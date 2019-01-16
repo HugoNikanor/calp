@@ -1,3 +1,5 @@
+.PHONY: all clean
+
 CC  := gcc
 LEX := flex
 
@@ -5,14 +7,18 @@ CFLAGS  = -Wall -ggdb
 #LFLAGS  =
 #LDFLAGS = 
 
-#%.yy.c : %.yy
-#	$(LEX) -o $@ ${LFLAGS} $<
+C_FILES = $(wildcard *.c)
+O_FILES = $(C_FILES:.c=.o)
+H_FILES = $(wildcard *.h)
 
-%.o : %.c
-	$(CC) -c -o $@ $^ ${CFLAGS}
+all: parse
 
-parse: parse.o
+%.o : %.c $(H_FILES)
+	$(CC) -c -o $@ $< ${CFLAGS}
+
+parse: $(O_FILES)
 	$(CC) -o $@ $^ ${LDFLAGS}
 
-test: test.yy.o
-	$(CC) -o $@ $^ ${LDFLAGS}
+clean:
+	-rm parse
+	-rm *.o

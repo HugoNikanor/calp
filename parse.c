@@ -1,15 +1,20 @@
+#define SAFE_STR
+
+/*
+ * TODO currently not all pointers inside strings are reset correctly,
+ * leading to old garbage data being read way to much. 
+ *
+ * A better ERR macro would solve most problems,
+ * along with the introduction of a MSG macro.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
-typedef enum {
-	key, value
-} context;
-
-typedef struct  {
-	char *key, *value;
-} kvpair;
+#include "strbuf.h"
+#include "vcal.h"
 
 /*
  * Max length of a line.
@@ -18,28 +23,44 @@ typedef struct  {
  */
 #define SEGSIZE 75
 
-int ii = 0;
-
-#define MARK do { printf("%i -- %i\n", __LINE__, ii++); } while (0)
-
-#define ERR(x) do { \
-	fprintf(stderr, "ERR %i: %s", __LINE__, (x)); \
+#define ERR(x, line) do { \
+	fprintf(stderr, "ERR %i: %s (cal %i)\n", __LINE__, (x), (line)); \
 } while(0)
 
+typedef enum {
+	p_key, p_value
+} part_context;
 
-int main (int argc, char* argv[argc]) {
-	FILE* F = fopen(argv[1], "r");
+typedef enum {
+	s_none, s_calendar, s_event
+} scope_context;
+
+int handle_kv(vcalendar* cal, vevent* ev, string* key, string* val, int line, scope_context* s_ctx);
+
+int parse_file(char* fname, vcalendar* cal) {
+	FILE* f = fopen(fname, "r");
 
 	int segments = 1;
-	char* str = malloc(segments * SEGSIZE);
-	int i = 0;
+	string str;
+	init_string (&str, segments * SEGSIZE);
 
-	context ctx = key;
-	kvpair kvs[100];
-	int ki = 0;
+	part_context p_ctx = p_key;
+	scope_context s_ctx = s_none;
+
+	int keylen = 100;
+	int vallen = 100;
+
+	string key, val;
+
+	init_string(&key, keylen);
+	init_string(&val, vallen);
+
+	int line = 0;
+
+	vevent ev;
 
 	char c;
-	while ( (c = fgetc(F)) != EOF) {
+	while ( (c = fgetc(f)) != EOF) {
 		/*
 		 * A carrige return means that the current line is at an
 		 * end. The following character should always be \n.
@@ -49,62 +70,155 @@ int main (int argc, char* argv[argc]) {
 		if (c == '\r') {
 
 			char s[2];
-			s[0] = fgetc(F);
-			s[1] = fgetc(F);
+			s[0] = fgetc(f);
+			s[1] = fgetc(f);
 
-			if (s[0] != '\n') { ERR("expected newline after CR"); }
+			if (s[0] != '\n') { ERR("expected newline after CR", line); }
 			else if (s[1] == ' ' || s[1] == '\t') {
-				MARK;
 				// TODO check return value
 				// TODO segments is always incremented here, meaning
 				// that segment grows larger for every multi line
 				// encountered.
-				str = realloc(str, ++segments * SEGSIZE);
-				if (str == NULL) { /* TODO signal error */
+#if 0
+				if (realloc_string(&str, ++segments * SEGSIZE) != 0) { /* TODO signal error */
+					ERR("Failed to realloc string", line);
 					exit (1);
 				}
+#endif
 				continue;
 			} else {
-				MARK;
-				if (ungetc(s[1], F) != s[1]) { /* TODO signal error */
+				if (ungetc(s[1], f) != s[1]) { /* TODO signal error */
 					exit (2);
 				}
 
 				/* At TRUE end of line */
-				kvs[ki].value = malloc(i + 1);
-				memcpy(kvs[ki].value, str, i);
-				kvs[ki].value[i] = 0;
-				ki++;
-				i = 0;
-				ctx = key;
+				if (str.ptr + 1 > vallen) {
+					vallen = str.ptr + 1;
+					realloc_string(&val, vallen);
+				}
+				copy_strbuf(&val, &str);
+				*strbuf_cur(&val) = 0;
+
+				++line;
+
+				/* We just got a value */
+				/* TODO for some reason both key and val is empty here */
+				handle_kv(cal, &ev, &key, &val, line, &s_ctx);
+				strbuf_soft_reset(&str);
+				p_ctx = p_key;
+
 				continue;
 			}
-		} else if (ctx == key && c == ':') {
-			kvs[ki].key = malloc(i + 1);
-			memcpy(kvs[ki].key, str, i);
-			kvs[ki].key[i] = 0;
-			printf("key := %s\n", kvs[ki].key);
-			i = 0;
-			ctx = value;
+		} else if (p_ctx == p_key && c == ':') {
+			/*
+			if (str.ptr + 1 > keylen) {
+				keylen = str.ptr + 1;
+				// TODO this might break everything
+				realloc_string(&key, keylen);
+			}
+			*/
+			copy_strbuf(&key, &str);
+			*strbuf_end(&key) = 0;
+			strbuf_soft_reset(&str);
+			p_ctx = p_value;
 			continue;
 		}
 
-		str[i] = c;
-		++i;
+		strbuf_append(&str, c);
 	}
 	if (errno != 0) {
-		printf("Error parsing, errno = %i\n", errno);
+		ERR("Error parsing", -1);
+	} else {
+		/*
+		 * Close last pair if the file is lacking trailing whitespace.
+		 * A file with trailing whitespace would however fail.
+		 * TODO check the spec and adjust accordingly
+		 */
+		if (str.ptr + 1 > vallen) {
+			vallen = str.ptr + 1;
+			realloc_string(&val, vallen);
+		}
+		copy_strbuf(&val, &str);
+		*strbuf_cur(&val) = 0;
 	}
-	puts("File parsed");
-	free(str);
-
+	// TODO this segfaults
 	/*
-	 * Just print and free all collected data
-	 */
-	for (int i = 0; i < ki; i++) {
-		printf("[%s] := [%s]\n", kvs[i].key, kvs[i].value);
-		free(kvs[i].key);
-		free(kvs[i].value);
+	free_vevent(&ev);
+	free_string(&str);
+	free_string(&key);
+	free_string(&val);
+	*/
+
+	// fclose(f);
+
+	return 0;
+}
+
+int main (int argc, char* argv[argc]) {
+	if (argc < 2) {
+		puts("Please give a ics file as first argument");
+	   exit (1);	
+	}
+	vcalendar cal;
+	init_vcalendar(&cal);
+	parse_file(argv[1], &cal);
+
+	printf("Parsed calendar file containing [%lu] events\n\n", cal.n_events);
+	for (size_t i = 0; i < cal.n_events; i++) {
+		printf("%lu: %s\n", i, cal.events[i].summary.mem);
 	}
 
+	free_vcalendar(&cal);
+}
+
+int handle_kv(vcalendar* cal, vevent* ev, string* key, string* val, int line, scope_context* s_ctx) {
+	switch (*s_ctx) {
+		case s_none:
+			/* Both key and val is null here */
+			if (! (strbuf_c(key, "BEGIN") && strbuf_c(val, "VCALENDAR"))) {
+				ERR("Invalid start of calendar", line);
+				return 1;
+			}
+			*s_ctx = s_calendar;
+			break;
+		case s_calendar:
+			if (strbuf_c(key, "BEGIN")) {
+				if (strbuf_c(val, "VEVENT")) {
+					*s_ctx = s_event;
+					break;
+				} else {
+					ERR("Unsupported start", line);
+					return 2;
+				}
+			} else if (strbuf_c(key, "END")) {
+				if (strbuf_c(val, "VCALENDAR")) {
+					*s_ctx = s_none;
+					/* GOTO cleanup */
+					break;
+				}
+			}
+			break;
+		case s_event:
+			/*  */ if (strbuf_c(key, "DTSTART")) {
+				strbuf_init_copy(&ev->dtstart, val);
+			} else if (strbuf_c(key, "DTEND")) {
+				strbuf_init_copy(&ev->dtend, val);
+			} else if (strbuf_c(key, "SUMMARY")) {
+				strbuf_init_copy(&ev->summary, val);
+			} else if (strbuf_c(key, "DESCRIPTION")) {
+				strbuf_init_copy(&ev->description, val);
+			} else if (strbuf_c(key, "END")) {
+				if (strbuf_c(val, "VEVENT")) {
+					push_event(cal, ev);
+					*s_ctx = s_calendar;
+				} else {
+					ERR("Trying to end something, expected VEVENT", line);
+					return 3;
+				}
+			}
+
+			break;
+	}
+
+	return 0;
 }
