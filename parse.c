@@ -27,6 +27,8 @@
 	fprintf(stderr, "ERR %i: %s (cal %i)\n", __LINE__, (x), (line)); \
 } while(0)
 
+#define LINE(nr, key, value) fprintf(stderr, "%i: [%s] := [%s]\n", nr, key, value);
+
 typedef enum {
 	p_key, p_value
 } part_context;
@@ -79,7 +81,7 @@ int parse_file(char* fname, vcalendar* cal) {
 				// TODO segments is always incremented here, meaning
 				// that segment grows larger for every multi line
 				// encountered.
-#if 0
+#if 1
 				if (realloc_string(&str, ++segments * SEGSIZE) != 0) { /* TODO signal error */
 					ERR("Failed to realloc string", line);
 					exit (1);
@@ -97,12 +99,12 @@ int parse_file(char* fname, vcalendar* cal) {
 					realloc_string(&val, vallen);
 				}
 				copy_strbuf(&val, &str);
-				*strbuf_cur(&val) = 0;
+				strbuf_cap(&val);
 
 				++line;
 
 				/* We just got a value */
-				/* TODO for some reason both key and val is empty here */
+				LINE(line, key.mem, val.mem);
 				handle_kv(cal, &ev, &key, &val, line, &s_ctx);
 				strbuf_soft_reset(&str);
 				p_ctx = p_key;
@@ -127,7 +129,7 @@ int parse_file(char* fname, vcalendar* cal) {
 		strbuf_append(&str, c);
 	}
 	if (errno != 0) {
-		ERR("Error parsing", -1);
+		ERR("Error parsing", errno);
 	} else {
 		/*
 		 * Close last pair if the file is lacking trailing whitespace.
@@ -141,15 +143,12 @@ int parse_file(char* fname, vcalendar* cal) {
 		copy_strbuf(&val, &str);
 		*strbuf_cur(&val) = 0;
 	}
-	// TODO this segfaults
-	/*
 	free_vevent(&ev);
 	free_string(&str);
 	free_string(&key);
 	free_string(&val);
-	*/
 
-	// fclose(f);
+	fclose(f);
 
 	return 0;
 }
@@ -159,13 +158,14 @@ int main (int argc, char* argv[argc]) {
 		puts("Please give a ics file as first argument");
 	   exit (1);	
 	}
+	printf("\nParsing %s\n", argv[1]);
 	vcalendar cal;
 	init_vcalendar(&cal);
 	parse_file(argv[1], &cal);
 
-	printf("Parsed calendar file containing [%lu] events\n\n", cal.n_events);
+	printf("\nParsed calendar file containing [%lu] events\n", cal.n_events);
 	for (size_t i = 0; i < cal.n_events; i++) {
-		printf("%lu: %s\n", i, cal.events[i].summary.mem);
+		printf("%2lu. %s\n", i + 1, cal.events[i].summary.mem);
 	}
 
 	free_vcalendar(&cal);

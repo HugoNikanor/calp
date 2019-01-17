@@ -41,7 +41,16 @@ int free_string(string* str);
 int copy_strbuf(string* dest, string* src);
 int strbuf_cmp(string* a, string* b);
 int strbuf_c(string* a, char* b);
-int strbuf_append(string* a, char c);
+
+/*
+ * Append char to end of string, determined by s->len.
+ */
+int strbuf_append(string* s, char c);
+
+/*
+ * Calls strbuf_append with NULL.
+ */
+int strbuf_cap(string* s);
 int strbuf_reset(string* s);
 char* charat(string* s, int idx);
 char* strbuf_cur(string* s);

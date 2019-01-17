@@ -40,6 +40,11 @@ int strbuf_append(string* s, char c) {
 	return 0;
 }
 
+int strbuf_cap(string* s) {
+	return strbuf_append(s, 0);
+}
+
+
 int copy_strbuf(string* dest, string* src) {
 #ifdef SAFE_STR
 	if (dest->alloc < src->len) {
@@ -88,7 +93,7 @@ int strbuf_init_copy(string* dest, string* src) {
 	}
 #endif
 
-	init_string(dest, src->alloc);
+	init_string(dest, src->len + 1);
 	copy_strbuf(dest, src);
 
 	return 0;

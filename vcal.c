@@ -10,6 +10,14 @@ int copy_vevent(vevent* dest, vevent* src) {
 	return 0;
 }
 
+int vevent_init_copy(vevent* dest, vevent* src) {
+	strbuf_init_copy(&dest->dtstart     , &src->dtstart);
+	strbuf_init_copy(&dest->dtend       , &src->dtend);
+	strbuf_init_copy(&dest->summary     , &src->summary);
+	strbuf_init_copy(&dest->description , &src->description);
+	return 0;
+}
+
 int free_vevent (vevent* ev) {
 	free_string(&ev->dtstart);
 	free_string(&ev->dtend);
@@ -19,11 +27,15 @@ int free_vevent (vevent* ev) {
 }
 
 int push_event(vcalendar* cal, vevent* ev) {
-	if (cal->n_events + 1> cal->alloc) {
+
+	/* Make sure that cal->events is large enough */
+	if (cal->n_events + 1 > cal->alloc) {
 		cal->alloc <<= 1;
+		cal->events = realloc(cal->events, sizeof(*cal->events) * cal->alloc);
 	}
-	cal->events = realloc(cal->events, cal->alloc);
-	copy_vevent(&cal->events[cal->n_events], ev);
+
+	vevent_init_copy(&cal->events[cal->n_events], ev);
+
 	cal->n_events++;
 	return 0;
 }
@@ -37,9 +49,8 @@ int init_vcalendar(vcalendar* cal) {
 
 int free_vcalendar (vcalendar* cal) {
 	for (size_t i = 0; i < cal->n_events; i++) {
-		vevent* v = & cal->events[i];
-		free_vevent(v);
-		free(v);
+		free_vevent(& cal->events[i]);
 	}
+	free (cal->events);
 	return 0;
 }

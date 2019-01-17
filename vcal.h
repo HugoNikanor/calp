@@ -5,6 +5,11 @@
 
 #include "strbuf.h"
 
+
+/*
+ * It's intentionall that there is no vevent_init. That since
+ * the length of the strings isn't known.
+ */
 typedef struct {
 	string dtstart;
 	string dtend;
@@ -12,7 +17,18 @@ typedef struct {
 	string description;
 } vevent;
 
+/*
+ * Deep copy from src -> dest
+ * Requires dest to be initialized beforehand
+ * TODO possibly remove this.
+ */
 int copy_vevent(vevent* dest, vevent* src);
+
+/*
+ * Copies src -> dest, initializing all the strings along the way.
+ * Requires dest to be initialized.
+ */
+int vevent_init_copy(vevent* dest, vevent* src);
 int free_vevent(vevent* ev);
 
 typedef struct {
