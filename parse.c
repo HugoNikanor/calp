@@ -12,6 +12,14 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <dirent.h>
+
+/*
+ * These three are only for some FD hacks.
+ */
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "strbuf.h"
 #include "vcal.h"
@@ -39,9 +47,7 @@ typedef enum {
 
 int handle_kv(vcalendar* cal, vevent* ev, string* key, string* val, int line, scope_context* s_ctx);
 
-int parse_file(char* fname, vcalendar* cal) {
-	FILE* f = fopen(fname, "r");
-
+int parse_file(FILE* f, vcalendar* cal) {
 	int segments = 1;
 	string str;
 	init_string (&str, segments * SEGSIZE);
@@ -62,6 +68,7 @@ int parse_file(char* fname, vcalendar* cal) {
 	vevent ev;
 
 	char c;
+	// TODO this segfaults...
 	while ( (c = fgetc(f)) != EOF) {
 		/*
 		 * A carrige return means that the current line is at an
@@ -104,7 +111,7 @@ int parse_file(char* fname, vcalendar* cal) {
 				++line;
 
 				/* We just got a value */
-				LINE(line, key.mem, val.mem);
+				// LINE(line, key.mem, val.mem);
 				handle_kv(cal, &ev, &key, &val, line, &s_ctx);
 				strbuf_soft_reset(&str);
 				p_ctx = p_key;
@@ -148,24 +155,59 @@ int parse_file(char* fname, vcalendar* cal) {
 	free_string(&key);
 	free_string(&val);
 
-	fclose(f);
-
 	return 0;
 }
 
 int main (int argc, char* argv[argc]) {
 	if (argc < 2) {
-		puts("Please give a ics file as first argument");
+		//puts("Please give a ics file as first argument");
+		puts("Please give vdir as first argument");
 	   exit (1);	
 	}
-	printf("\nParsing %s\n", argv[1]);
 	vcalendar cal;
 	init_vcalendar(&cal);
-	parse_file(argv[1], &cal);
 
-	printf("\nParsed calendar file containing [%lu] events\n", cal.n_events);
+	char* dname = argv[1];
+	DIR* dir = opendir(dname);
+	struct dirent* d;
+	int fcount = 0;
+	while ((d = readdir(dir)) != NULL) {
+
+
+		/* Check that it's a regular file */
+		if (d->d_type != DT_REG) continue;
+
+		/* Check that we have an ICS file */
+		char *s, *fname;
+	   	s = fname = d->d_name;
+		while (*(s++) != '.');
+		if (strcmp(s, "ics") != 0) continue;
+
+		/* We now assume that it's a good file, and start parsing it */
+
+		int fd = openat(dirfd(dir), fname, O_RDONLY);
+
+		FILE* f = fdopen(fd, "r");
+		if (f == NULL) {
+			fprintf(stderr, "Error opening file [%s], errno = %i\n",
+					fname, errno);
+			exit (1);
+		}
+
+		printf("%3i | %s\n", fcount++, fname);
+		/* TODO currently the hedaers cal is overwritten each
+		 * iteration (not really, since I don't save any headers).
+		 * Preferably, a special case is made for vdir structures
+		 * which can assume that all headers are equal. */
+		parse_file(f, &cal);
+		fclose(f);
+
+	}
+
+	printf("\nParsed calendar file containing [%lu] events\n",
+			cal.n_events);
 	for (size_t i = 0; i < cal.n_events; i++) {
-		printf("%2lu. %s\n", i + 1, cal.events[i].summary.mem);
+		printf("%3lu. %s\n", i + 1, cal.events[i].summary.mem);
 	}
 
 	free_vcalendar(&cal);
