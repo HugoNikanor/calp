@@ -5,17 +5,50 @@
 
 #include "strbuf.h"
 
-
-/*
- * It's intentionall that there is no vevent_init. That since
- * the length of the strings isn't known.
- */
 typedef struct {
+	string key;
+	string value;
+	string* vals;
+	int val_count;
+} parameter;
+
+typedef struct {
+	string key;
+	string val;
+
+	string* aux_values;
+	int value_count;
+
+	parameter* params;
+	int param_count;
+} content_line;
+
+#define TYPE content_line
+#include "hash.h"
+#undef TYPE
+
+struct s_vevent {
+	/*
 	string dtstart;
 	string dtend;
 	string summary;
 	string description;
-} vevent;
+	*/
+	TABLE(content_line) clines;
+};
+
+struct s_vevent;
+typedef struct s_vevent vevent;
+
+int vevent_init (vevent* ev, int init_size);
+
+int init_content_line (content_line* c, int keylen, int vallen);
+int content_line_free (content_line* c);
+int content_line_copy (content_line* dest, content_line* src);
+
+content_line* get_property (vevent* ev, char* key);
+
+int add_content_line (vevent* ev, content_line* c);
 
 /*
  * Deep copy from src -> dest
