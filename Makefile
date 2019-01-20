@@ -3,7 +3,7 @@
 CC  := gcc
 LEX := flex
 
-CFLAGS  = -Wall -ggdb
+CFLAGS  = -Wall -DSAFE_STR -ggdb
 #LFLAGS  =
 #LDFLAGS = 
 
