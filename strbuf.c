@@ -2,6 +2,9 @@
 
 #include <string.h>
 
+#include <stdio.h>
+#define ERR(s) fprintf(stderr, "\x1B[0;31mERR\x1b[m (strbuf %3i): %s\n", __LINE__, s)
+
 int init_string(string* str, size_t len) {
 	str->mem = malloc(len);
 	str->alloc = len;
@@ -24,7 +27,7 @@ int realloc_string(string* str, size_t len) {
 
 int free_string(string* str) {
 #ifdef SAFE_STR
-	if (str->alloc == 0) {
+	if (str->alloc == 0 || str->mem == NULL) {
 		ERR("String not allocated");
 		return 1;
 	}
@@ -69,7 +72,7 @@ char* charat(string* s, int idx) {
 #ifdef SAFE_STR
 	if (idx > s->len) {
 		ERR("Index out of bounds");
-		return -1;
+		return (char*) -1;
 	}
 #endif
 	return &s->mem[idx];
@@ -88,7 +91,7 @@ int strbuf_reset(string* s)
 int strbuf_init_copy(string* dest, string* src) {
 #ifdef SAFE_STR
 	if (dest->alloc != 0) {
-		ERR("Dest already allocated", -1);
+		ERR("Dest already allocated");
 		return 1;
 	}
 #endif

@@ -5,7 +5,7 @@
 int HASH_PUT(TYPE) ( TABLE(TYPE)* table, TYPE* value) {
 	// TODO genicify the hash function
 	unsigned long h = hash(value->key.mem) % table->size;
-	table->values[h] = *value;
+	table->values[h] = value;
 
 	/* TODO conflict resolution */
 
@@ -25,7 +25,8 @@ int HASH_INIT(TYPE) ( TABLE(TYPE)* table, int init_size ) {
 
 TYPE* HASH_GET(TYPE) ( TABLE(TYPE)* table, char* key ) {
 	unsigned long h = hash(key) % table->size;
-	TYPE* mem = (table->values + h);
+	// TYPE* mem = (table->values + h);
+	TYPE* mem = table->values[h];
 	if (mem == NULL) {
 		return 0;
 	} else if (strcmp(mem->key.mem, key) == 0) {

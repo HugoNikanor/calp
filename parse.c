@@ -27,7 +27,6 @@ int parse_file(FILE* f, vcalendar* cal) {
 
 	int line = 0;
 
-	// TODO this can apparently segfault...
 	NEW(vevent, ev, /**/ 100);
 
 	content_line cline;
@@ -86,10 +85,12 @@ int parse_file(FILE* f, vcalendar* cal) {
 
 				/* We just got a value */
 				// LINE(line, key.mem, val.mem);
+				/*
 				if (strbuf_c(&cline.key, "LOCATION")) {
 					if (strbuf_c(&cline.val, "")) return 1;
 					LINE(line, cline.key.mem, cline.val.mem);
 				}
+				*/
 				handle_kv(cal, ev, &cline, line, &s_ctx);
 				strbuf_soft_reset(&str);
 				p_ctx = p_key;

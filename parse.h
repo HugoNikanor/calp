@@ -1,8 +1,6 @@
 #ifndef PARSE_H
 #define PARSE_H
 
-#define SAFE_STR
-
 #include <stdio.h>
 #include <stdlib.h>
 

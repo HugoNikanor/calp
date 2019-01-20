@@ -18,7 +18,11 @@ unsigned long hash(char*);
 typedef struct {
 	int size;
 	int item_count;
-	TYPE* values;
+	/* NOTE
+	 * Hash maps are always assumed to hold pointers to objects
+	 * Double pointer means a list of pointers.
+	 */
+	TYPE** values;
 } TABLE(TYPE);
 
 int HASH_PUT(TYPE) ( TABLE(TYPE)* table, TYPE* value );
