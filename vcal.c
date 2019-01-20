@@ -44,6 +44,7 @@ int content_line_free (content_line* c) {
 	return 0;
 }
 
+/* TODO reimplement this */
 int copy_vevent(vevent* dest, vevent* src) {
 	// copy_strbuf(&dest->dtstart     , &src->dtstart);
 	// copy_strbuf(&dest->dtend       , &src->dtend);
@@ -52,6 +53,7 @@ int copy_vevent(vevent* dest, vevent* src) {
 	return 0;
 }
 
+/* TODO reimplement this */
 int vevent_init_copy(vevent* dest, vevent* src) {
 	// strbuf_init_copy(&dest->dtstart     , &src->dtstart);
 	// strbuf_init_copy(&dest->dtend       , &src->dtend);
@@ -60,6 +62,7 @@ int vevent_init_copy(vevent* dest, vevent* src) {
 	return 0;
 }
 
+/* TODO reimplement this */
 int free_vevent (vevent* ev) {
 	// free_string(&ev->dtstart);
 	// free_string(&ev->dtend);
