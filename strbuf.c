@@ -7,19 +7,19 @@
 #define ERR(s) fprintf(stderr, "\x1B[0;31mERR\x1b[m (strbuf %3i): %s\n", __LINE__, s)
 #endif
 
-int strbuf_init_0(strbuf* str) {
-	str->mem   = NULL;
-	str->alloc = 0;
-	str->len   = 0;
-	str->ptr   = 0;
+int CONSTRUCTOR_DECL(strbuf) {
+	this->mem   = NULL;
+	this->alloc = 0;
+	this->len   = 0;
+	this->ptr   = 0;
 	return 0;
 }
 
-int strbuf_init_1(strbuf* str, size_t len) {
-	str->mem = malloc(len);
-	str->alloc = len;
-	str->ptr = 0;
-	str->len = 0;
+int CONSTRUCTOR_DECL(strbuf, size_t len) {
+	this->mem   = calloc(sizeof(*this->mem), len);
+	this->alloc = len;
+	this->ptr   = 0;
+	this->len   = 0;
 	return 0;
 }
 

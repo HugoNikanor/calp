@@ -178,7 +178,7 @@ int handle_kv(
 					return 3;
 				}
 			} else {
-				content_line* c = malloc(sizeof(*c));
+				NEW(content_line, c);
 				content_line_copy(c, cline);
 				add_content_line (ev, c);
 			}

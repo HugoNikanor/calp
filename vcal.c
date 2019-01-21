@@ -95,8 +95,8 @@ int push_event(vcalendar* cal, vevent* ev) {
 }
 
 int CONSTRUCTOR_DECL(vcalendar) {
-	this->events = malloc(sizeof(*this->events));
 	this->alloc = 1;
+	this->events = calloc(sizeof(*this->events), this->alloc);
 	this->n_events = 0;
 	return 0;
 }
