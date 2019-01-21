@@ -63,5 +63,6 @@ int main (int argc, char* argv[argc]) {
 		printf("%3lu. %s\n", i + 1, get_property(&cal.events[i], "SUMMARY")->val.mem);
 	}
 
+	closedir(dir);
 	free_vcalendar(&cal);
 }
