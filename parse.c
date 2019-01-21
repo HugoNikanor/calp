@@ -16,8 +16,7 @@
 
 int parse_file(FILE* f, vcalendar* cal) {
 	int segments = 1;
-	strbuf str;
-	strbuf_init_1 (&str, segments * SEGSIZE);
+	SNEW(strbuf, str, segments * SEGSIZE);
 
 	part_context p_ctx = p_key;
 	scope_context s_ctx = s_none;
@@ -29,8 +28,7 @@ int parse_file(FILE* f, vcalendar* cal) {
 
 	NEW(vevent, ev, /**/ 100);
 
-	content_line cline;
-	content_line_init_2 (&cline, keylen, vallen);
+	SNEW(content_line, cline, keylen, vallen);
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
