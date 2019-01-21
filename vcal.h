@@ -6,17 +6,17 @@
 #include "strbuf.h"
 
 typedef struct {
-	string key;
-	string value;
-	string* vals;
+	strbuf key;
+	strbuf value;
+	strbuf* vals;
 	int val_count;
 } parameter;
 
 typedef struct {
-	string key;
-	string val;
+	strbuf key;
+	strbuf val;
 
-	string* aux_values;
+	strbuf* aux_values;
 	int value_count;
 
 	parameter* params;
@@ -29,10 +29,10 @@ typedef struct {
 
 struct s_vevent {
 	/*
-	string dtstart;
-	string dtend;
-	string summary;
-	string description;
+	strbuf dtstart;
+	strbuf dtend;
+	strbuf summary;
+	strbuf description;
 	*/
 	TABLE(content_line) clines;
 };
@@ -60,7 +60,7 @@ int add_content_line (vevent* ev, content_line* c);
 int copy_vevent(vevent* dest, vevent* src);
 
 /*
- * Copies src -> dest, initializing all the strings along the way.
+ * Copies src -> dest, initializing all the strbufs along the way.
  * Requires dest to be initialized.
  */
 int vevent_init_copy(vevent* dest, vevent* src);

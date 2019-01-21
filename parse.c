@@ -4,7 +4,7 @@
 
 
 /*
- * TODO currently not all pointers inside strings are reset correctly,
+ * TODO currently not all pointers inside strbufs are reset correctly,
  * leading to old garbage data being read way to much. 
  *
  * A better ERR macro would solve most problems,
@@ -16,7 +16,7 @@
 
 int parse_file(FILE* f, vcalendar* cal) {
 	int segments = 1;
-	string str;
+	strbuf str;
 	strbuf_init_1 (&str, segments * SEGSIZE);
 
 	part_context p_ctx = p_key;
@@ -57,8 +57,8 @@ int parse_file(FILE* f, vcalendar* cal) {
 				// TODO segments is always incremented here, meaning
 				// that segment grows larger for every multi line
 				// encountered.
-				if (realloc_string(&str, ++segments * SEGSIZE) != 0) { /* TODO signal error */
-					ERR("Failed to realloc string", line);
+				if (strbuf_realloc(&str, ++segments * SEGSIZE) != 0) { /* TODO signal error */
+					ERR("Failed to realloc strbuf", line);
 					exit (1);
 				}
 				continue;
@@ -75,10 +75,10 @@ int parse_file(FILE* f, vcalendar* cal) {
 				if (str.ptr + 1 > vallen) {
 					vallen = str.ptr + 1;
 					// TODO this fails
-					realloc_string(&cline.val, vallen);
+					strbuf_realloc(&cline.val, vallen);
 				}
 				*/
-				copy_strbuf(&cline.val, &str);
+				strbuf_copy(&cline.val, &str);
 				strbuf_cap(&cline.val);
 
 				++line;
@@ -102,10 +102,10 @@ int parse_file(FILE* f, vcalendar* cal) {
 			   if (str.ptr + 1 > keylen) {
 			   keylen = str.ptr + 1;
 			// TODO this might break everything
-			realloc_string(&key, keylen);
+			strbuf_realloc(&key, keylen);
 			}
 			*/
-			copy_strbuf(&cline.key, &str);
+			strbuf_copy(&cline.key, &str);
 			strbuf_cap(&cline.key);
 			strbuf_soft_reset(&str);
 			p_ctx = p_value;
@@ -126,12 +126,12 @@ int parse_file(FILE* f, vcalendar* cal) {
 		 */
 		if (str.ptr + 1 > vallen) {
 			vallen = str.ptr + 1;
-			realloc_string(&cline.val, vallen);
+			strbuf_realloc(&cline.val, vallen);
 		}
-		copy_strbuf(&cline.val, &str);
+		strbuf_copy(&cline.val, &str);
 		*strbuf_cur(&cline.val) = 0;
 	}
-	free_string(&str);
+	strbuf_free(&str);
 	content_line_free(&cline);
 
 	return 0;

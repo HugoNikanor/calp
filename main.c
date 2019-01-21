@@ -17,9 +17,7 @@ int main (int argc, char* argv[argc]) {
 		puts("Please give vdir as first argument");
 	   exit (1);	
 	}
-	// vcalendar cal;
-	// init_vcalendar(&cal);
-	// CONSTRUCT(vcalendar, &cal);
+
 	SNEW(vcalendar, cal);
 
 	char* dname = argv[1];
@@ -27,7 +25,6 @@ int main (int argc, char* argv[argc]) {
 	struct dirent* d;
 	int fcount = 0;
 	while ((d = readdir(dir)) != NULL) {
-
 
 		/* Check that it's a regular file */
 		if (d->d_type != DT_REG) continue;

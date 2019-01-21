@@ -44,8 +44,8 @@ int content_line_copy (content_line* dest, content_line* src) {
 }
 
 int content_line_free (content_line* c) {
-	free_string(&c->key);
-	free_string(&c->val);
+	strbuf_free(&c->key);
+	strbuf_free(&c->val);
 
 	// TODO remaining fields
 
@@ -54,10 +54,10 @@ int content_line_free (content_line* c) {
 
 /* TODO reimplement this */
 int copy_vevent(vevent* dest, vevent* src) {
-	// copy_strbuf(&dest->dtstart     , &src->dtstart);
-	// copy_strbuf(&dest->dtend       , &src->dtend);
-	// copy_strbuf(&dest->summary     , &src->summary);
-	// copy_strbuf(&dest->description , &src->description);
+	// strbuf_copy(&dest->dtstart     , &src->dtstart);
+	// strbuf_copy(&dest->dtend       , &src->dtend);
+	// strbuf_copy(&dest->summary     , &src->summary);
+	// strbuf_copy(&dest->description , &src->description);
 	return 0;
 }
 
@@ -72,10 +72,10 @@ int vevent_init_copy(vevent* dest, vevent* src) {
 
 /* TODO reimplement this */
 int free_vevent (vevent* ev) {
-	// free_string(&ev->dtstart);
-	// free_string(&ev->dtend);
-	// free_string(&ev->summary);
-	// free_string(&ev->description);
+	// strbuf_free(&ev->dtstart);
+	// strbuf_free(&ev->dtend);
+	// strbuf_free(&ev->summary);
+	// strbuf_free(&ev->description);
 	return 0;
 }
 
