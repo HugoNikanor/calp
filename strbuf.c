@@ -5,7 +5,15 @@
 #include <stdio.h>
 #define ERR(s) fprintf(stderr, "\x1B[0;31mERR\x1b[m (strbuf %3i): %s\n", __LINE__, s)
 
-int init_string(string* str, size_t len) {
+int strbuf_init_0(string* str) {
+	str->mem   = NULL;
+	str->alloc = 0;
+	str->len   = 0;
+	str->ptr   = 0;
+	return 0;
+}
+
+int strbuf_init_1(string* str, size_t len) {
 	str->mem = malloc(len);
 	str->alloc = len;
 	str->ptr = 0;
@@ -96,7 +104,7 @@ int strbuf_init_copy(string* dest, string* src) {
 	}
 #endif
 
-	init_string(dest, src->len + 1);
+	strbuf_init_1(dest, src->len + 1);
 	copy_strbuf(dest, src);
 
 	return 0;

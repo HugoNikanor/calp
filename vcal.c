@@ -6,8 +6,8 @@
 #include "hash_help.inc"
 #undef TYPE
 
-int vevent_init(vevent* ev, int init_size) {
-	HASH_INIT(content_line)(&ev->clines, init_size);
+int CONSTRUCTOR_DECL(vevent, int init_size) {
+	HASH_INIT(content_line)(&this->clines, init_size);
 	return 0;
 }
 
@@ -19,12 +19,20 @@ int add_content_line (vevent* ev, content_line* c) {
 	return HASH_PUT(content_line)(&ev->clines, c);
 }
 
-int init_content_line (content_line* c, int keylen, int vallen) {
-	init_string(&c->key, keylen);
-	init_string(&c->val, vallen);
+int CONSTRUCTOR_DECL(content_line) {
+	CONSTRUCT(strbuf, &this->key);
+	CONSTRUCT(strbuf, &this->val);
 	// TODO remaining fields
 	return 0;
 }
+
+int CONSTRUCTOR_DECL(content_line, int keylen, int vallen) {
+	CONSTRUCT(strbuf, &this->key, keylen);
+	CONSTRUCT(strbuf, &this->val, vallen);
+	// TODO remaining fields
+	return 0;
+}
+
 
 int content_line_copy (content_line* dest, content_line* src) {
 	strbuf_init_copy(&dest->key, &src->key);
@@ -86,10 +94,10 @@ int push_event(vcalendar* cal, vevent* ev) {
 	return 0;
 }
 
-int init_vcalendar(vcalendar* cal) {
-	cal->events = malloc(sizeof(*cal->events));
-	cal->alloc = 1;
-	cal->n_events = 0;
+int CONSTRUCTOR_DECL(vcalendar) {
+	this->events = malloc(sizeof(*this->events));
+	this->alloc = 1;
+	this->n_events = 0;
 	return 0;
 }
 

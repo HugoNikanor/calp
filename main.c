@@ -9,6 +9,7 @@
 #include <fcntl.h>
 
 #include "parse.h"
+#include "macro.h"
 
 int main (int argc, char* argv[argc]) {
 	if (argc < 2) {
@@ -16,8 +17,10 @@ int main (int argc, char* argv[argc]) {
 		puts("Please give vdir as first argument");
 	   exit (1);	
 	}
-	vcalendar cal;
-	init_vcalendar(&cal);
+	// vcalendar cal;
+	// init_vcalendar(&cal);
+	// CONSTRUCT(vcalendar, &cal);
+	SNEW(vcalendar, cal);
 
 	char* dname = argv[1];
 	DIR* dir = opendir(dname);

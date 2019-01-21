@@ -10,7 +10,9 @@ unsigned long hash(char*);
 #define TABLE(T)     TP(table_,     T)
 #define HASH_PUT(T)  TP(hash_put_,  T)
 #define HASH_GET(T)  TP(hash_get_,  T)
-#define HASH_INIT(T) TP(hash_init_, T)
+// #define HASH_INIT(T) TP(hash_init_, T)
+// #define HASH_INIT(T) CONSTRUCTOR_T(hash_ ## T, 1)
+#define HASH_INIT(T) CONSTRUCTOR_GEN(hash, T, 1)
 
 #endif /* HASH_H */
 #ifdef TYPE

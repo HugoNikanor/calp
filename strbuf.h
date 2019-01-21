@@ -18,9 +18,15 @@ typedef struct {
  */
 
 /*
+ * Init string to size of 0
+ * Doesnt't call malloc.
+ */
+int strbuf_init_0(string* str);
+
+/*
  * Constructor
  */
-int init_string(string* str, size_t len);
+int strbuf_init_1(string* str, size_t len);
 
 /*
  * Like realloc, but for strbuf

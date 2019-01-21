@@ -40,9 +40,11 @@ struct s_vevent {
 struct s_vevent;
 typedef struct s_vevent vevent;
 
-int vevent_init (vevent* ev, int init_size);
+int CONSTRUCTOR_DECL(vevent, int init_size);
 
-int init_content_line (content_line* c, int keylen, int vallen);
+int CONSTRUCTOR_DECL(content_line);
+int CONSTRUCTOR_DECL(content_line, int keylen, int vallen);
+
 int content_line_free (content_line* c);
 int content_line_copy (content_line* dest, content_line* src);
 
@@ -70,8 +72,8 @@ typedef struct {
 	vevent* events;
 } vcalendar;
 
-int init_vcalendar(vcalendar* cal);
-int free_vcalendar(vcalendar* cal);
+int CONSTRUCTOR_DECL(vcalendar);
+int free_vcalendar (vcalendar* cal);
 
 int push_event(vcalendar* cal, vevent* ev);
 
