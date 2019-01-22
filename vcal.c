@@ -7,8 +7,7 @@
 #include "trie.inc"
 #undef TYPE
 
-int CONSTRUCTOR_DECL(vevent, int init_size) {
-	// HASH_INIT(content_line)(&this->clines, init_size);
+int CONSTRUCTOR_DECL(vevent) {
 	CONSTRUCT(TRIE(content_line), &this->clines);
 	return 0;
 }
@@ -57,31 +56,8 @@ int FREE_DECL(content_line) {
 	return 0;
 }
 
-/* TODO reimplement this */
-int copy_vevent(vevent* dest, vevent* src) {
-	// strbuf_copy(&dest->dtstart     , &src->dtstart);
-	// strbuf_copy(&dest->dtend       , &src->dtend);
-	// strbuf_copy(&dest->summary     , &src->summary);
-	// strbuf_copy(&dest->description , &src->description);
-	return 0;
-}
-
-/* TODO reimplement this */
-int vevent_init_copy(vevent* dest, vevent* src) {
-	// strbuf_init_copy(&dest->dtstart     , &src->dtstart);
-	// strbuf_init_copy(&dest->dtend       , &src->dtend);
-	// strbuf_init_copy(&dest->summary     , &src->summary);
-	// strbuf_init_copy(&dest->description , &src->description);
-	return 0;
-}
-
-int free_vevent (vevent* ev) {
-	// strbuf_free(&ev->dtstart);
-	// strbuf_free(&ev->dtend);
-	// strbuf_free(&ev->summary);
-	// strbuf_free(&ev->description);
-	// HASH_FREE(content_line)(&ev->clines);
-	TRIE_FREE(content_line)(&ev->clines);
+int FREE_DECL(vevent) {
+	TRIE_FREE(content_line)(&this->clines);
 	return 0;
 }
 
@@ -109,7 +85,7 @@ int CONSTRUCTOR_DECL(vcalendar) {
 
 int free_vcalendar (vcalendar* cal) {
 	for (size_t i = 0; i < cal->n_events; i++) {
-		free_vevent(cal->events[i]);
+		FFREE(vevent, cal->events[i]);
 	}
 	free (cal->events);
 	return 0;

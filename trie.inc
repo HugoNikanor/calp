@@ -5,9 +5,7 @@
 #include "err.h"
 
 int CONSTRUCTOR_DECL ( TRIE(TYPE) ) {
-	// NEW(TRIE_NODE(TYPE), t, '\0');
-	TRIE_NODE(TYPE)* t = malloc(sizeof(*t));
-	CONSTRUCT(TRIE_NODE(content_line), t, '\0');
+	NEW(TRIE_NODE(TYPE), t, '\0');
 	this->root = t;
 	return 0;
 }
@@ -20,8 +18,6 @@ int CONSTRUCTOR_DECL (TRIE_NODE(TYPE), char c) {
 	return 0;
 }
 
-// int TRIE_NODE_INIT(TYPE) (
-// 	TRIE_NODE(TYPE)* node,
 int CONSTRUCTOR_DECL (TRIE_NODE(TYPE),
 	char c,
 	TRIE_NODE(TYPE)* next,
@@ -103,6 +99,7 @@ int TRIE_NODE_FREE(TYPE) ( TRIE_NODE(TYPE)* node ) {
 	if (node->value != NULL) FFREE(TYPE, node->value);
 	if (node->next  != NULL) TRIE_NODE_FREE(TYPE)(node->next);
 	if (node->child != NULL) TRIE_NODE_FREE(TYPE)(node->child);
+	free (node);
 	return 0;
 }
 

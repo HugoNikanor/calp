@@ -27,13 +27,12 @@ int parse_file(FILE* f, vcalendar* cal) {
 	int line = 0;
 
 	// TODO these are never freed. 
-	NEW(vevent, ev, /**/ 100);
+	NEW(vevent, ev);
 
 	SNEW(content_line, cline, keylen, vallen);
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
-		// D E S (-48 '\320')
 		/*
 		 * A carrige return means that the current line is at an
 		 * end. The following character should always be \n.
@@ -88,6 +87,7 @@ int parse_file(FILE* f, vcalendar* cal) {
 					LINE(line, cline.key.mem, cline.val.mem);
 				}
 				*/
+
 				handle_kv(cal, ev, &cline, line, &s_ctx);
 				strbuf_soft_reset(&str);
 				p_ctx = p_key;
