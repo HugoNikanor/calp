@@ -3,7 +3,7 @@
 #include <string.h>
 
 #define TYPE content_line
-// #include "hash_help.inc"
+// #include "hash.inc"
 #include "trie.inc"
 #undef TYPE
 
