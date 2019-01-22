@@ -3,18 +3,22 @@
 CC  := gcc
 LEX := flex
 
+DIRS := obj
+
 CFLAGS  = -Wall -DSAFE_STR -DSAFE_HASH -ggdb
 #LFLAGS  =
 #LDFLAGS = 
 
 C_FILES = $(wildcard *.c)
 INC_FILES = $(wildcard *.inc)
-O_FILES = $(C_FILES:.c=.o)
+O_FILES = $(addprefix obj/,$(C_FILES:.c=.o))
 H_FILES = $(wildcard *.h)
+
+$(shell mkdir -p $(DIRS))
 
 all: parse
 
-%.o : %.c $(H_FILES) $(INC_FILES)
+obj/%.o : %.c $(H_FILES) $(INC_FILES)
 	$(CC) -c -o $@ $< ${CFLAGS}
 
 parse: $(O_FILES)
@@ -22,4 +26,4 @@ parse: $(O_FILES)
 
 clean:
 	-rm parse
-	-rm *.o
+	-rm obj/*.o
