@@ -3,20 +3,25 @@
 #include <string.h>
 
 #define TYPE content_line
-#include "hash_help.inc"
+// #include "hash_help.inc"
+#include "trie.inc"
 #undef TYPE
 
 int CONSTRUCTOR_DECL(vevent, int init_size) {
-	HASH_INIT(content_line)(&this->clines, init_size);
+	// HASH_INIT(content_line)(&this->clines, init_size);
+	CONSTRUCT(TRIE(content_line), &this->clines);
 	return 0;
 }
 
 content_line* get_property (vevent* ev, char* key) {
-	return HASH_GET(content_line)(&ev->clines, key);
+	// return HASH_GET(content_line)(&ev->clines, key);
+	return TRIE_GET(content_line)(&ev->clines, key);
 }
 
 int add_content_line (vevent* ev, content_line* c) {
-	return HASH_PUT(content_line)(&ev->clines, c);
+	// return HASH_PUT(content_line)(&ev->clines, c);
+	// TODO memmory safety on strbuf?
+	return TRIE_PUT(content_line)(&ev->clines, c->key.mem, c);
 }
 
 int CONSTRUCTOR_DECL(content_line) {
@@ -70,12 +75,13 @@ int vevent_init_copy(vevent* dest, vevent* src) {
 	return 0;
 }
 
-/* TODO reimplement this */
 int free_vevent (vevent* ev) {
 	// strbuf_free(&ev->dtstart);
 	// strbuf_free(&ev->dtend);
 	// strbuf_free(&ev->summary);
 	// strbuf_free(&ev->description);
+	// HASH_FREE(content_line)(&ev->clines);
+	TRIE_FREE(content_line)(&ev->clines);
 	return 0;
 }
 
@@ -88,7 +94,7 @@ int push_event(vcalendar* cal, vevent* ev) {
 	}
 
 	// vevent_init_copy(&cal->events[cal->n_events], ev);
-	cal->events[cal->n_events] = *ev;
+	cal->events[cal->n_events] = ev;
 
 	cal->n_events++;
 	return 0;
@@ -103,7 +109,7 @@ int CONSTRUCTOR_DECL(vcalendar) {
 
 int free_vcalendar (vcalendar* cal) {
 	for (size_t i = 0; i < cal->n_events; i++) {
-		free_vevent(& cal->events[i]);
+		free_vevent(cal->events[i]);
 	}
 	free (cal->events);
 	return 0;

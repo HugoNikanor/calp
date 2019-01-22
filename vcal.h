@@ -24,21 +24,20 @@ typedef struct {
 } content_line;
 
 #define TYPE content_line
-#include "hash.h"
+// #include "hash.h"
+#include "trie.h"
 #undef TYPE
 
-struct s_vevent {
+typedef struct s_vevent {
 	/*
 	strbuf dtstart;
 	strbuf dtend;
 	strbuf summary;
 	strbuf description;
 	*/
-	TABLE(content_line) clines;
-};
-
-struct s_vevent;
-typedef struct s_vevent vevent;
+	// TABLE(content_line) clines;
+	TRIE(content_line) clines;
+} vevent;
 
 int CONSTRUCTOR_DECL(vevent, int init_size);
 
@@ -69,12 +68,15 @@ int free_vevent(vevent* ev);
 typedef struct {
 	size_t n_events;
 	size_t alloc;
-	vevent* events;
+	vevent** events;
 } vcalendar;
 
 int CONSTRUCTOR_DECL(vcalendar);
 int free_vcalendar (vcalendar* cal);
 
+/*
+ * Appends ev to cal. Doesn't copy ev
+ */
 int push_event(vcalendar* cal, vevent* ev);
 
 #endif /* VCAL_H */

@@ -26,6 +26,7 @@ int parse_file(FILE* f, vcalendar* cal) {
 
 	int line = 0;
 
+	// TODO these are never freed. 
 	NEW(vevent, ev, /**/ 100);
 
 	SNEW(content_line, cline, keylen, vallen);
@@ -69,13 +70,11 @@ int parse_file(FILE* f, vcalendar* cal) {
 				}
 
 				/* At TRUE end of line */
-				/*
 				if (str.ptr + 1 > vallen) {
 					vallen = str.ptr + 1;
-					// TODO this fails
 					strbuf_realloc(&cline.val, vallen);
 				}
-				*/
+
 				strbuf_copy(&cline.val, &str);
 				strbuf_cap(&cline.val);
 

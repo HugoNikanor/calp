@@ -11,6 +11,7 @@
 #define TP(a, b) a ## b
 #define TP3(a, b, c) a ## b ## c
 #define TP4(a, b, c, d) a ## b ## c ## d
+#define TP5(a, b, c, d, e) a ## b ## c ## d ## e
 
 /*
  * Get length of __VA_ARGS__
@@ -24,12 +25,17 @@
 	TP3(T, _init_, ARG_COUNT)
 
 /*
+ * TODO rename all the constructor macros to something clearer and
+ * shorter.
+ */
+
+/*
  * Constructor type name
  */
-#define CONSTRUCTOR_T(T, C) TP3(T, _init_, C)
+#define CONSTRUCTOR_T(T, C) TP3(T, __init__, C)
 
 #define CONSTRUCTOR_GEN(parent, child, C) \
-	CONSTRUCTOR_T(parent ## _ ## child, C)
+	CONSTRUCTOR_T(parent ## __ ## child, C)
 
 /*
  * Returns full type of constructor

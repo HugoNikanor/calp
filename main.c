@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <string.h>
+
 #include "parse.h"
 #include "macro.h"
 
@@ -60,7 +62,9 @@ int main (int argc, char* argv[argc]) {
 			cal.n_events);
 	for (size_t i = 0; i < cal.n_events; i++) {
 		// printf("%3lu. %s\n", i + 1, cal.events[i].summary.mem);
-		printf("%3lu. %s\n", i + 1, get_property(&cal.events[i], "SUMMARY")->val.mem);
+		// TODO this segfaults
+		// apparently get_property returns 0 in some cases
+		printf("%3lu. %s\n", i + 1, get_property(cal.events[i], "SUMMARY")->val.mem);
 	}
 
 	closedir(dir);

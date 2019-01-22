@@ -101,12 +101,13 @@ int strbuf_reset(strbuf* s)
 int strbuf_init_copy(strbuf* dest, strbuf* src) {
 #ifdef SAFE_STR
 	if (dest->alloc != 0) {
+		printf("%lu  ", dest->alloc);
 		ERR("Dest already allocated");
 		return 1;
 	}
 #endif
 
-	strbuf_init_1(dest, src->len + 1);
+	CONSTRUCT(strbuf, dest, src->len + 1);
 	strbuf_copy(dest, src);
 
 	return 0;
