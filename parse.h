@@ -11,6 +11,8 @@
  * Max length of a line.
  * TODO update this to allow longer lines, in case someone doesn't
  * follow the standard.
+ * (I currently only realloc memmory at end of lines, not when my
+ * buffer is full).
  */
 #define SEGSIZE 75
 

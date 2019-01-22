@@ -23,9 +23,6 @@ int CONSTRUCTOR_DECL(strbuf, size_t len) {
 	return 0;
 }
 
-/*
- * TODO check if this is the problem.
- */
 int strbuf_realloc(strbuf* str, size_t len) {
 #ifdef SAFE_STR
 	if (str->mem == NULL || str->alloc == 0) {

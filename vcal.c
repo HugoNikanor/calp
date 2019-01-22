@@ -13,12 +13,10 @@ int CONSTRUCTOR_DECL(vevent) {
 }
 
 content_line* get_property (vevent* ev, char* key) {
-	// return HASH_GET(content_line)(&ev->clines, key);
 	return TRIE_GET(content_line)(&ev->clines, key);
 }
 
 int add_content_line (vevent* ev, content_line* c) {
-	// return HASH_PUT(content_line)(&ev->clines, c);
 	// TODO memmory safety on strbuf?
 	return TRIE_PUT(content_line)(&ev->clines, c->key.mem, c);
 }
@@ -41,18 +39,14 @@ int CONSTRUCTOR_DECL(content_line, int keylen, int vallen) {
 int content_line_copy (content_line* dest, content_line* src) {
 	strbuf_init_copy(&dest->key, &src->key);
 	strbuf_init_copy(&dest->val, &src->val);
-
 	// TODO remaining fields
-
 	return 0;
 }
 
 int FREE_DECL(content_line) {
 	FREE(strbuf)(&this->key);
 	FREE(strbuf)(&this->val);
-
 	// TODO remaining fields
-
 	return 0;
 }
 

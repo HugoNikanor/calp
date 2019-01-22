@@ -9,8 +9,6 @@ int HASH_PUT(TYPE) ( TABLE(TYPE)* table, TYPE* value) {
 	unsigned long h = hash(value->key.mem) % table->size;
 	TYPE* mem = table->values[h];
 
-	// fprintf(stderr, "INFO: %i: [%s] := [%s]\n", table->item_count, value->key.mem, value->val.mem);
-
 	/* TODO conflict resolution */
 	if (mem != NULL) ERR("Hash collision");
    	mem = value;

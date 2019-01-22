@@ -1,18 +1,9 @@
 #include "parse.h"
 
-#include "macro.h"
-
-
-/*
- * TODO currently not all pointers inside strbufs are reset correctly,
- * leading to old garbage data being read way to much. 
- *
- * A better ERR macro would solve most problems,
- * along with the introduction of a MSG macro.
- */
-
 #include <errno.h>
 #include <string.h>
+
+#include "macro.h"
 
 int parse_file(FILE* f, vcalendar* cal) {
 	int segments = 1;
@@ -26,7 +17,6 @@ int parse_file(FILE* f, vcalendar* cal) {
 
 	int line = 0;
 
-	// TODO these are never freed. 
 	NEW(vevent, ev);
 
 	SNEW(content_line, cline, keylen, vallen);
@@ -47,24 +37,21 @@ int parse_file(FILE* f, vcalendar* cal) {
 
 			if (s[0] != '\n') { ERR("expected newline after CR", line); }
 			else if (s[1] == ' ' || s[1] == '\t') {
-				/*
-				 * Folded line, increase size of key and continue.
-				 */
+				/* Folded line, increase size of key and continue.  */
 
-				// TODO check return value
-				// TODO segments is always incremented here, meaning
-				// that segment grows larger for every multi line
-				// encountered.
-				if (strbuf_realloc(&str, ++segments * SEGSIZE) != 0) { /* TODO signal error */
+				/* TODO segments is always incremented here, meaning
+				 * that segment grows larger for every multi line
+				 * encountered.
+				 */
+				if (strbuf_realloc(&str, ++segments * SEGSIZE) != 0) {
 					ERR("Failed to realloc strbuf", line);
 					exit (1);
 				}
 				continue;
 			} else {
-				/*
-				 * Actuall end of line, handle values.
-				 */
-				if (ungetc(s[1], f) != s[1]) { /* TODO signal error */
+				/* Actuall end of line, handle values.  */
+				if (ungetc(s[1], f) != s[1]) {
+					ERR("Failed to put character back on FILE", line); 
 					exit (2);
 				}
 
