@@ -48,9 +48,9 @@ int content_line_copy (content_line* dest, content_line* src) {
 	return 0;
 }
 
-int content_line_free (content_line* c) {
-	strbuf_free(&c->key);
-	strbuf_free(&c->val);
+int FREE_DECL(content_line) {
+	FREE(strbuf)(&this->key);
+	FREE(strbuf)(&this->val);
 
 	// TODO remaining fields
 

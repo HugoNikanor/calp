@@ -44,7 +44,7 @@ int CONSTRUCTOR_DECL(vevent, int init_size);
 int CONSTRUCTOR_DECL(content_line);
 int CONSTRUCTOR_DECL(content_line, int keylen, int vallen);
 
-int content_line_free (content_line* c);
+int FREE_DECL(content_line);
 int content_line_copy (content_line* dest, content_line* src);
 
 content_line* get_property (vevent* ev, char* key);

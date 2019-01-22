@@ -23,6 +23,9 @@ int CONSTRUCTOR_DECL(strbuf, size_t len) {
 	return 0;
 }
 
+/*
+ * TODO check if this is the problem.
+ */
 int strbuf_realloc(strbuf* str, size_t len) {
 #ifdef SAFE_STR
 	if (str->mem == NULL || str->alloc == 0) {
@@ -35,18 +38,23 @@ int strbuf_realloc(strbuf* str, size_t len) {
 	return 0;
 }
 
-int strbuf_free(strbuf* str) {
+// int strbuf_free(strbuf* str) {
+int FREE_DECL(strbuf) {
 #ifdef SAFE_STR
-	if (str->alloc == 0 || str->mem == NULL) {
+	if (this->alloc == 0 || this->mem == NULL) {
 		ERR("String not allocated");
 		return 1;
 	}
 #endif
-	free (str->mem);
-	str->alloc = 0;
+	// fprintf(stderr, "Memmory = %p | %4lu | %s\n", this->mem, this->alloc, this->mem);
+	free (this->mem);
+	this->alloc = 0;
 	return 0;
 }
 
+/*
+ * TODO this should do bounds check
+ */
 int strbuf_append(strbuf* s, char c) {
 	s->mem[s->len] = c;
 	s->ptr = ++s->len;

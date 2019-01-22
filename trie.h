@@ -22,7 +22,6 @@ typedef struct TRIE_NODE(TYPE) {
 	char c;
 	TYPE* value;
 	struct TRIE_NODE(TYPE)* next;
-	/* child == NULL means leaf? */
 	struct TRIE_NODE(TYPE)* child;
 } TRIE_NODE(TYPE);
 

@@ -34,7 +34,8 @@ int strbuf_realloc(strbuf* str, size_t len);
 /*
  * Free's contents of str, but keeps str.
  */
-int strbuf_free(strbuf* str);
+// int strbuf_free(strbuf* str);
+int FREE_DECL(strbuf);
 
 /*
  * Copy contents from src to dest.

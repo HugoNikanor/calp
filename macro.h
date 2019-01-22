@@ -63,4 +63,13 @@
 	T N; \
 	CONSTRUCT(T, & N, __VA_ARGS__);
 
+/* Destructor for type */
+#define FREE(T) TP(T, __free)
+
+/*  Call destructor for type, and free object */
+#define FFREE(T, N) do { FREE(T)(N); free(N); } while (0)
+
+/* Declare destructor */
+#define FREE_DECL(T) TP(T, __free) (T* this)
+
 #endif /* MACRO_H */

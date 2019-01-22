@@ -128,8 +128,8 @@ int parse_file(FILE* f, vcalendar* cal) {
 		strbuf_copy(&cline.val, &str);
 		*strbuf_cur(&cline.val) = 0;
 	}
-	strbuf_free(&str);
-	content_line_free(&cline);
+	FREE(strbuf)(&str);
+	FREE(content_line)(&cline);
 
 	return 0;
 }

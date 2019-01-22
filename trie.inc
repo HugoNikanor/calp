@@ -4,15 +4,18 @@
 
 #include "err.h"
 
-int TRIE_INIT(TYPE) ( TRIE(TYPE)* trie ) {
-	NEW(TRIE_NODE(TYPE), t, '\0');
-	trie->root = t;
+int CONSTRUCTOR_DECL ( TRIE(TYPE) ) {
+	// NEW(TRIE_NODE(TYPE), t, '\0');
+	TRIE_NODE(TYPE)* t = malloc(sizeof(*t));
+	CONSTRUCT(TRIE_NODE(content_line), t, '\0');
+	this->root = t;
 	return 0;
 }
 
 int CONSTRUCTOR_DECL (TRIE_NODE(TYPE), char c) {
 	this->c = c;
-	this->next = NULL;
+	this->value = NULL;
+	this->next  = NULL;
 	this->child = NULL;
 	return 0;
 }
@@ -97,7 +100,7 @@ TYPE* TRIE_GET(TYPE) ( TRIE(TYPE)* trie, char* key ) {
 
 int TRIE_NODE_FREE(TYPE) ( TRIE_NODE(TYPE)* node ) {
 	if (node == NULL) return 0;
-	if (node->value != NULL) free (node->value);
+	if (node->value != NULL) FFREE(TYPE, node->value);
 	if (node->next  != NULL) TRIE_NODE_FREE(TYPE)(node->next);
 	if (node->child != NULL) TRIE_NODE_FREE(TYPE)(node->child);
 	return 0;
