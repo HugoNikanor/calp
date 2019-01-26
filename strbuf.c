@@ -83,7 +83,7 @@ int strbuf_c(strbuf* a, char* b) {
 	return strcmp(a->mem, b) == 0;
 }
 
-char* charat(strbuf* s, int idx) {
+char* charat(strbuf* s, unsigned int idx) {
 #ifdef SAFE_STR
 	if (idx > s->len) {
 		ERR("Index out of bounds");
@@ -106,7 +106,7 @@ int strbuf_reset(strbuf* s)
 int strbuf_init_copy(strbuf* dest, strbuf* src) {
 #ifdef SAFE_STR
 	if (dest->alloc != 0) {
-		printf("%lu  ", dest->alloc);
+		printf("%u  ", dest->alloc);
 		ERR("Dest already allocated");
 		return 1;
 	}

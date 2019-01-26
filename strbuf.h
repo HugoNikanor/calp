@@ -6,9 +6,10 @@
 
 typedef struct {
 	char* mem;
-	size_t ptr;
-	size_t alloc;
-	size_t len;
+	/* TODO add support for negative ptr */
+	int ptr;
+	unsigned int alloc;
+	unsigned int len;
 } strbuf;
 
 /*
@@ -57,7 +58,7 @@ int strbuf_append(strbuf* s, char c);
  */
 int strbuf_cap(strbuf* s);
 int strbuf_reset(strbuf* s);
-char* charat(strbuf* s, int idx);
+char* charat(strbuf* s, unsigned int idx);
 char* strbuf_cur(strbuf* s);
 
 /*

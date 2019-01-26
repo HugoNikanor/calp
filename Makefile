@@ -5,7 +5,7 @@ LEX := flex
 
 DIRS := obj
 
-CFLAGS  = -Wall -DSAFE_STR -DSAFE_HASH -ggdb
+CFLAGS  = -std=gnu99 -Wall -Wextra -pedantic -DSAFE_STR -DSAFE_HASH -ggdb
 #LFLAGS  =
 #LDFLAGS = 
 

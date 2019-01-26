@@ -66,21 +66,15 @@ int parse_file(FILE* f, vcalendar* cal) {
 
 				++line;
 
-				/* We just got a value */
-				// LINE(line, key.mem, val.mem);
-				/*
-				if (strbuf_c(&cline.key, "LOCATION")) {
-					if (strbuf_c(&cline.val, "")) return 1;
-					LINE(line, cline.key.mem, cline.val.mem);
-				}
-				*/
-
 				handle_kv(cal, ev, &cline, line, &s_ctx);
 				strbuf_soft_reset(&str);
 				p_ctx = p_key;
 
 				continue;
 			}
+		/*
+		 * TODO context for property_{key,val}.
+		 */
 		} else if (p_ctx == p_key && c == ':') {
 			/*
 			   if (str.ptr + 1 > keylen) {
@@ -104,9 +98,11 @@ int parse_file(FILE* f, vcalendar* cal) {
 		ERR("Error parsing", errno);
 	} else {
 		/*
-		 * Close last pair if the file is lacking trailing whitespace.
-		 * A file with trailing whitespace would however fail.
-		 * TODO check the spec and adjust accordingly
+		 * The standard (3.4, l. 2675) says that each icalobject must
+		 * end with CRLF. My files however does not, so we also parse
+		 * the end here.
+		 * TODO this doesn't do anything with its read value
+		 * TODO This might crash if we have the CRLF
 		 */
 		if (str.ptr + 1 > vallen) {
 			vallen = str.ptr + 1;
@@ -121,6 +117,9 @@ int parse_file(FILE* f, vcalendar* cal) {
 	return 0;
 }
 
+/*
+ * TODO Extend this to handle properties
+ */
 int handle_kv(
 		vcalendar*     cal,
 		vevent*        ev,
