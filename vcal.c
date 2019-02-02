@@ -4,7 +4,7 @@
 
 #define TYPE content_line
 // #include "hash.inc"
-#include "trie.inc"
+#include "trie.inc.h"
 #undef TYPE
 
 int CONSTRUCTOR_DECL(vevent) {

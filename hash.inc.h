@@ -59,5 +59,3 @@ int HASH_FREE(TYPE) ( TABLE(TYPE)* table ) {
 }
 
 #endif /* TYPE */
-
-// vim: ft=c

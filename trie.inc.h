@@ -111,5 +111,3 @@ int TRIE_FREE(TYPE) ( TRIE(TYPE)* trie ) {
 }
 
 #endif /* TYPE */
-
-// vim: ft=c

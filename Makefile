@@ -1,36 +1,42 @@
 .PHONY: all clean
 
 CC  := gcc
-LEX := flex
 
-DIRS := obj
+OBJDIR = obj
 
-CFLAGS  = -std=gnu99 -Wall -Wextra -pedantic \
-		  -DSAFE_STR -DSAFE_HASH -ggdb \
-		  -fPIC \
+CPPFLAGS = -DSAFE_STR -DSAFE_HASH 
+CFLAGS  = $(CPPFLAGS) \
+		  -std=gnu99 -Wall -Wextra -pedantic \
+		  -ggdb -fPIC \
 		  $(shell guile-config compile)
-# LFLAGS  =
 LDFLAGS = -fPIC $(shell guile-config link)
 
-C_FILES = $(wildcard *.c)
-INC_FILES = $(wildcard *.inc)
-O_FILES = $(addprefix obj/,$(C_FILES:.c=.o))
 H_FILES = $(wildcard *.h)
 
-$(shell mkdir -p $(DIRS))
+C_FILES = $(wildcard *.c)
 
 all: parse libguile-calendar.so
 
-obj/%.o : %.c $(H_FILES) $(INC_FILES)
-	$(CC) -c -o $@ $< ${CFLAGS}
+O_FILES = $(addprefix obj/,$(C_FILES:.c=.o))
 
-libguile-calendar.so: $(O_FILES)
-	$(CC) -shared -o $@ $^ $(LDFLAGS)
+all: parse libguile-calendar.so
 
 parse: $(O_FILES)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+$(O_FILES): | $(OBJDIR)
+
+$(OBJDIR)/%.o : %.c $(H_FILES)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+libguile-calendar.so: $(O_FILES)
+	$(CC) -shared -o $@ $^ $(LDFLAGS)
+
 clean:
 	-rm parse
-	-rm obj/*.o
+	-rm $(OBJDIR)/*.o
+	-rmdir $(OBJDIR)
 	-rm *.so
