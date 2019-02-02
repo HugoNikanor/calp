@@ -32,7 +32,7 @@ SCM_DEFINE (make_calendar, "make-calendar", 1, 0, 0,
 }
 
 static SCM scm_from_strbuf(strbuf* s) {
-	return scm_from_utf8_stringn (s->mem, s->len);
+	return scm_from_utf8_stringn (s->mem, s->len - 1);
 }
 
 SCM_DEFINE (calendar_get_attr, "calendar-get-attr", 3, 0, 0,
