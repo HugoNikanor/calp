@@ -13,8 +13,10 @@ void init_calendar_type (void) {
 	calendar_type = scm_make_foreign_object_type(name, slots, NULL);
 }
 
-SCM make_calendar (SCM path) {
-
+SCM_DEFINE (make_calendar, "make-calendar", 1, 0, 0,
+		(SCM path),
+		"Loads a vdir iCalendar from the given path.")
+{
 	vcalendar* cal =
 		(vcalendar*) scm_gc_malloc (
 				sizeof(*cal), "calendar");
@@ -33,7 +35,10 @@ static SCM scm_from_strbuf(strbuf* s) {
 	return scm_from_utf8_stringn (s->mem, s->len);
 }
 
-SCM calendar_get_attr(SCM calendar, SCM id, SCM attr) {
+SCM_DEFINE (calendar_get_attr, "calendar-get-attr", 3, 0, 0,
+		(SCM calendar, SCM id, SCM attr),
+		"Retuns the given attribute from the vevent object at index in calendar.")
+{
 	scm_assert_foreign_object_type (calendar_type, calendar);
 	vcalendar* cal = scm_foreign_object_ref (calendar, 0);
 
@@ -47,7 +52,10 @@ SCM calendar_get_attr(SCM calendar, SCM id, SCM attr) {
 	return scm_from_strbuf(&c->val);
 }
 
-SCM number_events(SCM calendar) {
+SCM_DEFINE (calendar_size, "calendar-size", 1, 0, 0,
+		(SCM calendar),
+		"Returns number of events in a vcalendar.")
+{
 	scm_assert_foreign_object_type (calendar_type, calendar);
 	vcalendar* cal = scm_foreign_object_ref (calendar, 0);
 	return scm_from_size_t (cal->n_events);
@@ -56,7 +64,8 @@ SCM number_events(SCM calendar) {
 void init_calendar () {
 	init_calendar_type();
 
-	scm_c_define_gsubr ("make-calendar", 1, 0, 0, make_calendar);
-	scm_c_define_gsubr ("get-attr", 3, 0, 0, calendar_get_attr);
-	scm_c_define_gsubr ("calendar-size", 1, 0, 0, number_events);
+#ifndef SCM_MAGIC_SNARFER
+#include "scheme.x"
+#endif
+
 }

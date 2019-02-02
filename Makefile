@@ -15,7 +15,8 @@ H_FILES = $(wildcard *.h)
 
 C_FILES = $(wildcard *.c)
 
-all: parse libguile-calendar.so
+SCM_C_FILES = $(wildcard *.scm.c)
+X_FILES = $(SCM_C_FILES:.scm.c=.x)
 
 O_FILES = $(addprefix obj/,$(C_FILES:.c=.o))
 
@@ -26,11 +27,14 @@ parse: $(O_FILES)
 
 $(O_FILES): | $(OBJDIR)
 
-$(OBJDIR)/%.o : %.c $(H_FILES)
+$(OBJDIR)/%.o : %.c $(H_FILES) $(X_FILES)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
+
+%.x : %.scm.c
+	guile-snarf -o $@ $< $(CFLAGS)
 
 libguile-calendar.so: $(O_FILES)
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
@@ -40,3 +44,4 @@ clean:
 	-rm $(OBJDIR)/*.o
 	-rmdir $(OBJDIR)
 	-rm *.so
+	-rm *.x
