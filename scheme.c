@@ -47,9 +47,16 @@ SCM calendar_get_attr(SCM calendar, SCM id, SCM attr) {
 	return scm_from_strbuf(&c->val);
 }
 
+SCM number_events(SCM calendar) {
+	scm_assert_foreign_object_type (calendar_type, calendar);
+	vcalendar* cal = scm_foreign_object_ref (calendar, 0);
+	return scm_from_size_t (cal->n_events);
+}
+
 void init_calendar () {
 	init_calendar_type();
 
 	scm_c_define_gsubr ("make-calendar", 1, 0, 0, make_calendar);
 	scm_c_define_gsubr ("get-attr", 3, 0, 0, calendar_get_attr);
+	scm_c_define_gsubr ("calendar-size", 1, 0, 0, number_events);
 }
