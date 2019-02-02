@@ -75,6 +75,9 @@ int TRIE_PUT(TYPE) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 	return 0;
 }
 
+/*
+ * TODO what happens when I give an invalid key?
+ */
 TYPE* TRIE_GET(TYPE) ( TRIE(TYPE)* trie, char* key ) {
 	TRIE_NODE(TYPE)* n = trie->root->child;
 	char* subkey = key;
