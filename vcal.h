@@ -28,6 +28,9 @@ typedef struct {
 int CONSTRUCTOR_DECL(content_line);
 int CONSTRUCTOR_DECL(content_line, int keylen, int vallen);
 
+int RESOLVE(content_line)
+	(content_line** orig, content_line* new);
+
 #define TYPE content_line
 // #include "hash.h"
 #include "trie.h"
@@ -65,6 +68,13 @@ int free_vcalendar (vcalendar* cal);
  */
 int push_event(vcalendar* cal, vevent* ev);
 
+/*
+ * NOTE
+ * these create a very basic garbage collector. It shouldn't be used,
+ * but is useful for finding lost memmory during debugging.
+ * TODO
+ * remove it.
+ */
 extern content_line** clines;
 extern int cline_ptr;
 

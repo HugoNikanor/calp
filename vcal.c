@@ -26,6 +26,20 @@ int CONSTRUCTOR_DECL(vevent, char* filename) {
 	return 0;
 }
 
+int RESOLVE(content_line)
+	(content_line** dest, content_line* new) {
+	if (*dest == NULL) *dest = new;
+
+	if (strbuf_cmp(&(*dest)->key, &new->key) != 0) {
+		ERR("Can't resolve between these two types");
+		return 1;
+	}
+
+	// printf("len = %i\n", dest->vals.length);
+	APPEND(LLIST(strbuf))(&(*dest)->vals, &new->vals);
+	return 0;
+}
+
 content_line* get_property (vevent* ev, char* key) {
 	return TRIE_GET(content_line)(&ev->clines, key);
 }
@@ -67,7 +81,8 @@ int content_line_copy (content_line* dest, content_line* src) {
 int FREE_DECL(content_line) {
 	FREE(strbuf)(&this->key);
 	// FREE(strbuf)(&this->val);
-	LLIST_FREE(strbuf)(&this->vals);
+	// LLIST_FREE(strbuf)(&this->vals);
+	FREE(LLIST(strbuf))(&this->vals);
 	for (int i = 0; i < cline_ptr; i++) {
 		if (clines[i] == this) {
 			clines[i] = NULL;

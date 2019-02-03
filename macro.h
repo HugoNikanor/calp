@@ -73,5 +73,7 @@
 #define FREE_DECL(T) TP(T, __free) (T* this)
 
 #define DEEP_COPY(T) TP(deep_copy__, T)
+#define RESOLVE(T) TP(resolve__, T)
+#define APPEND(T) TP(append__, T)
 
 #endif /* MACRO_H */

@@ -6,8 +6,6 @@
 #define LLIST(T) TP(llist__, T)
 #define LINK(T)  TP(llist_link__, T)
 
-#define LLIST_INIT(T) CONSTRUCTOR_GEN(llist, T, 0);
-#define LLIST_FREE(T) TP(llist_free__, T)
 #define LLIST_CONS(T) TP(llist_cons__, T)
 
 #endif /* LINKED_LIST_H */
@@ -27,12 +25,15 @@ typedef struct {
 } LLIST(TYPE);
 
 int CONSTRUCTOR_DECL ( LLIST(TYPE) );
-int LLIST_FREE(TYPE) ( LLIST(TYPE)* );
+int FREE_DECL( LLIST(TYPE) );
 
 int CONSTRUCTOR_DECL ( LINK(TYPE) );
+int CONSTRUCTOR_DECL ( LINK(TYPE), TYPE* val );
 
 int LLIST_CONS(TYPE) ( LLIST(TYPE)* lst, TYPE* val);
 
 int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src );
+
+int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new );
 
 #endif /* TYPE */

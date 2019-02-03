@@ -114,6 +114,11 @@ int strbuf_init_copy(strbuf* dest, strbuf* src) {
 		ERR("Dest already allocated");
 		return 1;
 	}
+
+	if (src == NULL) {
+		ERR("Attempting to copy NULL strbuf");
+		return 2;
+	}
 #endif
 
 	CONSTRUCT(strbuf, dest, src->len + 1);

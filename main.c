@@ -43,7 +43,7 @@ int main (int argc, char* argv[argc]) {
 					i + 1,
 					filename,
 					// get_property(cal.events[i], "SUMMARY")->val.mem);
-					get_property(cal.events[i], "SUMMARY")->vals.head->value->mem);
+					get_property(cal.events[i], "SUMMARY")->vals.cur->value->mem);
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {
 		if (arg_shift(&args) == 0) {
