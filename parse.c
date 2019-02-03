@@ -65,11 +65,11 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 				/* At TRUE end of line */
 				if (str.ptr + 1 > vallen) {
 					vallen = str.ptr + 1;
-					strbuf_realloc(&cline.val, vallen);
+					strbuf_realloc(cline.vals.cur->value, vallen);
 				}
 
-				strbuf_copy(&cline.val, &str);
-				strbuf_cap(&cline.val);
+				strbuf_copy(cline.vals.cur->value, &str);
+				strbuf_cap(cline.vals.cur->value);
 
 				++line;
 
@@ -116,10 +116,10 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 		 */
 		if (str.ptr + 1 > vallen) {
 			vallen = str.ptr + 1;
-			strbuf_realloc(&cline.val, vallen);
+			strbuf_realloc(cline.vals.cur->value, vallen);
 		}
-		strbuf_copy(&cline.val, &str);
-		strbuf_cap(&cline.val);
+		strbuf_copy(cline.vals.cur->value, &str);
+		strbuf_cap(cline.vals.cur->value);
 		handle_kv(cal, ev, &cline, line, &ctx);
 	}
 	FREE(strbuf)(&str);
@@ -143,14 +143,14 @@ int handle_kv(
 	switch (ctx->scope) {
 
 		case s_skip:
-			if (strbuf_c(&cline->key, "END") && strbuf_cmp(&cline->val, ctx->skip_to)) {
+			if (strbuf_c(&cline->key, "END") && strbuf_cmp(cline->vals.cur->value, ctx->skip_to)) {
 				ctx->scope = s_calendar;
 				// FREE(strbuf)(ctx->skip_to);
 			}
 			break;
 
 		case s_none:
-			if (! (strbuf_c(&cline->key, "BEGIN") && strbuf_c(&cline->val, "VCALENDAR"))) {
+			if (! (strbuf_c(&cline->key, "BEGIN") && strbuf_c(cline->vals.cur->value, "VCALENDAR"))) {
 				ERR("Invalid start of calendar", line);
 				return -1;
 			}
@@ -159,17 +159,17 @@ int handle_kv(
 
 		case s_calendar:
 			if (strbuf_c(&cline->key, "BEGIN")) {
-				if (strbuf_c(&cline->val, "VEVENT")) {
+				if (strbuf_c(cline->vals.cur->value, "VEVENT")) {
 					ctx->scope = s_event;
 					return ctx->scope;
 					break;
 				} else {
 					// ERR("Unsupported start", line);
 					ctx->scope = s_skip;
-					strbuf_copy(ctx->skip_to, &cline->val);
+					strbuf_copy(ctx->skip_to, cline->vals.cur->value);
 				}
 			} else if (strbuf_c(&cline->key, "END")) {
-				if (strbuf_c(&cline->val, "VCALENDAR")) {
+				if (strbuf_c(cline->vals.cur->value, "VCALENDAR")) {
 					ctx->scope = s_none;
 					break;
 				}
@@ -182,7 +182,7 @@ int handle_kv(
 				return -5;
 			}
 			if (strbuf_c(&cline->key, "END")) {
-				if (strbuf_c(&cline->val, "VEVENT")) {
+				if (strbuf_c(cline->vals.cur->value, "VEVENT")) {
 					push_event(cal, ev);
 					ctx->scope = s_calendar;
 					return ctx->scope;

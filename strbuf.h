@@ -48,6 +48,8 @@ int strbuf_copy(strbuf* dest, strbuf* src);
 int strbuf_cmp(strbuf* a, strbuf* b);
 int strbuf_c(strbuf* a, char* b);
 
+int DEEP_COPY(strbuf)(strbuf*, strbuf*);
+
 /*
  * Append char to end of strbuf, determined by s->len.
  */

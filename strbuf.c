@@ -122,6 +122,10 @@ int strbuf_init_copy(strbuf* dest, strbuf* src) {
 	return 0;
 }
 
+int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
+	return strbuf_init_copy(dest, src);
+}
+
 char* strbuf_end(strbuf* s) {
 	return &s->mem[s->len];
 }

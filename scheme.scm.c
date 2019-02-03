@@ -49,7 +49,15 @@ SCM_DEFINE (calendar_get_attr, "calendar-get-attr", 3, 0, 0,
 
 	if (c == NULL) return SCM_BOOL_F;
 
-	return scm_from_strbuf(&c->val);
+	LINK(strbuf)* cur = c->vals.head;
+	SCM llist = NULL;
+	while (cur != NULL) {
+		llist = scm_cons (scm_from_strbuf(cur->value), llist);
+		cur = cur->after;
+	}
+
+	// // return scm_from_strbuf(&c->val);
+	return llist;
 }
 
 SCM_DEFINE (calendar_size, "calendar-size", 1, 0, 0,

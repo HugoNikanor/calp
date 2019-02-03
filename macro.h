@@ -72,4 +72,6 @@
 /* Declare destructor */
 #define FREE_DECL(T) TP(T, __free) (T* this)
 
+#define DEEP_COPY(T) TP(deep_copy__, T)
+
 #endif /* MACRO_H */

@@ -5,6 +5,10 @@
 
 #include "strbuf.h"
 
+#define TYPE strbuf
+#include "linked_list.h"
+#undef TYPE
+
 typedef struct {
 	strbuf key;
 	strbuf value;
@@ -15,9 +19,7 @@ typedef struct {
 typedef struct {
 	strbuf key;
 
-	strbuf val;
-	strbuf* aux_values;
-	int value_count;
+	LLIST(strbuf) vals;
 
 	parameter* params;
 	int param_count;

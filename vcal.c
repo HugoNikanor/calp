@@ -7,6 +7,10 @@
 #include "trie.inc.h"
 #undef TYPE
 
+#define TYPE strbuf
+#include "linked_list.inc.h"
+#undef TYPE
+
 content_line** clines;
 int cline_ptr;
 
@@ -34,7 +38,8 @@ int add_content_line (vevent* ev, content_line* c) {
 int CONSTRUCTOR_DECL(content_line) {
 	clines[cline_ptr++] = this;
 	CONSTRUCT(strbuf, &this->key);
-	CONSTRUCT(strbuf, &this->val);
+	// CONSTRUCT(strbuf, &this->val);
+	CONSTRUCT( LLIST(strbuf), &this->vals );
 	// TODO remaining fields
 	return 0;
 }
@@ -42,7 +47,10 @@ int CONSTRUCTOR_DECL(content_line) {
 int CONSTRUCTOR_DECL(content_line, int keylen, int vallen) {
 	clines[cline_ptr++] = this;
 	CONSTRUCT(strbuf, &this->key, keylen);
-	CONSTRUCT(strbuf, &this->val, vallen);
+	// CONSTRUCT(strbuf, &this->val, vallen);
+	CONSTRUCT( LLIST(strbuf), &this->vals );
+	NEW(strbuf, s, vallen);
+	LLIST_CONS(strbuf)(&this->vals, s);
 	// TODO remaining fields
 	return 0;
 }
@@ -50,14 +58,16 @@ int CONSTRUCTOR_DECL(content_line, int keylen, int vallen) {
 
 int content_line_copy (content_line* dest, content_line* src) {
 	strbuf_init_copy(&dest->key, &src->key);
-	strbuf_init_copy(&dest->val, &src->val);
+	// strbuf_init_copy(&dest->val, &src->val);
+	DEEP_COPY(LLIST(strbuf))(&dest->vals, &src->vals);
 	// TODO remaining fields
 	return 0;
 }
 
 int FREE_DECL(content_line) {
 	FREE(strbuf)(&this->key);
-	FREE(strbuf)(&this->val);
+	// FREE(strbuf)(&this->val);
+	LLIST_FREE(strbuf)(&this->vals);
 	for (int i = 0; i < cline_ptr; i++) {
 		if (clines[i] == this) {
 			clines[i] = NULL;

@@ -42,7 +42,8 @@ int main (int argc, char* argv[argc]) {
 			printf("%3lu | %s | %s\n",
 					i + 1,
 					filename,
-					get_property(cal.events[i], "SUMMARY")->val.mem);
+					// get_property(cal.events[i], "SUMMARY")->val.mem);
+					get_property(cal.events[i], "SUMMARY")->vals.head->value->mem);
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {
 		if (arg_shift(&args) == 0) {
@@ -63,7 +64,8 @@ int main (int argc, char* argv[argc]) {
 
 	for (int i = 0; i < cline_ptr; i++) {
 		if (clines[i] != NULL) {
-			printf("clines[%i] : [%s] := [%s]\n", i, clines[i]->key.mem, clines[i]->val.mem);
+			// printf("clines[%i] : [%s] := [%s]\n", i, clines[i]->key.mem, clines[i]->val.mem);
+			printf("clines[%i] : [%s] := [%s]\n", i, clines[i]->key.mem, clines[i]->vals.head->value->mem);
 		}
 	}
 
