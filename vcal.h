@@ -32,6 +32,7 @@ int CONSTRUCTOR_DECL(content_line, int keylen, int vallen);
 #undef TYPE
 
 typedef struct s_vevent {
+	char* filename;
 	TRIE(content_line) clines;
 } vevent;
 

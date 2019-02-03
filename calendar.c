@@ -46,6 +46,7 @@ int read_vcalendar(vcalendar* cal, char* path) {
 		 * Preferably, a special case is made for vdir structures
 		 * which can assume that all headers are equal. */
 		parse_file(f, cal);
+		cal->events[cal->n_events - 1]->filename = fname;
 		fclose(f);
 
 	}

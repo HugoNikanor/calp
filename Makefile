@@ -41,6 +41,14 @@ $(OBJDIR):
 libguile-calendar.so: $(O_FILES)
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
+CALDIR = cal
+.SECONDARY += %.dot
+%.dot: parse
+	./parse $(CALDIR) -g $@
+
+%.pdf: %.dot
+	dot -Tpdf -o $@ $<
+
 clean:
 	-rm parse
 	-rm $(OBJDIR)/*.o

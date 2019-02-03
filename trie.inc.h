@@ -110,4 +110,34 @@ int TRIE_FREE(TYPE) ( TRIE(TYPE)* trie ) {
 	return TRIE_NODE_FREE(TYPE)(trie->root);
 }
 
+int TRIE_DOT(TYPE) ( TRIE(TYPE)* trie, FILE* f ) {
+	TRIE_NODE(TYPE)* n = trie->root->child;
+	fputs("root;", f);
+	while (n != NULL) {
+		fprintf(f, "root -> \"%p\"\n",
+				(void*) n);
+		fprintf(f, "subgraph \"cluster_%c\" {\n",
+				n->c);
+		TRIE_DOT_HELP(TYPE) ( n, f );
+		fputs("}", f);
+		n = n->next;
+	}
+	return 0;
+}
+
+int TRIE_DOT_HELP(TYPE) ( TRIE_NODE(TYPE)* root, FILE* f  ) {
+	fprintf(f, "\"%p\"[label = \"%c\" style=filled fillcolor=\"%s\"];\n",
+			(void*) root, root->c,
+			root->value == NULL ? "white" : "green");
+	TRIE_NODE(TYPE)* child = root->child;
+
+	while (child != NULL) {
+		fprintf(f, "\"%p\" -> \"%p\";\n",
+				(void*) root, (void*) child);
+		TRIE_DOT_HELP(TYPE)(child, f);
+		child = child->next;
+	}
+	return 0;
+}
+
 #endif /* TYPE */
