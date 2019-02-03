@@ -4,20 +4,27 @@
 #include <string.h>
 
 #include "macro.h"
+#include "vcal.h"
 
-int parse_file(FILE* f, vcalendar* cal) {
+int parse_file(char* fname, FILE* f, vcalendar* cal) {
 	int segments = 1;
 	SNEW(strbuf, str, segments * SEGSIZE);
 
 	part_context p_ctx = p_key;
-	scope_context s_ctx = s_none;
+	SNEW(strbuf, skip, SEGSIZE);
+	parse_ctx ctx = {
+		.scope = s_none,
+		.skip_to = &skip
+	};
+	// scope_context s_ctx = s_none;
 
 	int keylen = 100;
 	int vallen = 100;
 
 	int line = 0;
 
-	NEW(vevent, ev);
+	// NEW(vevent, ev, fname);
+	vevent* ev = NULL;
 
 	SNEW(content_line, cline, keylen, vallen);
 
@@ -66,23 +73,27 @@ int parse_file(FILE* f, vcalendar* cal) {
 
 				++line;
 
-				handle_kv(cal, ev, &cline, line, &s_ctx);
+				switch (handle_kv(cal, ev, &cline, line, &ctx)) {
+					case s_event:
+						ev = malloc(sizeof(*ev));
+						CONSTRUCT(vevent, ev, fname);
+						break;
+				}
 				strbuf_soft_reset(&str);
 				p_ctx = p_key;
 
 				continue;
 			}
+
 		/*
 		 * TODO context for property_{key,val}.
 		 */
 		} else if (p_ctx == p_key && c == ':') {
-			/*
-			   if (str.ptr + 1 > keylen) {
-			   keylen = str.ptr + 1;
-			// TODO this might break everything
-			strbuf_realloc(&key, keylen);
+			if (str.ptr + 1 > keylen) {
+				keylen = str.ptr + 1;
+				// TODO this might break everything
+				// strbuf_realloc(&cline.key, keylen);
 			}
-			*/
 			strbuf_copy(&cline.key, &str);
 			strbuf_cap(&cline.key);
 			strbuf_soft_reset(&str);
@@ -93,7 +104,6 @@ int parse_file(FILE* f, vcalendar* cal) {
 		strbuf_append(&str, c);
 	}
 
-
 	if (! feof(f)) {
 		ERR("Error parsing", errno);
 	} else {
@@ -101,7 +111,7 @@ int parse_file(FILE* f, vcalendar* cal) {
 		 * The standard (3.4, l. 2675) says that each icalobject must
 		 * end with CRLF. My files however does not, so we also parse
 		 * the end here.
-		 * TODO this doesn't do anything with its read value
+		 * TODO -- this doesn't do anything with its read value
 		 * TODO This might crash if we have the CRLF
 		 */
 		if (str.ptr + 1 > vallen) {
@@ -109,10 +119,12 @@ int parse_file(FILE* f, vcalendar* cal) {
 			strbuf_realloc(&cline.val, vallen);
 		}
 		strbuf_copy(&cline.val, &str);
-		*strbuf_cur(&cline.val) = 0;
+		strbuf_cap(&cline.val);
+		handle_kv(cal, ev, &cline, line, &ctx);
 	}
 	FREE(strbuf)(&str);
 	FREE(content_line)(&cline);
+	FREE(strbuf)(ctx.skip_to);
 
 	return 0;
 }
@@ -125,40 +137,58 @@ int handle_kv(
 		vevent*        ev,
 		content_line*  cline,
 		int            line,
-		scope_context* s_ctx
+		// scope_context* s_ctx
+		parse_ctx* ctx
 		) {
-	switch (*s_ctx) {
+	switch (ctx->scope) {
+
+		case s_skip:
+			if (strbuf_c(&cline->key, "END") && strbuf_cmp(&cline->val, ctx->skip_to)) {
+				ctx->scope = s_calendar;
+				// FREE(strbuf)(ctx->skip_to);
+			}
+			break;
+
 		case s_none:
 			if (! (strbuf_c(&cline->key, "BEGIN") && strbuf_c(&cline->val, "VCALENDAR"))) {
 				ERR("Invalid start of calendar", line);
-				return 1;
+				return -1;
 			}
-			*s_ctx = s_calendar;
+			ctx->scope = s_calendar;
 			break;
+
 		case s_calendar:
 			if (strbuf_c(&cline->key, "BEGIN")) {
 				if (strbuf_c(&cline->val, "VEVENT")) {
-					*s_ctx = s_event;
+					ctx->scope = s_event;
+					return ctx->scope;
 					break;
 				} else {
-					ERR("Unsupported start", line);
-					return 2;
+					// ERR("Unsupported start", line);
+					ctx->scope = s_skip;
+					strbuf_copy(ctx->skip_to, &cline->val);
 				}
 			} else if (strbuf_c(&cline->key, "END")) {
 				if (strbuf_c(&cline->val, "VCALENDAR")) {
-					*s_ctx = s_none;
+					ctx->scope = s_none;
 					break;
 				}
 			}
 			break;
+
 		case s_event:
+			if (ev == NULL) {
+				ERR("Something has gone terribly wrong", line);
+				return -5;
+			}
 			if (strbuf_c(&cline->key, "END")) {
 				if (strbuf_c(&cline->val, "VEVENT")) {
 					push_event(cal, ev);
-					*s_ctx = s_calendar;
+					ctx->scope = s_calendar;
+					return ctx->scope;
 				} else {
 					ERR("Trying to end something, expected VEVENT", line);
-					return 3;
+					return -3;
 				}
 			} else {
 				NEW(content_line, c);

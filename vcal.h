@@ -14,8 +14,8 @@ typedef struct {
 
 typedef struct {
 	strbuf key;
-	strbuf val;
 
+	strbuf val;
 	strbuf* aux_values;
 	int value_count;
 
@@ -33,10 +33,11 @@ int CONSTRUCTOR_DECL(content_line, int keylen, int vallen);
 
 typedef struct s_vevent {
 	char* filename;
+	struct s_vcalendar* calendar;
 	TRIE(content_line) clines;
 } vevent;
 
-int CONSTRUCTOR_DECL(vevent);
+int CONSTRUCTOR_DECL(vevent, char* filename);
 
 int FREE_DECL(content_line);
 int content_line_copy (content_line* dest, content_line* src);
@@ -47,7 +48,7 @@ int add_content_line (vevent* ev, content_line* c);
 
 int free_vevent(vevent* ev);
 
-typedef struct {
+typedef struct s_vcalendar {
 	size_t n_events;
 	size_t alloc;
 	vevent** events;
@@ -61,5 +62,8 @@ int free_vcalendar (vcalendar* cal);
  * out of scope.
  */
 int push_event(vcalendar* cal, vevent* ev);
+
+extern content_line** clines;
+extern int cline_ptr;
 
 #endif /* VCAL_H */

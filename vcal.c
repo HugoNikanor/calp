@@ -7,8 +7,18 @@
 #include "trie.inc.h"
 #undef TYPE
 
-int CONSTRUCTOR_DECL(vevent) {
+content_line** clines;
+int cline_ptr;
+
+int CONSTRUCTOR_DECL(vevent, char* filename) {
+
 	CONSTRUCT(TRIE(content_line), &this->clines);
+
+	this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
+	strcpy(this->filename, filename);
+
+	this->calendar = NULL;
+
 	return 0;
 }
 
@@ -22,6 +32,7 @@ int add_content_line (vevent* ev, content_line* c) {
 }
 
 int CONSTRUCTOR_DECL(content_line) {
+	clines[cline_ptr++] = this;
 	CONSTRUCT(strbuf, &this->key);
 	CONSTRUCT(strbuf, &this->val);
 	// TODO remaining fields
@@ -29,6 +40,7 @@ int CONSTRUCTOR_DECL(content_line) {
 }
 
 int CONSTRUCTOR_DECL(content_line, int keylen, int vallen) {
+	clines[cline_ptr++] = this;
 	CONSTRUCT(strbuf, &this->key, keylen);
 	CONSTRUCT(strbuf, &this->val, vallen);
 	// TODO remaining fields
@@ -46,18 +58,30 @@ int content_line_copy (content_line* dest, content_line* src) {
 int FREE_DECL(content_line) {
 	FREE(strbuf)(&this->key);
 	FREE(strbuf)(&this->val);
+	for (int i = 0; i < cline_ptr; i++) {
+		if (clines[i] == this) {
+			clines[i] = NULL;
+		}
+	}
 	// TODO remaining fields
 	return 0;
 }
 
 int FREE_DECL(vevent) {
-	TRIE_FREE(content_line)(&this->clines);
+	if (this->filename != NULL) free(this->filename);
+	if (TRIE_FREE(content_line)(&this->clines) != 0) {
+		fprintf(stderr, "Error freeing vevent belonging to file \n %s \n",
+				this->filename);
+	}
+
 	return 0;
 }
 
 int push_event(vcalendar* cal, vevent* ev) {
 
-	/* Make sure that cal->events is large enough */
+	ev->calendar = cal;
+
+	/* Make sure that cal->eents is large enough */
 	if (cal->n_events + 1 > cal->alloc) {
 		cal->alloc <<= 1;
 		cal->events = realloc(cal->events, sizeof(*cal->events) * cal->alloc);
@@ -71,6 +95,8 @@ int push_event(vcalendar* cal, vevent* ev) {
 }
 
 int CONSTRUCTOR_DECL(vcalendar) {
+	clines = calloc(sizeof(*clines), 10000);
+	cline_ptr = 0;
 	this->alloc = 1;
 	this->events = calloc(sizeof(*this->events), this->alloc);
 	this->n_events = 0;

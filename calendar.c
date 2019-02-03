@@ -14,6 +14,28 @@
 #include "macro.h"
 #include "parse.h"
 
+/*
+ * Returns 0 if file has no extersion
+ */
+int get_extension(const char* filename, char* ext, ssize_t max_len) {
+	int ext_idx = -1;
+	ext[0] = '\0';
+	for (char* c = (char*) filename; *c != '\0'; c++) {
+		if (*c == '.') {
+			ext_idx = 0;
+			continue;
+		}
+		if (ext_idx >= 0) {
+			ext[ext_idx++] = *c;
+			if (ext_idx == max_len) break;
+		}
+	}
+	ext[ext_idx] = '\0';
+	return (ext_idx == -1)
+		? 0
+		: ext_idx;
+}
+
 int read_vcalendar(vcalendar* cal, char* path) {
 
 	DIR* dir = opendir(path);
@@ -24,11 +46,11 @@ int read_vcalendar(vcalendar* cal, char* path) {
 		if (d->d_type != DT_REG) continue;
 
 		/* Check that we have an ICS file */
-		char *s, *fname;
-		s = fname = d->d_name;
-		while (*(s++) != '.');
+		char* fname = d->d_name;
 
-		if (strcmp(s, "ics") != 0) continue;
+		char ext[10];
+		int has_ext = get_extension(fname, ext, 9);
+		if (! has_ext || strcmp(ext, "ics") != 0) continue;
 
 		/* We now assume that it's a good file, and start parsing it */
 
@@ -45,10 +67,11 @@ int read_vcalendar(vcalendar* cal, char* path) {
 		 * iteration (not really, since I don't save any headers).
 		 * Preferably, a special case is made for vdir structures
 		 * which can assume that all headers are equal. */
-		parse_file(f, cal);
-		cal->events[cal->n_events - 1]->filename = fname;
+		parse_file(fname, f, cal);
+
 		fclose(f);
 
+		;
 	}
 
 	closedir(dir);

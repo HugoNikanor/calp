@@ -49,6 +49,9 @@ CALDIR = cal
 %.pdf: %.dot
 	dot -Tpdf -o $@ $<
 
+tags: $(C_FILES) $(H_FILES)
+	ctags -R
+
 clean:
 	-rm parse
 	-rm $(OBJDIR)/*.o

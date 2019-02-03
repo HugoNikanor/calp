@@ -72,6 +72,12 @@ int strbuf_soft_reset(strbuf* s);
 char* strbuf_end(strbuf* s);
 
 /*
+ * Reallocs dest to be the same size as src, and copies the contents
+ * of src into dest.
+ */
+int strbuf_realloc_copy(strbuf* dest, strbuf* src);
+
+/*
  * Copies contents from src to dest, also allocating dest in the
  * process. dest should not be initialized before this call. 
  */

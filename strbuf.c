@@ -25,9 +25,9 @@ int CONSTRUCTOR_DECL(strbuf, size_t len) {
 
 int strbuf_realloc(strbuf* str, size_t len) {
 #ifdef SAFE_STR
-	if (str->mem == NULL || str->alloc == 0) {
+	if (str->mem == NULL /*|| str->alloc == -1*/) {
 		ERR("String memory not initialized");
-		return 1;
+		// return 1;
 	}
 #endif
 	str->mem = realloc(str->mem, len);
@@ -38,14 +38,12 @@ int strbuf_realloc(strbuf* str, size_t len) {
 // int strbuf_free(strbuf* str) {
 int FREE_DECL(strbuf) {
 #ifdef SAFE_STR
-	if (this->alloc == 0 || this->mem == NULL) {
-		ERR("String not allocated");
-		return 1;
-	}
+	if (this->mem == NULL) return 1;
 #endif
-	// fprintf(stderr, "Memmory = %p | %4lu | %s\n", this->mem, this->alloc, this->mem);
 	free (this->mem);
+	this->mem = NULL;
 	this->alloc = 0;
+	this->len = 0;
 	return 0;
 }
 
@@ -100,6 +98,12 @@ char* strbuf_cur(strbuf* s) {
 int strbuf_reset(strbuf* s)
 {
 	s->ptr = 0;
+	return 0;
+}
+
+int strbuf_realloc_copy(strbuf* dest, strbuf* src) {
+	strbuf_realloc(dest, src->len);
+	strbuf_copy(dest, src);
 	return 0;
 }
 

@@ -107,6 +107,10 @@ int TRIE_NODE_FREE(TYPE) ( TRIE_NODE(TYPE)* node ) {
 }
 
 int TRIE_FREE(TYPE) ( TRIE(TYPE)* trie ) {
+	if (trie->root->c != '\0') {
+		// ERR("Invalid trie");
+		return 1;
+	}
 	return TRIE_NODE_FREE(TYPE)(trie->root);
 }
 

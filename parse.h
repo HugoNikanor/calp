@@ -25,17 +25,24 @@ typedef enum {
 } part_context;
 
 typedef enum {
-	s_none, s_calendar, s_event
+	s_none = 1, s_calendar, s_event,
+	s_skip
 } scope_context;
+
+typedef struct {
+	scope_context scope;
+	strbuf* skip_to;
+} parse_ctx;
 
 int handle_kv(
 		vcalendar*     cal,
 		vevent*        ev,
 		content_line*  cline,
 		int            line,
-		scope_context* s_ctx
+		// scope_context* s_ctx
+		parse_ctx* ctx
 		);
 
-int parse_file(FILE* f, vcalendar* cal);
+int parse_file(char* fname, FILE* f, vcalendar* cal);
 
 #endif /* PARSE_H */
