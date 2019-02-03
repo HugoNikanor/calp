@@ -18,6 +18,8 @@ C_FILES = $(wildcard *.c)
 SCM_C_FILES = $(wildcard *.scm.c)
 X_FILES = $(SCM_C_FILES:.scm.c=.x)
 
+.SECONDARY: $(X_FILES)
+
 O_FILES = $(addprefix obj/,$(C_FILES:.c=.o))
 
 all: parse libguile-calendar.so
