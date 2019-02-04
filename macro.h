@@ -21,9 +21,6 @@
 #define VA_ARGS_NUM_PRIV(P1, P2, P3, P4, P5, P6, Pn, ...) Pn
 #define VA_ARGS_NUM(...) VA_ARGS_NUM_PRIV(-1, ## __VA_ARGS__, 5, 4, 3, 2, 1, 0)
 
-#define NEW_HELPER(T, ARG_COUNT) \
-	TP3(T, _init_, ARG_COUNT)
-
 /* Constructor type name */
 #define __INIT_T(T, C) TP3(T, __init__, C)
 
@@ -39,6 +36,12 @@
 #define NEW(T, N, ...) \
 	T* N = malloc(sizeof(*N)); \
 	INIT(T, N, __VA_ARGS__);
+
+#define RENEW(T, N, ...) do { \
+	N = malloc(sizeof(*N)); \
+	INIT(T, N, __VA_ARGS__); \
+} while (0)
+
 
 /* Allocate a new object on the STACK */
 #define SNEW(T, N, ...) \
@@ -57,5 +60,7 @@
 #define DEEP_COPY(T) TP(deep_copy__, T)
 #define RESOLVE(T) TP(resolve__, T)
 #define APPEND(T) TP(append__, T)
+#define SIZE(T) TP(size__, T)
+#define EMPTY(T) TP(empty__, T)
 
 #endif /* MACRO_H */

@@ -65,7 +65,7 @@ int main (int argc, char* argv[argc]) {
 	for (int i = 0; i < cline_ptr; i++) {
 		if (clines[i] != NULL) {
 			// printf("clines[%i] : [%s] := [%s]\n", i, clines[i]->key.mem, clines[i]->val.mem);
-			printf("clines[%i] : [%s] := [%s]\n", i, clines[i]->key.mem, clines[i]->vals.head->value->mem);
+			printf("clines[%i] : [%s] := [%s]\n", i, clines[i]->key.mem, clines[i]->vals.head->after->value->mem);
 		}
 	}
 

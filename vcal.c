@@ -26,18 +26,26 @@ INIT_F(vevent, char* filename) {
 	return 0;
 }
 
-int RESOLVE(content_line)
-	(content_line** dest, content_line* new) {
-	if (*dest == NULL) *dest = new;
+content_line* RESOLVE(content_line)
+	(content_line* dest, content_line* new) {
 
-	if (strbuf_cmp(&(*dest)->key, &new->key) != 0) {
+	if (dest == NULL) return new;
+
+	if (strbuf_cmp(&dest->key, &new->key) != 0) {
 		ERR("Can't resolve between these two types");
-		return 1;
+		return NULL;
 	}
 
-	// printf("len = %i\n", dest->vals.length);
-	APPEND(LLIST(strbuf))(&(*dest)->vals, &new->vals);
-	return 0;
+	/* TODO actuall iterators could be fun */
+	for (LINK(strbuf)* s = new->vals.head->after;
+			s->after != NULL;
+			s = s->after) {
+		LLIST_CONS(strbuf) (&dest->vals, s->value);
+	}
+
+	FREE(content_line)(new);
+
+	return dest;
 }
 
 content_line* get_property (vevent* ev, char* key) {
@@ -83,6 +91,8 @@ FREE_F(content_line) {
 	// FREE(strbuf)(&this->val);
 	// LLIST_FREE(strbuf)(&this->vals);
 	FREE(LLIST(strbuf))(&this->vals);
+
+	// TODO this is just for the GC.
 	for (int i = 0; i < cline_ptr; i++) {
 		if (clines[i] == this) {
 			clines[i] = NULL;

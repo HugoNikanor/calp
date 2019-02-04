@@ -25,15 +25,19 @@ typedef struct {
 } LLIST(TYPE);
 
 INIT_F ( LLIST(TYPE) );
-FREE_F( LLIST(TYPE) );
+FREE_F ( LLIST(TYPE) );
 
 INIT_F ( LINK(TYPE) );
 INIT_F ( LINK(TYPE), TYPE* val );
+FREE_F ( LINK(TYPE) );
 
 int LLIST_CONS(TYPE) ( LLIST(TYPE)* lst, TYPE* val);
 
 int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src );
 
 int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new );
+
+int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist );
+int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 
 #endif /* TYPE */

@@ -28,8 +28,13 @@ typedef struct {
 INIT_F(content_line);
 INIT_F(content_line, int keylen, int vallen);
 
-int RESOLVE(content_line)
-	(content_line** orig, content_line* new);
+/*
+ * This takes two content lines, and return a content line that is the
+ * merge of the two.
+ * The function also cleans up the unused memmory between the two.
+ */
+content_line* RESOLVE(content_line)
+	(content_line* dest, content_line* new);
 
 #define TYPE content_line
 // #include "hash.h"

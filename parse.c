@@ -75,8 +75,9 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 
 				switch (handle_kv(cal, ev, &cline, line, &ctx)) {
 					case s_event:
-						ev = malloc(sizeof(*ev));
-						INIT(vevent, ev, fname);
+						RENEW(vevent, ev, fname);
+						// ev = malloc(sizeof(*ev));
+						// INIT(vevent, ev, fname);
 						break;
 				}
 				strbuf_soft_reset(&str);

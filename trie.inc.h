@@ -46,7 +46,7 @@ int TRIE_PUT(TYPE) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 				last->child = t;
 				last = t;
 			}
-			RESOLVE(TYPE)(&last->value, val);
+			last->value = RESOLVE(TYPE)(last->value, val);
 			// last->value = val;
 			return 0;
 		} else if (cur->c == subkey[0]) {
@@ -58,7 +58,7 @@ int TRIE_PUT(TYPE) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 		} else if (subkey[0] == '\0') {
 			/* Key finished */
 			// last->value = val;
-			RESOLVE(TYPE)(&last->value, val);
+			last->value = RESOLVE(TYPE)(last->value, val);
 			return 0;
 		} else if (cur->next != NULL) {
 			/* This node was not part of the set, but it's sibling might */
