@@ -6,6 +6,8 @@
 #include "macro.h"
 #include "vcal.h"
 
+#include "err.h"
+
 int parse_file(char* fname, FILE* f, vcalendar* cal) {
 	int segments = 1;
 	SNEW(strbuf, str, segments * SEGSIZE);
@@ -42,7 +44,7 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 			s[0] = fgetc(f);
 			s[1] = fgetc(f);
 
-			if (s[0] != '\n') { ERR("expected newline after CR", line); }
+			if (s[0] != '\n') { ERR_F("%s, %i", "expected newline after CR", line); }
 			else if (s[1] == ' ' || s[1] == '\t') {
 				/* Folded line, increase size of key and continue.  */
 
@@ -51,14 +53,14 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 				 * encountered.
 				 */
 				if (strbuf_realloc(&str, ++segments * SEGSIZE) != 0) {
-					ERR("Failed to realloc strbuf", line);
+					ERR_F("%s, %i", "Failed to realloc strbuf", line);
 					exit (1);
 				}
 				continue;
 			} else {
 				/* Actuall end of line, handle values.  */
 				if (ungetc(s[1], f) != s[1]) {
-					ERR("Failed to put character back on FILE", line); 
+					ERR_F("%s, %i", "Failed to put character back on FILE", line); 
 					exit (2);
 				}
 
@@ -106,14 +108,12 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 	}
 
 	if (! feof(f)) {
-		ERR("Error parsing", errno);
+		ERR("Error parsing");
 	} else {
 		/*
 		 * The standard (3.4, l. 2675) says that each icalobject must
 		 * end with CRLF. My files however does not, so we also parse
 		 * the end here.
-		 * TODO -- this doesn't do anything with its read value
-		 * TODO This might crash if we have the CRLF
 		 */
 		if (str.ptr + 1 > vallen) {
 			vallen = str.ptr + 1;
@@ -152,7 +152,7 @@ int handle_kv(
 
 		case s_none:
 			if (! (strbuf_c(&cline->key, "BEGIN") && strbuf_c(cline->vals.cur->value, "VCALENDAR"))) {
-				ERR("Invalid start of calendar", line);
+				ERR_F("%s, %i\n%s", "Invalid start of calendar", line, ev->filename);
 				return -1;
 			}
 			ctx->scope = s_calendar;
@@ -179,7 +179,7 @@ int handle_kv(
 
 		case s_event:
 			if (ev == NULL) {
-				ERR("Something has gone terribly wrong", line);
+				ERR_F("%s, %i", "Something has gone terribly wrong", line);
 				return -5;
 			}
 			if (strbuf_c(&cline->key, "END")) {
@@ -188,7 +188,7 @@ int handle_kv(
 					ctx->scope = s_calendar;
 					return ctx->scope;
 				} else {
-					ERR("Trying to end something, expected VEVENT", line);
+					ERR_F("%s, %i", "Trying to end something, expected VEVENT", line);
 					return -3;
 				}
 			} else {

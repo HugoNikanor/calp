@@ -16,8 +16,6 @@
  */
 #define SEGSIZE 75
 
-#define ERR(x, line) fprintf(stderr, "ERR %i: %s (cal %i)\n", __LINE__, (x), (line));
-
 #define LINE(nr, key, value) fprintf(stderr, "(%i) %i: [%s] := [%s]\n", __LINE__, nr, key, value);
 
 typedef enum {

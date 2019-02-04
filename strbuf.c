@@ -3,8 +3,7 @@
 #include <string.h>
 
 #ifdef SAFE_STR
-#include <stdio.h>
-#define ERR(s) fprintf(stderr, "\x1B[0;31mERR\x1b[m (strbuf %3i): %s\n", __LINE__, s)
+#include "err.h"
 #endif
 
 INIT_F(strbuf) {
