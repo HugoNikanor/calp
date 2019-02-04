@@ -2,7 +2,7 @@
 #error "Set TYPE before including this file"
 #else
 
-int CONSTRUCTOR_DECL ( LLIST(TYPE) ) {
+INIT_F ( LLIST(TYPE) ) {
 	this->length = 0;
 	NEW(LINK(TYPE), head);
 	NEW(LINK(TYPE), tail);
@@ -14,7 +14,7 @@ int CONSTRUCTOR_DECL ( LLIST(TYPE) ) {
 	return 0;
 }
 
-int FREE_DECL( LLIST(TYPE) ) {
+FREE_F( LLIST(TYPE) ) {
 	LINK(TYPE) *node, *next;
 	node = this->head->after;
 	while (node->after != NULL) {
@@ -31,14 +31,14 @@ int FREE_DECL( LLIST(TYPE) ) {
 	return 0;
 }
 
-int CONSTRUCTOR_DECL ( LINK(TYPE) ) {
+INIT_F ( LINK(TYPE) ) {
 	this->before = NULL;
 	this->after  = NULL;
 	this->value  = NULL;
 	return 0;
 }
 
-int CONSTRUCTOR_DECL ( LINK(TYPE), TYPE* val ) {
+INIT_F ( LINK(TYPE), TYPE* val ) {
 	this->before = NULL;
 	this->after  = NULL;
 	this->value  = val;

@@ -20,7 +20,7 @@ SCM_DEFINE (make_calendar, "make-calendar", 1, 0, 0,
 	vcalendar* cal =
 		(vcalendar*) scm_gc_malloc (
 				sizeof(*cal), "calendar");
-	CONSTRUCT(vcalendar, cal);
+	INIT(vcalendar, cal);
 
 	char* p = scm_to_utf8_stringn(path, NULL);
 	read_vcalendar(cal, p);

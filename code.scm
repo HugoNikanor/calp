@@ -15,4 +15,3 @@
   (format #t "~3d | ~a~%"
           i (calendar-get-attr v i "summary")))
 
-

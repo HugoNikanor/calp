@@ -25,8 +25,8 @@ typedef struct {
 	int param_count;
 } content_line;
 
-int CONSTRUCTOR_DECL(content_line);
-int CONSTRUCTOR_DECL(content_line, int keylen, int vallen);
+INIT_F(content_line);
+INIT_F(content_line, int keylen, int vallen);
 
 int RESOLVE(content_line)
 	(content_line** orig, content_line* new);
@@ -42,9 +42,9 @@ typedef struct s_vevent {
 	TRIE(content_line) clines;
 } vevent;
 
-int CONSTRUCTOR_DECL(vevent, char* filename);
+INIT_F(vevent, char* filename);
 
-int FREE_DECL(content_line);
+FREE_F(content_line);
 int content_line_copy (content_line* dest, content_line* src);
 
 content_line* get_property (vevent* ev, char* key);
@@ -59,7 +59,7 @@ typedef struct s_vcalendar {
 	vevent** events;
 } vcalendar;
 
-int CONSTRUCTOR_DECL(vcalendar);
+INIT_F(vcalendar);
 int free_vcalendar (vcalendar* cal);
 
 /*

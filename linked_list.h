@@ -24,11 +24,11 @@ typedef struct {
 	int length;
 } LLIST(TYPE);
 
-int CONSTRUCTOR_DECL ( LLIST(TYPE) );
-int FREE_DECL( LLIST(TYPE) );
+INIT_F ( LLIST(TYPE) );
+FREE_F( LLIST(TYPE) );
 
-int CONSTRUCTOR_DECL ( LINK(TYPE) );
-int CONSTRUCTOR_DECL ( LINK(TYPE), TYPE* val );
+INIT_F ( LINK(TYPE) );
+INIT_F ( LINK(TYPE), TYPE* val );
 
 int LLIST_CONS(TYPE) ( LLIST(TYPE)* lst, TYPE* val);
 

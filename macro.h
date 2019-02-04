@@ -24,44 +24,26 @@
 #define NEW_HELPER(T, ARG_COUNT) \
 	TP3(T, _init_, ARG_COUNT)
 
-/*
- * TODO rename all the constructor macros to something clearer and
- * shorter.
- */
+/* Constructor type name */
+#define __INIT_T(T, C) TP3(T, __init__, C)
 
-/*
- * Constructor type name
- */
-#define CONSTRUCTOR_T(T, C) TP3(T, __init__, C)
+/* Returns full type of constructor */
+#define INIT_F(T, ...) \
+	int __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (T* this __VA_OPT__(,) __VA_ARGS__)
 
-#define CONSTRUCTOR_GEN(parent, child, C) \
-	CONSTRUCTOR_T(parent ## __ ## child, C)
+/* Call the constructor of an object */
+#define INIT(T, N, ...) \
+	 __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (N __VA_OPT__(,) __VA_ARGS__)
 
-/*
- * Returns full type of constructor
- */
-#define CONSTRUCTOR_DECL(T, ...) \
-	CONSTRUCTOR_T(T, VA_ARGS_NUM(__VA_ARGS__)) (T* this __VA_OPT__(,) __VA_ARGS__)
-
-/*
- * Call the constructor of an object
- */
-#define CONSTRUCT(T, N, ...) \
-	 CONSTRUCTOR_T(T, VA_ARGS_NUM(__VA_ARGS__)) (N __VA_OPT__(,) __VA_ARGS__)
-
-/*
- * Allocate a new object on the HEAP
- */
+/* Allocate a new object on the HEAP */
 #define NEW(T, N, ...) \
 	T* N = malloc(sizeof(*N)); \
-	CONSTRUCT(T, N, __VA_ARGS__);
+	INIT(T, N, __VA_ARGS__);
 
-/*
- * Allocate a new object on the STACK
- */
+/* Allocate a new object on the STACK */
 #define SNEW(T, N, ...) \
 	T N; \
-	CONSTRUCT(T, & N, __VA_ARGS__);
+	INIT(T, & N, __VA_ARGS__);
 
 /* Destructor for type */
 #define FREE(T) TP(T, __free)
@@ -70,7 +52,7 @@
 #define FFREE(T, N) do { FREE(T)(N); free(N); } while (0)
 
 /* Declare destructor */
-#define FREE_DECL(T) TP(T, __free) (T* this)
+#define FREE_F(T) int TP(T, __free) (T* this)
 
 #define DEEP_COPY(T) TP(deep_copy__, T)
 #define RESOLVE(T) TP(resolve__, T)

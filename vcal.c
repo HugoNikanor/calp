@@ -14,9 +14,9 @@
 content_line** clines;
 int cline_ptr;
 
-int CONSTRUCTOR_DECL(vevent, char* filename) {
+INIT_F(vevent, char* filename) {
 
-	CONSTRUCT(TRIE(content_line), &this->clines);
+	INIT(TRIE(content_line), &this->clines);
 
 	this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
 	strcpy(this->filename, filename);
@@ -49,20 +49,20 @@ int add_content_line (vevent* ev, content_line* c) {
 	return TRIE_PUT(content_line)(&ev->clines, c->key.mem, c);
 }
 
-int CONSTRUCTOR_DECL(content_line) {
+INIT_F(content_line) {
 	clines[cline_ptr++] = this;
-	CONSTRUCT(strbuf, &this->key);
-	// CONSTRUCT(strbuf, &this->val);
-	CONSTRUCT( LLIST(strbuf), &this->vals );
+	INIT(strbuf, &this->key);
+	// INIT(strbuf, &this->val);
+	INIT( LLIST(strbuf), &this->vals );
 	// TODO remaining fields
 	return 0;
 }
 
-int CONSTRUCTOR_DECL(content_line, int keylen, int vallen) {
+INIT_F(content_line, int keylen, int vallen) {
 	clines[cline_ptr++] = this;
-	CONSTRUCT(strbuf, &this->key, keylen);
-	// CONSTRUCT(strbuf, &this->val, vallen);
-	CONSTRUCT( LLIST(strbuf), &this->vals );
+	INIT(strbuf, &this->key, keylen);
+	// INIT(strbuf, &this->val, vallen);
+	INIT( LLIST(strbuf), &this->vals );
 	NEW(strbuf, s, vallen);
 	LLIST_CONS(strbuf)(&this->vals, s);
 	// TODO remaining fields
@@ -78,7 +78,7 @@ int content_line_copy (content_line* dest, content_line* src) {
 	return 0;
 }
 
-int FREE_DECL(content_line) {
+FREE_F(content_line) {
 	FREE(strbuf)(&this->key);
 	// FREE(strbuf)(&this->val);
 	// LLIST_FREE(strbuf)(&this->vals);
@@ -92,9 +92,9 @@ int FREE_DECL(content_line) {
 	return 0;
 }
 
-int FREE_DECL(vevent) {
+FREE_F(vevent) {
 	if (this->filename != NULL) free(this->filename);
-	if (TRIE_FREE(content_line)(&this->clines) != 0) {
+	if (FREE(TRIE(content_line))(&this->clines) != 0) {
 		fprintf(stderr, "Error freeing vevent belonging to file \n %s \n",
 				this->filename);
 	}
@@ -119,7 +119,7 @@ int push_event(vcalendar* cal, vevent* ev) {
 	return 0;
 }
 
-int CONSTRUCTOR_DECL(vcalendar) {
+INIT_F(vcalendar) {
 	clines = calloc(sizeof(*clines), 10000);
 	cline_ptr = 0;
 	this->alloc = 1;

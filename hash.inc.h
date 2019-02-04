@@ -17,7 +17,7 @@ int HASH_PUT(TYPE) ( TABLE(TYPE)* table, TYPE* value) {
 	return 0;
 }
 
-int HASH_INIT(TYPE) ( TABLE(TYPE)* table, int init_size ) {
+INIT_F(HASH(TYPE), int init_size ) {
 	/*
 	 * TODO parts of table might not get properly initialized to 0
 	 */
@@ -43,7 +43,7 @@ TYPE* HASH_GET(TYPE) ( TABLE(TYPE)* table, char* key ) {
 	}
 }
 
-int HASH_FREE(TYPE) ( TABLE(TYPE)* table ) {
+FREE(HASH(TYPE)) {
 	/*
 	 * TODO an early return is possible by checking if all items have
 	 * been found. table->item_count

@@ -4,13 +4,13 @@
 
 #include "err.h"
 
-int CONSTRUCTOR_DECL ( TRIE(TYPE) ) {
+INIT_F ( TRIE(TYPE) ) {
 	NEW(TRIE_NODE(TYPE), t, '\0');
 	this->root = t;
 	return 0;
 }
 
-int CONSTRUCTOR_DECL (TRIE_NODE(TYPE), char c) {
+INIT_F (TRIE_NODE(TYPE), char c) {
 	this->c = c;
 	this->value = NULL;
 	this->next  = NULL;
@@ -18,7 +18,7 @@ int CONSTRUCTOR_DECL (TRIE_NODE(TYPE), char c) {
 	return 0;
 }
 
-int CONSTRUCTOR_DECL (TRIE_NODE(TYPE),
+INIT_F (TRIE_NODE(TYPE),
 	char c,
 	TRIE_NODE(TYPE)* next,
 	TRIE_NODE(TYPE)* child )
@@ -99,21 +99,21 @@ TYPE* TRIE_GET(TYPE) ( TRIE(TYPE)* trie, char* key ) {
 	return 0;
 }
 
-int TRIE_NODE_FREE(TYPE) ( TRIE_NODE(TYPE)* node ) {
-	if (node == NULL) return 0;
-	if (node->value != NULL) FFREE(TYPE, node->value);
-	if (node->next  != NULL) TRIE_NODE_FREE(TYPE)(node->next);
-	if (node->child != NULL) TRIE_NODE_FREE(TYPE)(node->child);
-	free (node);
+FREE_F(TRIE_NODE(TYPE)) {
+	if (this == NULL) return 0;
+	if (this->value != NULL) FFREE(TYPE, this->value);
+	if (this->next  != NULL) FREE(TRIE_NODE(TYPE))(this->next);
+	if (this->child != NULL) FREE(TRIE_NODE(TYPE))(this->child);
+	free (this);
 	return 0;
 }
 
-int TRIE_FREE(TYPE) ( TRIE(TYPE)* trie ) {
-	if (trie->root->c != '\0') {
+FREE_F(TRIE(TYPE)) {
+	if (this->root->c != '\0') {
 		// ERR("Invalid trie");
 		return 1;
 	}
-	return TRIE_NODE_FREE(TYPE)(trie->root);
+	return FREE(TRIE_NODE(TYPE))(this->root);
 }
 
 int TRIE_DOT(TYPE) ( TRIE(TYPE)* trie, FILE* f ) {

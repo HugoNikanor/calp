@@ -7,7 +7,7 @@
 #define ERR(s) fprintf(stderr, "\x1B[0;31mERR\x1b[m (strbuf %3i): %s\n", __LINE__, s)
 #endif
 
-int CONSTRUCTOR_DECL(strbuf) {
+INIT_F(strbuf) {
 	this->mem   = NULL;
 	this->alloc = 0;
 	this->len   = 0;
@@ -15,7 +15,7 @@ int CONSTRUCTOR_DECL(strbuf) {
 	return 0;
 }
 
-int CONSTRUCTOR_DECL(strbuf, size_t len) {
+INIT_F(strbuf, size_t len) {
 	this->mem   = calloc(sizeof(*this->mem), len);
 	this->alloc = len;
 	this->ptr   = 0;
@@ -36,7 +36,7 @@ int strbuf_realloc(strbuf* str, size_t len) {
 }
 
 // int strbuf_free(strbuf* str) {
-int FREE_DECL(strbuf) {
+FREE_F(strbuf) {
 #ifdef SAFE_STR
 	if (this->mem == NULL) return 1;
 #endif
@@ -121,7 +121,7 @@ int strbuf_init_copy(strbuf* dest, strbuf* src) {
 	}
 #endif
 
-	CONSTRUCT(strbuf, dest, src->len + 1);
+	INIT(strbuf, dest, src->len + 1);
 	strbuf_copy(dest, src);
 
 	return 0;

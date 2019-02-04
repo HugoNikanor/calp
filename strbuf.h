@@ -20,12 +20,10 @@ typedef struct {
  * Init strbuf to size of 0
  * Doesnt't call malloc.
  */
-int CONSTRUCTOR_DECL(strbuf);
+INIT_F(strbuf);
 
-/*
- * Constructor
- */
-int CONSTRUCTOR_DECL(strbuf, size_t len);
+/* Constructor */
+INIT_F(strbuf, size_t len);
 
 /*
  * Like realloc, but for strbuf
@@ -36,7 +34,7 @@ int strbuf_realloc(strbuf* str, size_t len);
  * Free's contents of str, but keeps str.
  */
 // int strbuf_free(strbuf* str);
-int FREE_DECL(strbuf);
+FREE_F(strbuf);
 
 /*
  * Copy contents from src to dest.
