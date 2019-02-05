@@ -23,6 +23,12 @@ INIT_F(vevent, char* filename) {
 	return 0;
 }
 
+/*
+ * Resolves a collision in some form of structure (probably a hash-map
+ * or a trie). If dest is NULL just return new. Otherwise mutates dest
+ * to have the correct form, and returns it. Destroying new in the
+ * process.
+ */
 content_line* RESOLVE(content_line)
 	(content_line* dest, content_line* new) {
 
@@ -99,6 +105,9 @@ FREE_F(vevent) {
 	return 0;
 }
 
+/*
+ * TODO change this into PUSH(VCALENDAR) (vevent*) ?
+ */
 int push_event(vcalendar* cal, vevent* ev) {
 
 	ev->calendar = cal;

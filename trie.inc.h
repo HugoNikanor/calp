@@ -47,7 +47,6 @@ int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 				last = t;
 			}
 			last->value = RESOLVE(TYPE)(last->value, val);
-			// last->value = val;
 			return 0;
 		} else if (cur->c == subkey[0]) {
 			/* This node belongs to the key,

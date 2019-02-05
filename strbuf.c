@@ -50,6 +50,12 @@ FREE_F(strbuf) {
  * TODO this should do bounds check
  */
 int strbuf_append(strbuf* s, char c) {
+#ifdef SAFE_STR
+	if (s->len > s->alloc) {
+		ERR("Not enough memmory allocated");
+		return 1;
+	}
+#endif
 	s->mem[s->len] = c;
 	s->ptr = ++s->len;
 	return 0;
@@ -62,13 +68,15 @@ int strbuf_cap(strbuf* s) {
 
 int strbuf_copy(strbuf* dest, strbuf* src) {
 #ifdef SAFE_STR
-	if (dest->alloc < src->len) {
+	if (dest->alloc + 1 < src->len) {
 		ERR("Not enough memmory allocated");
 		return 1;
 	}
 #endif
 	dest->len = src->len;
 	memcpy(dest->mem, src->mem, src->len);
+	// TODO should this be here?
+	strbuf_cap(dest);
 	return 0;
 }
 

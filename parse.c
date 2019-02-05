@@ -30,6 +30,11 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 
 	SNEW(content_line, cline, keylen, vallen);
 
+	/*
+	 * TODO
+	 * When a file ends with CRLF then ctx_scope == s_none, leading to
+	 * END:VEVENT erroring as bad start of calendar.
+	 * */
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
 		/*
@@ -60,7 +65,7 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 			} else {
 				/* Actuall end of line, handle values.  */
 				if (ungetc(s[1], f) != s[1]) {
-					ERR_F("%s, %i", "Failed to put character back on FILE", line); 
+					ERR_F("%s, %i", "Failed to put character back on FILE", line);
 					exit (2);
 				}
 
@@ -71,7 +76,7 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 				}
 
 				strbuf_copy(cline.vals.cur->value, &str);
-				strbuf_cap(cline.vals.cur->value);
+				// strbuf_cap(cline.vals.cur->value);
 
 				++line;
 
@@ -109,7 +114,7 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 
 	if (! feof(f)) {
 		ERR("Error parsing");
-	} else {
+	} else if (cline.vals.cur->value->len != 0 && str.ptr != 0) {
 		/*
 		 * The standard (3.4, l. 2675) says that each icalobject must
 		 * end with CRLF. My files however does not, so we also parse
@@ -194,7 +199,7 @@ int handle_kv(
 			} else {
 				NEW(content_line, c);
 				content_line_copy(c, cline);
-				add_content_line (ev, c);
+				PUSH(TRIE(content_line))(&ev->clines, c->key.mem, c);
 			}
 			break;
 	}

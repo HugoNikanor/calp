@@ -19,6 +19,7 @@ FREE_F (LINK(TYPE)) {
 	if (this->after  != NULL) this->after->before = NULL;
 	// TODO how much of value do I really wanna free?
 	// Should I implement some form of shared pointer?
+
 	if (this->value  != NULL) FFREE(TYPE, this->value);
 	return 0;
 }
