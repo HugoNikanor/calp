@@ -49,14 +49,16 @@ SCM_DEFINE (calendar_get_attr, "calendar-get-attr", 3, 0, 0,
 
 	if (c == NULL) return SCM_BOOL_F;
 
-	LINK(strbuf)* cur = c->vals.head;
-	SCM llist = NULL;
-	while (cur != NULL) {
-		llist = scm_cons (scm_from_strbuf(cur->value), llist);
-		cur = cur->after;
+	SCM llist = SCM_EOL;
+
+	// TODO actuall iterators
+	// TODO this reverses the list
+	for ( LINK(strbuf)* n = c->vals.head->after;
+			n->after != NULL;
+			n = n->after) {
+		llist = scm_cons(scm_from_strbuf(n->value), llist);
 	}
 
-	// // return scm_from_strbuf(&c->val);
 	return llist;
 }
 

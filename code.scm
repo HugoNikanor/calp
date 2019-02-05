@@ -7,8 +7,9 @@
 (begin
   ;; Supurflous begin block here to make sourcing into geiser easier.
   (setenv "LD_LIBRARY_PATH" (getcwd))
-  (load-extension "libguile-calendar" "init_calendar")
-  (define v (make-calendar "cal")))
+  (load-extension "libguile-calendar" "init_calendar"))
+
+(define v (make-calendar (cadr (command-line))))
 
 (do ((i 0 (1+ i)))
     ((>= i (calendar-size v)))
