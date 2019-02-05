@@ -42,11 +42,17 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 		 * end. The following character should always be \n.
 		 * However, if the first character on the next line is a
 		 * whitespace then the two lines should be concatenated.
+		 *
+		 * NOTE
+		 * The above is true according to the standard. But I have
+		 * found files with only NL. The code below ends line on the
+		 * first of NL or CR, and then ensures that the program thinks
+		 * it got the expected CRNL.
 		 */
-		if (c == '\r') {
+		if (c == '\r' || c == '\n') {
 
 			char s[2];
-			s[0] = fgetc(f);
+			s[0] = (c == '\n' ? '\n' : fgetc(f));
 			s[1] = fgetc(f);
 
 			if (s[0] != '\n') { ERR_F("%s, %i", "expected newline after CR", line); }
