@@ -24,7 +24,7 @@ int main (int argc, char* argv[argc]) {
 	arg args = { .argc = argc, .argv = argv };
 
 	if (arg_shift(&args) == 0) {
-		puts("Please give vdir as first argument");
+		puts("Please give vdir or a vcalendar file as first argument");
 		exit (1);
 	}
 
