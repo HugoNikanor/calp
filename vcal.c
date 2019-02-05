@@ -11,9 +11,6 @@
 #include "linked_list.inc.h"
 #undef TYPE
 
-content_line** clines;
-int cline_ptr;
-
 INIT_F(vevent, char* filename) {
 
 	INIT(TRIE(content_line), &this->clines);
@@ -36,14 +33,11 @@ content_line* RESOLVE(content_line)
 		return NULL;
 	}
 
-	/* TODO actuall iterators could be fun */
-	for (LINK(strbuf)* s = new->vals.head->after;
-			s->after != NULL;
-			s = s->after) {
-		PUSH(LLIST(strbuf)) (&dest->vals, s->value);
-	}
+	APPEND(LLIST(strbuf)) (&dest->vals, &new->vals);
 
-	FREE(content_line)(new);
+	FREE(strbuf)(&new->key);
+	gc_free(new);
+	free(new);
 
 	return dest;
 }
@@ -52,13 +46,9 @@ content_line* get_property (vevent* ev, char* key) {
 	return GET(TRIE(content_line))(&ev->clines, key);
 }
 
-int add_content_line (vevent* ev, content_line* c) {
-	// TODO memmory safety on strbuf?
-	return PUSH(TRIE(content_line))(&ev->clines, c->key.mem, c);
-}
-
 INIT_F(content_line) {
-	clines[cline_ptr++] = this;
+	gc_register(this);
+
 	INIT(strbuf, &this->key);
 	// INIT(strbuf, &this->val);
 	INIT( LLIST(strbuf), &this->vals );
@@ -67,7 +57,7 @@ INIT_F(content_line) {
 }
 
 INIT_F(content_line, int keylen, int vallen) {
-	clines[cline_ptr++] = this;
+	gc_register(this);
 	INIT(strbuf, &this->key, keylen);
 	// INIT(strbuf, &this->val, vallen);
 	INIT( LLIST(strbuf), &this->vals );
@@ -93,12 +83,8 @@ FREE_F(content_line) {
 	// LLIST_FREE(strbuf)(&this->vals);
 	FREE(LLIST(strbuf))(&this->vals);
 
-	// TODO this is just for the GC.
-	for (int i = 0; i < cline_ptr; i++) {
-		if (clines[i] == this) {
-			clines[i] = NULL;
-		}
-	}
+	gc_free(this);
+
 	// TODO remaining fields
 	return 0;
 }
@@ -131,8 +117,10 @@ int push_event(vcalendar* cal, vevent* ev) {
 }
 
 INIT_F(vcalendar) {
-	clines = calloc(sizeof(*clines), 10000);
-	cline_ptr = 0;
+	// TODO remove
+	gc_vect = calloc(sizeof(*gc_vect), 10000);
+	gc_ptr = 0;
+
 	this->alloc = 1;
 	this->events = calloc(sizeof(*this->events), this->alloc);
 	this->n_events = 0;
@@ -144,5 +132,23 @@ int free_vcalendar (vcalendar* cal) {
 		FFREE(vevent, cal->events[i]);
 	}
 	free (cal->events);
+	return 0;
+}
+
+void** gc_vect;
+int gc_ptr;
+
+int gc_register(void* ptr) {
+	gc_vect[gc_ptr++] = ptr;
+	return 0;
+}
+
+int gc_free(void* ptr) {
+	for (int i = 0; i < gc_ptr; i++) {
+		if (gc_vect[i] == ptr) {
+			gc_vect[i] = NULL;
+		}
+	}
+
 	return 0;
 }

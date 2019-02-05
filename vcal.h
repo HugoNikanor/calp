@@ -80,7 +80,10 @@ int push_event(vcalendar* cal, vevent* ev);
  * TODO
  * remove it.
  */
-extern content_line** clines;
-extern int cline_ptr;
+extern void** gc_vect;
+extern int gc_ptr;
+
+int gc_register(void* ptr);
+int gc_free(void* ptr);
 
 #endif /* VCAL_H */

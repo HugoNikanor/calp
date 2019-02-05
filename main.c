@@ -62,12 +62,15 @@ int main (int argc, char* argv[argc]) {
 	}
 	free_vcalendar(&cal);
 
-	for (int i = 0; i < cline_ptr; i++) {
-		if (clines[i] != NULL) {
+	for (int i = 0; i < gc_ptr; i++) {
+		if (gc_vect[i] != NULL) {
 			// printf("clines[%i] : [%s] := [%s]\n", i, clines[i]->key.mem, clines[i]->val.mem);
-			printf("clines[%i] : [%s] := [%s]\n", i, clines[i]->key.mem, clines[i]->vals.head->after->value->mem);
+			// printf("gc_vect[%i] : [%s] := [%s]\n", i, gc_vect[i]->key.mem, gc_vect[i]->vals.head->after->value->mem);
+			printf("gc_vect[%i] : [%s] := [%s]\n", i,
+					((content_line*) gc_vect[i])->key.mem,
+					((content_line*) gc_vect[i])->vals.head->after->value->mem);
 		}
 	}
 
-	free(clines);
+	free(gc_vect);
 }
