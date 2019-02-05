@@ -5,13 +5,10 @@
 
 #include "macro.h"
 
-#define TRIE(T) TP(trie__, T)
-#define TRIE_NODE(T) TP(trie_node__, T)
+#define TRIE(T)      TEMPL(trie, T)
+#define TRIE_NODE(T) TEMPL(trie_node, T)
 
-#define TRIE_PUT(T) TP(trie_put__, T)
-#define TRIE_GET(T) TP(trie_get__, T)
-
-#define TRIE_DOT(T) TP(trie_to_dot__, T)
+#define TRIE_DOT(T)      TP(trie_to_dot__, T)
 #define TRIE_DOT_HELP(T) TP(trie_to_dot_helper__, T)
 
 #endif /* TRIE_H */
@@ -36,14 +33,12 @@ INIT_F (TRIE_NODE(TYPE), char c);
 INIT_F (TRIE_NODE(TYPE), 
 	  char c, TRIE_NODE(TYPE)* next, TRIE_NODE(TYPE)* child );
 
-int TRIE_PUT(TYPE) ( TRIE(TYPE)* trie, char* key, TYPE* val );
+int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val );
 
-TYPE* TRIE_GET(TYPE) ( TRIE(TYPE)* trie, char* key );
+TYPE* GET(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key );
 
-// int TRIE_NODE_FREE(TYPE) ( TRIE_NODE(TYPE)* node );
 FREE_F(TRIE_NODE(TYPE));
 
-// int TRIE_FREE(TYPE) ( TRIE(TYPE)* trie );
 FREE_F(TRIE(TYPE));
 
 int TRIE_DOT(TYPE) (  TRIE(TYPE)*, FILE* );

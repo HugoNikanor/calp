@@ -7,9 +7,7 @@
 
 unsigned long hash(char*);
 
-#define TABLE(T)     TP(table__,    T)
-#define HASH_PUT(T)  TP(hash_put_,  T)
-#define HASH_GET(T)  TP(hash_get_,  T)
+#define HASHT(T)     TEMPL(hash_t, T)
 
 #endif /* HASH_H */
 #ifdef TYPE
@@ -24,16 +22,16 @@ typedef struct {
 	TYPE** values;
 } TABLE(TYPE);
 
-int HASH_PUT(TYPE) ( TABLE(TYPE)* table, TYPE* value );
+int PUSH(HASHT(TYPE)) ( HASHT(TYPE)* table, TYPE* value );
 
-INIT_F(HASH(TYPE), int init_size );
+INIT_F(HASHT(TYPE), int init_size );
 
-TYPE* HASH_GET(TYPE) ( TABLE(TYPE)* table, char* key );
+TYPE* GET(HASHT(TYPE)) ( HASHT(TYPE)* table, char* key );
 
 /*
  * Free's all item's stored in table.
  * And finally frees table.
  */
-FREE_F(HASH(TYPE));
+FREE_F(HASHT(TYPE));
 
 #endif /* HASH_H */

@@ -40,7 +40,7 @@ content_line* RESOLVE(content_line)
 	for (LINK(strbuf)* s = new->vals.head->after;
 			s->after != NULL;
 			s = s->after) {
-		LLIST_CONS(strbuf) (&dest->vals, s->value);
+		PUSH(LLIST(strbuf)) (&dest->vals, s->value);
 	}
 
 	FREE(content_line)(new);
@@ -49,12 +49,12 @@ content_line* RESOLVE(content_line)
 }
 
 content_line* get_property (vevent* ev, char* key) {
-	return TRIE_GET(content_line)(&ev->clines, key);
+	return GET(TRIE(content_line))(&ev->clines, key);
 }
 
 int add_content_line (vevent* ev, content_line* c) {
 	// TODO memmory safety on strbuf?
-	return TRIE_PUT(content_line)(&ev->clines, c->key.mem, c);
+	return PUSH(TRIE(content_line))(&ev->clines, c->key.mem, c);
 }
 
 INIT_F(content_line) {
@@ -72,14 +72,15 @@ INIT_F(content_line, int keylen, int vallen) {
 	// INIT(strbuf, &this->val, vallen);
 	INIT( LLIST(strbuf), &this->vals );
 	NEW(strbuf, s, vallen);
-	LLIST_CONS(strbuf)(&this->vals, s);
+	PUSH(LLIST(strbuf))(&this->vals, s);
 	// TODO remaining fields
 	return 0;
 }
 
 
 int content_line_copy (content_line* dest, content_line* src) {
-	strbuf_init_copy(&dest->key, &src->key);
+	//strbuf_init_copy(&dest->key, &src->key);
+	DEEP_COPY(strbuf)(&dest->key, &src->key);
 	// strbuf_init_copy(&dest->val, &src->val);
 	DEEP_COPY(LLIST(strbuf))(&dest->vals, &src->vals);
 	// TODO remaining fields

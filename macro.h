@@ -1,6 +1,7 @@
 #ifndef MACRO_H
 #define MACRO_H
 
+
 /*
  * NOTE This file uses __VA_OPT__. This is not standard compliant.
  */
@@ -12,6 +13,7 @@
 #define TP3(a, b, c) a ## b ## c
 #define TP4(a, b, c, d) a ## b ## c ## d
 #define TP5(a, b, c, d, e) a ## b ## c ## d ## e
+#define TP6(a, b, c, d, e, f) a ## b ## c ## d ## e ## f
 
 /*
  * Get length of __VA_ARGS__
@@ -21,8 +23,16 @@
 #define VA_ARGS_NUM_PRIV(P1, P2, P3, P4, P5, P6, Pn, ...) Pn
 #define VA_ARGS_NUM(...) VA_ARGS_NUM_PRIV(-1, ## __VA_ARGS__, 5, 4, 3, 2, 1, 0)
 
+/*
+ * Templetize
+ * TODO actuall documentatino
+ * ᐸElementTᐳ
+ */
+#define TEMPL(name, T)             TP4(name, \U00001438 , T, \U00001433 )
+#define TEMPL_N(name, T, argcount) TP6(name, \U00001438 , T, _, argcount, \U00001433 )
+
 /* Constructor type name */
-#define __INIT_T(T, C) TP3(T, __init__, C)
+#define __INIT_T(T, C) TEMPL_N(init, T, C)
 
 /* Returns full type of constructor */
 #define INIT_F(T, ...) \
@@ -49,18 +59,20 @@
 	INIT(T, & N, __VA_ARGS__);
 
 /* Destructor for type */
-#define FREE(T) TP(T, __free)
+#define FREE(T) TEMPL(free, T)
 
 /*  Call destructor for type, and free object */
 #define FFREE(T, N) do { FREE(T)(N); free(N); } while (0)
 
 /* Declare destructor */
-#define FREE_F(T) int TP(T, __free) (T* this)
+#define FREE_F(T) int FREE(T) (T* this)
 
-#define DEEP_COPY(T) TP(deep_copy__, T)
-#define RESOLVE(T) TP(resolve__, T)
-#define APPEND(T) TP(append__, T)
-#define SIZE(T) TP(size__, T)
-#define EMPTY(T) TP(empty__, T)
+#define DEEP_COPY(T) TEMPL(deep_copy , T)
+#define RESOLVE(T)   TEMPL(resolve   , T)
+#define APPEND(T)    TEMPL(append    , T)
+#define SIZE(T)      TEMPL(size      , T)
+#define EMPTY(T)     TEMPL(empty     , T)
+#define PUSH(T)      TEMPL(push      , T)
+#define GET(T)       TEMPL(get       , T)
 
 #endif /* MACRO_H */

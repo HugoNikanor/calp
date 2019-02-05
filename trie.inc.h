@@ -29,7 +29,7 @@ INIT_F (TRIE_NODE(TYPE),
 	return 0;
 }
 
-int TRIE_PUT(TYPE) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
+int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 	TRIE_NODE(TYPE) *cur, *last;
 
 	last = trie->root;
@@ -80,7 +80,7 @@ int TRIE_PUT(TYPE) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 /*
  * TODO what happens when I give an invalid key?
  */
-TYPE* TRIE_GET(TYPE) ( TRIE(TYPE)* trie, char* key ) {
+TYPE* GET(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key ) {
 	TRIE_NODE(TYPE)* n = trie->root->child;
 	char* subkey = key;
 

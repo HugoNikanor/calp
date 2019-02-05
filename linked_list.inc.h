@@ -52,7 +52,7 @@ INIT_F ( LINK(TYPE), TYPE* val ) {
 	return 0;
 }
 
-int LLIST_CONS(TYPE) ( LLIST(TYPE)* lst, TYPE* val) {
+int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val) {
 	NEW(LINK(TYPE), link, val);
 
 	link->after = lst->head->after;
@@ -73,7 +73,7 @@ int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src ) {
 	while (n->after != NULL) {
 		NEW(TYPE, cpy);
 		DEEP_COPY(TYPE)(cpy, n->value);
-		LLIST_CONS(TYPE) ( dest, cpy );
+		PUSH(LLIST(TYPE)) ( dest, cpy );
 		n = n->after;
 	}
 

@@ -4,7 +4,7 @@
 
 #include "err.h"
 
-int HASH_PUT(TYPE) ( TABLE(TYPE)* table, TYPE* value) {
+int PUT(HASHT(TYPE)) ( HASHT(TYPE)* table, TYPE* value) {
 	// TODO genicify the hash function
 	unsigned long h = hash(value->key.mem) % table->size;
 	TYPE* mem = table->values[h];
@@ -17,7 +17,7 @@ int HASH_PUT(TYPE) ( TABLE(TYPE)* table, TYPE* value) {
 	return 0;
 }
 
-INIT_F(HASH(TYPE), int init_size ) {
+INIT_F(HASHT(TYPE), int init_size ) {
 	/*
 	 * TODO parts of table might not get properly initialized to 0
 	 */
@@ -27,7 +27,7 @@ INIT_F(HASH(TYPE), int init_size ) {
 	return 0;
 }
 
-TYPE* HASH_GET(TYPE) ( TABLE(TYPE)* table, char* key ) {
+TYPE* GET(HASHT(TYPE)) ( HASHT(TYPE)* table, char* key ) {
 	unsigned long h = hash(key) % table->size;
 	TYPE* mem = table->values[h];
 	if (mem == NULL) {
@@ -43,7 +43,7 @@ TYPE* HASH_GET(TYPE) ( TABLE(TYPE)* table, char* key ) {
 	}
 }
 
-FREE(HASH(TYPE)) {
+FREE(HASHT(TYPE)) {
 	/*
 	 * TODO an early return is possible by checking if all items have
 	 * been found. table->item_count

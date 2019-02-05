@@ -6,7 +6,7 @@ OBJDIR = obj
 
 CPPFLAGS = -DSAFE_STR # -DSAFE_HASH 
 CFLAGS  = $(CPPFLAGS) \
-		  -std=gnu99 -Wall -Wextra -pedantic \
+		  -std=gnu11 -Wall -Wextra -pedantic \
 		  -ggdb -fPIC \
 		  $(shell guile-config compile)
 LDFLAGS = -fPIC $(shell guile-config link)

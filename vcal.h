@@ -56,7 +56,7 @@ content_line* get_property (vevent* ev, char* key);
 
 int add_content_line (vevent* ev, content_line* c);
 
-int free_vevent(vevent* ev);
+FREE_F(vevent);
 
 typedef struct s_vcalendar {
 	size_t n_events;

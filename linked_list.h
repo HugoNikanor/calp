@@ -3,10 +3,8 @@
 
 #include "macro.h"
 
-#define LLIST(T) TP(llist__, T)
-#define LINK(T)  TP(llist_link__, T)
-
-#define LLIST_CONS(T) TP(llist_cons__, T)
+#define LLIST(T) TEMPL(llist, T)
+#define LINK(T)  TEMPL(llist_link, T)
 
 #endif /* LINKED_LIST_H */
 #ifdef TYPE
@@ -31,7 +29,7 @@ INIT_F ( LINK(TYPE) );
 INIT_F ( LINK(TYPE), TYPE* val );
 FREE_F ( LINK(TYPE) );
 
-int LLIST_CONS(TYPE) ( LLIST(TYPE)* lst, TYPE* val);
+int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val);
 
 int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src );
 
