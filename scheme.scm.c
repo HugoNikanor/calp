@@ -53,7 +53,7 @@ SCM_DEFINE (calendar_get_attr, "calendar-get-attr", 3, 0, 0,
 
 	// TODO actuall iterators
 	// TODO this reverses the list
-	for ( LINK(strbuf)* n = c->vals.head->after;
+	for ( LINK(strbuf)* n = FIRST(&c->vals);
 			n->after != NULL;
 			n = n->after) {
 		llist = scm_cons(scm_from_strbuf(n->value), llist);

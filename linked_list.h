@@ -22,6 +22,9 @@ typedef struct {
 	int length;
 } LLIST(TYPE);
 
+#define FIRST(lst) (lst)->head->after
+#define LAST(lst)  (lst)->tail->before
+
 INIT_F ( LLIST(TYPE) );
 FREE_F ( LLIST(TYPE) );
 

@@ -56,10 +56,12 @@ INIT_F ( LINK(TYPE), TYPE* val ) {
 int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val) {
 	NEW(LINK(TYPE), link, val);
 
-	link->after = lst->head->after;
-	lst->head->after = link;
+	link->after         = FIRST(lst);
+	FIRST(lst)          = link;
+
 	link->after->before = link;
-	link->before = lst->head;
+	link->before        = lst->head;
+
 	++lst->length;
 
 	// TODO do I want to change that?
@@ -69,7 +71,7 @@ int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val) {
 }
 
 int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src ) {
-	LINK(TYPE)* n = src->head->after;
+	LINK(TYPE)* n = FIRST(src);
 
 	while (n->after != NULL) {
 		NEW(TYPE, cpy);
@@ -89,22 +91,25 @@ int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src ) {
  */
 int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new ) {
 
-	LINK(TYPE)* og_new_head = new->head;
-	dest->tail->before->after = new->head->after;
-	new->head->after->before = dest->tail->before;
-	LINK(TYPE)* old_tail = dest->tail;
-	dest->tail = new->tail;
-	dest->length += new->length;
+	/* Link end of dest onto start of new. */
+	LAST(dest)->after  = FIRST(new);
+	FIRST(new)->before = LAST(dest);
 
-	free(old_tail);
-	free(og_new_head);
+	/* Free the two now not needed end links.  */
+	free(new->head);
+	free(dest->tail);
+
+	/* Update dest with new tail ptr. */
+	dest->tail = new->tail;
+
+	dest->length += new->length;
 
 	return 0;
 }
 
 int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
 	int size = 0;
-	LINK(TYPE)* l = llist->head->after;
+	LINK(TYPE)* l = FIRST(llist);
 	while (l->after != NULL) {
 		++size;
 	}
@@ -112,7 +117,7 @@ int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
 }
 
 int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
-	return llist->head->after == llist->tail;
+	return FIRST(llist) == llist->tail;
 }
 
 #endif /* TYPE */
