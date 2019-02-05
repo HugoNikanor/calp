@@ -81,13 +81,14 @@ int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src ) {
 }
 
 /*
- * TODO
- * this or cons links wrong, creating infinite loops.
- * TODO
- * or maybe not
+ * Adds two linked lists together.
+ * O(1) time.
+ * destroys new in the process, but keeps the elements.
+ * make sure to free(new) after.
  */
 int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new ) {
 
+	LINK(TYPE)* og_new_head = new->head;
 	dest->tail->before->after = new->head->after;
 	new->head->after->before = dest->tail->before;
 	LINK(TYPE)* old_tail = dest->tail;
@@ -95,12 +96,7 @@ int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new ) {
 	dest->length += new->length;
 
 	free(old_tail);
-	// free(new->head);
-
-	/*
-	 * TODO `new` can now be handled as an empty husk.
-	 * Somehow it needs to be collected
-	 */
+	free(og_new_head);
 
 	return 0;
 }
