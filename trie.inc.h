@@ -36,7 +36,6 @@ int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 	cur = last->child;
 
 	char* subkey = key;
-	// --------------------------------------------------
 
 	while (1) {
 		if (cur == NULL) {
@@ -56,7 +55,6 @@ int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 			subkey++;
 		} else if (subkey[0] == '\0') {
 			/* Key finished */
-			// last->value = val;
 			last->value = RESOLVE(TYPE)(last->value, val);
 			return 0;
 		} else if (cur->next != NULL) {

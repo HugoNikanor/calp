@@ -37,8 +37,7 @@ int handle_kv(
 		vevent*        ev,
 		content_line*  cline,
 		int            line,
-		// scope_context* s_ctx
-		parse_ctx* ctx
+		parse_ctx*     ctx
 		);
 
 int parse_file(char* fname, FILE* f, vcalendar* cal);

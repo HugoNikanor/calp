@@ -23,12 +23,6 @@ INIT_F(vevent, char* filename) {
 	return 0;
 }
 
-/*
- * Resolves a collision in some form of structure (probably a hash-map
- * or a trie). If dest is NULL just return new. Otherwise mutates dest
- * to have the correct form, and returns it. Destroying new in the
- * process.
- */
 content_line* RESOLVE(content_line)
 	(content_line* dest, content_line* new) {
 
@@ -53,44 +47,46 @@ content_line* get_property (vevent* ev, char* key) {
 
 INIT_F(content_line) {
 	INIT(strbuf, &this->key);
-	// INIT(strbuf, &this->val);
 	INIT( LLIST(strbuf), &this->vals );
+
 	// TODO remaining fields
+
 	return 0;
 }
 
 INIT_F(content_line, int keylen, int vallen) {
 	INIT(strbuf, &this->key, keylen);
-	// INIT(strbuf, &this->val, vallen);
 	INIT( LLIST(strbuf), &this->vals );
 	NEW(strbuf, s, vallen);
 	PUSH(LLIST(strbuf))(&this->vals, s);
+
 	// TODO remaining fields
+
 	return 0;
 }
 
 
 int content_line_copy (content_line* dest, content_line* src) {
-	//strbuf_init_copy(&dest->key, &src->key);
 	DEEP_COPY(strbuf)(&dest->key, &src->key);
-	// strbuf_init_copy(&dest->val, &src->val);
 	DEEP_COPY(LLIST(strbuf))(&dest->vals, &src->vals);
+
 	// TODO remaining fields
+
 	return 0;
 }
 
 FREE_F(content_line) {
 	FREE(strbuf)(&this->key);
-	// FREE(strbuf)(&this->val);
-	// LLIST_FREE(strbuf)(&this->vals);
 	FREE(LLIST(strbuf))(&this->vals);
 
 	// TODO remaining fields
+
 	return 0;
 }
 
 FREE_F(vevent) {
 	if (this->filename != NULL) free(this->filename);
+
 	if (FREE(TRIE(content_line))(&this->clines) != 0) {
 		fprintf(stderr, "Error freeing vevent belonging to file \n %s \n",
 				this->filename);
@@ -99,9 +95,6 @@ FREE_F(vevent) {
 	return 0;
 }
 
-/*
- * TODO change this into PUSH(VCALENDAR) (vevent*) ?
- */
 int push_event(vcalendar* cal, vevent* ev) {
 
 	ev->calendar = cal;
@@ -112,7 +105,6 @@ int push_event(vcalendar* cal, vevent* ev) {
 		cal->events = realloc(cal->events, sizeof(*cal->events) * cal->alloc);
 	}
 
-	// vevent_init_copy(&cal->events[cal->n_events], ev);
 	cal->events[cal->n_events] = ev;
 
 	cal->n_events++;

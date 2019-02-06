@@ -29,15 +29,15 @@ INIT_F(content_line);
 INIT_F(content_line, int keylen, int vallen);
 
 /*
- * This takes two content lines, and return a content line that is the
- * merge of the two.
- * The function also cleans up the unused memmory between the two.
+ * Resolves a collision in some form of structure (probably a hash-map
+ * or a trie). If dest is NULL just return new. Otherwise mutates dest
+ * to have the correct form, and returns it. Destroying new in the
+ * process.
  */
 content_line* RESOLVE(content_line)
 	(content_line* dest, content_line* new);
 
 #define TYPE content_line
-// #include "hash.h"
 #include "trie.h"
 #undef TYPE
 
@@ -70,6 +70,7 @@ int free_vcalendar (vcalendar* cal);
 /*
  * Appends ev to cal. Doesn't copy ev. So make sure that it wont go
  * out of scope.
+ * TODO change this into PUSH(VCALENDAR) (vevent*) ?
  */
 int push_event(vcalendar* cal, vevent* ev);
 

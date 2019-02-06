@@ -18,25 +18,19 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 		.scope = s_none,
 		.skip_to = &skip
 	};
-	// scope_context s_ctx = s_none;
 
 	int keylen = 100;
 	int vallen = 100;
 
 	int line = 0;
 
-	// NEW(vevent, ev, fname);
 	vevent* ev = NULL;
 
 	SNEW(content_line, cline, keylen, vallen);
 
-	/*
-	 * TODO
-	 * When a file ends with CRLF then ctx_scope == s_none, leading to
-	 * END:VEVENT erroring as bad start of calendar.
-	 * */
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
+
 		/*
 		 * A carrige return means that the current line is at an
 		 * end. The following character should always be \n.
@@ -69,19 +63,24 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 				}
 				continue;
 			} else {
+
 				/* Actuall end of line, handle values.  */
+
+				/* Push back the last written character to the stream,
+				 * since it's part of the next line.
+				 */
 				if (ungetc(s[1], f) != s[1]) {
 					ERR_F("%s, %i", "Failed to put character back on FILE", line);
 					exit (2);
 				}
 
-				/* At TRUE end of line */
 				if (str.ptr + 1 > vallen) {
 					vallen = str.ptr + 1;
 					strbuf_realloc(cline.vals.cur->value, vallen);
 				}
 
 				strbuf_copy(cline.vals.cur->value, &str);
+				/* TODO when do I actualy cap? */
 				// strbuf_cap(cline.vals.cur->value);
 
 				++line;
@@ -89,8 +88,6 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 				switch (handle_kv(cal, ev, &cline, line, &ctx)) {
 					case s_event:
 						RENEW(vevent, ev, fname);
-						// ev = malloc(sizeof(*ev));
-						// INIT(vevent, ev, fname);
 						break;
 				}
 				strbuf_soft_reset(&str);
@@ -105,7 +102,16 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 		} else if (p_ctx == p_key && c == ':') {
 			if (str.ptr + 1 > keylen) {
 				keylen = str.ptr + 1;
-				// TODO this might break everything
+				/*
+				 * Allow for key's longer than 100 octets. It
+				 * currently is of no use, since key's can't be
+				 * folded.
+				 * TODO check if everything should be unfolded at 75
+				 * octets, or if that is only for values.
+				 *
+				 * TODO earlier there was a bug here. Test if that is
+				 * fixed and reenable this line.
+				 */
 				// strbuf_realloc(&cline.key, keylen);
 			}
 			strbuf_copy(&cline.key, &str);
@@ -149,7 +155,6 @@ int handle_kv(
 		vevent*        ev,
 		content_line*  cline,
 		int            line,
-		// scope_context* s_ctx
 		parse_ctx* ctx
 		) {
 	switch (ctx->scope) {
@@ -157,7 +162,6 @@ int handle_kv(
 		case s_skip:
 			if (strbuf_c(&cline->key, "END") && strbuf_cmp(cline->vals.cur->value, ctx->skip_to)) {
 				ctx->scope = s_calendar;
-				// FREE(strbuf)(ctx->skip_to);
 			}
 			break;
 
@@ -176,9 +180,15 @@ int handle_kv(
 					return ctx->scope;
 					break;
 				} else {
-					// ERR("Unsupported start", line);
+
+					/* 
+					 * Here we found the start of some form of block
+					 * we don't understand. Just skip everything until
+					 * we find the matching END
+					 */
 					ctx->scope = s_skip;
 					strbuf_copy(ctx->skip_to, cline->vals.cur->value);
+
 				}
 			} else if (strbuf_c(&cline->key, "END")) {
 				if (strbuf_c(cline->vals.cur->value, "VCALENDAR")) {

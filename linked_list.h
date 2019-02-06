@@ -26,6 +26,12 @@ typedef struct {
 #define LAST(lst)  (lst)->tail->before
 
 INIT_F ( LLIST(TYPE) );
+
+/*
+ * NOTE freeing a linked list alsa FFREE's all its contents.
+ * TODO some form of shared pointer to ensure nothing is free'd twice
+ * would be a good idea.
+ */
 FREE_F ( LLIST(TYPE) );
 
 INIT_F ( LINK(TYPE) );

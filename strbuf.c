@@ -24,9 +24,12 @@ INIT_F(strbuf, size_t len) {
 
 int strbuf_realloc(strbuf* str, size_t len) {
 #ifdef SAFE_STR
-	if (str->mem == NULL /*|| str->alloc == -1*/) {
+	if (str->mem == NULL) {
+		/* NOTE
+		 * this isn't an error, since
+		 * realloc(NULL, 10) ≡ malloc(10)
+		 */
 		ERR("String memory not initialized");
-		// return 1;
 	}
 #endif
 	str->mem = realloc(str->mem, len);
@@ -34,7 +37,6 @@ int strbuf_realloc(strbuf* str, size_t len) {
 	return 0;
 }
 
-// int strbuf_free(strbuf* str) {
 FREE_F(strbuf) {
 #ifdef SAFE_STR
 	if (this->mem == NULL) return 1;
@@ -46,9 +48,6 @@ FREE_F(strbuf) {
 	return 0;
 }
 
-/*
- * TODO this should do bounds check
- */
 int strbuf_append(strbuf* s, char c) {
 #ifdef SAFE_STR
 	if (s->len > s->alloc) {
@@ -75,6 +74,7 @@ int strbuf_copy(strbuf* dest, strbuf* src) {
 #endif
 	dest->len = src->len;
 	memcpy(dest->mem, src->mem, src->len);
+
 	// TODO should this be here?
 	strbuf_cap(dest);
 	return 0;

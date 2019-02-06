@@ -24,9 +24,17 @@
 #define VA_ARGS_NUM(...) VA_ARGS_NUM_PRIV(-1, ## __VA_ARGS__, 5, 4, 3, 2, 1, 0)
 
 /*
- * Templetize
- * TODO actuall documentatino
- * ᐸElementTᐳ
+ * Templatization macros. Forms symbols on the from name<T>, which
+ * looks really good in debuggers and the like. Unicode characters
+ * written in \U notation since C apparently doesn't support unicode
+ * literals.
+ *
+ * Can be nested (useful for container types).
+ *
+ * Doesn't use ASCII <>, but rather some other ᐸᐳ, meaning that it's
+ * not a reserved character.
+ *
+ * nameᐸTᐳ
  */
 #define TEMPL(name, T)             TP4(name, \U00001438 , T, \U00001433 )
 #define TEMPL_N(name, T, argcount) TP6(name, \U00001438 , T, _, argcount, \U00001433 )
@@ -38,7 +46,11 @@
 #define INIT_F(T, ...) \
 	int __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (T* this __VA_OPT__(,) __VA_ARGS__)
 
-/* Call the constructor of an object */
+/*
+ * Call the constructor of an object
+ * `int` part of the macro, to ensure that any attempt to call this
+ * function results in an error.
+ */
 #define INIT(T, N, ...) \
 	 __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (N __VA_OPT__(,) __VA_ARGS__)
 
@@ -47,6 +59,9 @@
 	T* N = malloc(sizeof(*N)); \
 	INIT(T, N, __VA_ARGS__);
 
+/*
+ * Reconstructs a object. Use with caution.
+ */
 #define RENEW(T, N, ...) do { \
 	N = malloc(sizeof(*N)); \
 	INIT(T, N, __VA_ARGS__); \
@@ -67,6 +82,11 @@
 /* Declare destructor */
 #define FREE_F(T) int FREE(T) (T* this)
 
+/*
+ * General functions that different container types may implement.
+ * Actuall implementation and type signature is mostly left to
+ * individual implementations.
+ */
 #define DEEP_COPY(T) TEMPL(deep_copy , T)
 #define RESOLVE(T)   TEMPL(resolve   , T)
 #define APPEND(T)    TEMPL(append    , T)

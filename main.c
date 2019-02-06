@@ -42,7 +42,6 @@ int main (int argc, char* argv[argc]) {
 			printf("%3lu | %s | %s\n",
 					i + 1,
 					filename,
-					// get_property(cal.events[i], "SUMMARY")->val.mem);
 					get_property(cal.events[i], "SUMMARY")->vals.cur->value->mem);
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {
@@ -55,7 +54,6 @@ int main (int argc, char* argv[argc]) {
 				strcat(target, ".dot");
 				create_graph(cal.events[i], target);
 			}
-			// create_graph(cal.events[0], "graph.dot");
 		} else {
 			create_graph(cal.events[0], args.argv[0]);
 		}

@@ -4,6 +4,14 @@
 #include <stdlib.h>
 #include "macro.h"
 
+/*
+ * A high level string type which holds it's own length, how much
+ * memmory it has allocated for itself, and a seek pointer into the
+ * string.
+ *
+ * Also comes with a number of functions which allow for safe(er)
+ * access to the memmory.
+ */
 typedef struct {
 	char* mem;
 	/* TODO add support for negative ptr */
@@ -33,7 +41,6 @@ int strbuf_realloc(strbuf* str, size_t len);
 /*
  * Free's contents of str, but keeps str.
  */
-// int strbuf_free(strbuf* str);
 FREE_F(strbuf);
 
 /*
@@ -57,8 +64,21 @@ int strbuf_append(strbuf* s, char c);
  * Calls strbuf_append with NULL.
  */
 int strbuf_cap(strbuf* s);
+
+/*
+ * Resets the seek for strbuf to 0.
+ */
 int strbuf_reset(strbuf* s);
+
+/*
+ * Returns a pointer to character at index. Allows mutation of the
+ * value pointed to by the return address.
+ */
 char* charat(strbuf* s, unsigned int idx);
+
+/*
+ * Same as `charat`, But returns the current character.
+ */
 char* strbuf_cur(strbuf* s);
 
 /*
