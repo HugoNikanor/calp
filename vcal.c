@@ -42,7 +42,6 @@ content_line* RESOLVE(content_line)
 	APPEND(LLIST(strbuf)) (&dest->vals, &new->vals);
 
 	FREE(strbuf)(&new->key);
-	gc_free(new);
 	free(new);
 
 	return dest;
@@ -53,8 +52,6 @@ content_line* get_property (vevent* ev, char* key) {
 }
 
 INIT_F(content_line) {
-	gc_register(this);
-
 	INIT(strbuf, &this->key);
 	// INIT(strbuf, &this->val);
 	INIT( LLIST(strbuf), &this->vals );
@@ -63,7 +60,6 @@ INIT_F(content_line) {
 }
 
 INIT_F(content_line, int keylen, int vallen) {
-	gc_register(this);
 	INIT(strbuf, &this->key, keylen);
 	// INIT(strbuf, &this->val, vallen);
 	INIT( LLIST(strbuf), &this->vals );
@@ -88,8 +84,6 @@ FREE_F(content_line) {
 	// FREE(strbuf)(&this->val);
 	// LLIST_FREE(strbuf)(&this->vals);
 	FREE(LLIST(strbuf))(&this->vals);
-
-	gc_free(this);
 
 	// TODO remaining fields
 	return 0;
@@ -126,10 +120,6 @@ int push_event(vcalendar* cal, vevent* ev) {
 }
 
 INIT_F(vcalendar) {
-	// TODO remove
-	gc_vect = calloc(sizeof(*gc_vect), 10000);
-	gc_ptr = 0;
-
 	this->alloc = 1;
 	this->events = calloc(sizeof(*this->events), this->alloc);
 	this->n_events = 0;
@@ -141,23 +131,5 @@ int free_vcalendar (vcalendar* cal) {
 		FFREE(vevent, cal->events[i]);
 	}
 	free (cal->events);
-	return 0;
-}
-
-void** gc_vect;
-int gc_ptr;
-
-int gc_register(void* ptr) {
-	gc_vect[gc_ptr++] = ptr;
-	return 0;
-}
-
-int gc_free(void* ptr) {
-	for (int i = 0; i < gc_ptr; i++) {
-		if (gc_vect[i] == ptr) {
-			gc_vect[i] = NULL;
-		}
-	}
-
 	return 0;
 }

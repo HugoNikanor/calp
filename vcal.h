@@ -73,17 +73,4 @@ int free_vcalendar (vcalendar* cal);
  */
 int push_event(vcalendar* cal, vevent* ev);
 
-/*
- * NOTE
- * these create a very basic garbage collector. It shouldn't be used,
- * but is useful for finding lost memmory during debugging.
- * TODO
- * remove it.
- */
-extern void** gc_vect;
-extern int gc_ptr;
-
-int gc_register(void* ptr);
-int gc_free(void* ptr);
-
 #endif /* VCAL_H */
