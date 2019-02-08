@@ -33,13 +33,13 @@ typedef struct {
 } parse_ctx;
 
 int handle_kv(
-		vcalendar*     cal,
-		vevent*        ev,
+		vcomponent*    cal,
+		vcomponent*    ev,
 		content_line*  cline,
 		int            line,
 		parse_ctx*     ctx
 		);
 
-int parse_file(char* fname, FILE* f, vcalendar* cal);
+int parse_file(char* fname, FILE* f, vcomponent* cal);
 
 #endif /* PARSE_H */

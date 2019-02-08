@@ -11,14 +11,25 @@
 #include "linked_list.inc.h"
 #undef TYPE
 
-INIT_F(vevent, char* filename) {
+#define TYPE vcomponent
+#include "vector.inc.h"
+#undef TYPE
+
+INIT_F(vcomponent) {
+	return INIT(vcomponent, this, NULL);
+}
+
+INIT_F(vcomponent, char* filename) {
 
 	INIT(TRIE(content_line), &this->clines);
+	INIT(VECT(vcomponent), &this->components);
 
-	this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
-	strcpy(this->filename, filename);
+	if (filename != NULL) {
+		this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
+		strcpy(this->filename, filename);
+	}
 
-	this->calendar = NULL;
+	this->parent = NULL;
 
 	return 0;
 }
@@ -41,7 +52,7 @@ content_line* RESOLVE(content_line)
 	return dest;
 }
 
-content_line* get_property (vevent* ev, char* key) {
+content_line* get_property (vcomponent* ev, char* key) {
 	return GET(TRIE(content_line))(&ev->clines, key);
 }
 
@@ -65,6 +76,14 @@ INIT_F(content_line, int keylen, int vallen) {
 	return 0;
 }
 
+FREE_F(content_line) {
+	FREE(strbuf)(&this->key);
+	FREE(LLIST(strbuf))(&this->vals);
+
+	// TODO remaining fields
+
+	return 0;
+}
 
 int content_line_copy (content_line* dest, content_line* src) {
 	DEEP_COPY(strbuf)(&dest->key, &src->key);
@@ -75,53 +94,21 @@ int content_line_copy (content_line* dest, content_line* src) {
 	return 0;
 }
 
-FREE_F(content_line) {
-	FREE(strbuf)(&this->key);
-	FREE(LLIST(strbuf))(&this->vals);
-
-	// TODO remaining fields
-
-	return 0;
-}
-
-FREE_F(vevent) {
+FREE_F(vcomponent) {
 	if (this->filename != NULL) free(this->filename);
 
 	if (FREE(TRIE(content_line))(&this->clines) != 0) {
-		fprintf(stderr, "Error freeing vevent belonging to file \n %s \n",
+		fprintf(stderr, "Error freeing vcomponent belonging to file \n %s \n",
 				this->filename);
 	}
 
+	FREE(VECT(vcomponent))(&this->components);
+
 	return 0;
 }
 
-int push_event(vcalendar* cal, vevent* ev) {
-
-	ev->calendar = cal;
-
-	/* Make sure that cal->eents is large enough */
-	if (cal->n_events + 1 > cal->alloc) {
-		cal->alloc <<= 1;
-		cal->events = realloc(cal->events, sizeof(*cal->events) * cal->alloc);
-	}
-
-	cal->events[cal->n_events] = ev;
-
-	cal->n_events++;
-	return 0;
+int PUSH(vcomponent)(vcomponent* parent, vcomponent* child) {
+	return PUSH(VECT(vcomponent))(&parent->components, child);
 }
 
-INIT_F(vcalendar) {
-	this->alloc = 1;
-	this->events = calloc(sizeof(*this->events), this->alloc);
-	this->n_events = 0;
-	return 0;
-}
 
-int free_vcalendar (vcalendar* cal) {
-	for (size_t i = 0; i < cal->n_events; i++) {
-		FFREE(vevent, cal->events[i]);
-	}
-	free (cal->events);
-	return 0;
-}

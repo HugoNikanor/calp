@@ -3,6 +3,6 @@
 
 #include "vcal.h"
 
-int read_vcalendar(vcalendar* cal, char* path);
+int read_vcalendar(vcomponent* cal, char* path);
 
 #endif /* CALENDAR_H */

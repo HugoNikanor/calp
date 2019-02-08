@@ -17,6 +17,9 @@
 
 /*
  * Returns 0 if file has no extersion
+ *
+ * TODO this looks from the first point, it should look from the last
+ * point.
  */
 int get_extension(const char* filename, char* ext, ssize_t max_len) {
 	int ext_idx = -1;
@@ -41,7 +44,7 @@ int get_extension(const char* filename, char* ext, ssize_t max_len) {
  * TODO merge the code for files and dirs.
  */
 
-int parse_dir(vcalendar* cal, char* path) {
+int parse_dir(vcomponent* cal, char* path) {
 	DIR* dir = opendir(path);
 	struct dirent* d;
 	while ((d = readdir(dir)) != NULL) {
@@ -81,7 +84,7 @@ int parse_dir(vcalendar* cal, char* path) {
 	return 0;
 }
 
-int read_vcalendar(vcalendar* cal, char* path) {
+int read_vcalendar(vcomponent* cal, char* path) {
 
 	struct stat statbuf;
 	if (stat (path, &statbuf) != 0) {
@@ -101,7 +104,7 @@ int read_vcalendar(vcalendar* cal, char* path) {
 			char ext[10];
 			int has_ext = get_extension(path, ext, 9);
 			if (! has_ext || strcmp(ext, "ics") != 0) {
-				fprintf(stderr, "File doesn't have .ics extension.\n");
+				fprintf(stderr, "File doesn't have .ics extension. [%s]\n", ext);
 				exit(1);
 			}
 

@@ -51,7 +51,8 @@ FREE_F(strbuf) {
 int strbuf_append(strbuf* s, char c) {
 #ifdef SAFE_STR
 	if (s->len > s->alloc) {
-		ERR("Not enough memmory allocated");
+		// printf("s->len = %i, s->alloc = %i\n", s->len, s->alloc);
+		// ERR("Not enough memmory allocated");
 		return 1;
 	}
 #endif

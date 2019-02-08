@@ -28,35 +28,36 @@ int main (int argc, char* argv[argc]) {
 		exit (1);
 	}
 
-	SNEW(vcalendar, cal);
+	SNEW(vcomponent, cal);
 	read_vcalendar(&cal, args.argv[0]);
 
 	arg_shift(&args);
 
 	if (args.argc == 0 || strcmp(args.argv[0], "-p") == 0) {
-		printf("\nParsed calendar file containing [%lu] events\n",
-				cal.n_events);
-		for (size_t i = 0; i < cal.n_events; i++) {
-			char* filename = cal.events[i]->filename;
+		printf("\nParsed calendar file containing [%u] events\n",
+				cal.components.length
+				);
+		for (size_t i = 0; i < cal.components.length; i++) {
+			char* filename = cal.components.items[i]->filename;
 
 			printf("%3lu | %s | %s\n",
 					i + 1,
 					filename,
-					get_property(cal.events[i], "SUMMARY")->vals.cur->value->mem);
+					get_property(cal.components.items[i], "SUMMARY")->vals.cur->value->mem);
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {
 		if (arg_shift(&args) == 0) {
-			for (size_t i = 0; i < cal.n_events; i++) {
+			for (size_t i = 0; i < cal.components.length; i++) {
 				char target[0xFF];
 				target[0] = '\0';
 				strcat(target, "/tmp/dot/");
-				strcat(target, cal.events[i]->filename);
+				strcat(target, cal.components.items[i]->filename);
 				strcat(target, ".dot");
-				create_graph(cal.events[i], target);
+				create_graph(cal.components.items[i], target);
 			}
 		} else {
-			create_graph(cal.events[0], args.argv[0]);
+			create_graph(cal.components.items[0], args.argv[0]);
 		}
 	}
-	free_vcalendar(&cal);
+	FREE(vcomponent)(&cal);
 }

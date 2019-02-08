@@ -3,6 +3,6 @@
 
 #include "vcal.h"
 
-int create_graph (vevent* ev, char* filename);
+int create_graph (vcomponent* ev, char* filename);
 
 #endif /* GRAPHS_H */

@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-int create_graph (vevent* ev, char* filename) {
+int create_graph (vcomponent* ev, char* filename) {
 	FILE* f = fopen(filename, "w");
 
 	fputs("digraph {\n	rankdir=LR;", f);

@@ -17,10 +17,10 @@ SCM_DEFINE (make_calendar, "make-calendar", 1, 0, 0,
 		(SCM path),
 		"Loads a vdir iCalendar from the given path.")
 {
-	vcalendar* cal =
-		(vcalendar*) scm_gc_malloc (
+	vcomponent* cal =
+		(vcomponent*) scm_gc_malloc (
 				sizeof(*cal), "calendar");
-	INIT(vcalendar, cal);
+	INIT(vcomponent, cal);
 
 	char* p = scm_to_utf8_stringn(path, NULL);
 	read_vcalendar(cal, p);
@@ -40,9 +40,9 @@ SCM_DEFINE (calendar_get_attr, "calendar-get-attr", 3, 0, 0,
 		"Retuns the given attribute from the vevent object at index in calendar.")
 {
 	scm_assert_foreign_object_type (calendar_type, calendar);
-	vcalendar* cal = scm_foreign_object_ref (calendar, 0);
+	vcomponent* cal = scm_foreign_object_ref (calendar, 0);
 
-	vevent* v = cal->events[scm_to_int(id)];
+	vcomponent* v = cal->components.items[scm_to_int(id)];
 	char* key = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
 	content_line* c = get_property (v, key);
 	free(key);
@@ -67,8 +67,8 @@ SCM_DEFINE (calendar_size, "calendar-size", 1, 0, 0,
 		"Returns number of events in a vcalendar.")
 {
 	scm_assert_foreign_object_type (calendar_type, calendar);
-	vcalendar* cal = scm_foreign_object_ref (calendar, 0);
-	return scm_from_size_t (cal->n_events);
+	vcomponent* cal = scm_foreign_object_ref (calendar, 0);
+	return scm_from_size_t (cal->components.length);
 }
 
 void init_calendar () {

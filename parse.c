@@ -8,7 +8,7 @@
 
 #include "err.h"
 
-int parse_file(char* fname, FILE* f, vcalendar* cal) {
+int parse_file(char* fname, FILE* f, vcomponent* cal) {
 	int segments = 1;
 	SNEW(strbuf, str, segments * SEGSIZE);
 
@@ -24,7 +24,7 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 
 	int line = 0;
 
-	vevent* ev = NULL;
+	vcomponent* ev = NULL;
 
 	SNEW(content_line, cline, keylen, vallen);
 
@@ -87,7 +87,7 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
 
 				switch (handle_kv(cal, ev, &cline, line, &ctx)) {
 					case s_event:
-						RENEW(vevent, ev, fname);
+						RENEW(vcomponent, ev, fname);
 						break;
 				}
 				strbuf_soft_reset(&str);
@@ -151,10 +151,10 @@ int parse_file(char* fname, FILE* f, vcalendar* cal) {
  * TODO Extend this to handle properties
  */
 int handle_kv(
-		vcalendar*     cal,
-		vevent*        ev,
-		content_line*  cline,
-		int            line,
+		vcomponent*   cal,
+		vcomponent*   ev,
+		content_line* cline,
+		int           line,
 		parse_ctx* ctx
 		) {
 	switch (ctx->scope) {
@@ -174,6 +174,11 @@ int handle_kv(
 			break;
 
 		case s_calendar:
+			/*
+			 * TODO
+			 * BEGIN's can be nested, extend this with a stack
+			 * Apparently only VALARM can be nested.
+			 */
 			if (strbuf_c(&cline->key, "BEGIN")) {
 				if (strbuf_c(cline->vals.cur->value, "VEVENT")) {
 					ctx->scope = s_event;
@@ -205,11 +210,12 @@ int handle_kv(
 			}
 			if (strbuf_c(&cline->key, "END")) {
 				if (strbuf_c(cline->vals.cur->value, "VEVENT")) {
-					push_event(cal, ev);
+					PUSH(vcomponent)(cal, ev);
 					ctx->scope = s_calendar;
 					return ctx->scope;
 				} else {
-					ERR_F("%s, %i", "Trying to end something, expected VEVENT", line);
+					ERR_F("Trying to end something, expected VEVENT, Got [%s]\n%s : %i",
+							cline->vals.cur->value->mem, ev->filename, line);
 					return -3;
 				}
 			} else {

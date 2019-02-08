@@ -27,6 +27,7 @@ typedef struct {
 
 INIT_F(content_line);
 INIT_F(content_line, int keylen, int vallen);
+FREE_F(content_line);
 
 /*
  * Resolves a collision in some form of structure (probably a hash-map
@@ -41,37 +42,33 @@ content_line* RESOLVE(content_line)
 #include "trie.h"
 #undef TYPE
 
-typedef struct s_vevent {
+typedef struct s_vcomponent vcomponent;
+
+#define TYPE vcomponent
+#include "vector.h"
+#undef TYPE
+
+struct s_vcomponent {
 	char* filename;
-	struct s_vcalendar* calendar;
+	vcomponent* parent;
 	TRIE(content_line) clines;
-} vevent;
+	VECT(vcomponent) components;
+};
 
-INIT_F(vevent, char* filename);
+INIT_F(vcomponent);
+INIT_F(vcomponent, char* filename);
+FREE_F(vcomponent);
 
-FREE_F(content_line);
 int content_line_copy (content_line* dest, content_line* src);
 
-content_line* get_property (vevent* ev, char* key);
+content_line* get_property (vcomponent* ev, char* key);
 
-int add_content_line (vevent* ev, content_line* c);
-
-FREE_F(vevent);
-
-typedef struct s_vcalendar {
-	size_t n_events;
-	size_t alloc;
-	vevent** events;
-} vcalendar;
-
-INIT_F(vcalendar);
-int free_vcalendar (vcalendar* cal);
+int add_content_line (vcomponent* ev, content_line* c);
 
 /*
  * Appends ev to cal. Doesn't copy ev. So make sure that it wont go
  * out of scope.
- * TODO change this into PUSH(VCALENDAR) (vevent*) ?
  */
-int push_event(vcalendar* cal, vevent* ev);
+int PUSH(vcomponent)(vcomponent*, vcomponent*);
 
 #endif /* VCAL_H */
