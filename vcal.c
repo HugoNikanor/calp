@@ -27,6 +27,8 @@ INIT_F(vcomponent, char* filename) {
 	if (filename != NULL) {
 		this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
 		strcpy(this->filename, filename);
+	} else {
+		this->filename = NULL;
 	}
 
 	this->parent = NULL;
