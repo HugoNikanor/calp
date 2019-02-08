@@ -77,6 +77,7 @@
 /* Declare destructor */
 #define FREE_F(T) int FREE(T) (T* this)
 
+
 /*
  * General functions that different container types may implement.
  * Actuall implementation and type signature is mostly left to

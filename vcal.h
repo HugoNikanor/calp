@@ -77,4 +77,5 @@ int PUSH(vcomponent)(vcomponent*, vcomponent*);
 
 int DEEP_COPY(vcomponent)(vcomponent*, vcomponent*);
 
+
 #endif /* VCAL_H */

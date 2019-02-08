@@ -35,40 +35,43 @@ int main (int argc, char* argv[argc]) {
 
 	arg_shift(&args);
 
-	vcomponent* cal = FCHILD(&root);
-
-	assert(strcmp(root.type, "ROOT") == 0);
-	assert(strcmp(cal->type, "VCALENDAR") == 0);
-
 	if (args.argc == 0 || strcmp(args.argv[0], "-p") == 0) {
 		printf("\nParsed calendar file containing [%u] events\n",
 				root.components.length
 				);
-		for (size_t i = 0; i < cal->components.length; i++) {
-			char* filename = cal->components.items[i]->filename;
-			vcomponent* ev = GET(VECT(vcomponent))(&cal->components, i);
+		for (size_t i = 0; i < root.components.length; i++) {
+			vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
+			assert(strcmp(cal->type, "VCALENDAR") == 0);
 
-			printf("TYPE = %s\n", ev->type);
-			if (strcmp(ev->type, "VEVENT") != 0) continue;
+			char* filename = cal->filename;
+			for (size_t j = 0; j < cal->components.length; j++) {
+				vcomponent* ev = GET(VECT(vcomponent))(&cal->components, j);
 
-			printf("%3lu | %s | %s\n",
-					i + 1,
-					filename,
-					get_property(ev, "SUMMARY")->vals.cur->value->mem);
+				if (strcmp(ev->type, "VEVENT") != 0) continue;
+
+				printf("%3lu | %s | %s\n",
+						i + 1,
+						filename,
+						get_property(ev, "SUMMARY")->vals.cur->value->mem);
+			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {
 		if (arg_shift(&args) == 0) {
-			for (size_t i = 0; i < cal->components.length; i++) {
+			for (size_t i = 0; i < root.components.length; i++) {
+				vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
+				assert(strcmp(cal->type, "VCALENDAR") == 0);
+
+				vcomponent* ev = FCHILD(cal);
+
 				char target[0xFF];
 				target[0] = '\0';
 				strcat(target, "/tmp/dot/");
-				vcomponent* ev = GET(VECT(vcomponent))(&cal->components, i);
 				strcat(target, ev->filename);
 				strcat(target, ".dot");
 				create_graph(ev, target);
 			}
 		} else {
-			create_graph(GET(VECT(vcomponent))(&cal->components, 0), args.argv[0]);
+			create_graph(FCHILD(FCHILD(&root)), args.argv[0]);
 		}
 	}
 
