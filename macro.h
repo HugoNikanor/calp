@@ -1,11 +1,6 @@
 #ifndef MACRO_H
 #define MACRO_H
 
-
-/*
- * NOTE This file uses __VA_OPT__. This is not standard compliant.
- */
-
 /*
  * Token paste
  */
@@ -44,7 +39,7 @@
 
 /* Returns full type of constructor */
 #define INIT_F(T, ...) \
-	int __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (T* this __VA_OPT__(,) __VA_ARGS__)
+	int __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (T* this, ## __VA_ARGS__)
 
 /*
  * Call the constructor of an object
@@ -52,26 +47,26 @@
  * function results in an error.
  */
 #define INIT(T, N, ...) \
-	 __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (N __VA_OPT__(,) __VA_ARGS__)
+	 __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (N, ## __VA_ARGS__)
 
 /* Allocate a new object on the HEAP */
 #define NEW(T, N, ...) \
 	T* N = malloc(sizeof(*N)); \
-	INIT(T, N, __VA_ARGS__);
+	INIT(T, N, ## __VA_ARGS__);
 
 /*
  * Reconstructs a object. Use with caution.
  */
 #define RENEW(T, N, ...) do { \
 	N = malloc(sizeof(*N)); \
-	INIT(T, N, __VA_ARGS__); \
+	INIT(T, N, ## __VA_ARGS__); \
 } while (0)
 
 
 /* Allocate a new object on the STACK */
 #define SNEW(T, N, ...) \
 	T N; \
-	INIT(T, & N, __VA_ARGS__);
+	INIT(T, & N, ## __VA_ARGS__);
 
 /* Destructor for type */
 #define FREE(T) TEMPL(free, T)
