@@ -6,6 +6,8 @@
 #define LLIST(T) TEMPL(llist, T)
 #define LINK(T)  TEMPL(llist_link, T)
 
+#define UNLINK(T) TEMPL(unlink, T)
+
 #endif /* LINKED_LIST_H */
 #ifdef TYPE
 
@@ -38,7 +40,11 @@ INIT_F ( LINK(TYPE) );
 INIT_F ( LINK(TYPE), TYPE* val );
 FREE_F ( LINK(TYPE) );
 
-int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val);
+int UNLINK(LINK(TYPE)) ( LINK(TYPE)* );
+
+int PUSH(LLIST(TYPE)) ( LLIST(TYPE)*, TYPE* );
+TYPE* PEEK(LLIST(TYPE)) ( LLIST(TYPE)* );
+TYPE* POP(LLIST(TYPE)) ( LLIST(TYPE)* );
 
 int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src );
 

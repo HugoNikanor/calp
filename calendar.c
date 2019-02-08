@@ -70,10 +70,7 @@ int parse_dir(vcomponent* cal, char* path) {
 			exit (1);
 		}
 
-		/* TODO currently the hedaers cal is overwritten each
-		 * iteration (not really, since I don't save any headers).
-		 * Preferably, a special case is made for vdir structures
-		 * which can assume that all headers are equal. */
+		// TODO complete path
 		parse_file(fname, f, cal);
 
 		fclose(f);
@@ -115,6 +112,7 @@ int read_vcalendar(vcomponent* cal, char* path) {
 				exit (1);
 			}
 
+			// TODO absolute path
 			parse_file(path, f, cal);
 			fclose(f);
 			break;

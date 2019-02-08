@@ -29,6 +29,8 @@ INIT_F(content_line);
 INIT_F(content_line, int keylen, int vallen);
 FREE_F(content_line);
 
+int content_line_copy (content_line* dest, content_line* src);
+
 /*
  * Resolves a collision in some form of structure (probably a hash-map
  * or a trie). If dest is NULL just return new. Otherwise mutates dest
@@ -50,16 +52,18 @@ typedef struct s_vcomponent vcomponent;
 
 struct s_vcomponent {
 	char* filename;
+	char* type;
 	vcomponent* parent;
 	TRIE(content_line) clines;
 	VECT(vcomponent) components;
 };
 
-INIT_F(vcomponent);
-INIT_F(vcomponent, char* filename);
-FREE_F(vcomponent);
+#define FCHILD(v) GET(VECT(vcomponent))(&(v)->components, 0)
 
-int content_line_copy (content_line* dest, content_line* src);
+INIT_F(vcomponent);
+INIT_F(vcomponent, char* type);
+INIT_F(vcomponent, char* type, char* filename);
+FREE_F(vcomponent);
 
 content_line* get_property (vcomponent* ev, char* key);
 
@@ -70,5 +74,7 @@ int add_content_line (vcomponent* ev, content_line* c);
  * out of scope.
  */
 int PUSH(vcomponent)(vcomponent*, vcomponent*);
+
+int DEEP_COPY(vcomponent)(vcomponent*, vcomponent*);
 
 #endif /* VCAL_H */

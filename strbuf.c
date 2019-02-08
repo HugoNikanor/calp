@@ -82,6 +82,12 @@ int strbuf_copy(strbuf* dest, strbuf* src) {
 }
 
 int strbuf_cmp(strbuf* a, strbuf* b) {
+#ifdef SAFE_STR
+	if (a->alloc == 0 || b->alloc == 0) {
+		ERR("a or b not alloced");
+		return -1;
+	}
+#endif
 	return strcmp(a->mem, b->mem);
 }
 

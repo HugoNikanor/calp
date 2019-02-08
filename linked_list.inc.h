@@ -15,8 +15,7 @@ INIT_F ( LLIST(TYPE) ) {
 }
 
 FREE_F (LINK(TYPE)) {
-	if (this->before != NULL) this->before->after = NULL;
-	if (this->after  != NULL) this->after->before = NULL;
+	UNLINK(LINK(TYPE))(this);
 
 	if (this->value  != NULL) FFREE(TYPE, this->value);
 	return 0;
@@ -50,6 +49,13 @@ INIT_F ( LINK(TYPE), TYPE* val ) {
 	return 0;
 }
 
+int UNLINK(LINK(TYPE)) ( LINK(TYPE)* this ) {
+	if (this->before != NULL) this->before->after = this->after;
+	if (this->after  != NULL) this->after->before = this->before;
+	return 0;
+}
+	 
+
 int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val) {
 	NEW(LINK(TYPE), link, val);
 
@@ -65,6 +71,23 @@ int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val) {
 	lst->cur = link;
 
 	return 0;
+}
+
+TYPE* PEEK(LLIST(TYPE)) ( LLIST(TYPE)* lst ) {
+	if (EMPTY(LLIST(TYPE))(lst)) return NULL;
+
+	return FIRST(lst)->value;
+}
+
+TYPE* POP(LLIST(TYPE)) ( LLIST(TYPE)* lst) {
+	if (EMPTY(LLIST(TYPE))(lst)) return NULL;
+
+	LINK(TYPE)* frst = FIRST(lst);
+	UNLINK(LINK(TYPE))(frst);
+
+	TYPE* retval = frst->value;
+	free (frst);
+	return retval;
 }
 
 int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src ) {

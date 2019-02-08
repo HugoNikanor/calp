@@ -7,6 +7,10 @@
 #include "strbuf.h"
 #include "vcal.h"
 
+#define TYPE vcomponent
+#include "linked_list.h"
+#undef TYPE
+
 /*
  * Max length of a line.
  * TODO update this to allow longer lines, in case someone doesn't
@@ -28,18 +32,19 @@ typedef enum {
 } scope_context;
 
 typedef struct {
-	scope_context scope;
-	strbuf* skip_to;
+	char* filename;
+	LLIST(strbuf) key_stack;
+	LLIST(vcomponent) comp_stack;
 } parse_ctx;
 
+INIT_F(parse_ctx, char* filename);
+
 int handle_kv(
-		vcomponent*    cal,
-		vcomponent*    ev,
 		content_line*  cline,
 		int            line,
 		parse_ctx*     ctx
 		);
 
-int parse_file(char* fname, FILE* f, vcomponent* cal);
+int parse_file(char* filename, FILE* f, vcomponent* cal);
 
 #endif /* PARSE_H */

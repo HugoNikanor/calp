@@ -88,6 +88,8 @@
 #define SIZE(T)      TEMPL(size      , T)
 #define EMPTY(T)     TEMPL(empty     , T)
 #define PUSH(T)      TEMPL(push      , T)
+#define PEEK(T)      TEMPL(peek      , T)
+#define POP(T)       TEMPL(pop       , T)
 #define GET(T)       TEMPL(get       , T)
 
 #endif /* MACRO_H */

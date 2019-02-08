@@ -16,20 +16,28 @@
 #undef TYPE
 
 INIT_F(vcomponent) {
-	return INIT(vcomponent, this, NULL);
+	(void) this;
+	ERR("Do not use");
+	return 0;
 }
 
-INIT_F(vcomponent, char* filename) {
+INIT_F(vcomponent, char* type) {
+	return INIT(vcomponent, this, type, NULL);
+}
+
+INIT_F(vcomponent, char* type, char* filename) {
 
 	INIT(TRIE(content_line), &this->clines);
 	INIT(VECT(vcomponent), &this->components);
 
+	this->filename = NULL;
 	if (filename != NULL) {
 		this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
 		strcpy(this->filename, filename);
-	} else {
-		this->filename = NULL;
 	}
+
+	this->type = calloc(sizeof(*type), strlen(type) + 1);
+	strcpy(this->type, type);
 
 	this->parent = NULL;
 
@@ -98,6 +106,7 @@ int content_line_copy (content_line* dest, content_line* src) {
 
 FREE_F(vcomponent) {
 	if (this->filename != NULL) free(this->filename);
+	free(this->type);
 
 	if (FREE(TRIE(content_line))(&this->clines) != 0) {
 		fprintf(stderr, "Error freeing vcomponent belonging to file \n %s \n",
@@ -113,4 +122,9 @@ int PUSH(vcomponent)(vcomponent* parent, vcomponent* child) {
 	return PUSH(VECT(vcomponent))(&parent->components, child);
 }
 
-
+int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
+	(void) a;
+	(void) b;
+	ERR("Deep copy not implemented for vcomponent");
+	return -1;
+}

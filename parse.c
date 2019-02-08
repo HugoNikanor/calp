@@ -2,29 +2,30 @@
 
 #include <errno.h>
 #include <string.h>
+#include <assert.h>
 
 #include "macro.h"
 #include "vcal.h"
 
 #include "err.h"
 
-int parse_file(char* fname, FILE* f, vcomponent* cal) {
+#define TYPE vcomponent
+#include "linked_list.inc.h"
+#undef TYPE
+
+int parse_file(char* filename, FILE* f, vcomponent* root) {
 	int segments = 1;
 	SNEW(strbuf, str, segments * SEGSIZE);
 
 	part_context p_ctx = p_key;
-	SNEW(strbuf, skip, SEGSIZE);
-	parse_ctx ctx = {
-		.scope = s_none,
-		.skip_to = &skip
-	};
+
+	SNEW(parse_ctx, ctx, filename);
+	PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
 
 	int keylen = 100;
 	int vallen = 100;
 
 	int line = 0;
-
-	vcomponent* ev = NULL;
 
 	SNEW(content_line, cline, keylen, vallen);
 
@@ -84,12 +85,7 @@ int parse_file(char* fname, FILE* f, vcomponent* cal) {
 				// strbuf_cap(cline.vals.cur->value);
 
 				++line;
-
-				switch (handle_kv(cal, ev, &cline, line, &ctx)) {
-					case s_event:
-						RENEW(vcomponent, ev, fname);
-						break;
-				}
+				handle_kv(&cline, line, &ctx);
 				strbuf_soft_reset(&str);
 				p_ctx = p_key;
 
@@ -138,11 +134,17 @@ int parse_file(char* fname, FILE* f, vcomponent* cal) {
 		}
 		strbuf_copy(cline.vals.cur->value, &str);
 		strbuf_cap(cline.vals.cur->value);
-		handle_kv(cal, ev, &cline, line, &ctx);
+		handle_kv(&cline, line, &ctx);
 	}
 	FREE(strbuf)(&str);
 	FREE(content_line)(&cline);
-	FREE(strbuf)(ctx.skip_to);
+	// FREE(strbuf)(ctx.skip_to);
+	assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
+	assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
+	assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
+	FREE(LLIST(strbuf))(&ctx.key_stack);
+	FREE(LLIST(vcomponent))(&ctx.comp_stack);
+	free(ctx.filename);
 
 	return 0;
 }
@@ -150,80 +152,57 @@ int parse_file(char* fname, FILE* f, vcomponent* cal) {
 /*
  * TODO Extend this to handle properties
  */
-int handle_kv(
-		vcomponent*   cal,
-		vcomponent*   ev,
-		content_line* cline,
-		int           line,
-		parse_ctx* ctx
-		) {
-	switch (ctx->scope) {
+int handle_kv (
+	content_line* cline,
+	int	line,
+	parse_ctx* ctx
+	) {
 
-		case s_skip:
-			if (strbuf_c(&cline->key, "END") && strbuf_cmp(cline->vals.cur->value, ctx->skip_to)) {
-				ctx->scope = s_calendar;
-			}
-			break;
+	if (strbuf_c(&cline->key, "BEGIN")) {
+		/* should be one of:
+		 * VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE,
+		 * and possibly some others I forget.
+		 */
+		NEW(strbuf, s);
+		strbuf_init_copy(s, cline->vals.cur->value);
+		PUSH(LLIST(strbuf))(&ctx->key_stack, s);
 
-		case s_none:
-			if (! (strbuf_c(&cline->key, "BEGIN") && strbuf_c(cline->vals.cur->value, "VCALENDAR"))) {
-				ERR_F("%s, %i\n%s", "Invalid start of calendar", line, ev->filename);
-				return -1;
-			}
-			ctx->scope = s_calendar;
-			break;
+		NEW(vcomponent, e,
+				s->mem,
+				ctx->filename);
+		e->parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
+		PUSH(LLIST(vcomponent))(&ctx->comp_stack, e);
 
-		case s_calendar:
-			/*
-			 * TODO
-			 * BEGIN's can be nested, extend this with a stack
-			 * Apparently only VALARM can be nested.
-			 */
-			if (strbuf_c(&cline->key, "BEGIN")) {
-				if (strbuf_c(cline->vals.cur->value, "VEVENT")) {
-					ctx->scope = s_event;
-					return ctx->scope;
-					break;
-				} else {
+	} else if (strbuf_c(&cline->key, "END")) {
+		strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
+		if (strbuf_cmp(s, cline->vals.cur->value) != 0) {
+			ERR_F("Expected END:%s, got END:%s.\n%s line %i",
+					s->mem, cline->vals.cur->value->mem, PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename, line);
+			PUSH(LLIST(strbuf))(&ctx->key_stack, s);
+			return -1;
 
-					/* 
-					 * Here we found the start of some form of block
-					 * we don't understand. Just skip everything until
-					 * we find the matching END
-					 */
-					ctx->scope = s_skip;
-					strbuf_copy(ctx->skip_to, cline->vals.cur->value);
-
-				}
-			} else if (strbuf_c(&cline->key, "END")) {
-				if (strbuf_c(cline->vals.cur->value, "VCALENDAR")) {
-					ctx->scope = s_none;
-					break;
-				}
-			}
-			break;
-
-		case s_event:
-			if (ev == NULL) {
-				ERR_F("%s, %i", "Something has gone terribly wrong", line);
-				return -5;
-			}
-			if (strbuf_c(&cline->key, "END")) {
-				if (strbuf_c(cline->vals.cur->value, "VEVENT")) {
-					PUSH(vcomponent)(cal, ev);
-					ctx->scope = s_calendar;
-					return ctx->scope;
-				} else {
-					ERR_F("Trying to end something, expected VEVENT, Got [%s]\n%s : %i",
-							cline->vals.cur->value->mem, ev->filename, line);
-					return -3;
-				}
-			} else {
-				NEW(content_line, c);
-				content_line_copy(c, cline);
-				PUSH(TRIE(content_line))(&ev->clines, c->key.mem, c);
-			}
-			break;
+		} else {
+			FFREE(strbuf, s);
+			/* Received propper end, push cur into parent */ 
+			vcomponent* cur = POP(LLIST(vcomponent))(&ctx->comp_stack);
+			// TODO should this instead be done at creation time?
+			PUSH(vcomponent)(PEEK(LLIST(vcomponent))(&ctx->comp_stack), cur);
+		}
+	} else {
+		NEW(content_line, c);
+		content_line_copy(c, cline);
+		PUSH(TRIE(content_line))(
+				&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
+				c->key.mem, c);
 	}
+
+	return 0;
+}
+
+INIT_F(parse_ctx, char* filename) {
+	INIT(LLIST(strbuf), &this->key_stack);
+	INIT(LLIST(vcomponent), &this->comp_stack);
+	this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
+	strcpy(this->filename, filename);
 	return 0;
 }
