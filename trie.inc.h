@@ -115,9 +115,9 @@ FREE_F(TRIE(TYPE)) {
 
 int TRIE_DOT(TYPE) ( TRIE(TYPE)* trie, FILE* f ) {
 	TRIE_NODE(TYPE)* n = trie->root->child;
-	fputs("root;", f);
+	fputs("root [fontcolor=gray, color=gray];", f);
 	while (n != NULL) {
-		fprintf(f, "root -> \"%p\"\n",
+		fprintf(f, "root -> \"%p\" [color=gray]\n",
 				(void*) n);
 		fprintf(f, "subgraph \"cluster_%c\" {\n",
 				n->c);
