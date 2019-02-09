@@ -7,22 +7,32 @@
 
 #define TYPE strbuf
 #include "linked_list.h"
+// #include "trie.h"
 #undef TYPE
 
+/*
 typedef struct {
 	strbuf key;
 	strbuf value;
+
 	strbuf* vals;
 	int val_count;
 } parameter;
+*/
+
+typedef struct {
+	strbuf key;
+	strbuf val;
+} key_val;
 
 typedef struct {
 	strbuf key;
 
 	LLIST(strbuf) vals;
 
-	parameter* params;
-	int param_count;
+	/* parcams NULL by default, since most content lines doesn't have
+	 * any properties */
+	LLIST(strbuf) params;
 } content_line;
 
 INIT_F(content_line);

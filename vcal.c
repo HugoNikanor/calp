@@ -54,7 +54,17 @@ content_line* RESOLVE(content_line)
 		return NULL;
 	}
 
+	/*
+	 * This destroys new.
+	 */
 	APPEND(LLIST(strbuf)) (&dest->vals, &new->vals);
+
+	INFO_F("param length = %i", SIZE(LLIST(strbuf))(&new->params));
+	FOR(LLIST(strbuf), link, &new->params) {
+		INFO_F("| %s", link->value->mem);
+	}
+
+	APPEND(LLIST(strbuf)) (&dest->params, &new->params);
 
 	FREE(strbuf)(&new->key);
 	free(new);
@@ -70,7 +80,7 @@ INIT_F(content_line) {
 	INIT(strbuf, &this->key);
 	INIT( LLIST(strbuf), &this->vals );
 
-	// TODO remaining fields
+	INIT( LLIST(strbuf), &this->params );
 
 	return 0;
 }
@@ -81,7 +91,7 @@ INIT_F(content_line, int keylen, int vallen) {
 	NEW(strbuf, s, vallen);
 	PUSH(LLIST(strbuf))(&this->vals, s);
 
-	// TODO remaining fields
+	INIT( LLIST(strbuf), &this->params );
 
 	return 0;
 }
@@ -90,16 +100,19 @@ FREE_F(content_line) {
 	FREE(strbuf)(&this->key);
 	FREE(LLIST(strbuf))(&this->vals);
 
-	// TODO remaining fields
+	FREE(LLIST(strbuf))(&this->params);
 
 	return 0;
 }
 
 int content_line_copy (content_line* dest, content_line* src) {
+	if (! EMPTY(LLIST(strbuf))(&src->params)) {
+		INFO_F("[%s] : %s", src->key.mem, FIRST_V(&src->params)->mem);
+	}
+
 	DEEP_COPY(strbuf)(&dest->key, &src->key);
 	DEEP_COPY(LLIST(strbuf))(&dest->vals, &src->vals);
-
-	// TODO remaining fields
+	DEEP_COPY(LLIST(strbuf))(&dest->params, &src->params);
 
 	return 0;
 }
