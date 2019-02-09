@@ -56,6 +56,7 @@ int main (int argc, char* argv[argc]) {
 			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {
+		/* TODO this might be broken */
 		if (arg_shift(&args) == 0) {
 			for (size_t i = 0; i < root.components.length; i++) {
 				vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
@@ -68,10 +69,13 @@ int main (int argc, char* argv[argc]) {
 				strcat(target, "/tmp/dot/");
 				strcat(target, ev->filename);
 				strcat(target, ".dot");
-				create_graph(ev, target);
+				// create_graph(ev, target);
 			}
 		} else {
-			create_graph(FCHILD(FCHILD(&root)), args.argv[0]);
+			// create_graph(FCHILD(FCHILD(&root)), args.argv[0]);
+			puts("Creating graph for single file");
+			printf("output = %s\n", args.argv[0]);
+			create_graph_vcomponent(&root, args.argv[0]);
 		}
 	}
 

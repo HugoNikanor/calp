@@ -1,8 +1,9 @@
 #include "graphs.h"
 
 #include <stdio.h>
+#include <errno.h>
 
-int create_graph (vcomponent* ev, char* filename) {
+int create_graph_trie (vcomponent* ev, char* filename) {
 	FILE* f = fopen(filename, "w");
 
 	fputs("digraph {\n	rankdir=LR;", f);
@@ -13,5 +14,52 @@ int create_graph (vcomponent* ev, char* filename) {
 
 	printf("Wrote '%s' to '%s'\n", ev->filename, filename);
 
+	return 0;
+}
+
+int helper_vcomponent (vcomponent* root, FILE* f) {
+	fprintf(f, "subgraph \"cluster_root\" { label=File; \"%p\" [label=%s] }\n", root, root->type);
+
+	TRIE(content_line)* trie = &root->clines;
+	TRIE_NODE(content_line)* n = trie->root->child;
+
+	if (! EMPTY(TRIE(content_line))(trie)) {
+		fprintf(f, "subgraph \"cluster_%p\" {\n", root);
+		fprintf(f, "\"%p\" [label=trie fontcolor=gray, color=gray];", trie);
+		fprintf(f, "\"%p\" -> \"%p\" [color=red]\n", root, trie);
+		while (n != NULL) {
+			fprintf(f, "\"%p\" -> \"%p\" [color=gray]\n",
+					(void*) trie,
+					(void*) n);
+			fprintf(f, "subgraph \"cluster_%c_%p\" {\ncolor=red; \n",
+					n->c, root);
+			TRIE_DOT_HELP(content_line) ( n, f );
+			fputs("}", f);
+			n = n->next;
+		}
+		fputs("}", f);
+	}
+
+	vcomponent* child;
+	for (size_t i = 0; i < root->components.length; i++) {
+		child = GET(VECT(vcomponent))(&root->components, i);
+		if (child == NULL) continue;
+		fprintf(f, "\"%p\" -> \"%p\"\n", root, child);
+		helper_vcomponent(child, f);
+	}
+	return 0;
+}
+
+int create_graph_vcomponent (vcomponent* root, char* outfile) {
+	FILE* f = fopen(outfile, "w");
+	if (f == NULL) {
+		printf("Error opening file %s, errno = %i\n", outfile, errno);
+		return 1;
+	}
+	vcomponent* c = root;
+	fputs("digraph {", f);
+	helper_vcomponent(c, f);
+	fputs("}", f);
+	fclose(f);
 	return 0;
 }

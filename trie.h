@@ -49,4 +49,6 @@ FREE_F(TRIE(TYPE));
 int TRIE_DOT(TYPE) (  TRIE(TYPE)*, FILE* );
 int TRIE_DOT_HELP(TYPE) ( TRIE_NODE(TYPE)*, FILE* );
 
+int EMPTY(TRIE(TYPE))(TRIE(TYPE)*);
+
 #endif /* TYPE */
