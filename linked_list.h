@@ -53,4 +53,16 @@ int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new );
 int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 
+/* Iterator */
+
+// #define __BEG_LLIST(v, set) v = (set)->head
+#define __BEG_LLIST(v, set) v = FIRST(set)
+#define BEG_LLIST(T) LINK(T)* __BEG_LLIST
+
+#define __END_LLIST(var, set) var == (set)->tail
+#define END_LLIST(T) __END_LLIST
+
+#define __NXT_LLIST(var, set) var = var->after
+#define NXT_LLIST(T) __NXT_LLIST
+
 #endif /* TYPE */

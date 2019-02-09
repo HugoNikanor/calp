@@ -79,6 +79,21 @@
 
 
 /*
+ * Iterator macros.
+ */
+#define FOR(T, var, set) for( \
+		BEG_ ## T (var, set); \
+		END_ ## T (var, set); \
+		NXT_ ## T (var, set))
+
+/* Example int implementation
+ * FOR(int, i, 10) { } */
+
+#define BEG_int(i, set) int i = 0
+#define NXT_int(i, set) i++
+#define END_int(i, set) i < set
+
+/*
  * General functions that different container types may implement.
  * Actuall implementation and type signature is mostly left to
  * individual implementations.
