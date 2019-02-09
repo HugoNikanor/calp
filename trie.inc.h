@@ -2,6 +2,8 @@
 #error "Set TYPE before including this file"
 #else
 
+#include <stdarg.h>
+
 #include "err.h"
 
 INIT_F ( TRIE(TYPE) ) {
@@ -146,6 +148,48 @@ int TRIE_DOT_HELP(TYPE) ( TRIE_NODE(TYPE)* root, FILE* f  ) {
 		child = child->next;
 	}
 	return 0;
+}
+
+FMT_F(TRIE_NODE(TYPE)) {
+
+	va_list ap;
+	va_start(ap, buf);
+	int argc = va_arg(ap, int);
+	int depth = argc >= 1
+		? va_arg(ap, int)
+		: 0;
+	va_end(ap);
+
+	int seek = 0;
+
+	TRIE_NODE(TYPE)* n = this;
+
+	if (n == NULL) { fmtf("\n"); }
+	while (n != NULL) {
+		fmtf("|");
+		FOR(int, i, depth) fmtf(" ");
+		fmtf("%c ", n->c == '\0' ? '0' : n->c);
+		if (n->value != NULL) {
+			seek += FMT(TYPE)(n->value, buf + seek);
+		   	fmtf("\n");
+		}
+
+		if (n->child != NULL) {
+			fmtf("\n");
+			seek += FMT(TRIE_NODE(TYPE))(n->child, buf + seek, depth + 1);
+		}
+		n = n->next;
+	}
+	return seek;
+
+}
+
+FMT_F(TRIE(TYPE)) {
+	int seek = 0;
+	fmtf("Trie: %p: {\n", this);
+	seek += FMT(TRIE_NODE(TYPE))(this->root->child, buf + seek);
+	fmtf("}");
+	return seek;
 }
 
 #endif /* TYPE */

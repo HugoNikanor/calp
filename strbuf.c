@@ -1,6 +1,7 @@
 #include "strbuf.h"
 
 #include <string.h>
+#include <stdio.h>
 
 #ifdef SAFE_STR
 #include "err.h"
@@ -152,4 +153,13 @@ char* strbuf_end(strbuf* s) {
 int strbuf_soft_reset(strbuf* s) {
 	s->ptr = s->len = 0;
 	return 0;
+}
+
+strbuf* RESOLVE(strbuf)(strbuf* dest, strbuf* new) {
+	if (dest == NULL) return new;
+	else return dest;
+}
+
+FMT_F(strbuf) {
+	return sprintf(buf, "%s", this->mem);
 }

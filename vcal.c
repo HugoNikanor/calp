@@ -141,3 +141,15 @@ int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
 	ERR("Deep copy not implemented for vcomponent");
 	return -1;
 }
+
+FMT_F(vcomponent) {
+	return sprintf(buf, "vcomp (%p)", this);
+}
+
+FMT_F(content_line) {
+	char str_a[100], str_b[100], str_c[100];;
+	FMT(strbuf)(&this->key, str_a);
+	FMT(LLIST(strbuf))(&this->params, str_b);
+	FMT(LLIST(strbuf))(&this->vals, str_c);
+	return sprintf(buf, "[[cl|%s] params := %s vals := %s]", str_a, str_b, str_c);
+}

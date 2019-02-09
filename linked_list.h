@@ -59,6 +59,8 @@ int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 
 LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new);
 
+FMT_F(LLIST(TYPE));
+
 /* Iterator */
 
 // #define __BEG_LLIST(v, set) v = (set)->head

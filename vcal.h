@@ -87,5 +87,7 @@ int PUSH(vcomponent)(vcomponent*, vcomponent*);
 
 int DEEP_COPY(vcomponent)(vcomponent*, vcomponent*);
 
+FMT_F(content_line);
+FMT_F(vcomponent);
 
 #endif /* VCAL_H */

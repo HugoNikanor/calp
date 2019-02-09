@@ -103,4 +103,8 @@ int strbuf_realloc_copy(strbuf* dest, strbuf* src);
  */
 int strbuf_init_copy(strbuf* dest, strbuf* src);
 
+strbuf* RESOLVE(strbuf)(strbuf*, strbuf*);
+
+FMT_F(strbuf);
+
 #endif /* STRBUF_H */

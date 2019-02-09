@@ -109,5 +109,20 @@
 #define GET(T)       TEMPL(get       , T)
 #define RESET(T)     TEMPL(reset     , T)
 
+/*
+ * Formatting macros.
+ * Transform objects into string representation of themselves. 
+ * buf should be a suffisiently large memmory location, if it's to
+ * small then bad stuff might happen.
+ *
+ * Should return the number of bytes written (like sprintf).
+ */
+
+#define FMT_T(T)     TEMPL(format    , T)
+#define FMT_F(T) int FMT_T(T)(T* this, char* buf, ...)
+// TODO change order of buf and item
+#define __FMT_HELP(item, buf, ...) ((item), (buf), VA_ARGS_NUM(__VA_ARGS__), ## __VA_ARGS__)
+#define FMT(T) FMT_T(T) __FMT_HELP
+#define fmtf(...) seek += sprintf(buf + seek, __VA_ARGS__)
 
 #endif /* MACRO_H */
