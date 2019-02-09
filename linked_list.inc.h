@@ -17,7 +17,7 @@ INIT_F ( LLIST(TYPE) ) {
 FREE_F (LINK(TYPE)) {
 	UNLINK(LINK(TYPE))(this);
 
-	if (this->value  != NULL) FFREE(TYPE, this->value);
+	if (this->value != NULL) FFREE(TYPE, this->value);
 	return 0;
 }
 
@@ -132,12 +132,36 @@ int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
 	LINK(TYPE)* l = FIRST(llist);
 	while (l->after != NULL) {
 		++size;
+		l = l->after;
 	}
 	return size;
 }
 
 int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
 	return FIRST(llist) == llist->tail;
+}
+
+LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new) {
+	if (dest == NULL) return new;
+	APPEND(LLIST(TYPE))(dest, new);
+	return dest;
+}
+
+int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
+	INFO_F("|llist| = %i", SIZE(LLIST(TYPE))(llist));
+#if 1
+	FOR(LLIST(TYPE), link, llist) {
+		// INFO_F("Freeing link '%p' → '%p'", link, link->value);
+		INFO("leaking memmory, or something");
+		FFREE(LINK(TYPE), link);
+		// UNLINK(LINK(TYPE))(link);
+	}
+#else
+	// TODO This is a memmory leak
+	FIRST(llist) = llist->tail;
+	LAST(llist)  = llist->head;
+#endif
+	return 0;
 }
 
 #endif /* TYPE */

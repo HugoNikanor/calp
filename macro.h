@@ -107,5 +107,7 @@
 #define PEEK(T)      TEMPL(peek      , T)
 #define POP(T)       TEMPL(pop       , T)
 #define GET(T)       TEMPL(get       , T)
+#define RESET(T)     TEMPL(reset     , T)
+
 
 #endif /* MACRO_H */
