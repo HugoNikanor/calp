@@ -7,6 +7,7 @@
 #include "macro.h"
 #include "vcal.h"
 #include "graphs.h"
+#include "err.h"
 
 typedef struct {
 	int argc;
@@ -25,7 +26,7 @@ int main (int argc, char* argv[argc]) {
 	arg args = { .argc = argc, .argv = argv };
 
 	if (arg_shift(&args) == 0) {
-		puts("Please give vdir or a vcalendar file as first argument");
+		ERR("Please give vdir or a vcalendar file as first argument");
 		exit (1);
 	}
 
@@ -36,9 +37,8 @@ int main (int argc, char* argv[argc]) {
 	arg_shift(&args);
 
 	if (args.argc == 0 || strcmp(args.argv[0], "-p") == 0) {
-		printf("\nParsed calendar file containing [%u] events\n",
-				root.components.length
-				);
+		INFO_F("\nParsed calendar file containing [%u] events",
+				root.components.length);
 		for (size_t i = 0; i < root.components.length; i++) {
 			vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
 			assert(strcmp(cal->type, "VCALENDAR") == 0);
@@ -73,8 +73,8 @@ int main (int argc, char* argv[argc]) {
 			}
 		} else {
 			// create_graph(FCHILD(FCHILD(&root)), args.argv[0]);
-			puts("Creating graph for single file");
-			printf("output = %s\n", args.argv[0]);
+			INFO("Creating graph for single file");
+			INFO_F("output = %s\n", args.argv[0]);
 			create_graph_vcomponent(&root, args.argv[0]);
 		}
 	}

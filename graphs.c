@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
+#include "err.h"
 
 int create_graph_trie (vcomponent* ev, char* filename) {
 	FILE* f = fopen(filename, "w");
@@ -12,7 +14,6 @@ int create_graph_trie (vcomponent* ev, char* filename) {
 
 	fclose(f);
 
-	printf("Wrote '%s' to '%s'\n", ev->filename, filename);
 
 	return 0;
 }
@@ -36,6 +37,7 @@ int attr_helper(TRIE_NODE(content_line)* root, FILE* f) {
 		attr_helper(root->child, f);
 		child = child->next;
 	}
+	INFO_F("Wrote '%s' to '%s'", ev->filename, filename);
 
 	return 0;
 }
@@ -80,7 +82,7 @@ int helper_vcomponent (vcomponent* root, FILE* f) {
 int create_graph_vcomponent (vcomponent* root, char* outfile) {
 	FILE* f = fopen(outfile, "w");
 	if (f == NULL) {
-		printf("Error opening file %s, errno = %i\n", outfile, errno);
+		ERR_F("Error opening file %s, errno = %i", outfile, errno);
 		return 1;
 	}
 	vcomponent* c = root;

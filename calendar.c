@@ -14,6 +14,7 @@
 
 #include "macro.h"
 #include "parse.h"
+#include "err.h"
 
 /*
  * Returns 0 if file has no extersion
@@ -92,11 +93,11 @@ int read_vcalendar(vcomponent* cal, char* path) {
 
 	int type  = statbuf.st_mode & 0777000;
 	int chmod = statbuf.st_mode & 0777;
-	printf("file has mode 0%o, with chmod = 0%o\n", type, chmod);
+	INFO_F("file has mode 0%o, with chmod = 0%o", type, chmod);
 
 	switch (type) {
 		case S_IFREG:
-			puts("Parsing a single file");
+			INFO("Parsing a single file");
 
 			char ext[10];
 			int has_ext = get_extension(path, ext, 9);
@@ -118,12 +119,12 @@ int read_vcalendar(vcomponent* cal, char* path) {
 			break;
 
 		case S_IFDIR:
-			puts("Parsing a directory");
+			INFO("Parsing a directory");
 			parse_dir (cal, path);
 			break;
 
 		case S_IFLNK:
-			fputs("Found symlink, can't be bothered to check it further.", stderr);
+			ERR("Found symlink, can't be bothered to check it further.");
 			break;
 
 		default:
