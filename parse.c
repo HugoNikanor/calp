@@ -13,6 +13,9 @@
 #include "linked_list.inc.h"
 #undef TYPE
 
+/*
+ * name *(";" param) ":" value CRLF
+ */
 int parse_file(char* filename, FILE* f, vcomponent* root) {
 	int segments = 1;
 	SNEW(strbuf, str, segments * SEGSIZE);
@@ -81,6 +84,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				}
 
 				strbuf_copy(cline.vals.cur->value, &str);
+
 				/* TODO when do I actualy cap? */
 				// strbuf_cap(cline.vals.cur->value);
 
@@ -132,26 +136,31 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			vallen = str.ptr + 1;
 			strbuf_realloc(cline.vals.cur->value, vallen);
 		}
+
 		strbuf_copy(cline.vals.cur->value, &str);
 		strbuf_cap(cline.vals.cur->value);
 		handle_kv(&cline, line, &ctx);
+
 	}
+
 	FREE(strbuf)(&str);
 	FREE(content_line)(&cline);
 	// FREE(strbuf)(ctx.skip_to);
+
 	assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
 	assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
 	assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
+
 	FREE(LLIST(strbuf))(&ctx.key_stack);
 	FREE(LLIST(vcomponent))(&ctx.comp_stack);
 	free(ctx.filename);
 
+	FREE(strbuf)(&kv.key);
+	FREE(strbuf)(&kv.val);
+
 	return 0;
 }
 
-/*
- * TODO Extend this to handle properties
- */
 int handle_kv (
 	content_line* cline,
 	int	line,

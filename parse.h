@@ -20,16 +20,11 @@
  */
 #define SEGSIZE 75
 
-#define LINE(nr, key, value) fprintf(stderr, "(%i) %i: [%s] := [%s]\n", __LINE__, nr, key, value);
+// #define LINE(nr, key, value) fprintf(stderr, "(%i) %i: [%s] := [%s]\n", __LINE__, nr, key, value);
 
 typedef enum {
 	p_key, p_value, p_param_name, p_param_value
 } part_context;
-
-typedef enum {
-	s_none = 1, s_calendar, s_event,
-	s_skip
-} scope_context;
 
 typedef struct {
 	char* filename;

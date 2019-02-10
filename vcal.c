@@ -45,8 +45,8 @@ INIT_F(vcomponent, char* type, char* filename) {
 }
 
 content_line* RESOLVE(content_line)
-	(content_line* dest, content_line* new) {
-
+	(content_line* dest, content_line* new)
+{
 	if (dest == NULL) return new;
 
 	if (strbuf_cmp(&dest->key, &new->key) != 0) {

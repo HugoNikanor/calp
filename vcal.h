@@ -10,16 +10,6 @@
 // #include "trie.h"
 #undef TYPE
 
-/*
-typedef struct {
-	strbuf key;
-	strbuf value;
-
-	strbuf* vals;
-	int val_count;
-} parameter;
-*/
-
 typedef struct {
 	strbuf key;
 	strbuf val;
