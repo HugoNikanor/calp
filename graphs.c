@@ -115,12 +115,12 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 
 
 		/* Parameters */
-		if (! EMPTY(LLIST(key_val))(&root->value->params)) {
+		if (! EMPTY(LLIST(PAIR(strbuf,strbuf)))(&root->value->params)) {
 			fprintf(f, "subgraph \"cluster_param_%p\"{\n	color=blue;\n", root);
-			FOR(LLIST(key_val), link, &root->value->params) {
+			FOR(LLIST(PAIR(strbuf,strbuf)), link, &root->value->params) {
 				fprintf(f, "\"%p\"  [shape=rectangle, label=\"%s := %s\"];", link,
-						link->value->key.mem,
-						link->value->val.mem);
+						link->value->left.mem,
+						link->value->right.mem);
 			}
 			fputs("}", f);
 
@@ -133,7 +133,7 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 			 */
 			fprintf(f, "\"link_%p\" [label=params style=filled fillcolor=lightblue];\n", root);
 			fprintf(f, "\"%p\" -> \"link_%p\";\n", root, root);
-			FOR(LLIST(key_val), link, &root->value->params) {
+			FOR(LLIST(PAIR(strbuf,strbuf)), link, &root->value->params) {
 				fprintf(f, "\"link_%p\" -> \"%p\";\n", root, link);
 			}
 		}

@@ -15,6 +15,17 @@
 #include "vector.inc.h"
 #undef TYPE
 
+#define T strbuf
+#define V strbuf
+#include "pair.inc.h"
+#undef T
+#undef V
+
+#define TYPE PAIR(strbuf, strbuf)
+#include "linked_list.inc.h"
+#undef TYPE
+
+
 INIT_F(vcomponent) {
 	(void) this;
 	ERR("Do not use");
@@ -59,7 +70,7 @@ content_line* RESOLVE(content_line)
 	 */
 	APPEND(LLIST(strbuf)) (&dest->vals, &new->vals);
 
-	APPEND(LLIST(key_val)) (&dest->params, &new->params);
+	APPEND(LLIST(PAIR(strbuf,strbuf))) (&dest->params, &new->params);
 
 	FREE(strbuf)(&new->key);
 	free(new);
@@ -75,7 +86,7 @@ INIT_F(content_line) {
 	INIT(strbuf, &this->key);
 	INIT( LLIST(strbuf), &this->vals );
 
-	INIT( LLIST(key_val), &this->params );
+	INIT( LLIST(PAIR(strbuf,strbuf)), &this->params );
 
 	return 0;
 }
@@ -86,7 +97,7 @@ INIT_F(content_line, int keylen, int vallen) {
 	NEW(strbuf, s, vallen);
 	PUSH(LLIST(strbuf))(&this->vals, s);
 
-	INIT( LLIST(key_val), &this->params );
+	INIT( LLIST(PAIR(strbuf,strbuf)), &this->params );
 
 	return 0;
 }
@@ -95,7 +106,7 @@ FREE_F(content_line) {
 	FREE(strbuf)(&this->key);
 	FREE(LLIST(strbuf))(&this->vals);
 
-	FREE(LLIST(key_val))(&this->params);
+	FREE(LLIST(PAIR(strbuf,strbuf)))(&this->params);
 
 	return 0;
 }
@@ -103,7 +114,7 @@ FREE_F(content_line) {
 int content_line_copy (content_line* dest, content_line* src) {
 	DEEP_COPY(strbuf)(&dest->key, &src->key);
 	DEEP_COPY(LLIST(strbuf))(&dest->vals, &src->vals);
-	DEEP_COPY(LLIST(key_val))(&dest->params, &src->params);
+	DEEP_COPY(LLIST(PAIR(strbuf,strbuf)))(&dest->params, &src->params);
 
 	return 0;
 }
@@ -151,34 +162,7 @@ FMT_F(vcomponent) {
 FMT_F(content_line) {
 	char str_a[100], str_b[100], str_c[100];;
 	FMT(strbuf)(&this->key, str_a);
-	FMT(LLIST(key_val))(&this->params, str_b);
+	FMT(LLIST(PAIR(strbuf, strbuf)))(&this->params, str_b);
 	FMT(LLIST(strbuf))(&this->vals, str_c);
 	return sprintf(buf, "[[cl|%s] params := %s vals := %s]", str_a, str_b, str_c);
-}
-
-INIT_F(key_val) {
-	INIT(strbuf, &this->key, 100);
-	INIT(strbuf, &this->val, 100);
-	return 0;
-}
-
-FREE_F(key_val) {
-	FREE(strbuf)(&this->key);
-	FREE(strbuf)(&this->val);
-	return 0;
-}
-
-FMT_F(key_val) {
-	char keybuf[100];
-	char valbuf[100];
-	FMT(strbuf)(&this->key, keybuf);
-	FMT(strbuf)(&this->val, valbuf);
-
-	return sprintf(buf, "[[%s] := [%s]]", keybuf, valbuf);
-}
-
-int DEEP_COPY(key_val) (key_val* dest, key_val* src) {
-	DEEP_COPY(strbuf)(&dest->key, &src->key);
-	DEEP_COPY(strbuf)(&dest->val, &src->val);
-	return 0;
 }

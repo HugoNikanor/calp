@@ -13,10 +13,6 @@
 #include "linked_list.inc.h"
 #undef TYPE
 
-#define TYPE key_val
-#include "linked_list.inc.h"
-#undef TYPE
-
 /*
  * name *(";" param) ":" value CRLF
  */
@@ -30,7 +26,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	//                 keylen -+    |
 	//                         |    |
 	SNEW(content_line, cline, 100, 100);
-	SNEW(key_val, kv);
+	SNEW(PAIR(strbuf,strbuf), kv);
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
@@ -85,8 +81,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 * Border between param {key, value}
 		 */
 		} else if (p_ctx == p_param_name && c == '=') {
-			DEEP_COPY(strbuf)(&kv.key, &ctx.str);
-			strbuf_cap(&kv.key);
+			DEEP_COPY(strbuf)(&kv.left, &ctx.str);
+			strbuf_cap(&kv.right);
 			strbuf_soft_reset(&ctx.str);
 
 			p_ctx = p_param_value;
@@ -101,7 +97,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		} else if ((p_ctx == p_key || p_ctx == p_param_value) && (c == ':' || c == ';')) {
 			strbuf* dest;
 			if      (p_ctx == p_key)         dest = &cline.key;
-			else if (p_ctx == p_param_value) dest = &kv.val;
+			else if (p_ctx == p_param_value) dest = &kv.right;
 
 			DEEP_COPY(strbuf)(dest, &ctx.str);
 			strbuf_cap(dest);
@@ -109,9 +105,9 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 			if (p_ctx == p_param_value) {
 				/* push kv pair */
-				NEW (key_val, _kv);
-				DEEP_COPY(key_val)(_kv, &kv);
-				PUSH(LLIST(key_val))(&cline.params, _kv);
+				NEW (PAIR(strbuf,strbuf), _kv);
+				DEEP_COPY(PAIR(strbuf,strbuf))(_kv, &kv);
+				PUSH(LLIST(PAIR(strbuf,strbuf)))(&cline.params, _kv);
 			}
 
 			if      (c == ':') p_ctx = p_value;
@@ -146,7 +142,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 	FREE(parse_ctx)(&ctx);
 
-	FREE(key_val)(&kv);
+	FREE(PAIR(strbuf,strbuf))(&kv);
 
 	return 0;
 }
@@ -196,8 +192,8 @@ int handle_kv (
 				&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
 				c->key.mem, c);
 
-		if ( SIZE(LLIST(key_val))(&c->params) != 0 ) {
-			RESET(LLIST(key_val))(&cline->params);
+		if ( SIZE(LLIST(PAIR(strbuf,strbuf)))(&c->params) != 0 ) {
+			RESET(LLIST(PAIR(strbuf,strbuf)))(&cline->params);
 		}
 	}
 

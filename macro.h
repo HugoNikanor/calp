@@ -31,7 +31,8 @@
  *
  * nameᐸTᐳ
  */
-#define TEMPL(name, T)             TP4(name, \U00001438 , T, \U00001433 )
+#define TEMPL(name, T)     TP4(name, \U00001438 , T, \U00001433 )
+#define TEMPL2(name, T, V) TP6(name, \U00001438\U00001438 , T , \U00001433_\U00001438 , V, \U00001433\U00001433)
 #define TEMPL_N(name, T, argcount) TP6(name, \U00001438 , T, _, argcount, \U00001433 )
 
 /* Constructor type name */

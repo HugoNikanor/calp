@@ -10,17 +10,13 @@
 // #include "trie.h"
 #undef TYPE
 
-typedef struct {
-	strbuf key;
-	strbuf val;
-} key_val;
+#define T strbuf
+#define V strbuf
+#include "pair.h"
+#undef T
+#undef V
 
-INIT_F(key_val);
-FREE_F(key_val);
-FMT_F(key_val);
-int DEEP_COPY(key_val) (key_val* dest, key_val* src);
-
-#define TYPE key_val
+#define TYPE PAIR(strbuf, strbuf)
 #include "linked_list.h"
 #undef TYPE
 
@@ -29,7 +25,7 @@ typedef struct {
 
 	LLIST(strbuf) vals;
 
-	LLIST(key_val) params;
+	LLIST(PAIR(strbuf, strbuf)) params;
 } content_line;
 
 INIT_F(content_line);
