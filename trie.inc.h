@@ -146,7 +146,7 @@ int TRIE_DOT_HELP(TYPE) ( TRIE_NODE(TYPE)* root, FILE* f  ) {
 		if (! EMPTY(LLIST(key_val))(&root->value->params)) {
 			fprintf(f, "subgraph \"cluster_param_%p\"{\n	color=blue;\n", root);
 			FOR(LLIST(key_val), link, &root->value->params) {
-				fprintf(f, "\"%p\"  [label=\"%s := %s\"];", link,
+				fprintf(f, "\"%p\"  [shape=rectangle, label=\"%s := %s\"];", link,
 						link->value->key.mem,
 						link->value->val.mem);
 			}

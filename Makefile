@@ -4,9 +4,7 @@ CC  := gcc
 
 OBJDIR = obj
 
-# CPPFLAGS =
-CFLAGS  = $(CPPFLAGS) \
-		  -std=gnu11 -Wall -Wextra \
+CFLAGS  = -std=gnu11 -Wall -Wextra \
 		  -ggdb -fPIC \
 		  $(shell guile-config compile)
 LDFLAGS = -fPIC $(shell guile-config link)
@@ -29,7 +27,7 @@ parse: $(O_FILES)
 $(O_FILES): | $(OBJDIR)
 
 $(OBJDIR)/%.o : %.c $(H_FILES) $(X_FILES)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)

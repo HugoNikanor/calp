@@ -138,8 +138,6 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 	}
 
-	INFO("Parsed file, cleaning up.");
-
 	FREE(content_line)(&cline);
 
 	assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
