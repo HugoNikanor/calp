@@ -66,11 +66,6 @@ int strbuf_append(strbuf* s, char c);
 int strbuf_cap(strbuf* s);
 
 /*
- * Resets the seek for strbuf to 0.
- */
-int strbuf_reset(strbuf* s);
-
-/*
  * Returns a pointer to character at index. Allows mutation of the
  * value pointed to by the return address.
  */
@@ -80,6 +75,11 @@ char* charat(strbuf* s, unsigned int idx);
  * Same as `charat`, But returns the current character.
  */
 char* strbuf_cur(strbuf* s);
+
+/*
+ * Resets the seek for strbuf to 0.
+ */
+int strbuf_reset(strbuf* s);
 
 /*
  * Sets the length and seek ptr to 0, but doesn't touch the memmory. 
