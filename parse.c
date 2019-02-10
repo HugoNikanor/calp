@@ -13,24 +13,24 @@
 #include "linked_list.inc.h"
 #undef TYPE
 
+#define TYPE key_val
+#include "linked_list.inc.h"
+#undef TYPE
+
 /*
  * name *(";" param) ":" value CRLF
  */
 int parse_file(char* filename, FILE* f, vcomponent* root) {
-	int segments = 1;
-	SNEW(strbuf, str, segments * SEGSIZE);
-
 	part_context p_ctx = p_key;
 
 	SNEW(parse_ctx, ctx, filename);
 	PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
 
-	int keylen = 100;
-	int vallen = 100;
-
-	int line = 0;
-
-	SNEW(content_line, cline, keylen, vallen);
+	//                      vallen -+
+	//                 keylen -+    |
+	//                         |    |
+	SNEW(content_line, cline, 100, 100);
+	SNEW(key_val, kv);
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
@@ -53,19 +53,9 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			s[0] = (c == '\n' ? '\n' : fgetc(f));
 			s[1] = fgetc(f);
 
-			if (s[0] != '\n') { ERR_F("%s, %i", "expected newline after CR", line); }
+			if (s[0] != '\n') { ERR_F("%s, %i", "expected newline after CR", ctx.line); }
 			else if (s[1] == ' ' || s[1] == '\t') {
-				/* Folded line, increase size of key and continue.  */
-
-				/* TODO segments is always incremented here, meaning
-				 * that segment grows larger for every multi line
-				 * encountered.
-				 */
-				if (strbuf_realloc(&str, ++segments * SEGSIZE) != 0) {
-					ERR_F("%s, %i", "Failed to realloc strbuf", line);
-					exit (1);
-				}
-				continue;
+				/* Folded line, don't end line */
 			} else {
 
 				/* Actuall end of line, handle values.  */
@@ -74,96 +64,97 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				 * since it's part of the next line.
 				 */
 				if (ungetc(s[1], f) != s[1]) {
-					ERR_F("%s, %i", "Failed to put character back on FILE", line);
+					ERR_F("%s, %i", "Failed to put character back on FILE", ctx.line);
 					exit (2);
 				}
 
-				if (str.ptr + 1 > vallen) {
-					vallen = str.ptr + 1;
-					strbuf_realloc(cline.vals.cur->value, vallen);
-				}
+				strbuf_copy(cline.vals.cur->value, &ctx.str);
+				strbuf_cap(cline.vals.cur->value);
+				strbuf_soft_reset(&ctx.str);
 
-				strbuf_copy(cline.vals.cur->value, &str);
+				++ctx.line;
+				ctx.column = 0;
 
-				/* TODO when do I actualy cap? */
-				// strbuf_cap(cline.vals.cur->value);
+				handle_kv(&cline, &ctx);
 
-				++line;
-				handle_kv(&cline, line, &ctx);
-				strbuf_soft_reset(&str);
 				p_ctx = p_key;
-
-				continue;
 			}
+
 
 		/*
-		 * TODO context for property_{key,val}.
+		 * Border between param {key, value}
 		 */
-		} else if (p_ctx == p_key && c == ':') {
-			if (str.ptr + 1 > keylen) {
-				keylen = str.ptr + 1;
-				/*
-				 * Allow for key's longer than 100 octets. It
-				 * currently is of no use, since key's can't be
-				 * folded.
-				 * TODO check if everything should be unfolded at 75
-				 * octets, or if that is only for values.
-				 *
-				 * TODO earlier there was a bug here. Test if that is
-				 * fixed and reenable this line.
-				 */
-				// strbuf_realloc(&cline.key, keylen);
-			}
-			strbuf_copy(&cline.key, &str);
-			strbuf_cap(&cline.key);
-			strbuf_soft_reset(&str);
-			p_ctx = p_value;
-			continue;
-		}
+		} else if (p_ctx == p_param_name && c == '=') {
+			strbuf_copy(&kv.key, &ctx.str);
+			strbuf_cap(&kv.key);
+			strbuf_soft_reset(&ctx.str);
 
-		strbuf_append(&str, c);
+			p_ctx = p_param_value;
+
+		/*
+		 * One of four cases:
+		 * 1) end of key  , start of value
+		 * 2)   ,,   key  ,    ,,    param
+		 * 3)   ,,   param,    ,,    param
+		 * 4)   ,,   param,    ,,    value
+		 */
+		} else if ((p_ctx == p_key || p_ctx == p_param_value) && (c == ':' || c == ';')) {
+			strbuf* dest;
+			if      (p_ctx == p_key)         dest = &cline.key;
+			else if (p_ctx == p_param_value) dest = &kv.val;
+
+			strbuf_copy(dest, &ctx.str);
+			strbuf_cap(dest);
+			strbuf_soft_reset(&ctx.str);
+
+			if (p_ctx == p_param_value) {
+				/* push kv pair */
+				NEW (key_val, _kv);
+				DEEP_COPY(key_val)(_kv, &kv);
+				PUSH(LLIST(key_val))(&cline.params, _kv);
+			}
+
+			if      (c == ':') p_ctx = p_value;
+			else if (c == ';') p_ctx = p_param_name;
+
+		} else {
+			strbuf_append(&ctx.str, c);
+			++ctx.column;
+		}
 	}
 
 	if (! feof(f)) {
 		ERR("Error parsing");
-	} else if (cline.vals.cur->value->len != 0 && str.ptr != 0) {
+	} else if (cline.vals.cur->value->len != 0 && ctx.str.ptr != 0) {
 		/*
 		 * The standard (3.4, l. 2675) says that each icalobject must
 		 * end with CRLF. My files however does not, so we also parse
 		 * the end here.
 		 */
-		if (str.ptr + 1 > vallen) {
-			vallen = str.ptr + 1;
-			strbuf_realloc(cline.vals.cur->value, vallen);
-		}
 
-		strbuf_copy(cline.vals.cur->value, &str);
+		strbuf_copy(cline.vals.cur->value, &ctx.str);
 		strbuf_cap(cline.vals.cur->value);
-		handle_kv(&cline, line, &ctx);
+		handle_kv(&cline, &ctx);
 
 	}
 
-	FREE(strbuf)(&str);
+	INFO("Parsed file, cleaning up.");
+
 	FREE(content_line)(&cline);
-	// FREE(strbuf)(ctx.skip_to);
 
 	assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
 	assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
 	assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
 
-	FREE(LLIST(strbuf))(&ctx.key_stack);
-	FREE(LLIST(vcomponent))(&ctx.comp_stack);
-	free(ctx.filename);
+	FREE(parse_ctx)(&ctx);
 
-	FREE(strbuf)(&kv.key);
-	FREE(strbuf)(&kv.val);
+	FREE(key_val)(&kv);
 
 	return 0;
 }
 
 int handle_kv (
 	content_line* cline,
-	int	line,
 	parse_ctx* ctx
 	) {
 
@@ -172,8 +163,9 @@ int handle_kv (
 		 * VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE,
 		 * and possibly some others I forget.
 		 */
+
 		NEW(strbuf, s);
-		strbuf_init_copy(s, cline->vals.cur->value);
+		strbuf_copy(s, cline->vals.cur->value);
 		PUSH(LLIST(strbuf))(&ctx->key_stack, s);
 
 		NEW(vcomponent, e,
@@ -186,23 +178,29 @@ int handle_kv (
 		strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
 		if (strbuf_cmp(s, cline->vals.cur->value) != 0) {
 			ERR_F("Expected END:%s, got END:%s.\n%s line %i",
-					s->mem, cline->vals.cur->value->mem, PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename, line);
+					s->mem, cline->vals.cur->value->mem, PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename, ctx->line);
 			PUSH(LLIST(strbuf))(&ctx->key_stack, s);
 			return -1;
 
 		} else {
 			FFREE(strbuf, s);
-			/* Received propper end, push cur into parent */ 
+			/* Received propper end, push cur into parent */
 			vcomponent* cur = POP(LLIST(vcomponent))(&ctx->comp_stack);
+
 			// TODO should this instead be done at creation time?
 			PUSH(vcomponent)(PEEK(LLIST(vcomponent))(&ctx->comp_stack), cur);
 		}
 	} else {
 		NEW(content_line, c);
 		content_line_copy(c, cline);
+
 		PUSH(TRIE(content_line))(
 				&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
 				c->key.mem, c);
+
+		if ( SIZE(LLIST(key_val))(&c->params) != 0 ) {
+			RESET(LLIST(key_val))(&cline->params);
+		}
 	}
 
 	return 0;
@@ -213,31 +211,23 @@ INIT_F(parse_ctx, char* filename) {
 	INIT(LLIST(vcomponent), &this->comp_stack);
 	this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
 	strcpy(this->filename, filename);
+
+	this->line = 0;
+	this->column = 0;
+	INIT(strbuf, &this->str);
+
 	return 0;
 }
 
-int push_strbuf(strbuf* target, strbuf* src) {
-#if 0
-	if (src->ptr + 1 > keylen) {
-		keylen = str->ptr + 1;
-		/*
-		 * Allow for key's longer than 100 octets. It
-		 * currently is of no use, since key's can't be
-		 * folded.
-		 * TODO check if everything should be unfolded at 75
-		 * octets, or if that is only for values.
-		 *
-		 * TODO earlier there was a bug here. Test if that is
-		 * fixed and reenable this line.
-		 */
-		// strbuf_realloc(&cline.key, keylen);
-	}
-#endif
+FREE_F(parse_ctx) {
 
-	strbuf_copy(target, src);
-	strbuf_cap(target);
-	strbuf_soft_reset(src);
+	FREE(LLIST(strbuf))(&this->key_stack);
+	FREE(LLIST(vcomponent))(&this->comp_stack);
+	free(this->filename);
 
-	// continue;
+	this->line = 0;
+	this->column = 0;
+	FREE(strbuf)(&this->str);
+
 	return 0;
 }

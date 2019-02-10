@@ -12,36 +12,38 @@
 #undef TYPE
 
 /*
- * Max length of a line.
- * TODO update this to allow longer lines, in case someone doesn't
- * follow the standard.
- * (I currently only realloc memmory at end of lines, not when my
- * buffer is full).
+ * The standard says that no line should be longer than 75 octets.
+ * This sets the default amount of memory to allocate for each string,
+ * but strings are reallocated when needed.
  */
 #define SEGSIZE 75
-
-// #define LINE(nr, key, value) fprintf(stderr, "(%i) %i: [%s] := [%s]\n", __LINE__, nr, key, value);
 
 typedef enum {
 	p_key, p_value, p_param_name, p_param_value
 } part_context;
 
+/*
+ * Struct holding most state information needed while parsing.
+ * Kept together for simplicity.
+ */
 typedef struct {
 	char* filename;
 	LLIST(strbuf) key_stack;
 	LLIST(vcomponent) comp_stack;
+
+	int line;
+	int column;
+	strbuf str;
 } parse_ctx;
 
 INIT_F(parse_ctx, char* filename);
+FREE_F(parse_ctx);
 
 int handle_kv(
 		content_line*  cline,
-		int            line,
 		parse_ctx*     ctx
 		);
 
 int parse_file(char* filename, FILE* f, vcomponent* cal);
-
-int push_strbuf(strbuf* target, strbuf* src);
 
 #endif /* PARSE_H */
