@@ -62,8 +62,7 @@ int strbuf_cap(strbuf* s) {
 	return strbuf_append(s, 0);
 }
 
-
-int strbuf_copy(strbuf* dest, strbuf* src) {
+int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
 	int retval = 0;
 
 	if (dest->alloc < src->len) {
@@ -108,11 +107,6 @@ char* charat(strbuf* s, unsigned int idx) {
 
 char* strbuf_cur(strbuf* s) {
 	return &s->mem[s->ptr];
-}
-
-/* TODO merge this and strbuf_copy */
-int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
-	return strbuf_copy(dest, src);
 }
 
 char* strbuf_end(strbuf* s) {

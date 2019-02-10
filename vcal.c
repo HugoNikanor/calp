@@ -178,7 +178,7 @@ FMT_F(key_val) {
 }
 
 int DEEP_COPY(key_val) (key_val* dest, key_val* src) {
-	strbuf_copy(&dest->key, &src->key);
-	strbuf_copy(&dest->val, &src->val);
+	DEEP_COPY(strbuf)(&dest->key, &src->key);
+	DEEP_COPY(strbuf)(&dest->val, &src->val);
 	return 0;
 }

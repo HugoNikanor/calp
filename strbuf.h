@@ -39,17 +39,13 @@ int strbuf_realloc(strbuf* str, size_t len);
  */
 FREE_F(strbuf);
 
-/*
- * Copy contents from src to dest.
- * Assumes that dest is already initialized.
- *
- * also see: strbuf_alloc_copy
- */
-int strbuf_copy(strbuf* dest, strbuf* src);
-
 int strbuf_cmp(strbuf* a, strbuf* b);
 int strbuf_c(strbuf* a, char* b);
 
+/*
+ * Copy contents from src to dest.
+ * Assumes that dest is already initialized.
+ */
 int DEEP_COPY(strbuf)(strbuf*, strbuf*);
 
 /*

@@ -68,7 +68,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 					exit (2);
 				}
 
-				strbuf_copy(cline.vals.cur->value, &ctx.str);
+				DEEP_COPY(strbuf)(cline.vals.cur->value, &ctx.str);
 				strbuf_cap(cline.vals.cur->value);
 				strbuf_soft_reset(&ctx.str);
 
@@ -85,7 +85,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 * Border between param {key, value}
 		 */
 		} else if (p_ctx == p_param_name && c == '=') {
-			strbuf_copy(&kv.key, &ctx.str);
+			DEEP_COPY(strbuf)(&kv.key, &ctx.str);
 			strbuf_cap(&kv.key);
 			strbuf_soft_reset(&ctx.str);
 
@@ -103,7 +103,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if      (p_ctx == p_key)         dest = &cline.key;
 			else if (p_ctx == p_param_value) dest = &kv.val;
 
-			strbuf_copy(dest, &ctx.str);
+			DEEP_COPY(strbuf)(dest, &ctx.str);
 			strbuf_cap(dest);
 			strbuf_soft_reset(&ctx.str);
 
@@ -132,7 +132,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 * the end here.
 		 */
 
-		strbuf_copy(cline.vals.cur->value, &ctx.str);
+		DEEP_COPY(strbuf)(cline.vals.cur->value, &ctx.str);
 		strbuf_cap(cline.vals.cur->value);
 		handle_kv(&cline, &ctx);
 
@@ -163,7 +163,7 @@ int handle_kv (
 		 */
 
 		NEW(strbuf, s);
-		strbuf_copy(s, cline->vals.cur->value);
+		DEEP_COPY(strbuf)(s, cline->vals.cur->value);
 		PUSH(LLIST(strbuf))(&ctx->key_stack, s);
 
 		NEW(vcomponent, e,
