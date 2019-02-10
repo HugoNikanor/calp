@@ -40,10 +40,9 @@ $(OBJDIR):
 libguile-calendar.so: $(O_FILES)
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
-CALDIR = test-cal/cal2/0c0f4d7090bacd99abe9ccca2d5baadf2afac709f7cb66454ef913c52a5ef096.ics
 .SECONDARY += %.dot
-%.dot: parse
-	./parse $(CALDIR) -g $@
+%.dot: testcal/%.ics parse
+	./parse $< -g $@
 
 %.pdf: %.dot
 	dot -Tpdf -o $@ $<
