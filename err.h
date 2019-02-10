@@ -29,4 +29,10 @@
 	printf("\n"); \
 } while (0)
 
+#define PRINT(T, v) do { \
+	char buf[0x1000]; \
+	FMT(T)(v, buf); \
+	INFO_F("%s", buf); \
+} while (0)
+
 #endif /* ERR_H */
