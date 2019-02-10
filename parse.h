@@ -42,4 +42,6 @@ int handle_kv(
 
 int parse_file(char* filename, FILE* f, vcomponent* cal);
 
+int push_strbuf(strbuf* target, strbuf* src);
+
 #endif /* PARSE_H */

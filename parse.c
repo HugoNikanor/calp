@@ -215,3 +215,29 @@ INIT_F(parse_ctx, char* filename) {
 	strcpy(this->filename, filename);
 	return 0;
 }
+
+int push_strbuf(strbuf* target, strbuf* src) {
+#if 0
+	if (src->ptr + 1 > keylen) {
+		keylen = str->ptr + 1;
+		/*
+		 * Allow for key's longer than 100 octets. It
+		 * currently is of no use, since key's can't be
+		 * folded.
+		 * TODO check if everything should be unfolded at 75
+		 * octets, or if that is only for values.
+		 *
+		 * TODO earlier there was a bug here. Test if that is
+		 * fixed and reenable this line.
+		 */
+		// strbuf_realloc(&cline.key, keylen);
+	}
+#endif
+
+	strbuf_copy(target, src);
+	strbuf_cap(target);
+	strbuf_soft_reset(src);
+
+	// continue;
+	return 0;
+}
