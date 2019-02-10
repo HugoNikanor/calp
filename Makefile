@@ -4,7 +4,7 @@ CC  := gcc
 
 OBJDIR = obj
 
-CPPFLAGS = -DSAFE_STR # -DSAFE_HASH 
+# CPPFLAGS =
 CFLAGS  = $(CPPFLAGS) \
 		  -std=gnu11 -Wall -Wextra \
 		  -ggdb -fPIC \

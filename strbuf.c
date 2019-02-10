@@ -3,9 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifdef SAFE_STR
 #include "err.h"
-#endif
 
 INIT_F(strbuf) {
 	INIT(strbuf, this, 1);
@@ -30,10 +28,9 @@ int strbuf_realloc(strbuf* str, size_t len) {
 }
 
 FREE_F(strbuf) {
-#ifdef SAFE_STR
 	/* has already been freed */
 	if (this->mem == NULL) return 1;
-#endif
+
 	free (this->mem);
 	this->mem = NULL;
 	this->alloc = 0;
@@ -46,13 +43,13 @@ FREE_F(strbuf) {
  */
 int strbuf_append(strbuf* s, char c) {
 	int retval = 0;
-#ifdef SAFE_STR
+
 	if (s->len + 1 > s->alloc) {
 		s->alloc <<= 1;
 		s->mem = realloc(s->mem, s->alloc);
 		retval = 1;
 	}
-#endif
+
 	s->mem[s->len] = c;
 	s->ptr = ++s->len;
 	return retval;
@@ -68,48 +65,44 @@ int strbuf_cap(strbuf* s) {
 
 int strbuf_copy(strbuf* dest, strbuf* src) {
 	int retval = 0;
-#ifdef SAFE_STR
+
 	if (dest->alloc < src->len) {
-		/*
-		 * one extra octet allocated to have space for a finishing
-		 * '\0'.
-		 * */
+		/* +1 in length is to have room for  '\0'. */
 		strbuf_realloc(dest, src->len + 1);
 		retval = 1;
 	}
-#endif
+
 	dest->len = src->len;
 	memcpy(dest->mem, src->mem, src->len);
 	return retval;
 }
 
 int strbuf_cmp(strbuf* a, strbuf* b) {
-#ifdef SAFE_STR
-	if (a->alloc == 0 || b->alloc == 0) {
+	if (a == NULL || a->alloc == 0 ||
+	    b == NULL || b->alloc == 0)
+	{
 		ERR("a or b not alloced");
 		return -1;
 	}
-#endif
+
 	return strncmp(a->mem, b->mem, a->len);
 }
 
 int strbuf_c(strbuf* a, char* b) {
-#ifdef SAFE_STR
-	if (a->alloc == 0) {
+	if (a == NULL || a->alloc == 0) {
 		ERR("a not allocated");
 		return -1;
 	}
-#endif
+
 	return strcmp(a->mem, b) == 0;
 }
 
 char* charat(strbuf* s, unsigned int idx) {
-#ifdef SAFE_STR
 	if (idx > s->len) {
 		ERR("Index out of bounds");
 		return (char*) -1;
 	}
-#endif
+
 	return &s->mem[idx];
 }
 

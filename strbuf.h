@@ -21,10 +21,6 @@ typedef struct {
 } strbuf;
 
 /*
- * TODO Check memmory allocation for last +1 byte for null.
- */
-
-/*
  * Init strbuf to size of 0
  * Doesnt't call malloc.
  */
@@ -50,6 +46,7 @@ FREE_F(strbuf);
  * also see: strbuf_alloc_copy
  */
 int strbuf_copy(strbuf* dest, strbuf* src);
+
 int strbuf_cmp(strbuf* a, strbuf* b);
 int strbuf_c(strbuf* a, char* b);
 
@@ -82,7 +79,7 @@ char* strbuf_cur(strbuf* s);
 int strbuf_reset(strbuf* s);
 
 /*
- * Sets the length and seek ptr to 0, but doesn't touch the memmory. 
+ * Sets the length and seek ptr to 0, but doesn't touch the memmory.
  */
 int strbuf_soft_reset(strbuf* s);
 
@@ -99,7 +96,7 @@ int strbuf_realloc_copy(strbuf* dest, strbuf* src);
 
 /*
  * Copies contents from src to dest, also allocating dest in the
- * process. dest should not be initialized before this call. 
+ * process. dest should not be initialized before this call.
  */
 int strbuf_init_copy(strbuf* dest, strbuf* src);
 
