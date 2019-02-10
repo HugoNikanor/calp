@@ -15,14 +15,21 @@ typedef struct {
 	strbuf val;
 } key_val;
 
+INIT_F(key_val);
+FREE_F(key_val);
+FMT_F(key_val);
+int DEEP_COPY(key_val) (key_val* dest, key_val* src);
+
+#define TYPE key_val
+#include "linked_list.h"
+#undef TYPE
+
 typedef struct {
 	strbuf key;
 
 	LLIST(strbuf) vals;
 
-	/* parcams NULL by default, since most content lines doesn't have
-	 * any properties */
-	LLIST(strbuf) params;
+	LLIST(key_val) params;
 } content_line;
 
 INIT_F(content_line);
