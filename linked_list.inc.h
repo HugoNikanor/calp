@@ -148,19 +148,20 @@ LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new) {
 }
 
 int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
-	INFO_F("|llist| = %i", SIZE(LLIST(TYPE))(llist));
-#if 1
-	FOR(LLIST(TYPE), link, llist) {
-		// INFO_F("Freeing link '%p' → '%p'", link, link->value);
-		INFO("leaking memmory, or something");
+
+	LINK(TYPE) *link = FIRST(llist), *next;
+	/*
+	 * Manual looping rather than itterators since we destroyed the
+	 * loop variable.
+	 */
+	while (link != llist->tail) {
+		next = link->after;
 		FFREE(LINK(TYPE), link);
-		// UNLINK(LINK(TYPE))(link);
+		link = next;
 	}
-#else
-	// TODO This is a memmory leak
-	FIRST(llist) = llist->tail;
-	LAST(llist)  = llist->head;
-#endif
+
+	llist->cur = llist->head;
+
 	return 0;
 }
 

@@ -55,6 +55,10 @@ int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new );
 int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 
+/*
+ * Resets a linked list by removing all it's objects.
+ * FREE's all elements stored in the list.
+ */
 int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 
 LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new);
