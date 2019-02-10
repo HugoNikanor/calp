@@ -141,6 +141,23 @@ int TRIE_DOT_HELP(TYPE) ( TRIE_NODE(TYPE)* root, FILE* f  ) {
 			root->value == NULL ? "white" : "green");
 	TRIE_NODE(TYPE)* child = root->child;
 
+	// ----------------------------------------
+	if (root->value != NULL) {
+		if (! EMPTY(LLIST(key_val))(&root->value->params)) {
+			fprintf(f, "subgraph \"cluster_param_%p\"{\n	color=blue;\n", root);
+			FOR(LLIST(key_val), link, &root->value->params) {
+				fprintf(f, "\"%p\"  [label=\"%s := %s\"];", link,
+						link->value->key.mem,
+						link->value->val.mem);
+			}
+			fputs("}", f);
+			FOR(LLIST(key_val), link, &root->value->params) {
+				fprintf(f, "\"%p\" -> \"%p\";\n", root, link);
+			}
+		}
+	}
+	// ----------------------------------------
+
 	while (child != NULL) {
 		fprintf(f, "\"%p\" -> \"%p\";\n",
 				(void*) root, (void*) child);

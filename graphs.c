@@ -14,29 +14,6 @@ int create_graph_trie (vcomponent* ev, char* filename) {
 
 	fclose(f);
 
-
-	return 0;
-}
-
-int attr_helper(TRIE_NODE(content_line)* root, FILE* f) {
-
-	if (root->value != NULL) {
-		if (! EMPTY(LLIST(strbuf))(&root->value->params)) {
-			printf("%s\n", root->value->key.mem);
-			fprintf(f, "subgraph \"cluster_param_%p\"{\n	color=blue;\n", root);
-			FOR(LLIST(strbuf), link, &root->value->params) {
-				fprintf(f, "\"%p\"  [label=\"%s\"];", link, link->value->mem);
-				fprintf(f, "\"%p\" -> \"%p\";\n", root, link);
-			}
-			fputs("}", f);
-		}
-	}
-
-	TRIE_NODE(content_line)* child = root->child;
-	while (child != NULL) {
-		attr_helper(root->child, f);
-		child = child->next;
-	}
 	INFO_F("Wrote '%s' to '%s'", ev->filename, filename);
 
 	return 0;
@@ -65,8 +42,6 @@ int helper_vcomponent (vcomponent* root, FILE* f) {
 			n = n->next;
 		}
 		fputs("}", f);
-
-		attr_helper(trie->root, f);
 	}
 
 	vcomponent* child;
