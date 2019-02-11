@@ -104,6 +104,7 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 	TRIE_NODE(T)* child = root->child;
 
 	// ----------------------------------------
+#if 0 /* Toggle values */
 	if (root->value != NULL) {
 
 		FOR(LLIST(content_set), link, &L(root)->val) {
@@ -129,6 +130,7 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 			}
 		}
 	}
+#endif
 
 	// ----------------------------------------
 
