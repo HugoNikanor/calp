@@ -17,6 +17,8 @@ typedef struct LINK(TYPE) {
 	TYPE* value;
 } LINK(TYPE);
 
+#define L(link) (link)->value
+
 typedef struct {
 	LINK(TYPE)* head;
 	LINK(TYPE)* tail;

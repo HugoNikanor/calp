@@ -61,7 +61,7 @@ SCM_DEFINE (calendar_get_attr, "calendar-get-attr", 3, 0, 0,
 
 	if (c == NULL) return SCM_BOOL_F;
 
-	return scm_from_llist(&c->vals);
+	return scm_from_llist(&c->val);
 }
 
 SCM scm_from_trie_node(TRIE_NODE(content_line)* node) {
@@ -75,7 +75,7 @@ SCM scm_from_trie_node(TRIE_NODE(content_line)* node) {
 	SCM lst;
 	if (node->value != NULL) {
 		lst = scm_cons(scm_from_char(node->c),
-				scm_from_llist(&node->value->vals));
+				scm_from_llist(&node->value->val));
 	} else {
 		lst = scm_list_1(scm_from_char(node->c));
 	}

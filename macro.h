@@ -99,7 +99,7 @@
  * Actuall implementation and type signature is mostly left to
  * individual implementations.
  */
-#define DEEP_COPY(T) TEMPL(deep_copy , T)
+#define DEEP_COPY(T) TEMPL(copy      , T)
 #define RESOLVE(T)   TEMPL(resolve   , T)
 #define APPEND(T)    TEMPL(append    , T)
 #define SIZE(T)      TEMPL(size      , T)

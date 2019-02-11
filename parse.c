@@ -13,6 +13,13 @@
 #include "linked_list.inc.h"
 #undef TYPE
 
+#define T strbuf
+#define V strbuf
+#include "pair.h"
+#include "pair.inc.h"
+#undef T
+#undef V
+
 /*
  * name *(";" param) ":" value CRLF
  */
@@ -22,11 +29,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	SNEW(parse_ctx, ctx, filename);
 	PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
 
-	//                      vallen -+
-	//                 keylen -+    |
-	//                         |    |
-	SNEW(content_line, cline, 100, 100);
-	SNEW(PAIR(strbuf,strbuf), kv);
+	SNEW(content_line, cline);
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
@@ -64,8 +67,10 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 					exit (2);
 				}
 
-				DEEP_COPY(strbuf)(cline.vals.cur->value, &ctx.str);
-				strbuf_cap(cline.vals.cur->value);
+				strbuf* target = CLINE_CUR_VAL(&cline);
+
+				DEEP_COPY(strbuf)(target, &ctx.str);
+				strbuf_cap(target);
 				strbuf_soft_reset(&ctx.str);
 
 				++ctx.line;
@@ -77,13 +82,15 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			}
 
 
-		/*
-		 * Border between param {key, value}
-		 */
+		/* Border between param {key, value} */
 		} else if (p_ctx == p_param_name && c == '=') {
-			DEEP_COPY(strbuf)(&kv.left, &ctx.str);
-			strbuf_cap(&kv.right);
+			LLIST(param_set)* params = CLINE_CUR_PARAMS(&cline);
+
+			NEW(param_set, ps);
+			DEEP_COPY(strbuf)(&ps->key, &ctx.str);
+			strbuf_cap(&ps->key);
 			strbuf_soft_reset(&ctx.str);
+			PUSH(LLIST(param_set))(params, ps);
 
 			p_ctx = p_param_value;
 
@@ -95,19 +102,28 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 * 4)   ,,   param,    ,,    value
 		 */
 		} else if ((p_ctx == p_key || p_ctx == p_param_value) && (c == ':' || c == ';')) {
-			strbuf* dest;
-			if      (p_ctx == p_key)         dest = &cline.key;
-			else if (p_ctx == p_param_value) dest = &kv.right;
-
-			DEEP_COPY(strbuf)(dest, &ctx.str);
-			strbuf_cap(dest);
-			strbuf_soft_reset(&ctx.str);
 
 			if (p_ctx == p_param_value) {
 				/* push kv pair */
-				NEW (PAIR(strbuf,strbuf), _kv);
-				DEEP_COPY(PAIR(strbuf,strbuf))(_kv, &kv);
-				PUSH(LLIST(PAIR(strbuf,strbuf)))(&cline.params, _kv);
+
+				NEW(strbuf, s);
+
+				DEEP_COPY(strbuf)(s, &ctx.str);
+				strbuf_cap(s);
+				strbuf_soft_reset(&ctx.str);
+
+				LLIST(strbuf)* ls = & CLINE_CUR_PARAMS(&cline)->cur->value->val;
+				PUSH(LLIST(strbuf))(ls, s);
+
+			}
+
+			if (p_ctx == p_key) {
+				DEEP_COPY(strbuf)(&cline.key, &ctx.str);
+				strbuf_cap(&cline.key);
+				strbuf_soft_reset(&ctx.str);
+
+				NEW(content_set, p);
+				PUSH(LLIST(content_set))(&cline.val, p);
 			}
 
 			if      (c == ':') p_ctx = p_value;
@@ -121,15 +137,23 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 	if (! feof(f)) {
 		ERR("Error parsing");
-	} else if (cline.vals.cur->value->len != 0 && ctx.str.ptr != 0) {
+	} 
+	/* Check to see if empty line */
+	else if (ctx.str.ptr != 0) {
 		/*
 		 * The standard (3.4, l. 2675) says that each icalobject must
 		 * end with CRLF. My files however does not, so we also parse
 		 * the end here.
 		 */
 
-		DEEP_COPY(strbuf)(cline.vals.cur->value, &ctx.str);
-		strbuf_cap(cline.vals.cur->value);
+		strbuf* target = CLINE_CUR_VAL(&cline);
+		DEEP_COPY(strbuf)(target, &ctx.str);
+		strbuf_cap(target);
+		strbuf_soft_reset(&ctx.str);
+
+		++ctx.line;
+		ctx.column = 0;
+
 		handle_kv(&cline, &ctx);
 
 	}
@@ -141,8 +165,6 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
 
 	FREE(parse_ctx)(&ctx);
-
-	FREE(PAIR(strbuf,strbuf))(&kv);
 
 	return 0;
 }
@@ -159,8 +181,11 @@ int handle_kv (
 		 */
 
 		NEW(strbuf, s);
-		DEEP_COPY(strbuf)(s, cline->vals.cur->value);
+		strbuf* type = CLINE_CUR_VAL(cline);
+		DEEP_COPY(strbuf)(s, type);
 		PUSH(LLIST(strbuf))(&ctx->key_stack, s);
+
+		RESET(LLIST(content_set))(&cline->val);
 
 		NEW(vcomponent, e,
 				s->mem,
@@ -170,9 +195,12 @@ int handle_kv (
 
 	} else if (strbuf_c(&cline->key, "END")) {
 		strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
-		if (strbuf_cmp(s, cline->vals.cur->value) != 0) {
+		if (strbuf_cmp(s, CLINE_CUR_VAL(cline)) != 0) {
 			ERR_F("Expected END:%s, got END:%s.\n%s line %i",
-					s->mem, cline->vals.cur->value->mem, PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename, ctx->line);
+					s->mem,
+					CLINE_CUR_VAL(cline)->mem,
+					PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename,
+					ctx->line);
 			PUSH(LLIST(strbuf))(&ctx->key_stack, s);
 			return -1;
 
@@ -186,15 +214,13 @@ int handle_kv (
 		}
 	} else {
 		NEW(content_line, c);
-		content_line_copy(c, cline);
+		DEEP_COPY(content_line)(c, cline);
 
 		PUSH(TRIE(content_line))(
 				&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
 				c->key.mem, c);
 
-		if ( SIZE(LLIST(PAIR(strbuf,strbuf)))(&c->params) != 0 ) {
-			RESET(LLIST(PAIR(strbuf,strbuf)))(&cline->params);
-		}
+		RESET(LLIST(content_set))(&cline->val);
 	}
 
 	return 0;

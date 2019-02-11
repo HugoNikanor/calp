@@ -7,7 +7,7 @@
 
 INIT_F(VECT(TYPE)) {
 	this->length = 0;
-	this->alloc = 0x10;
+	this->alloc = 1;
 	this->items = calloc(sizeof(*this->items), this->alloc);
 	return 0;
 }

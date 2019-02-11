@@ -37,7 +37,7 @@ int main (int argc, char* argv[argc]) {
 	arg_shift(&args);
 
 	if (args.argc == 0 || strcmp(args.argv[0], "-p") == 0) {
-		INFO_F("\nParsed calendar file containing [%u] events",
+		INFO_F("Parsed calendar file containing [%u] events",
 				root.components.length);
 		for (size_t i = 0; i < root.components.length; i++) {
 			vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
@@ -52,7 +52,7 @@ int main (int argc, char* argv[argc]) {
 				printf("%3lu | %s | %s\n",
 						i + 1,
 						filename,
-						get_property(ev, "SUMMARY")->vals.cur->value->mem);
+						get_property(ev, "SUMMARY")->val.cur->value->key.mem);
 			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {
@@ -78,6 +78,12 @@ int main (int argc, char* argv[argc]) {
 			create_graph_vcomponent(&root, args.argv[0]);
 		}
 	}
+
+	/*
+	char buf[0x20000];
+	FMT(vcomponent)(&root, buf);
+	puts(buf);
+	*/
 
 	FREE(vcomponent)(&root);
 }

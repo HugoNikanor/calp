@@ -2,29 +2,38 @@
 
 #include <string.h>
 
+#define TYPE strbuf
+#include "linked_list.inc.h"
+#undef TYPE
+
+#define TYPE param_set
+#include "linked_list.inc.h"
+#undef TYPE
+
+#define TYPE content_set
+#include "linked_list.inc.h"
+#undef TYPE
+
+#define T strbuf
+	#define V LLIST(strbuf)
+		#include "pair.inc.h"
+	#undef V
+	#define V LLIST(param_set)
+		#include "pair.inc.h"
+	#undef V
+	#define V LLIST(content_set)
+		#include "pair.inc.h"
+	#undef V
+#undef T
+
 #define TYPE content_line
 // #include "hash.inc"
 #include "trie.inc.h"
 #undef TYPE
 
-#define TYPE strbuf
-#include "linked_list.inc.h"
-#undef TYPE
-
 #define TYPE vcomponent
 #include "vector.inc.h"
 #undef TYPE
-
-#define T strbuf
-#define V strbuf
-#include "pair.inc.h"
-#undef T
-#undef V
-
-#define TYPE PAIR(strbuf, strbuf)
-#include "linked_list.inc.h"
-#undef TYPE
-
 
 INIT_F(vcomponent) {
 	(void) this;
@@ -65,12 +74,8 @@ content_line* RESOLVE(content_line)
 		return NULL;
 	}
 
-	/*
-	 * This destroys new.
-	 */
-	APPEND(LLIST(strbuf)) (&dest->vals, &new->vals);
-
-	APPEND(LLIST(PAIR(strbuf,strbuf))) (&dest->params, &new->params);
+	/* This destroys new->val. */
+	APPEND(LLIST(content_set)) (&dest->val, &new->val);
 
 	FREE(strbuf)(&new->key);
 	free(new);
@@ -80,43 +85,6 @@ content_line* RESOLVE(content_line)
 
 content_line* get_property (vcomponent* ev, char* key) {
 	return GET(TRIE(content_line))(&ev->clines, key);
-}
-
-INIT_F(content_line) {
-	INIT(strbuf, &this->key);
-	INIT( LLIST(strbuf), &this->vals );
-
-	INIT( LLIST(PAIR(strbuf,strbuf)), &this->params );
-
-	return 0;
-}
-
-INIT_F(content_line, int keylen, int vallen) {
-	INIT(strbuf, &this->key, keylen);
-	INIT( LLIST(strbuf), &this->vals );
-	NEW(strbuf, s, vallen);
-	PUSH(LLIST(strbuf))(&this->vals, s);
-
-	INIT( LLIST(PAIR(strbuf,strbuf)), &this->params );
-
-	return 0;
-}
-
-FREE_F(content_line) {
-	FREE(strbuf)(&this->key);
-	FREE(LLIST(strbuf))(&this->vals);
-
-	FREE(LLIST(PAIR(strbuf,strbuf)))(&this->params);
-
-	return 0;
-}
-
-int content_line_copy (content_line* dest, content_line* src) {
-	DEEP_COPY(strbuf)(&dest->key, &src->key);
-	DEEP_COPY(LLIST(strbuf))(&dest->vals, &src->vals);
-	DEEP_COPY(LLIST(PAIR(strbuf,strbuf)))(&dest->params, &src->params);
-
-	return 0;
 }
 
 FREE_F(vcomponent) {
@@ -144,25 +112,19 @@ int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
 	return -1;
 }
 
-/*
- * TODO this doesn't seem to work.
- */
 FMT_F(vcomponent) {
 	int seek = 0;
-	FOR(int, i, 40) fmtf("-");
 
-	seek += sprintf(buf, _YELLOW);
-	seek += sprintf(buf, "VComponet (Type := %s)\n", this->type); 
+	FOR(int, i, 40) fmtf("_");
+
+	seek += sprintf(buf + seek, _YELLOW);
+	seek += sprintf(buf + seek, "\nVComponet (Type := %s)\n", this->type); 
+	seek += sprintf(buf + seek, _RESET);
 	seek += FMT(TRIE(content_line))(&this->clines, buf + seek);
-	seek += sprintf(buf, _RESET);
+	seek += sprintf(buf + seek, "\nComponents:\n");
+	FOR(VECT(vcomponent), i, &this->components) {
+		seek += FMT(vcomponent)(GET(VECT(vcomponent))(&this->components, i), buf + seek);
+	}
 
 	return seek;
-}
-
-FMT_F(content_line) {
-	char str_a[100], str_b[100], str_c[100];;
-	FMT(strbuf)(&this->key, str_a);
-	FMT(LLIST(PAIR(strbuf, strbuf)))(&this->params, str_b);
-	FMT(LLIST(strbuf))(&this->vals, str_c);
-	return sprintf(buf, "[[cl|%s] params := %s vals := %s]", str_a, str_b, str_c);
 }

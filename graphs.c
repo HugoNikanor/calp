@@ -92,52 +92,44 @@ int trie_to_dot ( TRIE(T)* trie, FILE* f ) {
 }
 
 int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
-	if (root->value == NULL) {
+	if (L(root) == NULL) {
 		fprintf(f, "\"%p\"[label = \"%c\" style=filled fillcolor=white];\n",
 				(void*) root, root->c);
 	} else {
 		fprintf(f, "\"%p\"[label = \"%c [%i]\" style=filled fillcolor=green];\n",
 				(void*) root, root->c,
-				SIZE(LLIST(strbuf))(&root->value->vals));
+				SIZE(LLIST(content_set))(&L(root)->val)
+				);
 	}
 	TRIE_NODE(T)* child = root->child;
 
 	// ----------------------------------------
 	if (root->value != NULL) {
 
-		FOR(LLIST(strbuf), link, &root->value->vals) {
+		FOR(LLIST(content_set), link, &L(root)->val) {
 			char buf[0x100];
-			FMT(strbuf)(link->value, buf);
+			FMT(strbuf)(&L(link)->key, buf);
 			fprintf(f, "\"%p\" [label=\"%s\" shape=rectangle color=darkgreen];\n",
 					link->value, buf);
-			fprintf(f, "\"%p\" -> \"%p\";\n", root, link->value);
-		}
+			fprintf(f, "\"%p\" -> \"%p\";\n", root, L(link));
 
+			/* Parameters */
+			FOR(LLIST(param_set), param_link, &L(link)->val) {
+				strbuf* param_key = &L(param_link)->key;
 
-		/* Parameters */
-		if (! EMPTY(LLIST(PAIR(strbuf,strbuf)))(&root->value->params)) {
-			fprintf(f, "subgraph \"cluster_param_%p\"{\n	color=blue;\n", root);
-			FOR(LLIST(PAIR(strbuf,strbuf)), link, &root->value->params) {
-				fprintf(f, "\"%p\"  [shape=rectangle, label=\"%s := %s\"];", link,
-						link->value->left.mem,
-						link->value->right.mem);
-			}
-			fputs("}", f);
+				fprintf(f, "\"%p\" [label=\"%s\" color=blue];\n",
+						param_key, param_key->mem);
+				fprintf(f, "\"%p\" -> \"%p\";", L(link), param_key);
 
-			/* 
-			 * TODO
-			 * Params should actually belong to each value. Not to
-			 * each content_line (since a content line is a collection
-			 * of lines in the original file). This is a temporary
-			 * hack.
-			 */
-			fprintf(f, "\"link_%p\" [label=params style=filled fillcolor=lightblue];\n", root);
-			fprintf(f, "\"%p\" -> \"link_%p\";\n", root, root);
-			FOR(LLIST(PAIR(strbuf,strbuf)), link, &root->value->params) {
-				fprintf(f, "\"link_%p\" -> \"%p\";\n", root, link);
+				FOR(LLIST(strbuf), str, &L(param_link)->val) {
+					fprintf(f, "\"%p\" [label=\"%s\" color=orange];",
+							str, L(str)->mem);
+					fprintf(f, "\"%p\" -> \"%p\";", param_key, str);
+				}
 			}
 		}
 	}
+
 	// ----------------------------------------
 
 	while (child != NULL) {

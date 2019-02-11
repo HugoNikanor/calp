@@ -100,4 +100,6 @@ strbuf* RESOLVE(strbuf)(strbuf*, strbuf*);
 
 FMT_F(strbuf);
 
+int SIZE(strbuf)(strbuf*);
+
 #endif /* STRBUF_H */

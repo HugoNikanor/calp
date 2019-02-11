@@ -81,7 +81,7 @@ int strbuf_cmp(strbuf* a, strbuf* b) {
 	    b == NULL || b->alloc == 0)
 	{
 		ERR("a or b not alloced");
-		return -1;
+		// return -1;
 	}
 
 	return strncmp(a->mem, b->mem, a->len);
@@ -131,4 +131,8 @@ strbuf* RESOLVE(strbuf)(strbuf* dest, strbuf* new) {
 
 FMT_F(strbuf) {
 	return sprintf(buf, "%s", this->mem);
+}
+
+int SIZE(strbuf)(strbuf* this) {
+	return this->len;
 }

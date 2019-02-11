@@ -7,8 +7,8 @@
 #if defined(T) && defined(V)
 
 typedef struct {
-	T left;
-	V right;
+	T key;
+	V val;
 } PAIR(T, V);
 
 INIT_F(PAIR(T, V));

@@ -11,28 +11,60 @@
 #undef TYPE
 
 #define T strbuf
-#define V strbuf
-#include "pair.h"
+	#define V LLIST(strbuf)
+		#include "pair.h"
+		/* left := param_name | right := param_values */
+		#define param_set PAIR(strbuf, LLIST(strbuf))
+	#undef V
 #undef T
-#undef V
 
-#define TYPE PAIR(strbuf, strbuf)
+#define TYPE param_set
 #include "linked_list.h"
 #undef TYPE
 
-typedef struct {
-	strbuf key;
+#define T strbuf
+	#define V LLIST(param_set)
+		#include "pair.h"
+		/* left := content | right := params */
+		#define content_set PAIR(strbuf, LLIST(param_set))
+	#undef V
+#undef T
 
-	LLIST(strbuf) vals;
+#define TYPE content_set
+#include "linked_list.h"
+#undef TYPE
 
-	LLIST(PAIR(strbuf, strbuf)) params;
-} content_line;
+#define T strbuf
+	#define V LLIST(content_set)
+		#include "pair.h"
+		/* left := content | right := params */
+		#define content_line PAIR(strbuf, LLIST(content_set))
+	#undef V
+#undef T
 
-INIT_F(content_line);
-INIT_F(content_line, int keylen, int vallen);
-FREE_F(content_line);
+/*
+ * Helper macros for accessing fields in
+ * content_line, content_set, and param_set
+ *
+ * TODO find a better way to do this.
+ */
 
-int content_line_copy (content_line* dest, content_line* src);
+/* ptr -> ptr */
+#define CLINE_KEY(c) (&(c)->key)
+#define CLINE_CUR_CSET(c) (&((c)->val.cur->value))
+
+/* content_set */
+#define CLINE_CUR(c)        ((c)->val.cur->value)
+/* strbuf */
+#define CLINE_CUR_VAL(c)    (& CLINE_CUR(c)->key)
+
+/* LLIST(param_set) */
+#define CLINE_CUR_PARAMS(c) (& CLINE_CUR(c)->val)
+
+/* strbuf */
+#define CLINE_CUR_PARAM_KEY(c) (CLINE_CUR_PARAMS(c)->cur->value->key)
+/* strbuf */
+#define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->val.cur->value)
 
 /*
  * Resolves a collision in some form of structure (probably a hash-map
@@ -80,7 +112,6 @@ int PUSH(vcomponent)(vcomponent*, vcomponent*);
 
 int DEEP_COPY(vcomponent)(vcomponent*, vcomponent*);
 
-FMT_F(content_line);
 FMT_F(vcomponent);
 
 #endif /* VCAL_H */
