@@ -83,10 +83,10 @@
 
 /* Iterator macros.  */
 #define FOR(CONT_T, T, var, set) \
-	PRE_FOR_ ## CONT_T (T, var, set); \
-	for( BEG_ ## CONT_T (T, var, set); \
-		 END_ ## CONT_T (T, var, set); \
-		 NXT_ ## CONT_T (T, var, set))
+	PRE_FOR_  ## CONT_T (T) (T, var, set); \
+	for( BEG_ ## CONT_T (T) (T, var, set); \
+		 END_ ## CONT_T (T) (T, var, set); \
+		 NXT_ ## CONT_T (T) (T, var, set))
 
 /* Example int implementation
  * FOR(int, i, 10) { } */

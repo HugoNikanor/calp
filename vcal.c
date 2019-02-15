@@ -122,7 +122,7 @@ FMT_F(vcomponent) {
 	seek += sprintf(buf + seek, _RESET);
 	seek += FMT(TRIE(content_line))(&this->clines, buf + seek);
 	seek += sprintf(buf + seek, "\nComponents:\n");
-	FOR(VECT(vcomponent), vcomponent, comp, &this->components) {
+	FOR(VECT, vcomponent, comp, &this->components) {
 		seek += FMT(vcomponent)(comp, buf + seek);
 	}
 
