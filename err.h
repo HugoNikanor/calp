@@ -19,6 +19,10 @@
 #define ERR_F(fmt, ...) fprintf(stderr, _RED "ERR" _RESET " (%s:%i) " fmt "\n", \
 		__FILE__, __LINE__, ##__VA_ARGS__)
 
+/* Parse error */
+#define ERR_P(ctx, fmt, ...) fprintf(stderr, _RED "PARSE" _RESET " (%s:%i) %i:%i " fmt "\n", \
+		__FILE__, __LINE__, (ctx)->pline, (ctx)->pcolumn, ##__VA_ARGS__)
+
 #define INFO(msg) fprintf(stderr, _BLUE "INFO" _RESET " (%s:%i) %s\n", __FILE__, __LINE__, #msg)
 #define INFO_F(fmt, ...) fprintf(stderr, _BLUE "INFO" _RESET " (%s:%i) " fmt "\n", \
 		__FILE__, __LINE__, ##__VA_ARGS__)

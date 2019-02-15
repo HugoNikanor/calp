@@ -196,11 +196,10 @@ int handle_kv (
 	} else if (strbuf_c(&cline->key, "END")) {
 		strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
 		if (strbuf_cmp(s, CLINE_CUR_VAL(cline)) != 0) {
-			ERR_F("Expected END:%s, got END:%s.\n%s line %i",
+			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
 					s->mem,
 					CLINE_CUR_VAL(cline)->mem,
-					PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename,
-					ctx->line);
+					PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename);
 			PUSH(LLIST(strbuf))(&ctx->key_stack, s);
 			return -1;
 
