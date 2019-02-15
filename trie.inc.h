@@ -137,7 +137,8 @@ FMT_F(TRIE_NODE(TYPE)) {
 	if (n == NULL) { fmtf("\n"); }
 	while (n != NULL) {
 		fmtf("|");
-		FOR(int, i, depth) fmtf(" ");
+		// FOR(int, i, depth) fmtf(" ");
+		for (int i = 0; i < depth; i++) fmtf(" ");
 		fmtf("%c ", n->c == '\0' ? '0' : n->c);
 		if (n->value != NULL) {
 			seek += FMT(TYPE)(n->value, buf + seek);

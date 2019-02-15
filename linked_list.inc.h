@@ -168,8 +168,8 @@ int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
 FMT_F(LLIST(TYPE)) {
 	int seek = 0;
 	fmtf("(");
-	FOR(LLIST(TYPE), link, this) {
-		seek += FMT(TYPE)(link->value, buf + seek);
+	FOR(LLIST(TYPE), TYPE, v, this) {
+		seek += FMT(TYPE)(v, buf + seek);
 		fmtf(" ");
 	}
 	fmtf(")");

@@ -69,14 +69,20 @@ FMT_F(LLIST(TYPE));
 
 /* Iterator */
 
-// #define __BEG_LLIST(v, set) v = (set)->head
-#define __BEG_LLIST(l, set) l = FIRST(set)
-#define BEG_LLIST(T) LINK(T)* __BEG_LLIST
+#define __PRE_LLIST(T, l, set) \
+	T* l; LINK(T)* __INTER(l);
 
-#define __END_LLIST(l, set) l != (set)->tail
+#define PRE_FOR_LLIST(T) __PRE_LLIST
+
+// #define __BEG_LLIST(v, set) v = (set)->head
+#define __BEG_LLIST(T, l, set) __INTER(l) = FIRST(set), l = L(__INTER(l))
+#define BEG_LLIST(T) __BEG_LLIST
+
+#define __END_LLIST(T, l, set) __INTER(l) != (set)->tail
 #define END_LLIST(T) __END_LLIST
 
-#define __NXT_LLIST(l, set) l = l->after
+#define __NXT_LLIST(T, l, set) __INTER(l) = __INTER(l)->after, l = L(__INTER(l))
+// #define __NXT_LLIST(T, l, set) l = L(__INTER(l) = __INTER(l)->after)
 #define NXT_LLIST(T) __NXT_LLIST
 
 #endif /* TYPE */

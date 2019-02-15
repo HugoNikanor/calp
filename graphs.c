@@ -104,27 +104,27 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 	TRIE_NODE(T)* child = root->child;
 
 	// ----------------------------------------
-#if 0 /* Toggle values */
-	if (root->value != NULL) {
+#if 1 /* Toggle values */
+	if (L(root) != NULL) {
 
-		FOR(LLIST(content_set), link, &L(root)->val) {
+		FOR(LLIST(content_set), content_set, v, &L(root)->val) {
 			char buf[0x100];
-			FMT(strbuf)(&L(link)->key, buf);
+			FMT(strbuf)(&v->key, buf);
 			fprintf(f, "\"%p\" [label=\"%s\" shape=rectangle color=darkgreen];\n",
-					link->value, buf);
-			fprintf(f, "\"%p\" -> \"%p\";\n", root, L(link));
+					v, buf);
+			fprintf(f, "\"%p\" -> \"%p\";\n", root, v);
 
 			/* Parameters */
-			FOR(LLIST(param_set), param_link, &L(link)->val) {
-				strbuf* param_key = &L(param_link)->key;
+			FOR(LLIST(param_set), param_set, p, &v->val) {
+				strbuf* param_key = &p->key;
 
 				fprintf(f, "\"%p\" [label=\"%s\" color=blue];\n",
 						param_key, param_key->mem);
-				fprintf(f, "\"%p\" -> \"%p\";", L(link), param_key);
+				fprintf(f, "\"%p\" -> \"%p\";", p, param_key);
 
-				FOR(LLIST(strbuf), str, &L(param_link)->val) {
+				FOR(LLIST(strbuf), strbuf, str, &p->val) {
 					fprintf(f, "\"%p\" [label=\"%s\" color=orange];",
-							str, L(str)->mem);
+							str, str->mem);
 					fprintf(f, "\"%p\" -> \"%p\";", param_key, str);
 				}
 			}

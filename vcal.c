@@ -115,15 +115,15 @@ int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
 FMT_F(vcomponent) {
 	int seek = 0;
 
-	FOR(int, i, 40) fmtf("_");
+	for (int i = 0; i < 40; i++) fmtf("_");
 
 	seek += sprintf(buf + seek, _YELLOW);
 	seek += sprintf(buf + seek, "\nVComponet (Type := %s)\n", this->type); 
 	seek += sprintf(buf + seek, _RESET);
 	seek += FMT(TRIE(content_line))(&this->clines, buf + seek);
 	seek += sprintf(buf + seek, "\nComponents:\n");
-	FOR(VECT(vcomponent), i, &this->components) {
-		seek += FMT(vcomponent)(GET(VECT(vcomponent))(&this->components, i), buf + seek);
+	FOR(VECT(vcomponent), vcomponent, comp, &this->components) {
+		seek += FMT(vcomponent)(comp, buf + seek);
 	}
 
 	return seek;

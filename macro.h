@@ -78,18 +78,20 @@
 /* Declare destructor */
 #define FREE_F(T) int FREE(T) (T* this)
 
+/* generate reusable internal symbol */
+#define __INTER(s) TP3(__, s, __internal)
 
-/*
- * Iterator macros.
- */
-#define FOR(T, var, set) for( \
-		BEG_ ## T (var, set); \
-		END_ ## T (var, set); \
-		NXT_ ## T (var, set))
+/* Iterator macros.  */
+#define FOR(CONT_T, T, var, set) \
+	PRE_FOR_ ## CONT_T (T, var, set); \
+	for( BEG_ ## CONT_T (T, var, set); \
+		 END_ ## CONT_T (T, var, set); \
+		 NXT_ ## CONT_T (T, var, set))
 
 /* Example int implementation
  * FOR(int, i, 10) { } */
 
+#define PRE_FOR_int(i, set)
 #define BEG_int(i, set) int i = 0
 #define NXT_int(i, set) i++
 #define END_int(i, set) i < set
