@@ -52,4 +52,26 @@ int handle_kv(
 
 int parse_file(char* filename, FILE* f, vcomponent* cal);
 
+/*
+ * Input
+ *   f: file to get characters from
+ *   ctx: current parse context
+ *   c: last read character
+ * output:
+ *   0: line folded
+ *   1: line ended
+ *
+ * A carrige return means that the current line is at an
+ * end. The following character should always be \n.
+ * However, if the first character on the next line is a
+ * whitespace then the two lines should be concatenated.
+ *
+ * NOTE
+ * The above is true according to the standard. But I have
+ * found files with only NL. The code below ends line on the
+ * first of NL or CR, and then ensures that the program thinks
+ * it got the expected CRNL.
+ */
+int fold(FILE* f, parse_ctx* ctx, char c);
+
 #endif /* PARSE_H */

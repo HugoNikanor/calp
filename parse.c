@@ -21,59 +21,6 @@
 #undef V
 
 /*
- * Input
- *   f: file to get characters from
- *   ctx: current parse context
- *   c: last read character
- * output:
- *   0: line folded
- *   1: line ended
- *
- * A carrige return means that the current line is at an
- * end. The following character should always be \n.
- * However, if the first character on the next line is a
- * whitespace then the two lines should be concatenated.
- *
- * NOTE
- * The above is true according to the standard. But I have
- * found files with only NL. The code below ends line on the
- * first of NL or CR, and then ensures that the program thinks
- * it got the expected CRNL.
- */
-int fold(FILE* f, parse_ctx* ctx, char c) {
-	int retval;
-
-	char buf[2] = {
-		(c == '\n' ? '\n' : fgetc(f)),
-		fgetc(f)
-	};
-
-	ctx->pcolumn = 1;
-
-	if (buf[0] != '\n') {
-		ERR_P(ctx, "expected newline after CR");
-		retval = -1;
-
-	} else if (buf[1] == ' ' || buf[1] == '\t') {
-		retval = 0;
-		ctx->pcolumn++;
-
-	} else if (ungetc(buf[1], f) != buf[1]) {
-		ERR_P(ctx, "Failed to put character back on FILE");
-		retval = -2;
-
-	} else {
-		retval = 1;
-		++ctx->line;
-		ctx->column = 0;
-	}
-
-	++ctx->pline;
-
-	return retval;
-}
-
-/*
  * name *(";" param) ":" value CRLF
  */
 int parse_file(char* filename, FILE* f, vcomponent* root) {
@@ -289,6 +236,40 @@ int handle_kv (
 
 	return 0;
 }
+
+int fold(FILE* f, parse_ctx* ctx, char c) {
+	int retval;
+
+	char buf[2] = {
+		(c == '\n' ? '\n' : fgetc(f)),
+		fgetc(f)
+	};
+
+	ctx->pcolumn = 1;
+
+	if (buf[0] != '\n') {
+		ERR_P(ctx, "expected newline after CR");
+		retval = -1;
+
+	} else if (buf[1] == ' ' || buf[1] == '\t') {
+		retval = 0;
+		ctx->pcolumn++;
+
+	} else if (ungetc(buf[1], f) != buf[1]) {
+		ERR_P(ctx, "Failed to put character back on FILE");
+		retval = -2;
+
+	} else {
+		retval = 1;
+		++ctx->line;
+		ctx->column = 0;
+	}
+
+	++ctx->pline;
+
+	return retval;
+}
+
 
 INIT_F(parse_ctx, char* filename) {
 	INIT(LLIST(strbuf), &this->key_stack);
