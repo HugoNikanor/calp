@@ -86,6 +86,7 @@ TYPE* POP(LLIST(TYPE)) ( LLIST(TYPE)* lst) {
 	UNLINK(LINK(TYPE))(frst);
 
 	TYPE* retval = frst->value;
+	--lst->length;
 	free (frst);
 	return retval;
 }
@@ -128,13 +129,7 @@ int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new ) {
 }
 
 int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
-	int size = 0;
-	LINK(TYPE)* l = FIRST(llist);
-	while (l->after != NULL) {
-		++size;
-		l = l->after;
-	}
-	return size;
+	return llist->length;
 }
 
 int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
