@@ -19,7 +19,7 @@
 #define SEGSIZE 75
 
 typedef enum {
-	p_key, p_value, p_param_name, p_param_value
+	p_key, p_value, p_param_name, p_param_value, p_escape
 } part_context;
 
 /*
@@ -31,8 +31,14 @@ typedef struct {
 	LLIST(strbuf) key_stack;
 	LLIST(vcomponent) comp_stack;
 
+	/* Number for unfolded lines */
 	int line;
 	int column;
+
+	/* Actuall lines and columns from file */
+	int pline;
+	int pcolumn;
+
 	strbuf str;
 } parse_ctx;
 

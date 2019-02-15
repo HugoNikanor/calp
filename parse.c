@@ -21,6 +21,59 @@
 #undef V
 
 /*
+ * Input
+ *   f: file to get characters from
+ *   ctx: current parse context
+ *   c: last read character
+ * output:
+ *   0: line folded
+ *   1: line ended
+ *
+ * A carrige return means that the current line is at an
+ * end. The following character should always be \n.
+ * However, if the first character on the next line is a
+ * whitespace then the two lines should be concatenated.
+ *
+ * NOTE
+ * The above is true according to the standard. But I have
+ * found files with only NL. The code below ends line on the
+ * first of NL or CR, and then ensures that the program thinks
+ * it got the expected CRNL.
+ */
+int fold(FILE* f, parse_ctx* ctx, char c) {
+	int retval;
+
+	char buf[2] = {
+		(c == '\n' ? '\n' : fgetc(f)),
+		fgetc(f)
+	};
+
+	ctx->pcolumn = 1;
+
+	if (buf[0] != '\n') {
+		ERR_P(ctx, "expected newline after CR");
+		retval = -1;
+
+	} else if (buf[1] == ' ' || buf[1] == '\t') {
+		retval = 0;
+		ctx->pcolumn++;
+
+	} else if (ungetc(buf[1], f) != buf[1]) {
+		ERR_P(ctx, "Failed to put character back on FILE");
+		retval = -2;
+
+	} else {
+		retval = 1;
+		++ctx->line;
+		ctx->column = 0;
+	}
+
+	++ctx->pline;
+
+	return retval;
+}
+
+/*
  * name *(";" param) ":" value CRLF
  */
 int parse_file(char* filename, FILE* f, vcomponent* root) {
@@ -34,38 +87,11 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
 
-		/*
-		 * A carrige return means that the current line is at an
-		 * end. The following character should always be \n.
-		 * However, if the first character on the next line is a
-		 * whitespace then the two lines should be concatenated.
-		 *
-		 * NOTE
-		 * The above is true according to the standard. But I have
-		 * found files with only NL. The code below ends line on the
-		 * first of NL or CR, and then ensures that the program thinks
-		 * it got the expected CRNL.
-		 */
+		/* We have a linebreak */
 		if (c == '\r' || c == '\n') {
 
-			char s[2];
-			s[0] = (c == '\n' ? '\n' : fgetc(f));
-			s[1] = fgetc(f);
-
-			if (s[0] != '\n') { ERR_F("%s, %i", "expected newline after CR", ctx.line); }
-			else if (s[1] == ' ' || s[1] == '\t') {
-				/* Folded line, don't end line */
-			} else {
-
-				/* Actuall end of line, handle values.  */
-
-				/* Push back the last written character to the stream,
-				 * since it's part of the next line.
-				 */
-				if (ungetc(s[1], f) != s[1]) {
-					ERR_F("%s, %i", "Failed to put character back on FILE", ctx.line);
-					exit (2);
-				}
+			if (fold(f, &ctx, c) > 0) {
+				/* Actuall end of line, handle value */
 
 				strbuf* target = CLINE_CUR_VAL(&cline);
 
@@ -73,13 +99,50 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				strbuf_cap(target);
 				strbuf_soft_reset(&ctx.str);
 
-				++ctx.line;
-				ctx.column = 0;
-
 				handle_kv(&cline, &ctx);
 
 				p_ctx = p_key;
+			} /* Else continue on current line */
+
+		/* We have an escaped character */
+		} else if (c == '\\') {
+			char esc = fgetc(f);
+			char target;
+
+			/*
+			 * An actuall linebreak after the backslash. Unfold the
+			 * line and find the next "real" character, and escape
+			 * that.
+			 */
+			if (esc == '\r' || esc == '\n') {
+				int ret;
+				if ( (ret = fold(f, &ctx, esc)) != 0) {
+					if (ret == 1) ERR_P(&ctx, "ESC before not folded line");
+					else          ERR_P(&ctx, "other error: val = %i", ret);
+					exit (2);
+				} else {
+					esc = fgetc(f);
+				}
 			}
+
+			/* Escaped newline */
+			if (esc == 'n' || esc == 'N') {
+				target = '\n';
+
+			/* "Standard" escaped character */
+			} else if (esc == ';' || esc == ',' || esc == '\\') {
+				target = esc;
+
+			/* Invalid escaped character */
+			} else {
+				ERR_P(&ctx, "Non escapable character '%c' (%i)", esc, esc);
+			}
+
+			/* save escapade character as a normal character */
+			strbuf_append(&ctx.str, target);
+
+			++ctx.column;
+			++ctx.pcolumn;
 
 
 		/* Border between param {key, value} */
@@ -131,13 +194,15 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 		} else {
 			strbuf_append(&ctx.str, c);
+
 			++ctx.column;
+			++ctx.pcolumn;
 		}
 	}
 
 	if (! feof(f)) {
 		ERR("Error parsing");
-	} 
+	}
 	/* Check to see if empty line */
 	else if (ctx.str.ptr != 0) {
 		/*
@@ -231,8 +296,12 @@ INIT_F(parse_ctx, char* filename) {
 	this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
 	strcpy(this->filename, filename);
 
-	this->line = 0;
-	this->column = 0;
+	this->line    = 0;
+	this->column  = 0;
+
+	this->pline   = 1;
+	this->pcolumn = 1;
+
 	INIT(strbuf, &this->str);
 
 	return 0;
