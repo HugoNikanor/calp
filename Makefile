@@ -26,14 +26,17 @@ parse: $(O_FILES)
 
 $(O_FILES): | $(OBJDIR)
 
-$(OBJDIR)/%.o : %.c $(H_FILES) $(X_FILES)
+%.x : %.scm.c
+	guile-snarf -o $@ $< $(CFLAGS)
+
+$(OBJDIR)/%.scm.o : %.scm.c %.x
+	$(CC) -c $(CFLAGS) -o $@ $<
+
+$(OBJDIR)/%.o : %.c # $(H_FILES) $(X_FILES)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
-
-%.x : %.scm.c
-	guile-snarf -o $@ $< $(CFLAGS)
 
 libguile-calendar.so: $(O_FILES)
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
