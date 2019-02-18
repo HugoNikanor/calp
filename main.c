@@ -39,18 +39,24 @@ int main (int argc, char* argv[argc]) {
 	if (args.argc == 0 || strcmp(args.argv[0], "-p") == 0) {
 		INFO_F("Parsed calendar file containing [%u] events",
 				root.components.length);
+
+		puts("CAL : OBJ | Filename | Description");
+		puts("----------+----------+------------");
+
+		/* This loops over all VCALENDAR's in root */
 		for (size_t i = 0; i < root.components.length; i++) {
 			vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
 			assert(strcmp(cal->type, "VCALENDAR") == 0);
 
 			char* filename = cal->filename;
+			/* This loop over all VEVENT's in the current VCALENDAR */
 			for (size_t j = 0; j < cal->components.length; j++) {
 				vcomponent* ev = GET(VECT(vcomponent))(&cal->components, j);
 
 				if (strcmp(ev->type, "VEVENT") != 0) continue;
 
-				printf("%3lu | %s | %s\n",
-						i + 1,
+				printf("%3lu : %3lu | %s | %s\n",
+						i + 1, j + 1,
 						filename,
 						get_property(ev, "SUMMARY")->val.cur->value->key.mem);
 			}
