@@ -3,8 +3,6 @@
 
 #include <stdio.h>
 
-#include "macro.h"
-
 #define _RESET "\x1b[m"
 #define _BLACK  "\x1B[0;30m"
 #define _RED    "\x1B[0;31m"
@@ -27,6 +25,7 @@
 #define INFO_F(fmt, ...) fprintf(stderr, _BLUE "INFO" _RESET " (%s:%i) " fmt "\n", \
 		__FILE__, __LINE__, ##__VA_ARGS__)
 
+#if 0
 #define LINE(len) do { \
 	printf(_GREEN); \
 	FOR(int, i, len) printf("_"); \
@@ -38,5 +37,6 @@
 	FMT(T)(v, buf); \
 	INFO_F("%s", buf); \
 } while (0)
+#endif
 
 #endif /* ERR_H */

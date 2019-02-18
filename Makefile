@@ -10,14 +10,14 @@ CFLAGS  = -std=gnu++11 -Wall -Wextra \
 LDFLAGS = -fPIC $(shell guile-config link)
 
 H_FILES = $(wildcard *.h)
-C_FILES = $(wildcard *.c)
+C_FILES = $(wildcard *.cpp)
 
 SCM_C_FILES = $(wildcard *.scm.c)
-X_FILES = $(SCM_C_FILES:.scm.c=.x)
+X_FILES = $(SCM_C_FILES:.scm.cpp=.x)
 
 .SECONDARY: $(X_FILES)
 
-O_FILES = $(addprefix obj/,$(C_FILES:.c=.o))
+O_FILES = $(addprefix obj/,$(C_FILES:.cpp=.o))
 
 all: parse libguile-calendar.so
 
@@ -32,7 +32,7 @@ $(O_FILES): | $(OBJDIR)
 $(OBJDIR)/%.scm.o : %.scm.c %.x
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-$(OBJDIR)/%.o : %.c # $(H_FILES) $(X_FILES)
+$(OBJDIR)/%.o : %.cpp # $(H_FILES) $(X_FILES)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(OBJDIR):

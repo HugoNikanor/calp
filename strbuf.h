@@ -1,8 +1,9 @@
 #ifndef STRBUF_H
 #define STRBUF_H
 
-#include <stdlib.h>
-#include "macro.h"
+#include <unistd.h>
+#include <cstdlib>
+#include <cstring>
 
 /*
  * A high level string type which holds it's own length, how much
@@ -12,88 +13,74 @@
  * Also comes with a number of functions which allow for safe(er)
  * access to the memmory.
  */
-typedef struct {
+struct strbuf {
 	char* mem;
 	/* TODO add support for negative ptr */
-	int ptr;
-	unsigned int alloc;
-	unsigned int len;
-} strbuf;
+	int ptr = 0;
+	size_t alloc;
+	size_t len   = 0;
 
-/*
- * Init strbuf to size of 0
- * Doesnt't call malloc.
- */
-INIT_F(strbuf);
+	strbuf () : strbuf (1) { };
+	strbuf (size_t alloc)
+		: alloc(alloc)
+		, mem(static_cast<char*>(malloc(alloc))) { };
 
-/* Constructor */
-INIT_F(strbuf, size_t len);
+	~strbuf();
 
-/*
- * Like realloc, but for strbuf
- */
-int strbuf_realloc(strbuf* str, size_t len);
+	/*
+	 * Like realloc, but for strbuf
+	 */
+	void realloc (size_t len);
 
-/*
- * Free's contents of str, but keeps str.
- */
-FREE_F(strbuf);
+	bool operator==(strbuf& other) {
+		return strncmp(this->mem, other.mem, this->len) == 0;
+	}
+	bool operator==(char* other)
+		{ strncmp(this->mem, other, this->len) == 0 ; }
 
-int strbuf_cmp(strbuf* a, strbuf* b);
-int strbuf_c(strbuf* a, char* b);
+	strbuf& operator=(strbuf* other);
 
-/*
- * Copy contents from src to dest.
- * Assumes that dest is already initialized.
- */
-int DEEP_COPY(strbuf)(strbuf*, strbuf*);
+	strbuf& operator+=(char c);
 
-/*
- * Append char to end of strbuf, determined by s->len.
- */
-int strbuf_append(strbuf* s, char c);
+	void cap() { this->mem += '\0'; }
 
-/*
- * Calls strbuf_append with NULL.
- */
-int strbuf_cap(strbuf* s);
+	/*
+	 * Returns a pointer to character at index. Allows mutation of the
+	 * value pointed to by the return address.
+	 */
+	char& operator[](int idx) 
+		{ return this->mem[idx]; }
 
-/*
- * Returns a pointer to character at index. Allows mutation of the
- * value pointed to by the return address.
- */
-char* charat(strbuf* s, unsigned int idx);
+	/* Same as `charat`, But returns the current character.  */
+	char& strbuf_cur()
+		{ return this->mem[this->ptr]; }
 
-/*
- * Same as `charat`, But returns the current character.
- */
-char* strbuf_cur(strbuf* s);
+	/* Returns the character after the last, so where null hopefully is.  */
+	char& back()
+		{ return this->mem[this->len]; }
 
-/*
- * Resets the seek for strbuf to 0.
- */
-int strbuf_reset(strbuf* s);
+	/* Resets the seek for strbuf to 0.  */
+	void reset();
 
-/*
- * Sets the length and seek ptr to 0, but doesn't touch the memmory.
- */
-int strbuf_soft_reset(strbuf* s);
+	/* Sets the length and seek ptr to 0, but doesn't touch the memmory.  */
+	void soft_reset();
 
-/*
- * Returns the character after the last, so where null hopefully is.
- */
-char* strbuf_end(strbuf* s);
+	std::string to_string() {
+		return std::string (this->mem);
+	}
+};
 
 /*
  * Reallocs dest to be the same size as src, and copies the contents
  * of src into dest.
  */
-int strbuf_realloc_copy(strbuf* dest, strbuf* src);
+// int strbuf_realloc_copy(strbuf* dest, strbuf* src);
 
 /*
  * Copies contents from src to dest, also allocating dest in the
  * process. dest should not be initialized before self call.
  */
+#if 0
 int strbuf_init_copy(strbuf* dest, strbuf* src);
 
 strbuf* RESOLVE(strbuf)(strbuf*, strbuf*);
@@ -101,5 +88,6 @@ strbuf* RESOLVE(strbuf)(strbuf*, strbuf*);
 FMT_F(strbuf);
 
 int SIZE(strbuf)(strbuf*);
+#endif
 
 #endif /* STRBUF_H */

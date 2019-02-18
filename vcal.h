@@ -1,47 +1,20 @@
 #ifndef VCAL_H
 #define VCAL_H
 
-#include <stdlib.h>
+#include <string>
+#include <utility>
+#include <vector>
+#include <list>
+#include <iostream>
 
-#include "strbuf.h"
+#include "trie.h"
 
-#define TYPE strbuf
-#include "linked_list.h"
-// #include "trie.h"
-#undef TYPE
 
-#define T strbuf
-	#define V LLIST(strbuf)
-		#include "pair.h"
-		/* left := param_name | right := param_values */
-		#define param_set PAIR(strbuf, LLIST(strbuf))
-	#undef V
-#undef T
+typedef std::pair<strbuf, std::list<strbuf> > param_set;
+typedef std::pair<strbuf, std::list<param_set> > content_set;
+typedef std::pair<strbuf, std::list<content_set> > content_line;
 
-#define TYPE param_set
-#include "linked_list.h"
-#undef TYPE
-
-#define T strbuf
-	#define V LLIST(param_set)
-		#include "pair.h"
-		/* left := content | right := params */
-		#define content_set PAIR(strbuf, LLIST(param_set))
-	#undef V
-#undef T
-
-#define TYPE content_set
-#include "linked_list.h"
-#undef TYPE
-
-#define T strbuf
-	#define V LLIST(content_set)
-		#include "pair.h"
-		/* left := content | right := params */
-		#define content_line PAIR(strbuf, LLIST(content_set))
-	#undef V
-#undef T
-
+#if 0
 /*
  * Helper macros for accessing fields in
  * content_line, content_set, and param_set
@@ -50,21 +23,36 @@
  */
 
 /* ptr -> ptr */
-#define CLINE_KEY(c) (&(c)->key)
-#define CLINE_CUR_CSET(c) (&((c)->val.cur->value))
+#define CLINE_KEY(c) (&(c)->first)
+#define CLINE_CUR_CSET(c) (&((c)->second.cur->value))
 
 /* content_set */
-#define CLINE_CUR(c)        ((c)->val.cur->value)
+#define CLINE_CUR(c)        ((c)->second.cur->value)
 /* strbuf */
-#define CLINE_CUR_VAL(c)    (& CLINE_CUR(c)->key)
+#define CLINE_CUR_VAL(c)    (& CLINE_CUR(c)->first)
 
-/* LLIST(param_set) */
-#define CLINE_CUR_PARAMS(c) (& CLINE_CUR(c)->val)
+	/* LLIST(param_set) */
+#define CLINE_CUR_PARAMS(c) (& CLINE_CUR(c)->second)
 
-/* strbuf */
-#define CLINE_CUR_PARAM_KEY(c) (CLINE_CUR_PARAMS(c)->cur->value->key)
-/* strbuf */
-#define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->val.cur->value)
+	/* strbuf */
+#define CLINE_CUR_PARAM_KEY(c) (CLINE_CUR_PARAMS(c)->cur->value->first)
+	/* strbuf */
+#define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->second.cur->value)
+#endif
+
+	struct vcomponent {
+		std::string filename;
+		std::string type;
+		vcomponent* parent = nullptr;
+		trie<content_line> clines;
+		std::vector<vcomponent> components;
+
+		vcomponent(const std::string& type) : vcomponent(type, nullptr) { };
+		vcomponent(const std::string& type, const std::string& filename)
+			: type(type) , filename(filename) { };
+
+	~vcomponent();
+
 
 /*
  * Resolves a collision in some form of structure (probably a hash-map
@@ -72,46 +60,16 @@
  * to have the correct form, and returns it. Destroying new_ in the
  * process.
  */
-content_line* RESOLVE(content_line)
-	(content_line* dest, content_line* new_);
+	vcomponent* operator= (vcomponent* other);
 
-#define TYPE content_line
-#include "trie.h"
-#undef TYPE
+	content_line& operator[] (char* key) {
+		return this->clines[key];
+	}
 
-typedef struct s_vcomponent vcomponent;
-
-#define TYPE vcomponent
-#include "vector.h"
-#undef TYPE
-
-struct s_vcomponent {
-	char* filename;
-	char* type;
-	vcomponent* parent;
-	TRIE(content_line) clines;
-	VECT(vcomponent) components;
+	void push_back(const vcomponent& child)
+		{ this->components.push_back(child); }
 };
 
-#define FCHILD(v) GET(VECT(vcomponent))(&(v)->components, 0)
-
-INIT_F(vcomponent);
-INIT_F(vcomponent, char* type);
-INIT_F(vcomponent, char* type, char* filename);
-FREE_F(vcomponent);
-
-content_line* get_property (vcomponent* ev, char* key);
-
-int add_content_line (vcomponent* ev, content_line* c);
-
-/*
- * Appends ev to cal. Doesn't copy ev. So make sure that it wont go
- * out of scope.
- */
-int PUSH(vcomponent)(vcomponent*, vcomponent*);
-
-int DEEP_COPY(vcomponent)(vcomponent*, vcomponent*);
-
-FMT_F(vcomponent);
+std::ostream& operator<<(std::ostream&, vcomponent*);
 
 #endif /* VCAL_H */

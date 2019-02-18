@@ -1,26 +1,3 @@
-#ifndef TYPE
-#error "Set TYPE before including self file"
-#else
-
-INIT_F ( LLIST(TYPE) ) {
-	self->length = 0;
-	NEW(LINK(TYPE), head);
-	NEW(LINK(TYPE), tail);
-	self->head   = head;
-	self->tail   = tail;
-	head->after  = tail;
-	tail->before = head;
-	self->cur    = head;
-	return 0;
-}
-
-FREE_F (LINK(TYPE)) {
-	UNLINK(LINK(TYPE))(self);
-
-	if (self->value != NULL) FFREE(TYPE, self->value);
-	return 0;
-}
-
 FREE_F( LLIST(TYPE) ) {
 	LINK(TYPE) *n, *next;
 	n = self->head;

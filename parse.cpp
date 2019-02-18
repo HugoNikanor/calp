@@ -4,32 +4,21 @@
 #include <string.h>
 #include <assert.h>
 
-#include "macro.h"
 #include "vcal.h"
+#include "strbuf.h"
 
 #include "err.h"
-
-#define TYPE vcomponent
-#include "linked_list.inc.h"
-#undef TYPE
-
-#define T strbuf
-#define V strbuf
-#include "pair.h"
-#include "pair.inc.h"
-#undef T
-#undef V
 
 /*
  * name *(";" param) ":" value CRLF
  */
-int parse_file(char* filename, FILE* f, vcomponent* root) {
+int parse_file(char* filename, FILE* f, vcomponent& root) {
 	part_context p_ctx = p_key;
 
-	SNEW(parse_ctx, ctx, filename);
-	PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
+	parse_ctx ctx(filename);
+	ctx.comp_stack.push(root);
 
-	SNEW(content_line, cline);
+	content_line cline;
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
@@ -40,11 +29,16 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (fold(f, &ctx, c) > 0) {
 				/* Actuall end of line, handle value */
 
-				strbuf* target = CLINE_CUR_VAL(&cline);
+				// std::string& target = CLINE_CUR_VAL(&cline);
+				// TODO solve current;
+				// std::string& target = cline
 
-				DEEP_COPY(strbuf)(target, &ctx.str);
-				strbuf_cap(target);
-				strbuf_soft_reset(&ctx.str);
+				strbuf target = ctx.str;
+				// DEEP_COPY(strbuf)(target, &ctx.str);
+				target.cap();
+				// strbuf_cap(target);
+				ctx.str.soft_reset();
+				// strbuf_soft_reset(&ctx.str);
 
 				handle_kv(&cline, &ctx);
 
@@ -86,7 +80,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			}
 
 			/* save escapade character as a normal character */
-			strbuf_append(&ctx.str, target);
+			// strbuf_append(&ctx.str, target);
+			ctx.str += target;
 
 			++ctx.column;
 			++ctx.pcolumn;
@@ -94,12 +89,15 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 		/* Border between param {key, value} */
 		} else if (p_ctx == p_param_name && c == '=') {
-			LLIST(param_set)* params = CLINE_CUR_PARAMS(&cline);
+			// LLIST(param_set)* params = CLINE_CUR_PARAMS(&cline);
+			std::list<param_set>* params = cline.second.second;
 
-			NEW(param_set, ps);
-			DEEP_COPY(strbuf)(&ps->key, &ctx.str);
-			strbuf_cap(&ps->key);
-			strbuf_soft_reset(&ctx.str);
+			// NEW(param_set, ps);
+			auto ps = new param_set;
+			// TODO make sure this is a deep copy
+			ps->first = ctx.str;
+			ps->first.cap();
+			ctx.str.soft_reset();
 			PUSH(LLIST(param_set))(params, ps);
 
 			p_ctx = p_param_value;
@@ -268,35 +266,4 @@ int fold(FILE* f, parse_ctx* ctx, char c) {
 	++ctx->pline;
 
 	return retval;
-}
-
-
-INIT_F(parse_ctx, char* filename) {
-	INIT(LLIST(strbuf), &self->key_stack);
-	INIT(LLIST(vcomponent), &self->comp_stack);
-	self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
-	strcpy(self->filename, filename);
-
-	self->line    = 0;
-	self->column  = 0;
-
-	self->pline   = 1;
-	self->pcolumn = 1;
-
-	INIT(strbuf, &self->str);
-
-	return 0;
-}
-
-FREE_F(parse_ctx) {
-
-	FREE(LLIST(strbuf))(&self->key_stack);
-	FREE(LLIST(vcomponent))(&self->comp_stack);
-	free(self->filename);
-
-	self->line = 0;
-	self->column = 0;
-	FREE(strbuf)(&self->str);
-
-	return 0;
 }

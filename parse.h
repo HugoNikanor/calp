@@ -4,12 +4,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <string>
+#include <stack>
+
 #include "strbuf.h"
 #include "vcal.h"
+#if 0
 
 #define TYPE vcomponent
 #include "linked_list.h"
 #undef TYPE
+#endif
 
 /*
  * The standard says that no line should be longer than 75 octets.
@@ -18,32 +23,32 @@
  */
 #define SEGSIZE 75
 
-typedef enum {
+enum part_context {
 	p_key, p_value, p_param_name, p_param_value, p_escape
-} part_context;
+};
 
 /*
  * Struct holding most state information needed while parsing.
  * Kept together for simplicity.
  */
-typedef struct {
-	char* filename;
-	LLIST(strbuf) key_stack;
-	LLIST(vcomponent) comp_stack;
+struct parse_ctx {
+	std::string filename;
+	std::stack<std::string> key_stack;
+	std::stack<vcomponent> comp_stack;
 
 	/* Number for unfolded lines */
-	int line;
-	int column;
+	int line   = 0;
+	int column = 0;
 
 	/* Actuall lines and columns from file */
-	int pline;
-	int pcolumn;
+	int pline   = 1;
+	int pcolumn = 1;
 
 	strbuf str;
-} parse_ctx;
 
-INIT_F(parse_ctx, char* filename);
-FREE_F(parse_ctx);
+	parse_ctx (const std::string& filename)
+		: filename(filename) { }
+};
 
 int handle_kv(
 		content_line*  cline,
