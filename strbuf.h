@@ -92,7 +92,7 @@ int strbuf_realloc_copy(strbuf* dest, strbuf* src);
 
 /*
  * Copies contents from src to dest, also allocating dest in the
- * process. dest should not be initialized before this call.
+ * process. dest should not be initialized before self call.
  */
 int strbuf_init_copy(strbuf* dest, strbuf* src);
 

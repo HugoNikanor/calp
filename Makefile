@@ -1,10 +1,10 @@
 .PHONY: all clean
 
-CC  := gcc
+CC  := g++
 
 OBJDIR = obj
 
-CFLAGS  = -std=gnu11 -Wall -Wextra \
+CFLAGS  = -std=gnu++11 -Wall -Wextra \
 		  -ggdb -fPIC \
 		  $(shell guile-config compile)
 LDFLAGS = -fPIC $(shell guile-config link)

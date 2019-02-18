@@ -46,7 +46,7 @@
  * Helper macros for accessing fields in
  * content_line, content_set, and param_set
  *
- * TODO find a better way to do this.
+ * TODO find a better way to do self.
  */
 
 /* ptr -> ptr */
@@ -68,12 +68,12 @@
 
 /*
  * Resolves a collision in some form of structure (probably a hash-map
- * or a trie). If dest is NULL just return new. Otherwise mutates dest
- * to have the correct form, and returns it. Destroying new in the
+ * or a trie). If dest is NULL just return new_. Otherwise mutates dest
+ * to have the correct form, and returns it. Destroying new_ in the
  * process.
  */
 content_line* RESOLVE(content_line)
-	(content_line* dest, content_line* new);
+	(content_line* dest, content_line* new_);
 
 #define TYPE content_line
 #include "trie.h"

@@ -1,0 +1,6 @@
+/* cpp arguments: guile_interface.scm.c -std=gnu11 -Wall -Wextra -fPIC -pthread -I/usr/include/guile/2.2 */
+scm_c_define_gsubr (s_make_vcomponent, 1, 0, 0, (scm_t_subr) make_vcomponent);;
+scm_c_define_gsubr (s_vcomponent_get_attribute, 2, 0, 0, (scm_t_subr) vcomponent_get_attribute);;
+scm_c_define_gsubr (s_vcomponent_child_count, 1, 0, 0, (scm_t_subr) vcomponent_child_count);;
+scm_c_define_gsubr (s_vcomponent_children, 1, 0, 0, (scm_t_subr) vcomponent_children);;
+scm_c_define_gsubr (s_vcomponent_typeof, 1, 0, 0, (scm_t_subr) vcomponent_typeof);;

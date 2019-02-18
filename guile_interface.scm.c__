@@ -63,7 +63,7 @@ SCM_DEFINE (vcomponent_child_count, "vcomponent-child-count", 1, 0, 0,
 	return scm_from_size_t (SIZE(VECT(vcomponent))(&c->components));
 }
 
-/* TODO This currently returns a new foreign object each time I call it.  */
+/* TODO This currently returns a new_ foreign object each time I call it.  */
 SCM_DEFINE(vcomponent_children, "vcomponent-children", 1, 0, 0,
 		(SCM component),
 		"")

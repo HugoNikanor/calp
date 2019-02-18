@@ -52,7 +52,7 @@ TYPE* POP(LLIST(TYPE)) ( LLIST(TYPE)* );
 
 int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src );
 
-int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new );
+int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new_ );
 
 int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist );
@@ -63,7 +63,7 @@ int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist );
  */
 int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 
-LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new);
+LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new_);
 
 FMT_F(LLIST(TYPE));
 

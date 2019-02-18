@@ -6,7 +6,7 @@
 #include "err.h"
 
 INIT_F(strbuf) {
-	INIT(strbuf, this, 1);
+	INIT(strbuf, self, 1);
 	return 0;
 }
 
@@ -14,27 +14,27 @@ INIT_F(strbuf) {
  * Giving len < 1 is an error.
  */
 INIT_F(strbuf, size_t len) {
-	this->mem   = calloc(sizeof(*this->mem), len);
-	this->alloc = len;
-	this->ptr   = 0;
-	this->len   = 0;
+	self->mem   = (char*) calloc(sizeof(*self->mem), len);
+	self->alloc = len;
+	self->ptr   = 0;
+	self->len   = 0;
 	return 0;
 }
 
 int strbuf_realloc(strbuf* str, size_t len) {
-	str->mem = realloc(str->mem, len);
+	str->mem = (char*) realloc(str->mem, len);
 	str->alloc = len;
 	return 0;
 }
 
 FREE_F(strbuf) {
 	/* has already been freed */
-	if (this->mem == NULL) return 1;
+	if (self->mem == NULL) return 1;
 
-	free (this->mem);
-	this->mem = NULL;
-	this->alloc = 0;
-	this->len = 0;
+	free (self->mem);
+	self->mem = NULL;
+	self->alloc = 0;
+	self->len = 0;
 	return 0;
 }
 
@@ -46,7 +46,7 @@ int strbuf_append(strbuf* s, char c) {
 
 	if (s->len + 1 > s->alloc) {
 		s->alloc <<= 1;
-		s->mem = realloc(s->mem, s->alloc);
+		s->mem = (char*) realloc(s->mem, s->alloc);
 		retval = 1;
 	}
 
@@ -124,15 +124,15 @@ int strbuf_soft_reset(strbuf* s) {
 	return 0;
 }
 
-strbuf* RESOLVE(strbuf)(strbuf* dest, strbuf* new) {
-	if (dest == NULL) return new;
+strbuf* RESOLVE(strbuf)(strbuf* dest, strbuf* new_) {
+	if (dest == NULL) return new_;
 	else return dest;
 }
 
 FMT_F(strbuf) {
-	return sprintf(buf, "%s", this->mem);
+	return sprintf(buf, "%s", self->mem);
 }
 
-int SIZE(strbuf)(strbuf* this) {
-	return this->len;
+int SIZE(strbuf)(strbuf* self) {
+	return self->len;
 }

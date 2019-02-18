@@ -22,7 +22,7 @@ int arg_shift (arg* a) {
 
 }
 
-int main (int argc, char* argv[argc]) {
+int main (int argc, char** argv) {
 	arg args = { .argc = argc, .argv = argv };
 
 	if (arg_shift(&args) == 0) {
@@ -62,7 +62,7 @@ int main (int argc, char* argv[argc]) {
 			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {
-		/* TODO this might be broken */
+		/* TODO self might be broken */
 		if (arg_shift(&args) == 0) {
 			for (size_t i = 0; i < root.components.length; i++) {
 				vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);

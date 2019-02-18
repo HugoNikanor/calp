@@ -1,57 +1,57 @@
 #ifndef TYPE
-#error "Set TYPE before including this file"
+#error "Set TYPE before including self file"
 #else
 
 INIT_F ( LLIST(TYPE) ) {
-	this->length = 0;
+	self->length = 0;
 	NEW(LINK(TYPE), head);
 	NEW(LINK(TYPE), tail);
-	this->head   = head;
-	this->tail   = tail;
+	self->head   = head;
+	self->tail   = tail;
 	head->after  = tail;
 	tail->before = head;
-	this->cur    = head;
+	self->cur    = head;
 	return 0;
 }
 
 FREE_F (LINK(TYPE)) {
-	UNLINK(LINK(TYPE))(this);
+	UNLINK(LINK(TYPE))(self);
 
-	if (this->value != NULL) FFREE(TYPE, this->value);
+	if (self->value != NULL) FFREE(TYPE, self->value);
 	return 0;
 }
 
 FREE_F( LLIST(TYPE) ) {
 	LINK(TYPE) *n, *next;
-	n = this->head;
+	n = self->head;
 	while ( n != NULL ) {
 		next = n->after;
 		FFREE(LINK(TYPE), n);
 		n = next;
 	}
 
-	this->length = -1;
+	self->length = -1;
 
 	return 0;
 }
 
 INIT_F ( LINK(TYPE) ) {
-	this->before = NULL;
-	this->after  = NULL;
-	this->value  = NULL;
+	self->before = NULL;
+	self->after  = NULL;
+	self->value  = NULL;
 	return 0;
 }
 
 INIT_F ( LINK(TYPE), TYPE* val ) {
-	this->before = NULL;
-	this->after  = NULL;
-	this->value  = val;
+	self->before = NULL;
+	self->after  = NULL;
+	self->value  = val;
 	return 0;
 }
 
-int UNLINK(LINK(TYPE)) ( LINK(TYPE)* this ) {
-	if (this->before != NULL) this->before->after = this->after;
-	if (this->after  != NULL) this->after->before = this->before;
+int UNLINK(LINK(TYPE)) ( LINK(TYPE)* self ) {
+	if (self->before != NULL) self->before->after = self->after;
+	if (self->after  != NULL) self->after->before = self->before;
 	return 0;
 }
 	 
@@ -107,23 +107,23 @@ int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src ) {
 /*
  * Adds two linked lists together.
  * O(1) time.
- * destroys new in the process, but keeps the elements.
- * make sure to free(new) after.
+ * destroys new__ in the process, but keeps the elements.
+ * make sure to free(new__) after.
  */
-int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new ) {
+int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new__ ) {
 
-	/* Link end of dest onto start of new. */
-	LAST(dest)->after  = FIRST(new);
-	FIRST(new)->before = LAST(dest);
+	/* Link end of dest onto start of new__. */
+	LAST(dest)->after  = FIRST(new__);
+	FIRST(new__)->before = LAST(dest);
 
 	/* Free the two now not needed end links.  */
-	free(new->head);
+	free(new__->head);
 	free(dest->tail);
 
-	/* Update dest with new tail ptr. */
-	dest->tail = new->tail;
+	/* Update dest with new__ tail ptr. */
+	dest->tail = new__->tail;
 
-	dest->length += new->length;
+	dest->length += new__->length;
 
 	return 0;
 }
@@ -136,9 +136,9 @@ int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
 	return FIRST(llist) == llist->tail;
 }
 
-LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new) {
-	if (dest == NULL) return new;
-	APPEND(LLIST(TYPE))(dest, new);
+LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new__) {
+	if (dest == NULL) return new__;
+	APPEND(LLIST(TYPE))(dest, new__);
 	return dest;
 }
 
@@ -163,7 +163,7 @@ int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
 FMT_F(LLIST(TYPE)) {
 	int seek = 0;
 	fmtf("(");
-	FOR(LLIST, TYPE, v, this) {
+	FOR(LLIST, TYPE, v, self) {
 		seek += FMT(TYPE)(v, buf + seek);
 		fmtf(" ");
 	}

@@ -36,49 +36,49 @@
 #undef TYPE
 
 INIT_F(vcomponent) {
-	(void) this;
+	(void) self;
 	ERR("Do not use");
 	return 0;
 }
 
 INIT_F(vcomponent, char* type) {
-	return INIT(vcomponent, this, type, NULL);
+	return INIT(vcomponent, self, type, NULL);
 }
 
 INIT_F(vcomponent, char* type, char* filename) {
 
-	INIT(TRIE(content_line), &this->clines);
-	INIT(VECT(vcomponent), &this->components);
+	INIT(TRIE(content_line), &self->clines);
+	INIT(VECT(vcomponent), &self->components);
 
-	this->filename = NULL;
+	self->filename = NULL;
 	if (filename != NULL) {
-		this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
-		strcpy(this->filename, filename);
+		self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
+		strcpy(self->filename, filename);
 	}
 
-	this->type = calloc(sizeof(*type), strlen(type) + 1);
-	strcpy(this->type, type);
+	self->type = (char*) calloc(sizeof(*type), strlen(type) + 1);
+	strcpy(self->type, type);
 
-	this->parent = NULL;
+	self->parent = NULL;
 
 	return 0;
 }
 
 content_line* RESOLVE(content_line)
-	(content_line* dest, content_line* new)
+	(content_line* dest, content_line* new_)
 {
-	if (dest == NULL) return new;
+	if (dest == NULL) return new_;
 
-	if (strbuf_cmp(&dest->key, &new->key) != 0) {
+	if (strbuf_cmp(&dest->key, &new_->key) != 0) {
 		ERR("Can't resolve between these two types");
 		return NULL;
 	}
 
-	/* This destroys new->val. */
-	APPEND(LLIST(content_set)) (&dest->val, &new->val);
+	/* This destroys new_->val. */
+	APPEND(LLIST(content_set)) (&dest->val, &new_->val);
 
-	FREE(strbuf)(&new->key);
-	free(new);
+	FREE(strbuf)(&new_->key);
+	free(new_);
 
 	return dest;
 }
@@ -88,15 +88,15 @@ content_line* get_property (vcomponent* ev, char* key) {
 }
 
 FREE_F(vcomponent) {
-	if (this->filename != NULL) free(this->filename);
-	free(this->type);
+	if (self->filename != NULL) free(self->filename);
+	free(self->type);
 
-	if (FREE(TRIE(content_line))(&this->clines) != 0) {
+	if (FREE(TRIE(content_line))(&self->clines) != 0) {
 		fprintf(stderr, "Error freeing vcomponent belonging to file \n %s \n",
-				this->filename);
+				self->filename);
 	}
 
-	FREE(VECT(vcomponent))(&this->components);
+	FREE(VECT(vcomponent))(&self->components);
 
 	return 0;
 }
@@ -118,11 +118,11 @@ FMT_F(vcomponent) {
 	for (int i = 0; i < 40; i++) fmtf("_");
 
 	seek += sprintf(buf + seek, _YELLOW);
-	seek += sprintf(buf + seek, "\nVComponet (Type := %s)\n", this->type); 
+	seek += sprintf(buf + seek, "\nVComponet (Type := %s)\n", self->type); 
 	seek += sprintf(buf + seek, _RESET);
-	seek += FMT(TRIE(content_line))(&this->clines, buf + seek);
+	seek += FMT(TRIE(content_line))(&self->clines, buf + seek);
 	seek += sprintf(buf + seek, "\nComponents:\n");
-	FOR(VECT, vcomponent, comp, &this->components) {
+	FOR(VECT, vcomponent, comp, &self->components) {
 		seek += FMT(vcomponent)(comp, buf + seek);
 	}
 

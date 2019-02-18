@@ -1,5 +1,5 @@
 #ifndef TYPE
-#error "Set TYPE to something before including this header"
+#error "Set TYPE to something before including self header"
 #else
 
 #include "err.h"

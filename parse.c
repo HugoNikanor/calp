@@ -72,7 +72,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				}
 			}
 
-			/* Escaped newline */
+			/* Escaped new_line */
 			if (esc == 'n' || esc == 'N') {
 				target = '\n';
 
@@ -220,7 +220,7 @@ int handle_kv (
 			/* Received propper end, push cur into parent */
 			vcomponent* cur = POP(LLIST(vcomponent))(&ctx->comp_stack);
 
-			// TODO should this instead be done at creation time?
+			// TODO should self instead be done at creation time?
 			PUSH(vcomponent)(PEEK(LLIST(vcomponent))(&ctx->comp_stack), cur);
 		}
 	} else {
@@ -241,14 +241,14 @@ int fold(FILE* f, parse_ctx* ctx, char c) {
 	int retval;
 
 	char buf[2] = {
-		(c == '\n' ? '\n' : fgetc(f)),
-		fgetc(f)
+		(c == '\n' ? '\n' : (char) fgetc(f)),
+		(char) fgetc(f)
 	};
 
 	ctx->pcolumn = 1;
 
 	if (buf[0] != '\n') {
-		ERR_P(ctx, "expected newline after CR");
+		ERR_P(ctx, "expected new_line after CR");
 		retval = -1;
 
 	} else if (buf[1] == ' ' || buf[1] == '\t') {
@@ -272,31 +272,31 @@ int fold(FILE* f, parse_ctx* ctx, char c) {
 
 
 INIT_F(parse_ctx, char* filename) {
-	INIT(LLIST(strbuf), &this->key_stack);
-	INIT(LLIST(vcomponent), &this->comp_stack);
-	this->filename = calloc(sizeof(*filename), strlen(filename) + 1);
-	strcpy(this->filename, filename);
+	INIT(LLIST(strbuf), &self->key_stack);
+	INIT(LLIST(vcomponent), &self->comp_stack);
+	self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
+	strcpy(self->filename, filename);
 
-	this->line    = 0;
-	this->column  = 0;
+	self->line    = 0;
+	self->column  = 0;
 
-	this->pline   = 1;
-	this->pcolumn = 1;
+	self->pline   = 1;
+	self->pcolumn = 1;
 
-	INIT(strbuf, &this->str);
+	INIT(strbuf, &self->str);
 
 	return 0;
 }
 
 FREE_F(parse_ctx) {
 
-	FREE(LLIST(strbuf))(&this->key_stack);
-	FREE(LLIST(vcomponent))(&this->comp_stack);
-	free(this->filename);
+	FREE(LLIST(strbuf))(&self->key_stack);
+	FREE(LLIST(vcomponent))(&self->comp_stack);
+	free(self->filename);
 
-	this->line = 0;
-	this->column = 0;
-	FREE(strbuf)(&this->str);
+	self->line = 0;
+	self->column = 0;
+	FREE(strbuf)(&self->str);
 
 	return 0;
 }

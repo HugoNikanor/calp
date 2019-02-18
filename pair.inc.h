@@ -3,15 +3,15 @@
 #else
 
 INIT_F(PAIR(T, V)) {
-	INIT(T, &this->key);
-	INIT(V, &this->val);
+	INIT(T, &self->key);
+	INIT(V, &self->val);
 
 	return 0;
 }
 
 FREE_F(PAIR(T, V)) {
-	FREE(T)(&this->key);
-	FREE(V)(&this->val);
+	FREE(T)(&self->key);
+	FREE(V)(&self->val);
 
 	return 0;
 }
@@ -19,8 +19,8 @@ FREE_F(PAIR(T, V)) {
 FMT_F(PAIR(T, V)) {
 	char lbuf[0x100];
 	char rbuf[0x1000];
-	FMT(T)(&this->key, lbuf);
-	FMT(V)(&this->val, rbuf);
+	FMT(T)(&self->key, lbuf);
+	FMT(V)(&self->val, rbuf);
 
 	return sprintf(buf, "<%s, %s>", lbuf, rbuf);
 }

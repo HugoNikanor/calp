@@ -40,31 +40,31 @@
 
 /* Returns full type of constructor */
 #define INIT_F(T, ...) \
-	int __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (T* this, ## __VA_ARGS__)
+	int __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (T* self, ## __VA_ARGS__)
 
 /*
  * Call the constructor of an object
- * `int` part of the macro, to ensure that any attempt to call this
+ * `int` part of the macro, to ensure that any attempt to call self
  * function results in an error.
  */
 #define INIT(T, N, ...) \
 	 __INIT_T(T, VA_ARGS_NUM(__VA_ARGS__)) (N, ## __VA_ARGS__)
 
-/* Allocate a new object on the HEAP */
+/* Allocate a new_ object on the HEAP */
 #define NEW(T, N, ...) \
-	T* N = malloc(sizeof(*N)); \
+	T* N = (T*) malloc(sizeof(*N)); \
 	INIT(T, N, ## __VA_ARGS__);
 
 /*
  * Reconstructs a object. Use with caution.
  */
 #define RENEW(T, N, ...) do { \
-	N = malloc(sizeof(*N)); \
+	N = (T*) malloc(sizeof(*N)); \
 	INIT(T, N, ## __VA_ARGS__); \
 } while (0)
 
 
-/* Allocate a new object on the STACK */
+/* Allocate a new_ object on the STACK */
 #define SNEW(T, N, ...) \
 	T N; \
 	INIT(T, & N, ## __VA_ARGS__);
@@ -76,7 +76,7 @@
 #define FFREE(T, N) do { FREE(T)(N); free(N); } while (0)
 
 /* Declare destructor */
-#define FREE_F(T) int FREE(T) (T* this)
+#define FREE_F(T) int FREE(T) (T* self)
 
 /* generate reusable internal symbol */
 #define __INTER(s) TP3(__, s, __internal)
@@ -122,7 +122,7 @@
  */
 
 #define FMT_T(T)     TEMPL(format    , T)
-#define FMT_F(T) int FMT_T(T)(T* this, char* buf, ...)
+#define FMT_F(T) int FMT_T(T)(T* self, char* buf, ...)
 // TODO change order of buf and item
 #define __FMT_HELP(item, buf, ...) ((item), (buf), VA_ARGS_NUM(__VA_ARGS__), ## __VA_ARGS__)
 #define FMT(T) FMT_T(T) __FMT_HELP
