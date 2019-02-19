@@ -4,7 +4,7 @@ CC  := g++
 
 OBJDIR = obj
 
-CFLAGS  = -std=gnu++11 -Wall -Wextra -Wno-reorder \
+CFLAGS  = -std=gnu++11 -pedantic -Wall -Wextra -Wno-reorder \
 		  -ggdb -fPIC # \
 		  # $(shell guile-config compile)
 LDFLAGS = -fPIC # $(shell guile-config link)

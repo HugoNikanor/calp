@@ -34,8 +34,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				// TODO solve current;
 				// std::string& target = cline
 
-				strbuf target = ctx.str;
-				target.cap();
+				cline.value() = ctx.str;
+				cline.value().cap();
 				ctx.str.soft_reset();
 
 				handle_kv(&cline, &ctx);
@@ -145,9 +145,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 */
 
 		//strbuf* target = CLINE_CUR_VAL(&cline);
-		strbuf* target = cline.value();
-		*target = ctx.str;
-		target->cap();
+		cline.value() = ctx.str;
+		cline.value().cap();
 		ctx.str.soft_reset();
 
 		++ctx.line;
@@ -175,9 +174,7 @@ int handle_kv (
 		 * and possibly some others I forget.
 		 */
 
-		strbuf* s = new strbuf;
-		strbuf* type = cline->value();
-		*s = *type;
+		strbuf* s = new strbuf(cline->value());
 		ctx->key_stack.push(s);
 
 		cline->values.reset();
@@ -191,7 +188,7 @@ int handle_kv (
 	} else if (cline->key == "END") {
 		// strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
 		strbuf* s = ctx->key_stack.top(); ctx->key_stack.pop();
-		if (s == cline->value()) {
+		if (*s == cline->value()) {
 #if 0
 			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
 					s->mem,
