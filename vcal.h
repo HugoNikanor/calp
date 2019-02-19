@@ -40,7 +40,8 @@ struct content_line {
 		this->values.cur()->params.push(p);
    	}
 
-	inline void push_param_value (strbuf* value) { this->values.cur()->params.cur()->values.push(value); }
+	inline void push_param_value (strbuf* value)
+		{ this->values.cur()->params.cur()->values.push(value); }
 
 	inline strbuf* value() { return &this->values.cur()->value; }
 

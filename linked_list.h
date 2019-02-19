@@ -39,6 +39,8 @@ struct llist {
 
 	int size () { return length; }
 	bool empty () { return length == 0; }
+
+	void reset ();
 };
 
 template <typename T>
@@ -70,6 +72,19 @@ void llist<T>::push(T* val) {
 
 	// TODO do I want to change that?
 	this->__cur = l;
+}
+
+template <typename T>
+void llist<T>::reset () {
+	llink<T> *link = this->first, *next;
+
+	while (link != this->tail) {
+		next = link->after;
+		delete link;
+		link = next;
+	}
+
+	this->__cur = this->head;
 }
 
 // template <typename T>

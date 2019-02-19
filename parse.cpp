@@ -64,7 +64,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				}
 			}
 
-			/* Escaped new_line */
+			/* Escaped newline */
 			if (esc == 'n' || esc == 'N') {
 				target = '\n';
 
@@ -78,7 +78,6 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			}
 
 			/* save escapade character as a normal character */
-			// strbuf_append(&ctx.str, target);
 			ctx.str += target;
 
 			++ctx.column;
@@ -87,20 +86,10 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 		/* Border between param {key, value} */
 		} else if (p_ctx == p_param_name && c == '=') {
-			// LLIST(param_set)* params = CLINE_CUR_PARAMS(&cline);
-			/*
-			std::list<param_set>* params = cline.val.val;
-
-			// NEW(param_set, ps);
-			auto ps = new param_set;
-			// TODO make sure this is a deep copy
-			ps->first = ctx.str;
-			ps->first.cap();
+			strbuf cpy = ctx.str;
+			cpy.cap();
 			ctx.str.soft_reset();
-			params += ps;
-			// PUSH(LLIST(param_set))(params, ps);
-			*
-			*/
+			cline.push_param_key (cpy);
 
 			p_ctx = p_param_value;
 
@@ -116,7 +105,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (p_ctx == p_param_value) {
 				/* push kv pair */
 
-				auto s = new strbuf(ctx.str);; 
+				auto s = new strbuf(ctx.str);
 				s->cap();
 				ctx.str.soft_reset();
 
@@ -124,10 +113,11 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			}
 
 			if (p_ctx == p_key) {
-				// cline.first = ctx.str;
-				// cline.first.cap();
+				cline.key = ctx.str;
+				cline.key.cap();
 				ctx.str.soft_reset();
 
+				// TODO?
 				// content_set* p = new content_set;
 				// cline.second.push(p);
 			}
@@ -190,6 +180,7 @@ int handle_kv (
 		*s = *type;
 		ctx->key_stack.push(s);
 
+		cline->values.reset();
 		// TODO ompty cline->second here;
 		// RESET(LLIST(content_set))(&cline->val);
 

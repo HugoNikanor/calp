@@ -23,7 +23,7 @@ int arg_shift (arg* a) {
 }
 
 int main (int argc, char** argv) {
-	arg args = { .argc = argc, .argv = argv };
+	arg args = { argc, argv };
 
 	if (arg_shift(&args) == 0) {
 		ERR("Please give vdir or a vcalendar file as first argument");

@@ -8,7 +8,7 @@ vcomponent::vcomponent(
 		const std::string& filename)
 	: type(type)
 	, filename(filename)
-{ };
+{ }
 
 std::ostream& operator<<(std::ostream& o, vcomponent* self) {
 	for (int i = 0; i < 40; i++) o << '_';
