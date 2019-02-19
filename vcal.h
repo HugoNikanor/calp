@@ -11,9 +11,41 @@
 #include "strbuf.h"
 #include "linked_list.h"
 
-typedef std::pair<strbuf, llist<strbuf> > param_set;
-typedef std::pair<strbuf, llist<param_set> > content_set;
-typedef std::pair<strbuf, llist<content_set> > content_line;
+// typedef std::pair<strbuf, llist<strbuf>      > param_set;
+// typedef std::pair<strbuf, llist<param_set>   > content_set;
+// typedef std::pair<strbuf, llist<strbuf> > content_line;
+typedef llist<strbuf> content_line;
+
+struct vcomponent {
+	std::string filename;
+	std::string type;
+	vcomponent* parent = nullptr;
+	trie<content_line> clines;
+	std::vector<vcomponent> components;
+
+	vcomponent(const std::string& type) : vcomponent(type, nullptr) { };
+
+	vcomponent(const std::string& type, const std::string& filename);
+
+
+	/*
+	 * Resolves a collision in some form of structure (probably a hash-map
+	 * or a trie). If dest is NULL just return new_. Otherwise mutates dest
+	 * to have the correct form, and returns it. Destroying new_ in the
+	 * process.
+	 */
+	vcomponent* operator= (vcomponent* other);
+
+	content_line& operator[] (const char* key) {
+		return this->clines[key];
+	}
+
+	void push_back(const vcomponent& child)
+	{ this->components.push_back(child); }
+};
+
+std::ostream& operator<<(std::ostream&, vcomponent*);
+
 
 #if 1
 /*
@@ -40,37 +72,5 @@ typedef std::pair<strbuf, llist<content_set> > content_line;
 	/* strbuf */
 #define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->second.cur->value)
 #endif
-
-	struct vcomponent {
-		std::string filename;
-		std::string type;
-		vcomponent* parent = nullptr;
-		trie<content_line> clines;
-		std::vector<vcomponent> components;
-
-		vcomponent(const std::string& type) : vcomponent(type, nullptr) { };
-		vcomponent(const std::string& type, const std::string& filename)
-			: type(type) , filename(filename) { };
-
-	~vcomponent();
-
-
-/*
- * Resolves a collision in some form of structure (probably a hash-map
- * or a trie). If dest is NULL just return new_. Otherwise mutates dest
- * to have the correct form, and returns it. Destroying new_ in the
- * process.
- */
-	vcomponent* operator= (vcomponent* other);
-
-	content_line& operator[] (char* key) {
-		return this->clines[key];
-	}
-
-	void push_back(const vcomponent& child)
-		{ this->components.push_back(child); }
-};
-
-std::ostream& operator<<(std::ostream&, vcomponent*);
 
 #endif /* VCAL_H */

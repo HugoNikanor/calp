@@ -1,9 +1,9 @@
 #include "calendar.h"
 
+#include <cstring>
+
 #include <sys/stat.h>
 #include <dirent.h>
-#include <string.h>
-#include <stdio.h>
 #include <errno.h>
 
 #include "parse.h"

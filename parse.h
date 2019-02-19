@@ -9,12 +9,6 @@
 
 #include "strbuf.h"
 #include "vcal.h"
-#if 0
-
-#define TYPE vcomponent
-#include "linked_list.h"
-#undef TYPE
-#endif
 
 /*
  * The standard says that no line should be longer than 75 octets.

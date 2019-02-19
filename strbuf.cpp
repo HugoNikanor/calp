@@ -2,6 +2,12 @@
 
 #include <cstdlib>
 
+strbuf::strbuf (const strbuf& other) {
+	this->alloc = other.len + 1;
+	this->mem = static_cast<char*>(malloc(this->alloc));
+	strncpy(this->mem, other.mem, other.len);
+}
+
 void strbuf::realloc (size_t len) {
 	this->mem = static_cast<char*>(std::realloc(this->mem, len));
 	this->alloc = len;

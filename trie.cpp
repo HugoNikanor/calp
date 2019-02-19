@@ -68,7 +68,7 @@ int trie<T>::push_back (const char* key, const T& item) {
 }
 
 template <class T>
-T& trie<T>::operator[] (char* key) {
+T& trie<T>::operator[] (const char* key) {
 	trie_node<T>* n = this->root->child;
 	char* subkey = key;
 

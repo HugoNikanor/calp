@@ -1,7 +1,8 @@
 #include "parse.h"
 
+#include <cstring>
+
 #include <errno.h>
-#include <string.h>
 #include <assert.h>
 
 #include "vcal.h"
@@ -12,11 +13,11 @@
 /*
  * name *(";" param) ":" value CRLF
  */
-int parse_file(char* filename, FILE* f, vcomponent& root) {
+int parse_file(char* filename, FILE* f, vcomponent* root) {
 	part_context p_ctx = p_key;
 
 	parse_ctx ctx(filename);
-	ctx.comp_stack.push(&root);
+	ctx.comp_stack.push(root);
 
 	content_line cline;
 
@@ -118,25 +119,22 @@ int parse_file(char* filename, FILE* f, vcomponent& root) {
 			if (p_ctx == p_param_value) {
 				/* push kv pair */
 
-				auto s = new strbuf; 
-				// TODO make sure this is a deep copy
-				*s = ctx.str;
-
+				auto s = new strbuf(ctx.str);; 
 				s->cap();
 				ctx.str.soft_reset();
 
-				llist<strbuf>* ls = & CLINE_CUR_PARAMS(&cline)->cur->value->second;
-				ls->push(s);
+				// llist<strbuf>* ls = & CLINE_CUR_PARAMS(&cline)->cur->value->second;
+				cline.push(s);
 
 			}
 
 			if (p_ctx == p_key) {
-				cline.first = ctx.str;
-				cline.first.cap();
+				// cline.first = ctx.str;
+				// cline.first.cap();
 				ctx.str.soft_reset();
 
-				content_set* p = new content_set;
-				cline.second.push(p);
+				// content_set* p = new content_set;
+				// cline.second.push(p);
 			}
 
 			if      (c == ':') p_ctx = p_value;
@@ -161,7 +159,8 @@ int parse_file(char* filename, FILE* f, vcomponent& root) {
 		 * the end here.
 		 */
 
-		strbuf* target = CLINE_CUR_VAL(&cline);
+		//strbuf* target = CLINE_CUR_VAL(&cline);
+		strbuf* target = cline.second.cur();
 		*target = ctx.str;
 		target->cap();
 		ctx.str.soft_reset();
@@ -192,21 +191,21 @@ int handle_kv (
 		 */
 
 		strbuf* s = new strbuf;
-		strbuf* type = CLINE_CUR_VAL(cline);
+		strbuf* type = cline->second.cur();
 		*s = *type;
 		ctx->key_stack.push(s);
 
 		// TODO ompty cline->second here;
 		// RESET(LLIST(content_set))(&cline->val);
 
-		auto e = new vcomponent(s->mem, ctx->filename);
+		auto e = new vcomponent(s->to_string(), ctx->filename);
 		e->parent = ctx->comp_stack.top();
 		ctx->comp_stack.push(e);
 
 	} else if (cline->first == "END") {
 		// strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
 		strbuf* s = ctx->key_stack.top(); ctx->key_stack.pop();
-		if (s == CLINE_CUR_VAL(cline)) {
+		if (s == cline->second.cur()) {
 #if 0
 			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
 					s->mem,

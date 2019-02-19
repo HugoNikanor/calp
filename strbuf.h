@@ -22,6 +22,9 @@ struct strbuf {
 	size_t len   = 0;
 
 	strbuf () : strbuf (1) { };
+
+	strbuf (const strbuf& other);
+
 	strbuf (size_t alloc)
 		: alloc(alloc)
 		, mem(static_cast<char*>(malloc(alloc))) { };
@@ -61,10 +64,13 @@ struct strbuf {
 		{ return this->mem[this->len]; }
 
 	/* Resets the seek for strbuf to 0.  */
-	void reset();
+	void reset()
+		{ this->ptr = 0; }
 
 	/* Sets the length and seek ptr to 0, but doesn't touch the memmory.  */
-	void soft_reset();
+	void soft_reset() {
+		this->ptr = 0; this->len = 0;
+	};
 
 	std::string to_string() {
 		return std::string (this->mem);
@@ -81,14 +87,4 @@ struct strbuf {
  * Copies contents from src to dest, also allocating dest in the
  * process. dest should not be initialized before self call.
  */
-#if 0
-int strbuf_init_copy(strbuf* dest, strbuf* src);
-
-strbuf* RESOLVE(strbuf)(strbuf*, strbuf*);
-
-FMT_F(strbuf);
-
-int SIZE(strbuf)(strbuf*);
-#endif
-
 #endif /* STRBUF_H */

@@ -21,7 +21,8 @@ template <typename T>
 struct llist {
 	llink<T>* head;
 	llink<T>* tail;
-	llink<T>* cur;
+	llink<T>* __cur;
+	T* cur() { return __cur->value; }
 	int length;
 
 	llist ();

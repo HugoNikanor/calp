@@ -7,13 +7,11 @@ template <typename T>
 struct trie_node {
 	char c;
 	T* value = NULL;
-	trie_node<T>* next = NULL;
-	trie_node<T>* child = NULL;
+	trie_node<T>* next  = nullptr;
+	trie_node<T>* child = nullptr;
 
 	trie_node (char c);
 	trie_node (char c, trie_node<T>* next, trie_node<T>* child);
-
-	// ~trie_node ();
 };
 
 template <class T>
@@ -24,11 +22,10 @@ struct trie {
 	trie_node<T>* root;
 
 	trie ();
-	// ~trie ();
 
 	int push_back (const char* key, const T&);
 
-	T& operator[] ( char* key );
+	T& operator[] ( const char* key );
 
 	bool empty () { return this->root->child == NULL; }
 };

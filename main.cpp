@@ -1,12 +1,12 @@
+#include <cstring>
+
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
+// #include <stdio.h>
 #include <assert.h>
 
 #include "calendar.h"
-#include "macro.h"
 #include "vcal.h"
-#include "graphs.h"
+// #include "graphs.h"
 #include "err.h"
 
 typedef struct {
@@ -31,37 +31,40 @@ int main (int argc, char** argv) {
 	}
 
 	char* rootpath = args.argv[0];
-	SNEW(vcomponent, root, "ROOT", rootpath);
+	vcomponent root("ROOT", rootpath);
+	// SNEW(vcomponent, root, "ROOT", rootpath);
 	read_vcalendar(&root, rootpath);
 
 	arg_shift(&args);
 
 	if (args.argc == 0 || strcmp(args.argv[0], "-p") == 0) {
 		INFO_F("Parsed calendar file containing [%u] events",
-				root.components.length);
+				static_cast<int>(root.components.size()));
 
 		puts("CAL : OBJ | Filename | Description");
 		puts("----------+----------+------------");
 
 		/* This loops over all VCALENDAR's in root */
-		for (size_t i = 0; i < root.components.length; i++) {
-			vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
-			assert(strcmp(cal->type, "VCALENDAR") == 0);
+		for (size_t i = 0; i < root.components.size(); i++) {
+			vcomponent* cal = &root.components[i];
+			assert(cal->type == "VCALENDAR");
 
-			char* filename = cal->filename;
+			std::string filename = cal->filename;
 			/* This loop over all VEVENT's in the current VCALENDAR */
-			for (size_t j = 0; j < cal->components.length; j++) {
-				vcomponent* ev = GET(VECT(vcomponent))(&cal->components, j);
+			for (size_t j = 0; j < cal->components.size(); j++) {
+				vcomponent* ev = &cal->components[j];
 
-				if (strcmp(ev->type, "VEVENT") != 0) continue;
-
-				printf("%3lu : %3lu | %s | %s\n",
-						i + 1, j + 1,
-						filename,
-						get_property(ev, "SUMMARY")->val.cur->value->key.mem);
+				if (ev->type == "VEVENT") continue;
+				std::cout << i + 1 << " " << j + 1 << std::endl;
+				// printf("%3lu : %3lu | %s | %s\n",
+				// 		i + 1, j + 1,
+				// 		filename,
+				// 		ev["SUMMARY"]->val.cur->value->key.mem);
 			}
 		}
-	} else if (strcmp(args.argv[0], "-g") == 0) {
+	}
+#if 0
+	else if (strcmp(args.argv[0], "-g") == 0) {
 		/* TODO self might be broken */
 		if (arg_shift(&args) == 0) {
 			for (size_t i = 0; i < root.components.length; i++) {
@@ -90,6 +93,5 @@ int main (int argc, char** argv) {
 	FMT(vcomponent)(&root, buf);
 	puts(buf);
 	*/
-
-	FREE(vcomponent)(&root);
+#endif
 }

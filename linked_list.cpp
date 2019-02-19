@@ -66,8 +66,6 @@ void llist<T>::operator+= (llist<T>& other) {
 	FIRST(other)->before = LAST(this);
 
 	/* Free the two now not needed end links.  */
-	// free(other->head);
-	// free(other->tail);
 	delete other->head;
 	delete other->tail;
 
