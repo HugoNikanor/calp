@@ -36,25 +36,4 @@ struct trie {
 template <class T>
 std::ostream& operator<<(std::ostream&, trie<T>* trie);
 
-
-// INIT_F ( TRIE(TYPE) );
-
-// INIT_F (TRIE_NODE(TYPE), char c);
-
-// INIT_F (TRIE_NODE(TYPE), 
-// 	  char c, TRIE_NODE(TYPE)* next, TRIE_NODE(TYPE)* child );
-
-// int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val );
-
-// TYPE* GET(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key );
-
-// FREE_F(TRIE_NODE(TYPE));
-
-// FREE_F(TRIE(TYPE));
-
-// int EMPTY(TRIE(TYPE))(TRIE(TYPE)*);
-
-// FMT_F(TRIE_NODE(TYPE));
-// FMT_F(TRIE(TYPE));
-
 #endif /* TRIE_H */

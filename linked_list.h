@@ -3,14 +3,14 @@
 
 
 template <typename T>
-struct link {
-	link<T>* before = nullptr;
-	link<T>* after  = nullptr;
+struct llink {
+	llink<T>* before = nullptr;
+	llink<T>* after  = nullptr;
 	T* value;
 
-	link ();
-	link (T* val) : value(val) { }
-	~link ();
+	llink ();
+	llink (T* val) : value(val) { }
+	~llink ();
 
 	void unlink ();
 };
@@ -19,64 +19,62 @@ struct link {
 
 template <typename T>
 struct llist {
-	link<T>* head;
-	link<T>* tail;
-	link<T>* cur;
+	llink<T>* head;
+	llink<T>* tail;
+	llink<T>* cur;
 	int length;
 
 	llist ();
 
-	void push ( T& );
+	void push ( T* );
 	T& peek ();
 	T& pop ();
 
-	llist& operator += (llist& other);
+	/*
+	 * Adds two linked lists together.
+	 * O(1) time.
+	 * destroys new__ in the process, but keeps the elements.
+	 * make sure to free(new__) after.
+	 */
+	void operator += (llist<T>& other);
+
+	int size () { return length; }
+	bool empty () { return length == 0; }
 };
+
+// template <typename T>
+// std::ostream& std::operator<<(std::ostream&, llist<T>);
 
 #define FIRST(lst) (lst)->head->after
 #define FIRST_V(lst) (lst)->head->after->value
 #define LAST(lst)  (lst)->tail->before
 #define LAST_V(lst)  (lst)->tail->before->value
 
-/*
- * NOTE freeing a linked list alsa FFREE's all its contents.
- * TODO some form of shared pointer to ensure nothing is free'd twice
- * would be a good idea.
- */
+#if 0
+DEEP_COPY
+	LINK(TYPE)* n = FIRST(src);
 
-int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src );
+	while (n->after != NULL) {
+		NEW(TYPE, cpy);
+		DEEP_COPY(TYPE)(cpy, n->value);
+		PUSH(LLIST(TYPE)) ( dest, cpy );
+		n = n->after;
+	}
 
-int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new_ );
-
-int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist );
-int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist );
+	return 0;
+#endif
 
 /*
  * Resets a linked list by removing all it's objects.
  * FREE's all elements stored in the list.
  */
-int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist );
+// int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 
+#if 0
 LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new_);
-
-FMT_F(LLIST(TYPE));
-
-/* Iterator */
-
-#define __PRE_LLIST(T, l, set) \
-	T* l; LINK(T)* __INTER(l);
-
-#define PRE_FOR_LLIST(T) __PRE_LLIST
-
-// #define __BEG_LLIST(v, set) v = (set)->head
-#define __BEG_LLIST(T, l, set) __INTER(l) = FIRST(set), l = L(__INTER(l))
-#define BEG_LLIST(T) __BEG_LLIST
-
-#define __END_LLIST(T, l, set) __INTER(l) != (set)->tail
-#define END_LLIST(T) __END_LLIST
-
-#define __NXT_LLIST(T, l, set) __INTER(l) = __INTER(l)->after, l = L(__INTER(l))
-// #define __NXT_LLIST(T, l, set) l = L(__INTER(l) = __INTER(l)->after)
-#define NXT_LLIST(T) __NXT_LLIST
+	if (dest == NULL) return new__;
+	APPEND(LLIST(TYPE))(dest, new__);
+	return dest;
+#endif
 
 #endif /* LINKED_LIST_H */

@@ -8,13 +8,14 @@
 #include <iostream>
 
 #include "trie.h"
+#include "strbuf.h"
+#include "linked_list.h"
 
+typedef std::pair<strbuf, llist<strbuf> > param_set;
+typedef std::pair<strbuf, llist<param_set> > content_set;
+typedef std::pair<strbuf, llist<content_set> > content_line;
 
-typedef std::pair<strbuf, std::list<strbuf> > param_set;
-typedef std::pair<strbuf, std::list<param_set> > content_set;
-typedef std::pair<strbuf, std::list<content_set> > content_line;
-
-#if 0
+#if 1
 /*
  * Helper macros for accessing fields in
  * content_line, content_set, and param_set

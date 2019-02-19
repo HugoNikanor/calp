@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 /*
  * A high level string type which holds it's own length, how much
@@ -32,11 +33,11 @@ struct strbuf {
 	 */
 	void realloc (size_t len);
 
-	bool operator==(strbuf& other) {
-		return strncmp(this->mem, other.mem, this->len) == 0;
-	}
-	bool operator==(char* other)
-		{ strncmp(this->mem, other, this->len) == 0 ; }
+	bool operator==(strbuf& other)
+		{ return strncmp(this->mem, other.mem, this->len) == 0; }
+
+	bool operator==(const char* other)
+		{ return strncmp(this->mem, other, this->len) == 0 ; }
 
 	strbuf& operator=(strbuf* other);
 

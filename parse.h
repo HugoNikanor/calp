@@ -33,8 +33,8 @@ enum part_context {
  */
 struct parse_ctx {
 	std::string filename;
-	std::stack<std::string> key_stack;
-	std::stack<vcomponent> comp_stack;
+	std::stack<strbuf*> key_stack;
+	std::stack<vcomponent*> comp_stack;
 
 	/* Number for unfolded lines */
 	int line   = 0;
