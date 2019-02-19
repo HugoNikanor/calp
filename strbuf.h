@@ -75,6 +75,10 @@ struct strbuf {
 	std::string to_string() {
 		return std::string (this->mem);
 	}
+
+	char* c_str() {
+		return this->mem;
+	}
 };
 
 /*

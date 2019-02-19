@@ -30,12 +30,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (fold(f, &ctx, c) > 0) {
 				/* Actuall end of line, handle value */
 
-				// std::string& target = CLINE_CUR_VAL(&cline);
-				// TODO solve current;
-				// std::string& target = cline
-
-				cline.value() = ctx.str;
-				cline.value().cap();
+				cline.push_value(ctx.str);
 				ctx.str.soft_reset();
 
 				handle_kv(&cline, &ctx);
@@ -86,10 +81,12 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 		/* Border between param {key, value} */
 		} else if (p_ctx == p_param_name && c == '=') {
-			strbuf cpy = ctx.str;
-			cpy.cap();
+
+			// ctx.str holds param_key;
+			// cline.values.back()->params.push_back(new __param_set(ctx.str));
+			cline.values.back()->push_param_key(ctx.str);
+
 			ctx.str.soft_reset();
-			cline.push_param_key (cpy);
 
 			p_ctx = p_param_value;
 
@@ -105,21 +102,17 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (p_ctx == p_param_value) {
 				/* push kv pair */
 
-				auto s = new strbuf(ctx.str);
-				s->cap();
+				cline.values.back()->push_param_value(ctx.str);
 				ctx.str.soft_reset();
-
-				cline.push_param_value (s);
 			}
 
 			if (p_ctx == p_key) {
+				/* set key for content line */
 				cline.key = ctx.str;
 				cline.key.cap();
 				ctx.str.soft_reset();
 
-				// TODO?
-				// content_set* p = new content_set;
-				// cline.second.push(p);
+
 			}
 
 			if      (c == ':') p_ctx = p_value;
@@ -144,13 +137,12 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 * the end here.
 		 */
 
-		//strbuf* target = CLINE_CUR_VAL(&cline);
-		cline.value() = ctx.str;
-		cline.value().cap();
-		ctx.str.soft_reset();
-
 		++ctx.line;
 		ctx.column = 0;
+
+		cline.values.back()->value = ctx.str;
+		cline.values.back()->value.cap();
+		ctx.str.soft_reset();
 
 		handle_kv(&cline, &ctx);
 
@@ -174,21 +166,20 @@ int handle_kv (
 		 * and possibly some others I forget.
 		 */
 
-		strbuf* s = new strbuf(cline->value());
-		ctx->key_stack.push(s);
+		ctx->key_stack.push(new strbuf(ctx->str));
 
-		cline->values.reset();
+		// cline->values.reset();
 		// TODO ompty cline->second here;
 		// RESET(LLIST(content_set))(&cline->val);
 
-		auto e = new vcomponent(s->to_string(), ctx->filename);
+		auto e = new vcomponent(ctx->str.to_string(), ctx->filename);
 		e->parent = ctx->comp_stack.top();
 		ctx->comp_stack.push(e);
 
 	} else if (cline->key == "END") {
 		// strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
 		strbuf* s = ctx->key_stack.top(); ctx->key_stack.pop();
-		if (*s == cline->value()) {
+		if (*s == ctx->str) {
 #if 0
 			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
 					s->mem,

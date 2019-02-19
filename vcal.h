@@ -13,9 +13,14 @@
 
 struct __param_set {
 	strbuf key;
-	llist<strbuf> values;
+	std::list<strbuf> values;
 
-	__param_set (strbuf key) : key (key) { }
+	__param_set (strbuf key) : key (key) { this->key.cap(); }
+
+	void push_value (strbuf val) {
+		this->values.push_back(val);
+		this->values.back().cap();
+	}
 };
 
 /*
@@ -24,7 +29,17 @@ struct __param_set {
  */
 struct __content_set {
 	strbuf value;
-	llist<__param_set> params;
+	std::list<__param_set*> params;
+
+	__content_set (strbuf value) : value(value) { this->value.cap(); }
+
+	void push_param_key (strbuf key) {
+		this->params.push_back (new __param_set(key));
+	}
+
+	void push_param_value (strbuf val) {
+		this->params.back()->push_value(val);
+	}
 };
 
 /*
@@ -33,18 +48,12 @@ struct __content_set {
  */
 struct content_line {
 	strbuf key;
-	llist<__content_set> values;
+	// llist<__content_set> values;
+	std::list<__content_set*> values;
 
-	inline void push_param_key (strbuf key) {
-		auto p = new __param_set(key);
-		this->values.cur()->params.push(p);
-   	}
-
-	inline void push_param_value (strbuf* value)
-		{ this->values.cur()->params.cur()->values.push(value); }
-
-	inline strbuf& value() { return this->values.cur()->value; }
-
+	void push_value (strbuf str) {
+		this->values.push_back(new __content_set(str));
+	}
 };
 
 struct vcomponent {
@@ -58,6 +67,9 @@ struct vcomponent {
 
 	vcomponent(const std::string& type, const std::string& filename);
 
+	void add_content_line (content_line* c) {
+		clines.push(c->key.c_str(), c);
+	}
 
 	/*
 	 * Resolves a collision in some form of structure (probably a hash-map
@@ -67,18 +79,17 @@ struct vcomponent {
 	 */
 	vcomponent* operator= (vcomponent* other);
 
-	content_line& operator[] (const char* key) {
-		return this->clines[key];
-	}
+	content_line* operator[] (const char* key)
+		{ return this->clines[key]; }
 
 	void push_back(const vcomponent& child)
-	{ this->components.push_back(child); }
+		{ this->components.push_back(child); }
 };
 
 std::ostream& operator<<(std::ostream&, vcomponent*);
 
 
-#if 1
+#if 0
 /*
  * Helper macros for accessing fields in
  * content_line, content_set, and param_set
