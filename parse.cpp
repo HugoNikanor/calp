@@ -35,11 +35,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				// std::string& target = cline
 
 				strbuf target = ctx.str;
-				// DEEP_COPY(strbuf)(target, &ctx.str);
 				target.cap();
-				// strbuf_cap(target);
 				ctx.str.soft_reset();
-				// strbuf_soft_reset(&ctx.str);
 
 				handle_kv(&cline, &ctx);
 
@@ -123,9 +120,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				s->cap();
 				ctx.str.soft_reset();
 
-				// llist<strbuf>* ls = & CLINE_CUR_PARAMS(&cline)->cur->value->second;
-				cline.push(s);
-
+				cline.push_param_value (s);
 			}
 
 			if (p_ctx == p_key) {
@@ -160,7 +155,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 */
 
 		//strbuf* target = CLINE_CUR_VAL(&cline);
-		strbuf* target = cline.second.cur();
+		strbuf* target = cline.value();
 		*target = ctx.str;
 		target->cap();
 		ctx.str.soft_reset();
@@ -184,14 +179,14 @@ int handle_kv (
 	parse_ctx* ctx
 	) {
 
-	if (cline->first == "BEGIN") {
+	if (cline->key == "BEGIN") {
 		/* should be one of:
 		 * VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE,
 		 * and possibly some others I forget.
 		 */
 
 		strbuf* s = new strbuf;
-		strbuf* type = cline->second.cur();
+		strbuf* type = cline->value();
 		*s = *type;
 		ctx->key_stack.push(s);
 
@@ -202,10 +197,10 @@ int handle_kv (
 		e->parent = ctx->comp_stack.top();
 		ctx->comp_stack.push(e);
 
-	} else if (cline->first == "END") {
+	} else if (cline->key == "END") {
 		// strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
 		strbuf* s = ctx->key_stack.top(); ctx->key_stack.pop();
-		if (s == cline->second.cur()) {
+		if (s == cline->value()) {
 #if 0
 			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
 					s->mem,

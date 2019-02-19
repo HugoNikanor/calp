@@ -11,10 +11,40 @@
 #include "strbuf.h"
 #include "linked_list.h"
 
-// typedef std::pair<strbuf, llist<strbuf>      > param_set;
-// typedef std::pair<strbuf, llist<param_set>   > content_set;
-// typedef std::pair<strbuf, llist<strbuf> > content_line;
-typedef llist<strbuf> content_line;
+struct __param_set {
+	strbuf key;
+	llist<strbuf> values;
+
+	__param_set (strbuf key) : key (key) { }
+};
+
+/*
+ * A content set is a single instance of a content line, having a
+ * specific value and it's own (possible) set of parameters. 
+ */
+struct __content_set {
+	strbuf value;
+	llist<__param_set> params;
+};
+
+/*
+ * A content line is the collection of all lines which share the same
+ * key.
+ */
+struct content_line {
+	strbuf key;
+	llist<__content_set> values;
+
+	inline void push_param_key (strbuf key) {
+		auto p = new __param_set(key);
+		this->values.cur()->params.push(p);
+   	}
+
+	inline void push_param_value (strbuf* value) { this->values.cur()->params.cur()->values.push(value); }
+
+	inline strbuf* value() { return &this->values.cur()->value; }
+
+};
 
 struct vcomponent {
 	std::string filename;
@@ -60,16 +90,16 @@ std::ostream& operator<<(std::ostream&, vcomponent*);
 #define CLINE_CUR_CSET(c) (&((c)->second.cur->value))
 
 /* content_set */
-#define CLINE_CUR(c)        ((c)->second.cur->value)
+#define CLINE_CUR(c)        ((c)->second.cur())
 /* strbuf */
 #define CLINE_CUR_VAL(c)    (& CLINE_CUR(c)->first)
 
 	/* LLIST(param_set) */
 #define CLINE_CUR_PARAMS(c) (& CLINE_CUR(c)->second)
 
-	/* strbuf */
+/* strbuf */
 #define CLINE_CUR_PARAM_KEY(c) (CLINE_CUR_PARAMS(c)->cur->value->first)
-	/* strbuf */
+/* strbuf */
 #define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->second.cur->value)
 #endif
 

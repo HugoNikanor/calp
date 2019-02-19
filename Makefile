@@ -5,9 +5,9 @@ CC  := g++
 OBJDIR = obj
 
 CFLAGS  = -std=gnu++11 -Wall -Wextra -Wno-reorder \
-		  -ggdb -fPIC \
-		  $(shell guile-config compile)
-LDFLAGS = -fPIC $(shell guile-config link)
+		  -ggdb -fPIC # \
+		  # $(shell guile-config compile)
+LDFLAGS = -fPIC # $(shell guile-config link)
 
 H_FILES = $(wildcard *.h)
 C_FILES = $(wildcard *.cpp)

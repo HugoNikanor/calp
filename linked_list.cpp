@@ -1,16 +1,6 @@
 #include "linked_list.h"
 
 template <typename T>
-llist<T>::llist () {
-	this->length = 0;
-	this->cur = this->head = new llink<T>;
-	this->tail = new llink<T>;
-
-	head->after  = tail;
-	tail->before = head;
-}
-
-template <typename T>
 llink<T>::~llink () {
 	this.unlink();
 }
@@ -19,22 +9,6 @@ template <typename T>
 void llink<T>::unlink () {
 	if (this->before != nullptr) this->before->after = this->after;
 	if (this->after  != nullptr) this->after->before = this->before;
-}
-
-template <typename T>
-void llist<T>::push(T* val) {
-	auto l = new llink<T>(val);
-
-	l->after    = FIRST(this);
-	FIRST(this) = l;
-
-	l->after->before = l;
-	l->before        = this->head;
-
-	++this->length;
-
-	// TODO do I want to change that?
-	this->cur = l;
 }
 
 template <typename T>

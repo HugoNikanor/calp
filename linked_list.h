@@ -8,14 +8,12 @@ struct llink {
 	llink<T>* after  = nullptr;
 	T* value;
 
-	llink ();
+	llink () { };
 	llink (T* val) : value(val) { }
 	~llink ();
 
 	void unlink ();
 };
-
-// #define L(link) (link)->value
 
 template <typename T>
 struct llist {
@@ -23,7 +21,7 @@ struct llist {
 	llink<T>* tail;
 	llink<T>* __cur;
 	T* cur() { return __cur->value; }
-	int length;
+	int length = 0;
 
 	llist ();
 
@@ -43,13 +41,39 @@ struct llist {
 	bool empty () { return length == 0; }
 };
 
-// template <typename T>
-// std::ostream& std::operator<<(std::ostream&, llist<T>);
+template <typename T>
+llist<T>::llist () {
+	this->__cur = this->head = new llink<T>;
+	this->tail = new llink<T>;
+
+	head->after  = tail;
+	tail->before = head;
+}
+
 
 #define FIRST(lst) (lst)->head->after
 #define FIRST_V(lst) (lst)->head->after->value
 #define LAST(lst)  (lst)->tail->before
 #define LAST_V(lst)  (lst)->tail->before->value
+
+template <typename T>
+void llist<T>::push(T* val) {
+	auto l = new llink<T>(val);
+
+	l->after    = FIRST(this);
+	FIRST(this) = l;
+
+	l->after->before = l;
+	l->before        = this->head;
+
+	++this->length;
+
+	// TODO do I want to change that?
+	this->__cur = l;
+}
+
+// template <typename T>
+// std::ostream& std::operator<<(std::ostream&, llist<T>);
 
 #if 0
 DEEP_COPY

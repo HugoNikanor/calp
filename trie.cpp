@@ -1,16 +1,6 @@
 #include "trie.h"
 
 template <class T>
-trie<T>::trie () {
-	this->root = new trie_node<T> ('\0');
-}
-
-template <class T>
-trie_node<T>::trie_node (char c) {
-	this->c = c;
-}
-
-template <class T>
 trie_node<T>::trie_node (char c, trie_node<T>* next, trie_node<T>* child) {
 	this->c = c;
 	this->next = next;

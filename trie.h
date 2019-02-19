@@ -3,25 +3,25 @@
 
 #include <iostream>
 
-template <typename T>
+template <class T>
 struct trie_node {
 	char c;
 	T* value = NULL;
 	trie_node<T>* next  = nullptr;
 	trie_node<T>* child = nullptr;
 
-	trie_node (char c);
+	trie_node (char c) : c(c) { };
 	trie_node (char c, trie_node<T>* next, trie_node<T>* child);
 };
 
 template <class T>
 std::ostream& operator<<(std::ostream&, trie_node<T>* node);
 
-template <typename T>
+template <class T>
 struct trie {
 	trie_node<T>* root;
 
-	trie ();
+	trie () : root (new trie_node<T> ('\0')) { }
 
 	int push_back (const char* key, const T&);
 
