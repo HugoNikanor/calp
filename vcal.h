@@ -10,16 +10,17 @@
 #include "trie.h"
 #include "strbuf.h"
 #include "linked_list.h"
+#include "err.h"
 
 struct __param_set {
-	strbuf key;
-	std::list<strbuf> values;
+	strbuf* key;
+	std::list<strbuf*> values;
 
-	__param_set (strbuf key) : key (key) { this->key.cap(); }
+	__param_set (strbuf* key) : key (key) { this->key->cap(); }
 
-	void push_value (strbuf val) {
+	void push_value (strbuf* val) {
 		this->values.push_back(val);
-		this->values.back().cap();
+		this->values.back()->cap();
 	}
 };
 
@@ -28,16 +29,16 @@ struct __param_set {
  * specific value and it's own (possible) set of parameters. 
  */
 struct __content_set {
-	strbuf value;
+	strbuf* value;
 	std::list<__param_set*> params;
 
-	__content_set (strbuf value) : value(value) { this->value.cap(); }
+	__content_set (strbuf* value);
 
-	void push_param_key (strbuf key) {
+	void push_param_key (strbuf* key) {
 		this->params.push_back (new __param_set(key));
 	}
 
-	void push_param_value (strbuf val) {
+	void push_param_value (strbuf* val) {
 		this->params.back()->push_value(val);
 	}
 };
@@ -47,18 +48,18 @@ struct __content_set {
  * key.
  */
 struct content_line {
-	strbuf key;
+	strbuf* key;
 	// llist<__content_set> values;
 	std::list<__content_set*> values;
 
-	void push_value (strbuf str) {
+	void push_value (strbuf* str) {
 		this->values.push_back(new __content_set(str));
 	}
 };
 
 struct vcomponent {
-	std::string filename;
 	std::string type;
+	std::string filename;
 	vcomponent* parent = nullptr;
 	trie<content_line> clines;
 	std::vector<vcomponent> components;
@@ -66,6 +67,7 @@ struct vcomponent {
 	vcomponent(const std::string& type) : vcomponent(type, nullptr) { };
 
 	vcomponent(const std::string& type, const std::string& filename);
+
 
 	void add_content_line (content_line* c) {
 		clines.push(c->key.c_str(), c);
@@ -82,7 +84,7 @@ struct vcomponent {
 	content_line* operator[] (const char* key)
 		{ return this->clines[key]; }
 
-	void push_back(const vcomponent& child)
+	void push(const vcomponent& child)
 		{ this->components.push_back(child); }
 };
 

@@ -3,6 +3,11 @@
 
 #include <iostream>
 
+__content_set::__content_set (strbuf* value) : value(value) {
+	std::cout << _GREEN << value->len << ' ' << value << _RESET << std::endl;
+	this->value->cap();
+}
+
 vcomponent::vcomponent(
 		const std::string& type,
 		const std::string& filename)

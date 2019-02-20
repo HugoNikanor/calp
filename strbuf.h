@@ -3,8 +3,10 @@
 
 #include <unistd.h>
 #include <cstdlib>
-#include <cstring>
+// #include <cstring>
 #include <string>
+
+#include <iostream>
 
 /*
  * A high level string type which holds it's own length, how much
@@ -15,11 +17,12 @@
  * access to the memmory.
  */
 struct strbuf {
-	char* mem;
 	/* TODO add support for negative ptr */
-	int ptr = 0;
-	size_t alloc;
+	int ptr      = 0;
+	size_t alloc = 0;
 	size_t len   = 0;
+
+	char* mem;
 
 	strbuf () : strbuf (1) { };
 
@@ -36,11 +39,9 @@ struct strbuf {
 	 */
 	void realloc (size_t len);
 
-	bool operator==(strbuf& other)
-		{ return strncmp(this->mem, other.mem, this->len) == 0; }
+	bool operator==(strbuf& other);
 
-	bool operator==(const char* other)
-		{ return strncmp(this->mem, other, this->len) == 0 ; }
+	bool operator==(const char* other);
 
 	strbuf& operator=(strbuf* other);
 
@@ -72,14 +73,15 @@ struct strbuf {
 		this->ptr = 0; this->len = 0;
 	};
 
-	std::string to_string() {
-		return std::string (this->mem);
-	}
 
-	char* c_str() {
-		return this->mem;
+	char* c_str();
+
+	std::string to_string() {
+		return std::string (this->c_str());
 	}
 };
+
+std::ostream& operator << (std::ostream& out, strbuf& str);
 
 /*
  * Reallocs dest to be the same size as src, and copies the contents

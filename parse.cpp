@@ -30,10 +30,13 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (fold(f, &ctx, c) > 0) {
 				/* Actuall end of line, handle value */
 
-				cline.push_value(ctx.str);
-				ctx.str.soft_reset();
+				cline.push_value(new strbuf(ctx.str));
 
+				std::cout << _RED << ctx.str.len << ' ' << ctx.str << _RESET << std::endl;
+				strbuf* n = cline.values.back()->value;
+				std::cout << _BLUE << n->len << ' ' << *n << _RESET << std::endl;
 				handle_kv(&cline, &ctx);
+				ctx.str.soft_reset();
 
 				p_ctx = p_key;
 			} /* Else continue on current line */
@@ -84,7 +87,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 			// ctx.str holds param_key;
 			// cline.values.back()->params.push_back(new __param_set(ctx.str));
-			cline.values.back()->push_param_key(ctx.str);
+			cline.values.back()->push_param_key(new strbuf(ctx.str));
 
 			ctx.str.soft_reset();
 
@@ -102,14 +105,14 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (p_ctx == p_param_value) {
 				/* push kv pair */
 
-				cline.values.back()->push_param_value(ctx.str);
+				cline.values.back()->push_param_value(new strbuf(ctx.str));
 				ctx.str.soft_reset();
 			}
 
 			if (p_ctx == p_key) {
 				/* set key for content line */
-				cline.key = ctx.str;
-				cline.key.cap();
+				*cline.key = ctx.str;
+				cline.key->cap();
 				ctx.str.soft_reset();
 
 
@@ -140,11 +143,11 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		++ctx.line;
 		ctx.column = 0;
 
-		cline.values.back()->value = ctx.str;
-		cline.values.back()->value.cap();
-		ctx.str.soft_reset();
+		cline.push_value(new strbuf(ctx.str));
 
+		std::cout << ctx.str;
 		handle_kv(&cline, &ctx);
+		ctx.str.soft_reset();
 
 	}
 
@@ -160,7 +163,7 @@ int handle_kv (
 	parse_ctx* ctx
 	) {
 
-	if (cline->key == "BEGIN") {
+	if (*cline->key == "BEGIN") {
 		/* should be one of:
 		 * VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE,
 		 * and possibly some others I forget.
@@ -176,16 +179,15 @@ int handle_kv (
 		e->parent = ctx->comp_stack.top();
 		ctx->comp_stack.push(e);
 
-	} else if (cline->key == "END") {
+	} else if (*cline->key == "END") {
 		// strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
 		strbuf* s = ctx->key_stack.top(); ctx->key_stack.pop();
 		if (*s == ctx->str) {
-#if 0
 			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
-					s->mem,
-					CLINE_CUR_VAL(cline)->mem,
-					PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename);
-#endif
+					s->c_str(),
+					cline->values.back()->value->c_str(),
+					ctx->comp_stack.top()->filename.c_str());
+
 			ctx->key_stack.push(s);
 			return -1;
 
@@ -195,22 +197,28 @@ int handle_kv (
 			/* Received propper end, push cur into parent */
 			vcomponent* cur = ctx->comp_stack.top(); ctx->comp_stack.pop();
 
+			// TODO we never get here
+			INFO(here);
+
 			// TODO should self instead be done at creation time?
-			ctx->comp_stack.push(cur);
+			ctx->comp_stack.top()->push(*cur);
 		}
 	} else {
 		content_line* c = new content_line;
+
 		// TODO make sure deep-copy
 		*c = *cline;
 
+		// TODO
+		// RESET(LLIST(content_set))(&cline->val);
+
+		ctx->comp_stack.top()->clines.push(c->key->c_str(), c);
 		// PUSH(TRIE(content_line))(
 		// 		&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
 		// 		c->key.mem, c);
 
 		// TODO?
 		// ctx->comp_stack.top()->clines.push_back(c->first, c);
-		// TODO
-		// RESET(LLIST(content_set))(&cline->val);
 	}
 
 	return 0;
