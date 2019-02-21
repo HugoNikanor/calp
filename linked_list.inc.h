@@ -1,107 +1,129 @@
-#ifndef TYPE
-#error "Set TYPE before including self file"
-#else
+// #ifndef TYPE
+// #error "Set TYPE before including this file"
+// #else
 
-INIT_F ( LLIST(TYPE) ) {
-	self->length = 0;
-	NEW(LINK(TYPE), head);
-	NEW(LINK(TYPE), tail);
-	self->head   = head;
-	self->tail   = tail;
+// INIT_F ( LLIST(TYPE) ) {
+template <class T>
+llist<T>::llist () {
+	this->length = 0;
+	head = new llink<T>;
+	tail = new llink<T>;
+	this->head   = head;
+	this->tail   = tail;
 	head->after  = tail;
 	tail->before = head;
-	self->cur    = head;
-	return 0;
+	this->cur    = head;
+	// return 0;
 }
 
-FREE_F (LINK(TYPE)) {
-	UNLINK(LINK(TYPE))(self);
+// FREE_F (LINK(TYPE)) {
+template <class T>
+llink<T>::~llink () {
+	this->unlink();
 
-	if (self->value != NULL) FFREE(TYPE, self->value);
-	return 0;
+	// if (this->value != NULL) delete this->value;
 }
 
-FREE_F( LLIST(TYPE) ) {
-	LINK(TYPE) *n, *next;
-	n = self->head;
+// FREE_F( LLIST(TYPE) ) {
+template <class T>
+llist<T>::~llist () {
+	llink<T> *n, *next;
+	n = this->head;
 	while ( n != NULL ) {
 		next = n->after;
-		FFREE(LINK(TYPE), n);
+		delete n;
+		// FFREE(LINK(TYPE), n);
 		n = next;
 	}
 
-	self->length = -1;
-
-	return 0;
+	this->length = -1;
 }
 
+/*
 INIT_F ( LINK(TYPE) ) {
-	self->before = NULL;
-	self->after  = NULL;
-	self->value  = NULL;
+	this->before = NULL;
+	this->after  = NULL;
+	this->value  = NULL;
 	return 0;
 }
+*/
 
-INIT_F ( LINK(TYPE), TYPE* val ) {
-	self->before = NULL;
-	self->after  = NULL;
-	self->value  = val;
-	return 0;
+// INIT_F ( LINK(TYPE), TYPE* val ) {
+template <class T>
+llink<T>::llink (T* val) {
+	this->before = NULL;
+	this->after  = NULL;
+	this->value  = val;
 }
 
-int UNLINK(LINK(TYPE)) ( LINK(TYPE)* self ) {
-	if (self->before != NULL) self->before->after = self->after;
-	if (self->after  != NULL) self->after->before = self->before;
+// int UNLINK(LINK(TYPE)) ( LINK(TYPE)* this ) {
+template <class T>
+int llink<T>::unlink () {
+	if (this->before != NULL) this->before->after = this->after;
+	if (this->after  != NULL) this->after->before = this->before;
 	return 0;
 }
 	 
 
-int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val) {
-	NEW(LINK(TYPE), link, val);
+// int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val) {
+template <class T>
+int llist<T>::push (T* val) {
+	// NEW(LINK(TYPE), link, val);
+	auto link = new llink<T>(val);
 
-	link->after         = FIRST(lst);
-	FIRST(lst)          = link;
+	link->after         = FIRST(this);
+	FIRST(this)          = link;
 
 	link->after->before = link;
-	link->before        = lst->head;
+	link->before        = this->head;
 
-	++lst->length;
+	++this->length;
 
 	// TODO do I want to change that?
-	lst->cur = link;
+	this->cur = link;
 
 	return 0;
 }
 
-TYPE* PEEK(LLIST(TYPE)) ( LLIST(TYPE)* lst ) {
-	if (EMPTY(LLIST(TYPE))(lst)) return NULL;
+// TYPE* PEEK(LLIST(TYPE)) ( LLIST(TYPE)* lst ) {
+template <class T>
+T* llist<T>::peek () {
+	if (this->empty()) return NULL;
+	// if (EMPTY(LLIST(TYPE))(lst)) return NULL;
 
-	return FIRST(lst)->value;
+	return FIRST(this)->value;
 }
 
-TYPE* POP(LLIST(TYPE)) ( LLIST(TYPE)* lst) {
-	if (EMPTY(LLIST(TYPE))(lst)) return NULL;
+// TYPE* POP(LLIST(TYPE)) ( LLIST(TYPE)* lst) {
+template <class T>
+T* llist<T>::pop () {
+	// if (EMPTY(LLIST(TYPE))(lst)) return NULL;
+	if (this->empty()) return NULL;
 
-	LINK(TYPE)* frst = FIRST(lst);
-	UNLINK(LINK(TYPE))(frst);
+	// LINK(TYPE)* frst = FIRST(lst);
+	//UNLINK(LINK(TYPE))(frst);
+	auto frst = FIRST(this);
+	frst->unlink();
 
-	TYPE* retval = frst->value;
-	--lst->length;
-	free (frst);
+	T* retval = frst->value;
+	--this->length;
+	delete frst;
 	return retval;
 }
 
-int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src ) {
-	LINK(TYPE)* n = FIRST(src);
+// int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src ) {
+template <class T>
+llist<T>::llist (llist<T>* other) {
+	llink<T>* n = FIRST(other);
 
 	while (n->after != NULL) {
-		NEW(TYPE, cpy);
-		DEEP_COPY(TYPE)(cpy, n->value);
-		PUSH(LLIST(TYPE)) ( dest, cpy );
+		// NEW(TYPE, cpy);
+		T* cpy = new T(n->value);
+		// DEEP_COPY(TYPE)(cpy, n->value);
+		//PUSH(LLIST(TYPE)) ( dest, cpy );
+		this->push (cpy);
 		n = n->after;
 	}
-
-	return 0;
 }
 
 /*
@@ -110,60 +132,60 @@ int DEEP_COPY(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* src ) {
  * destroys new__ in the process, but keeps the elements.
  * make sure to free(new__) after.
  */
-int APPEND(LLIST(TYPE)) ( LLIST(TYPE)* dest, LLIST(TYPE)* new__ ) {
+template <class T>
+int llist<T>::append ( llist<T>* other ) {
 
 	/* Link end of dest onto start of new__. */
-	LAST(dest)->after  = FIRST(new__);
-	FIRST(new__)->before = LAST(dest);
+	LAST(this)->after  = FIRST(other);
+	FIRST(other)->before = LAST(this);
 
 	/* Free the two now not needed end links.  */
-	free(new__->head);
-	free(dest->tail);
+	// free(new__->head);
+	// free(dest->tail);
+	delete this->tail;
+	delete other->head;
 
 	/* Update dest with new__ tail ptr. */
-	dest->tail = new__->tail;
+	this->tail = other->tail;
 
-	dest->length += new__->length;
+	this->length += other->length;
 
 	return 0;
 }
 
-int SIZE(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
-	return llist->length;
-}
-
-int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
-	return FIRST(llist) == llist->tail;
-}
-
-LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new__) {
+template <class T>
+llist<T>* resolve (llist<T>* dest, llist<T>* new__) {
 	if (dest == NULL) return new__;
-	APPEND(LLIST(TYPE))(dest, new__);
+	dest.append(new__);
 	return dest;
 }
 
-int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
+// int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
+template <class T>
+int llist<T>::reset () {
 
-	LINK(TYPE) *link = FIRST(llist), *next;
+	llink<T> *link = FIRST(this), *next;
 	/*
 	 * Manual looping rather than itterators since we destroyed the
 	 * loop variable.
 	 */
-	while (link != llist->tail) {
+	while (link != this->tail) {
 		next = link->after;
-		FFREE(LINK(TYPE), link);
+		// FFREE(LINK(TYPE), link);
+		delete link;
 		link = next;
 	}
 
-	llist->cur = llist->head;
+	this->cur = this->head;
 
 	return 0;
 }
 
+#if 0
 FMT_F(LLIST(TYPE)) {
 	int seek = 0;
 	fmtf("(");
-	FOR(LLIST, TYPE, v, self) {
+	FOR(LLIST, TYPE, v, this) {
 		seek += FMT(TYPE)(v, buf + seek);
 		fmtf(" ");
 	}
@@ -171,5 +193,6 @@ FMT_F(LLIST(TYPE)) {
 
 	return seek;
 }
+#endif
 
-#endif /* TYPE */
+// #endif /* TYPE */

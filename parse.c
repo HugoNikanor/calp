@@ -9,16 +9,16 @@
 
 #include "err.h"
 
-#define TYPE vcomponent
-#include "linked_list.inc.h"
-#undef TYPE
+// #define TYPE vcomponent
+// #include "linked_list.inc.h"
+// #undef TYPE
 
-#define T strbuf
-#define V strbuf
+// #define T strbuf
+// #define V strbuf
 #include "pair.h"
-#include "pair.inc.h"
-#undef T
-#undef V
+// #include "pair.inc.h"
+// #undef T
+// #undef V
 
 /*
  * name *(";" param) ":" value CRLF
@@ -27,9 +27,11 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	part_context p_ctx = p_key;
 
 	SNEW(parse_ctx, ctx, filename);
-	PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
+	// PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
+	ctx.comp_stack.push(root);
 
-	SNEW(content_line, cline);
+	content_line cline;
+	// SNEW(content_line, cline);
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
@@ -94,13 +96,16 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 		/* Border between param {key, value} */
 		} else if (p_ctx == p_param_name && c == '=') {
-			LLIST(param_set)* params = CLINE_CUR_PARAMS(&cline);
+			auto params = CLINE_CUR_PARAMS(&cline);
 
-			NEW(param_set, ps);
-			DEEP_COPY(strbuf)(&ps->key, &ctx.str);
-			strbuf_cap(&ps->key);
+			// NEW(param_set, ps);
+			auto ps = new param_set;
+			// DEEP_COPY(strbuf)(&ps->key, &ctx.str);
+			*ps->key = ctx.str;
+			strbuf_cap(ps->key);
 			strbuf_soft_reset(&ctx.str);
-			PUSH(LLIST(param_set))(params, ps);
+			// PUSH(LLIST(param_set))(params, ps);
+			params->push(ps);
 
 			p_ctx = p_param_value;
 
@@ -116,24 +121,29 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (p_ctx == p_param_value) {
 				/* push kv pair */
 
-				NEW(strbuf, s);
+				// NEW(strbuf, s);
+				auto s = new strbuf;
+				*s = ctx.str;
 
-				DEEP_COPY(strbuf)(s, &ctx.str);
+				// DEEP_COPY(strbuf)(s, &ctx.str);
 				strbuf_cap(s);
 				strbuf_soft_reset(&ctx.str);
 
-				LLIST(strbuf)* ls = & CLINE_CUR_PARAMS(&cline)->cur->value->val;
-				PUSH(LLIST(strbuf))(ls, s);
+				CLINE_CUR_PARAMS(&cline)->cur->value->val->push(s);
+				// PUSH(LLIST(strbuf))(ls, s);
 
 			}
 
 			if (p_ctx == p_key) {
-				DEEP_COPY(strbuf)(&cline.key, &ctx.str);
-				strbuf_cap(&cline.key);
+				// DEEP_COPY(strbuf)(&cline.key, &ctx.str);
+				*cline.key = ctx.str;
+				strbuf_cap(cline.key);
 				strbuf_soft_reset(&ctx.str);
 
-				NEW(content_set, p);
-				PUSH(LLIST(content_set))(&cline.val, p);
+				// NEW(content_set, p);
+				auto p = new content_set;
+				// PUSH(LLIST(content_set))(&cline.val, p);
+				cline.val->push(p);
 			}
 
 			if      (c == ':') p_ctx = p_value;
@@ -170,13 +180,16 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 	}
 
-	FREE(content_line)(&cline);
+	// FREE(content_line)(&cline);
 
-	assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
-	assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
-	assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
+	// assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
+	assert(ctx.comp_stack.pop() == root);
+	// assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
+	assert(ctx.key_stack.empty());
+	// assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
+	assert(ctx.comp_stack.empty());
 
-	FREE(parse_ctx)(&ctx);
+	// FREE(parse_ctx)(&ctx);
 
 	return 0;
 }
@@ -186,52 +199,66 @@ int handle_kv (
 	parse_ctx* ctx
 	) {
 
-	if (strbuf_c(&cline->key, "BEGIN")) {
+	if (strbuf_c(cline->key, "BEGIN")) {
 		/* should be one of:
 		 * VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE,
 		 * and possibly some others I forget.
 		 */
 
-		NEW(strbuf, s);
-		strbuf* type = CLINE_CUR_VAL(cline);
-		DEEP_COPY(strbuf)(s, type);
-		PUSH(LLIST(strbuf))(&ctx->key_stack, s);
+		// NEW(strbuf, s);
+		auto s = new strbuf;
+		// strbuf* type = CLINE_CUR_VAL(cline);
+		// DEEP_COPY(strbuf)(s, type);
+		*s = *CLINE_CUR_VAL(cline);
+		// PUSH(LLIST(strbuf))(&ctx->key_stack, s);
+		ctx->key_stack.push(s);
 
-		RESET(LLIST(content_set))(&cline->val);
+		// RESET(LLIST(content_set))(&cline->val);
+		cline->val->reset();
 
 		NEW(vcomponent, e,
 				s->mem,
 				ctx->filename);
-		e->parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
-		PUSH(LLIST(vcomponent))(&ctx->comp_stack, e);
+		// e->parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
+		e->parent = ctx->comp_stack.peek();
+		//PUSH(LLIST(vcomponent))(&ctx->comp_stack, e);
+		ctx->comp_stack.push(e);
 
-	} else if (strbuf_c(&cline->key, "END")) {
-		strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
+	} else if (strbuf_c(cline->key, "END")) {
+		//strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
+		strbuf* s = ctx->key_stack.pop();
 		if (strbuf_cmp(s, CLINE_CUR_VAL(cline)) != 0) {
-			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
-					s->mem,
-					CLINE_CUR_VAL(cline)->mem,
-					PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename);
-			PUSH(LLIST(strbuf))(&ctx->key_stack, s);
+			// ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
+			// 		s->mem,
+			// 		CLINE_CUR_VAL(cline)->mem,
+			// 		PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename);
+			// PUSH(LLIST(strbuf))(&ctx->key_stack, s);
+			ctx->key_stack.push(s);
 			return -1;
 
 		} else {
-			FFREE(strbuf, s);
+			delete s;
+			// FFREE(strbuf, s);
 			/* Received propper end, push cur into parent */
-			vcomponent* cur = POP(LLIST(vcomponent))(&ctx->comp_stack);
+			// vcomponent* cur = POP(LLIST(vcomponent))(&ctx->comp_stack);
+			vcomponent* cur = ctx->comp_stack.pop();
 
 			// TODO should self instead be done at creation time?
-			PUSH(vcomponent)(PEEK(LLIST(vcomponent))(&ctx->comp_stack), cur);
+			PUSH(vcomponent)(ctx->comp_stack.peek(), cur);
 		}
 	} else {
-		NEW(content_line, c);
-		DEEP_COPY(content_line)(c, cline);
+		//NEW(content_line, c);
+		content_line* c = new content_line(*cline);
+		// DEEP_COPY(content_line)(c, cline);
 
-		PUSH(TRIE(content_line))(
-				&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
-				c->key.mem, c);
+		// PUSH(TRIE(content_line))(
+		// 		&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
+		// 		c->key.mem, c);
+		// (PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines).push(c->key.mem, c);
+		ctx->comp_stack.peek()->clines.push(c->key->mem, c);
 
-		RESET(LLIST(content_set))(&cline->val);
+		//RESET(LLIST(content_set))(&cline->val);
+		cline->val->reset();
 	}
 
 	return 0;
@@ -272,8 +299,8 @@ int fold(FILE* f, parse_ctx* ctx, char c) {
 
 
 INIT_F(parse_ctx, char* filename) {
-	INIT(LLIST(strbuf), &self->key_stack);
-	INIT(LLIST(vcomponent), &self->comp_stack);
+	// INIT(LLIST(strbuf), &self->key_stack);
+	// INIT(LLIST(vcomponent), &self->comp_stack);
 	self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
 	strcpy(self->filename, filename);
 
@@ -283,20 +310,20 @@ INIT_F(parse_ctx, char* filename) {
 	self->pline   = 1;
 	self->pcolumn = 1;
 
-	INIT(strbuf, &self->str);
+	// INIT(strbuf, &self->str);
 
 	return 0;
 }
 
 FREE_F(parse_ctx) {
 
-	FREE(LLIST(strbuf))(&self->key_stack);
-	FREE(LLIST(vcomponent))(&self->comp_stack);
+	// FREE(LLIST(strbuf))(&self->key_stack);
+	// FREE(LLIST(vcomponent))(&self->comp_stack);
 	free(self->filename);
 
 	self->line = 0;
 	self->column = 0;
-	FREE(strbuf)(&self->str);
+	// FREE(strbuf)(&self->str);
 
 	return 0;
 }

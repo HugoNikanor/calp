@@ -5,42 +5,42 @@
 
 #include "macro.h"
 
-#define TRIE(T)      TEMPL(trie, T)
-#define TRIE_NODE(T) TEMPL(trie_node, T)
+// #define TRIE(T)      TEMPL(trie, T)
+// #define TRIE_NODE(T) TEMPL(trie_node, T)
 
-#endif /* TRIE_H */
-#ifdef TYPE
+// #endif /* TRIE_H */
+// #ifdef TYPE
 
-typedef struct TRIE_NODE(TYPE) {
+template<class T> struct trie_node {
 	char c;
-	TYPE* value;
-	struct TRIE_NODE(TYPE)* next;
-	struct TRIE_NODE(TYPE)* child;
-} TRIE_NODE(TYPE);
+	T* value;
+	trie_node* next;
+	trie_node* child;
 
-typedef struct {
-	TRIE_NODE(TYPE)* root;
-} TRIE(TYPE);
+	trie_node (char c);
+	trie_node (char c, trie_node* next, trie_node* child);
 
+	~trie_node ();
+};
 
-INIT_F ( TRIE(TYPE) );
+template<class T> struct trie {
+	trie_node<T>* root;
 
-INIT_F (TRIE_NODE(TYPE), char c);
+	trie ();
+	~trie();
 
-INIT_F (TRIE_NODE(TYPE), 
-	  char c, TRIE_NODE(TYPE)* next, TRIE_NODE(TYPE)* child );
+	int push (char* key, T* val);
+	T* get (char* key);
 
-int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val );
+	int empty ();
+};
 
-TYPE* GET(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key );
+// FMT_F(TRIE_NODE(TYPE));
+// FMT_F(TRIE(TYPE));
 
-FREE_F(TRIE_NODE(TYPE));
+extern template struct trie<content_line>;
+extern template struct trie_node<content_line>;
 
-FREE_F(TRIE(TYPE));
-
-int EMPTY(TRIE(TYPE))(TRIE(TYPE)*);
-
-FMT_F(TRIE_NODE(TYPE));
-FMT_F(TRIE(TYPE));
+#include "trie.c.inc"
 
 #endif /* TYPE */

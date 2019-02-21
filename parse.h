@@ -28,8 +28,8 @@ typedef enum {
  */
 typedef struct {
 	char* filename;
-	LLIST(strbuf) key_stack;
-	LLIST(vcomponent) comp_stack;
+	llist<strbuf> key_stack;
+	llist<vcomponent> comp_stack;
 
 	/* Number for unfolded lines */
 	int line;

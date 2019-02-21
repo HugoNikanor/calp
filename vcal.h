@@ -5,11 +5,14 @@
 
 #include "strbuf.h"
 
-#define TYPE strbuf
+//#define TYPE strbuf
 #include "linked_list.h"
 // #include "trie.h"
-#undef TYPE
+//#undef TYPE
 
+// #include <utility>
+
+#if 0
 #define T strbuf
 	#define V LLIST(strbuf)
 		#include "pair.h"
@@ -41,6 +44,22 @@
 		#define content_line PAIR(strbuf, LLIST(content_set))
 	#undef V
 #undef T
+#endif
+
+#include "pair.h"
+typedef pair<strbuf, llist<strbuf> > param_set;
+
+#define TYPE param_set
+#include "linked_list.h"
+#undef TYPE
+
+typedef pair<strbuf, llist<param_set> > content_set;
+
+#define TYPE content_set
+#include "linked_list.h"
+#undef TYPE
+
+typedef pair<strbuf, llist<content_set> > content_line;
 
 /*
  * Helper macros for accessing fields in
@@ -54,12 +73,12 @@
 #define CLINE_CUR_CSET(c) (&((c)->val.cur->value))
 
 /* content_set */
-#define CLINE_CUR(c)        ((c)->val.cur->value)
+#define CLINE_CUR(c)        ((c)->val->cur->value)
 /* strbuf */
-#define CLINE_CUR_VAL(c)    (& CLINE_CUR(c)->key)
+#define CLINE_CUR_VAL(c)    (CLINE_CUR(c)->key)
 
 /* LLIST(param_set) */
-#define CLINE_CUR_PARAMS(c) (& CLINE_CUR(c)->val)
+#define CLINE_CUR_PARAMS(c) (CLINE_CUR(c)->val)
 
 /* strbuf */
 #define CLINE_CUR_PARAM_KEY(c) (CLINE_CUR_PARAMS(c)->cur->value->key)
@@ -75,9 +94,9 @@
 content_line* RESOLVE(content_line)
 	(content_line* dest, content_line* new_);
 
-#define TYPE content_line
+// #define TYPE content_line
 #include "trie.h"
-#undef TYPE
+// #undef TYPE
 
 typedef struct s_vcomponent vcomponent;
 
@@ -89,7 +108,8 @@ struct s_vcomponent {
 	char* filename;
 	char* type;
 	vcomponent* parent;
-	TRIE(content_line) clines;
+	// TRIE(content_line) clines;
+	trie<content_line> clines;
 	VECT(vcomponent) components;
 };
 
@@ -112,6 +132,6 @@ int PUSH(vcomponent)(vcomponent*, vcomponent*);
 
 int DEEP_COPY(vcomponent)(vcomponent*, vcomponent*);
 
-FMT_F(vcomponent);
+// FMT_F(vcomponent);
 
 #endif /* VCAL_H */

@@ -5,20 +5,20 @@
 
 #include "err.h"
 
-INIT_F(strbuf) {
-	INIT(strbuf, self, 1);
-	return 0;
-}
+// INIT_F(strbuf) {
+// 	INIT(strbuf, self, 1);
+// 	return 0;
+// }
 
 /*
  * Giving len < 1 is an error.
  */
-INIT_F(strbuf, size_t len) {
-	self->mem   = (char*) calloc(sizeof(*self->mem), len);
-	self->alloc = len;
-	self->ptr   = 0;
-	self->len   = 0;
-	return 0;
+//INIT_F(strbuf, size_t len) {
+strbuf::strbuf (size_t len) {
+	this->mem   = (char*) calloc(sizeof(*this->mem), len);
+	this->alloc = len;
+	this->ptr   = 0;
+	this->len   = 0;
 }
 
 int strbuf_realloc(strbuf* str, size_t len) {
@@ -27,15 +27,15 @@ int strbuf_realloc(strbuf* str, size_t len) {
 	return 0;
 }
 
-FREE_F(strbuf) {
+// FREE_F(strbuf) {
+strbuf::~strbuf () {
 	/* has already been freed */
-	if (self->mem == NULL) return 1;
+	if (this->mem == NULL) return; // error
 
-	free (self->mem);
-	self->mem = NULL;
-	self->alloc = 0;
-	self->len = 0;
-	return 0;
+	free (this->mem);
+	this->mem = NULL;
+	this->alloc = 0;
+	this->len = 0;
 }
 
 /*
@@ -62,18 +62,31 @@ int strbuf_cap(strbuf* s) {
 	return strbuf_append(s, 0);
 }
 
-int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
-	int retval = 0;
+// int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
+strbuf::strbuf(strbuf& src) {
+	// int retval = 0;
 
-	if (dest->alloc < src->len) {
+	if (this->alloc < src.len) {
 		/* +1 in length is to have room for  '\0'. */
-		strbuf_realloc(dest, src->len + 1);
-		retval = 1;
+		strbuf_realloc(this, src.len + 1);
+		// retval = 1;
 	}
 
-	dest->len = src->len;
-	memcpy(dest->mem, src->mem, src->len);
-	return retval;
+	this->len = src.len;
+	memcpy(this->mem, src.mem, src.len);
+	// return retval;
+}
+
+strbuf& strbuf::operator=(strbuf& other) {
+	if (this->alloc < other.len) {
+		/* +1 in length is to have room for  '\0'. */
+		strbuf_realloc(this, other.len + 1);
+		// retval = 1;
+	}
+
+	this->len = other.len;
+	memcpy(this->mem, other.mem, other.len);
+	return *this;
 }
 
 int strbuf_cmp(strbuf* a, strbuf* b) {
@@ -129,9 +142,11 @@ strbuf* RESOLVE(strbuf)(strbuf* dest, strbuf* new_) {
 	else return dest;
 }
 
+#if 0
 FMT_F(strbuf) {
 	return sprintf(buf, "%s", self->mem);
 }
+#endif
 
 int SIZE(strbuf)(strbuf* self) {
 	return self->len;

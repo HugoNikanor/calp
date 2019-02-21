@@ -1,41 +1,51 @@
-#ifndef TYPE
-#error "Set TYPE before including self file"
-#else
+// #include "trie.h"
+// #ifndef TYPE
+// #error "Set TYPE before including this file"
+// #else
 
 #include <stdarg.h>
 
 #include "err.h"
 #include "macro.h"
 
-INIT_F ( TRIE(TYPE) ) {
-	NEW(TRIE_NODE(TYPE), t, '\0');
-	self->root = t;
-	return 0;
+// INIT_F ( TRIE(TYPE) ) {
+template <class T>
+trie<T>::trie () {
+	// NEW(TRIE_NODE(TYPE), t, '\0');
+	auto t = new trie_node<T>('\0');
+	this->root = t;
 }
 
-INIT_F (TRIE_NODE(TYPE), char c) {
-	self->c = c;
-	self->value = NULL;
-	self->next  = NULL;
-	self->child = NULL;
-	return 0;
+// INIT_F (TRIE_NODE(TYPE), char c) {
+template <class T>
+trie_node<T>::trie_node (char c) {
+	this->c = c;
+	this->value = NULL;
+	this->next  = NULL;
+	this->child = NULL;
 }
 
-INIT_F (TRIE_NODE(TYPE),
-	char c,
-	TRIE_NODE(TYPE)* next,
-	TRIE_NODE(TYPE)* child )
+// INIT_F (TRIE_NODE(TYPE),
+// 	char c,
+// 	TRIE_NODE(TYPE)* next,
+// 	TRIE_NODE(TYPE)* child )
+template <class T>
+trie_node<T>::trie_node (
+		char c,
+		trie_node<T>* next,
+		trie_node<T>* child )
 {
-	self->c = c;
-	self->next = next;
-	self->child = child;
-	return 0;
+	this->c = c;
+	this->next = next;
+	this->child = child;
 }
 
-int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
-	TRIE_NODE(TYPE) *cur, *last;
+// int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
+template <class T>
+int trie<T>::push (char* key, T* val) {
+	trie_node<T> *cur, *last;
 
-	last = trie->root;
+	last = this->root;
 	cur = last->child;
 
 	char* subkey = key;
@@ -44,7 +54,8 @@ int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 		if (cur == NULL) {
 			/* Build direct LL for remaining subkey */
 			for (char* c = subkey; c[0] != '\0'; c++) {
-				NEW(TRIE_NODE(TYPE), t, *c);
+				// NEW(TRIE_NODE(TYPE), t, *c);
+				auto t = new trie_node<T>(*c);
 				last->child = t;
 				last = t;
 			}
@@ -65,9 +76,10 @@ int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 			cur = cur->next;
 			/* `last` not set since we aren't moving down */ 
 		} else {
-			/* No node on self level was part of the set, create a new__
+			/* No node on this level was part of the set, create a new__
 			 * sibling and follow down that parse */
-			NEW(TRIE_NODE(TYPE), t, *subkey);
+			// NEW(TRIE_NODE(TYPE), t, *subkey);
+			auto t = new trie_node<T>(*subkey);
 			cur->next = t;
 			last = cur;
 			cur = t;
@@ -80,8 +92,11 @@ int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val ) {
 /*
  * TODO what happens when I give an invalid key?
  */
-TYPE* GET(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key ) {
-	TRIE_NODE(TYPE)* n = trie->root->child;
+template <class T>
+T* trie<T>::get (char* key) {
+// TYPE* GET(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key ) {
+	// TRIE_NODE(TYPE)* n = trie->root->child;
+	trie_node<T>* n = this->root->child;
 	char* subkey = key;
 
 	while (n != NULL) {
@@ -99,27 +114,34 @@ TYPE* GET(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key ) {
 	return 0;
 }
 
-FREE_F(TRIE_NODE(TYPE)) {
-	if (self == NULL) return 0;
-	if (self->value != NULL) FFREE(TYPE, self->value);
-	if (self->next  != NULL) FREE(TRIE_NODE(TYPE))(self->next);
-	if (self->child != NULL) FREE(TRIE_NODE(TYPE))(self->child);
-	free (self);
-	return 0;
+// FREE_F(TRIE_NODE(TYPE)) {
+template <class T>
+trie_node<T>::~trie_node () {
+	// if (this == NULL) return 0;
+	if (this->value != NULL) free (this->value); // FFREE(TYPE, this->value);
+	if (this->next  != NULL) free (this->next);
+	if (this->child != NULL) free (this->child);
+	// free (this);
 }
 
-FREE_F(TRIE(TYPE)) {
-	if (self->root->c != '\0') {
+// FREE_F(TRIE(TYPE)) {
+template <class T>
+trie<T>::~trie () {
+	if (this->root->c != '\0') {
 		// ERR("Invalid trie");
-		return 1;
+		// return 1;
+		return; // error
 	}
-	return FREE(TRIE_NODE(TYPE))(self->root);
+	free (this->root);
 }
 
-int EMPTY(TRIE(TYPE))(TRIE(TYPE)* self) {
-	return self->root->child == NULL;
+template <class T>
+int trie<T>::empty () {
+//int EMPTY(TRIE(TYPE))(TRIE(TYPE)* this) {
+	return this->root->child == NULL;
 }
 
+#if 0
 FMT_F(TRIE_NODE(TYPE)) {
 
 	va_list ap;
@@ -132,7 +154,7 @@ FMT_F(TRIE_NODE(TYPE)) {
 
 	int seek = 0;
 
-	TRIE_NODE(TYPE)* n = self;
+	TRIE_NODE(TYPE)* n = this;
 
 	if (n == NULL) { fmtf("\n"); }
 	while (n != NULL) {
@@ -157,7 +179,7 @@ FMT_F(TRIE_NODE(TYPE)) {
 
 FMT_F(TRIE(TYPE)) {
 	int seek = 0;
-	fmtf("Trie: %p: {\n", self);
+	fmtf("Trie: %p: {\n", this);
 	seek += FMT(TRIE_NODE(TYPE))(self->root->child, buf + seek);
 	fmtf("}");
 	return seek;

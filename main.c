@@ -6,7 +6,7 @@
 #include "calendar.h"
 #include "macro.h"
 #include "vcal.h"
-#include "graphs.h"
+// #include "graphs.h"
 #include "err.h"
 
 typedef struct {
@@ -58,7 +58,7 @@ int main (int argc, char** argv) {
 				printf("%3lu : %3lu | %s | %s\n",
 						i + 1, j + 1,
 						filename,
-						get_property(ev, "SUMMARY")->val.cur->value->key.mem);
+						get_property(ev, "SUMMARY")->val->cur->value->key->mem);
 			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {
@@ -81,7 +81,7 @@ int main (int argc, char** argv) {
 			// create_graph(FCHILD(FCHILD(&root)), args.argv[0]);
 			INFO("Creating graph for single file");
 			INFO_F("output = %s\n", args.argv[0]);
-			create_graph_vcomponent(&root, args.argv[0]);
+			// create_graph_vcomponent(&root, args.argv[0]);
 		}
 	}
 

@@ -121,11 +121,13 @@
  * Should return the number of bytes written (like sprintf).
  */
 
+#if 0
 #define FMT_T(T)     TEMPL(format    , T)
 #define FMT_F(T) int FMT_T(T)(T* self, char* buf, ...)
 // TODO change order of buf and item
 #define __FMT_HELP(item, buf, ...) ((item), (buf), VA_ARGS_NUM(__VA_ARGS__), ## __VA_ARGS__)
 #define FMT(T) FMT_T(T) __FMT_HELP
 #define fmtf(...) seek += sprintf(buf + seek, __VA_ARGS__)
+#endif
 
 #endif /* MACRO_H */

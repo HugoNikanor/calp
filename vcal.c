@@ -2,18 +2,19 @@
 
 #include <string.h>
 
-#define TYPE strbuf
-#include "linked_list.inc.h"
-#undef TYPE
+// #define TYPE strbuf
+// #include "linked_list.inc.h"
+// #undef TYPE
+// 
+// #define TYPE param_set
+// #include "linked_list.inc.h"
+// #undef TYPE
+// 
+// #define TYPE content_set
+// #include "linked_list.inc.h"
+// #undef TYPE
 
-#define TYPE param_set
-#include "linked_list.inc.h"
-#undef TYPE
-
-#define TYPE content_set
-#include "linked_list.inc.h"
-#undef TYPE
-
+#if 0
 #define T strbuf
 	#define V LLIST(strbuf)
 		#include "pair.inc.h"
@@ -25,11 +26,12 @@
 		#include "pair.inc.h"
 	#undef V
 #undef T
+#endif
 
-#define TYPE content_line
-// #include "hash.inc"
-#include "trie.inc.h"
-#undef TYPE
+// #define TYPE content_line
+// // #include "hash.inc"
+// #include "trie.inc.h"
+// #undef TYPE
 
 #define TYPE vcomponent
 #include "vector.inc.h"
@@ -47,7 +49,7 @@ INIT_F(vcomponent, const char* type) {
 
 INIT_F(vcomponent, const char* type, const char* filename) {
 
-	INIT(TRIE(content_line), &self->clines);
+	// INIT(TRIE(content_line), &self->clines);
 	INIT(VECT(vcomponent), &self->components);
 
 	self->filename = NULL;
@@ -69,16 +71,19 @@ content_line* RESOLVE(content_line)
 {
 	if (dest == NULL) return new_;
 
-	if (strbuf_cmp(&dest->key, &new_->key) != 0) {
+	if (strbuf_cmp(dest->key, new_->key) != 0) {
 		ERR("Can't resolve between these two types");
 		return NULL;
 	}
 
 	/* This destroys new_->val. */
-	APPEND(LLIST(content_set)) (&dest->val, &new_->val);
+	// APPEND(LLIST(content_set)) (&dest->val, &new_->val);
+	dest->val->append(new_->val);
 
-	FREE(strbuf)(&new_->key);
-	free(new_);
+	// FREE(strbuf)(&new_->key);
+	// delete new_->key;
+	delete new_;
+	// free(new_);
 
 	return dest;
 }
@@ -88,7 +93,8 @@ content_line* get_property (vcomponent* ev, const char* key) {
 	char* cpy = (char*) (calloc(sizeof(*cpy), len));
 	strncpy (cpy, key, len);
 
-	content_line* ret = GET(TRIE(content_line))(&ev->clines, cpy);
+	// content_line* ret = GET(TRIE(content_line))(&ev->clines, cpy);
+	content_line* ret = ev->clines.get(cpy);
 
 	free (cpy);
 	return ret;
@@ -98,10 +104,10 @@ FREE_F(vcomponent) {
 	if (self->filename != NULL) free(self->filename);
 	free(self->type);
 
-	if (FREE(TRIE(content_line))(&self->clines) != 0) {
-		fprintf(stderr, "Error freeing vcomponent belonging to file \n %s \n",
-				self->filename);
-	}
+	// if (FREE(TRIE(content_line))(&self->clines) != 0) {
+	// 	fprintf(stderr, "Error freeing vcomponent belonging to file \n %s \n",
+	// 			self->filename);
+	// }
 
 	FREE(VECT(vcomponent))(&self->components);
 
@@ -119,6 +125,7 @@ int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
 	return -1;
 }
 
+#if 0
 FMT_F(vcomponent) {
 	int seek = 0;
 
@@ -127,7 +134,7 @@ FMT_F(vcomponent) {
 	seek += sprintf(buf + seek, _YELLOW);
 	seek += sprintf(buf + seek, "\nVComponet (Type := %s)\n", self->type); 
 	seek += sprintf(buf + seek, _RESET);
-	seek += FMT(TRIE(content_line))(&self->clines, buf + seek);
+	// seek += FMT(TRIE(content_line))(&self->clines, buf + seek);
 	seek += sprintf(buf + seek, "\nComponents:\n");
 	FOR(VECT, vcomponent, comp, &self->components) {
 		seek += FMT(vcomponent)(comp, buf + seek);
@@ -135,3 +142,4 @@ FMT_F(vcomponent) {
 
 	return seek;
 }
+#endif

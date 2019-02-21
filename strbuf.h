@@ -12,22 +12,30 @@
  * Also comes with a number of functions which allow for safe(er)
  * access to the memmory.
  */
-typedef struct {
+struct strbuf {
 	char* mem;
 	/* TODO add support for negative ptr */
 	int ptr;
 	unsigned int alloc;
 	unsigned int len;
-} strbuf;
+
+	strbuf (size_t len);
+	strbuf (strbuf& other);
+	strbuf () : strbuf (1) { };
+
+	~strbuf ();
+
+	strbuf& operator=(strbuf& other);
+};
 
 /*
  * Init strbuf to size of 0
  * Doesnt't call malloc.
  */
-INIT_F(strbuf);
+// INIT_F(strbuf);
 
 /* Constructor */
-INIT_F(strbuf, size_t len);
+// INIT_F(strbuf, size_t len);
 
 /*
  * Like realloc, but for strbuf
@@ -37,7 +45,7 @@ int strbuf_realloc(strbuf* str, size_t len);
 /*
  * Free's contents of str, but keeps str.
  */
-FREE_F(strbuf);
+// FREE_F(strbuf);
 
 int strbuf_cmp(strbuf* a, strbuf* b);
 int strbuf_c(strbuf* a, const char* b);
@@ -98,7 +106,7 @@ int strbuf_init_copy(strbuf* dest, strbuf* src);
 
 strbuf* RESOLVE(strbuf)(strbuf*, strbuf*);
 
-FMT_F(strbuf);
+// FMT_F(strbuf);
 
 int SIZE(strbuf)(strbuf*);
 
