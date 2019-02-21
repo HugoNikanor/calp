@@ -96,11 +96,11 @@ struct s_vcomponent {
 #define FCHILD(v) GET(VECT(vcomponent))(&(v)->components, 0)
 
 INIT_F(vcomponent);
-INIT_F(vcomponent, char* type);
-INIT_F(vcomponent, char* type, char* filename);
+INIT_F(vcomponent, const char* type);
+INIT_F(vcomponent, const char* type, const char* filename);
 FREE_F(vcomponent);
 
-content_line* get_property (vcomponent* ev, char* key);
+content_line* get_property (vcomponent* ev, const char* key);
 
 int add_content_line (vcomponent* ev, content_line* c);
 

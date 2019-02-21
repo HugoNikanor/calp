@@ -87,7 +87,7 @@ int strbuf_cmp(strbuf* a, strbuf* b) {
 	return strncmp(a->mem, b->mem, a->len);
 }
 
-int strbuf_c(strbuf* a, char* b) {
+int strbuf_c(strbuf* a, const char* b) {
 	if (a == NULL || a->alloc == 0) {
 		ERR("a not allocated");
 		return -1;

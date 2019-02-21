@@ -41,11 +41,11 @@ INIT_F(vcomponent) {
 	return 0;
 }
 
-INIT_F(vcomponent, char* type) {
+INIT_F(vcomponent, const char* type) {
 	return INIT(vcomponent, self, type, NULL);
 }
 
-INIT_F(vcomponent, char* type, char* filename) {
+INIT_F(vcomponent, const char* type, const char* filename) {
 
 	INIT(TRIE(content_line), &self->clines);
 	INIT(VECT(vcomponent), &self->components);
@@ -83,8 +83,15 @@ content_line* RESOLVE(content_line)
 	return dest;
 }
 
-content_line* get_property (vcomponent* ev, char* key) {
-	return GET(TRIE(content_line))(&ev->clines, key);
+content_line* get_property (vcomponent* ev, const char* key) {
+	size_t len = strlen(key) + 1;
+	char* cpy = (char*) (calloc(sizeof(*cpy), len));
+	strncpy (cpy, key, len);
+
+	content_line* ret = GET(TRIE(content_line))(&ev->clines, cpy);
+
+	free (cpy);
+	return ret;
 }
 
 FREE_F(vcomponent) {

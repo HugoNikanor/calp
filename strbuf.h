@@ -40,7 +40,7 @@ int strbuf_realloc(strbuf* str, size_t len);
 FREE_F(strbuf);
 
 int strbuf_cmp(strbuf* a, strbuf* b);
-int strbuf_c(strbuf* a, char* b);
+int strbuf_c(strbuf* a, const char* b);
 
 /*
  * Copy contents from src to dest.
