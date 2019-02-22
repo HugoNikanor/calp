@@ -13,10 +13,10 @@
 /*
  * Giving len < 1 is an error.
  */
-//INIT_F(strbuf, size_t len) {
-strbuf::strbuf (size_t len) {
-	this->mem   = (char*) calloc(sizeof(*this->mem), len);
-	this->alloc = len;
+// INIT_F(strbuf, size_t len) {
+strbuf::strbuf () {
+	this->mem   = (char*) calloc(sizeof(*this->mem), 2);
+	this->alloc = 2;
 	this->ptr   = 0;
 	this->len   = 0;
 }

@@ -16,12 +16,12 @@ struct strbuf {
 	char* mem;
 	/* TODO add support for negative ptr */
 	int ptr;
-	unsigned int alloc;
+	unsigned int alloc = 0;
 	unsigned int len;
 
-	strbuf (size_t len);
+	// strbuf (size_t len);
 	strbuf (strbuf& other);
-	strbuf () : strbuf (1) { };
+	strbuf ();
 
 	~strbuf ();
 
