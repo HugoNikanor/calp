@@ -59,7 +59,8 @@ int trie<T>::push (char* key, T* val) {
 				last->child = t;
 				last = t;
 			}
-			last->value = RESOLVE(TYPE)(last->value, val);
+			// last->value = RESOLVE(TYPE)(last->value, val);
+			last->value = last->value->resolve(val);
 			return 0;
 		} else if (cur->c == subkey[0]) {
 			/* This node belongs to the key,
@@ -69,7 +70,8 @@ int trie<T>::push (char* key, T* val) {
 			subkey++;
 		} else if (subkey[0] == '\0') {
 			/* Key finished */
-			last->value = RESOLVE(TYPE)(last->value, val);
+			// last->value = RESOLVE(TYPE)(last->value, val);
+			last->value->resolve(val);
 			return 0;
 		} else if (cur->next != NULL) {
 			/* This node was not part of the set, but it's sibling might */
@@ -132,7 +134,8 @@ trie<T>::~trie () {
 		// return 1;
 		return; // error
 	}
-	free (this->root);
+	// free (this->root);
+	delete this->root;
 }
 
 template <class T>

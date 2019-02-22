@@ -26,7 +26,7 @@
 int parse_file(char* filename, FILE* f, vcomponent* root) {
 	part_context p_ctx = p_key;
 
-	SNEW(parse_ctx, ctx, filename);
+	parse_ctx ctx(filename);
 	// PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
 	ctx.comp_stack.push(root);
 
@@ -44,7 +44,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 				strbuf* target = CLINE_CUR_VAL(&cline);
 
-				DEEP_COPY(strbuf)(target, &ctx.str);
+				// DEEP_COPY(strbuf)(target, &ctx.str);
+				*target = ctx.str;
 				strbuf_cap(target);
 				strbuf_soft_reset(&ctx.str);
 
@@ -169,7 +170,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 */
 
 		strbuf* target = CLINE_CUR_VAL(&cline);
-		DEEP_COPY(strbuf)(target, &ctx.str);
+		*target = ctx.str;
 		strbuf_cap(target);
 		strbuf_soft_reset(&ctx.str);
 
@@ -216,9 +217,7 @@ int handle_kv (
 		// RESET(LLIST(content_set))(&cline->val);
 		cline->val->reset();
 
-		NEW(vcomponent, e,
-				s->mem,
-				ctx->filename);
+		auto e = new vcomponent(s->mem, ctx->filename);
 		// e->parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
 		e->parent = ctx->comp_stack.peek();
 		//PUSH(LLIST(vcomponent))(&ctx->comp_stack, e);
@@ -298,32 +297,30 @@ int fold(FILE* f, parse_ctx* ctx, char c) {
 }
 
 
-INIT_F(parse_ctx, char* filename) {
-	// INIT(LLIST(strbuf), &self->key_stack);
-	// INIT(LLIST(vcomponent), &self->comp_stack);
-	self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
-	strcpy(self->filename, filename);
+//INIT_F(parse_ctx, char* filename) {
+parse_ctx::parse_ctx (const char* filename) {
+	// INIT(LLIST(strbuf), &this->key_stack);
+	// INIT(LLIST(vcomponent), &this->comp_stack);
+	this->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
+	strcpy(this->filename, filename);
 
-	self->line    = 0;
-	self->column  = 0;
+	this->line    = 0;
+	this->column  = 0;
 
-	self->pline   = 1;
-	self->pcolumn = 1;
+	this->pline   = 1;
+	this->pcolumn = 1;
 
-	// INIT(strbuf, &self->str);
-
-	return 0;
+	// INIT(strbuf, &this->str);
 }
 
-FREE_F(parse_ctx) {
+// FREE_F(parse_ctx) {
+parse_ctx::~parse_ctx () {
 
-	// FREE(LLIST(strbuf))(&self->key_stack);
-	// FREE(LLIST(vcomponent))(&self->comp_stack);
-	free(self->filename);
+	// FREE(LLIST(strbuf))(&this->key_stack);
+	// FREE(LLIST(vcomponent))(&this->comp_stack);
+	free(this->filename);
 
-	self->line = 0;
-	self->column = 0;
-	// FREE(strbuf)(&self->str);
-
-	return 0;
+	this->line = 0;
+	this->column = 0;
+	// FREE(strbuf)(&this->str);
 }

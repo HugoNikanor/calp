@@ -31,28 +31,33 @@ int main (int argc, char** argv) {
 	}
 
 	char* rootpath = args.argv[0];
-	SNEW(vcomponent, root, "ROOT", rootpath);
+	// SNEW(vcomponent, root, "ROOT", rootpath);
+	vcomponent root("ROOT", rootpath);
 	read_vcalendar(&root, rootpath);
 
 	arg_shift(&args);
 
 	if (args.argc == 0 || strcmp(args.argv[0], "-p") == 0) {
-		INFO_F("Parsed calendar file containing [%u] events",
-				root.components.length);
+		// INFO_F("Parsed calendar file containing [%u] events",
+		// 		root.components.length);
+		printf("component %s, [%u] children\n", root.type, root.components.length);
 
 		puts("CAL : OBJ | Filename | Description");
 		puts("----------+----------+------------");
 
 		/* This loops over all VCALENDAR's in root */
 		for (size_t i = 0; i < root.components.length; i++) {
-			vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
+			// vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
+			vcomponent* cal = root.components[i];
 			assert(strcmp(cal->type, "VCALENDAR") == 0);
 
+			printf("component %s, [%u] children\n", cal->type, cal->components.length);
 			char* filename = cal->filename;
 			/* This loop over all VEVENT's in the current VCALENDAR */
 			for (size_t j = 0; j < cal->components.length; j++) {
-				vcomponent* ev = GET(VECT(vcomponent))(&cal->components, j);
+				vcomponent* ev = cal->components[j];
 
+				printf("component %s, [%u] children\n", ev->type, ev->components.length);
 				if (strcmp(ev->type, "VEVENT") != 0) continue;
 
 				printf("%3lu : %3lu | %s | %s\n",
@@ -65,7 +70,7 @@ int main (int argc, char** argv) {
 		/* TODO self might be broken */
 		if (arg_shift(&args) == 0) {
 			for (size_t i = 0; i < root.components.length; i++) {
-				vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
+				vcomponent* cal = root.components[i];
 				assert(strcmp(cal->type, "VCALENDAR") == 0);
 
 				vcomponent* ev = FCHILD(cal);
@@ -91,5 +96,5 @@ int main (int argc, char** argv) {
 	puts(buf);
 	*/
 
-	FREE(vcomponent)(&root);
+	// FREE(vcomponent)(&root);
 }

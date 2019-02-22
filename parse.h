@@ -7,9 +7,9 @@
 #include "strbuf.h"
 #include "vcal.h"
 
-#define TYPE vcomponent
+// #define TYPE vcomponent
 #include "linked_list.h"
-#undef TYPE
+// #undef TYPE
 
 /*
  * The standard says that no line should be longer than 75 octets.
@@ -26,7 +26,7 @@ typedef enum {
  * Struct holding most state information needed while parsing.
  * Kept together for simplicity.
  */
-typedef struct {
+struct parse_ctx {
 	char* filename;
 	llist<strbuf> key_stack;
 	llist<vcomponent> comp_stack;
@@ -40,10 +40,11 @@ typedef struct {
 	int pcolumn;
 
 	strbuf str;
-} parse_ctx;
 
-INIT_F(parse_ctx, char* filename);
-FREE_F(parse_ctx);
+	parse_ctx (const char* filename);
+
+	~parse_ctx ();
+};
 
 int handle_kv(
 		content_line*  cline,

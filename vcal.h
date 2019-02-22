@@ -4,61 +4,14 @@
 #include <stdlib.h>
 
 #include "strbuf.h"
-
-//#define TYPE strbuf
 #include "linked_list.h"
-// #include "trie.h"
-//#undef TYPE
+#include "trie.h"
 
-// #include <utility>
-
-#if 0
-#define T strbuf
-	#define V LLIST(strbuf)
-		#include "pair.h"
-		/* left := param_name | right := param_values */
-		#define param_set PAIR(strbuf, LLIST(strbuf))
-	#undef V
-#undef T
-
-#define TYPE param_set
 #include "linked_list.h"
-#undef TYPE
-
-#define T strbuf
-	#define V LLIST(param_set)
-		#include "pair.h"
-		/* left := content | right := params */
-		#define content_set PAIR(strbuf, LLIST(param_set))
-	#undef V
-#undef T
-
-#define TYPE content_set
-#include "linked_list.h"
-#undef TYPE
-
-#define T strbuf
-	#define V LLIST(content_set)
-		#include "pair.h"
-		/* left := content | right := params */
-		#define content_line PAIR(strbuf, LLIST(content_set))
-	#undef V
-#undef T
-#endif
-
 #include "pair.h"
-typedef pair<strbuf, llist<strbuf> > param_set;
 
-#define TYPE param_set
-#include "linked_list.h"
-#undef TYPE
-
-typedef pair<strbuf, llist<param_set> > content_set;
-
-#define TYPE content_set
-#include "linked_list.h"
-#undef TYPE
-
+typedef pair<strbuf, llist<strbuf> >      param_set;
+typedef pair<strbuf, llist<param_set> >   content_set;
 typedef pair<strbuf, llist<content_set> > content_line;
 
 /*
@@ -85,40 +38,33 @@ typedef pair<strbuf, llist<content_set> > content_line;
 /* strbuf */
 #define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->val.cur->value)
 
-/*
- * Resolves a collision in some form of structure (probably a hash-map
- * or a trie). If dest is NULL just return new_. Otherwise mutates dest
- * to have the correct form, and returns it. Destroying new_ in the
- * process.
- */
-content_line* RESOLVE(content_line)
-	(content_line* dest, content_line* new_);
+// typedef struct s_vcomponent vcomponent;
 
-// #define TYPE content_line
-#include "trie.h"
+// #define TYPE vcomponent
+#include "vector.h"
 // #undef TYPE
 
-typedef struct s_vcomponent vcomponent;
-
-#define TYPE vcomponent
-#include "vector.h"
-#undef TYPE
-
-struct s_vcomponent {
+struct vcomponent {
 	char* filename;
 	char* type;
 	vcomponent* parent;
 	// TRIE(content_line) clines;
 	trie<content_line> clines;
-	VECT(vcomponent) components;
+	vect<vcomponent> components;
+
+	vcomponent (const char* type) : vcomponent (type, NULL) { };
+	vcomponent (const char* type, const char* filename);
+
+	~vcomponent ();
 };
 
-#define FCHILD(v) GET(VECT(vcomponent))(&(v)->components, 0)
+// #define FCHILD(v) GET(VECT(vcomponent))(&(v)->components, 0)
+#define FCHILD(v) ((v)->components[0]);
 
-INIT_F(vcomponent);
-INIT_F(vcomponent, const char* type);
-INIT_F(vcomponent, const char* type, const char* filename);
-FREE_F(vcomponent);
+// INIT_F(vcomponent);
+// INIT_F(vcomponent, const char* type);
+// INIT_F(vcomponent, const char* type, const char* filename);
+// FREE_F(vcomponent);
 
 content_line* get_property (vcomponent* ev, const char* key);
 

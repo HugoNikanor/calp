@@ -1,28 +1,39 @@
-#ifndef VECTOR_H
-#define VECTOR_H
+#ifndef M_VECTOR_H
+#define M_VECTOR_H
 
 #include <stdlib.h>
 #include "macro.h"
 
-#define VECT(T) TEMPL(vect, T)
+// #define VECT(T) TEMPL(vect, T)
 
-#endif /* VECTOR_H */
+// #endif /* VECTOR_H */
 
-#ifdef TYPE
+// #ifdef TYPE
 
-typedef struct {
+template <class T>
+struct vect {
 	unsigned int length;
 	unsigned int alloc;
-	TYPE** items;
-} VECT(TYPE);
+	T** items;
 
-INIT_F(VECT(TYPE));
-FREE_F(VECT(TYPE));
+	vect ();
+	~vect ();
 
-int PUSH(VECT(TYPE))(VECT(TYPE)*, TYPE*);
-TYPE* GET(VECT(TYPE))(VECT(TYPE)*, unsigned int idx);
-int EMPTY(VECT(TYPE))(VECT(TYPE)*);
-unsigned int SIZE(VECT(TYPE))(VECT(TYPE)*);
+	int push (T* t);
+
+	T* operator[] (unsigned int idx);
+
+	int empty ();
+	unsigned int size ();
+};
+
+// INIT_F(VECT(TYPE));
+// FREE_F(VECT(TYPE));
+// 
+// int PUSH(VECT(TYPE))(VECT(TYPE)*, TYPE*);
+// TYPE* GET(VECT(TYPE))(VECT(TYPE)*, unsigned int idx);
+// int EMPTY(VECT(TYPE))(VECT(TYPE)*);
+// unsigned int SIZE(VECT(TYPE))(VECT(TYPE)*);
 
 #define __PRE_VECT(T, i, set) \
 	unsigned int __INTER(i) = 0; T* i;
@@ -37,4 +48,8 @@ unsigned int SIZE(VECT(TYPE))(VECT(TYPE)*);
 #define __NXT_VECT(T, i, set) i = GET(VECT(T))(set, ++__INTER(i))
 #define NXT_VECT(T) __NXT_VECT
 
-#endif /* TYPE */
+#define HEADER_ONLY
+#include "vector.inc.h"
+#undef HEADER_ONLY
+
+#endif /* M_VECTOR_H */

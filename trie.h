@@ -38,8 +38,8 @@ template<class T> struct trie {
 // FMT_F(TRIE_NODE(TYPE));
 // FMT_F(TRIE(TYPE));
 
-extern template struct trie<content_line>;
-extern template struct trie_node<content_line>;
+// extern template struct trie<content_line>;
+// extern template struct trie_node<content_line>;
 
 #include "trie.c.inc"
 

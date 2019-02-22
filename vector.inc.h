@@ -1,51 +1,65 @@
-#ifndef TYPE
-#error "Set TYPE before including self file"
-#else
+#ifndef HEADER_ONLY
+#error "Only include this file from the appropriate header."
+#endif
+// #ifndef TYPE
+// #error "Set TYPE before including this file"
+// #else
 
 #include "macro.h"
 #include "err.h"
 
-INIT_F(VECT(TYPE)) {
-	self->length = 0;
-	self->alloc = 1;
-	self->items = (TYPE**) calloc(sizeof(*self->items), self->alloc);
-	return 0;
+// INIT_F(VECT(TYPE)) {
+template <class T>
+vect<T>::vect () {
+	this->length = 0;
+	this->alloc = 1;
+	this->items = (T**) calloc(sizeof(*this->items), this->alloc);
 }
 
-FREE_F(VECT(TYPE)) {
-	for (unsigned int i = 0; i < self->length; i++) {
-		FFREE(TYPE, self->items[i]);
+template <class T>
+vect<T>::~vect() {
+// FREE_F(VECT(TYPE)) {
+	for (unsigned int i = 0; i < this->length; i++) {
+		delete this->items[i];
+		// FFREE(TYPE, this->items[i]);
 	}
-	free(self->items);
-	return 0;
+	free(this->items);
 }
 
-int PUSH(VECT(TYPE))(VECT(TYPE)* self, TYPE* t) {
-	if (self->length + 1 > self->alloc) {
-		self->alloc <<= 1;
-		self->items = (TYPE**) realloc(self->items, sizeof(*self->items) * self->alloc);
+template <class T>
+int vect<T>::push (T* t) {
+// int PUSH(VECT(TYPE))(VECT(TYPE)* this, TYPE* t) {
+	if (this->length + 1 > this->alloc) {
+		this->alloc <<= 1;
+		this->items = (T**) realloc(this->items, sizeof(*this->items) * this->alloc);
 	}
 
-	self->items[self->length] = t;
-	++self->length;
+	this->items[this->length] = t;
+	++this->length;
 	return 0;
 }
 
-TYPE* GET(VECT(TYPE))(VECT(TYPE)* self, unsigned int idx) {
-	if (idx >= self->length) {
+template <class T>
+T* vect<T>::operator[] (unsigned int idx) {
+// TYPE* GET(VECT(TYPE))(VECT(TYPE)* this, unsigned int idx) {
+	if (idx >= this->length) {
 		ERR("Index out of range"); 
 		return NULL;
 	}
 
-	return self->items[idx];
+	return this->items[idx];
 }
 
-int EMPTY(VECT(TYPE))(VECT(TYPE)* self) {
-	return self->length == 0;
+template <class T>
+int vect<T>::empty () {
+//int EMPTY(VECT(TYPE))(VECT(TYPE)* this) {
+	return this->length == 0;
 }
 
-unsigned int SIZE(VECT(TYPE))(VECT(TYPE)* self) {
-	return self->length;
+template <class T>
+unsigned int vect<T>::size () {
+//unsigned int SIZE(VECT(TYPE))(VECT(TYPE)* this) {
+	return this->length;
 }
 
-#endif /* TYPE */
+// #endif /* TYPE */

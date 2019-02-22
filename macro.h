@@ -9,6 +9,7 @@
 #define TP4(a, b, c, d) a ## b ## c ## d
 #define TP5(a, b, c, d, e) a ## b ## c ## d ## e
 #define TP6(a, b, c, d, e, f) a ## b ## c ## d ## e ## f
+#define TP7(a, b, c, d, e, f, g) a ## b ## c ## d ## e ## f ## g
 
 /*
  * Get length of __VA_ARGS__
@@ -31,10 +32,11 @@
  *
  * nameᐸTᐳ
  */
-#define TEMPL(name, T)     TP4(name, \U00001438 , T, \U00001433 )
-#define TEMPL2(name, T, V) TP6(name, \U00001438\U00001438 , T , \U00001433_\U00001438 , V, \U00001433\U00001433)
+#define TEMPL(name, T)     TP5(DEP_, name, \U00001438 , T, \U00001433 )
+#define TEMPL2(name, T, V) TP7(DEP_, name, \U00001438\U00001438 , T , \U00001433_\U00001438 , V, \U00001433\U00001433)
 #define TEMPL_N(name, T, argcount) TP6(name, \U00001438 , T, _, argcount, \U00001433 )
 
+#if 1
 /* Constructor type name */
 #define __INIT_T(T, C) TEMPL_N(init, T, C)
 
@@ -77,6 +79,7 @@
 
 /* Declare destructor */
 #define FREE_F(T) int FREE(T) (T* self)
+#endif
 
 /* generate reusable internal symbol */
 #define __INTER(s) TP3(__, s, __internal)
