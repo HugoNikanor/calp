@@ -18,6 +18,20 @@
  */
 #define SEGSIZE 75
 
+/*
+ * Transfers a strbuf from src to target. 
+ * Does this first copying the contents, followed by capping the
+ * target and reseting the src.
+ */
+#define TRANSFER(target, src) do { \
+	DEEP_COPY(strbuf)((target), (src)); \
+	strbuf_cap(target); \
+	strbuf_soft_reset(src); \
+} while (0)
+
+/*
+ * Current context for the character consumer (parse_file).
+ */
 typedef enum {
 	p_key, p_value, p_param_name, p_param_value, p_escape
 } part_context;
@@ -27,11 +41,22 @@ typedef enum {
  * Kept together for simplicity.
  */
 typedef struct {
+	/* Which file we are parsing, copied to all components to allow
+	 * writebacks later */
 	char* filename;
+
+	FILE* f;
+
+   /*
+	 * context stacks used since ICS files form a tree. key_stack is
+	 * only for sequrity purposes.
+	 */
 	LLIST(strbuf) key_stack;
 	LLIST(vcomponent) comp_stack;
 
-	/* Number for unfolded lines */
+	/* Number for unfolded lines
+	 * TODO remove this
+	 * */
 	int line;
 	int column;
 
@@ -39,18 +64,35 @@ typedef struct {
 	int pline;
 	int pcolumn;
 
+	/*
+	 * String which we write everything read into.
+	 * Later copied to appropiate places.
+	 */
 	strbuf str;
 } parse_ctx;
 
-INIT_F(parse_ctx, char* filename);
+INIT_F(parse_ctx, FILE* f, char* filename);
 FREE_F(parse_ctx);
 
+
+/*
+ * Character consumer. Reads characters from stdin until end of file.
+ * Whenever it finds a token with a special value (such as ':', ';',
+ * ...) it saves it away.
+ * Once It has parsed a full line it calls handel_kv. Which build my
+ * actuall datastructure.
+ */
+int parse_file(char* filename, FILE* f, vcomponent* cal);
+
+/*
+ * Called whenever parse_file finishes a line. Copies the contents of
+ * ctx and the current content_line into the object stack, stored in
+ * ctx. 
+ */
 int handle_kv(
 		content_line*  cline,
 		parse_ctx*     ctx
 		);
-
-int parse_file(char* filename, FILE* f, vcomponent* cal);
 
 /*
  * Input
@@ -72,6 +114,8 @@ int parse_file(char* filename, FILE* f, vcomponent* cal);
  * first of NL or CR, and then ensures that the program thinks
  * it got the expected CRNL.
  */
-int fold(FILE* f, parse_ctx* ctx, char c);
+int fold(parse_ctx* ctx, char c);
+
+int handle_escape (parse_ctx* ctx);
 
 #endif /* PARSE_H */

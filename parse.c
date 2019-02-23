@@ -26,9 +26,13 @@
 int parse_file(char* filename, FILE* f, vcomponent* root) {
 	part_context p_ctx = p_key;
 
-	SNEW(parse_ctx, ctx, filename);
+	SNEW(parse_ctx, ctx, f, filename);
 	PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
 
+	/*
+	 * Create a content_line which we use as storage while we are
+	 * parsing. This object is constantly broken down and rebuilt.
+	 */
 	SNEW(content_line, cline);
 
 	char c;
@@ -37,70 +41,25 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		/* We have a linebreak */
 		if (c == '\r' || c == '\n') {
 
-			if (fold(f, &ctx, c) > 0) {
+			if (fold(&ctx, c) > 0) {
 				/* Actuall end of line, handle value */
-
-				strbuf* target = CLINE_CUR_VAL(&cline);
-
-				DEEP_COPY(strbuf)(target, &ctx.str);
-				strbuf_cap(target);
-				strbuf_soft_reset(&ctx.str);
-
+				TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
 				handle_kv(&cline, &ctx);
-
 				p_ctx = p_key;
 			} /* Else continue on current line */
 
 		/* We have an escaped character */
 		} else if (c == '\\') {
-			char esc = fgetc(f);
-			char target;
-
-			/*
-			 * An actuall linebreak after the backslash. Unfold the
-			 * line and find the next "real" character, and escape
-			 * that.
-			 */
-			if (esc == '\r' || esc == '\n') {
-				int ret;
-				if ( (ret = fold(f, &ctx, esc)) != 0) {
-					if (ret == 1) ERR_P(&ctx, "ESC before not folded line");
-					else          ERR_P(&ctx, "other error: val = %i", ret);
-					exit (2);
-				} else {
-					esc = fgetc(f);
-				}
-			}
-
-			/* Escaped new_line */
-			if (esc == 'n' || esc == 'N') {
-				target = '\n';
-
-			/* "Standard" escaped character */
-			} else if (esc == ';' || esc == ',' || esc == '\\') {
-				target = esc;
-
-			/* Invalid escaped character */
-			} else {
-				ERR_P(&ctx, "Non escapable character '%c' (%i)", esc, esc);
-			}
-
-			/* save escapade character as a normal character */
-			strbuf_append(&ctx.str, target);
-
-			++ctx.column;
-			++ctx.pcolumn;
-
+			handle_escape (&ctx);
 
 		/* Border between param {key, value} */
 		} else if (p_ctx == p_param_name && c == '=') {
-			LLIST(param_set)* params = CLINE_CUR_PARAMS(&cline);
 
+			/* Create a new parameter set and push the current string
+			 * as its key */
 			NEW(param_set, ps);
-			DEEP_COPY(strbuf)(&ps->key, &ctx.str);
-			strbuf_cap(&ps->key);
-			strbuf_soft_reset(&ctx.str);
-			PUSH(LLIST(param_set))(params, ps);
+			TRANSFER (&ps->key, &ctx.str);
+			PUSH(LLIST(param_set))(CLINE_CUR_PARAMS(&cline), ps);
 
 			p_ctx = p_param_value;
 
@@ -113,24 +72,27 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 */
 		} else if ((p_ctx == p_key || p_ctx == p_param_value) && (c == ':' || c == ';')) {
 
+			/* We got a parameter value, push the current string to
+			 * the current parameter set. */
 			if (p_ctx == p_param_value) {
 				/* push kv pair */
 
 				NEW(strbuf, s);
-
-				DEEP_COPY(strbuf)(s, &ctx.str);
-				strbuf_cap(s);
-				strbuf_soft_reset(&ctx.str);
-
-				LLIST(strbuf)* ls = & CLINE_CUR_PARAMS(&cline)->cur->value->val;
-				PUSH(LLIST(strbuf))(ls, s);
-
+				TRANSFER(s, &ctx.str);
+				PUSH(LLIST(strbuf))(
+						& CLINE_CUR_PARAMS(&cline)->cur->value->val,
+						s);
 			}
 
+			/*
+			 * Top level key.
+			 * Copy the key into the current cline, and create a
+			 * content_set for the upcomming value and (possible)
+			 * parameters.
+			 */
 			if (p_ctx == p_key) {
-				DEEP_COPY(strbuf)(&cline.key, &ctx.str);
-				strbuf_cap(&cline.key);
-				strbuf_soft_reset(&ctx.str);
+
+				TRANSFER(&cline.key, &ctx.str);
 
 				NEW(content_set, p);
 				PUSH(LLIST(content_set))(&cline.val, p);
@@ -139,6 +101,10 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if      (c == ':') p_ctx = p_value;
 			else if (c == ';') p_ctx = p_param_name;
 
+		/*
+		 * Nothing interesting happened, append the read character to
+		 * the current string.
+		 */
 		} else {
 			strbuf_append(&ctx.str, c);
 
@@ -158,14 +124,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 * the end here.
 		 */
 
-		strbuf* target = CLINE_CUR_VAL(&cline);
-		DEEP_COPY(strbuf)(target, &ctx.str);
-		strbuf_cap(target);
-		strbuf_soft_reset(&ctx.str);
-
-		++ctx.line;
-		ctx.column = 0;
-
+		TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
 		handle_kv(&cline, &ctx);
 
 	}
@@ -181,52 +140,90 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	return 0;
 }
 
+/*
+ * We have a complete key value pair.
+ */
 int handle_kv (
 	content_line* cline,
 	parse_ctx* ctx
 	) {
 
+	/*
+	 * The key being BEGIN means that we decend into a new component.
+	 */
 	if (strbuf_c(&cline->key, "BEGIN")) {
-		/* should be one of:
-		 * VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE,
-		 * and possibly some others I forget.
-		 */
+		/* key \in { VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE, ...  } */
 
+		/*
+		 * Take a copy of the name of the entered component, and store
+		 * it on the stack of component names.
+		 */
 		NEW(strbuf, s);
-		strbuf* type = CLINE_CUR_VAL(cline);
-		DEEP_COPY(strbuf)(s, type);
+		DEEP_COPY(strbuf)(s, CLINE_CUR_VAL(cline));
 		PUSH(LLIST(strbuf))(&ctx->key_stack, s);
 
+		/* Clear the value list in the parse content_line */
 		RESET(LLIST(content_set))(&cline->val);
 
+		/*
+		 * Create the new curent component, link it with the current
+		 * component in a parent/child relationship.
+		 * Finally push the new component on to the top of the
+		 * component stack.
+		 */
 		NEW(vcomponent, e,
 				s->mem,
 				ctx->filename);
-		e->parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
+		vcomponent* parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
+		e->parent = parent;
+		PUSH(vcomponent)(parent, e);
+
 		PUSH(LLIST(vcomponent))(&ctx->comp_stack, e);
 
+	/*
+	 * The end of a component, go back along the stack to the previous
+	 * component.
+	 */
 	} else if (strbuf_c(&cline->key, "END")) {
-		strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
-		if (strbuf_cmp(s, CLINE_CUR_VAL(cline)) != 0) {
+		strbuf* expected_key = POP(LLIST(strbuf))(&ctx->key_stack);
+
+		if (strbuf_cmp(expected_key, CLINE_CUR_VAL(cline)) != 0) {
+
 			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
-					s->mem,
+					expected_key->mem,
 					CLINE_CUR_VAL(cline)->mem,
 					PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename);
-			PUSH(LLIST(strbuf))(&ctx->key_stack, s);
+			PUSH(LLIST(strbuf))(&ctx->key_stack, expected_key);
+
 			return -1;
 
 		} else {
-			FFREE(strbuf, s);
-			/* Received propper end, push cur into parent */
-			vcomponent* cur = POP(LLIST(vcomponent))(&ctx->comp_stack);
-
-			// TODO should self instead be done at creation time?
-			PUSH(vcomponent)(PEEK(LLIST(vcomponent))(&ctx->comp_stack), cur);
+			FFREE(strbuf, expected_key);
+			POP(LLIST(vcomponent))(&ctx->comp_stack);
 		}
+
+	/*
+	 * A regular key, value pair. Push it into to the current
+	 * component.
+	 */
 	} else {
+
+		/*
+		 * cline is the value store used during parsing, meaning that
+		 * its values WILL mutate at a later point. Therefore we take
+		 * a copy of it here.
+		 */
 		NEW(content_line, c);
 		DEEP_COPY(content_line)(c, cline);
 
+		/*
+		 * The PUSH(TRIE(T)) method handles collisions by calling
+		 * RESOLVE(T). content_line resolves by merging the new value
+		 * into the old value, and freeing the new value's container.
+		 *
+		 * This means that |c| declared above might be destroyed
+		 * here.
+		 */
 		PUSH(TRIE(content_line))(
 				&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
 				c->key.mem, c);
@@ -237,12 +234,12 @@ int handle_kv (
 	return 0;
 }
 
-int fold(FILE* f, parse_ctx* ctx, char c) {
+int fold(parse_ctx* ctx, char c) {
 	int retval;
 
 	char buf[2] = {
-		(c == '\n' ? '\n' : (char) fgetc(f)),
-		(char) fgetc(f)
+		(c == '\n' ? '\n' : (char) fgetc(ctx->f)),
+		(char) fgetc(ctx->f)
 	};
 
 	ctx->pcolumn = 1;
@@ -255,7 +252,7 @@ int fold(FILE* f, parse_ctx* ctx, char c) {
 		retval = 0;
 		ctx->pcolumn++;
 
-	} else if (ungetc(buf[1], f) != buf[1]) {
+	} else if (ungetc(buf[1], ctx->f) != buf[1]) {
 		ERR_P(ctx, "Failed to put character back on FILE");
 		retval = -2;
 
@@ -271,11 +268,12 @@ int fold(FILE* f, parse_ctx* ctx, char c) {
 }
 
 
-INIT_F(parse_ctx, char* filename) {
+INIT_F(parse_ctx, FILE* f, char* filename) {
 	INIT(LLIST(strbuf), &self->key_stack);
 	INIT(LLIST(vcomponent), &self->comp_stack);
 	self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
 	strcpy(self->filename, filename);
+	self->f = f;
 
 	self->line    = 0;
 	self->column  = 0;
@@ -297,6 +295,49 @@ FREE_F(parse_ctx) {
 	self->line = 0;
 	self->column = 0;
 	FREE(strbuf)(&self->str);
+
+	return 0;
+}
+
+int handle_escape (parse_ctx* ctx) {
+	char esc = fgetc(ctx->f);
+	char target;
+
+	/*
+	 * Escape character '\' and escaped token sepparated by a newline
+	 * (since the standard for some reason allows that (!!!))
+	 * We are at least guaranteed that it's a folded line, so just
+	 * unfold it and continue trying to find a token to escape.
+	 */
+	if (esc == '\r' || esc == '\n') {
+		int ret;
+		if ( (ret = fold(ctx, esc)) != 0) {
+			if (ret == 1) ERR_P(ctx, "ESC before not folded line");
+			else          ERR_P(ctx, "other error: val = %i", ret);
+			exit (2);
+		} else {
+			esc = fgetc(ctx->f);
+		}
+	}
+
+	/* Escaped new_line */
+	if (esc == 'n' || esc == 'N') {
+		target = '\n';
+
+		/* "Standard" escaped character */
+	} else if (esc == ';' || esc == ',' || esc == '\\') {
+		target = esc;
+
+		/* Invalid escaped character */
+	} else {
+		ERR_P(ctx, "Non escapable character '%c' (%i)", esc, esc);
+	}
+
+	/* save escapade character as a normal character */
+	strbuf_append(&ctx->str, target);
+
+	++ctx->column;
+	++ctx->pcolumn;
 
 	return 0;
 }
