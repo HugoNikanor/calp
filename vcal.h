@@ -1,31 +1,33 @@
 #ifndef VCAL_H
 #define VCAL_H
 
+#include <string>
+
 #include <stdlib.h>
 
-#include "strbuf.h"
+// #include "strbuf.h"
 #include "linked_list.h"
 #include "trie.h"
 
 #include "linked_list.h"
 #include "pair.h"
 
-typedef pair<strbuf, llist<strbuf> >      param_set;
-typedef pair<strbuf, llist<param_set> >   content_set;
+typedef pair<std::string, llist<std::string> >      param_set;
+typedef pair<std::string, llist<param_set> >   content_set;
 // typedef pair<strbuf, llist<content_set> > content_line;
 // typedef llist<content_set> content_line;
 struct content_line {
 	llist<content_set> data;
 
-	content_line (strbuf* key, strbuf* val);
+	content_line (std::string* key, std::string* val);
 
-	void push_value (strbuf* s) {
+	void push_value (std::string* s) {
 		auto cs = new content_set();
 		cs->key = s;
 		this->data.push(cs);
 	}
 
-	strbuf* cur_val () {
+	std::string* cur_val () {
 		return this->data.peek()->key;
 	}
 
@@ -51,7 +53,7 @@ struct content_line {
 	}
 
 	private:
-	strbuf* key;
+	std::string* key;
 };
 
 /*
@@ -99,7 +101,7 @@ struct vcomponent {
 
 	~vcomponent ();
 
-	void push_kv (strbuf* key, strbuf* val);
+	void push_kv (std::string* key, std::string* val);
 };
 
 // #define FCHILD(v) GET(VECT(vcomponent))(&(v)->components, 0)

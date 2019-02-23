@@ -57,14 +57,16 @@ int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
 	return -1;
 }
 
-content_line::content_line (strbuf* key, strbuf* val) {
+content_line::content_line (std::string* key, std::string* val) {
 	this->key = key;
 	this->push_value(val);
 }
 
-void vcomponent:: push_kv (strbuf* key, strbuf* val) {
+void vcomponent:: push_kv (std::string* key, std::string* val) {
 	auto cl = new content_line (key, val);
-	this->clines.push(key->mem, cl);
+	char * mem = (char*) malloc(key->length());
+	memcpy (mem, key->c_str(), key->length() + 1);
+	this->clines.push(mem, cl);
 }
 
 #if 0

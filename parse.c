@@ -21,7 +21,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	parse_ctx ctx(filename);
 	ctx.comp_stack.push(root);
 
-	strbuf key;
+	std::string key;
 	param_set* ps;
 
 	char c;
@@ -33,9 +33,11 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (fold(f, &ctx, c) > 0) {
 				/* Actuall end of line, handle value */
 
-				strbuf_cap(&ctx.str);
+				// strbuf_cap(&ctx.str);
+				ctx.str += '\0';
 				handle_kv(&key, &ctx);
-				strbuf_soft_reset(&ctx.str);
+				// strbuf_soft_reset(&ctx.str);
+				ctx.str.clear();
 
 				p_ctx = p_key;
 			} /* Else continue on current line */
@@ -75,7 +77,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			}
 
 			/* save escapade character as a normal character */
-			strbuf_append(&ctx.str, target);
+			// strbuf_append(&ctx.str, target);
+			ctx.str += target;
 
 			++ctx.column;
 			++ctx.pcolumn;
@@ -83,11 +86,13 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 		/* Border between param {key, value} */
 		} else if (p_ctx == p_param_name && c == '=') {
-			strbuf_cap(&ctx.str);
+			// strbuf_cap(&ctx.str);
+			ctx.str += '\0';
 
 			ps = new param_set;
 			*ps->key = ctx.str;
-			strbuf_soft_reset(&ctx.str);
+			ctx.str.clear();
+			// strbuf_soft_reset(&ctx.str);
 
 			p_ctx = p_param_value;
 
@@ -101,19 +106,23 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		} else if ((p_ctx == p_key || p_ctx == p_param_value) && (c == ':' || c == ';')) {
 			/* We have the end of the initial key, or the end of a
 			 * parameter value */ 
-			strbuf_cap(&ctx.str);
+			// strbuf_cap(&ctx.str);
+			ctx.str += '\0';
 
 			if (p_ctx == p_param_value) {
 				/* push kv pair */
-				ps->val->push(new strbuf(ctx.str));
-				strbuf_soft_reset(&ctx.str);
+				ps->val->push(new std::string(ctx.str));
+				ctx.str.clear();
+				// strbuf_soft_reset(&ctx.str);
 
 			}
 
 			if (p_ctx == p_key) {
-				strbuf_cap(&ctx.str);
+				// strbuf_cap(&ctx.str);
+				ctx.str += '\0';
 				key = ctx.str;
-				strbuf_soft_reset(&ctx.str);
+				// strbuf_soft_reset(&ctx.str);
+				ctx.str.clear();
 			}
 
 			if      (c == ':') p_ctx = p_value;
@@ -122,7 +131,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		} else {
 			/* Regular character, append it to the current read
 			 * buffer */
-			strbuf_append(&ctx.str, c);
+			// strbuf_append(&ctx.str, c);
+			ctx.str += c;
 
 			++ctx.column;
 			++ctx.pcolumn;
@@ -133,16 +143,18 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		ERR("Error parsing");
 	}
 	/* Check to see if empty line */
-	else if (ctx.str.ptr != 0) {
+	else if (ctx.str.length() != 0) {
 		/*
 		 * The standard (3.4, l. 2675) says that each icalobject must
 		 * end with CRLF. My files however does not, so we also parse
 		 * the end here.
 		 */
 
-		strbuf_cap(&ctx.str);
+		// strbuf_cap(&ctx.str);
+		ctx.str += '\0';
 		handle_kv(&key, &ctx);
-		strbuf_soft_reset(&ctx.str);
+		ctx.str.clear();
+		// strbuf_soft_reset(&ctx.str);
 
 		++ctx.line;
 		++ctx.pline;
@@ -159,12 +171,12 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 }
 
 int handle_kv (
-	strbuf* key,
+	std::string* key,
 	// content_line* cline,
 	parse_ctx* ctx
 	) {
 
-	strbuf* val = &ctx->str;
+	std::string* val = &ctx->str;
 
 	// std::cout << *key << ':' << *val << std::endl;
 	if (*key == "BEGIN") {
@@ -172,7 +184,7 @@ int handle_kv (
 
 		ctx->key_stack.push(val);
 
-		auto e = new vcomponent(val->mem, ctx->filename);
+		auto e = new vcomponent(val->c_str(), ctx->filename);
 		e->parent = ctx->comp_stack.peek();
 		ctx->comp_stack.push(e);
 
@@ -180,14 +192,14 @@ int handle_kv (
 	} else if (*key == "END") {
 		/* Fetch what we are supposed to end */ 
 
-		strbuf* s = ctx->key_stack.pop();
+		std::string* s = ctx->key_stack.pop();
 
 		/* Error if we got something else */
-		if (*val != *s) {
+		if ( ! (*val == *s) ) {
 			ERR_P(ctx, "Expected END:%s, got %s:%s.\n%s",
-					s->mem,
-					key->mem,
-					val->mem,
+					s->c_str(),
+					key->c_str(),
+					val->c_str(),
 					ctx->comp_stack.peek()->filename
 					);
 

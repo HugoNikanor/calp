@@ -1,3 +1,5 @@
+#include <string>
+
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -61,8 +63,8 @@ int main (int argc, char** argv) {
 				if (strcmp(ev->type, "VEVENT") != 0) continue;
 
 				content_line* cl = get_property(ev, "SUMMARY");
-				strbuf* s = cl->data.cur->value->key;
-				char* m = s->mem;
+				std::string* s = cl->data.cur->value->key;
+				const char* m = s->c_str();
 				printf("%3lu : %3lu | %s | %s\n",
 						i + 1, j + 1,
 						filename, m);

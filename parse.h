@@ -1,10 +1,12 @@
 #ifndef PARSE_H
 #define PARSE_H
 
+#include <string>
+
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "strbuf.h"
+// #include "strbuf.h"
 #include "vcal.h"
 
 // #define TYPE vcomponent
@@ -28,7 +30,7 @@ typedef enum {
  */
 struct parse_ctx {
 	char* filename;
-	llist<strbuf> key_stack;
+	llist<std::string> key_stack;
 	llist<vcomponent> comp_stack;
 
 	/* Number for unfolded lines */
@@ -39,7 +41,7 @@ struct parse_ctx {
 	int pline;
 	int pcolumn;
 
-	strbuf str;
+	std::string str;
 
 	parse_ctx (const char* filename);
 
@@ -47,7 +49,7 @@ struct parse_ctx {
 };
 
 int handle_kv(
-		strbuf* key,
+		std::string* key,
 		// content_line*  cline,
 		parse_ctx*     ctx
 		);
