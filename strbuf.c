@@ -1,5 +1,7 @@
 #include "strbuf.h"
 
+#include <iostream>
+
 #include <string.h>
 #include <stdio.h>
 
@@ -60,7 +62,8 @@ int strbuf_cap(strbuf* s) {
 	/*
 	 * TODO check memmory usage
 	 */
-	return strbuf_append(s, 0);
+	int retval = strbuf_append(s, 0);
+	return retval;
 }
 
 // int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
@@ -163,4 +166,9 @@ FMT_F(strbuf) {
 
 int SIZE(strbuf)(strbuf* self) {
 	return self->len;
+}
+
+std::ostream& operator<<(std::ostream& os, strbuf& str) {
+	os << str.mem;
+	return os;
 }

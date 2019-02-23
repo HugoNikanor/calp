@@ -57,15 +57,15 @@ int main (int argc, char** argv) {
 			for (size_t j = 0; j < cal->components.length; j++) {
 				vcomponent* ev = cal->components[j];
 
-				printf("component %s, [%u] children\n", ev->type, ev->components.length);
+				// printf("component %s, [%u] children\n", ev->type, ev->components.length);
 				if (strcmp(ev->type, "VEVENT") != 0) continue;
 
 				content_line* cl = get_property(ev, "SUMMARY");
 				strbuf* s = cl->data.cur->value->key;
+				char* m = s->mem;
 				printf("%3lu : %3lu | %s | %s\n",
 						i + 1, j + 1,
-						filename,
-						s->mem);
+						filename, m);
 			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {

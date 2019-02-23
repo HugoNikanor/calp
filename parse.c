@@ -1,5 +1,7 @@
 #include "parse.h"
 
+#include <iostream>
+
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
@@ -138,31 +140,20 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 * the end here.
 		 */
 
-		/*
-		strbuf* target = CLINE_CUR_VAL(&cline);
-		*target = ctx.str;
-		*/
-
 		strbuf_cap(&ctx.str);
 		handle_kv(&key, &ctx);
 		strbuf_soft_reset(&ctx.str);
 
 		++ctx.line;
+		++ctx.pline;
 		ctx.column = 0;
 
 
 	}
 
-	// FREE(content_line)(&cline);
-
-	// assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
 	assert(ctx.comp_stack.pop() == root);
-	// assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
 	assert(ctx.key_stack.empty());
-	// assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
 	assert(ctx.comp_stack.empty());
-
-	// FREE(parse_ctx)(&ctx);
 
 	return 0;
 }
@@ -173,30 +164,33 @@ int handle_kv (
 	parse_ctx* ctx
 	) {
 
+	strbuf* val = &ctx->str;
+
+	// std::cout << *key << ':' << *val << std::endl;
 	if (*key == "BEGIN") {
-		/* should be one of:
-		 * VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE,
-		 * and possibly some others I forget.
-		 */
+		/* val \in { VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE } */
 
-		ctx->key_stack.push(key);
+		ctx->key_stack.push(val);
 
-		auto e = new vcomponent(ctx->str.mem, ctx->filename);
+		auto e = new vcomponent(val->mem, ctx->filename);
 		e->parent = ctx->comp_stack.peek();
 		ctx->comp_stack.push(e);
 
 	/* A block is ending */
 	} else if (*key == "END") {
-		//strbuf* s = POP(LLIST(strbuf))(&ctx->key_stack);
 		/* Fetch what we are supposed to end */ 
+
 		strbuf* s = ctx->key_stack.pop();
+
 		/* Error if we got something else */
-		if (ctx->str != *s) {
-			// ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
-			// 		s->mem,
-			// 		CLINE_CUR_VAL(cline)->mem,
-			// 		PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename);
-			// PUSH(LLIST(strbuf))(&ctx->key_stack, s);
+		if (*val != *s) {
+			ERR_P(ctx, "Expected END:%s, got %s:%s.\n%s",
+					s->mem,
+					key->mem,
+					val->mem,
+					ctx->comp_stack.peek()->filename
+					);
+
 			/* put value back on stack */
 			ctx->key_stack.push(s);
 			return -1;
@@ -216,7 +210,6 @@ int handle_kv (
 
 	/* Neither BEGIN nor END, so a regular KV pair */
 	} else {
-		strbuf* val = &ctx->str;
 		vcomponent* cur_comp = ctx->comp_stack.peek();
 		cur_comp->push_kv (key, val);
 	}

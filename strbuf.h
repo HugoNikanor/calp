@@ -1,6 +1,8 @@
 #ifndef STRBUF_H
 #define STRBUF_H
 
+#include <iostream>
+
 #include <stdlib.h>
 #include "macro.h"
 
@@ -33,7 +35,10 @@ struct strbuf {
 		{ return ! (*this == other); }
 	bool operator!=(const char* other)
 		{ return ! (*this == other); }
+
 };
+
+std::ostream& operator<<(std::ostream&, strbuf&);
 
 /*
  * Init strbuf to size of 0
