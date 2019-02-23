@@ -22,6 +22,7 @@ strbuf::strbuf () {
 }
 
 int strbuf_realloc(strbuf* str, size_t len) {
+	fprintf(stderr, "str->mem = %p\n", str->mem);
 	str->mem = (char*) realloc(str->mem, len);
 	str->alloc = len;
 	return 0;
@@ -66,11 +67,15 @@ int strbuf_cap(strbuf* s) {
 strbuf::strbuf(strbuf& src) {
 	// int retval = 0;
 
+#if 0
 	if (this->alloc < src.len) {
 		/* +1 in length is to have room for  '\0'. */
 		strbuf_realloc(this, src.len + 1);
 		// retval = 1;
 	}
+#endif
+
+	this->mem = (char*) calloc(sizeof(*this->mem), src.len + 1);
 
 	this->len = src.len;
 	memcpy(this->mem, src.mem, src.len);

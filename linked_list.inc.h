@@ -2,6 +2,9 @@
 // #error "Set TYPE before including this file"
 // #else
 
+#include <stdio.h>
+#include "err.h"
+
 // INIT_F ( LLIST(TYPE) ) {
 template <class T>
 llist<T>::llist () {
@@ -169,8 +172,10 @@ int llist<T>::reset () {
 	 * Manual looping rather than itterators since we destroyed the
 	 * loop variable.
 	 */
+	fprintf(stderr, _RED "head = %p, tail = %p\n" _RESET, this->head, this->tail);
 	while (link != this->tail) {
 		next = link->after;
+		fprintf(stderr, _RED "link = %p\n" _RESET, link);
 		// FFREE(LINK(TYPE), link);
 		delete link;
 		link = next;
