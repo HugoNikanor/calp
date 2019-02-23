@@ -54,6 +54,24 @@ SCM_DEFINE (vcomponent_get_attribute, "vcomponent-get-attribute", 2, 0, 0,
 	return llist;
 }
 
+SCM_DEFINE (vcomponent_set_attr_x, "vcomponent-set-attribute!", 3, 0, 0,
+		(SCM component, SCM attr, SCM new_value),
+		"")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	vcomponent* com = scm_foreign_object_ref (component, 0);
+
+	char* key = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
+	content_line* c = get_property (com, key);
+	free(key);
+
+	c->val.cur->value->key.mem = (char*) new_value;
+
+
+
+	return SCM_UNSPECIFIED;
+}
+
 SCM_DEFINE (vcomponent_child_count, "vcomponent-child-count", 1, 0, 0,
 		(SCM component),
 		"Returns number of child components.")
