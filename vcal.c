@@ -57,6 +57,16 @@ int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
 	return -1;
 }
 
+content_line::content_line (strbuf* key, strbuf* val) {
+	this->key = key;
+	this->push_value(val);
+}
+
+void vcomponent:: push_kv (strbuf* key, strbuf* val) {
+	auto cl = new content_line (key, val);
+	this->clines.push(key->mem, cl);
+}
+
 #if 0
 FMT_F(vcomponent) {
 	int seek = 0;

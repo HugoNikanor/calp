@@ -61,10 +61,11 @@ int main (int argc, char** argv) {
 				if (strcmp(ev->type, "VEVENT") != 0) continue;
 
 				content_line* cl = get_property(ev, "SUMMARY");
+				strbuf* s = cl->data.cur->value->key;
 				printf("%3lu : %3lu | %s | %s\n",
 						i + 1, j + 1,
 						filename,
-						cl->val->cur->value->key->mem);
+						s->mem);
 			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {

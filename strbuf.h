@@ -26,6 +26,13 @@ struct strbuf {
 	~strbuf ();
 
 	strbuf& operator=(strbuf& other);
+
+	bool operator==(strbuf& other);
+	bool operator==(const char* other);
+	bool operator!=(strbuf& other)
+		{ return ! (*this == other); }
+	bool operator!=(const char* other)
+		{ return ! (*this == other); }
 };
 
 /*

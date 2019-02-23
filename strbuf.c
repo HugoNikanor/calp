@@ -94,6 +94,14 @@ strbuf& strbuf::operator=(strbuf& other) {
 	return *this;
 }
 
+bool strbuf::operator==(strbuf& other) {
+	return strbuf_cmp(this, &other);
+}
+
+bool strbuf::operator==(const char* other) {
+	return strbuf_c(this, other);
+}
+
 int strbuf_cmp(strbuf* a, strbuf* b) {
 	if (a == NULL || a->alloc == 0 ||
 	    b == NULL || b->alloc == 0)

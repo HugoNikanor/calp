@@ -12,7 +12,47 @@
 
 typedef pair<strbuf, llist<strbuf> >      param_set;
 typedef pair<strbuf, llist<param_set> >   content_set;
-typedef pair<strbuf, llist<content_set> > content_line;
+// typedef pair<strbuf, llist<content_set> > content_line;
+// typedef llist<content_set> content_line;
+struct content_line {
+	llist<content_set> data;
+
+	content_line (strbuf* key, strbuf* val);
+
+	void push_value (strbuf* s) {
+		auto cs = new content_set();
+		cs->key = s;
+		this->data.push(cs);
+	}
+
+	strbuf* cur_val () {
+		return this->data.peek()->key;
+	}
+
+	content_line* resolve (content_line* other) {
+		if (this == NULL) return other; 
+
+		/*
+		 * Resolves a collision in some form of structure (probably a hash-map
+		 * or a trie). If dest is NULL just return new_. Otherwise mutates dest
+		 * to have the correct form, and returns it. Destroying new_ in the
+		 * process.
+		 */
+
+		if ( ! (this->key == other->key)) {
+			ERR("Can't resolve between these two types");
+			return NULL;
+		}
+
+		/* This destroys new_->val. */
+		this->data.append(&other->data);
+		delete other;
+		return this;
+	}
+
+	private:
+	strbuf* key;
+};
 
 /*
  * Helper macros for accessing fields in
@@ -21,6 +61,7 @@ typedef pair<strbuf, llist<content_set> > content_line;
  * TODO find a better way to do self.
  */
 
+#if 0
 /* ptr -> ptr */
 #define CLINE_KEY(c) (&(c)->key)
 #define CLINE_CUR_CSET(c) (&((c)->val.cur->value))
@@ -37,6 +78,7 @@ typedef pair<strbuf, llist<content_set> > content_line;
 #define CLINE_CUR_PARAM_KEY(c) (CLINE_CUR_PARAMS(c)->cur->value->key)
 /* strbuf */
 #define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->val.cur->value)
+#endif
 
 // typedef struct s_vcomponent vcomponent;
 
@@ -56,6 +98,8 @@ struct vcomponent {
 	vcomponent (const char* type, const char* filename);
 
 	~vcomponent ();
+
+	void push_kv (strbuf* key, strbuf* val);
 };
 
 // #define FCHILD(v) GET(VECT(vcomponent))(&(v)->components, 0)
