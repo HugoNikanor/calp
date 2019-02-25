@@ -13,7 +13,7 @@
  * The protection markers stop the GC from doing its thing.
  */
 
-void init_vcomponent ();
+void init_lib (void);
 void init_vcomponent_type (void);
 
 SCM make_vcomponent (SCM);

@@ -13,7 +13,7 @@ void init_vcomponent_type (void) {
 	vcomponent_type = scm_make_foreign_object_type(name, slots, NULL);
 }
 
-SCM_DEFINE (make_vcomponent, "make-vcomponent", 1, 0, 0,
+SCM_DEFINE (make_vcomponent, "%vcomponent-make", 1, 0, 0,
 		(SCM path),
 		"Loads a vdir iCalendar from the given path.")
 {
@@ -34,7 +34,7 @@ SCM_DEFINE (make_vcomponent, "make-vcomponent", 1, 0, 0,
 /*
  * Returns a line from a component.
  */
-SCM_DEFINE (vcomponent_get_attribute, "vcomponent-get-attribute", 2, 0, 0,
+SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 		(SCM calendar, SCM attr),
 		"Retuns the given attribute from the vevent object at index in calendar.")
 {
@@ -60,7 +60,7 @@ SCM_DEFINE (vcomponent_get_attribute, "vcomponent-get-attribute", 2, 0, 0,
 	}
 }
 
-SCM_DEFINE (vcomponent_set_attr_x, "vcomponent-set-attribute!", 3, 0, 0,
+SCM_DEFINE (vcomponent_set_attr_x, "%vcomponent-set-attribute!", 3, 0, 0,
 		(SCM component, SCM attr, SCM new_value),
 		"")
 {
@@ -78,7 +78,7 @@ SCM_DEFINE (vcomponent_set_attr_x, "vcomponent-set-attribute!", 3, 0, 0,
 	return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (vcomponent_child_count, "vcomponent-child-count", 1, 0, 0,
+SCM_DEFINE (vcomponent_child_count, "%vcomponent-child-count", 1, 0, 0,
 		(SCM component),
 		"Returns number of child components.")
 {
@@ -87,7 +87,7 @@ SCM_DEFINE (vcomponent_child_count, "vcomponent-child-count", 1, 0, 0,
 	return scm_from_size_t (SIZE(VECT(vcomponent))(&c->components));
 }
 
-SCM_DEFINE(vcomponent_children, "vcomponent-children", 1, 0, 0,
+SCM_DEFINE(vcomponent_children, "%vcomponent-children", 1, 0, 0,
 		(SCM component),
 		"")
 {
@@ -96,7 +96,7 @@ SCM_DEFINE(vcomponent_children, "vcomponent-children", 1, 0, 0,
 	return scm_from_vector(&cal->components, vcomponent_type);
 }
 
-SCM_DEFINE(vcomponent_typeof, "vcomponent-typeof", 1, 0, 0,
+SCM_DEFINE(vcomponent_typeof, "%vcomponent-type", 1, 0, 0,
 		(SCM component),
 		"Returns type of vcomponent")
 {
@@ -105,7 +105,7 @@ SCM_DEFINE(vcomponent_typeof, "vcomponent-typeof", 1, 0, 0,
 	return scm_from_utf8_symbol(comp->type);
 }
 
-void init_vcomponent () {
+void init_lib (void) {
 	init_vcomponent_type();
 
 #ifndef SCM_MAGIC_SNARFER

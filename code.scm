@@ -5,26 +5,33 @@
 (begin
   ;; Supurflous begin block here to make sourcing into geiser easier.
   (setenv "LD_LIBRARY_PATH" (getcwd))
-  (load-extension "libguile-calendar" "init_vcomponent"))
+  (load-extension "libguile-calendar" "init_lib"))
+
+(define make-vcomponent %vcomponent-make)
+(define children %vcomponent-children)
+(define set-attr! %vcomponent-set-attribute!)
+(define get-attr %vcomponent-get-attribute)
 
 (define root (make-vcomponent "testcal/d1-b.ics"))
-(define cal (car (vcomponent-children root)))
+(define cal (car (children root)))
 
 ;; TODO flatten all calendars into root
 
 (use-modules (srfi srfi-19)
              (srfi srfi-26))
 
-(for-each (lambda (ev)
-            (vcomponent-set-attribute!
-             ev "DTSTART"
-             ((cut string->date <> "~Y~m~dT~H~M~S")
-              (vcomponent-get-attribute ev "DTSTART"))))
-          (vcomponent-children cal))
+(define (mutate-attr! ev field transformer)
+  (set-attr! ev field
+             (transformer
+              (get-attr ev field))))
 
-(display (vcomponent-get-attribute (car (vcomponent-children cal))
-                                   "DTSTART"))
+(for-each (cut mutate-attr! <> "DTSTART"
+               (cut string->date <> "~Y~m~dT~H~M~S"))
+          (children cal))
+
+(display (get-attr (car (children cal))
+                   "DTSTART"))
 (newline)
-(display (vcomponent-get-attribute (car (vcomponent-children cal))
-                                   "DTSTART"))
+(display (get-attr (car (children cal))
+                   "DTSTART"))
 (newline)
