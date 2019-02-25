@@ -3,6 +3,8 @@
 
 #include <libguile.h>
 
+#define SCM_IS_LIST(x) scm_is_true(scm_list_p(x))
+
 void init_vcomponent ();
 void init_vcomponent_type (void);
 

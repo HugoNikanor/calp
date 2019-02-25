@@ -2,6 +2,7 @@
 #define STRBUF_H
 
 #include <stdlib.h>
+#include <libguile.h>
 #include "macro.h"
 
 /*
@@ -14,6 +15,7 @@
  */
 typedef struct {
 	char* mem;
+	SCM scm;
 	/* TODO add support for negative ptr */
 	int ptr;
 	unsigned int alloc;

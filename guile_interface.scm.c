@@ -47,6 +47,7 @@ SCM_DEFINE (vcomponent_get_attribute, "vcomponent-get-attribute", 2, 0, 0,
 
 	if (c == NULL) return SCM_BOOL_F;
 
+	// TODO returns the car of list if list is one long. 
 	SCM llist = SCM_EOL;
 	FOR (LLIST, content_set, v, &c->val) {
 		llist = scm_cons(scm_from_strbuf(&v->key), llist);
@@ -65,9 +66,9 @@ SCM_DEFINE (vcomponent_set_attr_x, "vcomponent-set-attribute!", 3, 0, 0,
 	content_line* c = get_property (com, key);
 	free(key);
 
-	c->val.cur->value->key.mem = (char*) new_value;
-
-
+	// TODO if list is a value store it as is, else wrap it in a list
+	// of length one.
+	c->val.cur->value->key.scm = new_value;
 
 	return SCM_UNSPECIFIED;
 }

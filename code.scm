@@ -2,37 +2,29 @@
 -s
 !#
 
-(add-to-load-path (dirname (current-filename)))
-(load "helpers.scm")
-
-(use-modules (ice-9 format)
-             (ice-9 pretty-print))
-
 (begin
   ;; Supurflous begin block here to make sourcing into geiser easier.
   (setenv "LD_LIBRARY_PATH" (getcwd))
   (load-extension "libguile-calendar" "init_vcomponent"))
 
-(begin
-  (define root (make-vcomponent "test.ics"))
-  (define cal (car (vcomponent-children root)))
-  (define events (vcomponent-children cal)))
+(define root (make-vcomponent "testcal/d1-b.ics"))
+(define cal (car (vcomponent-children root)))
 
-(define (pp-list strs)
-  (for-each (lambda (i str)
-              (format #t "~3d | ~a~%"
-                      (1+ i)
-                      str))
-            (iota (length strs))
-            strs))
+;; TODO flatten all calendars into root
 
-(pp-list
- (map (lambda (c) (car (vcomponent-get-attribute c "summary")))
-      events))
+(use-modules (srfi srfi-19)
+             (srfi srfi-26))
 
-#;
-(do ((i 0 (1+ i)))
-    ((>= i (calendar-size v)))
-  (format #t "~3d | ~a~%"
-          (1+ i) (car (calendar-get-attr v i "summary"))))
+(for-each (lambda (ev)
+            (vcomponent-set-attribute!
+             ev "DTSTART"
+             (map (cut string->date <> "~Y~m~dT~H~M~S")
+                  (vcomponent-get-attribute ev "DTSTART"))))
+          (vcomponent-children cal))
 
+(display (vcomponent-get-attribute (car (vcomponent-children cal))
+                                   "DTSTART"))
+(newline)
+(display (vcomponent-get-attribute (car (vcomponent-children cal))
+                                   "DTSTART"))
+(newline)

@@ -2,8 +2,13 @@
 
 #include "macro.h"
 
-SCM scm_from_strbuf(strbuf* s)
-	{ return scm_from_utf8_stringn (s->mem, s->len - 1); }
+SCM scm_from_strbuf(strbuf* s) {
+	if (s->scm == NULL) {
+		s->scm = scm_from_utf8_stringn (s->mem, s->len - 1);
+	}
+
+	return s->scm;
+}
 
 SCM scm_from_vector(VECT(vcomponent)* vect, SCM element_type) {
 	SCM l = SCM_EOL;

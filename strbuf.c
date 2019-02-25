@@ -18,6 +18,7 @@ INIT_F(strbuf, size_t len) {
 	self->alloc = len;
 	self->ptr   = 0;
 	self->len   = 0;
+	self->scm = NULL;
 	return 0;
 }
 
