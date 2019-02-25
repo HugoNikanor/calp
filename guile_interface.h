@@ -3,7 +3,15 @@
 
 #include <libguile.h>
 
-#define SCM_IS_LIST(x) scm_is_true(scm_list_p(x))
+/*
+ * At a number of places scm_gc_{un,}protect_object is called.
+ * This is needed since most of my structures are allocated with the
+ * regular malloc, instead of the scm_gc_malloc variants.
+ * This leads to the garbage collector not realizing that I still have
+ * the components, and deletes them.
+ *
+ * The protection markers stop the GC from doing its thing.
+ */
 
 void init_vcomponent ();
 void init_vcomponent_type (void);

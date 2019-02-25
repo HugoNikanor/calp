@@ -68,7 +68,9 @@ SCM_DEFINE (vcomponent_set_attr_x, "vcomponent-set-attribute!", 3, 0, 0,
 
 	// TODO if list is a value store it as is, else wrap it in a list
 	// of length one.
+	scm_gc_unprotect_object(c->val.cur->value->key.scm);
 	c->val.cur->value->key.scm = new_value;
+	scm_gc_protect_object(c->val.cur->value->key.scm);
 
 	return SCM_UNSPECIFIED;
 }
