@@ -18,8 +18,8 @@
 (for-each (lambda (ev)
             (vcomponent-set-attribute!
              ev "DTSTART"
-             (map (cut string->date <> "~Y~m~dT~H~M~S")
-                  (vcomponent-get-attribute ev "DTSTART"))))
+             ((cut string->date <> "~Y~m~dT~H~M~S")
+              (vcomponent-get-attribute ev "DTSTART"))))
           (vcomponent-children cal))
 
 (display (vcomponent-get-attribute (car (vcomponent-children cal))
