@@ -14,9 +14,12 @@ SCM scm_from_strbuf(strbuf* s) {
 SCM scm_from_vector(VECT(vcomponent)* vect, SCM element_type) {
 	SCM l = SCM_EOL;
 	for (size_t i = 0; i < vect->length; i++) {
-		l = scm_cons(
-				scm_make_foreign_object_1 (element_type, GET(VECT(vcomponent))(vect, i)),
-				l);
+		vcomponent* v = GET(VECT(vcomponent))(vect, i);
+		if (v->scm == NULL) {
+			v->scm = scm_make_foreign_object_1 (element_type, v);
+			scm_gc_protect_object(v->scm);
+		}
+		l = scm_cons(v->scm, l);
 	}
 	return scm_reverse(l);
 }

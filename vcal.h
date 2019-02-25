@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include <libguile.h>
+
 #include "strbuf.h"
 
 #define TYPE strbuf
@@ -101,6 +103,8 @@ struct s_vcomponent {
 	vcomponent* parent;
 	TRIE(content_line) clines;
 	VECT(vcomponent) components;
+
+	SCM scm;
 };
 
 #define FCHILD(v) GET(VECT(vcomponent))(&(v)->components, 0)

@@ -60,6 +60,7 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 	strcpy(self->type, type);
 
 	self->parent = NULL;
+	self->scm = NULL;
 
 	return 0;
 }
