@@ -110,6 +110,7 @@ FREE_F(vcomponent) {
 }
 
 int PUSH(vcomponent)(vcomponent* parent, vcomponent* child) {
+	child->parent = parent;
 	return PUSH(VECT(vcomponent))(&parent->components, child);
 }
 

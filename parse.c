@@ -175,7 +175,6 @@ int handle_kv (
 				s->mem,
 				ctx->filename);
 		vcomponent* parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
-		e->parent = parent;
 		PUSH(vcomponent)(parent, e);
 
 		PUSH(LLIST(vcomponent))(&ctx->comp_stack, e);

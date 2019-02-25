@@ -96,6 +96,21 @@ SCM_DEFINE(vcomponent_children, "%vcomponent-children", 1, 0, 0,
 	return scm_from_vector(&cal->components, vcomponent_type);
 }
 
+SCM_DEFINE(vcomponent_push_child_x, "%vcomponent-push-child!", 2, 0, 0,
+               (SCM component, SCM child),
+               "")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	scm_assert_foreign_object_type (vcomponent_type, child);
+	vcomponent* comp = scm_foreign_object_ref (component, 0);
+	vcomponent* chil = scm_foreign_object_ref (child, 0);
+
+	PUSH(vcomponent)(comp, chil);
+
+	return SCM_UNSPECIFIED;
+}
+
+
 SCM_DEFINE(vcomponent_typeof, "%vcomponent-type", 1, 0, 0,
 		(SCM component),
 		"Returns type of vcomponent")
