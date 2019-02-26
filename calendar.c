@@ -106,7 +106,6 @@ int check_ext (const char* path, const char* ext) {
 }
 
 int open_ics (char* resolved_path, vcomponent* cal) {
-	puts(resolved_path);
 	if (! check_ext(resolved_path, "ics") ) return 2;
 
 	FILE* f = fopen(resolved_path, "r");
