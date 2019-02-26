@@ -1,11 +1,10 @@
 (define-module (vcalendar)
+  #:use-module (vcalendar primitive)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:export (make-vcomponent children set-attr! get-attr type
+                            type-filter
                             transform-attr! push-child!))
-
-(setenv "LD_LIBRARY_PATH" (dirname (current-filename)))
-(load-extension "libguile-calendar" "init_lib")
 
 (define (make-vcomponent path)
   (if (string-ci=? ".ics" (string-take-right path 4))
@@ -27,7 +26,16 @@
                 accum)
               '() (%vcomponent-children (%vcomponent-make path)))))
 
-(define children %vcomponent-children)
+(define (type-filter t lst)
+  (filter (lambda (e) (eqv? t (type e)))
+          lst))
+
+(define* (children component #:optional only-type)
+  (let ((childs (%vcomponent-children component)))
+    (if only-type
+        (type-filter only-type childs)
+        childs)))
+
 (define set-attr! %vcomponent-set-attribute!)
 (define get-attr %vcomponent-get-attribute)
 (define type %vcomponent-type)
