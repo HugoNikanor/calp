@@ -52,8 +52,12 @@ int DEEP_COPY(strbuf)(strbuf*, strbuf*);
 
 /*
  * Append char to end of strbuf, determined by s->len.
+ *
+ * TODO rename this PUSH(strbuf)?
  */
 int strbuf_append(strbuf* s, char c);
+
+char strbuf_pop(strbuf*);
 
 /*
  * Calls strbuf_append with NULL.

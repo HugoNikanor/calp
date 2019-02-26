@@ -11,6 +11,9 @@
 #endif /* TRIE_H */
 #ifdef TYPE
 
+#include "linked_list.h"
+#include "strbuf.h"
+
 typedef struct TRIE_NODE(TYPE) {
 	char c;
 	TYPE* value;
@@ -27,7 +30,7 @@ INIT_F ( TRIE(TYPE) );
 
 INIT_F (TRIE_NODE(TYPE), char c);
 
-INIT_F (TRIE_NODE(TYPE), 
+INIT_F (TRIE_NODE(TYPE),
 	  char c, TRIE_NODE(TYPE)* next, TRIE_NODE(TYPE)* child );
 
 int PUSH(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key, TYPE* val );
@@ -45,5 +48,7 @@ FMT_F(TRIE(TYPE));
 
 int DEEP_COPY(TRIE_NODE(TYPE)) (TRIE_NODE(TYPE)* dest, TRIE_NODE(TYPE)* src);
 int DEEP_COPY(TRIE(TYPE)) (TRIE(TYPE)* dest, TRIE(TYPE)* src);
+
+LLIST(strbuf)* KEYS(TRIE(TYPE)) (TRIE(TYPE)*);
 
 #endif /* TYPE */

@@ -56,6 +56,12 @@ int strbuf_append(strbuf* s, char c) {
 	return retval;
 }
 
+char strbuf_pop(strbuf* s) {
+	char ret = s->mem[--s->len];
+	s->mem[s->len + 1] = '\0';
+	return ret;
+}
+
 int strbuf_cap(strbuf* s) {
 	/*
 	 * TODO check memmory usage

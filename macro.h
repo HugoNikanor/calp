@@ -80,6 +80,8 @@
 
 /* generate reusable internal symbol */
 #define __INTER(s) TP3(__, s, __internal)
+#define __INTER2(s) __INTER(__INTER(s))
+#define __INTER3(s) __INTER(__INTER(__INTER(s)))
 
 /* Iterator macros.  */
 #define FOR(CONT_T, T, var, set) \
@@ -111,6 +113,7 @@
 #define POP(T)       TEMPL(pop       , T)
 #define GET(T)       TEMPL(get       , T)
 #define RESET(T)     TEMPL(reset     , T)
+#define KEYS(T)      TEMPL(keys      , T)
 
 /*
  * Formatting macros.

@@ -6,6 +6,8 @@
 
 #include "err.h"
 #include "macro.h"
+#include "linked_list.inc.h"
+#include "strbuf.h"
 
 INIT_F ( TRIE(TYPE) ) {
 	NEW(TRIE_NODE(TYPE), t, '\0');
@@ -185,6 +187,32 @@ int DEEP_COPY(TRIE_NODE(TYPE)) (TRIE_NODE(TYPE)* dest, TRIE_NODE(TYPE)* src) {
 
 int DEEP_COPY(TRIE(TYPE)) (TRIE(TYPE)* dest, TRIE(TYPE)* src) {
 	return DEEP_COPY(TRIE_NODE(TYPE))(dest->root, src->root);
+}
+
+void KEYS(TRIE_NODE(TYPE)) (TRIE_NODE(TYPE)* node, LLIST(strbuf)* list, strbuf* path) {
+	if (node == NULL) return;
+
+
+	if (node->value != NULL) {
+		strbuf_append(path, node->c);
+		PUSH(LLIST(strbuf))(list, path);
+		strbuf_pop(path);
+	}
+	if (node->next != NULL) {
+		KEYS(TRIE_NODE(TYPE)) (node->next, list, path);
+	}
+	if (node->child != NULL) {
+		strbuf_append(path, node->c);
+		KEYS(TRIE_NODE(TYPE)) (node->child, list, path);
+		strbuf_pop(path);
+	}
+}
+
+LLIST(strbuf)* KEYS(TRIE(TYPE)) (TRIE(TYPE)* trie) {
+	NEW(LLIST(strbuf), retlist);
+	SNEW(strbuf, key);
+	KEYS(TRIE_NODE(TYPE)) (trie->root, retlist, &key);
+	return retlist;
 }
 
 #endif /* TYPE */

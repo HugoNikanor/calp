@@ -117,21 +117,22 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 			/* Parameters */
 			// TODO reenable this, but currently v->val is a TRIE,
 			// which I currently can't itterate over
-#if 0
-			FOR(LLIST, param_set, p, &v->val) {
-				strbuf* param_key = &p->key;
+			LLIST(strbuf)* keys = KEYS(TRIE(param_set))(&v->val);
+			// FOR(TRIE, param_set, p, &v->val) {
+			FOR(LLIST, strbuf, key, keys) {
+				param_set* p = GET(TRIE(param_set))(&v->val, key->mem);
+				// strbuf* param_key = &p->key;
 
 				fprintf(f, "\"%p\" [label=\"%s\" color=blue];\n",
-						param_key, param_key->mem);
-				fprintf(f, "\"%p\" -> \"%p\";", p, param_key);
+						key, key->mem);
+				fprintf(f, "\"%p\" -> \"%p\";", p, key);
 
-				FOR(LLIST, strbuf, str, &p->val) {
+				FOR(LLIST, strbuf, str, p) {
 					fprintf(f, "\"%p\" [label=\"%s\" color=orange];",
 							str, str->mem);
-					fprintf(f, "\"%p\" -> \"%p\";", param_key, str);
+					fprintf(f, "\"%p\" -> \"%p\";", key, str);
 				}
 			}
-#endif
 		}
 	}
 #endif
