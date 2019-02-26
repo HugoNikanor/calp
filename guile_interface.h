@@ -2,6 +2,7 @@
 #define GUILE_INTERFACE_H
 
 #include <libguile.h>
+#include "vcal.h"
 
 /*
  * At a number of places scm_gc_{un,}protect_object is called.
@@ -21,5 +22,7 @@ SCM vcomponent_get_attribute (SCM, SCM);
 SCM vcomponent_child_count (SCM);
 SCM vcomponent_children (SCM);
 SCM vcomponent_typeof (SCM);
+
+SCM scm_from_vcomponent (vcomponent*);
 
 #endif /* GUILE_INTERFACE_H */

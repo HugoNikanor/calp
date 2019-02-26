@@ -1,4 +1,5 @@
 #include "guile_type_helpers.h"
+#include "guile_interface.h"
 
 #include "macro.h"
 
@@ -11,17 +12,12 @@ SCM scm_from_strbuf(strbuf* s) {
 	return s->scm;
 }
 
-SCM scm_from_vector(VECT(vcomponent)* vect, SCM element_type) {
+SCM scm_from_vector(VECT(vcomponent)* vect) {
 	SCM l = SCM_EOL;
 	for (size_t i = 0; i < vect->length; i++) {
 		vcomponent* v = GET(VECT(vcomponent))(vect, i);
-		if (v->scm == NULL) {
-			v->scm = scm_make_foreign_object_1 (element_type, v);
-			scm_gc_protect_object(v->scm);
-		}
-		l = scm_cons(v->scm, l);
+		l = scm_cons(scm_from_vcomponent(v), l);
 	}
 	return scm_reverse(l);
 }
-
 

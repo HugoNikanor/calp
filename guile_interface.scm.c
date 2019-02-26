@@ -1,6 +1,5 @@
 #include "guile_interface.h"
 
-#include "vcal.h"
 #include "calendar.h"
 #include "guile_type_helpers.h"
 
@@ -93,7 +92,7 @@ SCM_DEFINE(vcomponent_children, "%vcomponent-children", 1, 0, 0,
 {
 	scm_assert_foreign_object_type (vcomponent_type, component);
 	vcomponent* cal = scm_foreign_object_ref (component, 0);
-	return scm_from_vector(&cal->components, vcomponent_type);
+	return scm_from_vector(&cal->components);
 }
 
 SCM_DEFINE(vcomponent_push_child_x, "%vcomponent-push-child!", 2, 0, 0,
@@ -110,6 +109,20 @@ SCM_DEFINE(vcomponent_push_child_x, "%vcomponent-push-child!", 2, 0, 0,
 	return SCM_UNSPECIFIED;
 }
 
+SCM_DEFINE (vcomponent_parent, "%vcomponent-parent", 1, 0, 0,
+		(SCM component),
+		"")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	vcomponent* comp = scm_foreign_object_ref (component, 0);
+
+	vcomponent* parent = comp->parent;
+	if (strcmp(parent->type, "ROOT") == 0) {
+		return SCM_BOOL_F;
+	} else {
+		return scm_from_vcomponent(parent);
+	}
+}
 
 SCM_DEFINE(vcomponent_typeof, "%vcomponent-type", 1, 0, 0,
 		(SCM component),
@@ -118,6 +131,14 @@ SCM_DEFINE(vcomponent_typeof, "%vcomponent-type", 1, 0, 0,
 	scm_assert_foreign_object_type (vcomponent_type, component);
 	vcomponent* comp = scm_foreign_object_ref (component, 0);
 	return scm_from_utf8_symbol(comp->type);
+}
+
+SCM scm_from_vcomponent(vcomponent* v) {
+	if (v->scm == NULL) {
+		v->scm = scm_make_foreign_object_1 (vcomponent_type, v);
+		scm_gc_protect_object(v->scm);
+	}
+	return v->scm;
 }
 
 void init_lib (void) {

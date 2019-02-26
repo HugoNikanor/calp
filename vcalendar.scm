@@ -18,6 +18,9 @@
       ;; Also removes the abstract ROOT component, but also
       ;; merges all VCALENDAR's children into the first
       ;; VCALENDAR, and return that VCALENDAR.
+      ;;
+      ;; TODO the other VCALENDAR components might not get thrown away,
+      ;; this since I protect them from the GC in the C code.
       (reduce (lambda (cal accum)
                 (for-each (cut %vcomponent-push-child! accum <>)
                           (%vcomponent-children cal))
@@ -28,7 +31,7 @@
 (define set-attr! %vcomponent-set-attribute!)
 (define get-attr %vcomponent-get-attribute)
 (define type %vcomponent-type)
-
+(define parent %vcomponent-parent)
 (define push-child! %vcomponent-push-child!)
 
 (define (transform-attr! ev field transformer)
