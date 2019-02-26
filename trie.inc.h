@@ -171,20 +171,21 @@ FMT_F(TRIE(TYPE)) {
 }
 
 int DEEP_COPY(TRIE_NODE(TYPE)) (TRIE_NODE(TYPE)* dest, TRIE_NODE(TYPE)* src) {
-	if (dest == NULL) return 1;
-	if (dest->value != NULL) {
-		RENEW(TYPE, src->value);
-		DEEP_COPY(TYPE)(src->value, dest->value);
+	dest->c = src->c;
+
+	if (src->value != NULL) {
+		RENEW(TYPE, dest->value);
+		DEEP_COPY(TYPE)(dest->value, src->value);
 	}
 
-	if (dest->next != NULL) {
-		RENEW(TRIE_NODE(TYPE), src->next, dest->c);
-		DEEP_COPY(TRIE_NODE(TYPE))(src->next, dest->next);
+	if (src->next != NULL) {
+		RENEW(TRIE_NODE(TYPE), dest->next, '\0');
+		DEEP_COPY(TRIE_NODE(TYPE))(dest->next, src->next);
 	}
 
-	if (dest->child != NULL) {
-		RENEW(TRIE_NODE(TYPE), src->child, dest->c);
-		DEEP_COPY(TRIE_NODE(TYPE))(src->child, dest->child);
+	if (src->child != NULL) {
+		RENEW(TRIE_NODE(TYPE), dest->child, '\0');
+		DEEP_COPY(TRIE_NODE(TYPE))(dest->child, src->child);
 	}
 
 	return 0;
