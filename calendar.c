@@ -51,7 +51,7 @@ int handle_dir(vcomponent* cal, char* path) {
 	DIR* dir = opendir(path);
 
 	/* Buffer for holding search path and filename */
-	char buf[PATH_MAX];
+	char buf[PATH_MAX] = { [0 ... PATH_MAX - 1] = '\0' };
 	strcpy(buf, path);
 	int path_len = strlen(path) + 1;
 
