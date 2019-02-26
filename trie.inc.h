@@ -159,8 +159,13 @@ FMT_F(TRIE_NODE(TYPE)) {
 
 FMT_F(TRIE(TYPE)) {
 	int seek = 0;
-	fmtf("Trie: %p: {\n", self);
-	seek += FMT(TRIE_NODE(TYPE))(self->root->child, buf + seek);
+	fmtf("Trie: %p: {", self);
+	if (EMPTY(TRIE(TYPE))(self)) {
+		fmtf(" [EMPTY] ");
+	} else {
+		fmtf("\n");
+		seek += FMT(TRIE_NODE(TYPE))(self->root->child, buf + seek);
+	}
 	fmtf("}");
 	return seek;
 }
@@ -195,16 +200,18 @@ void KEYS(TRIE_NODE(TYPE)) (TRIE_NODE(TYPE)* node, LLIST(strbuf)* list, strbuf* 
 
 	if (node->value != NULL) {
 		strbuf_append(path, node->c);
-		PUSH(LLIST(strbuf))(list, path);
+		NEW(strbuf, c);
+		DEEP_COPY(strbuf)(c, path);
+		PUSH(LLIST(strbuf))(list, c);
 		strbuf_pop(path);
 	}
 	if (node->next != NULL) {
 		KEYS(TRIE_NODE(TYPE)) (node->next, list, path);
 	}
 	if (node->child != NULL) {
-		strbuf_append(path, node->c);
+		if (node->c != '\0') strbuf_append(path, node->c);
 		KEYS(TRIE_NODE(TYPE)) (node->child, list, path);
-		strbuf_pop(path);
+		if (node->c != '\0') strbuf_pop(path);
 	}
 }
 
