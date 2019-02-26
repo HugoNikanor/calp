@@ -7,15 +7,26 @@
              (srfi srfi-26)
              (vcalendar))
 
-(define cal (make-vcomponent "testcal/d1-b.ics"))
+(define path
+  (if (null? (cdr (command-line)))
+      "testcal/d1-b.ics"
+      (cadr (command-line))))
 
+(define cal (make-vcomponent path))
+
+;;; Parse all start times into scheme date objects.
 (for-each (cut transform-attr! <> "DTSTART"
                (cut string->date <> "~Y~m~dT~H~M~S"))
           (children cal))
 
-(display (get-attr (car (children cal))
-                   "DTSTART"))
-(newline)
-(display (get-attr (car (children cal))
-                   "DTSTART"))
-(newline)
+;;; Sort the events, and print a simple agenda.
+(let ((sorted-events
+       (sort (children cal)
+             (lambda (a b)
+               (time<? (date->time-utc (get-attr a "DTSTART"))
+                       (date->time-utc (get-attr b "DTSTART")))))))
+  (for-each (lambda (ev) (format #t "~a | ~a~%"
+                            (date->string (get-attr ev "DTSTART") "~1 ~H:~M")
+                            (get-attr ev "SUMMARY")))
+            sorted-events))
+
