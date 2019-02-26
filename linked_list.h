@@ -63,6 +63,10 @@ int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist );
  */
 int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist );
 
+/*
+ * Takes to lists, and merges them into a single one. Destroys new_ in
+ * the process. 
+ */
 LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new_);
 
 FMT_F(LLIST(TYPE));

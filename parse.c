@@ -32,6 +32,9 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	/*
 	 * Create a content_line which we use as storage while we are
 	 * parsing. This object is constantly broken down and rebuilt.
+	 *
+	 * {cline,param}_key is also temporary register used during
+	 * parsing.
 	 */
 	SNEW(content_line, cline);
 	SNEW(strbuf, cline_key);
@@ -46,7 +49,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (fold(&ctx, c) > 0) {
 				/* Actuall end of line, handle value */
 				TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
-				handle_kv(&param_key, &cline, &ctx);
+				handle_kv(&cline_key, &cline, &ctx);
 				p_ctx = p_key;
 			} /* Else continue on current line */
 
@@ -57,11 +60,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		/* Border between param {key, value} */
 		} else if (p_ctx == p_param_name && c == '=') {
 
-			/* Create a new parameter set and push the current string
-			 * as its key */
+			/* Save the current parameter key */
 			TRANSFER (&param_key, &ctx.str);
-			// PUSH(LLIST(param_set))(CLINE_CUR_PARAMS(&cline), ps);
-
 			p_ctx = p_param_value;
 
 		/*
@@ -76,7 +76,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			/* We got a parameter value, push the current string to
 			 * the current parameter set. */
 			if (p_ctx == p_param_value) {
-				/* push kv pair */
+				/* save current parameter value. */
 
 				NEW(strbuf, s);
 				TRANSFER(s, &ctx.str);
@@ -84,7 +84,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				NEW(param_set, ps);
 				PUSH(LLIST(strbuf))(ps, s);
 
-				PUSH(TRIE(param_set))(CLINE_CUR_PARAMS(&cline), s->mem, ps);
+				PUSH(TRIE(param_set))(CLINE_CUR_PARAMS(&cline), param_key.mem, ps);
+				strbuf_soft_reset (&param_key);
 			}
 
 			/*
@@ -128,11 +129,13 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 */
 
 		TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
-		handle_kv(&param_key, &cline, &ctx);
+		handle_kv(&cline_key, &cline, &ctx);
 
 	}
 
 	FREE(content_line)(&cline);
+	FREE(strbuf)(&cline_key);
+	FREE(strbuf)(&param_key);
 
 	assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
 	assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
