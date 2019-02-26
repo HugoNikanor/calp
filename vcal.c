@@ -115,7 +115,7 @@ int vcomponent_push_val (vcomponent* comp, const char* key, const char* val) {
 	strbuf_load(&cs->key, val);
 	PUSH(content_line)(cl, cs);
 
-	char* key_cpy = calloc(sizeof(*key_cpy), strlen(key));
+	char* key_cpy = calloc(sizeof(*key_cpy), strlen(key) + 1);
 	strcpy (key_cpy, key);
 	PUSH(TRIE(content_line))(&comp->clines, key_cpy, cl);
 	free (key_cpy);
@@ -124,7 +124,7 @@ int vcomponent_push_val (vcomponent* comp, const char* key, const char* val) {
 }
 
 char* vcomponent_get_val (vcomponent* comp, const char* key) {
-	char* key_cpy = calloc(sizeof(*key_cpy), strlen(key));
+	char* key_cpy = calloc(sizeof(*key_cpy), strlen(key) + 1);
 	strcpy (key_cpy, key);
 	content_line* cl = GET(TRIE(content_line))(&comp->clines, key_cpy);
 	free (key_cpy);
