@@ -67,7 +67,6 @@ typedef struct s_vcomponent vcomponent;
 #undef TYPE
 
 struct s_vcomponent {
-	char* filename;
 	char* type;
 	vcomponent* parent;
 	TRIE(content_line) clines;
@@ -86,6 +85,9 @@ FREE_F(vcomponent);
 content_line* get_property (vcomponent* ev, const char* key);
 
 int add_content_line (vcomponent* ev, content_line* c);
+
+int vcomponent_push_val (vcomponent*, const char* key, const char* val);
+char* vcomponent_get_val (vcomponent*, const char* key);
 
 /*
  * Appends ev to cal. Doesn't copy ev. So make sure that it wont go

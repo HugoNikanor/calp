@@ -198,7 +198,9 @@ int handle_kv (
 			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
 					expected_key->mem,
 					CLINE_CUR_VAL(cline)->mem,
-					PEEK(LLIST(vcomponent))(&ctx->comp_stack)->filename);
+					vcomponent_get_val(
+						PEEK(LLIST(vcomponent))(&ctx->comp_stack),
+						"X-HH-FILENAME"));
 			PUSH(LLIST(strbuf))(&ctx->key_stack, expected_key);
 
 			return -1;

@@ -48,7 +48,8 @@ int main (int argc, char** argv) {
 			vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
 			assert(strcmp(cal->type, "VCALENDAR") == 0);
 
-			char* filename = cal->filename;
+			char* filename = vcomponent_get_val(cal, "X-HH-FILENAME");
+
 			/* This loop over all VEVENT's in the current VCALENDAR */
 			for (size_t j = 0; j < cal->components.length; j++) {
 				vcomponent* ev = GET(VECT(vcomponent))(&cal->components, j);
@@ -73,7 +74,7 @@ int main (int argc, char** argv) {
 				char target[0xFF];
 				target[0] = '\0';
 				strcat(target, "/tmp/dot/");
-				strcat(target, ev->filename);
+				strcat(target, vcomponent_get_val(ev, "X-HH-FILENAME"));
 				strcat(target, ".dot");
 				// create_graph(ev, target);
 			}

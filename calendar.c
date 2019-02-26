@@ -117,4 +117,3 @@ int open_ics (char* resolved_path, vcomponent* cal) {
 
 	return 0;
 }
-

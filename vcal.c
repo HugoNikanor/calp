@@ -44,10 +44,8 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 	INIT(TRIE(content_line), &self->clines);
 	INIT(VECT(vcomponent), &self->components);
 
-	self->filename = NULL;
 	if (filename != NULL) {
-		self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
-		strcpy(self->filename, filename);
+		vcomponent_push_val (self, "X-HH-FILENAME", filename);
 	}
 
 	self->type = (char*) calloc(sizeof(*type), strlen(type) + 1);
@@ -71,12 +69,10 @@ content_line* get_property (vcomponent* ev, const char* key) {
 }
 
 FREE_F(vcomponent) {
-	if (self->filename != NULL) free(self->filename);
 	free(self->type);
 
 	if (FREE(TRIE(content_line))(&self->clines) != 0) {
-		fprintf(stderr, "Error freeing vcomponent belonging to file \n %s \n",
-				self->filename);
+		ERR("Error freeing vcomponent");
 	}
 
 	FREE(VECT(vcomponent))(&self->components);
@@ -111,4 +107,31 @@ FMT_F(vcomponent) {
 	}
 
 	return seek;
+}
+
+int vcomponent_push_val (vcomponent* comp, const char* key, const char* val) {
+	NEW(content_line, cl);
+	NEW(content_set, cs);
+	strbuf_load(&cs->key, val);
+	PUSH(content_line)(cl, cs);
+
+	char* key_cpy = calloc(sizeof(*key_cpy), strlen(key));
+	strcpy (key_cpy, key);
+	PUSH(TRIE(content_line))(&comp->clines, key_cpy, cl);
+	free (key_cpy);
+
+	return 0;
+}
+
+char* vcomponent_get_val (vcomponent* comp, const char* key) {
+	char* key_cpy = calloc(sizeof(*key_cpy), strlen(key));
+	strcpy (key_cpy, key);
+	content_line* cl = GET(TRIE(content_line))(&comp->clines, key_cpy);
+	free (key_cpy);
+
+	if (cl != NULL && cl->cur->value != NULL) {
+		return cl->cur->value->key.mem;
+	}
+
+	return NULL;
 }
