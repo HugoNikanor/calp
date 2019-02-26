@@ -6,16 +6,8 @@
 #include "err.h"
 
 INIT_F(strbuf) {
-	INIT(strbuf, self, 1);
-	return 0;
-}
-
-/*
- * Giving len < 1 is an error.
- */
-INIT_F(strbuf, size_t len) {
-	self->mem   = (char*) calloc(sizeof(*self->mem), len);
-	self->alloc = len;
+	self->alloc = 0x10;
+	self->mem   = (char*) calloc(sizeof(*self->mem), self->alloc);
 	self->ptr   = 0;
 	self->len   = 0;
 	self->scm = NULL;
@@ -142,4 +134,12 @@ FMT_F(strbuf) {
 
 int SIZE(strbuf)(strbuf* self) {
 	return self->len;
+}
+
+int strbuf_load(strbuf* self, const char* str) {
+	for (int i = 0; str[i] != '\0'; i++) {
+		strbuf_append(self, str[i]);
+	}
+	strbuf_cap(self);
+	return 0;
 }

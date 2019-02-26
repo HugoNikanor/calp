@@ -23,13 +23,9 @@ typedef struct {
 } strbuf;
 
 /*
- * Init strbuf to size of 0
- * Doesnt't call malloc.
+ * Init strbuf to size of 10
  */
 INIT_F(strbuf);
-
-/* Constructor */
-INIT_F(strbuf, size_t len);
 
 /*
  * Like realloc, but for strbuf
@@ -107,5 +103,7 @@ strbuf* RESOLVE(strbuf)(strbuf*, strbuf*);
 FMT_F(strbuf);
 
 int SIZE(strbuf)(strbuf*);
+
+int strbuf_load(strbuf* self, const char* str);
 
 #endif /* STRBUF_H */
