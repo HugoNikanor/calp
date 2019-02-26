@@ -112,31 +112,29 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 			FMT(strbuf)(&v->key, buf);
 			fprintf(f, "\"%p\" [label=\"%s\" shape=rectangle color=darkgreen];\n",
 					v, buf);
+			/* Edge between TRIE char node and data node */
 			fprintf(f, "\"%p\" -> \"%p\";\n", root, v);
 
 			/* Parameters */
-			// TODO reenable this, but currently v->val is a TRIE,
-			// which I currently can't itterate over
 			LLIST(strbuf)* keys = KEYS(TRIE(param_set))(&v->val);
-			// FOR(TRIE, param_set, p, &v->val) {
 			FOR(LLIST, strbuf, key, keys) {
 				param_set* p = GET(TRIE(param_set))(&v->val, key->mem);
-				// strbuf* param_key = &p->key;
 
 				fprintf(f, "\"%p\" [label=\"%s\" color=blue];\n",
 						key, key->mem);
+				/* Edge between data node and param key node */
 				fprintf(f, "\"%p\" -> \"%p\";", v, key);
 
 				FOR(LLIST, strbuf, str, p) {
 					fprintf(f, "\"%p\" [label=\"%s\" color=orange];",
 							str, str->mem);
+					/* Edge between param key node and param value node */
 					fprintf(f, "\"%p\" -> \"%p\";", key, str);
 				}
 			}
 		}
 	}
 #endif
-
 	// ----------------------------------------
 
 	while (child != NULL) {
