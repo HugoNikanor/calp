@@ -9,11 +9,6 @@
 #include "graphs.h"
 #include "err.h"
 
-#define TYPE content_line
-// #include "hash.inc"
-#include "trie.inc.h"
-#undef TYPE
-
 typedef struct {
 	int argc;
 	char** argv;
@@ -57,15 +52,6 @@ int main (int argc, char** argv) {
 			/* This loop over all VEVENT's in the current VCALENDAR */
 			for (size_t j = 0; j < cal->components.length; j++) {
 				vcomponent* ev = GET(VECT(vcomponent))(&cal->components, j);
-
-				LLIST(strbuf)* keys = KEYS(TRIE(content_line))(&ev->clines);
-				FOR(LLIST, strbuf, k, keys) {
-					char* mem = k->mem;
-					char buf[10000];
-					buf[0] = '\0';
-					FMT(content_line)(GET(TRIE(content_line))(&ev->clines, mem), buf);
-					printf("%s := %s\n", mem, buf);
-				}
 
 				if (strcmp(ev->type, "VEVENT") != 0) continue;
 

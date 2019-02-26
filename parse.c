@@ -82,7 +82,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				TRANSFER(s, &ctx.str);
 
 				NEW(param_set, ps);
-				PUSH(LLIST(strbuf))(ps, s);
+				PUSH(param_set)(ps, s);
 
 				PUSH(TRIE(param_set))(CLINE_CUR_PARAMS(&cline), param_key.mem, ps);
 				strbuf_soft_reset (&param_key);
