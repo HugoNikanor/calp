@@ -40,26 +40,12 @@
 #include "linked_list.h"
 #undef TYPE
 
-// #define T strbuf
-// 	#define V LLIST(content_set)
-// 		#include "pair.h"
-// 		/* left := content | right := params */
-// 		#define content_line PAIR(strbuf, LLIST(content_set))
-// 	#undef V
-// #undef T
-
 #define content_line LLIST(content_set)
 
 /*
  * Helper macros for accessing fields in
  * content_line, content_set, and param_set
- *
- * TODO find a better way to do self.
  */
-
-/* ptr -> ptr */
-// #define CLINE_KEY(c) (&(c)->key)
-// #define CLINE_CUR_CSET(c) (&((c)->val.cur->value))
 
 /* content_set */
 #define CLINE_CUR(c)        ((c)->cur->value)
@@ -69,22 +55,6 @@
 
 /* TRIE(param_set) */
 #define CLINE_CUR_PARAMS(c) (& CLINE_CUR(c)->val)
-
-/* strbuf */
-// #define CLINE_CUR_PARAM_KEY(c) (CLINE_CUR_PARAMS(c)->cur->value->key)
-/* strbuf */
-// #define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->val.cur->value)
-
-/*
- * Resolves a collision in some form of structure (probably a hash-map
- * or a trie). If dest is NULL just return new_. Otherwise mutates dest
- * to have the correct form, and returns it. Destroying new_ in the
- * process.
- */
-#if 0
-content_line* RESOLVE(content_line)
-	(content_line* dest, content_line* new_);
-#endif
 
 #define TYPE content_line
 #include "trie.h"

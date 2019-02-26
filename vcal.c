@@ -59,30 +59,6 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 	return 0;
 }
 
-#if 0
-content_line* RESOLVE(content_line)
-	(content_line* dest, content_line* new_)
-{
-	if (dest == NULL) return new_;
-
-	/*
-	if (strbuf_cmp(&dest->key, &new_->key) != 0) {
-		ERR("Can't resolve between these two types");
-		return NULL;
-	}
-	*/
-
-	/* This destroys new_->val. */
-	//APPEND(LLIST(content_set)) (&dest->val, &new_->val);
-	APPEND(LLIST(content_set)) (dest, new_);
-
-	// FREE(strbuf)(&new_->key);
-	free(new_);
-
-	return dest;
-}
-#endif
-
 content_line* get_property (vcomponent* ev, const char* key) {
 	size_t len = strlen(key) + 1;
 	char* cpy = (char*) (calloc(sizeof(*cpy), len));
