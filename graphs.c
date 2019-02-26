@@ -125,7 +125,7 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 
 				fprintf(f, "\"%p\" [label=\"%s\" color=blue];\n",
 						key, key->mem);
-				fprintf(f, "\"%p\" -> \"%p\";", p, key);
+				fprintf(f, "\"%p\" -> \"%p\";", v, key);
 
 				FOR(LLIST, strbuf, str, p) {
 					fprintf(f, "\"%p\" [label=\"%s\" color=orange];",
