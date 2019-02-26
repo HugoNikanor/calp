@@ -139,6 +139,7 @@ int EMPTY(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
 LLIST(TYPE)* RESOLVE(LLIST(TYPE)) (LLIST(TYPE)* dest, LLIST(TYPE)* new__) {
 	if (dest == NULL) return new__;
 	APPEND(LLIST(TYPE))(dest, new__);
+	// TODO free new__?
 	return dest;
 }
 

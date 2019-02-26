@@ -34,6 +34,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	 * parsing. This object is constantly broken down and rebuilt.
 	 */
 	SNEW(content_line, cline);
+	SNEW(strbuf, cline_key);
+	SNEW(strbuf, param_key);
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
@@ -44,7 +46,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (fold(&ctx, c) > 0) {
 				/* Actuall end of line, handle value */
 				TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
-				handle_kv(&cline, &ctx);
+				handle_kv(&param_key, &cline, &ctx);
 				p_ctx = p_key;
 			} /* Else continue on current line */
 
@@ -57,9 +59,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 			/* Create a new parameter set and push the current string
 			 * as its key */
-			NEW(param_set, ps);
-			TRANSFER (&ps->key, &ctx.str);
-			PUSH(LLIST(param_set))(CLINE_CUR_PARAMS(&cline), ps);
+			TRANSFER (&param_key, &ctx.str);
+			// PUSH(LLIST(param_set))(CLINE_CUR_PARAMS(&cline), ps);
 
 			p_ctx = p_param_value;
 
@@ -79,9 +80,11 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 				NEW(strbuf, s);
 				TRANSFER(s, &ctx.str);
-				PUSH(LLIST(strbuf))(
-						& CLINE_CUR_PARAMS(&cline)->cur->value->val,
-						s);
+
+				NEW(param_set, ps);
+				PUSH(LLIST(strbuf))(ps, s);
+
+				PUSH(TRIE(param_set))(CLINE_CUR_PARAMS(&cline), s->mem, ps);
 			}
 
 			/*
@@ -92,10 +95,10 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			 */
 			if (p_ctx == p_key) {
 
-				TRANSFER(&cline.key, &ctx.str);
+				TRANSFER(&cline_key, &ctx.str);
 
 				NEW(content_set, p);
-				PUSH(LLIST(content_set))(&cline.val, p);
+				PUSH(LLIST(content_set))(&cline, p);
 			}
 
 			if      (c == ':') p_ctx = p_value;
@@ -125,7 +128,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 */
 
 		TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
-		handle_kv(&cline, &ctx);
+		handle_kv(&param_key, &cline, &ctx);
 
 	}
 
@@ -144,6 +147,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
  * We have a complete key value pair.
  */
 int handle_kv (
+	strbuf* key,
 	content_line* cline,
 	parse_ctx* ctx
 	) {
@@ -151,7 +155,7 @@ int handle_kv (
 	/*
 	 * The key being BEGIN means that we decend into a new component.
 	 */
-	if (strbuf_c(&cline->key, "BEGIN")) {
+	if (strbuf_c(key, "BEGIN")) {
 		/* key \in { VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE, ...  } */
 
 		/*
@@ -163,7 +167,7 @@ int handle_kv (
 		PUSH(LLIST(strbuf))(&ctx->key_stack, s);
 
 		/* Clear the value list in the parse content_line */
-		RESET(LLIST(content_set))(&cline->val);
+		RESET(LLIST(content_set))(cline);
 
 		/*
 		 * Create the new curent component, link it with the current
@@ -183,7 +187,7 @@ int handle_kv (
 	 * The end of a component, go back along the stack to the previous
 	 * component.
 	 */
-	} else if (strbuf_c(&cline->key, "END")) {
+	} else if (strbuf_c(key, "END")) {
 		strbuf* expected_key = POP(LLIST(strbuf))(&ctx->key_stack);
 
 		if (strbuf_cmp(expected_key, CLINE_CUR_VAL(cline)) != 0) {
@@ -225,9 +229,9 @@ int handle_kv (
 		 */
 		PUSH(TRIE(content_line))(
 				&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
-				c->key.mem, c);
+				key->mem, c);
 
-		RESET(LLIST(content_set))(&cline->val);
+		RESET(LLIST(content_set))(cline);
 	}
 
 	return 0;

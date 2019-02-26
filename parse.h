@@ -90,6 +90,7 @@ int parse_file(char* filename, FILE* f, vcomponent* cal);
  * ctx. 
  */
 int handle_kv(
+		strbuf* key,
 		content_line*  cline,
 		parse_ctx*     ctx
 		);

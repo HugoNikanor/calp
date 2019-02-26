@@ -47,7 +47,7 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 	if (c == NULL) return SCM_BOOL_F;
 
 	SCM llist = SCM_EOL;
-	FOR (LLIST, content_set, v, &c->val) {
+	FOR (LLIST, content_set, v, c) {
 		llist = scm_cons(scm_from_strbuf(&v->key), llist);
 	}
 
@@ -70,9 +70,9 @@ SCM_DEFINE (vcomponent_set_attr_x, "%vcomponent-set-attribute!", 3, 0, 0,
 	content_line* c = get_property (com, key);
 	free(key);
 
-	scm_gc_unprotect_object(c->val.cur->value->key.scm);
-	c->val.cur->value->key.scm = new_value;
-	scm_gc_protect_object(c->val.cur->value->key.scm);
+	scm_gc_unprotect_object(c->cur->value->key.scm);
+	c->cur->value->key.scm = new_value;
+	scm_gc_protect_object(c->cur->value->key.scm);
 
 	return SCM_UNSPECIFIED;
 }

@@ -98,7 +98,7 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 	} else {
 		fprintf(f, "\"%p\"[label = \"%c [%i]\" style=filled fillcolor=green];\n",
 				(void*) root, root->c,
-				SIZE(LLIST(content_set))(&L(root)->val)
+				SIZE(LLIST(content_set))(L(root))
 				);
 	}
 	TRIE_NODE(T)* child = root->child;
@@ -107,7 +107,7 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 #if 1 /* Toggle values */
 	if (L(root) != NULL) {
 
-		FOR(LLIST, content_set, v, &L(root)->val) {
+		FOR(LLIST, content_set, v, L(root)) {
 			char buf[0x100];
 			FMT(strbuf)(&v->key, buf);
 			fprintf(f, "\"%p\" [label=\"%s\" shape=rectangle color=darkgreen];\n",
@@ -115,6 +115,9 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 			fprintf(f, "\"%p\" -> \"%p\";\n", root, v);
 
 			/* Parameters */
+			// TODO reenable this, but currently v->val is a TRIE,
+			// which I currently can't itterate over
+#if 0
 			FOR(LLIST, param_set, p, &v->val) {
 				strbuf* param_key = &p->key;
 
@@ -128,6 +131,7 @@ int trie_to_dot_helper ( TRIE_NODE(T)* root, FILE* f  ) {
 					fprintf(f, "\"%p\" -> \"%p\";", param_key, str);
 				}
 			}
+#endif
 		}
 	}
 #endif

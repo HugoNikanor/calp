@@ -7,7 +7,7 @@
 #undef TYPE
 
 #define TYPE param_set
-#include "linked_list.inc.h"
+#include "trie.inc.h"
 #undef TYPE
 
 #define TYPE content_set
@@ -15,13 +15,7 @@
 #undef TYPE
 
 #define T strbuf
-	#define V LLIST(strbuf)
-		#include "pair.inc.h"
-	#undef V
-	#define V LLIST(param_set)
-		#include "pair.inc.h"
-	#undef V
-	#define V LLIST(content_set)
+	#define V TRIE(param_set)
 		#include "pair.inc.h"
 	#undef V
 #undef T
@@ -65,24 +59,29 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 	return 0;
 }
 
+#if 0
 content_line* RESOLVE(content_line)
 	(content_line* dest, content_line* new_)
 {
 	if (dest == NULL) return new_;
 
+	/*
 	if (strbuf_cmp(&dest->key, &new_->key) != 0) {
 		ERR("Can't resolve between these two types");
 		return NULL;
 	}
+	*/
 
 	/* This destroys new_->val. */
-	APPEND(LLIST(content_set)) (&dest->val, &new_->val);
+	//APPEND(LLIST(content_set)) (&dest->val, &new_->val);
+	APPEND(LLIST(content_set)) (dest, new_);
 
-	FREE(strbuf)(&new_->key);
+	// FREE(strbuf)(&new_->key);
 	free(new_);
 
 	return dest;
 }
+#endif
 
 content_line* get_property (vcomponent* ev, const char* key) {
 	size_t len = strlen(key) + 1;

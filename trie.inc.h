@@ -163,4 +163,10 @@ FMT_F(TRIE(TYPE)) {
 	return seek;
 }
 
+int DEEP_COPY(TRIE(TYPE)) (TRIE(TYPE)* dest, TRIE(TYPE)* src) {
+	(void) dest; (void) src;
+	ERR(deep copy on tries currently not implemented);
+	return 1;
+}
+
 #endif /* TYPE */

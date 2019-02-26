@@ -58,7 +58,7 @@ int main (int argc, char** argv) {
 				printf("%3lu : %3lu | %s | %s\n",
 						i + 1, j + 1,
 						filename,
-						get_property(ev, "SUMMARY")->val.cur->value->key.mem);
+						get_property(ev, "SUMMARY")->cur->value->key.mem);
 			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {

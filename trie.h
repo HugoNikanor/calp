@@ -43,4 +43,6 @@ int EMPTY(TRIE(TYPE))(TRIE(TYPE)*);
 FMT_F(TRIE_NODE(TYPE));
 FMT_F(TRIE(TYPE));
 
+int DEEP_COPY(TRIE(TYPE)) (TRIE(TYPE)* dest, TRIE(TYPE)* src);
+
 #endif /* TYPE */

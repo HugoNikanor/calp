@@ -22,23 +22,17 @@
  *     A parameter key, along with a list of all its values. 
  */
 
-#define T strbuf
-	#define V LLIST(strbuf)
-		#include "pair.h"
-		/* left := param_name | right := param_values */
-		#define param_set PAIR(strbuf, LLIST(strbuf))
-	#undef V
-#undef T
+#define param_set LLIST(strbuf)
 
 #define TYPE param_set
-#include "linked_list.h"
+#include "trie.h"
 #undef TYPE
 
 #define T strbuf
-	#define V LLIST(param_set)
+	#define V TRIE(param_set)
 		#include "pair.h"
 		/* left := content | right := params */
-		#define content_set PAIR(strbuf, LLIST(param_set))
+		#define content_set PAIR(strbuf, TRIE(param_set))
 	#undef V
 #undef T
 
@@ -46,13 +40,15 @@
 #include "linked_list.h"
 #undef TYPE
 
-#define T strbuf
-	#define V LLIST(content_set)
-		#include "pair.h"
-		/* left := content | right := params */
-		#define content_line PAIR(strbuf, LLIST(content_set))
-	#undef V
-#undef T
+// #define T strbuf
+// 	#define V LLIST(content_set)
+// 		#include "pair.h"
+// 		/* left := content | right := params */
+// 		#define content_line PAIR(strbuf, LLIST(content_set))
+// 	#undef V
+// #undef T
+
+#define content_line LLIST(content_set)
 
 /*
  * Helper macros for accessing fields in
@@ -62,21 +58,22 @@
  */
 
 /* ptr -> ptr */
-#define CLINE_KEY(c) (&(c)->key)
-#define CLINE_CUR_CSET(c) (&((c)->val.cur->value))
+// #define CLINE_KEY(c) (&(c)->key)
+// #define CLINE_CUR_CSET(c) (&((c)->val.cur->value))
 
 /* content_set */
-#define CLINE_CUR(c)        ((c)->val.cur->value)
+#define CLINE_CUR(c)        ((c)->cur->value)
+
 /* strbuf */
 #define CLINE_CUR_VAL(c)    (& CLINE_CUR(c)->key)
 
-/* LLIST(param_set) */
+/* TRIE(param_set) */
 #define CLINE_CUR_PARAMS(c) (& CLINE_CUR(c)->val)
 
 /* strbuf */
-#define CLINE_CUR_PARAM_KEY(c) (CLINE_CUR_PARAMS(c)->cur->value->key)
+// #define CLINE_CUR_PARAM_KEY(c) (CLINE_CUR_PARAMS(c)->cur->value->key)
 /* strbuf */
-#define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->val.cur->value)
+// #define CLINE_CUR_PARAM_VAL(c) (CLINE_CUR_PARAMS(c)->cur->value->val.cur->value)
 
 /*
  * Resolves a collision in some form of structure (probably a hash-map
@@ -84,8 +81,10 @@
  * to have the correct form, and returns it. Destroying new_ in the
  * process.
  */
+#if 0
 content_line* RESOLVE(content_line)
 	(content_line* dest, content_line* new_);
+#endif
 
 #define TYPE content_line
 #include "trie.h"
