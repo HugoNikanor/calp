@@ -17,7 +17,7 @@ X_FILES = $(SCM_C_FILES:.scm.c=.x)
 
 .SECONDARY: $(X_FILES)
 
-O_FILES = $(addprefix obj/,$(C_FILES:.c=.o))
+O_FILES = $(C_FILES:%.c=obj/%.o)
 
 all: parse libguile-calendar.so
 
