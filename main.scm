@@ -4,11 +4,11 @@
 
 (add-to-load-path ".")
 
-(load "code.scm")
 (use-modules (srfi srfi-1)
              (srfi srfi-19)
              (srfi srfi-26)
-             (vcalendar))
+             (vcalendar)
+             (code))
 
 ;;; ------------------------------------------------------------
 
@@ -29,8 +29,9 @@
   (cdr (let ((events (filter (lambda (ev) (eq? 'VEVENT (type ev)))
                              (children cal))))
          (find (lambda (ev) (string-contains-ci (car ev) term))
-               (map-cons (cut get-attr <> "SUMMARY")
-                         events)))))
+               (map cons (map (cut get-attr <> "SUMMARY")
+                              events)
+                    events)))))
 
 
 (define (main args)
@@ -54,5 +55,4 @@
                                (get-attr ev "SUMMARY")))))
 
 
-k
   #; (define pizza-event (search cal "pizza"))
