@@ -38,3 +38,14 @@
          (time<=? (date->time-utc input-date)
                   (date->time-utc then)))))
 
+
+(define-syntax-rule (color-if pred color body ...)
+  (let ((pred-value pred))
+    (format #f "~a~a~a"
+            (if pred-value color "")
+            (begin body ...)
+            (if pred-value STR-RESET ""))))
+
+(define-syntax-rule (for-each-in lst proc)
+  (for-each proc lst))
+
