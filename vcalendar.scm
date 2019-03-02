@@ -1,12 +1,9 @@
 (define-module (vcalendar)
   #:use-module (vcalendar primitive)
   #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-26)
-  #:export (make-vcomponent children set-attr! get-attr type
-                            type-filter
-                            transform-attr! push-child!))
+  #:use-module (srfi srfi-26))
 
-(define (make-vcomponent path)
+(define-public (make-vcomponent path)
   (if (string-ci=? ".ics" (string-take-right path 4))
       ;; == Single ICS file ==
       ;; Remove the abstract ROOT component,
@@ -26,7 +23,7 @@
                 accum)
               '() (%vcomponent-children (%vcomponent-make path)))))
 
-(define (type-filter t lst)
+(define-public (type-filter t lst)
   (filter (lambda (e) (eqv? t (type e)))
           lst))
 
@@ -35,14 +32,16 @@
     (if only-type
         (type-filter only-type childs)
         childs)))
+(export children)
 
-(define set-attr! %vcomponent-set-attribute!)
-(define get-attr %vcomponent-get-attribute)
-(define type %vcomponent-type)
-(define parent %vcomponent-parent)
-(define push-child! %vcomponent-push-child!)
+(define-public set-attr! %vcomponent-set-attribute!)
+(define-public get-attr %vcomponent-get-attribute)
+(define-public type %vcomponent-type)
+(define-public parent %vcomponent-parent)
+(define-public push-child! %vcomponent-push-child!)
+(define-public attributes %vcomponent-attribute-list)
 
-(define (transform-attr! ev field transformer)
+(define-public (transform-attr! ev field transformer)
   "Apply transformer to field in ev, and store the result back."
   (set-attr! ev field
              (transformer

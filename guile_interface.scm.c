@@ -141,6 +141,24 @@ SCM scm_from_vcomponent(vcomponent* v) {
 	return v->scm;
 }
 
+SCM_DEFINE(vcomponent_attr_list, "%vcomponent-attribute-list", 1, 0, 0,
+		(SCM component),
+		"Returns list of all keys in component.")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	vcomponent* comp = scm_foreign_object_ref (component, 0);
+	LLIST(strbuf)* keys = KEYS(TRIE(content_line))(&comp->clines);
+
+	SCM llist = SCM_EOL;
+	FOR (LLIST, strbuf, s, keys) {
+		llist = scm_cons(scm_from_strbuf(s), llist);
+	}
+
+	FFREE(LLIST(strbuf), keys);
+
+	return llist;
+}
+
 void init_lib (void) {
 	init_vcomponent_type();
 
