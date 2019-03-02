@@ -6,8 +6,10 @@
 
 (use-modules (srfi srfi-1)
              (srfi srfi-19)
+             (srfi srfi-19 util)
              (srfi srfi-26)
              (vcalendar)
+             (vcalendar datetime)
              (code))
 
 ;;; ------------------------------------------------------------
@@ -16,14 +18,7 @@
 ;;; Parse all start times into scheme date objects.
   (for-each-in (children cal 'VEVENT)
                (cut transform-attr! <> "DTSTART"
-                    (lambda (start)
-                      (localize-date
-                        (string->date
-                          start
-                          (case (string-length start)
-                            ((8) "~Y~m~d")
-                            ((15) "~Y~m~dT~H~M~S")
-                            ((16) "~Y~m~dT~H~M~S~z"))))))))
+                    parse-datetime)))
 
 (define (search cal term)
   (cdr (let ((events (filter (lambda (ev) (eq? 'VEVENT (type ev)))
