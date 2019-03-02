@@ -55,10 +55,9 @@ char strbuf_pop(strbuf* s) {
 }
 
 int strbuf_cap(strbuf* s) {
-	/*
-	 * TODO check memmory usage
-	 */
-	return strbuf_append(s, 0);
+	strbuf_append(s, 0);
+	--s->len;
+	return 0;
 }
 
 int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
