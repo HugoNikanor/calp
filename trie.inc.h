@@ -88,6 +88,8 @@ TYPE* GET(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key ) {
 
 	while (n != NULL) {
 		if (subkey[1] == '\0') {
+			/* Wanted node found,
+			 * value can however be NULL */
 			return n->value;
 		} else if (subkey[0] == n->c) {
 			n = n->child;
@@ -97,7 +99,7 @@ TYPE* GET(TRIE(TYPE)) ( TRIE(TYPE)* trie, char* key ) {
 		}
 	}
 
-	ERR("Position not found");
+	/* Position not found */
 	return 0;
 }
 

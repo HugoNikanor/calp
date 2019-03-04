@@ -68,9 +68,22 @@ SCM_DEFINE (vcomponent_set_attr_x, "%vcomponent-set-attribute!", 3, 0, 0,
 
 	char* key = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
 	content_line* c = get_property (com, key);
+
+	/* Create the position in the TRIE if it doesn't already exist */
+	if (c == NULL) {
+		/* Insert empty key since this allows me to use the helper
+		 * function */
+		vcomponent_push_val(com, key, "");
+		c = get_property (com, key);
+	} else {
+		/* If the object already exists it should be protected,
+		 * so unprotect it
+		 */
+		scm_gc_unprotect_object(c->cur->value->key.scm);
+	}
+
 	free(key);
 
-	scm_gc_unprotect_object(c->cur->value->key.scm);
 	c->cur->value->key.scm = new_value;
 	scm_gc_protect_object(c->cur->value->key.scm);
 
