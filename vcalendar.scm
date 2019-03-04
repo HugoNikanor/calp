@@ -36,6 +36,11 @@
 
 (define-public set-attr! %vcomponent-set-attribute!)
 (define-public get-attr %vcomponent-get-attribute)
+
+;; Enables symmetric get and set:
+;; (set! (attr ev "KEY") 10)
+(define-public attr (make-procedure-with-setter get-attr set-attr!))
+
 (define-public type %vcomponent-type)
 (define-public parent %vcomponent-parent)
 (define-public push-child! %vcomponent-push-child!)
@@ -43,6 +48,16 @@
 
 (define-public (transform-attr! ev field transformer)
   "Apply transformer to field in ev, and store the result back."
+  #;
   (set-attr! ev field
              (transformer
-              (get-attr ev field))))
+              (get-attr ev field)))
+
+  ;; TODO make transform C primitive.
+  ;; Halfing the lookups.
+  (set! (attr ev field)
+        (transformer (attr ev field))))
+
+
+
+
