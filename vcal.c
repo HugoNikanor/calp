@@ -45,7 +45,7 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 	INIT(VECT(vcomponent), &self->components);
 
 	if (filename != NULL) {
-		vcomponent_push_val (self, "X-HH-FILENAME", filename);
+		vcomponent_push_val (self, "X-HNH-FILENAME", filename);
 	}
 
 	self->type = (char*) calloc(sizeof(*type), strlen(type) + 1);

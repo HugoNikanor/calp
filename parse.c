@@ -200,7 +200,7 @@ int handle_kv (
 					CLINE_CUR_VAL(cline)->mem,
 					vcomponent_get_val(
 						PEEK(LLIST(vcomponent))(&ctx->comp_stack),
-						"X-HH-FILENAME"));
+						"X-HNH-FILENAME"));
 			PUSH(LLIST(strbuf))(&ctx->key_stack, expected_key);
 
 			return -1;

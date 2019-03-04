@@ -19,7 +19,7 @@ int create_graph_trie (vcomponent* ev, char* filename) {
 
 	fclose(f);
 
-	INFO_F("Wrote '%s' to '%s'", vcomponent_get_val(ev, "X-HH-FILENAME"), filename);
+	INFO_F("Wrote '%s' to '%s'", vcomponent_get_val(ev, "X-HNH-FILENAME"), filename);
 
 	return 0;
 }
