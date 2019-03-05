@@ -1,7 +1,9 @@
 (define-module (vcalendar recur)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9 gnu)
+  #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-41)
   #:use-module (vcalendar datetime)
   #:use-module (util)
   #:export (<recur-rule> build-recur-rules))
@@ -89,6 +91,7 @@
                #,@(cc #'((key val proc) ...))
                (else (call/cc (lambda (cont) (throw 'unknown-key cont obj var-key)))))))))))
 
+
 (define (%build-recur-rules str)
   (fold-lists
    (lambda ((key val) obj)
@@ -112,3 +115,32 @@
    ((record-constructor <recur-rule> '(interval wkst)) 1 'MO)
    (map (cut string-split <> #\=)
         (string-split str #\;))))
+
+
+(define (generate-next event rule)
+  (match rule
+    (($ <recur-rule> freq until count interval bysecond byminute byhour wkst)
+     (case freq
+       ((WEEKLY)
+        ;; TODO implement copy-event
+        (let ((new-event (copy-event event)))
+          (transform-attr! (date new-event)
+                           (cut date-add <> 1 weeks)))))
+     
+     ))
+
+  )
+
+(define-stream (recur-event-stream event rule-obj)
+  (stream-cons event
+               (receive (next-event next-obj) (generate-next event rule-obj)
+                 (recur-event-stream next-event next-rule))))
+
+(define (recur-event event)
+  (recur-event-stream event (build-recur-rules (get-attr event "RRULE"))))
+
+
+
+(define tzero (make-time time-utc 0 0))
+(define dzero (time-utc->date tzero))
+
