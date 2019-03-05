@@ -5,7 +5,9 @@
   #:export (copy-date
             drop-time! drop-time
             localize-date
-            date-today?))
+            date-today?
+            seconds minutes hours days weeks 
+            date-add))
 
 (define (copy-date date)
   "Returns a copy of the given date structure"
@@ -53,3 +55,13 @@ transposed to the current timezone. Current timezone gotten from
           (1+ (day then)))
     (and (%date<=? now input-date)
          (%date<=? input-date then))))
+
+(define seconds  1)
+(define minutes 60)
+(define hours   (* 60 minutes))
+(define days    (* 24 hours))
+(define weeks   (* 7 days))
+
+(define (date-add date amount unit)
+  (time-utc->date (add-duration (date->time-utc date)
+                 (make-time time-duration 0 (* amount unit)))))
