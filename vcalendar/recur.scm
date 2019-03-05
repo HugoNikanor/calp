@@ -2,16 +2,23 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9 gnu)
   #:use-module (srfi srfi-26)
-  #:use-module (util))
-
+  #:use-module (vcalendar datetime)
+  #:use-module (util)
+  #:export (<recur-rule> build-recur-rules))
 
 (define-immutable-record-type <recur-rule>
-  (make-recur-rules freq until count interval)
+  (make-recur-rules
+   freq until count interval bysecond byminute byhour wkst)
   recur-rule?
   (freq     get-freq     set-freq)
   (until    get-until    set-until)
   (count    get-count    set-count)
-  (interval get-interval set-interval))
+  (interval get-interval set-interval)  ; 1
+  (bysecond get-bysecond set-bysecond)
+  (byminute get-byminute set-byminute)
+  (byhour   get-byhour   set-byhour)
+  (wkst     get-wkst     set-wkst)      ; MO
+  )
 
 
 ;; (build-recur-rules "FREQ=HOURLY") ; => #<<recur-rule> freq: HOURLY until: #f count: #f interval: #f>
@@ -46,22 +53,11 @@
 (define (string->number-list val delim)
   (map string->number (string-split val delim)))
 
-(define (%build-recur-rules str)
-  (fold-lists
-   (lambda ((key val) obj)
-     (quick-case (string->symbol key) obj
-                 (FREQ  (string->symbol val) (cut memv <> '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY)))
-                 (UNTIL (string->date val) identity)
-                 (COUNT (string->number val) (cut <= 0 <>))
-                 (INTERVAL (string->number val) (cut <= 0 <>))
-                 (BYSECOND (string->number-list val #\,) (cut every (cut <= 0 <> 60) <>))
-                 (BYMINUTE (string->number-list val #\,) (cut every (cut <= 0 <> 59) <>))
-                 (BYHOUR (string->number-list val #\,) (cut every (cut <= 0 <> 23) <>))
-                 ))
-   (make-recur-rules #f #f #f 1)
-   (map (cut string-split <> #\=)
-        (string-split str #\;))))
+(define (string->symbols val delim)
+  (map string->symbol (string-split val delim)))
 
+(define weekdays
+  '(SU MO TU WE TH FR SA))
 
 ;;; A special form of case only useful in build-recur-rules above.
 ;;; Each case is on the form (KEY val check-proc) where:
@@ -69,24 +65,50 @@
 ;;; `val` is the value to bind to the loop object and
 ;;; `check` is something the object must conform to
 
-(define (syntax-helper obj parent-expr expr )
-  "Helper function for quick-case below"
-  (with-syntax ((obj (datum->syntax parent-expr obj)))
-    (syntax-case expr ()
-      ((key val proc)
-       (with-syntax ((setter (datum->syntax parent-expr (make-setter (syntax->datum (syntax key))))))
-         #'((key)
-            (cond ((not val) (call/cc (lambda (cont) (throw 'invalid-value cont obj (quote key) val))))
-                  ((proc val) (setter obj val))
-                  (else (setter obj (call/cc (lambda (cont) (throw 'unfulfilled-constraint cont obj (quote key) val))))))))))))
+
 
 (define-syntax quick-case 
   (lambda (x)
-    (syntax-case x ()
-      ((_ var-key obj (key val proc) ...)
-       (let* ((make-setter (lambda (symb) (symbol-append 'set- (symbol-downcase symb))))
-              (cc (lambda (lst) (map (cut syntax-helper (syntax->datum (syntax obj)) x <>)
-                                lst))))
-         #`(case var-key
-             #,@(cc #'((key val proc) ...))
-             (else (call/cc (lambda (cont) (throw 'unknown-key cont obj var-key))))))))))
+    (let ((syntax-helper
+           (lambda (obj parent-expr expr) 
+             "Helper function for quick-case below"
+             (with-syntax ((obj (datum->syntax parent-expr obj)))
+               (syntax-case expr ()
+                 ((key val proc)
+                  (let ((make-setter (lambda (symb) (symbol-append 'set- (symbol-downcase symb)))))
+                    (with-syntax ((setter (datum->syntax parent-expr (make-setter (syntax->datum (syntax key))))))
+                      #'((key)
+                         (cond ((not val) (call/cc (lambda (cont) (throw 'invalid-value cont obj (quote key) val))))
+                               ((proc val) (setter obj val))
+                               (else (setter obj (call/cc (lambda (cont) (throw 'unfulfilled-constraint cont obj (quote key) val)))))))))))))))
+      (syntax-case x ()
+        ((_ var-key obj (key val proc) ...)
+         (let ((cc (lambda (lst) (map (cut syntax-helper (syntax->datum (syntax obj)) x <>)
+                                 lst))))
+           #`(case var-key
+               #,@(cc #'((key val proc) ...))
+               (else (call/cc (lambda (cont) (throw 'unknown-key cont obj var-key)))))))))))
+
+(define (%build-recur-rules str)
+  (fold-lists
+   (lambda ((key val) obj)
+     (quick-case (string->symbol key) obj
+                 (FREQ  (string->symbol val) (cut memv <> '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY)))
+                 (UNTIL (parse-datetime val) identity)
+                 (COUNT (string->number val) (cut <= 0 <>))
+                 (INTERVAL (string->number val) (cut <= 0 <>))
+                 (BYSECOND (string->number-list val #\,) (cut every (cut <= 0 <> 60) <>))
+                 (BYMINUTE (string->number-list val #\,) (cut every (cut <= 0 <> 59) <>))
+                 (BYHOUR (string->number-list val #\,) (cut every (cut <= 0 <> 23) <>))
+                 ;; TODO implement these
+                 ;; (BYDAY)
+                 ;; (BYMONTHDAY)
+                 ;; (BYYEARDAY)
+                 ;; (BYWEEKNO)
+                 ;; (BYMONTH)
+                 ;; (BYSETPOS)
+                 (WKST (string->symbol val) (cut memv <> weekdays))
+                 ))
+   ((record-constructor <recur-rule> '(interval wkst)) 1 'MO)
+   (map (cut string-split <> #\=)
+        (string-split str #\;))))
