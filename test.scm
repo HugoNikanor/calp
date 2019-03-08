@@ -13,8 +13,7 @@
 
 (define cal (make-vcomponent "testcal/repeating-event.ics"))
 
-(define ev (find (lambda (ev) (eq? 'VEVENT (type ev)))
-                 (children cal)))
+(define ev (car (children cal 'VEVENT)))
 
 (define ev-copy (copy-vcomponent ev))
 
