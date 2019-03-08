@@ -18,21 +18,6 @@
      (lambda (expr)
        (apply (lambda expr-list body ...) expr)))))
 
-(define-syntax let-multi
-  (syntax-rules ()
-      ((let-m identifiers lst body ...)
-       (apply (lambda identifiers body ...)
-              lst))))
-
-(define-syntax fold-lists
-  (syntax-rules (lambda)
-    ((_ (lambda ((list-part ...) object) body ...) seed list)
-     (fold (lambda (kv object)
-             (let-multi (list-part ...) kv
-                        body ...))
-           seed
-           list))))
-
 (define-syntax catch-let
   (syntax-rules ()
     ((_ thunk ((type handler) ...))
@@ -43,9 +28,12 @@
            (else (format #t "Unhandled error type ~a, rethrowing ~%" err)
                  (apply throw err args))))))))
 
+;;; For-each with arguments in reverse order.
 (define-syntax-rule (for-each-in lst proc)
   (for-each proc lst))
 
+
+;;; Helper macros to make define-quick-record better
 
 (define (class-name symb) (symbol-append '< symb '>))
 (define (constructor symb) (symbol-append 'make- symb))
@@ -66,6 +54,9 @@
                                        ,(getter f symb) ,(setter f symb bang?))))
                    fields))))
 
+;;; Creates srfi-9 define{-immutable,}-record-type declations.
+;;; Also creates srfi-17 accessor ((set! (access field) value))
+
 (define-macro (define-quick-record name . fields)
   (%define-quick-record '(@ (srfi srfi-9 gnu) define-immutable-record-type)
                         #f name fields))
@@ -73,6 +64,15 @@
 (define-macro (define-quick-record! name . fields)
   (%define-quick-record '(@ (srfi srfi-9) define-record-type)
                         #t name fields))
+
+;;; Replace let* with a version that can bind from lists.
+;;; Example:
+;; (let* ((i 10)
+;;        ((a b) (list (+ i 1)
+;;                     (+ i 2))))
+;;   (list i a b))
+;; => (10 11 12)
+;;; 
 
 (define-syntax let*
   (syntax-rules ()
