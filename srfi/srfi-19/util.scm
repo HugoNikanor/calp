@@ -26,7 +26,7 @@
 
 (define (drop-time date)
   "Returns a copy of date; with the hour, minute, second and nanosecond
-attribute set to 0."
+attribute set to 0. Can also be seen as \"Start of day\""
   (set-fields date
               ((date-hour) 0)
               ((date-minute) 0)
@@ -44,7 +44,7 @@ attribute set to 0."
   (add-duration time (make-time time-duration 0 (* amount unit))))
 
 (define (today? time)
-  (let* ((now (date->time-utc (current-date)))
+  (let* ((now (date->time-utc (drop-time (current-date))))
          (then (time-add now 1 days)))
     (and (time<=? now time)
          (time<=? time then))))

@@ -8,7 +8,6 @@
              (srfi srfi-19)
              (srfi srfi-19 util)
              (srfi srfi-41)
-             (code)
              (vcalendar)
              (vcalendar recur))
 

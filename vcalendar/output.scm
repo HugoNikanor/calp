@@ -1,27 +1,13 @@
-(define-module (code)
-  #:export (extract sort* color-if
-                    STR-YELLOW STR-RESET
-                    print-vcomponent))
-
-(use-modules (srfi srfi-19)
-             (srfi srfi-19 util)
-             (srfi srfi-26)
-             (vcalendar)
-             (util))
-
-(define (extract field)
-  (cut get-attr <> field))
-
-;;; This function borrowed from web-ics (calendar util) 
-(define* (sort* items comperator #:optional (get identity))
-  "A sort function more in line with how python's sorted works"
-  (sort items (lambda (a b)
-                (comperator (get a)
-                            (get b)))))
+(define-module (vcalendar output)
+  #:use-module (vcalendar)
+  #:use-module (util)
+  #:use-module (srfi srfi-26)
+  #:export (print-vcomponent
+            color-if
+            STR-YELLOW STR-RESET))
 
 (define STR-YELLOW "\x1b[0;33m")
 (define STR-RESET "\x1b[m")
-
 
 (define-syntax-rule (color-if pred color body ...)
   (let ((pred-value pred))
@@ -30,9 +16,8 @@
             (begin body ...)
             (if pred-value STR-RESET ""))))
 
-
 (define* (print-vcomponent comp #:optional (depth 0))
-  (let ((kvs (map (lambda (key) (cons key (get-attr comp key)))
+  (let ((kvs (map (lambda (key) (cons key (attr comp key)))
                   (attributes comp))))
     (format #t "~a <~a> :: ~:a~%"
             (make-string depth #\:)
@@ -46,4 +31,3 @@
                              key value))))
     (for-each-in (children comp)
                  (cut print-vcomponent <> (1+ depth)))))
-

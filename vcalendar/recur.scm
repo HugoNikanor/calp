@@ -155,7 +155,7 @@
           (time-difference
            (attr event "DTEND")
            (attr event "DTSTART"))))
-  (recur-event-stream event (build-recur-rules (get-attr event "RRULE"))))
+  (recur-event-stream event (build-recur-rules (attr event "RRULE"))))
 
 (define tzero (make-time time-utc 0 0))
 (define dzero (time-utc->date tzero))

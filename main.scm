@@ -4,43 +4,33 @@
 
 (add-to-load-path (dirname (current-filename)))
 
-(use-modules (srfi srfi-1)
-             (srfi srfi-19)
+(use-modules (srfi srfi-19)
              (srfi srfi-19 util)
-             (srfi srfi-26)
              (vcalendar)
-             (util)
-             (code))
+             (vcalendar output)
+             (util))
+
+;;; This function borrowed from web-ics (calendar util) 
+(define* (sort* items comperator #:optional (get identity))
+  "A sort function more in line with how python's sorted works"
+  (sort items (lambda (a b)
+                (comperator (get a)
+                            (get b)))))
 
 ;;; ------------------------------------------------------------
 
-
-(define (search cal term)
-  (cdr (let ((events (filter (lambda (ev) (eq? 'VEVENT (type ev)))
-                             (children cal))))
-         (find (lambda (ev) (string-contains-ci (car ev) term))
-               (map cons (map (cut get-attr <> "SUMMARY")
-                              events)
-                    events)))))
-
-
 (define (main args)
-  (define path
-    (if (null? (cdr (command-line)))
-        "testcal/repeating-event.ics"
-        (cadr (command-line))))
-
+  (define path (cadr (append args '("testcal/repeating-event.ics"))))
   (define cal (make-vcomponent path))
 
   ;; Sort the events, and print a simple agenda.
-
   (for-each-in (sort* (children cal 'VEVENT)
                       time<? (extract "DTSTART"))
                (lambda (ev) (format #t "~a | ~a~%"
-                               (let ((start (get-attr ev "DTSTART")))
+                               (let ((start (attr ev "DTSTART")))
                                  (color-if (today? start) STR-YELLOW
                                            (time->string start "~1 ~H:~M")))
-                               (get-attr ev "SUMMARY")))))
+                               (attr ev "SUMMARY")))))
 
 
   #; (define pizza-event (search cal "pizza"))
