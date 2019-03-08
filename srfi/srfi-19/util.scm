@@ -4,11 +4,8 @@
   #:use-module (srfi srfi-19 setters)
   #:export (copy-date
             drop-time! drop-time
-            localize-date
-            ;; date-today?
             today?
             seconds minutes hours days weeks 
-            date-add
             time-add
             time->string))
 
@@ -30,28 +27,12 @@
 (define (drop-time date)
   "Returns a copy of date; with the hour, minute, second and nanosecond
 attribute set to 0."
-  #; 
-  (let ((new-date (copy-date date)))    ;
-  (drop-time! new-date))
   (set-fields date
               ((date-hour) 0)
               ((date-minute) 0)
               ((date-second) 0)
               ((date-nanosecond) 0)))
 
-
-#;
-(define (%date<=? a b)
-  (time<=? (date->time-utc a)
-           (date->time-utc b)))
-
-#;
-(define (localize-date date)
-  "Returns a <date> object representing the same datetime as `date`, but
-transposed to the current timezone. Current timezone gotten from
-(current-date)."
-  (time-utc->date (date->time-utc date)
-                  (date-zone-offset (current-date))))
 
 (define seconds  1)
 (define minutes 60)
@@ -67,21 +48,6 @@ transposed to the current timezone. Current timezone gotten from
          (then (time-add now 1 days)))
     (and (time<=? now time)
          (time<=? time then))))
-
-  #;
-(define (date-today? input-date)
-  (let* ((date (current-date))
-         (now (drop-time date))
-         (then (copy-date now)))
-    (set! (day then)
-          (1+ (day then)))
-    (and (%date<=? now input-date)
-         (%date<=? input-date then))))
-
-#;
-(define (date-add date amount unit)
-  (time-utc->date (add-duration (date->time-utc date)
-                 (make-time time-duration 0 (* amount unit)))))
 
 (define* (time->string time #:optional (format "~c"))
   (date->string (time-utc->date time) format))
