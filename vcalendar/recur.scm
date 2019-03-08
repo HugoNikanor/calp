@@ -11,24 +11,8 @@
   #:use-module (vcalendar)
   #:use-module (vcalendar datetime)
   #:use-module (util)
-  #:export (<recur-rule> build-recur-rules recur-event))
 
-
-;; (define-immutable-record-type <recur-rule>
-;;   (make-recur-rules
-;;    freq until count interval bysecond byminute byhour wkst)
-;;   recur-rule?
-;;   (freq     get-freq     set-freq)
-;;   (until    get-until    set-until)
-;;   (count    get-count    set-count)
-;;   (interval get-interval set-interval)  ; 1
-;;   (bysecond get-bysecond set-bysecond)
-;;   (byminute get-byminute set-byminute)
-;;   (byhour   get-byhour   set-byhour)
-;;   (wkst     get-wkst     set-wkst)      ; MO
-;;   )
-
-(define-quick-record recur-rule freq until count interval bysecond byminute byhour wkst)
+  #:export (recur-event))
 
 ;; (build-recur-rules "FREQ=HOURLY")
 ;; ;; => #<<recur-rule> freq: HOURLY until: #f count: #f interval: #f>
@@ -41,29 +25,22 @@
 ;; (build-recur-rules "FREQ=HOURLY;COUNT=-1")
 ;; ;; => #<<recur-rule> freq: HOURLY until: #f count: #f interval: #f>
 
+(define-quick-record recur-rule
+  freq until count interval bysecond byminute byhour wkst)
+
 (define (build-recur-rules str)
- (catch-let
+  "Takes a RECUR value (string), and returuns a <recur-rule> object"
+ (catch #t
   (lambda () (%build-recur-rules str))
-
-  ((unknown-key
-    (lambda (err cont obj key . rest)
-      (format #t "ERR Invalid key [~a] while parsing recurence rule, ignoring.~%" key)
-      (cont obj)))
-
-   (unfulfilled-constraint
-    (lambda (err cont obj key val . rest)
-      (let ((default-value (case key
-                             ((INTERVAL) 1)
-                             (else #f))))
-        (format #t "ERR Value [~a] doesn't fulfill constraint of type [~a], defauting to [~a].~%"
-                val key default-value)
-        (cont default-value))))
-
-   (invalid-value
-    (lambda (err cont obj key val . rest)
-      (format #t "ERR Invalid value [~a] for key [~a], ignoring.~%" val key)
-      (cont obj))))))
-
+  (lambda (err cont obj key val . rest)
+    (let ((fmt (case err
+                 ((unfulfilled-constraint)
+                  "ERR ~a [~a] doesn't fulfill constraint of type [~a], ignoring~%")
+                 ((invalid-value)
+                  "ERR ~a [~a] for key [~a], ignoring.~%")
+                 (else "~a ~a ~a"))))
+      (format #t fmt err val key))
+    (cont obj))))
 
 ;;; A special form of case only useful in build-recur-rules above.
 ;;; Each case is on the form (KEY val check-proc) where:
@@ -74,6 +51,10 @@
 (define-syntax-rule (throw-returnable symb args ...)
   (call/cc (lambda (cont) (throw symb cont args ...))))
 
+;;; TODO
+;;; something with this will only properly compiled if run interactively. 
+;;; But once compiled from the repl it stays compiled from script
+;;; And script can run it, it just complains and keeps recompiling.
 (define ((handle-case stx obj) key val proc)
   (with-syntax ((skey (datum->syntax
                        stx (symbol-downcase (syntax->datum key)))))
@@ -94,7 +75,7 @@
                   #'(key ...)
                   #'(val ...)
                   #'(proc ...))
-        (else #f))))))
+        (else obj))))))
 
 (define weekdays
   '(SU MO TU WE TH FR SA))
@@ -113,13 +94,13 @@
    (lambda (lst obj)
      (let* (((key val) lst))
        (quick-case (string->symbol key) obj
-                   (FREQ  (string->symbol val) (cut memv <> intervals))
-                   (UNTIL (parse-datetime val) identity)
-                   (COUNT (string->number val) (cut <= 0 <>))
+                   (FREQ     (string->symbol val) (cut memv <> intervals))
+                   (UNTIL    (parse-datetime val) identity)
+                   (COUNT    (string->number val) (cut <= 0 <>))
                    (INTERVAL (string->number val) (cut <= 0 <>))
                    (BYSECOND (string->number-list val #\,) (cut every (cut <= 0 <> 60) <>))
                    (BYMINUTE (string->number-list val #\,) (cut every (cut <= 0 <> 59) <>))
-                   (BYHOUR (string->number-list val #\,) (cut every (cut <= 0 <> 23) <>))
+                   (BYHOUR   (string->number-list val #\,) (cut every (cut <= 0 <> 23) <>))
                    ;; TODO implement these
                    ;; (BYDAY)
                    ;; (BYMONTHDAY)
@@ -129,8 +110,10 @@
                    ;; (BYSETPOS)
                    (WKST (string->symbol val) (cut memv <> weekdays))
                    )))
+
    ;; obj
    ((record-constructor <recur-rule> '(interval wkst)) 1 'MO)
+
    ;; ((key val) ...)
    (map (cut string-split <> #\=)
         (string-split str #\;))))
@@ -144,12 +127,14 @@
              (add-duration (attr new-event "DTSTART")
                            (attr new-event "DURATION")))
        (values new-event rule))
+
       ((DAILY)
        (transform-attr! new-event "DTSTART" (cut time-add <> 1 days))
        (set! (attr new-event "DTEND")
              (add-duration  (attr new-event "DTSTART")
                             (attr new-event "DURATION")))
        (values new-event rule))
+
       (else (values '() rule)))))
 
 (define-stream (recur-event-stream event rule-obj)
@@ -167,7 +152,3 @@
            (attr event "DTEND")
            (attr event "DTSTART"))))
   (recur-event-stream event (build-recur-rules (attr event "RRULE"))))
-
-(define tzero (make-time time-utc 0 0))
-(define dzero (time-utc->date tzero))
-
