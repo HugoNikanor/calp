@@ -25,9 +25,7 @@ SCM_DEFINE (make_vcomponent, "%vcomponent-make", 1, 0, 0,
 	read_vcalendar(cal, p);
 	free(p);
 
-	return scm_make_foreign_object_1
-		(vcomponent_type, cal);
-
+	return scm_from_vcomponent (cal);
 }
 
 /*
@@ -188,10 +186,8 @@ SCM_DEFINE(vcomponent_shallow_copy, "%vcomponent-shallow-copy", 1, 0, 0,
 		(vcomponent*) scm_gc_malloc (
 				sizeof(*dest), "vcomponent");
 	INIT(vcomponent, dest, src->type, NULL);
-
 	vcomponent_copy (dest, src);
-	return scm_make_foreign_object_1
-		(vcomponent_type, dest);
+	return scm_from_vcomponent (dest);
 }
 
 void init_lib (void) {

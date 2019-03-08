@@ -22,6 +22,8 @@
 (assert (equal? (children ev)
                 (children ev-copy)))
 
+(define strm (recur-event ev))
+
 (stream-for-each
  (lambda (ev)
    (format #t "~a -- ~a~%"
@@ -29,8 +31,11 @@
            (time->string (attr ev "DTEND") "~1 ~3")))
  (stream-take 10 (recur-event ev)))
 
-(define stream-cadr (compose stream-car stream-cdr))
-
 (newline)
-(display (time->string (attr ev "DTSTART") "~1 ~3")) (newline)
-(display (time->string (attr (stream-cadr (recur-event ev)) "DTSTART") "~1 ~3")) (newline)
+
+(for-each
+ (lambda (ev)
+   (format #t "~a -- ~a~%"
+           (time->string (attr ev "DTSTART") "~1 ~3")
+           (time->string (attr ev "DTEND") "~1 ~3")))
+ (stream->list (stream-take 20 (recur-event ev))))

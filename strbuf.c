@@ -70,7 +70,10 @@ int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
 	}
 
 	if (src->scm != NULL) {
+		/* The magic SCM type is copied when reassigned. */
 		dest->scm = src->scm;
+		/* NOTE This is a bit of a leaky abstraction.  */
+		scm_gc_protect_object(dest->scm);
 	}
 
 	dest->len = src->len;
