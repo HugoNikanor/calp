@@ -19,7 +19,7 @@
  *     A top level value, along with a list of kv pairs for all its
  *     possible parameters.
  * param_set:
- *     A parameter key, along with a list of all its values. 
+ *     A parameter key, along with a list of all its values.
  */
 
 #define param_set LLIST(strbuf)
@@ -63,19 +63,20 @@
 typedef struct s_vcomponent vcomponent;
 
 #define TYPE vcomponent
-#include "vector.h"
+// #include "vector.h"
+#include "linked_list.h"
 #undef TYPE
 
 struct s_vcomponent {
 	char* type;
 	vcomponent* parent;
 	TRIE(content_line) clines;
-	VECT(vcomponent) components;
+	LLIST(vcomponent) components;
 
 	SCM scm;
 };
 
-#define FCHILD(v) GET(VECT(vcomponent))(&(v)->components, 0)
+#define FCHILD(v) FIRST_V(&(v)->components)
 
 INIT_F(vcomponent);
 INIT_F(vcomponent, const char* type);

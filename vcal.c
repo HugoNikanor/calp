@@ -26,7 +26,8 @@
 #undef TYPE
 
 #define TYPE vcomponent
-#include "vector.inc.h"
+// #include "vector.inc.h"
+#include "linked_list.inc.h"
 #undef TYPE
 
 INIT_F(vcomponent) {
@@ -42,7 +43,7 @@ INIT_F(vcomponent, const char* type) {
 INIT_F(vcomponent, const char* type, const char* filename) {
 
 	INIT(TRIE(content_line), &self->clines);
-	INIT(VECT(vcomponent), &self->components);
+	INIT(LLIST(vcomponent), &self->components);
 
 	if (filename != NULL) {
 		vcomponent_push_val (self, "X-HNH-FILENAME", filename);
@@ -75,14 +76,14 @@ FREE_F(vcomponent) {
 		ERR("Error freeing vcomponent");
 	}
 
-	FREE(VECT(vcomponent))(&self->components);
+	FREE(LLIST(vcomponent))(&self->components);
 
 	return 0;
 }
 
 int PUSH(vcomponent)(vcomponent* parent, vcomponent* child) {
 	child->parent = parent;
-	return PUSH(VECT(vcomponent))(&parent->components, child);
+	return PUSH(LLIST(vcomponent))(&parent->components, child);
 }
 
 int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
@@ -92,17 +93,31 @@ int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
 	return -1;
 }
 
+int vcomponent_copy(vcomponent* dest, vcomponent* src) {
+
+	DEEP_COPY(TRIE(content_line))(&dest->clines, &src->clines);
+
+	/* Children are the same objects */
+	FOR(LLIST, vcomponent, c, &src->components) {
+		PUSH(LLIST(vcomponent))(&dest->components, c);
+	}
+
+	PUSH(vcomponent)(src->parent, dest);
+
+	return 0;
+}
+
 FMT_F(vcomponent) {
 	int seek = 0;
 
 	for (int i = 0; i < 40; i++) fmtf("_");
 
 	seek += sprintf(buf + seek, _YELLOW);
-	seek += sprintf(buf + seek, "\nVComponet (Type := %s)\n", self->type); 
+	seek += sprintf(buf + seek, "\nVComponet (Type := %s)\n", self->type);
 	seek += sprintf(buf + seek, _RESET);
 	seek += FMT(TRIE(content_line))(&self->clines, buf + seek);
 	seek += sprintf(buf + seek, "\nComponents:\n");
-	FOR(VECT, vcomponent, comp, &self->components) {
+	FOR(LLIST, vcomponent, comp, &self->components) {
 		seek += FMT(vcomponent)(comp, buf + seek);
 	}
 

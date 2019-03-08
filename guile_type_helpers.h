@@ -10,6 +10,4 @@
 
 SCM scm_from_strbuf(strbuf* s);
 
-SCM scm_from_vector(VECT(vcomponent)* vect);
-
 #endif /* GUILE_TYPE_HELPERS_H */

@@ -96,7 +96,7 @@ SCM_DEFINE (vcomponent_child_count, "%vcomponent-child-count", 1, 0, 0,
 {
 	scm_assert_foreign_object_type (vcomponent_type, component);
 	vcomponent* c = scm_foreign_object_ref (component, 0);
-	return scm_from_size_t (SIZE(VECT(vcomponent))(&c->components));
+	return scm_from_size_t (SIZE(LLIST(vcomponent))(&c->components));
 }
 
 SCM_DEFINE(vcomponent_children, "%vcomponent-children", 1, 0, 0,
@@ -105,7 +105,12 @@ SCM_DEFINE(vcomponent_children, "%vcomponent-children", 1, 0, 0,
 {
 	scm_assert_foreign_object_type (vcomponent_type, component);
 	vcomponent* cal = scm_foreign_object_ref (component, 0);
-	return scm_from_vector(&cal->components);
+
+	SCM llist = SCM_EOL;
+	FOR (LLIST, vcomponent, v, &cal->components) {
+		llist = scm_cons(scm_from_vcomponent(v), llist);
+	}
+	return llist;
 }
 
 SCM_DEFINE(vcomponent_push_child_x, "%vcomponent-push-child!", 2, 0, 0,

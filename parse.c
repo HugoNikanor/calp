@@ -9,9 +9,9 @@
 
 #include "err.h"
 
-#define TYPE vcomponent
-#include "linked_list.inc.h"
-#undef TYPE
+// #define TYPE vcomponent
+// #include "linked_list.inc.h"
+// #undef TYPE
 
 #define T strbuf
 #define V strbuf

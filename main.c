@@ -44,20 +44,16 @@ int main (int argc, char** argv) {
 		puts("----------+----------+------------");
 
 		/* This loops over all VCALENDAR's in root */
-		for (size_t i = 0; i < root.components.length; i++) {
-			vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
+		FOR (LLIST, vcomponent, cal, &root.components) {
 			assert(strcmp(cal->type, "VCALENDAR") == 0);
 
 			char* filename = vcomponent_get_val(cal, "X-HNH-FILENAME");
 
 			/* This loop over all VEVENT's in the current VCALENDAR */
-			for (size_t j = 0; j < cal->components.length; j++) {
-				vcomponent* ev = GET(VECT(vcomponent))(&cal->components, j);
-
+			FOR (LLIST, vcomponent, ev, &cal->components) {
 				if (strcmp(ev->type, "VEVENT") != 0) continue;
 
-				printf("%3lu : %3lu | %s | %s\n",
-						i + 1, j + 1,
+				printf("%s | %s\n",
 						filename,
 						get_property(ev, "SUMMARY")->cur->value->key.mem);
 			}
@@ -65,8 +61,7 @@ int main (int argc, char** argv) {
 	} else if (strcmp(args.argv[0], "-g") == 0) {
 		/* TODO self might be broken */
 		if (arg_shift(&args) == 0) {
-			for (size_t i = 0; i < root.components.length; i++) {
-				vcomponent* cal = GET(VECT(vcomponent))(&root.components, i);
+			FOR (LLIST, vcomponent, cal, &root.components) {
 				assert(strcmp(cal->type, "VCALENDAR") == 0);
 
 				vcomponent* ev = FCHILD(cal);

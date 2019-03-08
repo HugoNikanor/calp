@@ -49,10 +49,7 @@ int helper_vcomponent (vcomponent* root, FILE* f) {
 		fputs("}", f);
 	}
 
-	vcomponent* child;
-	for (size_t i = 0; i < root->components.length; i++) {
-		child = GET(VECT(vcomponent))(&root->components, i);
-		if (child == NULL) continue;
+	FOR(LLIST, vcomponent, child, &root->components) {
 		fprintf(f, "\"%p\" -> \"%p\"\n", root, child);
 		helper_vcomponent(child, f);
 	}

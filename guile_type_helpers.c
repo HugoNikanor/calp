@@ -11,13 +11,3 @@ SCM scm_from_strbuf(strbuf* s) {
 
 	return s->scm;
 }
-
-SCM scm_from_vector(VECT(vcomponent)* vect) {
-	SCM l = SCM_EOL;
-	for (size_t i = 0; i < vect->length; i++) {
-		vcomponent* v = GET(VECT(vcomponent))(vect, i);
-		l = scm_cons(scm_from_vcomponent(v), l);
-	}
-	return scm_reverse(l);
-}
-
