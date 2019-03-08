@@ -1,12 +1,13 @@
 (define-module (code)
   #:export (extract sort* color-if
-                    for-each-in STR-YELLOW STR-RESET
+                    STR-YELLOW STR-RESET
                     print-vcomponent))
 
 (use-modules (srfi srfi-19)
              (srfi srfi-19 util)
              (srfi srfi-26)
-             (vcalendar))
+             (vcalendar)
+             (util))
 
 (define (extract field)
   (cut get-attr <> field))

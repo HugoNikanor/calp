@@ -27,7 +27,7 @@
 (define (main args)
   (define path
     (if (null? (cdr (command-line)))
-        "testcal/d1-b.ics"
+        "testcal/repeating-event.ics"
         (cadr (command-line))))
 
   (define cal (make-vcomponent path))
@@ -38,8 +38,8 @@
                       time<? (extract "DTSTART"))
                (lambda (ev) (format #t "~a | ~a~%"
                                (let ((start (get-attr ev "DTSTART")))
-                                 (color-if (date-today? start) STR-YELLOW
-                                           (date->string (time-utc->date start) "~1 ~H:~M")))
+                                 (color-if (today? start) STR-YELLOW
+                                           (time->string start "~1 ~H:~M")))
                                (get-attr ev "SUMMARY")))))
 
 
