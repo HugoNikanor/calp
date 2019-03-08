@@ -10,7 +10,7 @@
   #:use-module (vcalendar)
   #:use-module (vcalendar datetime)
   #:use-module (util)
-  #:export (<recur-rule> build-recur-rules))
+  #:export (<recur-rule> build-recur-rules recur-event))
 
 (define-immutable-record-type <recur-rule>
   (make-recur-rules
@@ -122,28 +122,27 @@
 
 
 (define (generate-next event rule)
-  (match rule
-    (($ <recur-rule> freq until count interval bysecond byminute byhour wkst)
-     (case freq
-       ((WEEKLY)
-        ;; TODO implement copy-event
-        (let ((new-event (copy-event event)))
-          (transform-attr! new-event "DTSTART"
-                           (cut date-add <> 1 weeks)))))
-     
-     ))
-
-  )
+  (let ((new-event (copy-vcomponent event)))
+    (match rule
+      (($ <recur-rule> freq until count interval bysecond byminute byhour wkst)
+       (case freq
+         ((WEEKLY) (transform-attr! new-event "DTSTART" (cut date-add <> 1 weeks))
+          (values new-event rule))
+         ((DAILY) (transform-attr! new-event "DTSTART" (cut date-add <> 1 days))
+          (values new-event rule))
+         (else (values '() rule))))
+      (_ (values event rule)))))
 
 (define-stream (recur-event-stream event rule-obj)
   (stream-cons event
-               (receive (next-event next-rule) (generate-next event rule-obj)
-                 (recur-event-stream next-event next-rule))))
+               (receive (next-event next-rule)
+                   (generate-next event rule-obj)
+                 (if (null? next-event)
+                     stream-null
+                     (recur-event-stream next-event next-rule)))))
 
 (define (recur-event event)
   (recur-event-stream event (build-recur-rules (get-attr event "RRULE"))))
-
-
 
 (define tzero (make-time time-utc 0 0))
 (define dzero (time-utc->date tzero))

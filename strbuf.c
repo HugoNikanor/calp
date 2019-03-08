@@ -69,6 +69,10 @@ int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
 		retval = 1;
 	}
 
+	if (src->scm != NULL) {
+		dest->scm = src->scm;
+	}
+
 	dest->len = src->len;
 	memcpy(dest->mem, src->mem, src->len);
 	return retval;
