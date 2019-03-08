@@ -73,6 +73,11 @@ struct s_vcomponent {
 	TRIE(content_line) clines;
 	LLIST(vcomponent) components;
 
+	/*
+	 * Holds a Guile representation of this object. Used to always
+	 * return the same foreign (for guile) object for the same
+	 * vcomponent.
+	 */
 	SCM scm;
 };
 
@@ -96,7 +101,17 @@ char* vcomponent_get_val (vcomponent*, const char* key);
  */
 int PUSH(vcomponent)(vcomponent*, vcomponent*);
 
+/*
+ * Deep copy is currently not implemented for vcomponentes.
+ * The reason for this method being here is since some
+ * generic methods in other places complain otherwise.
+ */
 int DEEP_COPY(vcomponent)(vcomponent*, vcomponent*);
+
+/*
+ * "Shallow" copy of vcomponent.
+ */
+int vcomponent_copy(vcomponent*, vcomponent*);
 
 FMT_F(vcomponent);
 

@@ -12,7 +12,9 @@
             %vcomponent-set-attribute!
             %vcomponent-get-attribute
 
-            %vcomponent-attribute-list))
+            %vcomponent-attribute-list
+
+            %vcomponent-shallow-copy))
 
 (setenv "LD_LIBRARY_PATH" (dirname (dirname (current-filename))))
 (load-extension "libguile-calendar" "init_lib")

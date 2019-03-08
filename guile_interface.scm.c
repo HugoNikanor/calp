@@ -177,6 +177,23 @@ SCM_DEFINE(vcomponent_attr_list, "%vcomponent-attribute-list", 1, 0, 0,
 	return llist;
 }
 
+SCM_DEFINE(vcomponent_shallow_copy, "%vcomponent-shallow-copy", 1, 0, 0,
+           (SCM component),
+           "Creates a shallow copy of the given component.")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	vcomponent* src = scm_foreign_object_ref (component, 0);
+
+	vcomponent* dest =
+		(vcomponent*) scm_gc_malloc (
+				sizeof(*dest), "vcomponent");
+	INIT(vcomponent, dest, src->type, NULL);
+
+	vcomponent_copy (dest, src);
+	return scm_make_foreign_object_1
+		(vcomponent_type, dest);
+}
+
 void init_lib (void) {
 	init_vcomponent_type();
 
