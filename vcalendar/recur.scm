@@ -1,9 +1,13 @@
 (define-module (vcalendar recur)
   #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-9 gnu)
+  #:use-module (srfi srfi-8)            ; Recieve
+  #:use-module (srfi srfi-9 gnu)        ; Records
+  #:use-module (srfi srfi-19)           ; Datetime
   #:use-module (srfi srfi-19 util)
-  #:use-module (srfi srfi-26)
-  #:use-module (srfi srfi-41)
+  #:use-module (srfi srfi-26)           ; Cut
+  #:use-module (srfi srfi-41)           ; Streams
+  #:use-module (ice-9 match)
+  #:use-module (vcalendar)
   #:use-module (vcalendar datetime)
   #:use-module (util)
   #:export (<recur-rule> build-recur-rules))
@@ -124,7 +128,7 @@
        ((WEEKLY)
         ;; TODO implement copy-event
         (let ((new-event (copy-event event)))
-          (transform-attr! (date new-event)
+          (transform-attr! new-event "DTSTART"
                            (cut date-add <> 1 weeks)))))
      
      ))
@@ -133,7 +137,7 @@
 
 (define-stream (recur-event-stream event rule-obj)
   (stream-cons event
-               (receive (next-event next-obj) (generate-next event rule-obj)
+               (receive (next-event next-rule) (generate-next event rule-obj)
                  (recur-event-stream next-event next-rule))))
 
 (define (recur-event event)

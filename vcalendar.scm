@@ -58,5 +58,6 @@
   (set! (attr ev field)
         (transformer (attr ev field))))
 
+;; { (attr ev field) := (transformer (attr ev field)) }
 
 (define-public copy-vcomponent %vcomponent-shallow-copy)

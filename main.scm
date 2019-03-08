@@ -2,7 +2,7 @@
 -e main -s
 !#
 
-(add-to-load-path ".")
+(add-to-load-path (dirname (current-filename)))
 
 (use-modules (srfi srfi-1)
              (srfi srfi-19)
