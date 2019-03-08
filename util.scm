@@ -1,6 +1,7 @@
 (define-module (util)
   #:use-module (srfi srfi-1)
-  #:export (destructure-lambda let-multi fold-lists catch-let)
+  #:export (destructure-lambda let-multi fold-lists catch-let
+                               for-each-in)
   )
 
 (define-public upstring->symbol (compose string->symbol string-upcase))
@@ -43,3 +44,6 @@
            ((type) (apply handler err args)) ...
            (else (format #t "Unhandled error type ~a, rethrowing ~%" err)
                  (apply throw err args))))))))
+
+(define-syntax-rule (for-each-in lst proc)
+  (for-each proc lst))

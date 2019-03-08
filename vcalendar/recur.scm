@@ -126,9 +126,17 @@
     (match rule
       (($ <recur-rule> freq until count interval bysecond byminute byhour wkst)
        (case freq
-         ((WEEKLY) (transform-attr! new-event "DTSTART" (cut date-add <> 1 weeks))
+         ((WEEKLY)
+          (transform-attr! new-event "DTSTART" (cut time-add <> 1 weeks))
+          (set! (attr new-event "DTEND")
+                (add-duration (attr new-event "DTSTART")
+                              (attr new-event "DURATION")))
           (values new-event rule))
-         ((DAILY) (transform-attr! new-event "DTSTART" (cut date-add <> 1 days))
+         ((DAILY)
+          (transform-attr! new-event "DTSTART" (cut time-add <> 1 days))
+          (set! (attr new-event "DTEND")
+                (add-duration  (attr new-event "DTSTART")
+                               (attr new-event "DURATION")))
           (values new-event rule))
          (else (values '() rule))))
       (_ (values event rule)))))
@@ -142,6 +150,11 @@
                      (recur-event-stream next-event next-rule)))))
 
 (define (recur-event event)
+  (unless (attr event "DURATION")
+    (set! (attr event "DURATION")
+          (time-difference
+           (attr event "DTEND")
+           (attr event "DTSTART"))))
   (recur-event-stream event (build-recur-rules (get-attr event "RRULE"))))
 
 (define tzero (make-time time-utc 0 0))

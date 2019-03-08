@@ -9,16 +9,11 @@
              (srfi srfi-19 util)
              (srfi srfi-26)
              (vcalendar)
-             (vcalendar datetime)
+             (util)
              (code))
 
 ;;; ------------------------------------------------------------
 
-(define (parse-dates! cal)
-;;; Parse all start times into scheme date objects.
-  (for-each-in (children cal 'VEVENT)
-               (cut transform-attr! <> "DTSTART"
-                    parse-datetime)))
 
 (define (search cal term)
   (cdr (let ((events (filter (lambda (ev) (eq? 'VEVENT (type ev)))
@@ -37,16 +32,14 @@
 
   (define cal (make-vcomponent path))
 
-  (parse-dates! cal)
-
   ;; Sort the events, and print a simple agenda.
 
   (for-each-in (sort* (children cal 'VEVENT)
-                      time<? (compose date->time-utc (extract "DTSTART")))
+                      time<? (extract "DTSTART"))
                (lambda (ev) (format #t "~a | ~a~%"
                                (let ((start (get-attr ev "DTSTART")))
                                  (color-if (date-today? start) STR-YELLOW
-                                           (date->string start "~1 ~H:~M")))
+                                           (date->string (time-utc->date start) "~1 ~H:~M")))
                                (get-attr ev "SUMMARY")))))
 
 

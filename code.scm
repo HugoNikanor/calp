@@ -29,9 +29,6 @@
             (begin body ...)
             (if pred-value STR-RESET ""))))
 
-(define-syntax-rule (for-each-in lst proc)
-  (for-each proc lst))
-
 
 (define* (print-vcomponent comp #:optional (depth 0))
   (let ((kvs (map (lambda (key) (cons key (get-attr comp key)))

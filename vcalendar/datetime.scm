@@ -7,7 +7,9 @@
 
 (define (parse-datetime dtime)
   "Parse the given date[time] string into a date object."
-  (localize-date
+  ;; localize-date
+  
+  (date->time-utc
    (string->date
     dtime
     (case (string-length dtime)
