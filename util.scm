@@ -66,12 +66,13 @@
                         #t name fields))
 
 ;;; Replace let* with a version that can bind from lists.
+;;; Also supports SRFI-71 (extended let-syntax for multiple values)
 ;;; Example:
-;; (let* ((i 10)
-;;        ((a b) (list (+ i 1)
-;;                     (+ i 2))))
-;;   (list i a b))
-;; => (10 11 12)
+;; (let* ([a b (values 1 2)]               ; SRFI-71
+;;        [(c d) '(3 4)]                   ; Let-list (mine)
+;;        [e 5])                           ; Regular
+;;   (list e d c b a))
+;; ;; => (5 4 3 2 1)
 ;;; 
 
 (define-syntax let*
@@ -93,4 +94,13 @@
     [(_ ((k value) rest ...) body ...)
      (let ((k value))
        (let* (rest ...)
-        body ...))]))
+         body ...))]
+
+    ;; SRFI-71 let-values 
+    [(_ ((k k* ... values) rest ...) body ...)
+     (call-with-values (lambda () values)
+       (lambda (k k* ...)
+         (let* (rest ...)
+           body ...)))]
+
+    ))
