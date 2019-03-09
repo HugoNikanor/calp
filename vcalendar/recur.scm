@@ -1,13 +1,11 @@
 (define-module (vcalendar recur)
   #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-8)            ; Recieve
   #:use-module (srfi srfi-9 gnu)        ; Records
   #:use-module (srfi srfi-19)           ; Datetime
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-26)           ; Cut
   #:use-module (srfi srfi-41)           ; Streams
   #:use-module (ice-9 curried-definitions)
-  ;; #:use-module (ice-9 match)
   #:use-module (vcalendar)
   #:use-module (vcalendar datetime)
   #:use-module (util)
@@ -119,28 +117,29 @@
         (string-split str #\;))))
 
 (define (generate-next event rule)
-  (let ((new-event (copy-vcomponent event)))
+  (let ((ne (copy-vcomponent event)))   ; new event
     (case (freq rule)
       ((WEEKLY)
-       (transform-attr! new-event "DTSTART" (cut time-add <> 1 weeks))
-       (set! (attr new-event "DTEND")
-             (add-duration (attr new-event "DTSTART")
-                           (attr new-event "DURATION")))
-       (values new-event rule))
+       (mod! (attr ne "DTSTART") (cut time-add <> 1 weeks))
+
+       (set! (attr ne "DTEND")
+             (add-duration (attr ne "DTSTART")
+                           (attr ne "DURATION")))
+       (values ne rule))
 
       ((DAILY)
-       (transform-attr! new-event "DTSTART" (cut time-add <> 1 days))
-       (set! (attr new-event "DTEND")
-             (add-duration  (attr new-event "DTSTART")
-                            (attr new-event "DURATION")))
-       (values new-event rule))
+       (mod! (attr ne "DTSTART") (cut time-add <> 1 days))
+
+       (set! (attr ne "DTEND")
+             (add-duration  (attr ne "DTSTART")
+                            (attr ne "DURATION")))
+       (values ne rule))
 
       (else (values '() rule)))))
 
 (define-stream (recur-event-stream event rule-obj)
   (stream-cons event
-               (receive (next-event next-rule)
-                   (generate-next event rule-obj)
+               (let* ([next-event next-rule (generate-next event rule-obj)])
                  (if (null? next-event)
                      stream-null
                      (recur-event-stream next-event next-rule)))))

@@ -9,8 +9,8 @@
   "Parse all start times into scheme date objects."
   (for-each-in (children cal 'VEVENT)
                (lambda (ev)
-                 (transform-attr! ev "DTSTART" parse-datetime)
-                 (transform-attr! ev "DTEND"   parse-datetime)))
+                 (mod! (attr ev "DTSTART") parse-datetime)
+                 (mod! (attr ev "DTEND")   parse-datetime)))
   cal)
 
 (define-public (make-vcomponent path)
@@ -56,15 +56,6 @@
 (define-public parent %vcomponent-parent)
 (define-public push-child! %vcomponent-push-child!)
 (define-public attributes %vcomponent-attribute-list)
-
-(define-public (transform-attr! ev field transformer)
-  "Apply transformer to field in ev, and store the result back."
-  ;; TODO make transform C primitive.
-  ;; Halfing the lookups.
-  (set! (attr ev field)
-        (transformer (attr ev field))))
-
-;; { (attr ev field) := (transformer (attr ev field)) }
 
 (define-public copy-vcomponent %vcomponent-shallow-copy)
 

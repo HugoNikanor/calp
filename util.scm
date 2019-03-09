@@ -2,7 +2,8 @@
   #:use-module (srfi srfi-1)
   #:export (destructure-lambda let-multi fold-lists catch-let
                                for-each-in
-                               define-quick-record define-quick-record!)
+                               define-quick-record define-quick-record!
+                               mod!)
   #:replace (let*)
   )
 
@@ -104,3 +105,7 @@
            body ...)))]
 
     ))
+
+;; Like set!, but applies a transformer on the already present value.
+(define-syntax-rule (mod! field transform-proc)
+  (set! field (transform-proc field)))
