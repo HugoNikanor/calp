@@ -24,7 +24,9 @@
 ;; ;; => #<<recur-rule> freq: HOURLY until: #f count: #f interval: #f>
 
 (define-quick-record recur-rule
-  freq until count interval bysecond byminute byhour wkst)
+  freq until count interval bysecond byminute byhour
+  byday bymonthday byyearday byweekno bymonth bysetpos
+  wkst)
 
 (define (build-recur-rules str)
   "Takes a RECUR value (string), and returuns a <recur-rule> object"
@@ -72,11 +74,6 @@
                   #'(proc ...))
         (else obj))))))
 
-(define weekdays
-  '(SU MO TU WE TH FR SA))
-
-(define intervals
-  '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))
 
 (define (string->number-list val delim)
   (map string->number (string-split val delim)))
@@ -84,26 +81,50 @@
 (define (string->symbols val delim)
   (map string->symbol (string-split val delim)))
 
+(define-syntax all-in
+  (syntax-rules ()
+    ((_ var rules ...)
+     (cut every (lambda (var) (and rules ...)) <>))))
+
+(define (!= a b) (not (= a b)))
+
+(define weekdays
+  '(SU MO TU WE TH FR SA))
+
+(define intervals
+  '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))
+
 (define (%build-recur-rules str)
   (fold
-   (lambda (lst obj)
-     (let* (((key val) lst))
+   (lambda (kv obj)
+     (let* (((key val) kv)
+            ;; Lazy fields for the poor man.
+            (symb (lambda () (string->symbol val)))
+            (date (lambda () (parse-datetime val)))
+            (num  (lambda () (string->number val)))
+            (nums (lambda () (string->number-list val #\,))))
        (quick-case (string->symbol key) obj
-                   (FREQ     (string->symbol val) (cut memv <> intervals))
-                   (UNTIL    (parse-datetime val) identity)
-                   (COUNT    (string->number val) (cut <= 0 <>))
-                   (INTERVAL (string->number val) (cut <= 0 <>))
-                   (BYSECOND (string->number-list val #\,) (cut every (cut <= 0 <> 60) <>))
-                   (BYMINUTE (string->number-list val #\,) (cut every (cut <= 0 <> 59) <>))
-                   (BYHOUR   (string->number-list val #\,) (cut every (cut <= 0 <> 23) <>))
-                   ;; TODO implement these
-                   ;; (BYDAY)
-                   ;; (BYMONTHDAY)
-                   ;; (BYYEARDAY)
-                   ;; (BYWEEKNO)
-                   ;; (BYMONTH)
-                   ;; (BYSETPOS)
-                   (WKST (string->symbol val) (cut memv <> weekdays))
+                   (FREQ     (symb) (cut memv <> intervals)) ; Requirek
+                   (UNTIL    (date) identity)
+                   (COUNT    (num)  (cut <= 0 <>))
+                   (INTERVAL (num)  (cut <= 0 <>))
+                   (BYSECOND (nums) (all-in n (<= 0 n 60)))
+                   (BYMINUTE (nums) (all-in n (<= 0 n 59)))
+                   (BYHOUR   (nums) (all-in n (<= 0 n 23)))
+
+                   ;; TODO
+                   ;; <weekday> ∈ weekdays
+                   ;; <weekdaynum> ::= [[±] <num>] <weekday> ;; +3MO
+                   ;; (<weekadynum>, ...)
+                   ;; (BYDAY (string-split val #\,))
+
+                   (BYMONTHDAY (nums) (all-in n (<=  -31 n  31) (!= n 0)))
+                   (BYYEARDAY  (nums) (all-in n (<= -366 n 366) (!= n 0)))
+                   (BYWEEKNO   (nums) (all-in n (<=  -53 n  53) (!= n 0)))
+                   (BYMONTH    (nums) (all-in n (<=    1 n  12)))
+                   (BYSETPOS   (nums) (all-in n (<= -366 n 366) (!= n 0)))
+
+                   (WKST (symb) (cut memv <> weekdays))
                    )))
 
    ;; obj
