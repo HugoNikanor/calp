@@ -49,20 +49,17 @@
 (define-syntax-rule (throw-returnable symb args ...)
   (call/cc (lambda (cont) (throw symb cont args ...))))
 
-;;; TODO
-;;; something with this will only properly compiled if run interactively. 
-;;; But once compiled from the repl it stays compiled from script
-;;; And script can run it, it just complains and keeps recompiling.
-(define ((handle-case stx obj) key val proc)
-  (with-syntax ((skey (datum->syntax
-                       stx (symbol-downcase (syntax->datum key)))))
-    #`((#,key)
-       (let ((v #,val))
-         (cond ((not v) (throw-returnable 'invalid-value #,obj (quote #,key) v))
-               ((#,proc #,val) (set! (skey #,obj) v))
-               (else (set! (skey #,obj)
-                           (throw-returnable 'unfulfilled-constraint
-                                             #,obj (quote #,key) v))))))))
+(eval-when (expand)
+ (define ((handle-case stx obj) key val proc)
+   (with-syntax ((skey (datum->syntax
+                        stx (symbol-downcase (syntax->datum key)))))
+     #`((#,key)
+        (let ((v #,val))
+          (cond ((not v) (throw-returnable 'invalid-value #,obj (quote #,key) v))
+                ((#,proc #,val) (set! (skey #,obj) v))
+                (else (set! (skey #,obj)
+                            (throw-returnable 'unfulfilled-constraint
+                                              #,obj (quote #,key) v)))))))))
 
 (define-syntax quick-case
   (lambda (stx)
