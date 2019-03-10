@@ -13,6 +13,58 @@
                  (mod! (attr ev "DTEND")   parse-datetime)))
   cal)
 
+
+(define-public (type-filter t lst)
+  (filter (lambda (e) (eqv? t (type e)))
+          lst))
+
+(define* (children component #:optional only-type)
+  (let ((childs (%vcomponent-children component)))
+    (if only-type
+        (type-filter only-type childs)
+        childs)))
+(export children)
+
+(define (set-attr! component attr value)
+  (%vcomponent-set-attribute!
+   component
+   (if (symbol? attr) (symbol->string attr) attr)
+   value))
+
+(define (get-attr component attr)
+  (%vcomponent-get-attribute
+   component
+   (if (symbol? attr) (symbol->string attr) attr)))
+
+;; Enables symmetric get and set:
+;; (set! (attr ev "KEY") 10)
+(define-public attr (make-procedure-with-setter get-attr set-attr!))
+
+(define-public type %vcomponent-type)
+(define-public parent %vcomponent-parent)
+(define-public push-child! %vcomponent-push-child!)
+(define-public (attributes component) (map string->symbol (%vcomponent-attribute-list component)))
+
+(define-public copy-vcomponent %vcomponent-shallow-copy)
+
+(define-public filter-children! %vcomponent-filter-children!)
+
+(define-public (search cal term)
+  (cdr (let ((events (filter (lambda (ev) (eq? 'VEVENT (type ev)))
+                             (children cal))))
+         (find (lambda (ev) (string-contains-ci (car ev) term))
+               (map cons (map (cut get-attr <> "SUMMARY")
+                              events)
+                    events)))))
+
+(define-public (extract field)
+  (cut get-attr <> field))
+
+(define-public (key=? k1 k2)
+  (eq?
+   (if (string? k1) (string->symbol k1) k1)
+   (if (string? k2) (string->symbol k2) k2)))
+
 (define-public (make-vcomponent path)
   (parse-dates!
    (if (string-ci=? ".ics" (string-take-right path 4))
@@ -29,45 +81,17 @@
        ;; TODO the other VCALENDAR components might not get thrown away,
        ;; this since I protect them from the GC in the C code.
        (reduce (lambda (cal accum)
-                 (for-each (cut %vcomponent-push-child! accum <>)
+                 (for-each (lambda (component)
+                             (case (type component)
+                               ((VTIMEZONE)
+                                (let ((zones (children cal 'VTIMEZONE)))
+                                  (unless (find (lambda (z)
+                                                  (string=? (attr z "TZID")
+                                                            (attr component "TZID")))
+                                                zones)
+                                    (%vcomponent-push-child! accum component))))
+                               (else (%vcomponent-push-child! accum component))))
                            (%vcomponent-children cal))
                  accum)
                '() (%vcomponent-children (%vcomponent-make path))))))
 
-(define-public (type-filter t lst)
-  (filter (lambda (e) (eqv? t (type e)))
-          lst))
-
-(define* (children component #:optional only-type)
-  (let ((childs (%vcomponent-children component)))
-    (if only-type
-        (type-filter only-type childs)
-        childs)))
-(export children)
-
-(define set-attr! %vcomponent-set-attribute!)
-(define get-attr %vcomponent-get-attribute)
-
-;; Enables symmetric get and set:
-;; (set! (attr ev "KEY") 10)
-(define-public attr (make-procedure-with-setter get-attr set-attr!))
-
-(define-public type %vcomponent-type)
-(define-public parent %vcomponent-parent)
-(define-public push-child! %vcomponent-push-child!)
-(define-public attributes %vcomponent-attribute-list)
-
-(define-public copy-vcomponent %vcomponent-shallow-copy)
-
-(define-public filter-children! %vcomponent-filter-children!)
-
-(define-public (search cal term)
-  (cdr (let ((events (filter (lambda (ev) (eq? 'VEVENT (type ev)))
-                             (children cal))))
-         (find (lambda (ev) (string-contains-ci (car ev) term))
-               (map cons (map (cut get-attr <> "SUMMARY")
-                              events)
-                    events)))))
-
-(define-public (extract field)
-  (cut get-attr <> field))
