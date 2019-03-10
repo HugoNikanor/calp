@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# A simple utility script for generating ctags from some RFC files.
+#
+# Deffinitely works with RFC 5545.
+
+filename=$1
+
+grep Current $filename \
+	| sed 's/RFC [0-9]\+, Section //' \
+	| tr -d ' ' \
+	| awk -F '|' '{ print $2 "\t'$filename'\t/^" $4 ". /;\"" }'

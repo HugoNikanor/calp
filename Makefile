@@ -50,6 +50,7 @@ libguile-calendar.so: $(O_FILES)
 
 tags: $(C_FILES) $(H_FILES)
 	ctags -R
+	rfc-tags rfc5545.txt >> tags
 
 clean:
 	-rm parse
