@@ -5,8 +5,9 @@
   #:export (copy-date
             drop-time! drop-time
             today?
-            seconds minutes hours days weeks 
-            time-add
+            ;; seconds minutes hours days weeks
+            ;; time-add
+            make-duration
             time->string))
 
 #;
@@ -33,21 +34,15 @@ attribute set to 0. Can also be seen as \"Start of day\""
               ((date-second) 0)
               ((date-nanosecond) 0)))
 
-
-(define seconds  1)
-(define minutes 60)
-(define hours   (* 60 minutes))
-(define days    (* 24 hours))
-(define weeks   (* 7 days))
-
-(define (time-add time amount unit)
-  (add-duration time (make-time time-duration 0 (* amount unit))))
+(define (make-duration s)
+  (make-time time-duration 0 s))
 
 (define (today? time)
   (let* ((now (date->time-utc (drop-time (current-date))))
-         (then (time-add now 1 days)))
+         (then (add-duration now (make-duration (* 60 60 24)))))
     (and (time<=? now time)
          (time<=? time then))))
 
 (define* (time->string time #:optional (format "~c"))
   (date->string (time-utc->date time) format))
+

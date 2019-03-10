@@ -134,26 +134,57 @@
    (map (cut string-split <> #\=)
         (string-split str #\;))))
 
+(define (seconds-in interval)
+  (case interval
+    ((SECONDLY) 1)
+    ((MINUTELY) 60 )
+    ((HOURLY) (* 60 60))
+    ((DAILY) (* 60 60 24))
+    ((WEEKLY) (* 60 60 24 7))))
+
 (define (generate-next event rule)
+
+  (when (count rule)
+    (set! (count rule)
+          (1- (count rule)))
+
+    (when (zero? (count rule))
+      ;; TODO early return
+      (values '() '())))
+
+
   (let ((ne (copy-vcomponent event)))   ; new event
-    (case (freq rule)
-      ((WEEKLY)
-       (mod! (attr ne "DTSTART") (cut time-add <> 1 weeks))
+    (cond
 
-       (set! (attr ne "DTEND")
-             (add-duration (attr ne "DTSTART")
-                           (attr ne "DURATION")))
-       (values ne rule))
+     ;; BYDAY and the like depend on the freq?
+     ;; Line 7100
+     ;; Table @ 2430
 
-      ((DAILY)
-       (mod! (attr ne "DTSTART") (cut time-add <> 1 days))
+     ((memv (freq rule) '(SECONDLY MINUTELY HOURLY DAILY WEEKLY))
+      (mod! (attr ne "DTSTART")
+            (cut add-duration! <>
+                 (make-duration (* (interval rule)
+                                   (seconds-in (freq rule)))))))
+     ((memv (freq rule) '(MONTHLY YEARLY))
+      ;; Hur fasen beräkrnar man det här!!!!
+      )
+     (else #f))
 
-       (set! (attr ne "DTEND")
-             (add-duration  (attr ne "DTSTART")
-                            (attr ne "DURATION")))
-       (values ne rule))
 
-      (else (values '() rule)))))
+    ;; Make sure DTSTART is updated before this point
+
+    (and=> (until rule)
+        (lambda (u)
+          (when (time<? u (attr ne "DTSTART"))
+            ;; TODO early return
+            (values '() '()))))
+
+
+    (set! (attr ne "DTEND")
+          (add-duration (attr ne "DTSTART")
+                        (attr ne "DURATION")))
+
+    (values ne rule)))
 
 (define-stream (recur-event-stream event rule-obj)
   (stream-cons event
@@ -161,6 +192,22 @@
                  (if (null? next-event)
                      stream-null
                      (recur-event-stream next-event next-rule)))))
+
+;;; TODO implement
+;;; EXDATE and RDATE
+
+;;; EXDATE (3.8.5.1)
+;;; comma sepparated list of dates or datetimes.
+;;; Can have TZID parameter
+;;; Specifies list of dates that the event should not happen on, even
+;;; if the RRULE say so.
+;;; Can have VALUE field specifiying "DATE-TIME" or "DATE".
+
+;;; RDATE (3.8.5.2)
+;;; Comma sepparated list of dates the event should happen on.
+;;; Can have TZID parameter.
+;;; Can have VALUE parameter, specyfying "DATE-TIME", "DATE" or "PREIOD".
+;;; PERIOD (see 3.3.9)
 
 (define (recur-event event)
   (unless (attr event "DURATION")
