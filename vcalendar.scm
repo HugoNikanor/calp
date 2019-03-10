@@ -59,6 +59,8 @@
 
 (define-public copy-vcomponent %vcomponent-shallow-copy)
 
+(define-public filter-children! %vcomponent-filter-children!)
+
 (define-public (search cal term)
   (cdr (let ((events (filter (lambda (ev) (eq? 'VEVENT (type ev)))
                              (children cal))))

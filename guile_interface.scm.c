@@ -111,6 +111,27 @@ SCM_DEFINE(vcomponent_children, "%vcomponent-children", 1, 0, 0,
 	return llist;
 }
 
+SCM_DEFINE(vcomponent_filter_children_x, "%vcomponent-filter-children!",
+		2, 0, 0,
+		(SCM pred, SCM component),
+	   "Remove all children from component who DOESN'T satisfy `pred`")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	vcomponent* cal = scm_foreign_object_ref (component, 0);
+
+	for (LINK(vcomponent)* l = FIRST(&cal->components);
+			l->after != NULL;
+			l = l->after)
+	{
+		if (scm_is_false(scm_call_1 (pred, scm_from_vcomponent(l->value)))) {
+			FFREE(vcomponent, l->value);
+			UNLINK(LINK(vcomponent))(l);
+		}
+	}
+
+	return SCM_UNSPECIFIED;
+}
+
 SCM_DEFINE(vcomponent_push_child_x, "%vcomponent-push-child!", 2, 0, 0,
                (SCM component, SCM child),
                "")

@@ -3,6 +3,7 @@
 (define-module (vcalendar primitive)
   #:export (%vcomponent-children
             %vcomponent-push-child!
+            %vcomponent-filter-children!
 
             %vcomponent-parent
 
