@@ -38,6 +38,8 @@ int read_vcalendar(vcomponent* cal, char* path) {
 int handle_file(vcomponent* cal, char* path) {
 	INFO("Parsing a single file");
 
+	vcomponent_push_val(cal, "NAME", path);
+	vcomponent_push_val(cal, "TYPE", "file");
 	char* resolved_path = realpath(path, NULL);
 	open_ics (resolved_path, cal);
 	free (resolved_path);
@@ -58,6 +60,10 @@ int handle_dir(vcomponent* cal, char* path) {
 	/* Slash to guarantee we have at least one */
 	buf[path_len - 1] = '/';
 
+
+	vcomponent_push_val(cal, "NAME", path);
+	vcomponent_push_val(cal, "TYPE", "vdir");
+
 	struct dirent* d;
 	while ((d = readdir(dir)) != NULL) {
 		/* Check that it's a regular file */
@@ -69,7 +75,22 @@ int handle_dir(vcomponent* cal, char* path) {
 		/* Remove file part from combined path */
 		buf[path_len] = '\0';
 
-		open_ics (resolved_path, cal);
+		FILE* f;
+		char info_buf[0x100];
+		if (strcmp (d->d_name, "color") == 0) {
+			f = fopen(resolved_path, "r");
+			fgets(info_buf, 0x100, f);
+			fclose(f);
+			vcomponent_push_val(cal, "COLOR", info_buf);
+		} else if (strcmp (d->d_name, "displayname") == 0) {
+			f = fopen(resolved_path, "r");
+			fgets(info_buf, 0x100, f);
+			fclose(f);
+			// TODO make sure that this replaces
+			vcomponent_push_val(cal, "NAME", info_buf);
+		} else {
+			open_ics (resolved_path, cal);
+		}
 
 		free (resolved_path);
 	}
