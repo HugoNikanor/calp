@@ -4,11 +4,12 @@
   #:use-module (srfi srfi-19 setters)
   #:export (copy-date
             drop-time! drop-time
-            today?
+            in-day? today?
             ;; seconds minutes hours days weeks
             ;; time-add
             make-duration
-            time->string))
+            time->string
+            add-day remove-day))
 
 #;
 (define (copy-date date)
@@ -37,12 +38,21 @@ attribute set to 0. Can also be seen as \"Start of day\""
 (define (make-duration s)
   (make-time time-duration 0 s))
 
-(define (today? time)
-  (let* ((now (date->time-utc (drop-time (current-date))))
+(define (in-day? day-date time)
+  (let* ((now (date->time-utc (drop-time day-date)))
          (then (add-duration now (make-duration (* 60 60 24)))))
     (and (time<=? now time)
          (time<=? time then))))
 
+(define (today? time)
+  (in-day? (current-date) time))
+
 (define* (time->string time #:optional (format "~c"))
   (date->string (time-utc->date time) format))
 
+
+(define (add-day time)
+  (add-duration time (make-time time-duration 0 (* 60 60 24))))
+
+(define (remove-day time)
+  (add-duration time (make-time time-duration 0 (- (* 60 60 24)))))
