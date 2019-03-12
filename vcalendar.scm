@@ -66,32 +66,49 @@
    (if (string? k2) (string->symbol k2) k2)))
 
 (define-public (make-vcomponent path)
-  (parse-dates!
-   (if (string-ci=? ".ics" (string-take-right path 4))
-       ;; == Single ICS file ==
-       ;; Remove the abstract ROOT component,
-       ;; returning the wanted VCALENDAR component
-       (car (%vcomponent-children
-             (%vcomponent-make path)))
-       ;; == Assume vdir ==
-       ;; Also removes the abstract ROOT component, but also
-       ;; merges all VCALENDAR's children into the first
-       ;; VCALENDAR, and return that VCALENDAR.
-       ;;
-       ;; TODO the other VCALENDAR components might not get thrown away,
-       ;; this since I protect them from the GC in the C code.
-       (reduce (lambda (cal accum)
-                 (for-each (lambda (component)
-                             (case (type component)
-                               ((VTIMEZONE)
-                                (let ((zones (children cal 'VTIMEZONE)))
-                                  (unless (find (lambda (z)
-                                                  (string=? (attr z "TZID")
-                                                            (attr component "TZID")))
-                                                zones)
-                                    (%vcomponent-push-child! accum component))))
-                               (else (%vcomponent-push-child! accum component))))
-                           (%vcomponent-children cal))
-                 accum)
-               '() (%vcomponent-children (%vcomponent-make path))))))
+  (let* ((root (%vcomponent-make path))
+         (component
+          (parse-dates!
+           (case (string->symbol (or (attr root "TYPE") "no-type"))
+             ;; == Single ICS file ==
+             ;; Remove the abstract ROOT component,
+             ;; returning the wanted VCALENDAR component
+             ((file)
+              (car (%vcomponent-children root)))
+
+             ;; == Assume vdir ==
+             ;; Also removes the abstract ROOT component, but also
+             ;; merges all VCALENDAR's children into the first
+             ;; VCALENDAR, and return that VCALENDAR.
+             ;;
+             ;; TODO the other VCALENDAR components might not get thrown away,
+             ;; this since I protect them from the GC in the C code.
+             ((vdir)
+              (reduce (lambda (cal accum)
+                        (for-each (lambda (component)
+                                    (case (type component)
+                                      ((VTIMEZONE)
+                                       (let ((zones (children cal 'VTIMEZONE)))
+                                         (unless (find (lambda (z)
+                                                         (string=? (attr z "TZID")
+                                                                   (attr component "TZID")))
+                                                       zones)
+                                           (%vcomponent-push-child! accum component))))
+                                      (else (%vcomponent-push-child! accum component))))
+                                  (%vcomponent-children cal))
+                        accum)
+                      '() (%vcomponent-children root)))
+
+             ((no-type) (throw 'no-type))
+
+             (else (throw 'something))))))
+
+    (display component) (newline)
+    (display root) (newline)
+
+    (set! (attr component "NAME")
+          (attr root      "NAME"))
+    (set! (attr component "COLOR")
+          (attr root      "COLOR"))
+    component))
 
