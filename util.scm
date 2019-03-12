@@ -3,7 +3,7 @@
   #:export (destructure-lambda let-multi fold-lists catch-let
                                for-each-in
                                define-quick-record define-quick-record!
-                               mod!)
+                               mod! sort*)
   #:replace (let*)
   )
 
@@ -12,7 +12,7 @@
 (define-public symbol-upcase (compose string->symbol string-upcase symbol->string))
 
 (define-public symbol-downcase (compose string->symbol string-downcase symbol->string))
-       
+
 (define-syntax destructure-lambda
   (syntax-rules ()
     ((_ expr-list body ...)
@@ -74,7 +74,7 @@
 ;;        [e 5])                           ; Regular
 ;;   (list e d c b a))
 ;; ;; => (5 4 3 2 1)
-;;; 
+;;;
 
 (define-syntax let*
   (syntax-rules ()
@@ -97,7 +97,7 @@
        (let* (rest ...)
          body ...))]
 
-    ;; SRFI-71 let-values 
+    ;; SRFI-71 let-values
     [(_ ((k k* ... values) rest ...) body ...)
      (call-with-values (lambda () values)
        (lambda (k k* ...)
@@ -109,3 +109,13 @@
 ;; Like set!, but applies a transformer on the already present value.
 (define-syntax-rule (mod! field transform-proc)
   (set! field (transform-proc field)))
+
+(define-public (concat lists)
+  (apply append lists))
+
+;;; This function borrowed from web-ics (calendar util)
+(define* (sort* items comperator #:optional (get identity))
+  "A sort function more in line with how python's sorted works"
+  (sort items (lambda (a b)
+                (comperator (get a)
+                            (get b)))))
