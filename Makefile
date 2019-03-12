@@ -19,7 +19,7 @@ X_FILES = $(SCM_C_FILES:.scm.c=.x)
 
 O_FILES = $(C_FILES:%.c=obj/%.o)
 
-all: parse libguile-calendar.so
+all: parse libguile-calendar.so libtermios.so
 
 parse: $(O_FILES)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -38,7 +38,7 @@ $(OBJDIR)/%.o : %.c # $(H_FILES) $(X_FILES)
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
-libguile-calendar.so: $(O_FILES)
+%.so: $(O_FILES)
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
 .SECONDARY += %.dot
