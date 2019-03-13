@@ -18,10 +18,52 @@
 
 #; (define pizza-event (search cal "pizza"))
 
+;;    A          B          C          D         ¬E
+;; |s1|     :     |s2| : |s1|     :     |s2| : |s1|
+;; |  |     :     |  | : |  ||s2| : |s1||  | : |  |
+;; |  ||s2| : |s1||  | : |  ||  | : |  ||  | :
+;;     |  | : |  |     : |  ||  | : |  ||  | :     |s2|
+;;     |  | : |  |     : |  |     :     |  | :     |  |
+(define (timespan-overlaps? s1-begin s1-end s2-begin s2-end)
+  "Return whetever or not two timespans overlap."
+  (or
+   ;; A
+   (and (time<=? s2-begin s1-end)
+        (time<=? s1-begin s2-end))
+
+   ;; B
+   (and (time<=? s1-begin s2-end)
+        (time<=? s2-begin s1-end))
+
+   ;; C
+   (and (time<=? s1-begin s2-begin)
+        (time<=? s2-end s1-end))
+
+   ;; D
+   (and (time<=? s2-begin s1-begin)
+        (time<=? s1-end s2-end))))
+
+(define (event-overlaps? event begin end)
+  "Returns if the event overlaps the timespan.
+Event must have the DTSTART and DTEND attribute set."
+  (timespan-overlaps? (attr event 'DTSTART)
+                      (attr event 'DTEND)
+                      begin end))
 
 (define-public (event-in? ev time)
-  (in-day? (time-utc->date time)
-           (attr ev 'DTSTART)))
+  (let* ((date (time-utc->date time))
+         (start (date->time-utc (drop-time date)))
+         (end (add-duration start (make-duration (* 60 60 24)))))
+    (event-overlaps? ev start end)))
+
+(define (trim-to-width str len)
+  (let ((trimmed (string-pad-right str len)))
+    (if (< (string-length trimmed)
+           (string-length str))
+        (string-append (string-drop-right trimmed 1)
+                       "…")
+        trimmed)))
+  ; TODO show truncated string
 
 (define (main-loop calendars)
   (define time (date->time-utc (current-date)))
@@ -33,7 +75,11 @@
 
     (cls)
     (display-calendar-header! (time-utc->date time))
-    (line)
+    ;; (line)
+    (format #t "~a┬~a┬~a~%"
+            (make-string 20 #\─)
+            (make-string 32 #\─)
+            (make-string 10 #\─))
 
     (let ((events
            (sort* (concat
@@ -45,12 +91,12 @@
 
       (for-each-in events
        (lambda (ev)
-         (format #t "~a~a | ~a | ~a~a~%"
-                 (color-escape (attr (parent ev) 'COLOR))
+         (format #t "~a │ ~a~a~a │ ~a~%"
                  (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
-                 (string-pad-right (attr ev 'SUMMARY) 30) ; TODO show truncated string
-                 (or (attr ev 'LOCATION) "[INGEN LOKAL]")
-                 STR-RESET))))
+                 (color-escape (attr (parent ev) 'COLOR))
+                 (trim-to-width (attr ev 'SUMMARY) 30)
+                 STR-RESET
+                 (trim-to-width (or (attr ev 'LOCATION) "[INGEN LOKAL]") 20)))))
 
     ;; (format #t "c = ~c (~d)~%" char (char->integer char))
 
