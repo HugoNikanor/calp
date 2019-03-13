@@ -14,8 +14,11 @@
   (let* ((day   (number->string (date-day   date)))
          (month (number->string (date-month date)))
          (year  (number->string (date-year  date))))
-    (system* "cal" "-3" day month year)))
-
+    (if (file-exists? "/usr/bin/ncal")
+        (system*  "cal" "-3" "-H" (format #f "~a-~a-~a"
+                                          year month day)
+                  month year)
+        (system* "cal" "-3" day month year))))
 
 (define (color-escape n)
   (cond ((not n) "")
@@ -28,3 +31,4 @@
                    (string->number rs 16)
                    (string->number gs 16)
                    (string->number bs 16))))))
+
