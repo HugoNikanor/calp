@@ -76,21 +76,6 @@ Event must have the DTSTART and DTEND attribute set."
   (define time (date->time-utc (current-date)))
   (define cur-event 0)
   (let loop ((char #\nul))
-
-    (case char
-      ((#\L #\l) (set! time (add-day time)) (set! cur-event 0))
-      ((#\h #\H) (set! time (remove-day time)) (set! cur-event 0))
-      ((#\j #\J) (set! cur-event (1+ cur-event)))
-      ((#\k #\K) (unless (zero? cur-event) (set! cur-event (1- cur-event)))) )
-
-    (cls)
-    (display-calendar-header! (time-utc->date time))
-    ;; (line)
-    (format #t "~a┬~a┬~a~%"
-            (make-string 20 #\─)
-            (make-string 32 #\─)
-            (make-string 10 #\─))
-
     (let ((events
            (sort* (concat
                    (map (lambda (cal)
@@ -98,6 +83,23 @@ Event must have the DTSTART and DTEND attribute set."
                                   (children cal 'VEVENT)))
                         calendars))
                   time<? (extract "DTSTART"))))
+
+      (case char
+        ((#\L #\l) (set! time (add-day time)) (set! cur-event 0))
+        ((#\h #\H) (set! time (remove-day time)) (set! cur-event 0))
+        ((#\j #\J) (unless (= cur-event (1- (length events)))
+                     (set! cur-event (1+ cur-event))))
+        ((#\k #\K) (unless (= cur-event 0)
+                     (set! cur-event (1- cur-event)))))
+
+      (cls)
+      (display-calendar-header! (time-utc->date time))
+      ;; (line)
+      (format #t "~a┬~a┬~a~%"
+              (make-string 20 #\─)
+              (make-string 32 #\─)
+              (make-string 10 #\─))
+
 
       (for-each
        (lambda (ev i)
@@ -131,13 +133,13 @@ Event must have the DTSTART and DTEND attribute set."
                                          #:collapse-whitespace? #f)
                   10)
                  (string #\newline))
-                )))
+                ))
 
-    ;; (format #t "c = ~c (~d)~%" char (char->integer char))
+      ;; (format #t "c = ~c (~d)~%" char (char->integer char))
 
-    (unless (or (eof-object? char)
-                (memv char (list #\q (ctrl #\C))))
-      (loop (read-char (current-input-port))))))
+      (unless (or (eof-object? char)
+                  (memv char (list #\q (ctrl #\C))))
+        (loop (read-char (current-input-port)))))))
 
 (load "config.scm")
 
