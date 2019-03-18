@@ -4,15 +4,22 @@
 
 (add-to-load-path (dirname (current-filename)))
 
-(use-modules (srfi srfi-19)
+(use-modules (srfi srfi-1)
+             (srfi srfi-19)
              (srfi srfi-19 util)
              (srfi srfi-26)
              (ice-9 format)
+             (texinfo string-utils)     ; string->wrapped-lines
              (util)
              (vcalendar)
              (vcalendar output)
              (terminal escape)
              (terminal util))
+
+(define (take-to lst i)
+  (if (> i (length lst))
+      lst (take lst i)))
+
 
 ;;; ------------------------------------------------------------
 
@@ -67,11 +74,14 @@ Event must have the DTSTART and DTEND attribute set."
 
 (define (main-loop calendars)
   (define time (date->time-utc (current-date)))
+  (define cur-event 0)
   (let loop ((char #\nul))
 
     (case char
-      ((#\L #\l) (set! time (add-day time)))
-      ((#\h #\H) (set! time (remove-day time))))
+      ((#\L #\l) (set! time (add-day time)) (set! cur-event 0))
+      ((#\h #\H) (set! time (remove-day time)) (set! cur-event 0))
+      ((#\j #\J) (set! cur-event (1+ cur-event)))
+      ((#\k #\K) (unless (zero? cur-event) (set! cur-event (1- cur-event)))) )
 
     (cls)
     (display-calendar-header! (time-utc->date time))
@@ -89,14 +99,39 @@ Event must have the DTSTART and DTEND attribute set."
                         calendars))
                   time<? (extract "DTSTART"))))
 
-      (for-each-in events
-       (lambda (ev)
-         (format #t "~a │ ~a~a~a │ ~a~%"
+      (for-each
+       (lambda (ev i)
+         (format #t "~a │ ~a~a~a~a │ ~a~a~%"
                  (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
+                 (if (= i cur-event) "\x1b[7m" "")
                  (color-escape (attr (parent ev) 'COLOR))
                  (trim-to-width (attr ev 'SUMMARY) 30)
                  STR-RESET
-                 (trim-to-width (or (attr ev 'LOCATION) "[INGEN LOKAL]") 20)))))
+                 (trim-to-width
+                  (or (attr ev 'LOCATION) "\x1b[1;30mINGEN LOKAL") 20)
+                 STR-RESET))
+       events
+       (iota (length events)))
+
+      (format #t "~a┴~a┴~a~%"
+              (make-string 20 #\─)
+              (make-string 32 #\─)
+              (make-string 10 #\─))
+
+      (let ((ev (list-ref events cur-event)))
+        (format #t "~a~%~aStart: ~a	Slut: ~a~%~%~a~%"
+                (attr ev 'SUMMARY)
+                (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
+                (time->string (attr ev 'DTSTART) "~1 ~3")
+                (time->string (attr ev 'DTEND) "~1 ~3")
+                (string-join ; TODO replace this with a better text flower
+                 (take-to ; This one destroys newlines used for layout
+                  (string->wrapped-lines (or (attr ev 'DESCRIPTION) "")
+                                         #:line-width 60
+                                         #:collapse-whitespace? #f)
+                  10)
+                 (string #\newline))
+                )))
 
     ;; (format #t "c = ~c (~d)~%" char (char->integer char))
 
