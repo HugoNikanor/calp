@@ -85,8 +85,10 @@ Event must have the DTSTART and DTEND attribute set."
                   time<? (extract "DTSTART"))))
 
       (case char
-        ((#\L #\l) (set! time (add-day time)) (set! cur-event 0))
-        ((#\h #\H) (set! time (remove-day time)) (set! cur-event 0))
+        ;; TODO The explicit loop call is a hack to rerender the display
+        ;; It's REALLY ugly.
+        ((#\L #\l) (set! time (add-day time))    (set! cur-event 0) (loop #\nul))
+        ((#\h #\H) (set! time (remove-day time)) (set! cur-event 0) (loop #\nul))
         ((#\j #\J) (unless (= cur-event (1- (length events)))
                      (set! cur-event (1+ cur-event))))
         ((#\k #\K) (unless (= cur-event 0)
