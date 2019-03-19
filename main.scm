@@ -122,20 +122,21 @@ Event must have the DTSTART and DTEND attribute set."
               (make-string 32 #\─)
               (make-string 10 #\─))
 
-      (let ((ev (list-ref events cur-event)))
-        (format #t "~a~%~aStart: ~a	Slut: ~a~%~%~a~%"
-                (attr ev 'SUMMARY)
-                (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
-                (time->string (attr ev 'DTSTART) "~1 ~3")
-                (time->string (attr ev 'DTEND) "~1 ~3")
-                (string-join ; TODO replace this with a better text flower
-                 (take-to ; This one destroys newlines used for layout
-                  (string->wrapped-lines (or (attr ev 'DESCRIPTION) "")
-                                         #:line-width 60
-                                         #:collapse-whitespace? #f)
-                  10)
-                 (string #\newline))
-                ))
+      (unless (null? events)
+       (let ((ev (list-ref events cur-event)))
+         (format #t "~a~%~aStart: ~a	Slut: ~a~%~%~a~%"
+                 (attr ev 'SUMMARY)
+                 (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
+                 (time->string (attr ev 'DTSTART) "~1 ~3")
+                 (time->string (attr ev 'DTEND) "~1 ~3")
+                 (string-join      ; TODO replace this with a better text flower
+                  (take-to         ; This one destroys newlines used for layout
+                   (string->wrapped-lines (or (attr ev 'DESCRIPTION) "")
+                                          #:line-width 60
+                                          #:collapse-whitespace? #f)
+                   10)
+                  (string #\newline))
+                 )))
 
       ;; (format #t "c = ~c (~d)~%" char (char->integer char))
 
