@@ -103,12 +103,8 @@
 
              (else (throw 'something))))))
 
-    (display component) (newline)
-    (display root) (newline)
-
     (set! (attr component "NAME")
           (attr root      "NAME"))
     (set! (attr component "COLOR")
           (attr root      "COLOR"))
     component))
-

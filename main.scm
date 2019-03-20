@@ -104,6 +104,11 @@
       ;; (format #t "c = ~c (~d)~%" char (char->integer char))
 
       (unless (or (eof-object? char)
+                  ;; TODO this requires that `q' is pressed as many
+                  ;; times as other inputs where pressed to actually
+                  ;; quit.
+                  ;; ^C only works because it force closes the
+                  ;; program.
                   (memv char (list #\q (ctrl #\C))))
         (loop (read-char (current-input-port)))))))
 
