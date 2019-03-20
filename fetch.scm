@@ -10,26 +10,22 @@
 (add-to-load-path (dirname (current-filename)))
 
 (use-modules (srfi srfi-1)
-             (srfi srfi-26)
              (srfi srfi-19)
-             (srfi srfi-19 util)
+             (srfi srfi-26)
              (vcalendar)
+             (vcalendar datetime)
              (vcalendar output)
              (util))
 
 
 (begin
-  (define *path* "/home/hugo/.calendars/b85ba2e9-18aa-4451-91bb-b52da930e977/")
+  ;; (define *path* "/home/hugo/.calendars/b85ba2e9-18aa-4451-91bb-b52da930e977/")
+  (define *path* "/home/hugo/.calendars/D1/")
   (define cal (make-vcomponent *path*)))
 
 (filter-children!
- (lambda (comp)
-   (if (not (eq? 'VEVENT (type comp)))
-       #t
-       (let ((stime (date->time-utc (string->date "2019-03-12T12:00" "~Y-~m-~dT~H:~M")))
-             (etime (date->time-utc (string->date "2019-03-13T11:59" "~Y-~m-~dT~H:~M"))))
-         (and (time<=? stime (attr comp "DTSTART"))
-              (time<=? (attr comp "DTSTART") etime)))))
+ (lambda (ev) (and (eq? 'VEVENT (type ev))
+              (event-in? ev (date->time-utc (string->date "2019-04-03" "~Y-~m-~d")))))
  cal)
 
 (serialize-vcomponent cal)
