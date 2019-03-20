@@ -56,3 +56,28 @@ attribute set to 0. Can also be seen as \"Start of day\""
 
 (define (remove-day time)
   (add-duration time (make-time time-duration 0 (- (* 60 60 24)))))
+
+;;    A          B          C          D         ¬E
+;; |s1|     :     |s2| : |s1|     :     |s2| : |s1|
+;; |  |     :     |  | : |  ||s2| : |s1||  | : |  |
+;; |  ||s2| : |s1||  | : |  ||  | : |  ||  | :
+;;     |  | : |  |     : |  ||  | : |  ||  | :     |s2|
+;;     |  | : |  |     : |  |     :     |  | :     |  |
+(define-public (timespan-overlaps? s1-begin s1-end s2-begin s2-end)
+  "Return whetever or not two timespans overlap."
+  (or
+   ;; A
+   (and (time<=? s2-begin s1-end)
+        (time<=? s1-begin s2-end))
+
+   ;; B
+   (and (time<=? s1-begin s2-end)
+        (time<=? s2-begin s1-end))
+
+   ;; C
+   (and (time<=? s1-begin s2-begin)
+        (time<=? s2-end s1-end))
+
+   ;; D
+   (and (time<=? s2-begin s1-begin)
+        (time<=? s1-end s2-end))))

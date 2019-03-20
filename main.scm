@@ -12,6 +12,7 @@
              (texinfo string-utils)     ; string->wrapped-lines
              (util)
              (vcalendar)
+             (vcalendar datetime)
              (vcalendar output)
              (terminal escape)
              (terminal util))
@@ -24,44 +25,6 @@
 ;;; ------------------------------------------------------------
 
 #; (define pizza-event (search cal "pizza"))
-
-;;    A          B          C          D         ¬E
-;; |s1|     :     |s2| : |s1|     :     |s2| : |s1|
-;; |  |     :     |  | : |  ||s2| : |s1||  | : |  |
-;; |  ||s2| : |s1||  | : |  ||  | : |  ||  | :
-;;     |  | : |  |     : |  ||  | : |  ||  | :     |s2|
-;;     |  | : |  |     : |  |     :     |  | :     |  |
-(define (timespan-overlaps? s1-begin s1-end s2-begin s2-end)
-  "Return whetever or not two timespans overlap."
-  (or
-   ;; A
-   (and (time<=? s2-begin s1-end)
-        (time<=? s1-begin s2-end))
-
-   ;; B
-   (and (time<=? s1-begin s2-end)
-        (time<=? s2-begin s1-end))
-
-   ;; C
-   (and (time<=? s1-begin s2-begin)
-        (time<=? s2-end s1-end))
-
-   ;; D
-   (and (time<=? s2-begin s1-begin)
-        (time<=? s1-end s2-end))))
-
-(define (event-overlaps? event begin end)
-  "Returns if the event overlaps the timespan.
-Event must have the DTSTART and DTEND attribute set."
-  (timespan-overlaps? (attr event 'DTSTART)
-                      (attr event 'DTEND)
-                      begin end))
-
-(define-public (event-in? ev time)
-  (let* ((date (time-utc->date time))
-         (start (date->time-utc (drop-time date)))
-         (end (add-duration start (make-duration (* 60 60 24)))))
-    (event-overlaps? ev start end)))
 
 (define (trim-to-width str len)
   (let ((trimmed (string-pad-right str len)))
