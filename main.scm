@@ -8,10 +8,13 @@
              (srfi srfi-19)
              (srfi srfi-19 util)
              (srfi srfi-26)
+             (srfi srfi-41)
+             (srfi srfi-41 util)
              (ice-9 format)
              (texinfo string-utils)     ; string->wrapped-lines
              (util)
              (vcalendar)
+             (vcalendar recur)
              (vcalendar datetime)
              (vcalendar output)
              (terminal escape)
@@ -21,6 +24,9 @@
   (if (> i (length lst))
       lst (take lst i)))
 
+(define (ev-time<? a b)
+  (time<? (attr a 'DTSTART)
+          (attr b 'DTSTART)))
 
 ;;; ------------------------------------------------------------
 
@@ -35,13 +41,22 @@
         trimmed)))
   ; TODO show truncated string
 
+
 (define (main-loop regular-events repeating-events)
   (define time (date->time-utc (current-date)))
   (define cur-event 0)
   (let loop ((char #\nul))
     (let ((events
-           (filter (cut event-in? <> time)
-                   regular-events)))
+           (merge (filter-sorted
+                   (cut event-in? <> time)
+                   regular-events)
+
+                  (stream->list
+                   (filter-sorted-stream
+                    (cut event-in? <> time)
+                    repeating-events))
+
+                  ev-time<?)))
 
       (case char
         ;; TODO The explicit loop call is a hack to rerender the display
@@ -110,6 +125,7 @@
 
 (load "config.scm")
 
+
 (define (main args)
 
   (define calendars (map make-vcomponent calendar-files))
@@ -119,7 +135,9 @@
     (sort*! repeating time<? (extract 'DTSTART))
     (sort*! regular   time<? (extract 'DTSTART))
 
-    (with-vulgar
-     (lambda () (main-loop regular repeating)))))
+    (let ((repeating (interleave-streams ev-time<?
+                      (map generate-recurrence-set repeating))))
+      (with-vulgar
+       (lambda () (main-loop regular repeating))))))
 
 
