@@ -48,7 +48,7 @@
 
 (define (%define-quick-record internal-define bang? name fields)
   (let ((symb (gensym)))
-    `(begin (,internal-define ,(class-name name)
+    `((,internal-define ,(class-name name)
              (,(constructor name) ,@fields)
              ,(pred name)
              ,@(map (lambda (f) `(,f ,(getter f symb) ,(setter f symb bang?)))
@@ -60,13 +60,21 @@
 ;;; Creates srfi-9 define{-immutable,}-record-type declations.
 ;;; Also creates srfi-17 accessor ((set! (access field) value))
 
-(define-macro (define-quick-record name . fields)
-  (%define-quick-record '(@ (srfi srfi-9 gnu) define-immutable-record-type)
-                        #f name fields))
+;; (define (define-quick-record-templated define-proc name field))
 
-(define-macro (define-quick-record! name . fields)
-  (%define-quick-record '(@ (srfi srfi-9) define-record-type)
-                        #t name fields))
+(define-macro (define-quick-record name . fields)
+  (let ((public-fields  (or (assoc-ref fields #:public)  '()))
+        (private-fields (or (assoc-ref fields #:private) '())))
+    `(begin
+       ,@(%define-quick-record '(@ (srfi srfi-9 gnu) define-immutable-record-type)
+                               #f name
+                               (append public-fields private-fields))
+       ,@(map (lambda (field) `(export ,field))
+              public-fields))))
+  ;; (define-quick-record-templated 'define-immutable-record-type name fields))
+
+;; (define-macro (define-quick-record! name . fields)
+;;   (define-quick-record-templated 'define-record-type name fields))
 
 ;;; Replace let* with a version that can bind from lists.
 ;;; Also supports SRFI-71 (extended let-syntax for multiple values)
@@ -146,3 +154,11 @@
        (cdr items)
        ;; seeds:
        (car items) '())))
+
+(define-public (filter-sorted proc list)
+  (take-while
+   proc (drop-while
+         (negate proc) list)))
+
+;; (define (!= a b) (not (= a b)))
+(define-public != (negate =))
