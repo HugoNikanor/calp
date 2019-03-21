@@ -1,9 +1,11 @@
 (define-module (util)
   #:use-module (srfi srfi-1)
+  #:use-module ((sxml fold) #:select (fold-values))
   #:export (destructure-lambda let-multi fold-lists catch-let
                                for-each-in
                                define-quick-record define-quick-record!
-                               mod! sort* sort*!)
+                               mod! sort* sort*!
+                               find-min)
   #:replace (let*)
   )
 
@@ -126,3 +128,21 @@
   (sort! items (lambda (a b)
                  (comperator (get a)
                              (get b)))))
+
+;; Finds the smallest element in @var{items}, compared with @var{<} after
+;; applying @var{foo}. Returns 2 values. The smallest item in @var{items},
+;; and the other items in some order.
+(define (find-min < ac items)
+  (if (null? items)
+      ;; Vad fan retunerar man här?
+      (values #f '())
+      (fold-values
+       (lambda (c min other)
+         (if (< (ac c) (ac min))
+             ;; Current stream head is smaller that previous min
+             (values c (cons min other))
+             ;; Previous min is still smallest
+             (values min (cons c other))))
+       (cdr items)
+       ;; seeds:
+       (car items) '())))
