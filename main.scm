@@ -35,17 +35,13 @@
         trimmed)))
   ; TODO show truncated string
 
-(define (main-loop calendars)
+(define (main-loop regular-events repeating-events)
   (define time (date->time-utc (current-date)))
   (define cur-event 0)
   (let loop ((char #\nul))
     (let ((events
-           (sort* (concat
-                   (map (lambda (cal)
-                          (filter (cut event-in? <> time)
-                                  (children cal 'VEVENT)))
-                        calendars))
-                  time<? (extract "DTSTART"))))
+           (filter (cut event-in? <> time)
+                   regular-events)))
 
       (case char
         ;; TODO The explicit loop call is a hack to rerender the display
@@ -117,10 +113,13 @@
 (define (main args)
 
   (define calendars (map make-vcomponent calendar-files))
+  (define events (concatenate (map (cut children <> 'VEVENT) calendars)))
 
-  (display calendar-files) (newline)
+  (let* ((repeating regular (partition repeating? events)))
+    (sort*! repeating time<? (extract 'DTSTART))
+    (sort*! regular   time<? (extract 'DTSTART))
 
-  (with-vulgar
-   (lambda () (main-loop calendars))))
+    (with-vulgar
+     (lambda () (main-loop regular repeating)))))
 
 
