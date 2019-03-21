@@ -50,7 +50,7 @@ $(OBJDIR):
 
 tags: $(C_FILES) $(H_FILES)
 	ctags -R
-	rfc-tags rfc5545.txt >> tags
+	./rfc-tags rfc5545.txt >> tags
 
 clean:
 	-rm parse
