@@ -10,7 +10,7 @@
   #:use-module (vcalendar datetime)
   #:use-module (util)
 
-  #:export (recur-event))
+  #:export (recur-event repeating?))
 
 ;; (build-recur-rules "FREQ=HOURLY")
 ;; ;; => #<<recur-rule> freq: HOURLY until: #f count: #f interval: #f>
@@ -22,6 +22,9 @@
 ;; ;; => #<<recur-rule> freq: HOURLY until: #f count: #f interval: #f>
 ;; (build-recur-rules "FREQ=HOURLY;COUNT=-1")
 ;; ;; => #<<recur-rule> freq: HOURLY until: #f count: #f interval: #f>
+(define (repeating? ev)
+  "Does this event repeat?"
+  (attr ev 'RRULE))
 
 (define-quick-record recur-rule
   freq until count interval bysecond byminute byhour

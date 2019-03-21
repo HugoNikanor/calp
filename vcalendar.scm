@@ -1,9 +1,11 @@
 (define-module (vcalendar)
   #:use-module (vcalendar primitive)
   #:use-module (vcalendar datetime)
+  #:use-module (vcalendar recur)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
-  #:use-module (util))
+  #:use-module (util)
+  #:re-export (repeating?))
 
 (define (parse-dates! cal)
   "Parse all start times into scheme date objects."
