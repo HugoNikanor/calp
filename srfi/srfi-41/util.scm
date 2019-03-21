@@ -22,3 +22,8 @@
           (stream-cons m (interleave-streams < (cons ms other)))))))
 
 ;;; Varför är allting så långsamt‽‽‽‽‽‽‽‽
+
+(define-public (filter-sorted-stream proc stream)
+  (stream-take-while
+   proc (stream-drop-while
+         (negate proc) stream)))
