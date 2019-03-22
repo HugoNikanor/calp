@@ -47,7 +47,7 @@ attribute set to 0. Can also be seen as \"Start of day\""
 (define (today? time)
   (in-day? (current-date) time))
 
-(define* (time->string time #:optional (format "~c"))
+(define* (time->string time #:optional (format "~1 ~3"))
   (date->string (time-utc->date time) format))
 
 
