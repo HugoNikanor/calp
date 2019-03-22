@@ -61,6 +61,10 @@ int handle_dir(vcomponent* cal, char* path) {
 	buf[path_len - 1] = '/';
 
 
+	/*
+	 * NAME is the `fancy' name of the calendar.
+	 * TODO cut path to its last component.
+	 */
 	vcomponent_push_val(cal, "NAME", path);
 	vcomponent_push_val(cal, "TYPE", "vdir");
 
