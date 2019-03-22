@@ -3,6 +3,8 @@
   #:use-module (srfi srfi-19)           ; Datetime
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-26)
+  #:use-module ((vcalendar datetime) #:select (parse-datetime))
+  #:duplicates (last)                   ; Replace @var{count}
   #:use-module (vcalendar recurrence internal)
   #:use-module (util)
   #:use-module (exceptions)
