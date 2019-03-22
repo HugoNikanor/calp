@@ -58,3 +58,6 @@ clean:
 	-rmdir $(OBJDIR)
 	-rm *.so
 	-rm *.x
+
+clean-scheme:
+	rm -r $$HOME/.cache/guile/ccache/2.2-LE-8-3.A/$$PWD
