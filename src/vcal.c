@@ -31,9 +31,15 @@
 #undef TYPE
 
 INIT_F(vcomponent) {
-	(void) self;
-	ERR("Do not use");
+	INIT(TRIE(content_line), &self->clines);
+	INIT(LLIST(vcomponent), &self->components);
+
+	self->type = NULL;
+	self->parent = NULL;
+	self->scm = NULL;
+
 	return 0;
+
 }
 
 INIT_F(vcomponent, const char* type) {
