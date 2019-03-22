@@ -1,17 +1,12 @@
 (define-module (vcalendar recurrence generate)
-  ;; #:use-module (srfi srfi-1)
-  ;; #:use-module (srfi srfi-9 gnu)        ; Records
   #:use-module (srfi srfi-19)           ; Datetime
   #:use-module (srfi srfi-19 util)
-
   #:use-module (srfi srfi-26)           ; Cut
   #:use-module (srfi srfi-41)           ; Streams
-  ;; #:use-module (ice-9 control)          ; call-with-escape-continuation
   #:use-module (ice-9 match)
-  #:use-module (vcalendar)
-  #:use-module (vcalendar datetime)
-  #:use-module (util)
 
+  #:use-module (util)
+  #:use-module (vcalendar)
   #:use-module (vcalendar recurrence internal)
   #:use-module (vcalendar recurrence parse)
 
@@ -96,12 +91,11 @@
    ;; Event x Rule → next (Event, Rule)
    (match-lambda
      ((e r)
-      (list
-       (next-event e r)
-       (if (count r)
-           ;; Note that this doesn't modify, since r is immutable.
-           (mod! (count r) 1-)
-           r ))))
+      (list (next-event e r)
+            (if (count r)
+                ;; Note that this doesn't modify, since r is immutable.
+                (mod! (count r) 1-)
+                r ))))
 
    ;; Seed
    (list event rule-obj)))
