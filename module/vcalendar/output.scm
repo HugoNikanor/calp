@@ -4,6 +4,7 @@
   #:use-module (util)
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-26)
+  #:use-module (ice-9 format)
   #:export (print-vcomponent
             serialize-vcomponent
             color-if
