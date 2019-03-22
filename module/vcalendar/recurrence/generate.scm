@@ -42,6 +42,31 @@
     ((DAILY) (* 60 60 24))
     ((WEEKLY) (* 60 60 24 7))))
 
+;; Event x Rule → Event
+(define (next-event ev r)
+  (let ((e (copy-vcomponent ev)))
+    (cond
+     ((memv (freq r) '(SECONDLY MINUTELY HOURLY DAILY WEEKLY))
+      (mod! (attr e 'DTSTART)
+            ;; Previously I had the mutating version of
+            ;; @var{add-duration(!)} here. However since
+            ;; @var{copy-vcomponent} doesn't do a deep copy that
+            ;; modified the attribute for all items in the set,
+            ;; breaking everything.
+            (cut add-duration <>
+                 (make-duration
+                  (* (interval r)        ; INTERVAL
+                     (seconds-in (freq r)))))))
+
+     ((memv (freq r) '(MONTHLY YEARLY))
+      #f                                 ; Hur fasen beräkrnar man det här!!!!
+      ))
+
+    (set! (attr e 'DTEND)
+          (add-duration (attr e 'DTSTART) (attr e 'DURATION)))
+
+    ;; Return
+    e))
 
 ;; BYDAY and the like depend on the freq?
 ;; Line 7100
@@ -59,51 +84,24 @@
   (stream-unfold
 
    ;; Event x Rule → Event
-   (match-lambda
-     ((last r)
-      (let ((e (copy-vcomponent last)))   ; new event
-        (cond
-
-         ((memv (freq r) '(SECONDLY MINUTELY HOURLY DAILY WEEKLY))
-          (mod! (attr e 'DTSTART)       ; MUTATE
-                (cut add-duration! <>
-                     (make-duration
-                      (* (interval r)   ; INTERVAL
-                         (seconds-in (freq r)))))))
-
-         ((memv (freq r) '(MONTHLY YEARLY))
-          #f ; Hur fasen beräkrnar man det här!!!!
-          ))
-
-        ;; TODO this is just here for testing
-        (mod! (attr e 'NEW_ATTR) not)   ; MUTATE
-        ;; This segfaults...
-        ;; (set! (attr e 'N) #t)           ; MUTATE
-        ((@ (vcalendar output) print-vcomponent) e)
-        (set! (attr e 'D) #t)
-
-        (set! (attr e 'DTEND)           ; MUTATE
-              (add-duration
-               (attr e 'DTSTART)
-               (attr e 'DURATION)))
-        e)))
+   car
 
    ;; Event x Rule → Bool (continue?)
    (match-lambda
      ((e r)
-
       (or (and (not (until r)) (not (count r)))                   ; Never ending
           (and=> (count r) (negate zero?))                        ; COUNT
           (and=> (until r) (cut time<=? (attr e 'DTSTART) <>))))) ; UNTIL
 
-   ;; _ x Rule → (_, (next) Rule)
+   ;; Event x Rule → next (Event, Rule)
    (match-lambda
      ((e r)
       (list
-       e (if (count r)
-             ;; Note that this doesn't modify, since r is immutable.
-             (mod! (count r) 1-)
-             r))))
+       (next-event e r)
+       (if (count r)
+           ;; Note that this doesn't modify, since r is immutable.
+           (mod! (count r) 1-)
+           r ))))
 
    ;; Seed
    (list event rule-obj)))
@@ -111,16 +109,8 @@
 
 (define (generate-recurrence-set event)
   (unless (attr event "DURATION")
-    (set! (attr event "DURATION")       ; MUTATE
+    (set! (attr event "DURATION")
           (time-difference
            (attr event "DTEND")
            (attr event "DTSTART"))))
   (recur-event-stream event (parse-recurrence-rule (attr event "RRULE"))))
-
-  ;; How doee stream-unfold even work?
-  ;; What element is used as the next seed?
-;;; stream-fold:
-;; (stream-let recur ((base base))
-;;     (if (pred? base)
-;;         (stream-cons (mapper base) (recur (generator base)))
-;;         stream-null))
