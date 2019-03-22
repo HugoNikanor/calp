@@ -86,10 +86,10 @@ int strbuf_cmp(strbuf* a, strbuf* b) {
 	    b == NULL || b->alloc == 0)
 	{
 		ERR("a or b not alloced");
-		// return -1;
+		return -1;
+	} else {
+		return strncmp(a->mem, b->mem, a->len);
 	}
-
-	return strncmp(a->mem, b->mem, a->len);
 }
 
 int strbuf_c(strbuf* a, const char* b) {

@@ -309,7 +309,6 @@ FREE_F(parse_ctx) {
 
 int handle_escape (parse_ctx* ctx) {
 	char esc = fgetc(ctx->f);
-	char target;
 
 	/*
 	 * Escape character '\' and escaped token sepparated by a newline
@@ -330,19 +329,19 @@ int handle_escape (parse_ctx* ctx) {
 
 	/* Escaped new_line */
 	if (esc == 'n' || esc == 'N') {
-		target = '\n';
+		esc = '\n';
 
-		/* "Standard" escaped character */
+	/* "Standard" escaped character */
 	} else if (esc == ';' || esc == ',' || esc == '\\') {
-		target = esc;
+		/* esc already contains character, do nothing */
 
-		/* Invalid escaped character */
+	/* Invalid escaped character */
 	} else {
 		ERR_P(ctx, "Non escapable character '%c' (%i)", esc, esc);
 	}
 
 	/* save escapade character as a normal character */
-	strbuf_append(&ctx->str, target);
+	strbuf_append(&ctx->str, esc);
 
 	++ctx->column;
 	++ctx->pcolumn;
