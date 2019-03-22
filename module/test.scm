@@ -12,7 +12,7 @@
              (vcalendar output)
              (vcalendar recur))
 
-(define cal (make-vcomponent "testcal/repeating-event.ics"))
+(define cal (make-vcomponent "../testcal/repeating-event.ics"))
 
 (define ev (car (children cal 'VEVENT)))
 

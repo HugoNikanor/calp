@@ -7,5 +7,7 @@
 (define-public ECHO	#x0000010)
 (define-public ICANON	#x0000002)
 
-(setenv "LD_LIBRARY_PATH" (dirname (dirname (current-filename))))
+(setenv "LD_LIBRARY_PATH"
+        (string-append (dirname (dirname (dirname (current-filename))))
+                       "/lib"))
 (load-extension "libtermios" "init_termios")
