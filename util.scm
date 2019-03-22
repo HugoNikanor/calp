@@ -76,16 +76,15 @@
 ;; (define-macro (define-quick-record! name . fields)
 ;;   (define-quick-record-templated 'define-record-type name fields))
 
-;;; Replace let* with a version that can bind from lists.
-;;; Also supports SRFI-71 (extended let-syntax for multiple values)
-;;; Example:
-;; (let* ([a b (values 1 2)]               ; SRFI-71
-;;        [(c d) '(3 4)]                   ; Let-list (mine)
-;;        [e 5])                           ; Regular
+;; Replace let* with a version that can bind from lists.
+;; Also supports SRFI-71 (extended let-syntax for multiple values)
+;; @lisp
+;; (let* ([a b (values 1 2)]               ; @r{SRFI-71}
+;;        [(c d) '(3 4)]                   ; @r{Let-list (mine)}
+;;        [e 5])                           ; @r{Regular}
 ;;   (list e d c b a))
 ;; ;; => (5 4 3 2 1)
-;;;
-
+;; @end lisp
 (define-syntax let*
   (syntax-rules ()
 
@@ -123,7 +122,7 @@
 (define-public (concat lists)
   (apply append lists))
 
-;;; This function borrowed from web-ics (calendar util)
+;; This function borrowed from web-ics (calendar util)
 (define* (sort* items comperator #:optional (get identity))
   "A sort function more in line with how python's sorted works"
   (sort items (lambda (a b)
