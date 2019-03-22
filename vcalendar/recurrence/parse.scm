@@ -9,13 +9,9 @@
   #:use-module (util)
   #:use-module (exceptions)
   #:use-module (ice-9 curried-definitions)
-  #:export (build-recur-rules)
+  #:export (parse-recurrence-rule))
 
-  )
-
-
-
-(define (build-recur-rules str)
+(define (parse-recurrence-rule str)
   "Takes a RECUR value (string), and returuns a <recur-rule> object"
  (catch #t
   (lambda () (%build-recur-rules str))
@@ -42,7 +38,7 @@
                                               #,obj (quote #,key) v)))))))))
 
 
-;; A special form of case only useful in build-recur-rules above.
+;; A special form of case only useful in parse-recurrence-rules above.
 ;; Each case is on the form (KEY val check-proc) where:
 ;; `key` is what should be matched against, and what is used for the setter
 ;; `val` is the value to bind to the loop object and

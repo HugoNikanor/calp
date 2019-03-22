@@ -105,4 +105,4 @@
           (time-difference
            (attr event "DTEND")
            (attr event "DTSTART"))))
-  (recur-event-stream event (build-recur-rules (attr event "RRULE"))))
+  (recur-event-stream event (parse-recurrence-rule (attr event "RRULE"))))
