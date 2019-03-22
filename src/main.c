@@ -22,12 +22,41 @@ int arg_shift (arg* a) {
 
 }
 
+#define GETSET(C, KEY) \
+	vcomponent_push_val((C), (KEY), "DUMMY VALUE"); \
+	INFO_F("cline = %p", get_property((C), (KEY)));
+
+/*
+ * Tests defined here instead of in own header to ensure that all the
+ * correct modules are loaded.
+ */
+int run_tests() {
+	NEW(vcomponent, c);
+	INFO(All the following should print a valid pointer ≠ 0x0);
+	GETSET(c, "FILENAME");
+	GETSET(c, "X-HNH-FILENAME");
+	GETSET(c, "DATA");
+	GETSET(c, "DAT");
+	GETSET(c, "DA");
+	GETSET(c, "D");
+	GETSET(c, "A");
+	GETSET(c, "F");
+	FFREE(vcomponent, c);
+	return 0;
+}
+
 int main (int argc, char** argv) {
 	arg args = { .argc = argc, .argv = argv };
 
+
 	if (arg_shift(&args) == 0) {
-		ERR("Please give vdir or a vcalendar file as first argument");
+		ERR("Please give something to parse, or some other flags");
 		exit (1);
+	}
+
+	if (strcmp(args.argv[0], "--run-tests") == 0) {
+		run_tests();
+		return 0;
 	}
 
 	char* rootpath = args.argv[0];
