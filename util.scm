@@ -162,3 +162,8 @@
 
 ;; (define (!= a b) (not (= a b)))
 (define-public != (negate =))
+
+(define-public (take-to lst i)
+  "Like @var{take}, but might lists shorter than length."
+  (if (> i (length lst))
+      lst (take lst i)))

@@ -20,10 +20,6 @@
              (terminal escape)
              (terminal util))
 
-(define (take-to lst i)
-  (if (> i (length lst))
-      lst (take lst i)))
-
 (define (ev-time<? a b)
   (time<? (attr a 'DTSTART)
           (attr b 'DTSTART)))
