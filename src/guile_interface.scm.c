@@ -74,16 +74,26 @@ SCM_DEFINE (vcomponent_set_attr_x, "%vcomponent-set-attribute!", 3, 0, 0,
 		vcomponent_push_val(com, key, "");
 		c = get_property (com, key);
 	} else {
-		/* If the object already exists it should be protected,
-		 * so unprotect it
+		/*
+		 * The SCM representation of an object is usually initialized
+		 * when an attribute is first accessed from guile. If we
+		 * however try to set it before accessing it then that field
+		 * will still be NULL.
+		 *
+		 * If the object, and its SCM instance exist, unprotect it.
+		 * Otherwise we know that it's NULL and safe to write a new
+		 * SCM value there.
 		 */
-		scm_gc_unprotect_object(c->cur->value->key.scm);
+		if (c->cur->value->key.scm != NULL) {
+			scm_gc_unprotect_object(c->cur->value->key.scm);
+		}
 	}
 
 	free(key);
 
-	c->cur->value->key.scm = new_value;
-	scm_gc_protect_object(c->cur->value->key.scm);
+	strbuf* target = &c->cur->value->key;
+	target->scm = new_value;
+	scm_gc_protect_object(target->scm);
 
 	return SCM_UNSPECIFIED;
 }
