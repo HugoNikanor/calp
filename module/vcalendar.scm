@@ -5,6 +5,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:use-module (util)
+  #:export (make-vcomponent)
   #:re-export (repeating?))
 
 (define (parse-dates! cal)
@@ -70,46 +71,48 @@
    (if (string? k1) (string->symbol k1) k1)
    (if (string? k2) (string->symbol k2) k2)))
 
-(define-public (make-vcomponent path)
-  (let* ((root (%vcomponent-make path))
-         (component
-          (parse-dates!
-           (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
-             ;; == Single ICS file ==
-             ;; Remove the abstract ROOT component,
-             ;; returning the wanted VCALENDAR component
-             ((file)
-              (car (%vcomponent-children root)))
+(define* (make-vcomponent #:optional path)
+  (if (not path)
+      (%vcomponent-make)
+      (let* ((root (%vcomponent-make path))
+             (component
+              (parse-dates!
+               (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
+                 ;; == Single ICS file ==
+                 ;; Remove the abstract ROOT component,
+                 ;; returning the wanted VCALENDAR component
+                 ((file)
+                  (car (%vcomponent-children root)))
 
-             ;; == Assume vdir ==
-             ;; Also removes the abstract ROOT component, but also
-             ;; merges all VCALENDAR's children into the first
-             ;; VCALENDAR, and return that VCALENDAR.
-             ;;
-             ;; TODO the other VCALENDAR components might not get thrown away,
-             ;; this since I protect them from the GC in the C code.
-             ((vdir)
-              (reduce (lambda (cal accum)
-                        (for-each (lambda (component)
-                                    (case (type component)
-                                      ((VTIMEZONE)
-                                       (let ((zones (children cal 'VTIMEZONE)))
-                                         (unless (find (lambda (z)
-                                                         (string=? (attr z "TZID")
-                                                                   (attr component "TZID")))
-                                                       zones)
-                                           (%vcomponent-push-child! accum component))))
-                                      (else (%vcomponent-push-child! accum component))))
-                                  (%vcomponent-children cal))
-                        accum)
-                      '() (%vcomponent-children root)))
+                 ;; == Assume vdir ==
+                 ;; Also removes the abstract ROOT component, but also
+                 ;; merges all VCALENDAR's children into the first
+                 ;; VCALENDAR, and return that VCALENDAR.
+                 ;;
+                 ;; TODO the other VCALENDAR components might not get thrown away,
+                 ;; this since I protect them from the GC in the C code.
+                 ((vdir)
+                  (reduce (lambda (cal accum)
+                            (for-each (lambda (component)
+                                        (case (type component)
+                                          ((VTIMEZONE)
+                                           (let ((zones (children cal 'VTIMEZONE)))
+                                             (unless (find (lambda (z)
+                                                             (string=? (attr z "TZID")
+                                                                       (attr component "TZID")))
+                                                           zones)
+                                               (%vcomponent-push-child! accum component))))
+                                          (else (%vcomponent-push-child! accum component))))
+                                      (%vcomponent-children cal))
+                            accum)
+                          '() (%vcomponent-children root)))
 
-             ((no-type) (throw 'no-type))
+                 ((no-type) (throw 'no-type))
 
-             (else (throw 'something))))))
+                 (else (throw 'something))))))
 
-    (set! (attr component "NAME")
-          (attr root      "NAME"))
-    (set! (attr component "COLOR")
-          (attr root      "COLOR"))
-    component))
+        (set! (attr component "NAME")
+              (attr root      "NAME"))
+        (set! (attr component "COLOR")
+              (attr root      "COLOR"))
+        component)))
