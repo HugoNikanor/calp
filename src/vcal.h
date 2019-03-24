@@ -68,6 +68,7 @@ typedef struct s_vcomponent vcomponent;
 #undef TYPE
 
 struct s_vcomponent {
+	/* VCALENDAR, VEVENT, ... */
 	char* type;
 	vcomponent* parent;
 	TRIE(content_line) clines;

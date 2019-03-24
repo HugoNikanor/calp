@@ -8,7 +8,8 @@
             %vcomponent-parent
 
             %vcomponent-make
-            %vcomponent-type
+            %vcomponent-get-type
+            %vcomponent-set-type!
 
             %vcomponent-set-attribute!
             %vcomponent-get-attribute

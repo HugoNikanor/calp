@@ -39,7 +39,7 @@ int handle_file(vcomponent* cal, char* path) {
 	INFO("Parsing a single file");
 
 	vcomponent_push_val(cal, "NAME", path);
-	vcomponent_push_val(cal, "TYPE", "file");
+	vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "file");
 	char* resolved_path = realpath(path, NULL);
 	open_ics (resolved_path, cal);
 	free (resolved_path);
@@ -66,7 +66,7 @@ int handle_dir(vcomponent* cal, char* path) {
 	 * TODO cut path to its last component.
 	 */
 	vcomponent_push_val(cal, "NAME", path);
-	vcomponent_push_val(cal, "TYPE", "vdir");
+	vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "vdir");
 
 	struct dirent* d;
 	while ((d = readdir(dir)) != NULL) {

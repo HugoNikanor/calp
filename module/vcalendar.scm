@@ -42,7 +42,10 @@
 ;; (set! (attr ev "KEY") 10)
 (define-public attr (make-procedure-with-setter get-attr set-attr!))
 
-(define-public type %vcomponent-type)
+;; (define-public type %vcomponent-get-type)
+(define-public type (make-procedure-with-setter
+                     %vcomponent-get-type
+                     %vcomponent-set-type!))
 (define-public parent %vcomponent-parent)
 (define-public push-child! %vcomponent-push-child!)
 (define-public (attributes component) (map string->symbol (%vcomponent-attribute-list component)))
@@ -71,7 +74,7 @@
   (let* ((root (%vcomponent-make path))
          (component
           (parse-dates!
-           (case (string->symbol (or (attr root "TYPE") "no-type"))
+           (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
              ;; == Single ICS file ==
              ;; Remove the abstract ROOT component,
              ;; returning the wanted VCALENDAR component

@@ -34,7 +34,12 @@ INIT_F(vcomponent) {
 	INIT(TRIE(content_line), &self->clines);
 	INIT(LLIST(vcomponent), &self->components);
 
-	self->type = NULL;
+	// vcomponent_push_val (self, "X-HNH-FILENAME", "VIRTUAL");
+	vcomponent_push_val (self, "X-HNH-SOURCETYPE", "virtual");
+	char* type = "VIRTUAL";
+	self->type = (char*) calloc(sizeof(*type), strlen(type) + 1);
+	strcpy(self->type, type);
+
 	self->parent = NULL;
 	self->scm = NULL;
 
@@ -52,6 +57,15 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 	INIT(LLIST(vcomponent), &self->components);
 
 	if (filename != NULL) {
+		/*
+		 * NOTE
+		 * RFC-7986 adds additional parameters linked to this one.
+		 * - `SOURCE' :: where a (possibly) updated version of the data can be
+		 *   found 
+		 * - `URL' :: Where the same data can be fonud, but
+		 *   differently (but not where the original data can be fonud
+		 *   agani).
+		 */
 		vcomponent_push_val (self, "X-HNH-FILENAME", filename);
 	}
 

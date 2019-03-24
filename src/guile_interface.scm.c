@@ -12,18 +12,23 @@ void init_vcomponent_type (void) {
 	vcomponent_type = scm_make_foreign_object_type(name, slots, NULL);
 }
 
-SCM_DEFINE (make_vcomponent, "%vcomponent-make", 1, 0, 0,
+SCM_DEFINE (make_vcomponent, "%vcomponent-make", 0, 1, 0,
 		(SCM path),
 		"Loads a vdir iCalendar from the given path.")
 {
 	vcomponent* cal =
 		(vcomponent*) scm_gc_malloc (
 				sizeof(*cal), "vcomponent");
-	INIT(vcomponent, cal, "ROOT");
 
-	char* p = scm_to_utf8_stringn(path, NULL);
-	read_vcalendar(cal, p);
-	free(p);
+	if (SCM_UNBNDP(path)) {
+		INIT(vcomponent, cal);
+	} else {
+		INIT(vcomponent, cal, "ROOT");
+
+		char* p = scm_to_utf8_stringn(path, NULL);
+		read_vcalendar(cal, p);
+		free(p);
+	}
 
 	return scm_from_vcomponent (cal);
 }
@@ -171,13 +176,29 @@ SCM_DEFINE (vcomponent_parent, "%vcomponent-parent", 1, 0, 0,
 	}
 }
 
-SCM_DEFINE(vcomponent_typeof, "%vcomponent-type", 1, 0, 0,
+SCM_DEFINE(vcomponent_typeof, "%vcomponent-get-type", 1, 0, 0,
 		(SCM component),
 		"Returns type of vcomponent")
 {
 	scm_assert_foreign_object_type (vcomponent_type, component);
 	vcomponent* comp = scm_foreign_object_ref (component, 0);
 	return scm_from_utf8_symbol(comp->type);
+}
+
+SCM_DEFINE(vcomponent_set_type_x, "%vcomponent-set-type!", 2, 0, 0,
+		(SCM component, SCM type),
+		"Replace current type of vcomponent")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	vcomponent* comp = scm_foreign_object_ref (component, 0);
+
+	if (comp->type) free (comp->type);
+
+	char* ntype = scm_to_utf8_stringn (type, NULL);
+	comp->type = calloc(sizeof(*ntype), strlen(ntype) + 1);
+	strcpy(comp->type, ntype);
+
+	return SCM_UNSPECIFIED;
 }
 
 SCM scm_from_vcomponent(vcomponent* v) {
