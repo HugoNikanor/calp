@@ -37,13 +37,13 @@
         trimmed)))
   ; TODO show truncated string
 
-
 (define (main-loop regular-events repeating-events)
   (define time (date->time-utc (current-date)))
   (define cur-event 0)
   (let loop ((char #\nul))
     (let ((events
-           (merge (filter-sorted
+           ;; TODO change back to filter-sorted once it's fixed
+           (merge (filter ;-sorted
                    (cut event-in? <> time)
                    regular-events)
 

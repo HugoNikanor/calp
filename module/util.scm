@@ -154,6 +154,8 @@
        ;; seeds:
        (car items) '())))
 
+;; TODO This might be utterly broken, do some real tests on it
+;; (and then run equivalent tests on the stream variant)
 (define-public (filter-sorted proc list)
   (take-while
    proc (drop-while
