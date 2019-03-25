@@ -128,8 +128,9 @@
   (define events (concatenate (map (cut children <> 'VEVENT) calendars)))
 
   (let* ((repeating regular (partition repeating? events)))
-    (sort*! repeating time<? (extract 'DTSTART))
-    (sort*! regular   time<? (extract 'DTSTART))
+
+    (set! repeating (sort*! repeating time<? (extract 'DTSTART)))
+    (set! regular (sort*! regular   time<? (extract 'DTSTART)))
 
     (let ((repeating (interleave-streams ev-time<?
                       (map generate-recurrence-set repeating))))

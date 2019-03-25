@@ -129,7 +129,7 @@
                 (comperator (get a)
                             (get b)))))
 
-;;; This function borrowed from web-ics (calendar util)
+;; Sorts the list @var{items}. @em{May} destroy the input list in the process
 (define* (sort*! items comperator #:optional (get identity))
   "A sort function more in line with how python's sorted works"
   (sort! items (lambda (a b)
