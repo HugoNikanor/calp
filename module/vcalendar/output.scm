@@ -74,15 +74,16 @@ Removes the X-HNH-FILENAME attribute, and sets PRODID to
                 (lambda ()
                   (format port "~a:~a~%" key
                           (string->ics-safe-string
-                           (case key
-                             ((DTSTART DTEND)
-                              (if (string? value)
-                                  value
-                                  (time->string value "~Y~m~dT~H~M~S")))
+                           (or (case key
+                                 ((DTSTART DTEND)
+                                  (if (string? value)
+                                      value
+                                      (time->string value "~Y~m~dT~H~M~S")))
 
-                             ((RRULE DURATION) "Just forget it")
+                                 ((DURATION) "Just forget it")
 
-                             (else value)))))
+                                 (else value))
+                               ""))))
 
                 ;; Catch
                 (lambda (type proc fmt . args)

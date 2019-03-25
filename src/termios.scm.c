@@ -3,6 +3,8 @@
 #include <termios.h>
 #include <stdio.h>
 
+#include "err.h"
+
 static struct termios *oldt, *newt;
 
 SCM_DEFINE(termios_lflags_and, "c-lflags-disable!", 2, 0, 0,
@@ -13,7 +15,7 @@ SCM_DEFINE(termios_lflags_and, "c-lflags-disable!", 2, 0, 0,
 	int fd   = scm_to_int (_fd);
 	int bits = scm_to_int (_bits);
 
-	printf("Setting bits [%x]\n", bits);
+	INFO_F("Setting bits [%x]", bits);
 
 	tcgetattr(fd, oldt);
 	*newt = *oldt;

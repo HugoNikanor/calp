@@ -30,5 +30,6 @@ Event must have the DTSTART and DTEND attribute set."
   "Does event overlap the date that contains time."
   (let* ((date (time-utc->date time))
          (start (date->time-utc (drop-time date)))
-         (end (add-duration start (make-duration (* 60 60 24)))))
+         (end (add-day start)))
     (event-overlaps? ev start end)))
+

@@ -24,7 +24,7 @@
   (time<? (attr a 'DTSTART)
           (attr b 'DTSTART)))
 
-;;; ------------------------------------------------------------
+
 
 #; (define pizza-event (search cal "pizza"))
 
@@ -94,7 +94,8 @@
 
       (unless (null? events)
        (let ((ev (list-ref events cur-event)))
-         (format #t "~a~%~aStart: ~a	Slut: ~a~%~%~a~%"
+         (format #t "~a~%~a~%~aStart: ~a	Slut: ~a~%~%~a~%"
+                 (attr ev 'X-HNH-FILENAME)
                  (attr ev 'SUMMARY)
                  (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
                  (time->string (attr ev 'DTSTART) "~1 ~3")
@@ -119,8 +120,10 @@
                   (memv char (list #\q (ctrl #\C))))
         (loop (read-char (current-input-port)))))))
 
-(load "config.scm")
+
 
+
+(load "config.scm")
 
 (define (main args)
 
