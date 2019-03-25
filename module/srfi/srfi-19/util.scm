@@ -53,34 +53,37 @@ attribute set to 0. Can also be seen as \"Start of day\""
 (define* (time->string time #:optional (format "~1 ~3"))
   (date->string (time-utc->date time) format))
 
-
 (define (add-day time)
-  (add-duration time (make-time time-duration 0 (* 60 60 24))))
+  (add-duration time (make-duration (* 60 60 24))))
 
 (define (remove-day time)
-  (add-duration time (make-time time-duration 0 (- (* 60 60 24)))))
+  (add-duration time (make-duration (- (* 60 60 24)))))
 
-;;    A          B          C          D         ¬E
-;; |s1|     :     |s2| : |s1|     :     |s2| : |s1|
-;; |  |     :     |  | : |  ||s2| : |s1||  | : |  |
-;; |  ||s2| : |s1||  | : |  ||  | : |  ||  | :
-;;     |  | : |  |     : |  ||  | : |  ||  | :     |s2|
-;;     |  | : |  |     : |  |     :     |  | :     |  |
+;; @verbatim
+;;    A          B          C          D          E         ¬F
+;; |s1|     :     |s2| : |s1|     :     |s2| :          : |s1|
+;; |  |     :     |  | : |  ||s2| : |s1||  | : |s1||s2| : |  |
+;; |  ||s2| : |s1||  | : |  ||  | : |  ||  | : |  ||  | :
+;;     |  | : |  |     : |  ||  | : |  ||  | : |  ||  | :     |s2|
+;;     |  | : |  |     : |  |     :     |  | :          :     |  |
+;; @end verbatim
+;; 
+;; E is covered by both case A and B.
 (define-public (timespan-overlaps? s1-begin s1-end s2-begin s2-end)
   "Return whetever or not two timespans overlap."
   (or
    ;; A
-   (and (time<=? s2-begin s1-end)
-        (time<=? s1-begin s2-end))
+   (and (time<? s2-begin s1-end)
+        (time<? s1-begin s2-end))
 
    ;; B
-   (and (time<=? s1-begin s2-end)
-        (time<=? s2-begin s1-end))
+   (and (time<? s1-begin s2-end)
+        (time<? s2-begin s1-end))
 
    ;; C
-   (and (time<=? s1-begin s2-begin)
-        (time<=? s2-end s1-end))
+   (and (time<? s1-begin s2-begin)
+        (time<? s2-end s1-end))
 
    ;; D
-   (and (time<=? s2-begin s1-begin)
-        (time<=? s1-end s2-end))))
+   (and (time<? s2-begin s1-begin)
+        (time<? s1-end s2-end))))
