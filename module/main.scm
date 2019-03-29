@@ -46,87 +46,84 @@
 (define (main-loop regular-events repeating-events)
   (define time (now))
   (define cur-event 0)
-  (call/ec
-   (lambda (return)
-    (let loop ()
-      (let ((events
-             ;; TODO change back to filter-sorted once it's fixed
-             (merge (filter             ;-sorted
-                     (cut event-in? <> time)
-                     regular-events)
+  (while #t
+    (let ((events
+           ;; TODO change back to filter-sorted once it's fixed
+           (merge (filter             ;-sorted
+                   (cut event-in? <> time)
+                   regular-events)
 
-                    (stream->list
-                     (filter-sorted-stream
-                      (cut event-in? <> time)
-                      repeating-events))
+                  (stream->list
+                   (filter-sorted-stream
+                    (cut event-in? <> time)
+                    repeating-events))
 
-                    ev-time<?)))
+                  ev-time<?)))
 
 
-        (cls)
-        (display-calendar-header! (time-utc->date time))
-        ;; (line)
-        (format #t "~a┬~a┬~a~%"
-                (make-string 20 #\─)
-                (make-string 32 #\─)
-                (make-string 10 #\─))
+      (cls)
+      (display-calendar-header! (time-utc->date time))
+      ;; (line)
+      (format #t "~a┬~a┬~a~%"
+              (make-string 20 #\─)
+              (make-string 32 #\─)
+              (make-string 10 #\─))
 
 
-        (for-each
-         (lambda (ev i)
-           (format #t "~a │ ~a~a~a~a │ ~a~a~%"
-                   (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
-                   (if (= i cur-event) "\x1b[7m" "")
-                   (color-escape (attr (parent ev) 'COLOR))
-                   ;; Summary filter is a hook for the user
-                   (trim-to-width (summary-filter ev (attr ev 'SUMMARY)) 30)
-                   STR-RESET
-                   (trim-to-width
-                    (or (attr ev 'LOCATION) "\x1b[1;30mINGEN LOKAL") 20)
-                   STR-RESET))
-         events
-         (iota (length events)))
+      (for-each
+       (lambda (ev i)
+         (format #t "~a │ ~a~a~a~a │ ~a~a~%"
+                 (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
+                 (if (= i cur-event) "\x1b[7m" "")
+                 (color-escape (attr (parent ev) 'COLOR))
+                 ;; Summary filter is a hook for the user
+                 (trim-to-width (summary-filter ev (attr ev 'SUMMARY)) 30)
+                 STR-RESET
+                 (trim-to-width
+                  (or (attr ev 'LOCATION) "\x1b[1;30mINGEN LOKAL") 20)
+                 STR-RESET))
+       events
+       (iota (length events)))
 
-        (format #t "~a┴~a┴~a~%"
-                (make-string 20 #\─)
-                (make-string 32 #\─)
-                (make-string 10 #\─))
+      (format #t "~a┴~a┴~a~%"
+              (make-string 20 #\─)
+              (make-string 32 #\─)
+              (make-string 10 #\─))
 
-        (unless (null? events)
-          (let ((ev (list-ref events cur-event)))
-            (format #t "~a~%~a~%~aStart: ~a	Slut: ~a~%~%~a~%"
-                    (attr ev 'X-HNH-FILENAME)
-                    (attr ev 'SUMMARY)
-                    (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
-                    (time->string (attr ev 'DTSTART) "~1 ~3")
-                    (time->string (attr ev 'DTEND) "~1 ~3")
-                    (string-join   ; TODO replace this with a better text flower
-                     (take-to      ; This one destroys newlines used for layout
-                      (string->wrapped-lines (or (attr ev 'DESCRIPTION) "")
-                                             #:line-width 60
-                                             #:collapse-whitespace? #f)
-                      10)
-                     (string #\newline))
-                    )))
+      (unless (null? events)
+        (let ((ev (list-ref events cur-event)))
+          (format #t "~a~%~a~%~aStart: ~a	Slut: ~a~%~%~a~%"
+                  (attr ev 'X-HNH-FILENAME)
+                  (attr ev 'SUMMARY)
+                  (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
+                  (time->string (attr ev 'DTSTART) "~1 ~3")
+                  (time->string (attr ev 'DTEND) "~1 ~3")
+                  (string-join   ; TODO replace this with a better text flower
+                   (take-to      ; This one destroys newlines used for layout
+                    (string->wrapped-lines (or (attr ev 'DESCRIPTION) "")
+                                           #:line-width 60
+                                           #:collapse-whitespace? #f)
+                    10)
+                   (string #\newline))
+                  )))
 
-	(let ((char (read-char)))
-         (case char
-           ((#\L #\l) (mod! time add-day)    (set! cur-event 0))
-           ((#\h #\H) (mod! time remove-day) (set! cur-event 0))
-           ((#\t)     (set! time (now))      (set! cur-event 0))
-           ((#\j #\J) (unless (= cur-event (1- (length events)))
-			(mod! cur-event 1+)))
-           ((#\k #\K) (unless (= cur-event 0)
-			(mod! cur-event 1-)))
-	   ((#\g) (set! cur-event 0))
-	   ((#\G) (set! cur-event (1- (length events)))))
+      (let ((char (read-char)))
+        (case char
+          ((#\L #\l) (mod! time add-day)    (set! cur-event 0))
+          ((#\h #\H) (mod! time remove-day) (set! cur-event 0))
+          ((#\t)     (set! time (now))      (set! cur-event 0))
+          ((#\j #\J) (unless (= cur-event (1- (length events)))
+		       (mod! cur-event 1+)))
+          ((#\k #\K) (unless (= cur-event 0)
+		       (mod! cur-event 1-)))
+	  ((#\g) (set! cur-event 0))
+	  ((#\G) (set! cur-event (1- (length events)))))
 
-         (when (or (eof-object? char)
-                   (memv char (list #\q (ctrl #\C))))
-           (return #f)))
-        ;; (format #t "c = ~c (~d)~%" char (char->integer char))
-        (loop)
-        )))))
+        (when (or (eof-object? char)
+                  (memv char (list #\q (ctrl #\C))))
+          (break)))
+      ;; (format #t "c = ~c (~d)~%" char (char->integer char))
+      )))
 
 
 
