@@ -41,6 +41,8 @@
 (define (now)
   (date->time-utc (current-date)))
 
+(define (summary-filter _ str) str)
+
 (define (main-loop regular-events repeating-events)
   (define time (now))
   (define cur-event 0)
@@ -76,7 +78,8 @@
                    (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
                    (if (= i cur-event) "\x1b[7m" "")
                    (color-escape (attr (parent ev) 'COLOR))
-                   (trim-to-width (attr ev 'SUMMARY) 30)
+                   ;; Summary filter is a hook for the user
+                   (trim-to-width (summary-filter ev (attr ev 'SUMMARY)) 30)
                    STR-RESET
                    (trim-to-width
                     (or (attr ev 'LOCATION) "\x1b[1;30mINGEN LOKAL") 20)
