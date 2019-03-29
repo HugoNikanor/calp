@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <errno.h>
 
+/* basename */
+#include <libgen.h>
+
 #include "parse.h"
 #include "err.h"
 
@@ -38,7 +41,8 @@ int read_vcalendar(vcomponent* cal, char* path) {
 int handle_file(vcomponent* cal, char* path) {
 	INFO("Parsing a single file");
 
-	vcomponent_push_val(cal, "NAME", path);
+	/* NAME is the `fancy' name of the calendar. */
+	vcomponent_push_val(cal, "NAME", basename(path));
 	vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "file");
 	char* resolved_path = realpath(path, NULL);
 	open_ics (resolved_path, cal);
@@ -61,11 +65,8 @@ int handle_dir(vcomponent* cal, char* path) {
 	buf[path_len - 1] = '/';
 
 
-	/*
-	 * NAME is the `fancy' name of the calendar.
-	 * TODO cut path to its last component.
-	 */
-	vcomponent_push_val(cal, "NAME", path);
+	/* NAME is the `fancy' name of the calendar. */
+	vcomponent_push_val(cal, "NAME", basename(path));
 	vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "vdir");
 
 	struct dirent* d;
