@@ -38,12 +38,15 @@
         trimmed)))
   ; TODO show truncated string
 
+(define (now)
+  (date->time-utc (current-date)))
+
 (define (main-loop regular-events repeating-events)
-  (define time (date->time-utc (current-date)))
+  (define time (now))
   (define cur-event 0)
   (call/ec
    (lambda (return)
-    (let loop ((char #\nul))
+    (let loop ()
       (let ((events
              ;; TODO change back to filter-sorted once it's fixed
              (merge (filter             ;-sorted
@@ -57,19 +60,6 @@
 
                     ev-time<?)))
 
-        (case char
-          ;; TODO The explicit loop call is a hack to rerender the display
-          ;; It's REALLY ugly.
-          ((#\L #\l) (set! time (add-day time))    (set! cur-event 0) (loop #\nul))
-          ((#\h #\H) (set! time (remove-day time)) (set! cur-event 0) (loop #\nul))
-          ((#\j #\J) (unless (= cur-event (1- (length events)))
-                       (set! cur-event (1+ cur-event))))
-          ((#\k #\K) (unless (= cur-event 0)
-                       (set! cur-event (1- cur-event)))))
-
-        (when (or (eof-object? char)
-                  (memv char (list #\q (ctrl #\C))))
-          (return #f))
 
         (cls)
         (display-calendar-header! (time-utc->date time))
@@ -116,8 +106,23 @@
                      (string #\newline))
                     )))
 
+	(let ((char (read-char)))
+         (case char
+           ((#\L #\l) (mod! time add-day)    (set! cur-event 0))
+           ((#\h #\H) (mod! time remove-day) (set! cur-event 0))
+           ((#\t)     (set! time (now))      (set! cur-event 0))
+           ((#\j #\J) (unless (= cur-event (1- (length events)))
+			(mod! cur-event 1+)))
+           ((#\k #\K) (unless (= cur-event 0)
+			(mod! cur-event 1-)))
+	   ((#\g) (set! cur-event 0))
+	   ((#\G) (set! cur-event (1- (length events)))))
+
+         (when (or (eof-object? char)
+                   (memv char (list #\q (ctrl #\C))))
+           (return #f)))
         ;; (format #t "c = ~c (~d)~%" char (char->integer char))
-        (loop (read-char (current-input-port)))
+        (loop)
         )))))
 
 
