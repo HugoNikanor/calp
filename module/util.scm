@@ -168,3 +168,9 @@
   "Like @var{take}, but might lists shorter than length."
   (if (> i (length lst))
       lst (take lst i)))
+
+(define-public (as-string s)
+  (if (symbol? s) (symbol->string s) s))
+
+(define-public (as-symb s)
+  (if (string? s) (string->symbol s) s))

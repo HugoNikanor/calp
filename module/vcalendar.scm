@@ -31,13 +31,13 @@
 (define (set-attr! component attr value)
   (%vcomponent-set-attribute!
    component
-   (if (symbol? attr) (symbol->string attr) attr)
+   (as-string attr)
    value))
 
 (define (get-attr component attr)
   (%vcomponent-get-attribute
    component
-   (if (symbol? attr) (symbol->string attr) attr)))
+   (as-string attr)))
 
 ;; Enables symmetric get and set:
 ;; (set! (attr ev "KEY") 10)
@@ -67,9 +67,8 @@
   (cut get-attr <> field))
 
 (define-public (key=? k1 k2)
-  (eq?
-   (if (string? k1) (string->symbol k1) k1)
-   (if (string? k2) (string->symbol k2) k2)))
+  (eq? (as-symb k1)
+       (as-symb k2)))
 
 (define* (make-vcomponent #:optional path)
   (if (not path)
