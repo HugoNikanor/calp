@@ -89,14 +89,14 @@ SCM_DEFINE (vcomponent_set_attr_x, "%vcomponent-set-attribute!", 3, 0, 0,
 		 * Otherwise we know that it's NULL and safe to write a new
 		 * SCM value there.
 		 */
-		if (c->cur->value->key.scm != NULL) {
-			scm_gc_unprotect_object(c->cur->value->key.scm);
+		if (c->cval->key.scm != NULL) {
+			scm_gc_unprotect_object(c->cval->key.scm);
 		}
 	}
 
 	free(key);
 
-	strbuf* target = &c->cur->value->key;
+	strbuf* target = &c->cval->key;
 	target->scm = new_value;
 	scm_gc_protect_object(target->scm);
 

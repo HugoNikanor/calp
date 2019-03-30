@@ -48,7 +48,7 @@
  */
 
 /* content_set */
-#define CLINE_CUR(c)        ((c)->cur->value)
+#define CLINE_CUR(c)        ((c)->cval)
 
 /* strbuf */
 #define CLINE_CUR_VAL(c)    (& CLINE_CUR(c)->key)

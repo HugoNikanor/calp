@@ -164,8 +164,8 @@ char* vcomponent_get_val (vcomponent* comp, const char* key) {
 	content_line* cl = GET(TRIE(content_line))(&comp->clines, key_cpy);
 	free (key_cpy);
 
-	if (cl != NULL && cl->cur->value != NULL) {
-		return cl->cur->value->key.mem;
+	if (cl != NULL && cl->cval != NULL) {
+		return cl->cval->key.mem;
 	}
 
 	return NULL;

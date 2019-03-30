@@ -11,6 +11,7 @@ INIT_F ( LLIST(TYPE) ) {
 	head->after  = tail;
 	tail->before = head;
 	self->cur    = head;
+	self->cval   = head->value;
 	return 0;
 }
 
@@ -69,6 +70,7 @@ int PUSH(LLIST(TYPE)) ( LLIST(TYPE)* lst, TYPE* val) {
 
 	// TODO do I want to change that?
 	lst->cur = link;
+	lst->cval = link->value;
 
 	return 0;
 }
@@ -157,6 +159,7 @@ int RESET(LLIST(TYPE)) ( LLIST(TYPE)* llist ) {
 	}
 
 	llist->cur = llist->head;
+	llist->cval = llist->head->value;
 
 	return 0;
 }

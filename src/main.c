@@ -84,7 +84,7 @@ int main (int argc, char** argv) {
 
 				printf("%s | %s\n",
 						filename,
-						get_property(ev, "SUMMARY")->cur->value->key.mem);
+						get_property(ev, "SUMMARY")->cval->key.mem);
 			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {

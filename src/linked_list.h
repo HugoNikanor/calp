@@ -23,6 +23,7 @@ typedef struct {
 	LINK(TYPE)* head;
 	LINK(TYPE)* tail;
 	LINK(TYPE)* cur;
+	TYPE* cval;
 	int length;
 } LLIST(TYPE);
 
