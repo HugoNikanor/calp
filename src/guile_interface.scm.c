@@ -62,6 +62,34 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 	}
 }
 
+SCM_DEFINE (vcomponent_get_property, "%vcomponent-get-property", 3, 0, 0,
+            (SCM component, SCM attr, SCM prop),
+            "")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	vcomponent* comp = scm_foreign_object_ref (component, 0);
+
+	char* key      = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
+	char* prop_key = scm_to_utf8_stringn(scm_string_upcase(prop), NULL);
+	content_line* cl = get_property (comp, key);
+	free(key);
+
+	if (cl == NULL) return SCM_BOOL_F;
+
+	SCM llist = SCM_EOL;
+	FOR (LLIST, content_set, cs, cl) {
+		LLIST(strbuf)* strs = GET(TRIE(param_set))(&cs->val, prop_key);
+		if (strs == NULL) continue;
+		SCM subl = SCM_EOL;
+		FOR (LLIST, strbuf, s, strs) {
+			subl = scm_cons(scm_from_strbuf(s), subl);
+		}
+		llist = scm_cons(subl, llist);
+	}
+
+	return llist;
+}
+
 SCM_DEFINE (vcomponent_set_attr_x, "%vcomponent-set-attribute!", 3, 0, 0,
 		(SCM component, SCM attr, SCM new_value),
 		"")
@@ -223,6 +251,37 @@ SCM_DEFINE(vcomponent_attr_list, "%vcomponent-attribute-list", 1, 0, 0,
 	}
 
 	FFREE(LLIST(strbuf), keys);
+
+	return llist;
+}
+
+SCM_DEFINE(vcomponent_prop_list, "%vcomponent-property-list", 2, 0, 0,
+           (SCM component, SCM attr),
+           "")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	vcomponent* comp = scm_foreign_object_ref (component, 0);
+
+	char* key      = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
+	content_line* cl = get_property (comp, key);
+	free(key);
+
+	if (cl == NULL) return SCM_BOOL_F;
+
+	SCM llist = SCM_EOL;
+	FOR (LLIST, content_set, cs, cl) {
+		LLIST(strbuf)* keys = KEYS(TRIE(param_set))(&cs->val);
+		if (keys == NULL) continue;
+
+		FOR (LLIST, strbuf, s, keys) {
+			SCM symb = scm_string_to_symbol(scm_from_strbuf(s));
+			if ( scm_is_false(scm_memv (symb, llist)) ) {
+				llist = scm_cons(symb, llist);
+			}
+		}
+
+		FFREE(LLIST(strbuf), keys);
+	}
 
 	return llist;
 }

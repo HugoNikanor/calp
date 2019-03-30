@@ -14,6 +14,9 @@
             %vcomponent-set-attribute!
             %vcomponent-get-attribute
 
+            %vcomponent-get-property
+            %vcomponent-property-list
+
             %vcomponent-attribute-list
 
             %vcomponent-shallow-copy))

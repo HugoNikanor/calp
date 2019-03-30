@@ -39,6 +39,18 @@
    component
    (as-string attr)))
 
+(define (get-property component attr prop)
+  (%vcomponent-get-property
+   component
+   (as-string attr)
+   (as-string prop)))
+
+;; TODO replace this with procedure-with-setter
+(define-public prop get-property)
+
+(define-public (properties component attr)
+  (%vcomponent-property-list component (as-string attr)))
+
 ;; Enables symmetric get and set:
 ;; (set! (attr ev "KEY") 10)
 (define-public attr (make-procedure-with-setter get-attr set-attr!))
