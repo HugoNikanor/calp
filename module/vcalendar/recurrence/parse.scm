@@ -65,6 +65,22 @@
 (define (string->symbols val delim)
   (map string->symbol (string-split val delim)))
 
+;; @example
+;; <weekday> ∈ weekdays
+;; <weekdaynum> ::= [[±] <num>] <weekday> ;; +3MO
+;; (<weekadynum>, ...)
+;; @end example
+
+;; Returns a pair, where the @code{car} is the offset
+;; and @code{cdr} is the day symbol.
+;; The @code{car} may be @code{#f}.
+(define (parse-day-spec str)
+  (let* ((numchars (append '(#\+ #\-) (map integer->char (iota 10 #x30))))
+         (num symb (span (cut memv <> numchars)
+                         (string->list str))))
+    (cons (string->number (list->string num))
+          (apply symbol symb))))
+
 (define (%build-recur-rules str)
   (fold
    (lambda (kv obj)
@@ -72,10 +88,11 @@
             ;; Lazy fields for the poor man.
             (symb (lambda () (string->symbol val)))
             (date (lambda () (parse-datetime val)))
+            (days (lambda () (map parse-day-spec (string-split val #\,))))
             (num  (lambda () (string->number val)))
             (nums (lambda () (string->number-list val #\,))))
        (quick-case (string->symbol key) obj
-                   (FREQ     (symb) (cut memv <> intervals)) ; Requirek
+                   (FREQ     (symb) (cut memv <> intervals)) ; Required
                    (UNTIL    (date) identity)
                    (COUNT    (num)  (cut <= 0 <>))
                    (INTERVAL (num)  (cut <= 0 <>))
@@ -83,11 +100,8 @@
                    (BYMINUTE (nums) (all-in n (<= 0 n 59)))
                    (BYHOUR   (nums) (all-in n (<= 0 n 23)))
 
-                   ;; TODO
-                   ;; <weekday> ∈ weekdays
-                   ;; <weekdaynum> ::= [[±] <num>] <weekday> ;; +3MO
-                   ;; (<weekadynum>, ...)
-                   ;; (BYDAY (string-split val #\,))
+                   (BYDAY (days) (lambda (p) (let* (((num . symb) p))
+                                          (memv symb weekdays))))
 
                    (BYMONTHDAY (nums) (all-in n (<=  -31 n  31) (!= n 0)))
                    (BYYEARDAY  (nums) (all-in n (<= -366 n 366) (!= n 0)))
