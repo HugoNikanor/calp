@@ -71,16 +71,15 @@
                                (append public-fields private-fields))
        ,@(map (lambda (field) `(export ,field))
               public-fields))))
-  ;; (define-quick-record-templated 'define-immutable-record-type name fields))
 
-;; (define-macro (define-quick-record! name . fields)
-;;   (define-quick-record-templated 'define-record-type name fields))
+
 
 ;; Replace let* with a version that can bind from lists.
 ;; Also supports SRFI-71 (extended let-syntax for multiple values)
 ;; @lisp
 ;; (let* ([a b (values 1 2)]               ; @r{SRFI-71}
 ;;        [(c d) '(3 4)]                   ; @r{Let-list (mine)}
+;;        [(a b . c) (cons* 1 2 3)]        ; @r{Improper list matching (mine)}
 ;;        [e 5])                           ; @r{Regular}
 ;;   (list e d c b a))
 ;; ;; => (5 4 3 2 1)
@@ -93,12 +92,22 @@
      (begin body ...)]
 
     ;; (let (((a b) '(1 2))) (list b a)) => (2 1)
-    [(_ (((k k* ...) list-value) rest ...)
+    [(_ (((k ... . (k*)) list-value) rest ...)
         body ...)
-     (apply (lambda (k k* ...)
+     (apply (lambda (k ... k*)
               (let* (rest ...)
-                    body ...))
+                body ...))
             list-value)]
+
+    ;; Improper list matching
+    ;; (let* (((a b . c) (cons* 1 2 3))) (list a c)) ; => (1 3)
+    [(_ (((k1 k ... . k*) imp-list) rest ...)
+        body ...)
+     (apply (lambda (k1 k ... k*)
+              (let* (rest ...)
+                body ...))
+            (improper->proper-list
+             imp-list (length (quote (k1 k ...)))))]
 
     ;; "Regular" case
     [(_ ((k value) rest ...) body ...)
@@ -112,8 +121,13 @@
        (lambda (k k* ...)
          (let* (rest ...)
            body ...)))]
-
     ))
+
+(define (improper->proper-list lst len)
+  (let* ((head tail (split-at lst len)))
+    (append head (list tail))))
+
+
 
 ;; Like set!, but applies a transformer on the already present value.
 (define-syntax-rule (mod! field transform-proc)
