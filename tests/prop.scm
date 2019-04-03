@@ -1,16 +1,8 @@
-#!/usr/bin/guile -s
-!#
+(use-modules (vcalendar))
 
-(define *dir* (dirname (dirname (current-filename))))
-(define (path subdir)
-  (string-append *dir* "/" subdir))
-
-(add-to-load-path (path "module"))
-
-(use-modules (srfi srfi-64)
-             (vcalendar))
-
-(define v (make-vcomponent (path "testdata/prop.ics")))
+(define v (make-vcomponent
+           (string-append (getenv "TESTPATH")
+                          "/prop.ics")))
 
 (test-begin "Proporty test")
 (test-equal (prop v 'KEY 'A) '(("1")))

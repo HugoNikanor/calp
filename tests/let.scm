@@ -1,12 +1,4 @@
-#!/usr/bin/guile \
--s
-!#
-
-(add-to-load-path (string-append (dirname (dirname (current-filename)))
-                                 "/module"))
-
-(use-modules (srfi srfi-64)
-             (util))
+(use-modules (util))
 
 (test-begin "let")
 

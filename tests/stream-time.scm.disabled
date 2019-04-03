@@ -1,0 +1,63 @@
+;;; Commentary:
+
+;; This is not really a test of calparse, but just some benchmarks on Guile's
+;; built in SRFI-41 (stream) implementation. While running interactively the code
+;; @lisp
+;; (stream 1 2 3)
+;; @end lisp
+;; is extremely slow (0.5s). The problem however seems to go away during
+;; compilation. Note however that
+;; @lisp
+;; (list->stream '(1 2 3))
+;; @end lisp
+;; is fast in both cases.
+
+;;; Code:
+
+(use-modules (srfi srfi-19)             ; Time
+             (srfi srfi-41)             ; Streams
+             (srfi srfi-64)             ; Tests
+             (srfi srfi-71)             ; let-multiple
+             (ice-9 format))
+
+;;; TODO use statprof insteadd
+
+(define (timed thunk)
+  "Returns two values, @var{result} and @var{time ellapsed}."
+ (let ((start-time (current-time time-process)))
+   (let ((result (thunk)))
+     (let ((end-time (current-time time-process)))
+       (values result
+               (time-difference end-time start-time))))))
+
+(define-syntax-rule (with-printed-time port expr ...)
+  (let ((result duration (timed (lambda () expr ...))))
+    (format port "~6f :: ~a~%"
+            (+ (time-second duration)
+               (/ (time-nanosecond duration) 1e5))
+            (quote expr ...))))
+
+(with-printed-time #t (stream 1 2 3 4 5))
+(with-printed-time #t (list->stream '(1 2 3 4 5)))
+(with-printed-time #t (stream->list (list->stream '(1 2 3 4 5))))
+(with-printed-time
+ #t (stream-cons
+     1 (stream-cons
+        2 (stream-cons
+           3 (stream-cons
+              4 (stream-cons
+                 5 stream-null))))))
+
+(display (make-string 60 #\-)) (newline)
+
+(eval-when (load)
+  (with-printed-time #t (stream 1 2 3 4 5))
+  (with-printed-time #t (list->stream '(1 2 3 4 5)))
+  (with-printed-time #t (stream->list (list->stream '(1 2 3 4 5))))
+  (with-printed-time
+   #t (stream-cons
+       1 (stream-cons
+          2 (stream-cons
+             3 (stream-cons
+                4 (stream-cons
+                   5 stream-null)))))))

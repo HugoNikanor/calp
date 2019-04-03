@@ -1,13 +1,7 @@
-#!/usr/bin/guile -s
-!#
-
-(add-to-load-path (string-append (dirname (dirname (current-filename))) "/module"))
-
 (use-modules (srfi srfi-1)
              (srfi srfi-19)
              (srfi srfi-19 util)
              (srfi srfi-41)
-             (srfi srfi-64)             ; Testisg
 
              (util)
              (vcalendar)
@@ -20,8 +14,8 @@
           (time->string (attr ev "DTEND"))))
 
 (define (tcal str)
-  (format #f "~a/testdata/recurrence/~a"
-          (dirname (dirname (current-filename)))
+  (format #f "~a/recurrence/~a"
+          (getenv "TESTPATH")
           str))
 
 (test-begin "recurrence test")
