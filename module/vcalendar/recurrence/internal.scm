@@ -4,13 +4,6 @@
   #:export (make-recur-rule
             weekdays intervals))
 
-;; (list
-;;  (build-recur-rules "FREQ=HOURLY")
-;;  (build-recur-rules "FREQ=HOURLY;COUNT=3")
-;;  (build-recur-rules "FREQ=ERR;COUNT=3")
-;;  (build-recur-rules "FREQ=HOURLY;COUNT=err")
-;;  (build-recur-rules "FREQ=HOURLY;COUNT=-1"))
-
 ;; Immutable, since I easily want to be able to generate the recurence set for
 ;; the same event multiple times.
 (define-quick-record recur-rule
