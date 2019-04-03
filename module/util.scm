@@ -3,7 +3,7 @@
   #:use-module ((sxml fold) #:select (fold-values))
   #:export (destructure-lambda let-multi fold-lists catch-let
                                for-each-in
-                               define-quick-record define-quick-record!
+                               define-quick-record
                                mod! sort* sort*!
                                find-min)
   #:replace (let*)
@@ -35,6 +35,7 @@
 (define-syntax-rule (for-each-in lst proc)
   (for-each proc lst))
 
+
 
 ;;; Helper macros to make define-quick-record better
 
@@ -60,7 +61,8 @@
 ;;; Creates srfi-9 define{-immutable,}-record-type declations.
 ;;; Also creates srfi-17 accessor ((set! (access field) value))
 
-;; (define (define-quick-record-templated define-proc name field))
+;;; TODO allow extra properties to be sent to this macro,
+;;; such as @var{:muttable} or @var{:immutable}
 
 (define-macro (define-quick-record name . fields)
   (let ((public-fields  (or (assoc-ref fields #:public)  '()))
