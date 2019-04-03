@@ -21,9 +21,12 @@
                (m ms (stream-car+cdr min)))
           (stream-cons m (interleave-streams < (cons ms other)))))))
 
-;;; Varför är allting så långsamt‽‽‽‽‽‽‽‽
-
 (define-public (filter-sorted-stream proc stream)
   (stream-take-while
    proc (stream-drop-while
          (negate proc) stream)))
+
+(define-public (stream-find pred stream)
+  (cond ((stream-null? stream) #f)
+        ((pred (stream-car stream)) (stream-car stream))
+        (else (stream-find pred (stream-cdr stream)))))
