@@ -13,17 +13,17 @@
 
 (define (parse-recurrence-rule str)
   "Takes a RECUR value (string), and returuns a <recur-rule> object"
- (catch #t
-  (lambda () (%build-recur-rules str))
-  (lambda (err cont obj key val . rest)
-    (let ((fmt (case err
-                 ((unfulfilled-constraint)
-                  "ERR ~a [~a] doesn't fulfill constraint of type [~a], ignoring~%")
-                 ((invalid-value)
-                  "ERR ~a [~a] for key [~a], ignoring.~%")
-                 (else "~a ~a ~a"))))
-      (format #t fmt err val key))
-    (cont obj))))
+  (catch #t
+    (lambda () (%build-recur-rules str))
+    (lambda (err cont obj key val . rest)
+      (let ((fmt (case err
+                   ((unfulfilled-constraint)
+                    "ERR ~a [~a] doesn't fulfill constraint of type [~a], ignoring~%")
+                   ((invalid-value)
+                    "ERR ~a [~a] for key [~a], ignoring.~%")
+                   (else "~a ~a ~a"))))
+        (format #t fmt err val key))
+      (cont obj))))
 
 (eval-when (expand)
  (define ((handle-case stx obj) key val proc)
