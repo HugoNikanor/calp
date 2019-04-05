@@ -3,6 +3,7 @@
 (define-module (terminal escape)
   #:use-module (srfi srfi-60)
   #:use-module (terminal termios)
+  #:use-module (util)
   #:export (with-vulgar))
 
 (define-public (cls)
@@ -15,14 +16,27 @@
 (define-syntax with-vulgar
   (syntax-rules ()
     ((_ thunk)
-     (let ((ifd (fileno (current-input-port)))
-           (ofd (fileno (current-output-port))))
+     (let* ((ifd (current-input-port))
+            (ofd (current-output-port))
+            (iattr (make-termios))
+            (oattr (make-termios))
+            iattr* oattr*)
        (dynamic-wind
          (lambda ()
-           (let ((bits (bitwise-ior ECHO ICANON)))
-             (c-lflags-disable! ifd bits)
-             (c-lflags-disable! ofd bits)))
+           (tcgetattr! iattr ifd)
+           (tcgetattr! oattr ofd)
+
+           ;; Store current settings to enable resetting the terminal later
+           (set! iattr* (copy-termios iattr))
+           (set! oattr* (copy-termios oattr))
+
+           (let ((bits (bitwise-not (bitwise-ior ECHO ICANON))))
+             (set! (lflag iattr) (bitwise-and (lflag iattr) bits))
+             (set! (lflag oattr) (bitwise-and (lflag oattr) bits)))
+
+           (tcsetattr! iattr ifd)
+           (tcsetattr! oattr ofd))
          thunk
          (lambda ()
-           (c-lflag-restore! ifd)
-           (c-lflag-restore! ofd))))  )))
+           (tcsetattr! iattr* ifd)
+           (tcsetattr! oattr* ofd)))))))
