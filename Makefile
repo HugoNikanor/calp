@@ -11,7 +11,7 @@ CFLAGS  = -std=gnu11 -Wall -Wextra \
 		  $(shell guile-config compile)
 LDFLAGS = -fPIC $(shell guile-config link)
 
-LIBS = libguile-calendar.so libtermios.so
+LIBS = libguile-calendar.so
 SO_FILES = $(addprefix $(LIBDIR)/, $(LIBS))
 
 H_FILES = $(wildcard src/*.h)
