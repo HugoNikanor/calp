@@ -190,3 +190,14 @@
 
 (define-public (as-symb s)
   (if (string? s) (string->symbol s) s))
+
+(define-public (enumerate lst)
+  (zip (iota (length lst))
+       lst))
+
+;; Map with index
+(define-syntax-rule (map-each proc lst)
+  (map (lambda (x i) (proc x i))
+       lst (iota (length lst))))
+
+(export map-each)
