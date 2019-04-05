@@ -123,6 +123,11 @@
        (lambda (k k* ...)
          (let* (rest ...)
            body ...)))]
+
+    ;; Declare variable without a value (actuall #f).
+    ;; Useful for inner mutation.
+    [(_ (v rest ...) body ...)
+     (let* ((v #f) rest ...) body ...)]
     ))
 
 (define (improper->proper-list lst len)
