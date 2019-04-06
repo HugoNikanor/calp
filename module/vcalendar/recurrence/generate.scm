@@ -1,6 +1,7 @@
 (define-module (vcalendar recurrence generate)
   #:use-module (srfi srfi-19)           ; Datetime
   #:use-module (srfi srfi-19 util)
+  #:use-module (srfi srfi-19 setters)
   #:use-module (srfi srfi-26)           ; Cut
   #:use-module (srfi srfi-41)           ; Streams
   #:use-module (ice-9 match)
@@ -54,11 +55,20 @@
                      (seconds-in (freq r)))))))
 
      ((memv (freq r) '(MONTHLY YEARLY))
-      #f                                 ; Hur fasen beräkrnar man det här!!!!
-      ))
+      (let ((sdate (time-utc->date (attr e 'DTSTART))))
+        (case (freq r)
+          ((MONTHLY) (mod! (month sdate) (cut + <> (interval r))))
+          ((YEARLY)  (mod! (year sdate)  (cut + <> (interval r)))))
+        (set! (attr e 'DTSTART)
+              (date->time-utc sdate))))
 
-    (set! (attr e 'DTEND)
-          (add-duration (attr e 'DTSTART) (attr e 'DURATION)))
+     ;; TODO
+     ;; All the BY... fields
+     )
+
+    (when (attr e 'DTEND)
+     (set! (attr e 'DTEND)
+           (add-duration (attr e 'DTSTART) (attr e 'DURATION))))
 
     ;; Return
     e))
@@ -102,9 +112,20 @@
 
 
 (define (generate-recurrence-set event)
-  (unless (attr event "DURATION")
-    (set! (attr event "DURATION")
-          (time-difference
-           (attr event "DTEND")
-           (attr event "DTSTART"))))
-  (recur-event-stream event (parse-recurrence-rule (attr event "RRULE"))))
+  ;; TODO DURATION might be used for something else, check applicable types
+  ;; TODO Far from all events have DTEND
+  ;;      VTIMEZONE's always lack it.
+  (if (not (attr event 'RRULE))
+      (stream event)
+      (begin
+        (when (and (attr event 'DTEND)
+                   (not (attr event 'DURATION)))
+          (set! (attr event "DURATION")
+                (time-difference
+                 (attr event "DTEND")
+                 (attr event "DTSTART"))))
+        (if (attr event "RRULE")
+            (recur-event-stream event (parse-recurrence-rule (attr event "RRULE")))
+            ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather
+            ;; just mention the current part. Handle this
+            stream-null))))

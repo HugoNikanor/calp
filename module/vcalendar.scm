@@ -2,18 +2,50 @@
   #:use-module (vcalendar primitive)
   #:use-module (vcalendar datetime)
   #:use-module (vcalendar recur)
+  #:use-module (vcalendar timezone)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-19)
+  #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-26)
   #:use-module (util)
   #:export (make-vcomponent)
   #:re-export (repeating?))
 
+;; All VTIMEZONE's seem to be in "local" time in relation to
+;; themselves. Therefore, a simple comparison should work,
+;; and then the TZOFFSETTO attribute can be subtracted from
+;; the event DTSTART to get UTC time.
+
+(define string->time-utc
+  (compose date->time-utc (unval parse-datetime)))
+
 (define (parse-dates! cal)
   "Parse all start times into scheme date objects."
-  (for-each-in (children cal 'VEVENT)
-               (lambda (ev)
-                 (mod! (attr ev "DTSTART") parse-datetime)
-                 (mod! (attr ev "DTEND")   parse-datetime)))
+
+  (for-each-in (children cal 'VTIMEZONE)
+               (lambda (tz)
+                 (for-each (lambda (p) (mod! (attr p "DTSTART") string->time-utc))
+                           (children tz))
+
+                  ;; TZSET is the generated recurrence set of a timezone
+                  (set! (attr tz 'X-HNH-TZSET)
+                        (make-tz-set tz))))
+
+  (for-each
+   (lambda (ev)
+     (mod! (attr ev "DTSTART") string->time-utc
+           (attr ev "DTEND")   string->time-utc)
+
+     (when (prop (attr* ev 'DTSTART) 'TZID)
+       (let* ((of (get-tz-offset ev)))
+         (set! (prop (attr* ev 'DTSTART) 'TZID) #f)
+         ;; 5545 says that DTEND is local time iff DTSTART is local time.
+         ;; But who says that will be true...
+         (mod! (attr ev 'DTSTART)
+               (cut subtract-duration <> (make-duration of))))))
+   (children cal 'VEVENT))
+
+  ;; Return
   cal)
 
 

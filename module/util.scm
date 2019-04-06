@@ -152,8 +152,13 @@
             (set! rest ...)))))
 
 ;; Like set!, but applies a transformer on the already present value.
-(define-syntax-rule (mod! field transform-proc)
-  (set! field (transform-proc field)))
+(define-syntax mod!
+  (syntax-rules ()
+    ((_ field proc)
+     (set! field (proc field)))
+    ((_ field transform-proc rest ...)
+     (begin (set! field (transform-proc field))
+            (mod! rest ...)))))
 
 (define-public (concat lists)
   (apply append lists))
