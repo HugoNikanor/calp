@@ -24,7 +24,7 @@ int arg_shift (arg* a) {
 
 #define GETSET(C, KEY) \
 	vcomponent_push_val((C), (KEY), "DUMMY VALUE"); \
-	INFO_F("cline = %p", get_property((C), (KEY)));
+	INFO_F("cline = %p", get_attributes((C), (KEY)));
 
 /*
  * Tests defined here instead of in own header to ensure that all the
@@ -84,7 +84,7 @@ int main (int argc, char** argv) {
 
 				printf("%s | %s\n",
 						filename,
-						get_property(ev, "SUMMARY")->cval->key.mem);
+						get_attributes(ev, "SUMMARY")->cval->key.mem);
 			}
 		}
 	} else if (strcmp(args.argv[0], "-g") == 0) {

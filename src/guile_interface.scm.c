@@ -44,7 +44,7 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 	vcomponent* cal = scm_foreign_object_ref (calendar, 0);
 
 	char* key = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
-	content_line* c = get_property (cal, key);
+	content_line* c = get_attributes (cal, key);
 	free(key);
 
 	if (c == NULL) return SCM_BOOL_F;
@@ -71,7 +71,7 @@ SCM_DEFINE (vcomponent_get_property, "%vcomponent-get-property", 3, 0, 0,
 
 	char* key      = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
 	char* prop_key = scm_to_utf8_stringn(scm_string_upcase(prop), NULL);
-	content_line* cl = get_property (comp, key);
+	content_line* cl = get_attributes (comp, key);
 	free(key);
 
 	if (cl == NULL) return SCM_BOOL_F;
@@ -98,14 +98,14 @@ SCM_DEFINE (vcomponent_set_attr_x, "%vcomponent-set-attribute!", 3, 0, 0,
 	vcomponent* com = scm_foreign_object_ref (component, 0);
 
 	char* key = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
-	content_line* c = get_property (com, key);
+	content_line* c = get_attributes (com, key);
 
 	/* Create the position in the TRIE if it doesn't already exist */
 	if (c == NULL) {
 		/* Insert empty key since this allows me to use the helper
 		 * function */
 		vcomponent_push_val(com, key, "");
-		c = get_property (com, key);
+		c = get_attributes (com, key);
 	} else {
 		/*
 		 * The SCM representation of an object is usually initialized
@@ -263,7 +263,7 @@ SCM_DEFINE(vcomponent_prop_list, "%vcomponent-property-list", 2, 0, 0,
 	vcomponent* comp = scm_foreign_object_ref (component, 0);
 
 	char* key      = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
-	content_line* cl = get_property (comp, key);
+	content_line* cl = get_attributes (comp, key);
 	free(key);
 
 	if (cl == NULL) return SCM_BOOL_F;

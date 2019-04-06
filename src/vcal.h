@@ -89,7 +89,7 @@ INIT_F(vcomponent, const char* type);
 INIT_F(vcomponent, const char* type, const char* filename);
 FREE_F(vcomponent);
 
-content_line* get_property (vcomponent* ev, const char* key);
+content_line* get_attributes (vcomponent* ev, const char* key);
 
 int add_content_line (vcomponent* ev, content_line* c);
 

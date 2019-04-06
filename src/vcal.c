@@ -78,7 +78,7 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 	return 0;
 }
 
-content_line* get_property (vcomponent* ev, const char* key) {
+content_line* get_attributes (vcomponent* ev, const char* key) {
 	size_t len = strlen(key) + 1;
 	char* cpy = (char*) (calloc(sizeof(*cpy), len));
 	strncpy (cpy, key, len);
