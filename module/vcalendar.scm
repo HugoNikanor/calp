@@ -45,8 +45,17 @@
    (as-string attr)
    (as-string prop)))
 
-;; TODO replace this with procedure-with-setter
-(define-public prop get-property)
+(define (set-property! component attr prop val)
+  (%vcomponent-set-property!
+   component
+   (as-string attr)
+   (as-string prop)
+   val))
+
+(define-public prop
+  (make-procedure-with-setter
+   get-property
+   set-property!))
 
 (define-public (properties component attr)
   (%vcomponent-property-list component (as-string attr)))

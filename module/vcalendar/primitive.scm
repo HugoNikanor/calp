@@ -15,6 +15,7 @@
             %vcomponent-get-attribute
 
             %vcomponent-get-property
+            %vcomponent-set-property!
             %vcomponent-property-list
 
             %vcomponent-attribute-list

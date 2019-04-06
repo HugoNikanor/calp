@@ -14,7 +14,7 @@
 
 /*
  * content_line:
- *     a mapping between a top level key, and everything it contains.
+ *     (a mapping) between a top level key, and everything it contains.
  * content_set:
  *     A top level value, along with a list of kv pairs for all its
  *     possible parameters.

@@ -90,6 +90,25 @@ SCM_DEFINE (vcomponent_get_property, "%vcomponent-get-property", 3, 0, 0,
 	return llist;
 }
 
+SCM_DEFINE (vcomponent_set_property_x, "%vcomponent-set-property!", 4, 0, 0,
+            (SCM component, SCM attr, SCM prop, SCM val),
+            "")
+{
+	scm_assert_foreign_object_type (vcomponent_type, component);
+	vcomponent* comp = scm_foreign_object_ref (component, 0);
+
+	char* key      = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
+	char* prop_key = scm_to_utf8_stringn(scm_string_upcase(prop), NULL);
+	content_line* cl = get_attributes (comp, key);
+	free(key);
+
+	TRIE(param_set)* tt = &cl->cval->val;
+	LLIST(strbuf)* vals = GET(TRIE(param_set))(tt, prop_key);
+	vals->cval->scm = val;
+
+	return SCM_UNSPECIFIED;
+}
+
 SCM_DEFINE (vcomponent_set_attr_x, "%vcomponent-set-attribute!", 3, 0, 0,
 		(SCM component, SCM attr, SCM new_value),
 		"")
