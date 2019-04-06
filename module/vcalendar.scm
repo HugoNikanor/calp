@@ -116,7 +116,7 @@
                             (for-each (lambda (component)
                                         (case (type component)
                                           ((VTIMEZONE)
-                                           (let ((zones (children cal 'VTIMEZONE)))
+                                           (let ((zones (children accum 'VTIMEZONE)))
                                              (unless (find (lambda (z)
                                                              (string=? (attr z "TZID")
                                                                        (attr component "TZID")))
