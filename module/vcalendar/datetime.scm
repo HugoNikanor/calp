@@ -33,3 +33,6 @@ Event must have the DTSTART and DTEND attribute set."
          (end (add-day start)))
     (event-overlaps? ev start end)))
 
+(define-public (ev-time<? a b)
+  (time<? (attr a 'DTSTART)
+          (attr b 'DTSTART)))
