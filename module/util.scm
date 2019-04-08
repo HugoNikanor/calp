@@ -6,7 +6,7 @@
                                define-quick-record
                                mod! sort* sort*!
                                find-min)
-  #:replace (let*)
+  #:replace (let* set!)
   )
 
 (define-public upstring->symbol (compose string->symbol string-upcase))
@@ -135,6 +135,21 @@
     (append head (list tail))))
 
 
+
+;; Allow set to work on multiple values at once,
+;; similar to Common Lisp's @var{setf}
+;; @example
+;; (set! x 10
+;;       y 20)
+;; @end example
+;; Still requires all variables to be defined beforehand.
+(define-syntax set!
+  (syntax-rules ()
+    ((_ field val)
+     ((@ (guile) set!) field val))
+    ((_ field val rest ...)
+     (begin ((@ (guile) set!) field val)
+            (set! rest ...)))))
 
 ;; Like set!, but applies a transformer on the already present value.
 (define-syntax-rule (mod! field transform-proc)
