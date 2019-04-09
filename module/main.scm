@@ -109,9 +109,15 @@
 
       (let ((char (read-char)))
         (case char
-          ((#\L #\l) (mod! time add-day)    (set! cur-event 0))
-          ((#\h #\H) (mod! time remove-day) (set! cur-event 0))
-          ((#\t)     (set! time (now))      (set! cur-event 0))
+          ((#\L #\l)
+           (set! time (add-day time)
+                 cur-event 0))
+          ((#\h #\H)
+           (set! time (remove-day time)
+                 cur-event 0))
+          ((#\t)
+           (set! time (now)
+                 cur-event 0))
           ((#\j #\J) (unless (= cur-event (1- (length events)))
 		       (mod! cur-event 1+)))
           ((#\k #\K) (unless (= cur-event 0)
@@ -136,8 +142,8 @@
 
   (let* ((repeating regular (partition repeating? events)))
 
-    (set! repeating (sort*! repeating time<? (extract 'DTSTART)))
-    (set! regular   (sort*! regular   time<? (extract 'DTSTART)))
+    (set! repeating (sort*! repeating time<? (extract 'DTSTART))
+          regular   (sort*! regular   time<? (extract 'DTSTART)))
 
     (let ((repeating (interleave-streams ev-time<?
                       (map generate-recurrence-set repeating))))
