@@ -100,8 +100,12 @@
                    (BYMINUTE (nums) (all-in n (<= 0 n 59)))
                    (BYHOUR   (nums) (all-in n (<= 0 n 23)))
 
-                   (BYDAY (days) (lambda (p) (let* (((num . symb) p))
-                                          (memv symb weekdays))))
+                   (BYDAY (days)
+                          (lambda (p*)
+                            (map (lambda (p)
+                                   (let* (((num . symb) p))
+                                     (memv symb weekdays)))
+                                 p*)))
 
                    (BYMONTHDAY (nums) (all-in n (<=  -31 n  31) (!= n 0)))
                    (BYYEARDAY  (nums) (all-in n (<= -366 n 366) (!= n 0)))
