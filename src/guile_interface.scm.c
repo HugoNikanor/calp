@@ -45,109 +45,54 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 
 	char* key = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
 	content_line* c = get_attributes (cal, key);
+
+	if (c == NULL) {
+		vcomponent_push_val(cal, key, "");
+		c = get_attributes (cal, key);
+		c->cval->key.scm = SCM_BOOL_F;
+	}
+
 	free(key);
 
-	if (c == NULL) return SCM_BOOL_F;
-
-	SCM llist = SCM_EOL;
+	SCM val, attrlist = SCM_EOL, proplist;
+	LLIST(strbuf) *triekeys, *trievals;
+	/* For every instance of a line */
 	FOR (LLIST, content_set, v, c) {
-		llist = scm_cons(scm_from_strbuf(&v->key), llist);
+		val = scm_from_strbuf(&v->key);
+		if (! scm_is_pair(val)) {
+			// TODO look into using a weak hash table instead
+
+			// TODO why is it an error to unprotect the object here?
+			// scm_from_strbuf should already have protected it...
+			// scm_gc_unprotect_object(v->key.scm);
+			val = scm_cons(val, SCM_MAKE_HASH_TABLE());
+			v->key.scm = val;
+			scm_gc_protect_object(v->key.scm);
+		}
+
+		triekeys = KEYS(TRIE(param_set))(&v->val);
+		/* For every property key bound to the current attribute */
+		FOR (LLIST, strbuf, k, triekeys) {
+			proplist = SCM_EOL;
+
+			trievals = GET(TRIE(param_set))(&v->val, k->mem);
+			/* For every value bound to the current property */
+			FOR (LLIST, strbuf, s, trievals) {
+				proplist = scm_cons(scm_from_strbuf(s), proplist);
+			}
+
+			scm_hashq_set_x(scm_cdr(val), scm_from_strbuf_symbol(k),
+			                scm_reverse(proplist));
+		}
+		attrlist = scm_cons(val, attrlist);
 	}
 
 	/* returns the car of list if list is one long. */
-	if (scm_to_int(scm_length(llist)) == 1) {
-		return SCM_CAR(llist);
+	if (scm_to_int(scm_length(attrlist)) == 1) {
+		return SCM_CAR(attrlist);
 	} else {
-		return llist;
+		return attrlist;
 	}
-}
-
-SCM_DEFINE (vcomponent_get_property, "%vcomponent-get-property", 3, 0, 0,
-            (SCM component, SCM attr, SCM prop),
-            "")
-{
-	scm_assert_foreign_object_type (vcomponent_type, component);
-	vcomponent* comp = scm_foreign_object_ref (component, 0);
-
-	char* key      = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
-	char* prop_key = scm_to_utf8_stringn(scm_string_upcase(prop), NULL);
-	content_line* cl = get_attributes (comp, key);
-	free(key);
-
-	if (cl == NULL) return SCM_BOOL_F;
-
-	SCM llist = SCM_EOL;
-	FOR (LLIST, content_set, cs, cl) {
-		LLIST(strbuf)* strs = GET(TRIE(param_set))(&cs->val, prop_key);
-		if (strs == NULL) continue;
-		SCM subl = SCM_EOL;
-		FOR (LLIST, strbuf, s, strs) {
-			subl = scm_cons(scm_from_strbuf(s), subl);
-		}
-		llist = scm_cons(subl, llist);
-	}
-
-	return llist;
-}
-
-SCM_DEFINE (vcomponent_set_property_x, "%vcomponent-set-property!", 4, 0, 0,
-            (SCM component, SCM attr, SCM prop, SCM val),
-            "")
-{
-	scm_assert_foreign_object_type (vcomponent_type, component);
-	vcomponent* comp = scm_foreign_object_ref (component, 0);
-
-	char* key      = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
-	char* prop_key = scm_to_utf8_stringn(scm_string_upcase(prop), NULL);
-	content_line* cl = get_attributes (comp, key);
-	free(key);
-
-	TRIE(param_set)* tt = &cl->cval->val;
-	LLIST(strbuf)* vals = GET(TRIE(param_set))(tt, prop_key);
-	vals->cval->scm = val;
-
-	return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (vcomponent_set_attr_x, "%vcomponent-set-attribute!", 3, 0, 0,
-		(SCM component, SCM attr, SCM new_value),
-		"")
-{
-	scm_assert_foreign_object_type (vcomponent_type, component);
-	vcomponent* com = scm_foreign_object_ref (component, 0);
-
-	char* key = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
-	content_line* c = get_attributes (com, key);
-
-	/* Create the position in the TRIE if it doesn't already exist */
-	if (c == NULL) {
-		/* Insert empty key since this allows me to use the helper
-		 * function */
-		vcomponent_push_val(com, key, "");
-		c = get_attributes (com, key);
-	} else {
-		/*
-		 * The SCM representation of an object is usually initialized
-		 * when an attribute is first accessed from guile. If we
-		 * however try to set it before accessing it then that field
-		 * will still be NULL.
-		 *
-		 * If the object, and its SCM instance exist, unprotect it.
-		 * Otherwise we know that it's NULL and safe to write a new
-		 * SCM value there.
-		 */
-		if (c->cval->key.scm != NULL) {
-			scm_gc_unprotect_object(c->cval->key.scm);
-		}
-	}
-
-	free(key);
-
-	strbuf* target = &c->cval->key;
-	target->scm = new_value;
-	scm_gc_protect_object(target->scm);
-
-	return SCM_UNSPECIFIED;
 }
 
 SCM_DEFINE (vcomponent_child_count, "%vcomponent-child-count", 1, 0, 0,
@@ -270,37 +215,6 @@ SCM_DEFINE(vcomponent_attr_list, "%vcomponent-attribute-list", 1, 0, 0,
 	}
 
 	FFREE(LLIST(strbuf), keys);
-
-	return llist;
-}
-
-SCM_DEFINE(vcomponent_prop_list, "%vcomponent-property-list", 2, 0, 0,
-           (SCM component, SCM attr),
-           "")
-{
-	scm_assert_foreign_object_type (vcomponent_type, component);
-	vcomponent* comp = scm_foreign_object_ref (component, 0);
-
-	char* key      = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
-	content_line* cl = get_attributes (comp, key);
-	free(key);
-
-	if (cl == NULL) return SCM_BOOL_F;
-
-	SCM llist = SCM_EOL;
-	FOR (LLIST, content_set, cs, cl) {
-		LLIST(strbuf)* keys = KEYS(TRIE(param_set))(&cs->val);
-		if (keys == NULL) continue;
-
-		FOR (LLIST, strbuf, s, keys) {
-			SCM symb = scm_string_to_symbol(scm_from_strbuf(s));
-			if ( scm_is_false(scm_memv (symb, llist)) ) {
-				llist = scm_cons(symb, llist);
-			}
-		}
-
-		FFREE(LLIST(strbuf), keys);
-	}
 
 	return llist;
 }

@@ -11,13 +11,7 @@
             %vcomponent-get-type
             %vcomponent-set-type!
 
-            %vcomponent-set-attribute!
             %vcomponent-get-attribute
-
-            %vcomponent-get-property
-            %vcomponent-set-property!
-            %vcomponent-property-list
-
             %vcomponent-attribute-list
 
             %vcomponent-shallow-copy))

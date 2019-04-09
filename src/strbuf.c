@@ -70,8 +70,13 @@ int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
 	}
 
 	if (src->scm != NULL) {
-		/* The magic SCM type is copied when reassigned. */
-		dest->scm = src->scm;
+		/*
+		 * Upon Vcomponent binding into scheme I place all
+		 * strings inside cons cells. This leads to a deep
+		 * copy being required. copy-tree however returns
+		 * the same object for atoms and scheme strings.
+		 */
+		dest->scm = scm_copy_tree(src->scm);
 		/* NOTE This is a bit of a leaky abstraction.  */
 		scm_gc_protect_object(dest->scm);
 	}

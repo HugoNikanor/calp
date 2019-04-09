@@ -28,41 +28,36 @@
         childs)))
 (export children)
 
-(define (set-attr! component attr value)
-  (%vcomponent-set-attribute!
-   component
-   (as-string attr)
-   value))
-
 (define (get-attr component attr)
   (%vcomponent-get-attribute
    component
    (as-string attr)))
 
-(define (get-property component attr prop)
-  (%vcomponent-get-property
-   component
-   (as-string attr)
-   (as-string prop)))
+(define (set-attr! component attr value)
+  (set-car! (get-attr component (as-string attr))
+            value))
 
-(define (set-property! component attr prop val)
-  (%vcomponent-set-property!
-   component
-   (as-string attr)
-   (as-string prop)
-   val))
+(define-public attr*
+  (make-procedure-with-setter
+   get-attr set-attr!))
+
+(define-public attr
+  (make-procedure-with-setter
+   (compose car get-attr) set-attr!))
+
+;; value
+(define-public v
+  (make-procedure-with-setter car set-car!))
 
 (define-public prop
   (make-procedure-with-setter
-   get-property
-   set-property!))
+   (lambda (attr-obj prop-key)
+     (hashq-ref (cdr attr-obj) prop-key))
+   (lambda (attr-obj prop-key val)
+     (hashq-set! (cdr attr-obj) prop-key val))))
 
-(define-public (properties component attr)
-  (%vcomponent-property-list component (as-string attr)))
-
-;; Enables symmetric get and set:
-;; (set! (attr ev "KEY") 10)
-(define-public attr (make-procedure-with-setter get-attr set-attr!))
+(define-public (properties component attr-key)
+  (hash-map->list cons (cdr (attr component (as-string attr-key)))))
 
 ;; (define-public type %vcomponent-get-type)
 (define-public type (make-procedure-with-setter
@@ -76,16 +71,19 @@
 
 (define-public filter-children! %vcomponent-filter-children!)
 
+(define-public (extract field)
+  (lambda (e) (attr e field)))
+
+(define-public (extract* field)
+  (lambda (e) (attr* e field)))
+
 (define-public (search cal term)
   (cdr (let ((events (filter (lambda (ev) (eq? 'VEVENT (type ev)))
                              (children cal))))
          (find (lambda (ev) (string-contains-ci (car ev) term))
-               (map cons (map (cut get-attr <> "SUMMARY")
+               (map cons (map (extract "SUMMARY")
                               events)
                     events)))))
-
-(define-public (extract field)
-  (cut get-attr <> field))
 
 (define-public (key=? k1 k2)
   (eq? (as-symb k1)
