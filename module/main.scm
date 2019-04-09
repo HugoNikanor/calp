@@ -41,6 +41,13 @@
 (define (now)
   (date->time-utc (current-date)))
 
+(define (box-top intersection line . lengths)
+  (reduce (lambda (str done) (string-append done (string intersection) str))
+          "" (map (cut make-string <> line) lengths)))
+
+(define (displayln a)
+  (display a) (newline))
+
 (define (summary-filter _ str) str)
 
 (define (main-loop regular-events repeating-events)
@@ -64,11 +71,7 @@
       (cls)
       (display-calendar-header! (time-utc->date time))
       ;; (line)
-      (format #t "~a┬~a┬~a~%"
-              (make-string 20 #\─)
-              (make-string 32 #\─)
-              (make-string 10 #\─))
-
+      (displayln (box-top #\┬ #\─ 20 32 10))
 
       (for-each
        (lambda (ev i)
@@ -85,10 +88,7 @@
        events
        (iota (length events)))
 
-      (format #t "~a┴~a┴~a~%"
-              (make-string 20 #\─)
-              (make-string 32 #\─)
-              (make-string 10 #\─))
+      (displayln (box-top #\┴ #\─ 20 32 10))
 
       (unless (null? events)
         (let ((ev (list-ref events cur-event)))
