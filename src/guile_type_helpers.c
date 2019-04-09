@@ -11,3 +11,7 @@ SCM scm_from_strbuf(strbuf* s) {
 
 	return s->scm;
 }
+
+SCM scm_from_strbuf_symbol(strbuf* s) {
+	return scm_string_to_symbol(scm_from_strbuf(s));
+}
