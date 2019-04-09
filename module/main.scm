@@ -108,6 +108,8 @@
                   )))
 
       (let ((char (read-char)))
+        ;; (format (current-error-port)
+        ;;         "c = ~c (~d)~%" char (char->integer char))
         (case char
           ((#\L #\l)
            (set! time (add-day time)
@@ -128,7 +130,6 @@
         (when (or (eof-object? char)
                   (memv char (list #\q (ctrl #\C))))
           (break)))
-      ;; (format #t "c = ~c (~d)~%" char (char->integer char))
       )))
 
 
@@ -136,7 +137,12 @@
 
 (load "config.scm")
 
-(define (main args)
+;; Reads all calendar files from disk, and creates a list of "regular" events,
+;; and a stream of "repeating" events, which are passed in that order to the
+;; given procedure @var{proc}.
+;;
+;; Given as a sepparate function from main to ease debugging.
+(define (init proc)
   (define calendars (map make-vcomponent calendar-files))
   (define events (concatenate (map (cut children <> 'VEVENT) calendars)))
 
@@ -147,7 +153,9 @@
 
     (let ((repeating (interleave-streams ev-time<?
                       (map generate-recurrence-set repeating))))
-      (with-vulgar
-       (lambda () (main-loop regular repeating))))))
+      (proc regular repeating))))
 
-
+(define (main args)
+  (init (lambda (regular repeating)
+          (with-vulgar
+           (lambda () (main-loop regular repeating))))))

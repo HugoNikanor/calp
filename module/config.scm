@@ -26,7 +26,6 @@
 (define* (aref alist key optional: default)
   (or (assoc-ref alist key) default key))
 
-
 (define (summary-filter ev str)
   (regexp-substitute/global
    #f "T[A-Z]{3}[0-9]{2}" str

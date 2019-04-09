@@ -22,8 +22,8 @@
                    ((invalid-value)
                     "ERR ~a [~a] for key [~a], ignoring.~%")
                    (else "~a ~a ~a"))))
-        (format #t fmt err val key))
-      (cont obj))))
+        (format (current-error-port) fmt err val key))
+      (cont #f))))
 
 (eval-when (expand)
  (define ((handle-case stx obj) key val proc)

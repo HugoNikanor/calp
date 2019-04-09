@@ -28,8 +28,7 @@
             (type comp) comp)
     (for-each-in kvs
                  (lambda (kv)
-                   (let ((key (car kv))
-                         (value (cdr kv)))
+                   (let* (((key . value) kv))
                      (format #t "~a ~20@a: ~a~%"
                              (make-string depth #\:)
                              key value))))
