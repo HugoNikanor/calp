@@ -20,20 +20,22 @@
             (begin body ...)
             (if pred-value STR-RESET ""))))
 
-(define* (print-vcomponent comp #:optional (depth 0))
-  (let ((kvs (map (lambda (key) (cons key (attr comp key)))
+(define* (print-vcomponent comp #:optional (port #t) #:key (depth 0))
+  (let ((kvs (map (lambda (key) (cons key (attr* comp key)))
                   (attributes comp))))
-    (format #t "~a <~a> :: ~:a~%"
+    (format port "~a <~a> :: ~:a~%"
             (make-string depth #\:)
             (type comp) comp)
     (for-each-in kvs
                  (lambda (kv)
-                   (let* (((key . value) kv))
-                     (format #t "~a ~20@a: ~a~%"
+                   (let* (((key . at) kv))
+                     (format port "~a ~15@a~{;~a=~{~a~^,~}~}: ~a~%"
                              (make-string depth #\:)
-                             key value))))
+                             key
+                             (concat (hash-map->list list (cdr at)))
+                             (v at)))))
     (for-each-in (children comp)
-                 (cut print-vcomponent <> (1+ depth)))))
+                 (lambda (e) (print-vcomponent e port #:depth (1+ depth))))))
 
 
 
