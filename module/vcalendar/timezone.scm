@@ -6,7 +6,7 @@
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (util)
-  :use-module ((vcalendar recur) :select (generate-recurrence-set))
+  :use-module ((vcalendar recurrence generate) :select (generate-recurrence-set))
   :use-module ((vcalendar datetime) :select (ev-time<?))
   )
 
@@ -28,6 +28,16 @@
 ;; :         TZOFFSETFROM: +0200
 ;; @end example
 
+;; Given a tz stream of length 2, takes the time difference between the DTSTART
+;; of those two. And creates a new VTIMEZONE with that end time.
+;; TODO set remaining properties, and type of the newly created component.
+(define (extrapolate-tz-stream strm)
+  (let ((nevent (copy-vcomponent (stream-ref strm 1))))
+    (mod! (attr nevent 'DTSTART)
+          = (add-duration (time-difference
+                           (attr (stream-ref strm 1) 'DTSTART)
+                           (attr (stream-ref strm 0) 'DTSTART))))
+    (stream-append strm (stream nevent))))
 
 ;; The RFC requires that at least one DAYLIGHT or STANDARD component is present.
 ;; Any number of both can be present. This should handle all these cases well,
@@ -39,9 +49,14 @@
                ev-time<?
                ;; { DAYLIGHT, STANDARD }
                (map generate-recurrence-set (children tz)))))
-    (if (stream-null? strm)
-        stream-null
-        (stream-zip strm (stream-cdr strm)))))
+
+    (cond [(stream-null? strm) stream-null]
+
+          [(stream-null? (stream-drop 2 strm))
+           (let ((strm (extrapolate-tz-stream strm)))
+             (stream-zip strm (stream-cdr strm)))]
+
+          [else (stream-zip strm (stream-cdr strm))])))
 
 (define (parse-offset str)
   (let* (((pm h1 h0 m1 m0) (string->list str)))

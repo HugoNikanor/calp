@@ -6,6 +6,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-19 util)
+  #:use-module (srfi srfi-19 setters)
   #:use-module (srfi srfi-26)
   #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module (util)
@@ -23,28 +24,23 @@
 (define (parse-dates! cal)
   "Parse all start times into scheme date objects."
 
-  (for-each-in (children cal 'VTIMEZONE)
-               (lambda (tz)
-                 (for-each (lambda (p) (mod! (attr p "DTSTART") string->time-utc))
-                           (children tz))
+  (for tz in (children cal 'VTIMEZONE)
+       (for-each (lambda (p) (mod! (attr p "DTSTART") string->time-utc))
+                 (children tz))
 
-                  ;; TZSET is the generated recurrence set of a timezone
-                  (set! (attr tz 'X-HNH-TZSET)
-                        (make-tz-set tz))))
+       ;; TZSET is the generated recurrence set of a timezone
+       (set! (attr tz 'X-HNH-TZSET)
+             (make-tz-set tz)))
 
-  (for-each
-   (lambda (ev)
-     (mod! (attr ev "DTSTART") string->time-utc
-           (attr ev "DTEND")   string->time-utc)
+  (for ev in (children cal 'VEVENT)
+       (define date (parse-datetime (attr ev 'DTSTART)))
 
-     (when (prop (attr* ev 'DTSTART) 'TZID)
-       (let* ((of (get-tz-offset ev)))
-         (set! (prop (attr* ev 'DTSTART) 'TZID) #f)
-         ;; 5545 says that DTEND is local time iff DTSTART is local time.
-         ;; But who says that will be true...
-         (mod! (attr ev 'DTSTART)
-               (cut subtract-duration <> (make-duration of))))))
-   (children cal 'VEVENT))
+       (mod! (attr ev "DTEND")   string->time-utc)
+       (set! (attr ev "DTSTART") (date->time-utc date))
+
+       (when (prop (attr* ev 'DTSTART) 'TZID)
+         (set! (zone-offset date) (get-tz-offset ev)
+               (attr ev 'DTSTART) (date->time-utc date))))
 
   ;; Return
   cal)

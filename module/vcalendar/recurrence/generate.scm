@@ -8,6 +8,7 @@
 
   #:use-module (util)
   #:use-module (vcalendar)
+  #:use-module (vcalendar timezone)
   #:use-module (vcalendar recurrence internal)
   #:use-module (vcalendar recurrence parse)
 
@@ -39,32 +40,37 @@
     ((WEEKLY) (* 60 60 24 7))))
 
 ;; Event x Rule → Event
+;; TODO My current naïve aproach to simple adding a constant time to an event
+;; breaks with time-zones. betwen 12:00 two adjacent days might NOT be 24h.
+;; Specifically, 23h or 25h when going between summer and "normal" time.
 (define (next-event ev r)
-  (let ((e (copy-vcomponent ev)))
-    (cond
-     ((memv (freq r) '(SECONDLY MINUTELY HOURLY DAILY WEEKLY))
-      (mod! (attr e 'DTSTART)
-            ;; Previously I had the mutating version of
-            ;; @var{add-duration(!)} here. However since
-            ;; @var{copy-vcomponent} doesn't do a deep copy that
-            ;; modified the attribute for all items in the set,
-            ;; breaking everything.
-            (cut add-duration <>
-                 (make-duration
-                  (* (interval r)        ; INTERVAL
-                     (seconds-in (freq r)))))))
+  (let* ((e (copy-vcomponent ev))
+         (d (time-utc->date
+             (attr e 'DTSTART)
+             (if (prop (attr* ev 'DTSTART) 'TZID)
+                 (get-tz-offset e)
+                 0))))
 
-     ((memv (freq r) '(MONTHLY YEARLY))
-      (let ((sdate (time-utc->date (attr e 'DTSTART))))
-        (case (freq r)
-          ((MONTHLY) (mod! (month sdate) (cut + <> (interval r))))
-          ((YEARLY)  (mod! (year sdate)  (cut + <> (interval r)))))
-        (set! (attr e 'DTSTART)
-              (date->time-utc sdate))))
+    (let ((i (interval r)))
+     (case (freq r)
+       ((SECONDLY) (mod! (second d) = (+ i)))
+       ((MINUTELY) (mod! (minute d) = (+ i)))
+       ((HOURLY)   (mod! (hour   d) = (+ i)))
+       ((DAILY)    (mod! (day    d) = (+ i)))
+       ((WEEKLY)   (mod! (day    d) = (+ (* i 7))))
+       ((MONTHLY)  (mod! (month  d) = (+ i)))
+       ((YEARLY)   (mod! (year   d) = (+ i)))))
 
-     ;; TODO
-     ;; All the BY... fields
-     )
+    (set! (attr e 'DTSTART)
+          (date->time-utc d))
+
+    (when (prop (attr* e 'DTSTART) 'TZID)
+      (let ((of (get-tz-offset e)))
+        ;; This addition works, but we still get lunch at 13
+        (set! (zone-offset d) of)))
+
+    (set! (attr e 'DTSTART)
+          (date->time-utc d))
 
     (when (attr e 'DTEND)
      (set! (attr e 'DTEND)
