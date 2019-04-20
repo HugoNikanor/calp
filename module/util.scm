@@ -1,5 +1,6 @@
 (define-module (util)
   #:use-module (srfi srfi-1)
+  #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module ((sxml fold) #:select (fold-values))
   #:export (destructure-lambda let-multi fold-lists catch-let
                                for-each-in
@@ -230,9 +231,8 @@
 ;; Takes a procedure returning multiple values, and returns a function which
 ;; takes the same arguments as the original procedure, but only returns one of
 ;; the procedures. Which procedure can be sent as an additional parameter.
-(define* (unval proc #:optional (n 0))
+(define*-public (unval proc #:optional (n 0))
   (lambda args
     (call-with-values (lambda () (apply proc args))
       (lambda args (list-ref args n)))))
 
-(export unval)
