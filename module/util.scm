@@ -6,7 +6,8 @@
                                for-each-in for
                                define-quick-record
                                mod! sort* sort*!
-                               find-min)
+                               find-min
+                               catch-multiple)
   #:replace (let* set!)
   )
 
@@ -241,4 +242,37 @@
   (lambda args
     (call-with-values (lambda () (apply proc args))
       (lambda args (list-ref args n)))))
+
+;; Takes a (non nested) list, and replaces all single underscore
+;; symbols with a generated symbol. For macro usage.
+(define (multiple-ignore lst)
+  (cond ((not-pair? lst) lst)
+        ((eq? '_ (car lst)) (cons (gensym "ignored_")
+                                  (multiple-ignore (cdr lst))))
+        (else (cons (car lst)
+                    (multiple-ignore (cdr lst))))))
+
+(define (catch-recur% errs thunk cases)
+  (let* ((v (car errs))
+         (case other (partition (lambda (case) (eq? v (car case))) cases))
+         (g!rest (gensym "rest")))
+    `(catch (quote ,v)
+       ,(if (null? (cdr errs))
+            thunk
+            `(lambda () ,(catch-recur% (cdr errs) thunk other)))
+       (lambda (err . ,g!rest)
+         (apply (lambda ,(multiple-ignore (second (car case)))
+                  ,@(cddr (car case)))
+                ,g!rest)))))
+
+;; Like @var{catch}, but multiple handlers can be specified.
+;; Each handler is on the form
+;; @example
+;; [err-symb (args ...) body ...]
+;; @end example
+;; 
+;; Only errors with a handler are caught. Error can *not* be given as
+;; an early argument.
+(define-macro (catch-multiple thunk . cases)
+  (catch-recur% (map car cases) thunk cases))
 
