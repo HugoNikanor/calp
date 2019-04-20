@@ -87,9 +87,7 @@
      (let* (((key val) kv)
             ;; Lazy fields for the poor man.
             (symb (lambda () (string->symbol val)))
-            (date (lambda ()
-                   (let* ((date type (parse-datetime val)))
-                     (date->time-utc date))))
+            (date (lambda () (date->time-utc (parse-datetime val))))
             (days (lambda () (map parse-day-spec (string-split val #\,))))
             (num  (lambda () (string->number val)))
             (nums (lambda () (string->number-list val #\,))))

@@ -13,13 +13,11 @@
 ;;; date time pointer
 (define (parse-datetime dtime)
   "Parse the given date[time] string into a date object."
-  (let* ((str type (case (string-length dtime)
-                     ((8) (values "~Y~m~d" 'all-day))        ; All day
-                     ((15) (values "~Y~m~dT~H~M~S" 'local))  ; "local" or TZID-param
-                     ((16) (values "~Y~m~dT~H~M~S~z" 'utc))  ; UTC-time
-                     ))
-         (date (string->date dtime str)))
-    (values date type)))
+  (string->date
+   dtime (case (string-length dtime)
+           ((8)  "~Y~m~d")              ; All day
+           ((15) "~Y~m~dT~H~M~S")       ; "local" or TZID-param
+           ((16) "~Y~m~dT~H~M~S~z"))))  ; UTC-time
 
 (define (event-overlaps? event begin end)
   "Returns if the event overlaps the timespan.

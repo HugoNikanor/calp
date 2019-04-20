@@ -17,7 +17,7 @@
 ;; the event DTSTART to get UTC time.
 
 (define string->time-utc
-  (compose date->time-utc (unval parse-datetime)))
+  (compose date->time-utc parse-datetime))
 
 (define (parse-dates! cal)
   "Parse all start times into scheme date objects."
