@@ -88,8 +88,10 @@
    (lambda (attr-obj prop-key val)
      (hashq-set! (cdr attr-obj) prop-key val))))
 
-(define-public (properties component attr-key)
-  (hash-map->list cons (cdr (attr component (as-string attr-key)))))
+;; Returns the properties of attribute as an assoc list.
+;; @code{(map car <>)} leads to available properties.
+(define-public (properties attrptr)
+  (hash-map->list cons (cdr attrptr)))
 
 ;; (define-public type %vcomponent-get-type)
 (define-public type (make-procedure-with-setter
