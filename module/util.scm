@@ -159,14 +159,27 @@
      (begin ((@ (guile) set!) field val)
             (set! rest ...)))))
 
+(define-syntax modf%
+  (syntax-rules (=)
+    ((_ field = (op args ...))
+     (set! field (op field args ...)))
+    ((_ field proc)
+     (set! field (proc field))))  )
+
 ;; Like set!, but applies a transformer on the already present value.
 (define-syntax mod!
-  (syntax-rules ()
+  (syntax-rules (=)
+    ((_ field = proc)
+     (modf% field = proc))
+
+    ((_ field = proc rest ...)
+     (begin (modf% field = proc) (mod! rest ...)))
+
     ((_ field proc)
-     (set! field (proc field)))
-    ((_ field transform-proc rest ...)
-     (begin (set! field (transform-proc field))
-            (mod! rest ...)))))
+     (modf% field proc))
+
+    ((_ field proc rest ...)
+     (begin (modf% field proc) (mod! rest ...)))))
 
 (define-public (concat lists)
   (apply append lists))
