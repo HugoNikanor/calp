@@ -3,7 +3,7 @@
   #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module ((sxml fold) #:select (fold-values))
   #:export (destructure-lambda let-multi fold-lists catch-let
-                               for-each-in
+                               for-each-in for
                                define-quick-record
                                mod! sort* sort*!
                                find-min)
@@ -35,6 +35,12 @@
 ;;; For-each with arguments in reverse order.
 (define-syntax-rule (for-each-in lst proc)
   (for-each proc lst))
+
+(define-syntax for
+  (syntax-rules (in)
+    ((for <var> in <collection> b1 body ...)
+     (for-each (lambda (<var>) b1 body ...)
+               <collection>))))
 
 
 
