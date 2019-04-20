@@ -7,6 +7,7 @@
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-26)
+  #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module (util)
   #:export (make-vcomponent)
   #:re-export (repeating?))
@@ -53,12 +54,11 @@
   (filter (lambda (e) (eqv? t (type e)))
           lst))
 
-(define* (children component #:optional only-type)
+(define*-public (children component #:optional only-type)
   (let ((childs (%vcomponent-children component)))
     (if only-type
         (type-filter only-type childs)
         childs)))
-(export children)
 
 (define (get-attr component attr)
   (%vcomponent-get-attribute

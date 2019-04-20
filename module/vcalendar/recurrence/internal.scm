@@ -1,5 +1,6 @@
 (define-module (vcalendar recurrence internal)
   #:use-module (util)
+  #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module (srfi srfi-88)
   #:export (make-recur-rule
             weekdays intervals))
@@ -17,7 +18,7 @@
 ;; TODO make this part of define-quick-record.
 ;; Only "hard" part would be to provide type hints for fields for
 ;; string conversions.
-(define (format-recur-rule r)
+(define-public (format-recur-rule r)
   (define (a f)
     ((record-accessor <recur-rule> f) r))
   (with-output-to-string
@@ -34,10 +35,8 @@
                     (a field)))))
        (record-type-fields <recur-rule>)))))
 
-(define* (print-recur-rule r #:optional (port (current-output-port)))
+(define*-public (print-recur-rule r #:optional (port (current-output-port)))
   (display (format-recur-rule r) port))
-
-(export format-recur-rule print-recur-rule)
 
 (define weekdays
   '(SU MO TU WE TH FR SA))
