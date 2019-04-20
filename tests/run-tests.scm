@@ -27,11 +27,7 @@
 ;; Load tests
 
 (add-to-load-path here)
-(for-each load-from-path files)
 
-;; Final test, triggers output
-(test-begin "metatest")
-(test-assert #t)
-(test-expect-fail 1)
-(test-assert #f)
-(test-end "metatest")
+(test-begin "tests")
+(for-each load-from-path files)
+(test-end "tests")

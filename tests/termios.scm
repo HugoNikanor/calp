@@ -20,8 +20,6 @@
 (define-syntax-rule (&= lvalue val)
   (mod! lvalue (lambda (v) (& v val))))
 
-(test-begin "termios")
-
 (define t (make-termios))
 
 (test-equal 0 (tcgetattr! t))
@@ -35,5 +33,3 @@
 (test-equal (& ifl (~ (|| ECHO ICANON)))
   (lflag t))
 (test-equal 0 (tcsetattr! copy))
-
-(test-end "termios")

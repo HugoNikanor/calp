@@ -1,5 +1,3 @@
-(test-begin "RRULE parse")
-
 (use-modules (vcalendar recurrence parse))
 
 (define-syntax mkrule
@@ -31,5 +29,3 @@
 (parse-recurrence-rule "FREQ=HOURLY;COUNT=-1") ; TODO this error seems to have an error
 ;; => #<<recur-rule> freq: HOURLY until: #f count: #<<recur-rule> freq: HOURLY until: #f count: #f interval: 1 bysecond: #f byminute: #f byhour: #f byday: #f bymonthday: #f byyearday: #f byweekno: #f bymonth: #f bysetpos: #f wkst: MO> interval: 1 bysecond: #f byminute: #f byhour: #f byday: #f bymonthday: #f byyearday: #f byweekno: #f bymonth: #f bysetpos: #f wkst: MO>
 ;; ERR unfulfilled-constraint [-1] doesn't fulfill constraint of type [COUNT], ignoring
-
-(test-end "RRULE parse")

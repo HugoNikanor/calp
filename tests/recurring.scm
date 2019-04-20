@@ -18,8 +18,6 @@
           (getenv "TESTPATH")
           str))
 
-(test-begin "recurrence test")
-
 (define cal-1 (make-vcomponent (tcal "simple-daily.ics")))
 
 (let ((ev (car (children cal-1 'VEVENT))))
@@ -47,4 +45,3 @@
            (s4 (add-day s3)))
       (list s0 s1 s2 s3 s4))) )
 
-(test-end "recurrence test")
