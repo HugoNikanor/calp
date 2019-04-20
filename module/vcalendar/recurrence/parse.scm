@@ -11,19 +11,26 @@
   #:use-module (ice-9 curried-definitions)
   #:export (parse-recurrence-rule))
 
+
+(define (printerr fmt . args)
+  (apply format (current-error-port)
+          fmt args))
+
 (define (parse-recurrence-rule str)
-  "Takes a RECUR value (string), and returuns a <recur-rule> object"
-  (catch #t
+  (catch-multiple
     (lambda () (%build-recur-rules str))
-    (lambda (err cont obj key val . rest)
-      (let ((fmt (case err
-                   ((unfulfilled-constraint)
-                    "ERR ~a [~a] doesn't fulfill constraint of type [~a], ignoring~%")
-                   ((invalid-value)
-                    "ERR ~a [~a] for key [~a], ignoring.~%")
-                   (else "~a ~a ~a"))))
-        (format (current-error-port) fmt err val key))
-      (cont #f))))
+
+    [unfulfilled-constraint
+     (cont obj key val . rest)
+     (printerr "ERR ~a [~a] doesn't fulfill constraint of type [~a], ignoring~%"
+               err val key)
+     (cont #f)]
+
+    [invalid-value
+     (cont obj key val . rest)
+     (printerr "ERR ~a [~a] for key [~a], ignoring.~%"
+               err val key)
+     (cont #f)]))
 
 (eval-when (expand)
  (define ((handle-case stx obj) key val proc)
