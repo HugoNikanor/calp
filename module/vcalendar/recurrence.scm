@@ -1,4 +1,4 @@
-(define-module (vcalendar recur)
+(define-module (vcalendar recurrence)
   #:use-module (vcalendar)
   #:use-module (vcalendar recurrence generate)
   #:re-export (generate-recurrence-set)

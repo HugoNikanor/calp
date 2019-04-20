@@ -15,7 +15,7 @@
              (texinfo string-utils)     ; string->wrapped-lines
              (util)
              (vcalendar)
-             (vcalendar recur)
+             (vcalendar recurrence)
              (vcalendar datetime)
              (vcalendar output)
              (terminal escape)

@@ -1,7 +1,7 @@
 (define-module (vcalendar)
   #:use-module (vcalendar primitive)
   #:use-module (vcalendar datetime)
-  #:use-module (vcalendar recur)
+  #:use-module (vcalendar recurrence)
   #:use-module (vcalendar timezone)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19)

@@ -6,7 +6,7 @@
              (util)
              (vcalendar)
              (vcalendar output)
-             (vcalendar recur))
+             (vcalendar recurrence))
 
 (define (display-timespan ev)
   (format #t "~a -- ~a~%"
