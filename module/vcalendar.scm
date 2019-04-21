@@ -33,14 +33,20 @@
              (make-tz-set tz)))
 
   (for ev in (children cal 'VEVENT)
-       (define date (parse-datetime (attr ev 'DTSTART)))
+       (define date     (parse-datetime (attr ev 'DTSTART)))
+       (define end-date (parse-datetime (attr ev 'DTEND)))
 
-       (mod! (attr ev "DTEND")   string->time-utc)
-       (set! (attr ev "DTSTART") (date->time-utc date))
+       (set! (attr ev "DTSTART") (date->time-utc date)
+             (attr ev "DTEND")   (date->time-utc end-date))
 
        (when (prop (attr* ev 'DTSTART) 'TZID)
          (set! (zone-offset date) (get-tz-offset ev)
-               (attr ev 'DTSTART) (date->time-utc date))))
+               (attr ev 'DTSTART) (date->time-utc date)
+
+               ;; The standard says that DTEND must have the same
+               ;; timezone as DTSTART. Here we trust that blindly.
+               (zone-offset end-date) (zone-offset date)
+               (attr ev 'DTEND) (date->time-utc end-date))))
 
   ;; Return
   cal)
