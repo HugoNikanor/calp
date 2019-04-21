@@ -50,23 +50,15 @@
 
 (define (summary-filter _ str) str)
 
-(define (main-loop regular-events repeating-events)
+(define (main-loop event-stream)
   (define time (now))
   (define cur-event 0)
   (while #t
     (let ((events
-           ;; TODO change back to filter-sorted once it's fixed
-           (merge (filter             ;-sorted
-                   (cut event-in? <> time)
-                   regular-events)
-
-                  (stream->list
-                   (filter-sorted-stream
-                    (cut event-in? <> time)
-                    repeating-events))
-
-                  ev-time<?)))
-
+           (stream->list
+            (filter-sorted-stream
+             (cut event-in? <> time)
+             event-stream))))
 
       (cls)
       (display-calendar-header! (time-utc->date time))
@@ -153,11 +145,13 @@
     (set! repeating (sort*! repeating time<? (extract 'DTSTART))
           regular   (sort*! regular   time<? (extract 'DTSTART)))
 
-    (let ((repeating (interleave-streams ev-time<?
-                      (map generate-recurrence-set repeating))))
-      (proc regular repeating))))
+    (proc
+     (interleave-streams
+      ev-time<?
+      (cons (list->stream regular)
+            (map generate-recurrence-set repeating))))))
 
 (define (main args)
-  (init (lambda (regular repeating)
+  (init (lambda (events)
           (with-vulgar
-           (lambda () (main-loop regular repeating))))))
+           (lambda () (main-loop events))))))
