@@ -19,7 +19,10 @@
              (vcalendar datetime)
              (vcalendar output)
              (terminal escape)
-             (terminal util))
+             (terminal util)
+
+             (html html)
+             )
 
 (define (ev-time<? a b)
   (time<? (attr a 'DTSTART)
@@ -146,12 +149,15 @@
           regular   (sort*! regular   time<? (extract 'DTSTART)))
 
     (proc
+     calendars
      (interleave-streams
       ev-time<?
       (cons (list->stream regular)
             (map generate-recurrence-set repeating))))))
 
 (define (main args)
-  (init (lambda (events)
-          (with-vulgar
-           (lambda () (main-loop events))))))
+  ;; (init (lambda (calendars events)
+  ;;         (with-vulgar
+  ;;          (lambda () (main-loop events)))))
+  ((@ (sxml simple) sxml->xml) (init html-main))
+  )
