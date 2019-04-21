@@ -2,6 +2,7 @@
   #:use-module (srfi srfi-9 gnu)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-19 setters)
+  #:use-module (srfi srfi-41)
   #:export (copy-date
             drop-time! drop-time
             in-day? today?
@@ -87,3 +88,15 @@ attribute set to 0. Can also be seen as \"Start of day\""
    ;; D
    (and (time<? s2-begin s1-begin)
         (time<? s1-end s2-end))))
+
+(define-public (normalize-date date)
+  (time-utc->date (date->time-utc date)
+                  (zone-offset date)))
+
+;; Returns a stream of date objects, one day appart, staring from start-day.
+(define-public (day-stream start-day)
+  (stream-iterate
+   (lambda (d)
+     (set! (day d) (1+ (day d)))
+     (normalize-date d))
+   start-day))
