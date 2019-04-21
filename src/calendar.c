@@ -85,6 +85,9 @@ int handle_dir(vcomponent* cal, char* path) {
 		if (strcmp (d->d_name, "color") == 0) {
 			f = fopen(resolved_path, "r");
 			fgets(info_buf, 0x100, f);
+			if (info_buf[strlen(info_buf) - 1] == '\n')
+				info_buf[strlen(info_buf) - 1] = '\0';
+
 			fclose(f);
 			vcomponent_push_val(cal, "COLOR", info_buf);
 		} else if (strcmp (d->d_name, "displayname") == 0) {
