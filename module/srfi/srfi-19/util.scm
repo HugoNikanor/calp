@@ -100,3 +100,14 @@ attribute set to 0. Can also be seen as \"Start of day\""
      (set! (day d) (1+ (day d)))
      (normalize-date d))
    start-day))
+
+(define-public (in-date-range? start-date end-date)
+  (format (current-error-port) "Start: ~a~%End: ~a~%"
+          (date->string start-date) (date->string end-date))
+  (lambda (date)
+    (format (current-error-port) "Date: ~a~%"
+            (date->string date "~1"))
+    (let ((time (date->time-utc date)))
+      (timespan-overlaps?
+       (date->time-utc start-date) (date->time-utc end-date)
+       time time))))

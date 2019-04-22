@@ -1,6 +1,7 @@
 (define-module (html html)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-41)
+  #:use-module (srfi srfi-41 util)
   #:use-module (vcalendar)
   #:use-module (vcalendar datetime)
   #:use-module (util)
@@ -92,6 +93,9 @@ never on absolute times. For that see date->decimal-hour"
                ,(string-append time ":00")))
        (map number->string (iota 12 0 2))))
 
+(define (d str)
+  (string->date str "~Y-~m-~d"))
+
 (define-public (html-main calendars events)
   `(html (head
           (title "Calendar")
@@ -111,5 +115,12 @@ never on absolute times. For that see date->decimal-hour"
                     ,@(time-marker-div)
                     (div (@ (class "days"))
                          ,@(stream->list
-                            (stream-take 2000 (stream-map lay-out-day (group-stream events)))))))))
+                            (stream-map
+                             lay-out-day
+                             (filter-sorted-stream
+                              (compose (in-date-range?
+                                        (d "2019-04-15")
+                                        (d "2019-04-22"))
+                                       car)
+                              (group-stream events)))))))))
 
