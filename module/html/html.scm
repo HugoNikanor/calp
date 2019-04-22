@@ -131,6 +131,18 @@ never on absolute times. For that see date->decimal-hour"
 (define (d str)
   (string->date str "~Y-~m-~d"))
 
+
+(define (calculate-fg-color c)
+  (define (str->num c n) (string->number (substring/shared c n (+ n 2)) 16))
+  (let ((r (str->num c 1))
+        (g (str->num c 3))
+        (b (str->num c 5)))
+    (if (< 1/2 (/ (+ (* 0.299 r)
+                     (* 0.587 g)
+                     (* 0.144 b))
+                  #xFF))
+        "black" "#e5e8e6")))
+
 (define-public (html-main calendars events)
   `(html (head
           (title "Calendar")
@@ -138,13 +150,15 @@ never on absolute times. For that see date->decimal-hour"
           (link (@ (type "text/css")
                    (rel "stylesheet")
                    (href "static/style.css")))
-          (style ,(format #f "~{.CAL_~a { background-color: ~a }~%~}"
+          (style ,(format #f "~{.CAL_~a { background-color: ~a; color: ~a }~%~}"
                           (concat (map (lambda (c)
                                          (list
                                           (html-attr (if (pair? (attr c 'NAME))
                                                          (car (attr c 'NAME))
                                                          (attr c 'NAME)))
-                                          (or (attr c 'COLOR) "white")))
+                                          (or (attr c 'COLOR) "white")
+                                          (or (and=> (attr c 'COLOR) calculate-fg-color )
+                                              "black")))
                                        calendars)))))
          (body (div (@ (class "calendar"))
                     ,@(time-marker-div)
