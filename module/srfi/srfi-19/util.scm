@@ -101,8 +101,7 @@ attribute set to 0. Can also be seen as \"Start of day\""
    (lambda (d)
      (set! (day d) (1+ (day d)))
      (normalize-date d))
-   (#; drop-time identity start-day
-                )))
+   (drop-time start-day)))
 
 (define-public (in-date-range? start-date end-date)
   (format (current-error-port) "Start: ~a~%End: ~a~%"
@@ -112,3 +111,4 @@ attribute set to 0. Can also be seen as \"Start of day\""
       (timespan-overlaps?
        (date->time-utc start-date) (date->time-utc end-date)
        time time))))
+

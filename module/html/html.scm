@@ -62,20 +62,49 @@ never on absolute times. For that see date->decimal-hour"
   (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
   (string-filter (lambda (c) (char-set-contains? cs c)) str))
 
-(define (vevent->sxml ev)
+(define (vevent->sxml day ev)
+  (define time (date->time-utc day))
   (define style
-    (format #f "top: ~,3f%; height: ~,3f%; width: ~,3f%; left: ~,3f%"
+    (format #f "top: ~,3f%;  left: ~,3f%; height: ~,3f%; width: ~,3f%;"
+            ;; top
+            (if (in-day? day (attr ev 'DTSTART))
+                (* (/ 24) 100
+                   (time->decimal-hour
+                    (time-difference (attr ev 'DTSTART)
+                                     (start-of-day* (attr ev 'DTSTART)))))
+                0)
+
+            ;; left
+            (* 100 (width ev) (x-pos ev))
+
+            ;; height
             (* (/ 24) 100
                (time->decimal-hour
-                (time-difference (attr ev 'DTSTART)
-                                 (start-of-day* (attr ev 'DTSTART)))))
-            (* (/ 24) 100
-               (time->decimal-hour (time-difference (attr ev 'DTEND)
-                                                    (attr ev 'DTSTART))))
+                (if (in-day? day (attr ev 'DTEND))
+                    (if (in-day? day (attr ev 'DTSTART))
+                        ;; regular
+                        (time-difference (attr ev 'DTEND)
+                                         (attr ev 'DTSTART))
+                        ;; end today, start later
+                        (time-difference (attr ev 'DTEND)
+                                         time))
+                    (if (in-day? day (attr ev 'DTSTART))
+                        ;; end today, start earlier
+                        (time-difference (add-day time)
+                                         (attr ev 'DTSTART))
+                        ;; start earlier, end earlier
+                        (time-difference (add-day time)
+                                         time)))))
+
+            ;; width
             (* 100 (width ev))
-            (* 100 (width ev) (x-pos ev))))
+            ))
   `(div (@ (class "event CAL_" ,(html-attr (let ((l (attr (parent ev) 'NAME)))
-                                         (if (pair? l) (car l) l))))
+                                             (if (pair? l) (car l) l)))
+             ,(if (time<? (attr ev 'DTSTART) time)
+                  " continued" "")
+             ,(if (time<? (add-day time) (attr ev 'DTEND))
+                  " continuing" ""))
            (style ,style))
         ,(attr ev 'SUMMARY)))
 
@@ -89,7 +118,7 @@ never on absolute times. For that see date->decimal-hour"
                (span (@ (class "daydate")) ,(date->string date "~Y-~m-~d")))
           (div (@ (class "events"))
                " "
-               ,@(stream->list (stream-map vevent->sxml events))))))
+               ,@(stream->list (stream-map (lambda (e) (vevent->sxml date e)) events))))))
 
 
 (define (time-marker-div)

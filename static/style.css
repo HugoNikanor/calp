@@ -80,6 +80,24 @@ body {
 	z-index: 0;
 }
 
+.event.continuing {
+	border-bottom: none;
+	background-image: linear-gradient(to top, #fefcea 0%,#FFF0 20%);
+}
+
+.event.continued {
+	border-top: none;
+	background-image: linear-gradient(to bottom, #fefcea 0%,#FFF0 20%);
+}
+
+.event.continued.continuing {
+	border-top: none;
+	border-top: bottom;
+	background-image:
+		linear-gradient(to bottom, #fefcea 0%, #FFF0   20%,
+		                           #FFF0  80%, #fefcea 100%);
+}
+
 .selected {
 	width: 100% !important;
 	left: 0 !important;
