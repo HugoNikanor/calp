@@ -82,20 +82,21 @@ body {
 
 .event.continuing {
 	border-bottom: none;
-	background-image: linear-gradient(to top, #fefcea 0%,#FFF0 20%);
+	background-image: linear-gradient(to top, #0007 0%,#FFF0 4em);
 }
 
 .event.continued {
 	border-top: none;
-	background-image: linear-gradient(to bottom, #fefcea 0%,#FFF0 20%);
+	background-image: linear-gradient(to bottom, #FFF7 0%,#FFF0 6em);
 }
 
 .event.continued.continuing {
 	border-top: none;
-	border-top: bottom;
+	border-top: none;
 	background-image:
-		linear-gradient(to bottom, #fefcea 0%, #FFF0   20%,
-		                           #FFF0  80%, #fefcea 100%);
+		linear-gradient(to bottom,
+			#FFF7  0%, #FFF0 10%,
+			#FFF0 90%, #0007 100%);
 }
 
 .selected {
