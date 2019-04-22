@@ -18,9 +18,15 @@
              (stream in-stream))
     (if (stream-null? stream)
         stream-null
-        (let ((day (stream-car days)))
+        (let* ((day (stream-car days))
+               (tomorow (add-day (date->time-utc (drop-time day)))))
           (let ((head (stream-take-while (ein? day) stream))
-                (tail (stream-drop-while (ein? day) stream)))
+                (tail
+                 (filter-sorted-stream*
+                  (lambda (e) (time<? tomorow (attr e 'DTEND)))
+                  (lambda (e) (time<=? tomorow (attr e 'DTSTART)))
+                  stream)))
+
             (stream-cons (cons day head)
                          (loop (stream-cdr days)
                                tail)))))))

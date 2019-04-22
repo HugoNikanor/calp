@@ -26,6 +26,17 @@
    proc (stream-drop-while
          (negate proc) stream)))
 
+(define-public (filter-sorted-stream* pred? keep-remaining? stream)
+  (cond [(stream-null? stream) stream-null]
+        [(keep-remaining? (stream-car stream)) stream]
+        [(pred? (stream-car stream))
+         (stream-cons (stream-car stream)
+                      (filter-sorted-stream*
+                       pred? keep-remaining?
+                       (stream-cdr stream)))]
+        [else (filter-sorted-stream* pred? keep-remaining?
+                                     (stream-cdr stream))]))
+
 (define-public (stream-find pred stream)
   (cond ((stream-null? stream) #f)
         ((pred (stream-car stream)) (stream-car stream))
