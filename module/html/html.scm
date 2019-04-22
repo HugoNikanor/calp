@@ -36,7 +36,7 @@
   (if (null? ev-list)
       #f
       (let* ((pred? (lambda (next)
-                      (time<=? (attr next 'DTSTART)
+                      (time<? (attr next 'DTSTART)
                                (attr (car ev-list) 'DTEND))))
              (overlapping (take-while pred? ev-list))
              (rest (drop-while pred? ev-list)))
