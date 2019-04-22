@@ -54,6 +54,8 @@ attribute set to 0. Can also be seen as \"Start of day\""
 (define* (time->string time #:optional (format "~1 ~3"))
   (date->string (time-utc->date time) format))
 
+;; TODO these ({add,remove}-day} might have problem moving between timezones.
+
 (define (add-day time)
   (add-duration time (make-duration (* 60 60 24))))
 
@@ -99,14 +101,13 @@ attribute set to 0. Can also be seen as \"Start of day\""
    (lambda (d)
      (set! (day d) (1+ (day d)))
      (normalize-date d))
-   start-day))
+   (#; drop-time identity start-day
+                )))
 
 (define-public (in-date-range? start-date end-date)
   (format (current-error-port) "Start: ~a~%End: ~a~%"
           (date->string start-date) (date->string end-date))
   (lambda (date)
-    (format (current-error-port) "Date: ~a~%"
-            (date->string date "~1"))
     (let ((time (date->time-utc date)))
       (timespan-overlaps?
        (date->time-utc start-date) (date->time-utc end-date)

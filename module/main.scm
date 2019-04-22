@@ -51,6 +51,22 @@
 (define (displayln a)
   (display a) (newline))
 
+(define (display-event-table events)
+ (for-each
+  (lambda (ev i)
+    (format #t "~a │ ~a~a~a~a │ ~a~a~%"
+            (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
+            (if (= i cur-event) "\x1b[7m" "")
+            (color-escape (attr (parent ev) 'COLOR))
+            ;; Summary filter is a hook for the user
+            (trim-to-width (summary-filter ev (attr ev 'SUMMARY)) 30)
+            STR-RESET
+            (trim-to-width
+             (or (attr ev 'LOCATION) "\x1b[1;30mINGEN LOKAL") 20)
+            STR-RESET))
+  events
+  (iota (length events))))
+
 (define (summary-filter _ str) str)
 
 (define (main-loop event-stream)
@@ -65,24 +81,9 @@
 
       (cls)
       (display-calendar-header! (time-utc->date time))
-      ;; (line)
+
       (displayln (box-top #\┬ #\─ 20 32 10))
-
-      (for-each
-       (lambda (ev i)
-         (format #t "~a │ ~a~a~a~a │ ~a~a~%"
-                 (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
-                 (if (= i cur-event) "\x1b[7m" "")
-                 (color-escape (attr (parent ev) 'COLOR))
-                 ;; Summary filter is a hook for the user
-                 (trim-to-width (summary-filter ev (attr ev 'SUMMARY)) 30)
-                 STR-RESET
-                 (trim-to-width
-                  (or (attr ev 'LOCATION) "\x1b[1;30mINGEN LOKAL") 20)
-                 STR-RESET))
-       events
-       (iota (length events)))
-
+      (display-event-table events)
       (displayln (box-top #\┴ #\─ 20 32 10))
 
       (unless (null? events)
@@ -160,4 +161,5 @@
   ;;         (with-vulgar
   ;;          (lambda () (main-loop events)))))
   ((@ (sxml simple) sxml->xml) (init html-main))
+  (newline)
   )

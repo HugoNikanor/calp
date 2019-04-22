@@ -38,7 +38,7 @@
       #f
       (let* ((pred? (lambda (next)
                       (time<? (attr next 'DTSTART)
-                               (attr (car ev-list) 'DTEND))))
+                              (attr (car ev-list) 'DTEND))))
              (overlapping (take-while pred? ev-list))
              (rest (drop-while pred? ev-list)))
         (for-each (lambda (o x) (set! (x-pos o) x)) overlapping (iota (length overlapping)))
