@@ -26,18 +26,22 @@
   (reduce (lambda (str done) (string-append done (string intersection) str))
           "" (map (cut make-string <> line) lengths)))
 
-(define (display-event-table cur-event events)
+(define* (display-event-table events #:key
+                              (cur-event -1)
+                              (summary-width 30)
+                              (location-width 20))
  (for-each
   (lambda (ev i)
-    (format #t "~a │ ~a~a~a~a │ ~a~a~%"
+    (format #t "~a │ ~a~a~a~a │ ~a~a~a~%"
             (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
             (if (= i cur-event) "\x1b[7m" "")
             (color-escape (attr (parent ev) 'COLOR))
             ;; Summary filter is a hook for the user
-            (trim-to-width ((summary-filter) ev (attr ev 'SUMMARY)) 30)
+            (trim-to-width ((summary-filter) ev (attr ev 'SUMMARY)) summary-width)
             STR-RESET
+            (if (attr ev 'LOCATION) "" "\x1b[1;30m")
             (trim-to-width
-             (or (attr ev 'LOCATION) "\x1b[1;30mINGEN LOKAL") 20)
+             (or (attr ev 'LOCATION) "INGEN LOKAL") location-width)
             STR-RESET))
   events
   (iota (length events))))
@@ -64,9 +68,18 @@
       (cls)
       (display-calendar-header! (time-utc->date time))
 
-      (displayln (box-top #\┬ #\─ 20 32 10))
-      (display-event-table cur-event events)
-      (displayln (box-top #\┴ #\─ 20 32 10))
+      (let* ((date-width 20)
+             (location-width 15)
+             (summary-width (- width date-width location-width 6)))
+        (displayln
+         (box-top #\┬ #\─ date-width (+ summary-width 2) (1+ location-width)))
+        (display-event-table
+         events
+         #:cur-event cur-event
+         #:location-width location-width
+         #:summary-width summary-width)
+        (displayln
+         (box-top #\┴ #\─ date-width (+ summary-width 2) (1+ location-width))))
 
       (unless (null? events)
         (let ((ev (list-ref events cur-event)))
@@ -77,7 +90,7 @@
                   (time->string (attr ev 'DTSTART) "~1 ~3")
                   (time->string (attr ev 'DTEND) "~1 ~3")
                   (flow-text (or (attr ev 'DESCRIPTION) "")
-                             #:width 70
+                             #:width (min 70 width)
                              #:height (- height 8 2 (length events) 5)))))
 
       (let ((char (read-char)))
