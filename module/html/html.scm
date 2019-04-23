@@ -69,7 +69,11 @@ never on absolute times. For that see date->decimal-hour"
 (define (vevent->sxml day ev)
   (define time (date->time-utc day))
   (define style
-    (format #f "top: ~,3f%;  left: ~,3f%; height: ~,3f%; width: ~,3f%;"
+    (format #f "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"
+
+            (* 100 (x-pos ev))          ; left
+            (* 100 (width ev))          ; width
+
             ;; top
             (if (in-day? day (attr ev 'DTSTART))
                 (* (/ 24) 100
@@ -77,9 +81,6 @@ never on absolute times. For that see date->decimal-hour"
                     (time-difference (attr ev 'DTSTART)
                                      (start-of-day* (attr ev 'DTSTART)))))
                 0)
-
-            ;; left
-            (* 100 (x-pos ev))
 
             ;; height
             (* (/ 24) 100
@@ -98,11 +99,8 @@ never on absolute times. For that see date->decimal-hour"
                                          (attr ev 'DTSTART))
                         ;; start earlier, end earlier
                         (time-difference (add-day time)
-                                         time)))))
+                                         time)))))))
 
-            ;; width
-            (* 100 (width ev))
-            ))
   `(div (@ (class "event CAL_" ,(html-attr (let ((l (attr (parent ev) 'NAME)))
                                              (if (pair? l) (car l) l)))
              ,(if (time<? (attr ev 'DTSTART) time)
