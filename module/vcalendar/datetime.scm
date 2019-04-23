@@ -43,3 +43,9 @@ Event must have the DTSTART and DTEND attribute set."
 (define (ev-time<? a b)
   (time<? (attr a 'DTSTART)
           (attr b 'DTSTART)))
+
+;; Returns length of the event @var{e}, as a time-duration object.
+(define-public (event-length e)
+  (time-difference
+   (attr e 'DTEND)
+   (attr e 'DTSTART)))

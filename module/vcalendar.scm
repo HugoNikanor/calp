@@ -125,11 +125,6 @@
   (eq? (as-symb k1)
        (as-symb k2)))
 
-(define-public (event-length e)
-  (time-difference
-   (attr e 'DTEND)
-   (attr e 'DTSTART)))
-
 (define* (make-vcomponent #:optional path)
   (if (not path)
       (%vcomponent-make)
