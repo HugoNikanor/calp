@@ -77,30 +77,14 @@
 
             ;; top
             (if (in-day? day (attr ev 'DTSTART))
-                (* (/ 24) 100
+                (* 100/24
                    (time->decimal-hour
                     (time-difference (attr ev 'DTSTART)
                                      (start-of-day* (attr ev 'DTSTART)))))
                 0)
 
             ;; height
-            (* (/ 24) 100
-               (time->decimal-hour
-                (if (in-day? day (attr ev 'DTEND))
-                    (if (in-day? day (attr ev 'DTSTART))
-                        ;; regular
-                        (time-difference (attr ev 'DTEND)
-                                         (attr ev 'DTSTART))
-                        ;; end today, start later
-                        (time-difference (attr ev 'DTEND)
-                                         time))
-                    (if (in-day? day (attr ev 'DTSTART))
-                        ;; end today, start earlier
-                        (time-difference (add-day time)
-                                         (attr ev 'DTSTART))
-                        ;; start earlier, end earlier
-                        (time-difference (add-day time)
-                                         time)))))))
+            (* 100/24 (time->decimal-hour (event-length/day ev time)))))
 
   `(div (@ (class "event CAL_" ,(html-attr (let ((l (attr (parent ev) 'NAME)))
                                              (if (pair? l) (car l) l)))
@@ -146,33 +130,34 @@
                   #xFF))
         "black" "#e5e8e6")))
 
+(define (include-css path)
+  `(link (@ (type "text/css")
+            (rel "stylesheet")
+            (href ,path))))
+
 (define-public (html-main calendars events)
+
+  (define evs
+    (filter-sorted-stream
+     (compose (in-date-range?
+               (d "2019-04-15")
+               (d "2019-05-10"))
+              car)
+     (group-stream events)))
+
   `(html (head
           (title "Calendar")
           (meta (@ (charset "utf-8")))
-          (link (@ (type "text/css")
-                   (rel "stylesheet")
-                   (href "static/style.css")))
-          (style ,(format #f "~{.CAL_~a { background-color: ~a; color: ~a }~%~}"
-                          (concat (map (lambda (c)
-                                         (list
-                                          (html-attr (if (pair? (attr c 'NAME))
-                                                         (car (attr c 'NAME))
-                                                         (attr c 'NAME)))
-                                          (or (attr c 'COLOR) "white")
-                                          (or (and=> (attr c 'COLOR) calculate-fg-color )
-                                              "black")))
-                                       calendars)))))
+          ,(include-css "static/style.css")
+          (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%~}"
+                          (map (lambda (c)
+                                 (list (html-attr (if (pair? (attr c 'NAME))
+                                                      (car (attr c 'NAME))
+                                                      (attr c 'NAME)))
+                                       (or (attr c 'COLOR) "white")
+                                       (or (and=> (attr c 'COLOR) calculate-fg-color) "black")))
+                               calendars))))
          (body (div (@ (class "calendar"))
                     ,@(time-marker-div)
                     (div (@ (class "days"))
-                         ,@(stream->list
-                            (stream-map
-                             lay-out-day
-                             (filter-sorted-stream
-                              (compose (in-date-range?
-                                        (d "2019-04-15")
-                                        (d "2019-05-10"))
-                                       car)
-                              (group-stream events)))))))))
-
+                         ,@(stream->list (stream-map lay-out-day evs)))))))
