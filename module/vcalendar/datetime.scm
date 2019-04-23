@@ -6,6 +6,7 @@
 
   #:export (parse-datetime
             event-overlaps?
+            overlapping?
             event-in?
             ev-time<?)
   )
@@ -25,6 +26,12 @@ Event must have the DTSTART and DTEND attribute set."
   (timespan-overlaps? (attr event 'DTSTART)
                       (attr event 'DTEND)
                       begin end))
+
+(define (overlapping? event-a event-b)
+  (timespan-overlaps? (attr event-a 'DTSTART)
+                      (attr event-a 'DTEND)
+                      (attr event-b 'DTSTART)
+                      (attr event-b 'DTEND)))
 
 (define (event-in? ev time)
   "Does event overlap the date that contains time."
