@@ -36,7 +36,7 @@
 
 ;; Takes a list of vcomponents, sets their widths and x-positions to optimally
 ;; fill out the space, without any overlaps.
-(define (fix-event-widths! lst)
+(define (fix-event-widths! start-of-day lst)
 
   ;; @var{x} is how for left in the container we are.
   (define (inner x tree)
@@ -54,7 +54,7 @@
                         ;; event it would capture  the longer event to
                         ;; only find  events which  also overlaps  the
                         ;; smaller event.
-                        (sort* lst time>? event-length))))
+                      (sort* lst time>? (lambda (e) (event-length/day e start-of-day))))))
 
 (define (time->decimal-hour time)
   "This should only be used on time intervals,
@@ -113,7 +113,7 @@ never on absolute times. For that see date->decimal-hour"
 (define (lay-out-day day)
   (let* (((date . events) day))
     ;; (format (current-error-port) "Processing ~a~%" (date->string date))
-    (fix-event-widths! (stream->list events))
+    (fix-event-widths! (date->time-utc date) (stream->list events))
     `(div (@ (class "day"))
           (div (@ (class "meta"))
                (span (@ (class "dayname")) ,(date->string date "~a"))
