@@ -27,8 +27,11 @@
 ;; Length includes current node, so the length of a leaf is 1.
 (define (length-of-longst-branch tree)
   (if (null? tree)
-      0 (1+ (max (length-of-longst-branch (left-subtree tree))
-                 (length-of-longst-branch (right-subtree tree))))))
+      ;; Having the @var{1+} outside the @var{max} also works,
+      ;; but leads to events overlapping many other to be thinner.
+      ;; Having it inside makes all events as evenly wide as possible.
+      0 (max (1+ (length-of-longst-branch (left-subtree tree)))
+             (length-of-longst-branch (right-subtree tree)))))
 
 (define (tree-map proc tree)
   (if (null? tree) '()
