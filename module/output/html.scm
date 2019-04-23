@@ -8,6 +8,7 @@
   #:use-module (util tree)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-19 util)
+  #:use-module (output general)
 
   #:use-module (parameters)
   #:use-module (config))
@@ -107,7 +108,6 @@
                " "
                ,@(stream->list (stream-map (lambda (e) (vevent->sxml date e)) events))))))
 
-
 (define (time-marker-div)
   (map (lambda (time)
          `(div (@ (id ,(string-append "clock-" time))
@@ -117,18 +117,6 @@
 
 (define (d str)
   (string->date str "~Y-~m-~d"))
-
-
-(define (calculate-fg-color c)
-  (define (str->num c n) (string->number (substring/shared c n (+ n 2)) 16))
-  (let ((r (str->num c 1))
-        (g (str->num c 3))
-        (b (str->num c 5)))
-    (if (< 1/2 (/ (+ (* 0.299 r)
-                     (* 0.587 g)
-                     (* 0.144 b))
-                  #xFF))
-        "black" "#e5e8e6")))
 
 (define (include-css path)
   `(link (@ (type "text/css")
