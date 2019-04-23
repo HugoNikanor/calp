@@ -44,16 +44,15 @@
             (map generate-recurrence-set repeating))))))
 
 (define options
-  '((mode (value #t) (single-char #\m))
-    (date (value #t) (single-char #\d))
-    ))
+  '((mode (value #t) (single-char #\m))))
 
 (define (main args)
   (let ((opts (getopt-long args options #:stop-at-first-non-option #t)))
     (init
      (lambda (c e)
-       ((case (string->symbol (option-ref opts 'mode "term"))
-          ((html) html-main)
-          ((term) terminal-main))
-        c e (option-ref opts '() '()))))
+       (let ((ropt (option-ref opts '() '("term"))))
+         ((case (string->symbol (car ropt))
+            ((html) html-main)
+            ((term) terminal-main))
+          c e ropt))))
     (newline)))

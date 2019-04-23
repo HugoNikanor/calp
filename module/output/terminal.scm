@@ -16,6 +16,7 @@
 
   #:use-module (texinfo string-utils)     ; string->wrapped-lines
   #:use-module (ice-9 format)
+  #:use-module (ice-9 getopt-long)
   #:use-module (parameters)
   #:use-module (config)
 
@@ -41,15 +42,13 @@
   events
   (iota (length events))))
 
-(define (now)
-  (date->time-utc (current-date)))
-
 (define (displayln a)
   (display a) (newline))
 
-(define (main-loop event-stream)
-  (define time (now))
+(define (main-loop time event-stream)
   (define cur-event 0)
+
+
   (while #t
     (let ((events
            (stream->list
@@ -92,7 +91,7 @@
            (set! time (remove-day time)
                  cur-event 0))
           ((#\t)
-           (set! time (now)
+           (set! time (date->time-utc (current-date))
                  cur-event 0))
           ((#\j #\J) (unless (= cur-event (1- (length events)))
 		       (mod! cur-event 1+)))
@@ -108,6 +107,16 @@
           (break)))
       )))
 
+(define options
+  '((date (value #t) (single-char #\d))))
+
+(define (parse-freeform-date str)
+  (string->date str "~Y-~m-~d"))
+
 (define (terminal-main calendars events args)
-  (with-vulgar
-   (lambda () (main-loop events))))
+  (let ((opts (getopt-long args options)))
+    (let ((time (date->time-utc
+                 (or (and=> (option-ref opts 'date #f) parse-freeform-date)
+                     (current-date)))))
+      (with-vulgar
+       (lambda () (main-loop time events))))))
