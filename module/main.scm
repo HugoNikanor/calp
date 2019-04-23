@@ -22,6 +22,8 @@
              (terminal util)
 
              (html html)
+
+             (parameters)
              )
 
 (define (ev-time<? a b)
@@ -59,15 +61,13 @@
             (if (= i cur-event) "\x1b[7m" "")
             (color-escape (attr (parent ev) 'COLOR))
             ;; Summary filter is a hook for the user
-            (trim-to-width (summary-filter ev (attr ev 'SUMMARY)) 30)
+            (trim-to-width ((summary-filter) ev (attr ev 'SUMMARY)) 30)
             STR-RESET
             (trim-to-width
              (or (attr ev 'LOCATION) "\x1b[1;30mINGEN LOKAL") 20)
             STR-RESET))
   events
   (iota (length events))))
-
-(define (summary-filter _ str) str)
 
 (define (main-loop event-stream)
   (define time (now))
@@ -132,8 +132,8 @@
 
 
 
-
-(load "config.scm")
+;; (load "config.scm")
+(use-modules (config))
 
 ;; Reads all calendar files from disk, and creates a list of "regular" events,
 ;; and a stream of "repeating" events, which are passed in that order to the
@@ -141,7 +141,7 @@
 ;;
 ;; Given as a sepparate function from main to ease debugging.
 (define (init proc)
-  (define calendars (map make-vcomponent calendar-files))
+  (define calendars (map make-vcomponent (calendar-files)))
   (define events (concatenate (map (cut children <> 'VEVENT) calendars)))
 
   (let* ((repeating regular (partition repeating? events)))

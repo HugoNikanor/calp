@@ -2,6 +2,7 @@
 ;;; Currently loaded by main, and requires that `calendar-files`
 ;;; is set to a list of files (or directories).
 
+(define-module (config) #:use-module (parameters))
 
 (use-modules (srfi srfi-26)
              (srfi srfi-88)
@@ -9,10 +10,10 @@
              (ice-9 regex)
              (ice-9 rdelim))
 
-(define calendar-files
-    (let ((path (string-append (getenv "HOME") "/.calendars/")))
-      (map (cut string-append path <>)
-           (scandir path (lambda (str) (not (char=? #\. (string-ref str 0))))))))
+(calendar-files
+ (let ((path (string-append (getenv "HOME") "/.calendars/")))
+   (map (cut string-append path <>)
+        (scandir path (lambda (str) (not (char=? #\. (string-ref str 0))))))))
 
 ;;; TODO possibly replace with propper lookup
 (define my-courses
@@ -26,8 +27,9 @@
 (define* (aref alist key optional: default)
   (or (assoc-ref alist key) default key))
 
-(define (summary-filter ev str)
-  (regexp-substitute/global
-   #f "T[A-Z]{3}[0-9]{2}" str
-   'pre (lambda (m) (aref my-courses (string->symbol (match:substring m))))
-   'post))
+(summary-filter
+ (lambda (ev str)
+   (regexp-substitute/global
+    #f "T[A-Z]{3}[0-9]{2}" str
+    'pre (lambda (m) (aref my-courses (string->symbol (match:substring m))))
+    'post)))
