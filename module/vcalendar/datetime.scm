@@ -49,3 +49,10 @@ Event must have the DTSTART and DTEND attribute set."
   (time-difference
    (attr e 'DTEND)
    (attr e 'DTSTART)))
+
+;; Returns the length of the part of @var{e} which is within the day
+;; starting at the time @var{start-of-day}.
+(define-public (event-length/day e start-of-day)
+  (time-difference
+   (time-min (add-day start-of-day) (attr e 'DTEND))
+   (time-max start-of-day (attr e 'DTSTART))))
