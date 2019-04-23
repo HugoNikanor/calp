@@ -183,9 +183,6 @@
     ((_ field proc rest ...)
      (begin (modf% field proc) (mod! rest ...)))))
 
-(define-public (concat lists)
-  (apply append lists))
-
 ;; This function borrowed from web-ics (calendar util)
 (define* (sort* items comperator #:optional (get identity))
   "A sort function more in line with how python's sorted works"

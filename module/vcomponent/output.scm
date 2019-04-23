@@ -2,6 +2,7 @@
   #:use-module (vcomponent)
   #:use-module (vcomponent control)
   #:use-module (util)
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 format)
@@ -32,7 +33,7 @@
                      (format port "~a ~15@a~{;~a=~{~a~^,~}~}: ~a~%"
                              (make-string depth #\:)
                              key
-                             (concat (hash-map->list list (cdr at)))
+                             (concatenate (hash-map->list list (cdr at)))
                              (v at)))))
     (for-each-in (children comp)
                  (lambda (e) (print-vcomponent e port #:depth (1+ depth))))))
