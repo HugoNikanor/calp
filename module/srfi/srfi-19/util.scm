@@ -112,3 +112,8 @@ attribute set to 0. Can also be seen as \"Start of day\""
        (date->time-utc start-date) (date->time-utc end-date)
        time time))))
 
+(define-public (time-min a b)
+  (if (time<? a b) a b))
+
+(define-public (time-max a b)
+  (if (time<? a b) b a))
