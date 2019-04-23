@@ -5,11 +5,11 @@
   #:use-module (vcalendar)
   #:use-module (vcalendar datetime)
   #:use-module (util)
+  #:use-module (util tree)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-19 util)
 
   )
-
 
 (define-stream (group-stream in-stream)
   (define (ein? day) (lambda (e) (event-in? e (date->time-utc day))))
@@ -34,23 +34,27 @@
 (define x-pos (make-object-property))
 (define width (make-object-property))
 
-;; Takes a list of vcomponents.
-;;; And makes each sublist have better laid out elements.
-;;; It's not perfect if there are many elements that overlap
-;;; In different ways. But it works perfectly for a block
-;;; schedule!
-(define (fix-event-widths! ev-list)
-  (if (null? ev-list)
-      #f
-      (let* ((pred? (lambda (next)
-                      (time<? (attr next 'DTSTART)
-                              (attr (car ev-list) 'DTEND))))
-             (overlapping (take-while pred? ev-list))
-             (rest (drop-while pred? ev-list)))
-        (for-each (lambda (o x) (set! (x-pos o) x)) overlapping (iota (length overlapping)))
-        (for-each (lambda (o) (set! (width o) (/ (length overlapping))))
-                  overlapping)
-        (fix-event-widths! rest))))
+;; Takes a list of vcomponents, sets their widths and x-positions to optimally
+;; fill out the space, without any overlaps.
+(define (fix-event-widths! lst)
+
+  ;; @var{x} is how for left in the container we are.
+  (define (inner x tree)
+    (if (null? tree) #f
+        (let ((w (/ (- 1 x)
+                    (+ 1 (length-of-longst-branch (left-subtree tree))))))
+          (set! (width (car tree)) w
+                (x-pos (car tree)) x)
+          (inner (+ x w) (left-subtree tree))
+          (inner x (right-subtree tree)))))
+
+  (inner 0 (make-tree (lambda (head e) (overlapping? head e))
+                        ;; The tree construction is greedy. This means
+                        ;; that if  a smaller  event preceeds a longer
+                        ;; event it would capture  the longer event to
+                        ;; only find  events which  also overlaps  the
+                        ;; smaller event.
+                        (sort* lst time>? event-length))))
 
 (define (time->decimal-hour time)
   "This should only be used on time intervals,
@@ -75,7 +79,7 @@ never on absolute times. For that see date->decimal-hour"
                 0)
 
             ;; left
-            (* 100 (width ev) (x-pos ev))
+            (* 100 (x-pos ev))
 
             ;; height
             (* (/ 24) 100
@@ -169,7 +173,7 @@ never on absolute times. For that see date->decimal-hour"
                              (filter-sorted-stream
                               (compose (in-date-range?
                                         (d "2019-04-15")
-                                        (d "2019-04-22"))
+                                        (d "2019-05-10"))
                                        car)
                               (group-stream events)))))))))
 
