@@ -1,5 +1,6 @@
 (define-module (output terminal)
   #:use-module (output general)
+  #:use-module (output text)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-19 util)
@@ -14,7 +15,6 @@
   #:use-module (vcomponent)
   #:use-module (vcomponent datetime)
 
-  #:use-module (texinfo string-utils)     ; string->wrapped-lines
   #:use-module (ice-9 format)
   #:use-module (ice-9 getopt-long)
   #:use-module (parameters)
@@ -71,14 +71,9 @@
                   (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
                   (time->string (attr ev 'DTSTART) "~1 ~3")
                   (time->string (attr ev 'DTEND) "~1 ~3")
-                  (string-join   ; TODO replace this with a better text flower
-                   (take-to      ; This one destroys newlines used for layout
-                    (string->wrapped-lines (or (attr ev 'DESCRIPTION) "")
-                                           #:line-width 60
-                                           #:collapse-whitespace? #f)
-                    10)
-                   (string #\newline))
-                  )))
+                  (flow-text (or (attr ev 'DESCRIPTION) "")
+                             #:width 70
+                             #:height 10))))
 
       (let ((char (read-char)))
         ;; (format (current-error-port)

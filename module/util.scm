@@ -153,8 +153,10 @@
 ;; Still requires all variables to be defined beforehand.
 (define-syntax set!
   (syntax-rules ()
-    ((_ field val)
-     ((@ (guile) set!) field val))
+    ((_ field expr)
+     (let ((val expr))
+       ((@ (guile) set!) field val)
+       val))
     ((_ field val rest ...)
      (begin ((@ (guile) set!) field val)
             (set! rest ...)))))
@@ -288,4 +290,20 @@
 ;; an early argument.
 (define-macro (catch-multiple thunk . cases)
   (catch-recur% (map car cases) thunk cases))
+
+(define-public (flatten lst)
+  (fold (lambda (subl done)
+          (append done ((if (list? subl) flatten list) subl)))
+        '() lst))
+
+;; Retuns two values. The longset head which satisfies @var{pred?},
+;; and the rest of the elements of list.
+;; Guarentees to only call @var{pred?} once for each element.
+(define-public (take-drop-while pred? list)
+  (let loop ((done '()) (rem list))
+    (cond ((null? rem) (values (reverse done) '()))
+          ((pred? (car rem)) (loop (cons (car rem) done) (cdr rem)))
+          (else (values (reverse done) rem)))))
+
+
 
