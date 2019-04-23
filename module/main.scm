@@ -6,136 +6,21 @@
 
 (use-modules (srfi srfi-1)
              (srfi srfi-19)
-             (srfi srfi-19 util)
              (srfi srfi-26)
              (srfi srfi-41)
              (srfi srfi-41 util)
-             (ice-9 format)
-             (ice-9 control)            ; call-with-escape-continuation
-             (texinfo string-utils)     ; string->wrapped-lines
              (util)
              (vcomponent)
              (vcomponent recurrence)
              (vcomponent datetime)
-             (vcomponent output)
-             (terminal escape)
-             (terminal util)
 
-             (html html)
+             (output html)
+             (output terminal)
 
              (ice-9 getopt-long)
 
              (parameters)
-             )
-
-(define (ev-time<? a b)
-  (time<? (attr a 'DTSTART)
-          (attr b 'DTSTART)))
-
-
-
-#; (define pizza-event (search cal "pizza"))
-
-(define (trim-to-width str len)
-  (let ((trimmed (string-pad-right str len)))
-    (if (< (string-length trimmed)
-           (string-length str))
-        (string-append (string-drop-right trimmed 1)
-                       "…")
-        trimmed)))
-  ; TODO show truncated string
-
-(define (now)
-  (date->time-utc (current-date)))
-
-(define (box-top intersection line . lengths)
-  (reduce (lambda (str done) (string-append done (string intersection) str))
-          "" (map (cut make-string <> line) lengths)))
-
-(define (displayln a)
-  (display a) (newline))
-
-(define (display-event-table cur-event events)
- (for-each
-  (lambda (ev i)
-    (format #t "~a │ ~a~a~a~a │ ~a~a~%"
-            (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
-            (if (= i cur-event) "\x1b[7m" "")
-            (color-escape (attr (parent ev) 'COLOR))
-            ;; Summary filter is a hook for the user
-            (trim-to-width ((summary-filter) ev (attr ev 'SUMMARY)) 30)
-            STR-RESET
-            (trim-to-width
-             (or (attr ev 'LOCATION) "\x1b[1;30mINGEN LOKAL") 20)
-            STR-RESET))
-  events
-  (iota (length events))))
-
-(define (main-loop event-stream)
-  (define time (now))
-  (define cur-event 0)
-  (while #t
-    (let ((events
-           (stream->list
-            (filter-sorted-stream
-             (cut event-in? <> time)
-             event-stream))))
-
-      (cls)
-      (display-calendar-header! (time-utc->date time))
-
-      (displayln (box-top #\┬ #\─ 20 32 10))
-      (display-event-table cur-event events)
-      (displayln (box-top #\┴ #\─ 20 32 10))
-
-      (unless (null? events)
-        (let ((ev (list-ref events cur-event)))
-          (format #t "~a~%~a~%~aStart: ~a	Slut: ~a~%~%~a~%"
-                  (attr ev 'X-HNH-FILENAME)
-                  (attr ev 'SUMMARY)
-                  (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
-                  (time->string (attr ev 'DTSTART) "~1 ~3")
-                  (time->string (attr ev 'DTEND) "~1 ~3")
-                  (string-join   ; TODO replace this with a better text flower
-                   (take-to      ; This one destroys newlines used for layout
-                    (string->wrapped-lines (or (attr ev 'DESCRIPTION) "")
-                                           #:line-width 60
-                                           #:collapse-whitespace? #f)
-                    10)
-                   (string #\newline))
-                  )))
-
-      (let ((char (read-char)))
-        ;; (format (current-error-port)
-        ;;         "c = ~c (~d)~%" char (char->integer char))
-        (case char
-          ((#\L #\l)
-           (set! time (add-day time)
-                 cur-event 0))
-          ((#\h #\H)
-           (set! time (remove-day time)
-                 cur-event 0))
-          ((#\t)
-           (set! time (now)
-                 cur-event 0))
-          ((#\j #\J) (unless (= cur-event (1- (length events)))
-		       (mod! cur-event 1+)))
-          ((#\k #\K) (unless (= cur-event 0)
-		       (mod! cur-event 1-)))
-          ((#\p) (print-vcomponent (list-ref events cur-event)
-                                   (current-error-port)))
-	  ((#\g) (set! cur-event 0))
-	  ((#\G) (set! cur-event (1- (length events)))))
-
-        (when (or (eof-object? char)
-                  (memv char (list #\q (ctrl #\C))))
-          (break)))
-      )))
-
-
-
-;; (load "config.scm")
-(use-modules (config))
+             (config))
 
 ;; Reads all calendar files from disk, and creates a list of "regular" events,
 ;; and a stream of "repeating" events, which are passed in that order to the
@@ -166,9 +51,9 @@
 (define (main args)
   (let ((opts (getopt-long args options #:stop-at-first-non-option #t)))
     (init
-     (case (string->symbol (option-ref opts 'mode "term"))
-       ((html) html-main)
-       ((term) (lambda (calendars events)
-                 (with-vulgar
-                  (lambda () (main-loop events)))))))
+     (lambda (c e)
+       ((case (string->symbol (option-ref opts 'mode "term"))
+          ((html) html-main)
+          ((term) terminal-main))
+        c e (option-ref opts '() '()))))
     (newline)))

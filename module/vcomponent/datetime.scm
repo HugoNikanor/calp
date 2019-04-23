@@ -56,3 +56,7 @@ Event must have the DTSTART and DTEND attribute set."
   (time-difference
    (time-min (add-day start-of-day) (attr e 'DTEND))
    (time-max start-of-day (attr e 'DTSTART))))
+
+(define-public (ev-time<? a b)
+  (time<? (attr a 'DTSTART)
+          (attr b 'DTSTART)))

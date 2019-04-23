@@ -1,4 +1,4 @@
-(define-module (html html)
+(define-module (output html)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
@@ -135,7 +135,7 @@
             (rel "stylesheet")
             (href ,path))))
 
-(define-public (html-main calendars events)
+(define-public (html-main calendars events args)
 
   (define evs
     (filter-sorted-stream
