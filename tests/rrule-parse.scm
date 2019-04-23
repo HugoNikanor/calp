@@ -1,9 +1,9 @@
-(use-modules (vcalendar recurrence parse))
+(use-modules (vcomponent recurrence parse))
 
 (define-syntax mkrule
   (syntax-rules ()
     ((_ (key val) ...)
-     ((record-constructor (@@ (vcalendar recurrence internal) <recur-rule>)
+     ((record-constructor (@@ (vcomponent recurrence internal) <recur-rule>)
                           (quote (key ...)))
       (quote val) ...))))
 

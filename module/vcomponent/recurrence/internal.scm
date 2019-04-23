@@ -1,4 +1,4 @@
-(define-module (vcalendar recurrence internal)
+(define-module (vcomponent recurrence internal)
   #:use-module (util)
   #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module (srfi srfi-88)

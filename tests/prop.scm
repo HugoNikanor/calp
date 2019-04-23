@@ -1,4 +1,4 @@
-(use-modules (vcalendar))
+(use-modules (vcomponent))
 
 (define v (make-vcomponent
            (string-append (getenv "TESTPATH")

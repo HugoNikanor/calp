@@ -1,6 +1,6 @@
 ;;; Primitive export of symbols linked from C binary.
 
-(define-module (vcalendar primitive)
+(define-module (vcomponent primitive)
   #:export (%vcomponent-children
             %vcomponent-push-child!
             %vcomponent-filter-children!

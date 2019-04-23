@@ -2,14 +2,12 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
-  #:use-module (vcalendar)
-  #:use-module (vcalendar datetime)
+  #:use-module (vcomponent)
+  #:use-module (vcomponent datetime)
   #:use-module (util)
   #:use-module (util tree)
   #:use-module (srfi srfi-19)
-  #:use-module (srfi srfi-19 util)
-
-  )
+  #:use-module (srfi srfi-19 util))
 
 (define-stream (group-stream in-stream)
   (define (ein? day) (lambda (e) (event-in? e (date->time-utc day))))
@@ -56,9 +54,9 @@
                         ;; smaller event.
                       (sort* lst time>? (lambda (e) (event-length/day e start-of-day))))))
 
+;; This should only be used on time intervals, never on absolute times.
+;; For that see @var{date->decimal-hour}.
 (define (time->decimal-hour time)
-  "This should only be used on time intervals,
-never on absolute times. For that see date->decimal-hour"
   (exact->inexact (/ (time-second time)
                      3600)))
 

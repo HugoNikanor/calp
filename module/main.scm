@@ -14,10 +14,10 @@
              (ice-9 control)            ; call-with-escape-continuation
              (texinfo string-utils)     ; string->wrapped-lines
              (util)
-             (vcalendar)
-             (vcalendar recurrence)
-             (vcalendar datetime)
-             (vcalendar output)
+             (vcomponent)
+             (vcomponent recurrence)
+             (vcomponent datetime)
+             (vcomponent output)
              (terminal escape)
              (terminal util)
 

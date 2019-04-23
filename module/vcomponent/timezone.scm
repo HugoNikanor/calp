@@ -1,13 +1,13 @@
-(define-module (vcalendar timezone)
-  :use-module (vcalendar)
+(define-module (vcomponent timezone)
+  :use-module (vcomponent)
   :use-module ((srfi srfi-1) :select (find))
   :use-module (srfi srfi-19)
   :use-module (srfi srfi-19 util)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (util)
-  :use-module ((vcalendar recurrence generate) :select (generate-recurrence-set))
-  :use-module ((vcalendar datetime) :select (ev-time<?))
+  :use-module ((vcomponent recurrence generate) :select (generate-recurrence-set))
+  :use-module ((vcomponent datetime) :select (ev-time<?))
   )
 
 ;;@begin exampe

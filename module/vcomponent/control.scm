@@ -1,6 +1,6 @@
-(define-module (vcalendar control)
+(define-module (vcomponent control)
   #:use-module (util)
-  #:use-module (vcalendar)
+  #:use-module (vcomponent)
   #:export (with-replaced-attrs))
 
 

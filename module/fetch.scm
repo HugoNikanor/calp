@@ -12,9 +12,9 @@
 (use-modules (srfi srfi-1)
              (srfi srfi-19)
              (srfi srfi-26)
-             (vcalendar)
-             (vcalendar datetime)
-             (vcalendar output)
+             (vcomponent)
+             (vcomponent datetime)
+             (vcomponent output)
              (util))
 
 

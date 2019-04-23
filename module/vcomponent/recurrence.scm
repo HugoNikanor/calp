@@ -1,6 +1,6 @@
-(define-module (vcalendar recurrence)
-  #:use-module (vcalendar)
-  #:use-module (vcalendar recurrence generate)
+(define-module (vcomponent recurrence)
+  #:use-module (vcomponent)
+  #:use-module (vcomponent recurrence generate)
   #:re-export (generate-recurrence-set)
   #:export (repeating?))
 

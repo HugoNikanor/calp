@@ -1,4 +1,4 @@
-(define-module (vcalendar recurrence generate)
+(define-module (vcomponent recurrence generate)
   #:use-module (srfi srfi-19)           ; Datetime
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-19 setters)
@@ -7,10 +7,10 @@
   #:use-module (ice-9 match)
 
   #:use-module (util)
-  #:use-module (vcalendar)
-  #:use-module (vcalendar timezone)
-  #:use-module (vcalendar recurrence internal)
-  #:use-module (vcalendar recurrence parse)
+  #:use-module (vcomponent)
+  #:use-module (vcomponent timezone)
+  #:use-module (vcomponent recurrence internal)
+  #:use-module (vcomponent recurrence parse)
 
   #:export (generate-recurrence-set)
   )

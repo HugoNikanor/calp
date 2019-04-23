@@ -1,5 +1,5 @@
-(define-module (vcalendar datetime)
-  #:use-module (vcalendar)
+(define-module (vcomponent datetime)
+  #:use-module (vcomponent)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-19 util)
   #:use-module (util)

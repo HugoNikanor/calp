@@ -4,9 +4,9 @@
              (srfi srfi-41)
 
              (util)
-             (vcalendar)
-             (vcalendar output)
-             (vcalendar recurrence))
+             (vcomponent)
+             (vcomponent output)
+             (vcomponent recurrence))
 
 (define (display-timespan ev)
   (format #t "~a -- ~a~%"

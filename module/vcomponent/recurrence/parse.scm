@@ -1,11 +1,11 @@
-(define-module (vcalendar recurrence parse)
+(define-module (vcomponent recurrence parse)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19)           ; Datetime
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-26)
-  #:use-module ((vcalendar datetime) #:select (parse-datetime))
+  #:use-module ((vcomponent datetime) #:select (parse-datetime))
   #:duplicates (last)                   ; Replace @var{count}
-  #:use-module (vcalendar recurrence internal)
+  #:use-module (vcomponent recurrence internal)
   #:use-module (util)
   #:use-module (exceptions)
   #:use-module (ice-9 curried-definitions)
