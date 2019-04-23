@@ -117,3 +117,9 @@ attribute set to 0. Can also be seen as \"Start of day\""
 
 (define-public (time-max a b)
   (if (time<? a b) b a))
+
+
+;; TODO possibly put this in some form of parser module.
+;; TODO actually allow many form date form.
+(define-public (parse-freeform-date str)
+  (string->date str "~Y-~m-~d"))

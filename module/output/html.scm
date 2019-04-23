@@ -10,6 +10,8 @@
   #:use-module (srfi srfi-19 util)
   #:use-module (output general)
 
+  #:use-module (ice-9 getopt-long)
+
   #:use-module (parameters)
   #:use-module (config))
 
@@ -114,21 +116,26 @@
                ,(string-append time ":00")))
        (map number->string (iota 12 0 2))))
 
-(define (d str)
-  (string->date str "~Y-~m-~d"))
-
 (define (include-css path)
   `(link (@ (type "text/css")
             (rel "stylesheet")
             (href ,path))))
 
+(define opt-spec
+  '((from (value #t) (single-char #\f))
+    (to (value #t) (single-char #\t))))
+
 (define-public (html-main calendars events args)
+
+  (define opts (getopt-long args opt-spec))
+
+  (define start (parse-freeform-date (option-ref opts 'from "2019-04-15")))
+  (define end   (parse-freeform-date (option-ref opts 'to   "2019-05-10")))
 
   (define evs
     (filter-sorted-stream
-     (compose (in-date-range?
-               (d "2019-04-15")
-               (d "2019-05-10"))
+     ;; TODO in-date-range? drops the first date
+     (compose (in-date-range? start end)
               car)
      (group-stream events)))
 

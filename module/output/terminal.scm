@@ -123,9 +123,6 @@
 (define options
   '((date (value #t) (single-char #\d))))
 
-(define (parse-freeform-date str)
-  (string->date str "~Y-~m-~d"))
-
 (define (terminal-main calendars events args)
   (let ((opts (getopt-long args options)))
     (let ((time (date->time-utc
