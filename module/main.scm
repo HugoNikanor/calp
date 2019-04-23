@@ -23,6 +23,8 @@
 
              (html html)
 
+             (ice-9 getopt-long)
+
              (parameters)
              )
 
@@ -156,10 +158,17 @@
       (cons (list->stream regular)
             (map generate-recurrence-set repeating))))))
 
+(define options
+  '((mode (value #t) (single-char #\m))
+    (date (value #t) (single-char #\d))
+    ))
+
 (define (main args)
-  ;; (init (lambda (calendars events)
-  ;;         (with-vulgar
-  ;;          (lambda () (main-loop events)))))
-  ((@ (sxml simple) sxml->xml) (init html-main))
-  (newline)
-  )
+  (let ((opts (getopt-long args options #:stop-at-first-non-option #t)))
+    (init
+     (case (string->symbol (option-ref opts 'mode "term"))
+       ((html) html-main)
+       ((term) (lambda (calendars events)
+                 (with-vulgar
+                  (lambda () (main-loop events)))))))
+    (newline)))
