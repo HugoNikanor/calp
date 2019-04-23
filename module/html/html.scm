@@ -7,7 +7,10 @@
   #:use-module (util)
   #:use-module (util tree)
   #:use-module (srfi srfi-19)
-  #:use-module (srfi srfi-19 util))
+  #:use-module (srfi srfi-19 util)
+
+  #:use-module (parameters)
+  #:use-module (config))
 
 (define-stream (group-stream in-stream)
   (define (ein? day) (lambda (e) (event-in? e (date->time-utc day))))
@@ -106,7 +109,7 @@
              ,(if (time<? (add-day time) (attr ev 'DTEND))
                   " continuing" ""))
            (style ,style))
-        ,(attr ev 'SUMMARY)))
+        ,((summary-filter) ev (attr ev 'SUMMARY))))
 
 (define (lay-out-day day)
   (let* (((date . events) day))
