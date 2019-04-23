@@ -53,7 +53,7 @@
 (define (displayln a)
   (display a) (newline))
 
-(define (display-event-table events)
+(define (display-event-table cur-event events)
  (for-each
   (lambda (ev i)
     (format #t "~a │ ~a~a~a~a │ ~a~a~%"
@@ -83,7 +83,7 @@
       (display-calendar-header! (time-utc->date time))
 
       (displayln (box-top #\┬ #\─ 20 32 10))
-      (display-event-table events)
+      (display-event-table cur-event events)
       (displayln (box-top #\┴ #\─ 20 32 10))
 
       (unless (null? events)
