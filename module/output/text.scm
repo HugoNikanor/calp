@@ -1,4 +1,5 @@
 (define-module (output text)
+  #:use-module (srfi srfi-1)
   #:use-module (util)
   #:export (justify-line flow-text))
 
@@ -8,23 +9,21 @@
 (define-public (lines str) (string-split str #\newline))
 (define-public (unlines list) (string-join list "\n" 'infix))
 
-(define* (add-some list amount item #:optional flipflop?)
-  (cond ((zero? amount) list)
-        ((null? list) '())
-        (else
-         (cons (if flipflop? item (car list))
-               (add-some (if flipflop? list (cdr list))
-                         (if flipflop? (1- amount) amount)
-                         item (not flipflop?))))))
-
 ;; (str) -> str
 (define* (justify-line-helper words #:key (width 70))
-  (let* ((len (1- (apply + (map (compose 1+ string-length) words))))
-         (to-add (- width len))
+  (let* ((phrase-length (string-length (string-concatenate/shared words)))
+         (needed-spaces (- width phrase-length))
          (slots (1- (length words)))
-         (sp-per (ceiling-quotient to-add slots)))
-
-    (unwords (add-some words to-add (make-string (1- sp-per) #\space)))))
+         (space-list
+          (let loop ((n needed-spaces) (d slots))
+            (if (zero? d) '()
+                (let ((v (round (/ n d))))
+                  (cons v (loop (- n v)
+                                (1- d))))))))
+    (string-concatenate/shared
+     (merge words (map (lambda (n) (make-string n #\space))
+                       space-list)
+            (let ((f #t)) (lambda _ (mod! f not)))))))
 
 
 ;; Splits and justifies the given line to @var{#:width}.
@@ -38,19 +37,20 @@
                            (< (mod! w = (+ 1 (string-length word)))
                               width)))
                        lst)))
-      (if (null? tail)
-          (list (unwords head)) ; Don't justify last line.
-          (cons (justify-line-helper head #:width width)
-                (recur tail))))))
+      (cond ((null? tail) (list (unwords head))) ; Don't justify last line.
+            ((null? head)
+             ;; an empty head implies that we found a word longer
+             ;; than our max width. Add it as is and continue
+             ;; (while crying).
+             (cons (car tail) (recur (cdr tail))))
+            (else (cons (justify-line-helper head #:width width)
+                        (recur tail)))))))
 
-;; str -> str
-(define* (flow-text str #:key (width 70) (height 10))
-  (unlines
-   (take-to
-    (flatten
-     (map (lambda (line) (justify-line line #:width width))
-          (lines str)))
-    height)))
+;; str -> (str)
+(define* (flow-text str #:key (width 70))
+  (flatten
+   (map (lambda (line) (justify-line line #:width width))
+        (lines str))))
 
 (define-public (trim-to-width str len)
   (let ((trimmed (string-pad-right str len)))

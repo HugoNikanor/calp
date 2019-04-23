@@ -89,9 +89,9 @@
                   (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
                   (time->string (attr ev 'DTSTART) "~1 ~3")
                   (time->string (attr ev 'DTEND) "~1 ~3")
-                  (flow-text (or (attr ev 'DESCRIPTION) "")
-                             #:width (min 70 width)
-                             #:height (- height 8 2 (length events) 5)))))
+                  (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
+                                               #:width (min 70 width))
+                                    (- height 8 2 (length events) 5))))))
 
       (let ((char (read-char)))
         ;; (format (current-error-port)
