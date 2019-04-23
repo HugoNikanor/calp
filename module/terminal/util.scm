@@ -1,6 +1,8 @@
 (define-module (terminal util)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-60)
+  #:use-module (util)
+  #:use-module (ice-9 popen)
   #:export (line ctrl color-escape))
 
 (define* (line #:optional (width 64))
@@ -35,3 +37,10 @@
                    (string->number gs 16)
                    (string->number bs 16))))))
 
+
+(define-public (get-terminal-size)
+ (let* (((rpipe . wpipe) (pipe)))
+   (system (format #f "stty size > /proc/~s/fd/~s"
+                   (getpid) (port->fdes wpipe)))
+   (values (read rpipe)
+           (read rpipe))))

@@ -48,6 +48,11 @@
 (define (main-loop time event-stream)
   (define cur-event 0)
 
+  (define height 0)
+  (define width 0)
+  (let* ((h w (get-terminal-size)))
+    (set! height h
+          width w))
 
   (while #t
     (let ((events
@@ -73,7 +78,7 @@
                   (time->string (attr ev 'DTEND) "~1 ~3")
                   (flow-text (or (attr ev 'DESCRIPTION) "")
                              #:width 70
-                             #:height 10))))
+                             #:height (- height 8 2 (length events) 5)))))
 
       (let ((char (read-char)))
         ;; (format (current-error-port)
