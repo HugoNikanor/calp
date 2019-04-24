@@ -52,11 +52,7 @@
 (define (main-loop time event-stream)
   (define cur-event 0)
 
-  (define height 0)
-  (define width 0)
-  (let* ((h w (get-terminal-size)))
-    (set! height h
-          width w))
+  (define-values (height width) (get-terminal-size))
 
   (while #t
     (let ((events
