@@ -8,7 +8,9 @@
                                mod! sort* sort*!
                                mod/r! set/r!
                                find-min
-                               catch-multiple)
+                               catch-multiple
+                               quote?
+                               tree-map let-lazy)
   #:replace (let* set! define-syntax)
   )
 
@@ -335,4 +337,25 @@
           (else (values (reverse done) rem)))))
 
 
+(define* (tree-map proc tree #:key (descend (const #t)))
+  (cond ((not (list? tree)) (proc tree))
+        ((null? tree) '())
+        ((list? (car tree))
+         (cons (if (descend (car tree))
+                   (tree-map proc (car tree) #:descend descend)
+                   (car tree))
+               (tree-map proc (cdr tree) #:descend descend)))
+        (else (cons (proc (car tree))
+                    (tree-map proc (cdr tree) #:descend descend)))))
+
+(define (quote? form)
+  (and (not (null? form))
+       (eq? 'quote (car form))))
+
+(define-macro (let-lazy bindings . body)
+  (let ((keys (map car bindings)))
+    `(let ,(map (lambda (b) `(,(car b) (delay ,@(cdr b))))
+                bindings)
+       ,@(tree-map (lambda (t) (if (memv t keys) `(force ,t) t))
+                   body #:descend (negate quote?)))))
 
