@@ -327,16 +327,6 @@
           (append done ((if (list? subl) flatten list) subl)))
         '() lst))
 
-;; Retuns two values. The longset head which satisfies @var{pred?},
-;; and the rest of the elements of list.
-;; Guarentees to only call @var{pred?} once for each element.
-(define-public (take-drop-while pred? list)
-  (let loop ((done '()) (rem list))
-    (cond ((null? rem) (values (reverse done) '()))
-          ((pred? (car rem)) (loop (cons (car rem) done) (cdr rem)))
-          (else (values (reverse done) rem)))))
-
-
 (define* (tree-map proc tree #:key (descend (const #t)))
   (cond ((not (list? tree)) (proc tree))
         ((null? tree) '())

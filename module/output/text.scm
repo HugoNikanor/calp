@@ -31,7 +31,7 @@
 ;; str -> (str)
 (define* (justify-line line #:key (width 70))
   (let recur ((lst (words line)))
-    (let* ((head tail (take-drop-while
+    (let* ((head tail (span
                        (let ((w 0))
                          (lambda (word)    ; Take words until we are above the limit.
                            (< (mod/r! w = (+ 1 (string-length word)))
