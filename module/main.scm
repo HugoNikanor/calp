@@ -46,12 +46,18 @@
 (define options
   '((mode (value #t) (single-char #\m))))
 
+(define (ornull a b)
+  (if (null? a)
+      b a))
+
 (define (main args)
   (let ((opts (getopt-long args options #:stop-at-first-non-option #t)))
     (init
      (lambda (c e)
-       (let ((ropt (option-ref opts '() '("term"))))
+       (let ((ropt (ornull (option-ref opts '() '())
+                           '("term"))))
          ((case (string->symbol (car ropt))
+            ((none) (compose display list))
             ((html) html-main)
             ((term) terminal-main))
           c e ropt))))
