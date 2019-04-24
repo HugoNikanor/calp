@@ -79,10 +79,11 @@
 
       (unless (null? events)
         (let ((ev (list-ref events cur-event)))
-          (format #t "~a~%~a~%~aStart: ~a	Slut: ~a~%~%~a~%"
+          (format #t "~a~%~a~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
                   (attr ev 'X-HNH-FILENAME)
                   (attr ev 'SUMMARY)
-                  (or (and=> (attr ev 'LOCATION) (cut string-append "Plats: " <> "\n")) "")
+                  (or (and=> (attr ev 'LOCATION)
+                             (cut string-append "\x1b[1mPlats:\x1b[m " <> "\n")) "")
                   (time->string (attr ev 'DTSTART) "~1 ~3")
                   (time->string (attr ev 'DTEND) "~1 ~3")
                   (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
