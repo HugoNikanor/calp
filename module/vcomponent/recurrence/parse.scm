@@ -32,34 +32,18 @@
                err val key)
      (cont #f)]))
 
-(eval-when (expand)
- (define ((handle-case stx obj) key val proc)
-   (with-syntax ((skey (datum->syntax
-                        stx (symbol-downcase (syntax->datum key)))))
-     #`((#,key)
-        (let ((v #,val))
-          (cond ((not v) (throw-returnable 'invalid-value #,obj (quote #,key) v))
-                ((#,proc #,val) (set! (skey #,obj) v))
-                (else (set! (skey #,obj)
-                            (throw-returnable 'unfulfilled-constraint
-                                              #,obj (quote #,key) v)))))))))
-
-
-;; A special form of case only useful in parse-recurrence-rules above.
-;; Each case is on the form (KEY val check-proc) where:
-;; `key` is what should be matched against, and what is used for the setter
-;; `val` is the value to bind to the loop object and
-;; `check` is something the object must conform to
-(define-syntax quick-case
-  (lambda (stx)
-   (syntax-case stx ()
-     ((_ var-key obj (key val proc) ...)
-      #`(case var-key
-          #,@(map (handle-case stx #'obj)
-                  #'(key ...)
-                  #'(val ...)
-                  #'(proc ...))
-        (else obj))))))
+(define-macro (quick-case key obj . cases)
+  `(case ,key
+     ,@(map (lambda (c)
+              (let* (((symb val pred) c))
+                `((,symb)
+                  (set! (,(symbol-downcase symb) ,obj)
+                        (let ((v ,val))
+                          (if (,pred v) v
+                              (throw-returnable
+                               'unfulfilled-constraint
+                               ,obj (quote ,key) ,val)))))))
+            cases)))
 
 (define-syntax all-in
   (syntax-rules ()
