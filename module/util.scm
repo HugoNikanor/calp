@@ -8,8 +8,19 @@
                                mod! sort* sort*!
                                find-min
                                catch-multiple)
-  #:replace (let* set!)
+  #:replace (let* set! define-syntax)
   )
+
+((@ (guile) define-syntax) define-syntax
+  (syntax-rules ()
+    ((_ (name args ...) body ...)
+     ((@ (guile) define-syntax) name
+      (lambda (args ...)
+        body ...)))
+    ((_ otherwise ...)
+     ((@ (guile) define-syntax) otherwise ...))))
+
+
 
 (define-public upstring->symbol (compose string->symbol string-upcase))
 
