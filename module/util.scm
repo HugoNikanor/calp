@@ -6,6 +6,7 @@
                                for-each-in for
                                define-quick-record
                                mod! sort* sort*!
+                               mod/r! set/r!
                                find-min
                                catch-multiple)
   #:replace (let* set! define-syntax)
@@ -19,6 +20,8 @@
         body ...)))
     ((_ otherwise ...)
      ((@ (guile) define-syntax) otherwise ...))))
+
+(define-public unspecified (if #f #f))
 
 
 
@@ -95,6 +98,9 @@
 
 
 
+
+
+
 ;; Replace let* with a version that can bind from lists.
 ;; Also supports SRFI-71 (extended let-syntax for multiple values)
 ;; @lisp
@@ -164,10 +170,8 @@
 ;; Still requires all variables to be defined beforehand.
 (define-syntax set!
   (syntax-rules ()
-    ((_ field expr)
-     (let ((val expr))
-       ((@ (guile) set!) field val)
-       val))
+    ((_ field val)
+     ((@ (guile) set!) field val))
     ((_ field val rest ...)
      (begin ((@ (guile) set!) field val)
             (set! rest ...)))))
@@ -179,9 +183,11 @@
     ((_ field proc)
      (set! field (proc field))))  )
 
+
 ;; Like set!, but applies a transformer on the already present value.
 (define-syntax mod!
   (syntax-rules (=)
+    ((_) unspecified)
     ((_ field = proc)
      (modf% field = proc))
 
@@ -193,6 +199,21 @@
 
     ((_ field proc rest ...)
      (begin (modf% field proc) (mod! rest ...)))))
+
+(define-syntax-rule (set/r! args ... final)
+  (let ((val final))
+    (set! args ... val)
+    val))
+
+(define-syntax mod/r!
+  (syntax-rules (=)
+    ((_ args ... field = (proc pargs ...))
+     (begin (mod! args ...)
+            (set/r! field (proc field pargs ...))))
+    ((_  args ... ffield fproc)
+     (begin (mod! args ...)
+            (set/r! ffield (fproc ffield))))))
+
 
 ;; This function borrowed from web-ics (calendar util)
 (define* (sort* items comperator #:optional (get identity))

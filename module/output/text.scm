@@ -23,7 +23,7 @@
     (string-concatenate/shared
      (merge words (map (lambda (n) (make-string n #\space))
                        space-list)
-            (let ((f #t)) (lambda _ (mod! f not)))))))
+            (let ((f #t)) (lambda _ (mod/r! f not)))))))
 
 
 ;; Splits and justifies the given line to @var{#:width}.
@@ -34,7 +34,7 @@
     (let* ((head tail (take-drop-while
                        (let ((w 0))
                          (lambda (word)    ; Take words until we are above the limit.
-                           (< (mod! w = (+ 1 (string-length word)))
+                           (< (mod/r! w = (+ 1 (string-length word)))
                               width)))
                        lst)))
       (cond ((null? tail) (list (unwords head))) ; Don't justify last line.
