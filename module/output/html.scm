@@ -49,7 +49,7 @@
 
   ;; @var{x} is how for left in the container we are.
   (let inner ((x 0)
-              (tree (make-tree (lambda (head e) (overlapping? head e))
+              (tree (make-tree overlapping?
                                (sort* lst time>? (lambda (e) (event-length/day e start-of-day))))))
     (if (null? tree) #f
         (let ((w (/ (- 1 x)
