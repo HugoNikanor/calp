@@ -91,38 +91,37 @@
 (define (%build-recur-rules str)
   (fold
    (lambda (kv obj)
-     (let* (((key val) kv)
-            ;; Lazy fields for the poor man.
-            (symb (lambda () (string->symbol val)))
-            (date (lambda () (date->time-utc (parse-datetime val))))
-            (days (lambda () (map parse-day-spec (string-split val #\,))))
-            (num  (lambda () (string->number val)))
-            (nums (lambda () (string->number-list val #\,))))
-       (quick-case (string->symbol key) obj
-                   (FREQ     (symb) (cut memv <> intervals)) ; Required
-                   (UNTIL    (date) identity)
-                   (COUNT    (num)  (cut <= 0 <>))
-                   (INTERVAL (num)  (cut <= 0 <>))
-                   (BYSECOND (nums) (all-in n (<= 0 n 60)))
-                   (BYMINUTE (nums) (all-in n (<= 0 n 59)))
-                   (BYHOUR   (nums) (all-in n (<= 0 n 23)))
+     (let* (((key val) kv))
+       (let-lazy
+        ((symb (string->symbol val))
+         (date (date->time-utc (parse-datetime val)))
+         (days (map parse-day-spec (string-split val #\,)))
+         (num  (string->number val))
+         (nums (string->number-list val #\,)))
 
-                   (BYDAY (days)
-                          (lambda (p*)
-                            (map (lambda (p)
-                                   (let* (((num . symb) p))
-                                     (memv symb weekdays)))
-                                 p*)))
+        (quick-case (string->symbol key) obj
+                    (FREQ     symb (cut memv <> intervals)) ; Required
+                    (UNTIL    date identity)
+                    (COUNT    num  (cut <= 0 <>))
+                    (INTERVAL num  (cut <= 0 <>))
+                    (BYSECOND nums (all-in n (<= 0 n 60)))
+                    (BYMINUTE nums (all-in n (<= 0 n 59)))
+                    (BYHOUR   nums (all-in n (<= 0 n 23)))
 
-                   (BYMONTHDAY (nums) (all-in n (<=  -31 n  31) (!= n 0)))
-                   (BYYEARDAY  (nums) (all-in n (<= -366 n 366) (!= n 0)))
-                   (BYWEEKNO   (nums) (all-in n (<=  -53 n  53) (!= n 0)))
-                   (BYMONTH    (nums) (all-in n (<=    1 n  12)))
-                   (BYSETPOS   (nums) (all-in n (<= -366 n 366) (!= n 0)))
+                    (BYDAY days
+                           (lambda (p*)
+                             (map (lambda (p)
+                                    (let* (((n . s) p))
+                                      (memv s weekdays)))
+                                  p*)))
 
-                   (WKST (symb) (cut memv <> weekdays))
-                   )))
+                    (BYMONTHDAY nums (all-in n (<=  -31 n  31) (!= n 0)))
+                    (BYYEARDAY  nums (all-in n (<= -366 n 366) (!= n 0)))
+                    (BYWEEKNO   nums (all-in n (<=  -53 n  53) (!= n 0)))
+                    (BYMONTH    nums (all-in n (<=    1 n  12)))
+                    (BYSETPOS   nums (all-in n (<= -366 n 366) (!= n 0)))
 
+                    (WKST symb (cut memv <> weekdays))))))
    ;; obj
    (make-recur-rule 1 'MO)
 
