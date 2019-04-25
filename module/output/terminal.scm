@@ -79,7 +79,7 @@
 
       (unless (null? events)
         (let ((ev (list-ref events cur-event)))
-          (format #t "~a~%~a~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
+          (format #t "~a~%~%  ~a~%~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
                   (attr ev 'X-HNH-FILENAME)
                   (attr ev 'SUMMARY)
                   (or (and=> (attr ev 'LOCATION)
@@ -88,7 +88,7 @@
                   (time->string (attr ev 'DTEND) "~1 ~3")
                   (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
                                                #:width (min 70 width))
-                                    (- height 8 2 (length events) 5))))))
+                                    (- height 8 5 (length events) 5))))))
 
       (let ((char (read-char)))
         ;; (format (current-error-port)
