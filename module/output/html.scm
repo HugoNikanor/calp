@@ -3,6 +3,7 @@
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
   #:use-module (vcomponent)
+  #:use-module (vcomponent group)
   #:use-module (vcomponent datetime)
   #:use-module (util)
   #:use-module (util tree)
@@ -14,26 +15,6 @@
 
   #:use-module (parameters)
   #:use-module (config))
-
-(define-stream (group-stream in-stream)
-  (define (ein? day) (lambda (e) (event-in? e (date->time-utc day))))
-
-  (let loop ((days (day-stream (time-utc->date (attr (stream-car in-stream) 'DTSTART))))
-             (stream in-stream))
-    (if (stream-null? stream)
-        stream-null
-        (let* ((day (stream-car days))
-               (tomorow (add-day (date->time-utc (drop-time day)))))
-          (let ((head (stream-take-while (ein? day) stream))
-                (tail
-                 (filter-sorted-stream*
-                  (lambda (e) (time<? tomorow (attr e 'DTEND)))
-                  (lambda (e) (time<=? tomorow (attr e 'DTSTART)))
-                  stream)))
-
-            (stream-cons (cons day head)
-                         (loop (stream-cdr days)
-                               tail)))))))
 
 (define x-pos (make-object-property))
 (define width (make-object-property))
@@ -140,12 +121,7 @@
   (define start (parse-freeform-date (option-ref opts 'from "2019-04-15")))
   (define end   (parse-freeform-date (option-ref opts 'to   "2019-05-10")))
 
-  (define evs
-    (filter-sorted-stream
-     ;; TODO in-date-range? drops the first date
-     (compose (in-date-range? start end)
-              car)
-     (group-stream events)))
+  (define evs (get-groups-between (group-stream events)))
 
   ((@ (sxml simple) sxml->xml)
    `(html (head
