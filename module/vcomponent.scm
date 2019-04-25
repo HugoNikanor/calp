@@ -46,10 +46,7 @@
                ;; The standard says that DTEND must have the same
                ;; timezone as DTSTART. Here we trust that blindly.
                (zone-offset end-date) (zone-offset date)
-               (attr ev 'DTEND) (date->time-utc end-date))))
-
-  ;; Return
-  cal)
+               (attr ev 'DTEND) (date->time-utc end-date)))))
 
 
 (define-public (type-filter t lst)
@@ -130,43 +127,47 @@
       (%vcomponent-make)
       (let* ((root (%vcomponent-make path))
              (component
-              (parse-dates!
-               (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
-                 ;; == Single ICS file ==
-                 ;; Remove the abstract ROOT component,
-                 ;; returning the wanted VCALENDAR component
-                 ((file)
-                  (car (%vcomponent-children root)))
+              (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
+                ;; == Single ICS file ==
+                ;; Remove the abstract ROOT component,
+                ;; returning the wanted VCALENDAR component
+                ((file)
+                 ;; TODO test this when an empty file is given.
+                 (car (children root)))
 
-                 ;; == Assume vdir ==
-                 ;; Also removes the abstract ROOT component, but also
-                 ;; merges all VCALENDAR's children into the first
-                 ;; VCALENDAR, and return that VCALENDAR.
-                 ;;
-                 ;; TODO the other VCALENDAR components might not get thrown away,
-                 ;; this since I protect them from the GC in the C code.
-                 ((vdir)
-                  (reduce (lambda (cal accum)
-                            (for-each (lambda (component)
-                                        (case (type component)
-                                          ((VTIMEZONE)
-                                           (let ((zones (children accum 'VTIMEZONE)))
-                                             (unless (find (lambda (z)
-                                                             (string=? (attr z "TZID")
-                                                                       (attr component "TZID")))
-                                                           zones)
-                                               (%vcomponent-push-child! accum component))))
-                                          (else (%vcomponent-push-child! accum component))))
-                                      (%vcomponent-children cal))
-                            accum)
-                          '() (%vcomponent-children root)))
+                ;; == Assume vdir ==
+                ;; Also removes the abstract ROOT component, but also
+                ;; merges all VCALENDAR's children into the a newly
+                ;; created VCALENDAR component, and return that component.
+                ;;
+                ;; TODO the other VCALENDAR components might not get thrown away,
+                ;; this since I protect them from the GC in the C code.
+                ((vdir)
+                 (let ((accum (make-vcomponent)))
+                   (set! (type accum) "VCALENDAR")
+                   (for cal in (children root)
+                        (for component in (children cal)
+                             (case (type component)
+                               ((VTIMEZONE)
+                                (unless (find (lambda (z)
+                                                (string=? (attr z "TZID")
+                                                          (attr component "TZID")))
+                                              (children accum 'VTIMEZONE))
+                                  (push-child! accum component)))
+                               (else (push-child! accum component)))))
+                   ;; return
+                   accum))
 
-                 ((no-type) (throw 'no-type))
+                ((no-type) (throw 'no-type))
 
-                 (else (throw 'something))))))
+                (else (throw 'something)))))
+
+        (parse-dates! component)
 
         (set! (attr component "NAME")
               (attr root      "NAME"))
         (set! (attr component "COLOR")
               (attr root      "COLOR"))
+
+        ;; return
         component)))
