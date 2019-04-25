@@ -11,6 +11,7 @@
   #:use-module (terminal escape)
   #:use-module (terminal util)
   #:use-module (vcomponent output)
+  #:use-module (vcomponent group)
 
   #:use-module (vcomponent)
   #:use-module (vcomponent datetime)
@@ -56,10 +57,12 @@
 
   (while #t
     (let ((events
-           (stream->list
-            (filter-sorted-stream
-             (cut event-in? <> time)
-             event-stream))))
+           (group->event-list
+            (stream-car
+             ;; TODO reusing the same grouping causes it to lose events.
+             ;; I currently have no idea why, but it's BAD.
+             (get-groups-between (group-stream event-stream)
+                                 (time-utc->date time) (time-utc->date time))))))
 
       (cls)
       (display-calendar-header! (time-utc->date time))
@@ -101,7 +104,7 @@
            (set! time (remove-day time)
                  cur-event 0))
           ((#\t)
-           (set! time (date->time-utc (current-date))
+           (set! time (date->time-utc (drop-time (current-date)))
                  cur-event 0))
           ((#\j #\J) (unless (= cur-event (1- (length events)))
 		       (mod! cur-event 1+)))
@@ -123,7 +126,7 @@
 (define (terminal-main calendars events args)
   (let ((opts (getopt-long args options)))
     (let ((time (date->time-utc
-                 (or (and=> (option-ref opts 'date #f) parse-freeform-date)
-                     (current-date)))))
+                 (drop-time (or (and=> (option-ref opts 'date #f) parse-freeform-date)
+                                (current-date))))))
       (with-vulgar
        (lambda () (main-loop time events))))))
