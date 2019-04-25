@@ -121,7 +121,8 @@
   (define start (parse-freeform-date (option-ref opts 'from "2019-04-15")))
   (define end   (parse-freeform-date (option-ref opts 'to   "2019-05-10")))
 
-  (define evs (get-groups-between (group-stream events)))
+  (define evs (get-groups-between (group-stream events)
+                                  start end))
 
   ((@ (sxml simple) sxml->xml)
    `(html (head
