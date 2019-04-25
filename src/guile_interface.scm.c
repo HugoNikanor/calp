@@ -54,7 +54,7 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 
 	free(key);
 
-	SCM val, attrlist = SCM_EOL, proplist;
+	SCM val, proplist, attrlist = SCM_EOL;
 	LLIST(strbuf) *triekeys, *trievals;
 	/* For every instance of a line */
 	FOR (LLIST, content_set, v, c) {

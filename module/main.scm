@@ -45,7 +45,8 @@
             (map generate-recurrence-set repeating))))))
 
 (define options
-  '((mode (value #t) (single-char #\m))))
+  '((mode (value #t) (single-char #\m))
+    (statprof (value #f))))
 
 (define (ornull a b)
   (if (null? a)
@@ -53,13 +54,20 @@
 
 (define (main args)
   (let ((opts (getopt-long args options #:stop-at-first-non-option #t)))
-    (init
-     (lambda (c e)
-       (let ((ropt (ornull (option-ref opts '() '())
-                           '("term"))))
-         ((case (string->symbol (car ropt))
-            ((none) none-main)
-            ((html) html-main)
-            ((term) terminal-main))
-          c e ropt))))
+    ((lambda (thunk) (if (option-ref opts 'statprof #f)
+                    ((@ (statprof) statprof)
+                     thunk
+                     #:count-calls? #t
+                     #:display-style 'tree)
+                    (thunk)))
+     (lambda ()
+       (init
+        (lambda (c e)
+          (let ((ropt (ornull (option-ref opts '() '())
+                              '("term"))))
+            ((case (string->symbol (car ropt))
+               ((none) none-main)
+               ((html) html-main)
+               ((term) terminal-main))
+             c e ropt))))))
     (newline)))
