@@ -68,22 +68,23 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 			val = scm_cons(val, SCM_MAKE_HASH_TABLE());
 			v->key.scm = val;
 			scm_gc_protect_object(v->key.scm);
-		}
 
-		triekeys = KEYS(TRIE(param_set))(&v->val);
-		/* For every property key bound to the current attribute */
-		FOR (LLIST, strbuf, k, triekeys) {
-			proplist = SCM_EOL;
+			triekeys = KEYS(TRIE(param_set))(&v->val);
+			/* For every property key bound to the current attribute */
+			FOR (LLIST, strbuf, k, triekeys) {
+				proplist = SCM_EOL;
 
-			trievals = GET(TRIE(param_set))(&v->val, k->mem);
-			/* For every value bound to the current property */
-			FOR (LLIST, strbuf, s, trievals) {
-				proplist = scm_cons(scm_from_strbuf(s), proplist);
+				trievals = GET(TRIE(param_set))(&v->val, k->mem);
+				/* For every value bound to the current property */
+				FOR (LLIST, strbuf, s, trievals) {
+					proplist = scm_cons(scm_from_strbuf(s), proplist);
+				}
+
+				scm_hashq_set_x(scm_cdr(val), scm_from_strbuf_symbol(k),
+						scm_reverse(proplist));
 			}
-
-			scm_hashq_set_x(scm_cdr(val), scm_from_strbuf_symbol(k),
-			                scm_reverse(proplist));
 		}
+
 		attrlist = scm_cons(val, attrlist);
 	}
 
