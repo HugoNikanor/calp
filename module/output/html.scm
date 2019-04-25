@@ -107,8 +107,8 @@
                (span (@ (class "daydate")) ,(date->string date "~Y-~m-~d")))
           (div (@ (class "events"))
                ,@(map (lambda (time)
-                        `(div (@ (id ,(string-append "clock-" time))
-                                 (class "clock")) " "))
+                        `(div (@ (class "clock "
+                                   ,(string-append "clock-" time))) " "))
                       (map number->string (iota 12 0 2)))
                ,@(stream->list (stream-map (lambda (e) (vevent->sxml date e)) events))))))
 
@@ -118,8 +118,8 @@
              (div (@ (class "meta")) #\space)
              (div (@ (class "clockbar"))
                   ,@(map (lambda (time)
-                           `(div (@ (id ,(string-append "clock-" time))
-                                    (class "clock"))
+                           `(div (@ (class "clock "
+                                      ,(string-append "clock-" time)))
                                  (span (@ (class "clocktext"))
                                        ,(string-append time ":00"))))
                          (map number->string (iota 12 0 2)))))))
