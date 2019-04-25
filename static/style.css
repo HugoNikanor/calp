@@ -1,19 +1,33 @@
-/*
- * TODO
- * the positioning of the meta information for each day is
- * quite badly done, and mostly a hack.
- */
-
-body {
-	/* This is for the day meta information */
-	padding-top: 50px;
+.calendar {
+	height: 100%;
+	display: flex;
 }
 
-.calendar {
-	height: calc(90vh - 50px);
-
+.clockbar {
 	/* This is relative for the .clock */
 	position: relative;
+	height: calc(100% - 50px - 10px);
+	width: 2.5em;
+}
+
+.sideclock {
+	/* border-right: 2px solid gray; */
+	z-index: 1;
+	height: 100%;
+	padding: 0;
+}
+
+.sideclock .meta {
+	border-bottom: 2px solid transparent;
+}
+
+.sideclock .day {
+	border: 1px transparent;
+	min-width: 0;
+}
+
+.days .meta {
+	border-bottom: 2px solid gray;
 }
 
 .days {
@@ -21,6 +35,14 @@ body {
 	width: 100%;
 	height: 100%;
 	padding: 0;
+	overflow-x: scroll;
+	scroll-snap-type: x mandatory;
+}
+
+.events {
+	position: relative;
+	width: 100%;
+	height: calc(100% - 50px);
 }
 
 /*
@@ -37,29 +59,36 @@ body {
 .clock {
 	color: gray;
 	border-top: 1px dotted gray;
-	width: 100000; /* calc(100% + 5ex); */
 }
 
-.days > :first-child {
-	margin-left: 6ex;
+.sideclock .clock {
+	border: none;
+}
+
+.clocktext {
+	z-index: 1;
+	text-align: right;
 }
 
 .day {
 	position: relative;
 
-	height: 100%;
+	height: 99%;
 	width: 100%;
 	min-width: 300px;
 
 	margin-left: 0.5em;
 	border: 1px solid black;
+
+	scroll-snap-align: start;
+}
+
+.day .clock {
+	width: calc(100% + 0.5em);
 }
 
 .meta {
-	position: absolute;
 	height: 50px;
-	top: -50px;
-
 	width: 100%;
 
 }
