@@ -9,6 +9,7 @@
   #:use-module (util)
   #:use-module (util exceptions)
   #:use-module (ice-9 curried-definitions)
+  #:use-module (ice-9 match)
   #:export (parse-recurrence-rule))
 
 
@@ -32,24 +33,6 @@
                err val key)
      (cont #f)]))
 
-(define-macro (quick-case key obj . cases)
-  `(case ,key
-     ,@(map (lambda (c)
-              (let* (((symb val pred) c))
-                `((,symb)
-                  (set! (,(symbol-downcase symb) ,obj)
-                        (let ((v ,val))
-                          (if (,pred v) v
-                              (throw-returnable
-                               'unfulfilled-constraint
-                               ,obj (quote ,key) ,val)))))))
-            cases)))
-
-(define-syntax all-in
-  (syntax-rules ()
-    ((_ var rules ...)
-     (cut every (lambda (var) (and rules ...)) <>))))
-
 (define (string->number-list val delim)
   (map string->number (string-split val delim)))
 
@@ -72,9 +55,24 @@
     (cons (string->number (list->string num))
           (apply symbol symb))))
 
+(define-macro (quick-case key . cases)
+  (let ((else-clause (or (assoc-ref cases 'else)
+                         '(error "Guard failed"))))
+    `(case ,key
+       ,@(map (match-lambda
+                ((key guard '=> body ...)
+                 `((,key) (if (not ,guard)
+                              (begin ,@else-clause)
+                              (begin ,@body))))
+                ((key body ...)
+                 `((,key) (begin ,@body)))
+                (('else body ...)
+                 `(else ,@body)))
+              cases))))
+
 (define (%build-recur-rules str)
   (fold
-   (lambda (kv obj)
+   (lambda (kv o)
      (let* (((key val) kv))
        (let-lazy
         ((symb (string->symbol val))
@@ -83,29 +81,28 @@
          (num  (string->number val))
          (nums (string->number-list val #\,)))
 
-        (quick-case (string->symbol key) obj
-                    (FREQ     symb (cut memv <> intervals)) ; Required
-                    (UNTIL    date identity)
-                    (COUNT    num  (cut <= 0 <>))
-                    (INTERVAL num  (cut <= 0 <>))
-                    (BYSECOND nums (all-in n (<= 0 n 60)))
-                    (BYMINUTE nums (all-in n (<= 0 n 59)))
-                    (BYHOUR   nums (all-in n (<= 0 n 23)))
+        (quick-case (string->symbol key)
+          (UNTIL (set! (until o) date))
 
-                    (BYDAY days
-                           (lambda (p*)
-                             (map (lambda (p)
-                                    (let* (((n . s) p))
-                                      (memv s weekdays)))
-                                  p*)))
+          (COUNT    (<= 0 num) => (set! (count o) num))
+          (INTERVAL (<= 0 num) => (set! (interval o) num))
 
-                    (BYMONTHDAY nums (all-in n (<=  -31 n  31) (!= n 0)))
-                    (BYYEARDAY  nums (all-in n (<= -366 n 366) (!= n 0)))
-                    (BYWEEKNO   nums (all-in n (<=  -53 n  53) (!= n 0)))
-                    (BYMONTH    nums (all-in n (<=    1 n  12)))
-                    (BYSETPOS   nums (all-in n (<= -366 n 366) (!= n 0)))
+          (FREQ (memv symb intervals) => (set! (freq o) symb))
+          (WKST (memv symb weekdays)  => (set! (wkst o) symb))
 
-                    (WKST symb (cut memv <> weekdays))))))
+          (BYSECOND (every (lambda (n) (<= 0 n 60)) nums) => (set! (bysecond o) nums))
+          (BYMINUTE (every (lambda (n) (<= 0 n 59)) nums) => (set! (byminute o) nums))
+          (BYHOUR   (every (lambda (n) (<= 0 n 23)) nums) => (set! (byhour   o) nums))
+          (BYMONTH  (every (lambda (n) (<= 1 n 12)) nums) => (set! (byweekno o) nums))
+
+          (BYDAY   (every (lambda (p) (memv (cdr p) weekdays)) days) => (set! (byday o) days))
+
+          (BYMONTHDAY (every (lambda (n) (and (!= n 0) (<= -31  n 31)))  nums) => (set! (bymonthday o) nums))
+          (BYYEARDAY  (every (lambda (n) (and (!= n 0) (<= -366 n 366))) nums) => (set! (byyearday  o) nums))
+          (BYSETPOS   (every (lambda (n) (and (!= n 0) (<= -366 n 366))) nums) => (set! (bysetpos   o) nums))
+          (BYWEEKNO   (every (lambda (n) (and (!= n 0) (<= -53  n 53)))  nums) => (set! (byweekno   o) nums))
+          (else o)))))
+
    ;; obj
    (make-recur-rule 1 'MO)
 
