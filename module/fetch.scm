@@ -25,7 +25,7 @@
 
 (filter-children!
  (lambda (ev) (and (eq? 'VEVENT (type ev))
-              (event-in? ev (date->time-utc (string->date "2019-04-03" "~Y-~m-~d")))))
+              (event-contains? ev (date->time-utc (string->date "2019-04-03" "~Y-~m-~d")))))
  cal)
 
 (serialize-vcomponent cal)

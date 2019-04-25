@@ -7,7 +7,7 @@
   #:export (parse-datetime
             event-overlaps?
             overlapping?
-            event-in?
+            event-contains?
             ev-time<?)
   )
 
@@ -33,7 +33,7 @@ Event must have the DTSTART and DTEND attribute set."
                       (attr event-b 'DTSTART)
                       (attr event-b 'DTEND)))
 
-(define (event-in? ev time)
+(define (event-contains? ev time)
   "Does event overlap the date that contains time."
   (let* ((date (time-utc->date time))
          (start (date->time-utc (drop-time date)))
