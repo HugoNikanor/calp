@@ -104,13 +104,10 @@ attribute set to 0. Can also be seen as \"Start of day\""
    (drop-time start-day)))
 
 (define-public (in-date-range? start-date end-date)
-  (format (current-error-port) "Start: ~a~%End: ~a~%"
-          (date->string start-date) (date->string end-date))
   (lambda (date)
     (let ((time (date->time-utc date)))
-      (timespan-overlaps?
-       (date->time-utc start-date) (date->time-utc end-date)
-       time time))))
+      (and (time<=? (date->time-utc start-date) time)
+           (time<=? time (date->time-utc end-date))))))
 
 (define-public (time-min a b)
   (if (time<? a b) a b))
