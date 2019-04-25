@@ -16,6 +16,7 @@
 
              (output html)
              (output terminal)
+             (output none)
 
              (ice-9 getopt-long)
 
@@ -57,7 +58,7 @@
        (let ((ropt (ornull (option-ref opts '() '())
                            '("term"))))
          ((case (string->symbol (car ropt))
-            ((none) (compose display list))
+            ((none) none-main)
             ((html) html-main)
             ((term) terminal-main))
           c e ropt))))
