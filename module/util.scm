@@ -2,17 +2,14 @@
   #:use-module (srfi srfi-1)
   #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module ((sxml fold) #:select (fold-values))
-  #:export (destructure-lambda let-multi fold-lists catch-let
-                               for-each-in for
-                               define-quick-record
-                               mod! sort* sort*!
-                               mod/r! set/r!
-                               find-min
-                               catch-multiple
-                               quote?
-                               tree-map let-lazy)
-  #:replace (let* set! define-syntax)
-  )
+  #:export (for define-quick-record
+                mod! sort* sort*!
+                mod/r! set/r!
+                find-min
+                catch-multiple
+                quote?
+                tree-map let-lazy)
+  #:replace (let* set! define-syntax))
 
 ((@ (guile) define-syntax) define-syntax
   (syntax-rules ()
@@ -33,25 +30,6 @@
 
 (define-public symbol-downcase (compose string->symbol string-downcase symbol->string))
 
-(define-syntax destructure-lambda
-  (syntax-rules ()
-    ((_ expr-list body ...)
-     (lambda (expr)
-       (apply (lambda expr-list body ...) expr)))))
-
-(define-syntax catch-let
-  (syntax-rules ()
-    ((_ thunk ((type handler) ...))
-     (catch #t thunk
-       (lambda (err . args)
-         (case err
-           ((type) (apply handler err args)) ...
-           (else (format #t "Unhandled error type ~a, rethrowing ~%" err)
-                 (apply throw err args))))))))
-
-;;; For-each with arguments in reverse order.
-(define-syntax-rule (for-each-in lst proc)
-  (for-each proc lst))
 
 (define-syntax for
   (syntax-rules (in)
@@ -289,39 +267,6 @@
     (call-with-values (lambda () (apply proc args))
       (lambda args (list-ref args n)))))
 
-;; Takes a (non nested) list, and replaces all single underscore
-;; symbols with a generated symbol. For macro usage.
-(define (multiple-ignore lst)
-  (cond ((not-pair? lst) lst)
-        ((eq? '_ (car lst)) (cons (gensym "ignored_")
-                                  (multiple-ignore (cdr lst))))
-        (else (cons (car lst)
-                    (multiple-ignore (cdr lst))))))
-
-(define (catch-recur% errs thunk cases)
-  (let* ((v (car errs))
-         (case other (partition (lambda (case) (eq? v (car case))) cases))
-         (g!rest (gensym "rest")))
-    `(catch (quote ,v)
-       ,(if (null? (cdr errs))
-            thunk
-            `(lambda () ,(catch-recur% (cdr errs) thunk other)))
-       (lambda (err . ,g!rest)
-         (apply (lambda ,(multiple-ignore (second (car case)))
-                  ,@(cddr (car case)))
-                ,g!rest)))))
-
-;; Like @var{catch}, but multiple handlers can be specified.
-;; Each handler is on the form
-;; @example
-;; [err-symb (args ...) body ...]
-;; @end example
-;; 
-;; Only errors with a handler are caught. Error can *not* be given as
-;; an early argument.
-(define-macro (catch-multiple thunk . cases)
-  (catch-recur% (map car cases) thunk cases))
-
 (define-public (flatten lst)
   (fold (lambda (subl done)
           (append done ((if (list? subl) flatten list) subl)))
@@ -349,3 +294,10 @@
        ,@(tree-map (lambda (t) (if (memv t keys) `(force ,t) t))
                    body #:descend (negate quote?)))))
 
+
+(define-public (map/dotted proc dotted-list)
+  (cond ((null? dotted-list) '())
+        ((not-pair? dotted-list) (proc dotted-list))
+        (else
+         (cons (proc (car dotted-list))
+               (map/dotted proc (cdr dotted-list))))))

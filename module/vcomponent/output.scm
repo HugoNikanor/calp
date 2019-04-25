@@ -27,16 +27,15 @@
     (format port "~a <~a> :: ~:a~%"
             (make-string depth #\:)
             (type comp) comp)
-    (for-each-in kvs
-                 (lambda (kv)
-                   (let* (((key . at) kv))
-                     (format port "~a ~15@a~{;~a=~{~a~^,~}~}: ~a~%"
-                             (make-string depth #\:)
-                             key
-                             (concatenate (hash-map->list list (cdr at)))
-                             (v at)))))
-    (for-each-in (children comp)
-                 (lambda (e) (print-vcomponent e port #:depth (1+ depth))))))
+    (for kv in kvs
+         (let* (((key . at) kv))
+           (format port "~a ~15@a~{;~a=~{~a~^,~}~}: ~a~%"
+                   (make-string depth #\:)
+                   key
+                   (concatenate (hash-map->list list (cdr at)))
+                   (v at))))
+    (for-each (lambda (e) (print-vcomponent e port #:depth (1+ depth)))
+              (children comp))))
 
 
 
@@ -69,29 +68,28 @@ Removes the X-HNH-FILENAME attribute, and sets PRODID to
    (let ((kvs (map (lambda (key) (list key (attr comp key)))
                    (filter (negate (cut key=? <> 'X-HNH-FILENAME))
                            (attributes comp)))))
-     (for-each-in
-      kvs (lambda (kv)
-            (let* (((key value) kv))
-              (catch 'wrong-type-arg
-                (lambda ()
-                  (format port "~a:~a~%" key
-                          (string->ics-safe-string
-                           (or (case key
-                                 ((DTSTART DTEND)
-                                  (if (string? value)
-                                      value
-                                      (time->string value "~Y~m~dT~H~M~S")))
+     (for kv in kvs
+          (let* (((key value) kv))
+            (catch 'wrong-type-arg
+              (lambda ()
+                (format port "~a:~a~%" key
+                        (string->ics-safe-string
+                         (or (case key
+                               ((DTSTART DTEND)
+                                (if (string? value)
+                                    value
+                                    (time->string value "~Y~m~dT~H~M~S")))
 
-                                 ((DURATION) "Just forget it")
+                               ((DURATION) "Just forget it")
 
-                                 (else value))
-                               ""))))
+                               (else value))
+                             ""))))
 
-                ;; Catch
-                (lambda (type proc fmt . args)
-                  (apply format (current-error-port) "[ERR] ~a in ~a (~a) ~a:~%~?~%"
-                         type key proc (attr comp 'X-HNH-FILENAME)
-                         fmt args))))))
+              ;; Catch
+              (lambda (type proc fmt . args)
+                (apply format (current-error-port) "[ERR] ~a in ~a (~a) ~a:~%~?~%"
+                       type key proc (attr comp 'X-HNH-FILENAME)
+                       fmt args)))))
 
      (for-each (cut serialize-vcomponent <> port) (children comp)))
    (format port "END:~a~%" (type comp))))

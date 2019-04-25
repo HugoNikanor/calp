@@ -7,7 +7,7 @@
   #:duplicates (last)                   ; Replace @var{count}
   #:use-module (vcomponent recurrence internal)
   #:use-module (util)
-  #:use-module (exceptions)
+  #:use-module (util exceptions)
   #:use-module (ice-9 curried-definitions)
   #:export (parse-recurrence-rule))
 
