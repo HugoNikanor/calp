@@ -90,11 +90,21 @@
 .meta {
 	height: 50px;
 	width: 100%;
-
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
 }
 
 .meta .dayname {
-	font-size: 2em;
+	position: absolute;
+	left: 5;
+	top: 2;
+	color: grey;
+}
+
+.meta .daydate {
+	font-size: 200%;
 }
 
 .event {

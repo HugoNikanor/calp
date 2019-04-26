@@ -84,8 +84,9 @@
     (fix-event-widths! (date->time-utc date) (stream->list events))
     `(div (@ (class "day"))
           (div (@ (class "meta"))
-               (span (@ (class "dayname")) ,(date->string date "~a"))
-               (span (@ (class "daydate")) ,(date->string date "~Y-~m-~d")))
+               ,(let ((str (date->string date "~Y-~m-~d")))
+                  `(span (@ (id ,str) (class "daydate")) ,str))
+               (span (@ (class "dayname")) ,(date->string date "~a")))
           (div (@ (class "events"))
                ,@(map (lambda (time)
                         `(div (@ (class "clock "
