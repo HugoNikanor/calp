@@ -1,4 +1,4 @@
-.PHONY: all clean tests
+.PHONY: all clean tests guild-stuff guile-none
 
 CC  := gcc
 
@@ -24,7 +24,13 @@ X_FILES = $(SCM_C_FILES:.scm.c=.x)
 
 O_FILES = $(C_FILES:src/%.c=obj/%.o)
 
-all: parse $(SO_FILES)
+all: parse $(SO_FILES) guild-stuff guile-none
+
+guild-stuff:
+	guild compile module/vcomponent/primitive.scm
+
+guile-none:
+	module/main.scm none
 
 parse: $(O_FILES)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -68,9 +74,7 @@ clean:
 	-rmdir $(OBJDIR)
 	-rm $(LIBDIR)/*.so
 	-rm $(SRCDIR)/*.x
-
-clean-scheme:
-	rm -r $$HOME/.cache/guile/ccache/2.2-LE-8-3.A/$$PWD
+	-rm -r $$HOME/.cache/guile/ccache/2.2-LE-8-3.A/$$PWD
 
 tests:
 	tests/run-tests.scm
