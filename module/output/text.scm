@@ -16,10 +16,10 @@
          (slots (1- (length words)))
          (space-list
           (let loop ((n needed-spaces) (d slots))
-            (if (zero? d) '()
-                (let ((v (round (/ n d))))
-                  (cons v (loop (- n v)
-                                (1- d))))))))
+            (unless (zero? d)
+              (let ((v (round (/ n d))))
+                (cons v (loop (- n v)
+                              (1- d))))))))
     (string-concatenate/shared
      (merge words (map (lambda (n) (make-string n #\space))
                        space-list)

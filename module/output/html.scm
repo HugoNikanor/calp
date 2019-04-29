@@ -32,13 +32,13 @@
   (let inner ((x 0)
               (tree (make-tree overlapping?
                                (sort* lst time>? (lambda (e) (event-length/day e start-of-day))))))
-    (if (null? tree) #f
-        (let ((w (/ (- 1 x)
-                    (+ 1 (length-of-longst-branch (left-subtree tree))))))
-          (set! (width (car tree)) w
-                (x-pos (car tree)) x)
-          (inner (+ x w) (left-subtree tree))
-          (inner x (right-subtree tree))))))
+    (unless (null? tree)
+      (let ((w (/ (- 1 x)
+                  (+ 1 (length-of-longst-branch (left-subtree tree))))))
+        (set! (width (car tree)) w
+              (x-pos (car tree)) x)
+        (inner (+ x w) (left-subtree tree))
+        (inner x (right-subtree tree))))))
 
 ;; This should only be used on time intervals, never on absolute times.
 ;; For that see @var{date->decimal-hour}.

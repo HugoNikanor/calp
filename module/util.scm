@@ -9,7 +9,8 @@
                 catch-multiple
                 quote?
                 tree-map let-lazy)
-  #:replace (let* set! define-syntax))
+  #:replace (let* set! define-syntax
+                  when unless))
 
 ((@ (guile) define-syntax) define-syntax
   (syntax-rules ()
@@ -138,6 +139,14 @@
 (define (improper->proper-list lst len)
   (let* ((head tail (split-at lst len)))
     (append head (list tail))))
+
+
+
+(define-syntax-rule (when pred body ...)
+  (if pred (begin body ...) '()))
+
+(define-syntax-rule (unless pred body ...)
+  (if pred '() (begin body ...)))
 
 
 
