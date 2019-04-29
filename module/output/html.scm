@@ -16,6 +16,12 @@
   #:use-module (parameters)
   #:use-module (config))
 
+(define (date-link date)
+  (date->string date "~Y-~m-~d"))
+
+(define (time-link time)
+  (time->string time "~Y-~m-~d"))
+
 (define x-pos (make-object-property))
 (define width (make-object-property))
 
@@ -69,42 +75,40 @@
             ;; height
             (* 100/24 (time->decimal-hour (event-length/day ev time)))))
 
-  `(div (@ (class "event CAL_" ,(html-attr (let ((l (attr (parent ev) 'NAME)))
-                                             (if (pair? l) (car l) l)))
-             ,(if (time<? (attr ev 'DTSTART) time)
-                  " continued" "")
-             ,(if (time<? (add-day time) (attr ev 'DTEND))
-                  " continuing" ""))
-           (style ,style))
-        ,((summary-filter) ev (attr ev 'SUMMARY))))
+  `(a (@ (href "#" ,(time->string (attr ev 'DTSTART) "~s") ,(attr ev 'UID)))
+      (div (@ (class "event CAL_" ,(html-attr (let ((l (attr (parent ev) 'NAME)))
+                                                (if (pair? l) (car l) l)))
+                ,(when (time<? (attr ev 'DTSTART) time)
+                   " continued")
+                ,(when (time<? (add-day time) (attr ev 'DTEND))
+                   " continuing"))
+              (style ,style))
+           ,((summary-filter) ev (attr ev 'SUMMARY)))))
 
 (define (lay-out-day day)
   (let* (((date . events) day))
-    ;; (format (current-error-port) "Processing ~a~%" (date->string date))
     (fix-event-widths! (date->time-utc date) (stream->list events))
     `(div (@ (class "day"))
           (div (@ (class "meta"))
-               ,(let ((str (date->string date "~Y-~m-~d")))
+               ,(let ((str (date-link date)))
                   `(span (@ (id ,str) (class "daydate")) ,str))
                (span (@ (class "dayname")) ,(date->string date "~a")))
           (div (@ (class "events"))
                ,@(map (lambda (time)
-                        `(div (@ (class "clock "
-                                   ,(string-append "clock-" time))) " "))
-                      (map number->string (iota 12 0 2)))
+                        `(div (@ (class "clock clock-" time)) ""))
+                      (iota 12 0 2))
                ,@(stream->list (stream-map (lambda (e) (vevent->sxml date e)) events))))))
 
 (define (time-marker-div)
   `(div (@ (class "sideclock"))
         (div (@ (class "day"))
-             (div (@ (class "meta")) #\space)
+             (div (@ (class "meta")) "")
              (div (@ (class "clockbar"))
                   ,@(map (lambda (time)
-                           `(div (@ (class "clock "
-                                      ,(string-append "clock-" time)))
+                           `(div (@ (class "clock clock-" ,time))
                                  (span (@ (class "clocktext"))
-                                       ,(string-append time ":00"))))
-                         (map number->string (iota 12 0 2)))))))
+                                       ,time ":00")))
+                          (iota 12 0 2))))))
 
 (define (include-css path)
   `(link (@ (type "text/css")
@@ -114,6 +118,81 @@
 (define opt-spec
   '((from (value #t) (single-char #\f))
     (to (value #t) (single-char #\t))))
+
+(define (fmt-time-span ev)
+  (let* ((fmt (if (time<? (time-difference (attr ev 'DTEND) (attr ev 'DTSTART))
+                          (make-duration (* 3600 24)))
+                  "~H:~M" "~Y-~m-~d ~H:~M"))
+         (start (time->string (attr ev 'DTSTART) fmt))
+         (end (time->string (attr ev 'DTEND) fmt)))
+    (values start end)))
+
+(define (fmt-single-event ev)
+  `(article (@ (id ,(time->string (attr ev 'DTSTART) "~s")
+                   ,(html-attr (attr ev 'UID)))
+               (class "eventtext CAL_bg_"
+                 ,(html-attr (let ((l (attr (parent ev) 'NAME)))
+                               (if (pair? l) (car l) l)))))
+            (h1 (a (@ (href "#" ,(time-link (attr ev 'DTSTART))))
+                   ,(attr ev 'SUMMARY)))
+            (main
+             ,(let* ((start end (fmt-time-span ev)))
+                `(div ,start " — " ,end))
+             ,(when (and=> (attr ev 'LOCATION) (negate string-null?))
+                `(div (b "Plats: ") ,(attr ev 'LOCATION)))
+             ,(attr ev 'DESCRIPTION))))
+
+(define (fmt-day day)
+  (let* (((date . events) day))
+    `(div (@ (class "text-day"))
+          ;; TODO this gives date +1
+          (header (h2 ,(let ((s (date->string date "~Y-~m-~d")))
+                         `(a (@ (href "#" ,s)) ,s))))
+          ,@(map fmt-single-event (stream->list events)))))
+
+(define (days-in-month n)
+  (cond ((memv n '(1 3 5 7 8 10 12)) 31)
+        ((memv n '(4 6 9 11)) 30)
+        ;; TODO leap years
+        (else 28)))
+
+(define (previous-month n)
+  (1+ (modulo (- n 2) 12)))
+
+(define (next-month n)
+  (1+ (modulo n 12)))
+
+(define (td param)
+  (lambda (d) `(td (@ ,(map (lambda (p)
+                         (cons `(quote ,(car p))
+                               (cdr p)))
+                       param)) ,d)))
+
+;; 0 indexed, starting at monday.
+(define (week-day date)
+  (modulo (1- (date-week-day date)) 7))
+
+;; date should be start of month
+(define (cal-table date)
+  (let ((td (lambda (p) (lambda (d) `(td (@ ,p) ,d)))))
+    `(table (@ (class "small-calendar"))
+            (thead (tr ,@(map (lambda (d) `(td ,d)) '(MÅ TI ON TO FR LÖ SÖ))))
+            (tbody ,@(let recur
+                         ((lst (let* ((month (date-month date))
+                                      (month-len (days-in-month month))
+                                      (prev-month-len (days-in-month (previous-month month)))
+                                      (month-start (week-day date)))
+                                 (append (map (td '(class "prev"))
+                                              (iota month-start (- prev-month-len month-start)))
+                                         (map (td '(class "cur"))
+                                              (map (lambda (d) `(a (@ (href "#" ,(date->string date "~Y-~m-") ,d)) ,d))
+                                                   (iota month-len 1)))
+                                         (map (td '(class "next"))
+                                              (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))))
+                       (unless (null? lst)
+                         (let* ((w rest (split-at lst 7)))
+                           (cons `(tr ,@w)
+                                 (recur rest)))))))))
 
 (define-public (html-main calendars events args)
 
@@ -130,15 +209,25 @@
            (title "Calendar")
            (meta (@ (charset "utf-8")))
            ,(include-css "static/style.css")
-           (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%~}"
+           (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
                            (map (lambda (c)
-                                  (list (html-attr (if (pair? (attr c 'NAME))
-                                                       (car (attr c 'NAME))
-                                                       (attr c 'NAME)))
-                                        (or (attr c 'COLOR) "white")
-                                        (or (and=> (attr c 'COLOR) calculate-fg-color) "black")))
+                                  (let* ((name (html-attr (if (pair? (attr c 'NAME))
+                                                              (car (attr c 'NAME))
+                                                              (attr c 'NAME))))
+                                         (bg-color (attr c 'COLOR))
+                                         (fg-color (and=> (attr c 'COLOR)
+                                                          calculate-fg-color)))
+                                    (list name (or bg-color 'white) (or fg-color 'black)
+                                          name (or bg-color 'black))))
                                 calendars))))
-          (body (div (@ (class "calendar"))
+          (body
+           (div (@ (class "root"))
+                (div (@ (class "calendar"))
                      ,(time-marker-div)
                      (div (@ (class "days"))
-                          ,@(stream->list (stream-map lay-out-day evs))))))))
+                          ,@(stream->list (stream-map lay-out-day evs))))
+                (div (@ (class "sideinfo"))
+                     (div (@ (class "about"))
+                          (div ,(cal-table (parse-freeform-date "2019-04-01"))))
+                     (div (@ (class "eventlist"))
+                          ,@(stream->list (stream-map fmt-day evs)))))))))
