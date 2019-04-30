@@ -25,6 +25,11 @@
 (define x-pos (make-object-property))
 (define width (make-object-property))
 
+(define (UID ev)
+  (string-append
+   (time->string (attr ev 'DTSTART) "~s")
+   (html-attr (attr ev 'UID))))
+
 ;; Takes a list of vcomponents, sets their widths and x-positions to optimally
 ;; fill out the space, without any overlaps.
 (define (fix-event-widths! start-of-day lst)
@@ -75,7 +80,8 @@
             ;; height
             (* 100/24 (time->decimal-hour (event-length/day ev time)))))
 
-  `(a (@ (href "#" ,(time->string (attr ev 'DTSTART) "~s") ,(attr ev 'UID)))
+  `(a (@ (href "#" ,(UID ev))
+         (class "hidelink"))
       (div (@ (class "event CAL_" ,(html-attr (let ((l (attr (parent ev) 'NAME)))
                                                 (if (pair? l) (car l) l)))
                 ,(when (time<? (attr ev 'DTSTART) time)
@@ -127,15 +133,16 @@
          (end (time->string (attr ev 'DTEND) fmt)))
     (values start end)))
 
+
 (define (fmt-single-event ev)
-  `(article (@ (id ,(time->string (attr ev 'DTSTART) "~s")
-                   ,(html-attr (attr ev 'UID)))
+  `(article (@ (id ,(UID ev))
                (class "eventtext CAL_bg_"
                  ,(html-attr (let ((l (attr (parent ev) 'NAME)))
                                (if (pair? l) (car l) l)))))
-            (h1 (a (@ (href "#" ,(time-link (attr ev 'DTSTART))))
+            (h3 (a (@ (href "#" ,(time-link (attr ev 'DTSTART)))
+                      (class "hidelink"))
                    ,(attr ev 'SUMMARY)))
-            (main
+            (div
              ,(let* ((start end (fmt-time-span ev)))
                 `(div ,start " — " ,end))
              ,(when (and=> (attr ev 'LOCATION) (negate string-null?))
@@ -144,11 +151,12 @@
 
 (define (fmt-day day)
   (let* (((date . events) day))
-    `(div (@ (class "text-day"))
-          ;; TODO this gives date +1
-          (header (h2 ,(let ((s (date->string date "~Y-~m-~d")))
-                         `(a (@ (href "#" ,s)) ,s))))
-          ,@(map fmt-single-event (stream->list events)))))
+    `(section (@ (class "text-day"))
+              ;; TODO this gives date +1
+              (header (h2 ,(let ((s (date->string date "~Y-~m-~d")))
+                             `(a (@ (href "#" ,s)
+                                    (class "hidelink")) ,s))))
+              ,@(map fmt-single-event (stream->list events)))))
 
 (define (days-in-month n)
   (cond ((memv n '(1 3 5 7 8 10 12)) 31)
@@ -173,6 +181,14 @@
   (modulo (1- (date-week-day date)) 7))
 
 ;; date should be start of month
+;; @example
+;; må ti on to fr lö sö
+;;  1  2  3  4  5  6  7
+;;  8  9 10 11 12 13 14
+;; 15 16 17 18 19 20 21
+;; 22 23 24 25 26 27 28
+;; 29 30
+;; @end example
 (define (cal-table date)
   (let ((td (lambda (p) (lambda (d) `(td (@ ,p) ,d)))))
     `(table (@ (class "small-calendar"))
@@ -185,7 +201,8 @@
                                  (append (map (td '(class "prev"))
                                               (iota month-start (- prev-month-len month-start)))
                                          (map (td '(class "cur"))
-                                              (map (lambda (d) `(a (@ (href "#" ,(date->string date "~Y-~m-") ,d)) ,d))
+                                              (map (lambda (d) `(a (@ (href "#" ,(date->string date "~Y-~m-") ,d)
+                                                                 (class "hidelink")) ,d))
                                                    (iota month-len 1)))
                                          (map (td '(class "next"))
                                               (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))))
@@ -204,10 +221,17 @@
   (define evs (get-groups-between (group-stream events)
                                   start end))
 
+  ;; (display "<!doctype HTML>") (newline)
   ((@ (sxml simple) sxml->xml)
-   `(html (head
+   `(html (@ (lang sv))
+          (head
            (title "Calendar")
            (meta (@ (charset "utf-8")))
+           (meta (@ (name viewport)
+                    (content "width=device-width, initial-scale=0.5")))
+           (meta (@ (name description)
+                    (content "Calendar for the dates between " (date->string start)
+                             " and " (date->string end))))
            ,(include-css "static/style.css")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
                            (map (lambda (c)
@@ -222,12 +246,12 @@
                                 calendars))))
           (body
            (div (@ (class "root"))
-                (div (@ (class "calendar"))
-                     ,(time-marker-div)
-                     (div (@ (class "days"))
-                          ,@(stream->list (stream-map lay-out-day evs))))
-                (div (@ (class "sideinfo"))
-                     (div (@ (class "about"))
-                          (div ,(cal-table (parse-freeform-date "2019-04-01"))))
-                     (div (@ (class "eventlist"))
-                          ,@(stream->list (stream-map fmt-day evs)))))))))
+                (main (@ (class "calendar"))
+                      ,(time-marker-div)
+                      (div (@ (class "days"))
+                           ,@(stream->list (stream-map lay-out-day evs))))
+                (aside (@ (class "sideinfo"))
+                       (div (@ (class "about"))
+                            (div ,(cal-table (parse-freeform-date "2019-05-01"))))
+                       (div (@ (class "eventlist"))
+                            ,@(stream->list (stream-map fmt-day evs)))))))))
