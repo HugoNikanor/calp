@@ -95,7 +95,7 @@
                (span (@ (class "dayname")) ,(date->string date "~a")))
           (div (@ (class "events"))
                ,@(map (lambda (time)
-                        `(div (@ (class "clock clock-" time)) ""))
+                        `(div (@ (class "clock clock-" ,time)) ""))
                       (iota 12 0 2))
                ,@(stream->list (stream-map (lambda (e) (vevent->sxml date e)) events))))))
 
