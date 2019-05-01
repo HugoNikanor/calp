@@ -80,6 +80,7 @@ struct s_vcomponent {
 	 * vcomponent.
 	 */
 	SCM scm;
+	SCM scmtype;
 };
 
 #define FCHILD(v) FIRST_V(&(v)->components)

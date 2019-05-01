@@ -42,6 +42,7 @@ INIT_F(vcomponent) {
 
 	self->parent = NULL;
 	self->scm = NULL;
+	self->scmtype = NULL;
 
 	return 0;
 
@@ -74,6 +75,7 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 
 	self->parent = NULL;
 	self->scm = NULL;
+	self->scmtype = NULL;
 
 	return 0;
 }

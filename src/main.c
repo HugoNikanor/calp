@@ -32,7 +32,7 @@ int arg_shift (arg* a) {
  */
 int run_tests() {
 	NEW(vcomponent, c);
-	INFO(All the following should print a valid pointer ≠ 0x0);
+	INFO(All the following should print a valid pointer != 0x0);
 	GETSET(c, "FILENAME");
 	GETSET(c, "X-HNH-FILENAME");
 	GETSET(c, "DATA");

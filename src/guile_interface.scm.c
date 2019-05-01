@@ -4,6 +4,7 @@
 #include "guile_type_helpers.h"
 
 static SCM vcomponent_type;
+static SCM content_set_lists;
 
 void init_vcomponent_type (void) {
 	SCM name = scm_from_utf8_symbol("vcomponent");
@@ -43,7 +44,7 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 	scm_assert_foreign_object_type (vcomponent_type, calendar);
 	vcomponent* cal = scm_foreign_object_ref (calendar, 0);
 
-	char* key = scm_to_utf8_stringn(scm_string_upcase(attr), NULL);
+	const char* key = scm_i_string_chars (attr);
 	content_line* c = get_attributes (cal, key);
 
 	if (c == NULL) {
@@ -52,7 +53,11 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 		c->cval->key.scm = SCM_BOOL_F;
 	}
 
-	free(key);
+	SCM ptr = scm_from_pointer(c, NULL);
+	SCM ret = scm_hashq_ref (content_set_lists, ptr, SCM_BOOL_F);
+	if (! scm_is_false (ret)) {
+		return ret;
+	}
 
 	SCM val, proplist;
 	SCM attrroot = scm_list_1(SCM_BOOL_F);
@@ -95,6 +100,9 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 
 	/* create circular list */
 	scm_set_cdr_x (attrroot, attrlist);
+
+
+	scm_hashq_set_x (content_set_lists, ptr, attrlist);
 
 	return attrlist;
 }
@@ -178,7 +186,12 @@ SCM_DEFINE(vcomponent_typeof, "%vcomponent-get-type", 1, 0, 0,
 {
 	scm_assert_foreign_object_type (vcomponent_type, component);
 	vcomponent* comp = scm_foreign_object_ref (component, 0);
-	return scm_from_utf8_symbol(comp->type);
+
+	if (comp->scmtype == NULL) {
+		comp->scmtype = scm_from_utf8_symbol(comp->type);
+	}
+
+	return comp->scmtype;
 }
 
 SCM_DEFINE(vcomponent_set_type_x, "%vcomponent-set-type!", 2, 0, 0,
@@ -240,6 +253,7 @@ SCM_DEFINE(vcomponent_shallow_copy, "%vcomponent-shallow-copy", 1, 0, 0,
 
 void init_lib (void) {
 	init_vcomponent_type();
+	content_set_lists = scm_make_weak_key_hash_table (scm_from_uint(0x100));
 
 #ifndef SCM_MAGIC_SNARFER
 #include "guile_interface.x"
