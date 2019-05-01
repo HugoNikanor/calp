@@ -28,8 +28,8 @@
 ;; given procedure @var{proc}.
 ;;
 ;; Given as a sepparate function from main to ease debugging.
-(define (init proc)
-  (define calendars (map make-vcomponent (calendar-files)))
+(define* (init proc #:key (calendar-files (calendar-files)))
+  (define calendars (map make-vcomponent calendar-files))
   (define events (concatenate (map (cut children <> 'VEVENT) calendars)))
 
   (let* ((repeating regular (partition repeating? events)))
@@ -46,7 +46,8 @@
 
 (define options
   '((mode (value #t) (single-char #\m))
-    (statprof (value #f))))
+    (files (value #t) (single-char #\f))
+    (statprof (value optional))))
 
 (define (ornull a b)
   (if (null? a)
@@ -54,12 +55,15 @@
 
 (define (main args)
   (let ((opts (getopt-long args options #:stop-at-first-non-option #t)))
-    ((lambda (thunk) (if (option-ref opts 'statprof #f)
-                    ((@ (statprof) statprof)
-                     thunk
-                     #:count-calls? #t
-                     #:display-style 'tree)
-                    (thunk)))
+    ((lambda (thunk)
+       (let ((stprof (option-ref opts 'statprof #f)))
+         (if stprof
+             ((@ (statprof) statprof) thunk
+              #:count-calls? #t
+              #:port (current-error-port)
+              #:display-style (if (boolean? stprof) 'flat (string->symbol stprof)))
+             (thunk))))
+
      (lambda ()
        (init
         (lambda (c e)
@@ -69,5 +73,8 @@
                ((none) none-main)
                ((html) html-main)
                ((term) terminal-main))
-             c e ropt))))))
+             c e ropt)))
+        #:calendar-files (or (and=> (option-ref opts 'files #f)
+                                    list)
+                             (calendar-files)))))
     (newline)))
