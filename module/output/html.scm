@@ -102,7 +102,7 @@
                ,@(map (lambda (time)
                         `(div (@ (class "clock clock-" ,time)) ""))
                       (iota 12 0 2))
-               ,@(stream->list (stream-map (lambda (e) (vevent->sxml date e)) events))))))
+               ,@(map (lambda (e) (vevent->sxml date e)) (stream->list events))))))
 
 (define (time-marker-div)
   `(div (@ (class "sideclock"))
@@ -131,7 +131,6 @@
          (start (time->string (attr ev 'DTSTART) fmt))
          (end (time->string (attr ev 'DTEND) fmt)))
     (values start end)))
-
 
 (define (fmt-single-event ev)
   `(article (@ (id ,(UID ev))

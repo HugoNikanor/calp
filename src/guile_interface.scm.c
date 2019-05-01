@@ -74,7 +74,7 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 			// TODO why is it an error to unprotect the object here?
 			// scm_from_strbuf should already have protected it...
 			// scm_gc_unprotect_object(v->key.scm);
-			SCM htable = SCM_MAKE_HASH_TABLE();
+			SCM htable = scm_make_hash_table (scm_from_ulong(32));
 			val = scm_cons(val, htable);
 			v->key.scm = val;
 			scm_gc_protect_object(v->key.scm);
