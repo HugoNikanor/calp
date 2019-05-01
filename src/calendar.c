@@ -81,20 +81,29 @@ int handle_dir(vcomponent* cal, char* path) {
 		buf[path_len] = '\0';
 
 		FILE* f;
-		char info_buf[0x100];
+		size_t read, size = 0x100;
+		char* info_buf = malloc(size);
 		if (strcmp (d->d_name, "color") == 0) {
 			f = fopen(resolved_path, "r");
-			fgets(info_buf, 0x100, f);
-			if (info_buf[strlen(info_buf) - 1] == '\n')
-				info_buf[strlen(info_buf) - 1] = '\0';
+			read = getline(&info_buf, &size, f);
+			if (info_buf[read - 1] == '\n')
+				info_buf[read - 1] = '\0';
 
 			fclose(f);
 			vcomponent_push_val(cal, "COLOR", info_buf);
 		} else if (strcmp (d->d_name, "displayname") == 0) {
 			f = fopen(resolved_path, "r");
-			fgets(info_buf, 0x100, f);
+			read = getline(&info_buf, &size, f);
+			if (info_buf[read - 1] == '\n')
+				info_buf[read - 1] = '\0';
+
 			fclose(f);
-			// TODO make sure that this replaces
+
+			/* This adds the new list to the set of names, keeping the
+			 * filename name.
+			 * This works since *currently* values are returned in
+			 * reverse order
+			 */
 			vcomponent_push_val(cal, "NAME", info_buf);
 		} else {
 			open_ics (resolved_path, cal);
