@@ -4,6 +4,7 @@
   #:use-module (vcomponent recurrence)
   #:use-module (vcomponent timezone)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-17)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-19 setters)
@@ -65,32 +66,47 @@
    (as-string attr)))
 
 (define (set-attr! component attr value)
-  (set-car! (get-attr component (as-string attr))
-            value))
+  (set! (car (get-attr component (as-string attr)))
+        value))
 
-(define-public attr*
-  (make-procedure-with-setter
-   get-attr set-attr!))
+(define-public value caar)
+(define-public next cdr)
+;; (define-public next! pop!)
+
+(define-public (values-left-count attr-list)
+  (length (take-while identity attr-list)))
+
+(define-public (value-count attr-list)
+  (length (take-while identity (cdr (drop-while identity attr-list)))))
+
+;; (define-public (reset! attr-list)
+;;   (while (not (car attr-list))
+;;     (next! attr-list))
+;;   (next! attr-list))
+
+(define-public attr* get-attr)
 
 (define-public attr
   (make-procedure-with-setter
-   (compose car get-attr) set-attr!))
+   (lambda (c a) (and=> (car (get-attr c a)) car))
+   (lambda (c a v) (and=> (car (get-attr c a))
+                     (lambda (f) (set! (car f) v))))))
 
 ;; value
-(define-public v
-  (make-procedure-with-setter car set-car!))
+;; (define-public v
+;;   (make-procedure-with-setter car set-car!))
 
 (define-public prop
   (make-procedure-with-setter
    (lambda (attr-obj prop-key)
-     (hashq-ref (cdr attr-obj) prop-key))
+     (hashq-ref (cdar attr-obj) prop-key))
    (lambda (attr-obj prop-key val)
-     (hashq-set! (cdr attr-obj) prop-key val))))
+     (hashq-set! (cdar attr-obj) prop-key val))))
 
 ;; Returns the properties of attribute as an assoc list.
 ;; @code{(map car <>)} leads to available properties.
 (define-public (properties attrptr)
-  (hash-map->list cons (cdr attrptr)))
+  (hash-map->list cons (cdar attrptr)))
 
 ;; (define-public type %vcomponent-get-type)
 (define-public type (make-procedure-with-setter

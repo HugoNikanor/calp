@@ -82,8 +82,7 @@
 
   `(a (@ (href "#" ,(UID ev))
          (class "hidelink"))
-      (div (@ (class "event CAL_" ,(html-attr (let ((l (attr (parent ev) 'NAME)))
-                                                (if (pair? l) (car l) l)))
+      (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
                 ,(when (time<? (attr ev 'DTSTART) time)
                    " continued")
                 ,(when (time<? (add-day time) (attr ev 'DTEND))
@@ -137,8 +136,7 @@
 (define (fmt-single-event ev)
   `(article (@ (id ,(UID ev))
                (class "eventtext CAL_bg_"
-                 ,(html-attr (let ((l (attr (parent ev) 'NAME)))
-                               (if (pair? l) (car l) l)))))
+                 ,(html-attr (attr (parent ev) 'NAME))))
             (h3 (a (@ (href "#" ,(time-link (attr ev 'DTSTART)))
                       (class "hidelink"))
                    ,(attr ev 'SUMMARY)))
@@ -235,9 +233,7 @@
            ,(include-css "static/style.css")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
                            (map (lambda (c)
-                                  (let* ((name (html-attr (if (pair? (attr c 'NAME))
-                                                              (car (attr c 'NAME))
-                                                              (attr c 'NAME))))
+                                  (let* ((name (html-attr (attr c 'NAME)))
                                          (bg-color (attr c 'COLOR))
                                          (fg-color (and=> (attr c 'COLOR)
                                                           calculate-fg-color)))

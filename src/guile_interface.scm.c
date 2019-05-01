@@ -54,18 +54,23 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 
 	free(key);
 
-	SCM val, proplist, attrlist = SCM_EOL;
+	SCM val, proplist;
+	SCM attrroot = scm_list_1(SCM_BOOL_F);
+	SCM attrlist = attrroot;
 	LLIST(strbuf) *triekeys, *trievals;
+
 	/* For every instance of a line */
 	FOR (LLIST, content_set, v, c) {
 		val = scm_from_strbuf(&v->key);
+
 		if (! scm_is_pair(val)) {
 			// TODO look into using a weak hash table instead
 
 			// TODO why is it an error to unprotect the object here?
 			// scm_from_strbuf should already have protected it...
 			// scm_gc_unprotect_object(v->key.scm);
-			val = scm_cons(val, SCM_MAKE_HASH_TABLE());
+			SCM htable = SCM_MAKE_HASH_TABLE();
+			val = scm_cons(val, htable);
 			v->key.scm = val;
 			scm_gc_protect_object(v->key.scm);
 
@@ -80,7 +85,7 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 					proplist = scm_cons(scm_from_strbuf(s), proplist);
 				}
 
-				scm_hashq_set_x(scm_cdr(val), scm_from_strbuf_symbol(k),
+				scm_hashq_set_x(htable, scm_from_strbuf_symbol(k),
 						scm_reverse(proplist));
 			}
 		}
@@ -88,12 +93,10 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 		attrlist = scm_cons(val, attrlist);
 	}
 
-	/* returns the car of list if list is one long. */
-	if (scm_to_int(scm_length(attrlist)) == 1) {
-		return SCM_CAR(attrlist);
-	} else {
-		return attrlist;
-	}
+	/* create circular list */
+	scm_set_cdr_x (attrroot, attrlist);
+
+	return attrlist;
 }
 
 SCM_DEFINE (vcomponent_child_count, "%vcomponent-child-count", 1, 0, 0,
