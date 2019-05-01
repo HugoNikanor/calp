@@ -159,9 +159,15 @@
                 ;; TODO the other VCALENDAR components might not get thrown away,
                 ;; this since I protect them from the GC in the C code.
                 ((vdir)
-                 (let ((accum (make-vcomponent)))
+                 (let ((accum (make-vcomponent))
+                       (ch (children root)))
                    (set! (type accum) "VCALENDAR")
-                   (for cal in (children root)
+
+                   (unless (null? ch)
+                    (for key in (attributes (car ch))
+                         (set! (attr accum key) (attr (car ch) key))))
+
+                   (for cal in ch
                         (for component in (children cal)
                              (case (type component)
                                ((VTIMEZONE)
@@ -180,10 +186,14 @@
 
         (parse-dates! component)
 
-        (set! (attr component "NAME")
-              (attr root      "NAME"))
-        (set! (attr component "COLOR")
-              (attr root      "COLOR"))
+        (unless (attr component "NAME")
+          (set! (attr component "NAME")
+                (or (attr component "X-WR-CALNAME")
+                    (attr root      "NAME"))))
+
+        (unless (attr component "COLOR")
+          (set! (attr component "COLOR")
+                (attr root      "COLOR")))
 
         ;; return
         component)))
