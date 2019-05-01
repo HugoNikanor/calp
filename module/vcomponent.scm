@@ -86,11 +86,16 @@
 
 (define-public attr* get-attr)
 
+(define (get-first c a)
+  (and=> (car (get-attr c a)) car))
+
+(define (set-first! c a v)
+  (and=> (car (get-attr c a))
+         (lambda (f) (set! (car f) v))))
+
 (define-public attr
   (make-procedure-with-setter
-   (lambda (c a) (and=> (car (get-attr c a)) car))
-   (lambda (c a v) (and=> (car (get-attr c a))
-                     (lambda (f) (set! (car f) v))))))
+   get-first set-first!))
 
 ;; value
 ;; (define-public v
