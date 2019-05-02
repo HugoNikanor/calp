@@ -20,3 +20,6 @@
         (string-append (dirname (dirname (dirname (current-filename))))
                        "/lib"))
 (load-extension "libguile-calendar" "init_lib")
+
+(define (%vcomponent-attribute-list comp)
+  (map car (hash-map->list cons (%vcomponent-get-hash-table comp))))

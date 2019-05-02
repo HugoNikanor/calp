@@ -119,7 +119,7 @@
                      %vcomponent-set-type!))
 (define-public parent %vcomponent-parent)
 (define-public push-child! %vcomponent-push-child!)
-(define-public (attributes component) (map string->symbol (%vcomponent-attribute-list component)))
+(define-public attributes  %vcomponent-attribute-list)
 
 (define-public copy-vcomponent %vcomponent-shallow-copy)
 
@@ -148,7 +148,7 @@
       (%vcomponent-make)
       (let* ((root (%vcomponent-make path))
              (component
-              (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
+              (case (or (attr root "X-HNH-SOURCETYPE") 'no-type)
                 ;; == Single ICS file ==
                 ;; Remove the abstract ROOT component,
                 ;; returning the wanted VCALENDAR component
@@ -166,7 +166,7 @@
                 ((vdir)
                  (let ((accum (make-vcomponent))
                        (ch (children root)))
-                   (set! (type accum) "VCALENDAR")
+                   (set! (type accum) 'VCALENDAR)
 
                    (unless (null? ch)
                     (for key in (attributes (car ch))

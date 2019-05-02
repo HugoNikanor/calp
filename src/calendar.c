@@ -49,8 +49,12 @@ int handle_file(vcomponent* cal, char* path) {
 	strbuf_load (&sourcetype, "X-HNH-SOURCETYPE"); 
 
 	const char* bname = basename(path);
-	vcomponent_push_val(cal, &name, scm_from_utf8_stringn (bname, strlen(bname)));
-	vcomponent_push_val(cal, &sourcetype, scm_from_utf8_symbol("file"));
+	vcomponent_push_val(cal, &name,
+			scm_cons (scm_from_utf8_stringn (bname, strlen(bname)),
+				SCM_BOOL_F));
+	vcomponent_push_val(cal, &sourcetype,
+			scm_cons (scm_from_utf8_symbol("file"),
+				SCM_BOOL_F));
 	char* resolved_path = realpath(path, NULL);
 	open_ics (resolved_path, cal);
 	free (resolved_path);
@@ -81,8 +85,12 @@ int handle_dir(vcomponent* cal, char* path) {
 	const char* bname = basename(path);
 
 	/* NAME is the `fancy' name of the calendar. */
-	vcomponent_push_val(cal, &name, scm_from_utf8_stringn(bname, strlen(bname)));
-	vcomponent_push_val(cal, &sourcetype, scm_from_utf8_symbol("vdir"));
+	vcomponent_push_val(cal, &name,
+			scm_cons(scm_from_utf8_stringn(bname, strlen(bname)),
+				SCM_BOOL_F));
+	vcomponent_push_val(cal, &sourcetype,
+			scm_cons(scm_from_utf8_symbol("vdir"),
+				SCM_BOOL_F));
 
 	FREE(strbuf)(&name);
 	FREE(strbuf)(&sourcetype);
@@ -110,7 +118,9 @@ int handle_dir(vcomponent* cal, char* path) {
 			fclose(f);
 			SNEW(strbuf, color);
 			strbuf_load (&color, "COLOR");
-			vcomponent_push_val(cal, &color, scm_from_utf8_stringn(info_buf, strlen(info_buf)));
+			vcomponent_push_val(cal, &color,
+					scm_cons(scm_from_utf8_stringn(info_buf, strlen(info_buf)),
+						SCM_BOOL_F));
 			FREE(strbuf)(&color);
 		} else if (strcmp (d->d_name, "displayname") == 0) {
 			f = fopen(resolved_path, "r");
@@ -127,7 +137,9 @@ int handle_dir(vcomponent* cal, char* path) {
 			 */
 			SNEW(strbuf, name);
 			strbuf_load (&name, "NAME");
-			vcomponent_push_val(cal, &name, scm_from_utf8_stringn(info_buf, strlen(info_buf)));
+			vcomponent_push_val(cal, &name,
+					scm_cons(scm_from_utf8_stringn(info_buf, strlen(info_buf)),
+						SCM_BOOL_F));
 			FREE(strbuf)(&name);
 		} else {
 			open_ics (resolved_path, cal);

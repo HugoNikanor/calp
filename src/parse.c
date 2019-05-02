@@ -46,9 +46,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 				 TRANSFER(&cline_val, &ctx.str);
 
 				/* Actuall end of line, handle value */
-				INFO_F("cp: %p", content_pair);
 				handle_kv(&cline_key, &cline_val, &content_pair, &ctx);
-				INFO_F("cp: %p", content_pair);
 				p_ctx = p_key;
 			} /* Else continue on current line */
 
@@ -154,7 +152,6 @@ int handle_kv (
 
 	strbuf_cap (key);
 	strbuf_cap (val);
-	INFO_F("%s: %s", key->mem, val->mem);
 
 	/*
 	 * The key being BEGIN means that we decend into a new component.

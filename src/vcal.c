@@ -47,7 +47,7 @@ INIT_F(vcomponent) {
 	// vcomponent_push_val (self, "X-HNH-FILENAME", "VIRTUAL");
 	SNEW(strbuf, s);
 	strbuf_load(&s, "X-HNH-SOURCETYPE");
-	vcomponent_push_val (self, &s, scm_from_utf8_symbol("virtual"));
+	vcomponent_push_val (self, &s, scm_cons(scm_from_utf8_symbol("virtual"), SCM_BOOL_F));
 	FREE(strbuf)(&s);
 	char* type = "VIRTUAL";
 	self->type = (char*) calloc(sizeof(*type), strlen(type) + 1);
@@ -85,7 +85,7 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 		 */
 		SNEW(strbuf, fname);
 		strbuf_load (&fname,  "X-HNH-FILENAME");
-		vcomponent_push_val (self, &fname, scm_from_utf8_stringn(filename, strlen(filename)));
+		vcomponent_push_val (self, &fname, scm_cons(scm_from_utf8_stringn(filename, strlen(filename)), SCM_BOOL_F));
 	}
 
 	self->type = (char*) calloc(sizeof(*type), strlen(type) + 1);
@@ -195,7 +195,7 @@ int vcomponent_push_val (vcomponent* comp, strbuf* key, SCM val) {
 
 	SCM k = scm_string_to_symbol (scm_from_utf8_stringn (key->mem, key->len));
 	// TODO this should cons
-	scm_hashq_set_x (comp->clines, k, val);
+	scm_hashq_set_x (comp->clines, k, scm_list_1 (val));
 
 	return 0;
 }

@@ -222,7 +222,7 @@ SCM_DEFINE(vcomponent_set_type_x, "%vcomponent-set-type!", 2, 0, 0,
 
 	if (comp->type) free (comp->type);
 
-	char* ntype = scm_to_utf8_stringn (type, NULL);
+	char* ntype = scm_to_utf8_stringn (scm_symbol_to_string(type), NULL);
 	comp->type = calloc(sizeof(*ntype), strlen(ntype) + 1);
 	strcpy(comp->type, ntype);
 
