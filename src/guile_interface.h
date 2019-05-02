@@ -24,5 +24,6 @@ SCM vcomponent_children (SCM);
 SCM vcomponent_typeof (SCM);
 
 SCM scm_from_vcomponent (vcomponent*);
+vcomponent* scm_to_vcomponent (SCM);
 
 #endif /* GUILE_INTERFACE_H */

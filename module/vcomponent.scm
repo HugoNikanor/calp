@@ -63,7 +63,7 @@
 (define (get-attr component attr)
   (%vcomponent-get-attribute
    component
-   (as-string attr)))
+   (as-symb attr)))
 
 (define (set-attr! component attr value)
   (set! (car (get-attr component (as-string attr)))
@@ -123,7 +123,7 @@
 
 (define-public copy-vcomponent %vcomponent-shallow-copy)
 
-(define-public filter-children! %vcomponent-filter-children!)
+;; (define-public filter-children! %vcomponent-filter-children!)
 
 (define-public (extract field)
   (lambda (e) (attr e field)))

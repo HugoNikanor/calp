@@ -51,8 +51,10 @@ typedef struct {
 	 * context stacks used since ICS files form a tree. key_stack is
 	 * only for sequrity purposes.
 	 */
-	LLIST(strbuf) key_stack;
-	LLIST(vcomponent) comp_stack;
+	// LLIST(strbuf) key_stack;
+	// LLIST(vcomponent) comp_stack;
+	SCM key_stack;
+	SCM comp_stack;
 
 	/* Number for unfolded lines
 	 * TODO remove this
@@ -91,7 +93,8 @@ int parse_file(char* filename, FILE* f, vcomponent* cal);
  */
 int handle_kv(
 		strbuf* key,
-		content_line*  cline,
+		strbuf* val,
+		SCM* content_pair,
 		parse_ctx*     ctx
 		);
 

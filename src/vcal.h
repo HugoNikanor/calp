@@ -5,12 +5,10 @@
 
 #include <libguile.h>
 
-#include "strbuf.h"
+#define SCM_PUSH_X(parent, child) parent = scm_cons(child, parent)
+#define SCM_POP_X(lst) lst = SCM_CDR(lst)
 
-#define TYPE strbuf
-#include "linked_list.h"
-// #include "trie.h"
-#undef TYPE
+#include "strbuf.h"
 
 /*
  * content_line:
@@ -22,25 +20,25 @@
  *     A parameter key, along with a list of all its values.
  */
 
-#define param_set LLIST(strbuf)
-
-#define TYPE param_set
-#include "trie.h"
-#undef TYPE
-
-#define T strbuf
-	#define V TRIE(param_set)
-		#include "pair.h"
-		/* left := content | right := params */
-		#define content_set PAIR(strbuf, TRIE(param_set))
-	#undef V
-#undef T
-
-#define TYPE content_set
-#include "linked_list.h"
-#undef TYPE
-
-#define content_line LLIST(content_set)
+// #define param_set LLIST(strbuf)
+// 
+// #define TYPE param_set
+// #include "trie.h"
+// #undef TYPE
+// 
+// #define T strbuf
+// 	#define V TRIE(param_set)
+// 		#include "pair.h"
+// 		/* left := content | right := params */
+// 		#define content_set PAIR(strbuf, TRIE(param_set))
+// 	#undef V
+// #undef T
+// 
+// #define TYPE content_set
+// #include "linked_list.h"
+// #undef TYPE
+// 
+// #define content_line LLIST(content_set)
 
 /*
  * Helper macros for accessing fields in
@@ -56,23 +54,25 @@
 /* TRIE(param_set) */
 #define CLINE_CUR_PARAMS(c) (& CLINE_CUR(c)->val)
 
-#define TYPE content_line
-#include "trie.h"
-#undef TYPE
+// #define TYPE content_line
+// #include "trie.h"
+// #undef TYPE
 
 typedef struct s_vcomponent vcomponent;
 
-#define TYPE vcomponent
-// #include "vector.h"
-#include "linked_list.h"
-#undef TYPE
+// #define TYPE vcomponent
+// // #include "vector.h"
+// #include "linked_list.h"
+// #undef TYPE
 
 struct s_vcomponent {
 	/* VCALENDAR, VEVENT, ... */
 	char* type;
 	vcomponent* parent;
-	TRIE(content_line) clines;
-	LLIST(vcomponent) components;
+	// TRIE(content_line) clines;
+	// LLIST(vcomponent) components;
+	SCM clines;
+	SCM components;
 
 	/*
 	 * Holds a Guile representation of this object. Used to always
@@ -90,12 +90,12 @@ INIT_F(vcomponent, const char* type);
 INIT_F(vcomponent, const char* type, const char* filename);
 FREE_F(vcomponent);
 
-content_line* get_attributes (vcomponent* ev, const char* key);
+// content_line* get_attributes (vcomponent* ev, const char* key);
 
-int add_content_line (vcomponent* ev, content_line* c);
+// int add_content_line (vcomponent* ev, SCM c);
 
-int vcomponent_push_val (vcomponent*, const char* key, const char* val);
-char* vcomponent_get_val (vcomponent*, const char* key);
+int vcomponent_push_val (vcomponent* comp, strbuf* key, SCM val);
+// char* vcomponent_get_val (vcomponent*, const char* key);
 
 /*
  * Appends ev to cal. Doesn't copy ev. So make sure that it wont go

@@ -24,7 +24,7 @@ X_FILES = $(SCM_C_FILES:.scm.c=.x)
 
 O_FILES = $(C_FILES:src/%.c=obj/%.o)
 
-all: parse $(SO_FILES) guild-stuff guile-none
+all: $(SO_FILES) guild-stuff guile-none
 
 guild-stuff:
 	guild compile module/vcomponent/primitive.scm

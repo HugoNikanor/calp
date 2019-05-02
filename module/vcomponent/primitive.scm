@@ -3,7 +3,7 @@
 (define-module (vcomponent primitive)
   #:export (%vcomponent-children
             %vcomponent-push-child!
-            %vcomponent-filter-children!
+            ;; %vcomponent-filter-children!
 
             %vcomponent-parent
 

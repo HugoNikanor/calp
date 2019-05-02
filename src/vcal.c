@@ -1,11 +1,16 @@
 #include "vcal.h"
 
 #include <string.h>
+#include <libguile.h>
 
-#define TYPE strbuf
-#include "linked_list.inc.h"
-#undef TYPE
+#include "guile_interface.h"
+#include "err.h"
 
+// #define TYPE strbuf
+// #include "linked_list.inc.h"
+// #undef TYPE
+
+#if 0
 #define TYPE param_set
 #include "trie.inc.h"
 #undef TYPE
@@ -29,13 +34,21 @@
 // #include "vector.inc.h"
 #include "linked_list.inc.h"
 #undef TYPE
+#endif
 
 INIT_F(vcomponent) {
-	INIT(TRIE(content_line), &self->clines);
-	INIT(LLIST(vcomponent), &self->components);
+	// INIT(TRIE(content_line), &self->clines);
+	// INIT(LLIST(vcomponent), &self->components);
+
+	self->clines = scm_make_hash_table(scm_from_ulong(32));
+	scm_gc_protect_object (self->clines);
+	self->components = SCM_EOL;
 
 	// vcomponent_push_val (self, "X-HNH-FILENAME", "VIRTUAL");
-	vcomponent_push_val (self, "X-HNH-SOURCETYPE", "virtual");
+	SNEW(strbuf, s);
+	strbuf_load(&s, "X-HNH-SOURCETYPE");
+	vcomponent_push_val (self, &s, scm_from_utf8_symbol("virtual"));
+	FREE(strbuf)(&s);
 	char* type = "VIRTUAL";
 	self->type = (char*) calloc(sizeof(*type), strlen(type) + 1);
 	strcpy(self->type, type);
@@ -54,8 +67,11 @@ INIT_F(vcomponent, const char* type) {
 
 INIT_F(vcomponent, const char* type, const char* filename) {
 
-	INIT(TRIE(content_line), &self->clines);
-	INIT(LLIST(vcomponent), &self->components);
+	// INIT(TRIE(content_line), &self->clines);
+	// INIT(LLIST(vcomponent), &self->components);
+	self->clines = scm_make_hash_table(scm_from_ulong(32));
+	scm_gc_protect_object (self->clines);
+	self->components = SCM_EOL;
 
 	if (filename != NULL) {
 		/*
@@ -67,7 +83,9 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 		 *   differently (but not where the original data can be fonud
 		 *   agani).
 		 */
-		vcomponent_push_val (self, "X-HNH-FILENAME", filename);
+		SNEW(strbuf, fname);
+		strbuf_load (&fname,  "X-HNH-FILENAME");
+		vcomponent_push_val (self, &fname, scm_from_utf8_stringn(filename, strlen(filename)));
 	}
 
 	self->type = (char*) calloc(sizeof(*type), strlen(type) + 1);
@@ -80,6 +98,7 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 	return 0;
 }
 
+#if 0
 content_line* get_attributes (vcomponent* ev, const char* key) {
 	size_t len = strlen(key) + 1;
 	char* cpy = (char*) (calloc(sizeof(*cpy), len));
@@ -90,22 +109,28 @@ content_line* get_attributes (vcomponent* ev, const char* key) {
 	free (cpy);
 	return ret;
 }
+#endif
 
 FREE_F(vcomponent) {
 	free(self->type);
 
+	/*
 	if (FREE(TRIE(content_line))(&self->clines) != 0) {
 		ERR("Error freeing vcomponent");
 	}
+	*/
 
-	FREE(LLIST(vcomponent))(&self->components);
+	// FREE(LLIST(vcomponent))(&self->components);
 
 	return 0;
 }
 
 int PUSH(vcomponent)(vcomponent* parent, vcomponent* child) {
 	child->parent = parent;
-	return PUSH(LLIST(vcomponent))(&parent->components, child);
+	SCM_PUSH_X (parent->components, scm_from_vcomponent(child));
+	scm_gc_protect_object (parent->components);
+	return 0;
+	// return PUSH(LLIST(vcomponent))(&parent->components, child);
 }
 
 int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
@@ -115,8 +140,13 @@ int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
 	return -1;
 }
 
+// TODO
 int vcomponent_copy(vcomponent* dest, vcomponent* src) {
+	ERR("Deep copy not implemented for vcomponent");
+	(void) dest;
+	(void) src;
 
+#if 0
 	DEEP_COPY(TRIE(content_line))(&dest->clines, &src->clines);
 
 	/* Children are the same objects */
@@ -125,12 +155,14 @@ int vcomponent_copy(vcomponent* dest, vcomponent* src) {
 	}
 
 	PUSH(vcomponent)(src->parent, dest);
+#endif
 
 	return 0;
 }
 
 FMT_F(vcomponent) {
 	int seek = 0;
+#if 0
 
 	for (int i = 0; i < 40; i++) fmtf("_");
 
@@ -142,11 +174,14 @@ FMT_F(vcomponent) {
 	FOR(LLIST, vcomponent, comp, &self->components) {
 		seek += FMT(vcomponent)(comp, buf + seek);
 	}
+#endif
+	seek += sprintf(buf + seek, "#<vcomponent %p>", self);
 
 	return seek;
 }
 
-int vcomponent_push_val (vcomponent* comp, const char* key, const char* val) {
+int vcomponent_push_val (vcomponent* comp, strbuf* key, SCM val) {
+	/*
 	NEW(content_line, cl);
 	NEW(content_set, cs);
 	strbuf_load(&cs->key, val);
@@ -156,11 +191,18 @@ int vcomponent_push_val (vcomponent* comp, const char* key, const char* val) {
 	strcpy (key_cpy, key);
 	PUSH(TRIE(content_line))(&comp->clines, key_cpy, cl);
 	free (key_cpy);
+	*/
+
+	SCM k = scm_string_to_symbol (scm_from_utf8_stringn (key->mem, key->len));
+	// TODO this should cons
+	scm_hashq_set_x (comp->clines, k, val);
 
 	return 0;
 }
 
+#if 0
 char* vcomponent_get_val (vcomponent* comp, const char* key) {
+	/*
 	char* key_cpy = calloc(sizeof(*key_cpy), strlen(key) + 1);
 	strcpy (key_cpy, key);
 	content_line* cl = GET(TRIE(content_line))(&comp->clines, key_cpy);
@@ -169,6 +211,10 @@ char* vcomponent_get_val (vcomponent* comp, const char* key) {
 	if (cl != NULL && cl->cval != NULL) {
 		return cl->cval->key.mem;
 	}
+	*/
 
-	return NULL;
+	return scm_i_string_chars (scm_hashq_ref (comp->clines, scm_from_utf8_symbol (key), NULL));
+
+	// return NULL;
 }
+#endif

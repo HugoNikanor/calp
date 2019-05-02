@@ -3,22 +3,13 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <libguile.h>
+#include "guile_interface.h"
 
 #include "macro.h"
 #include "vcal.h"
 
 #include "err.h"
-
-// #define TYPE vcomponent
-// #include "linked_list.inc.h"
-// #undef TYPE
-
-#define T strbuf
-#define V strbuf
-#include "pair.h"
-#include "pair.inc.h"
-#undef T
-#undef V
 
 /*
  * name *(";" param) ":" value CRLF
@@ -27,7 +18,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	part_context p_ctx = p_key;
 
 	SNEW(parse_ctx, ctx, f, filename);
-	PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
+	SCM_PUSH_X(ctx.comp_stack, scm_from_vcomponent(root));
 
 	/*
 	 * Create a content_line which we use as storage while we are
@@ -36,8 +27,13 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	 * {cline,param}_key is also temporary register used during
 	 * parsing.
 	 */
-	SNEW(content_line, cline);
+	// SNEW(content_line, cline);
+	SCM content_pair = scm_cons (SCM_BOOL_F, scm_make_hash_table (scm_from_ulong(32)));
+	scm_gc_protect_object (content_pair);
+
 	SNEW(strbuf, cline_key);
+	SNEW(strbuf, cline_val);
+
 	SNEW(strbuf, param_key);
 
 	char c;
@@ -47,9 +43,12 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		if (c == '\r' || c == '\n') {
 
 			if (fold(&ctx, c) > 0) {
+				 TRANSFER(&cline_val, &ctx.str);
+
 				/* Actuall end of line, handle value */
-				TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
-				handle_kv(&cline_key, &cline, &ctx);
+				INFO_F("cp: %p", content_pair);
+				handle_kv(&cline_key, &cline_val, &content_pair, &ctx);
+				INFO_F("cp: %p", content_pair);
 				p_ctx = p_key;
 			} /* Else continue on current line */
 
@@ -78,14 +77,13 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			if (p_ctx == p_param_value) {
 				/* save current parameter value. */
 
-				NEW(strbuf, s);
-				TRANSFER(s, &ctx.str);
+				// TODO resolve
+				scm_hashq_set_x (
+						scm_cdr (content_pair),
+						scm_string_to_symbol (scm_from_utf8_stringn (param_key.mem, param_key.len)),
+						scm_from_utf8_stringn (ctx.str.mem, ctx.str.len));
 
-				NEW(param_set, ps);
-				PUSH(param_set)(ps, s);
-
-				PUSH(TRIE(param_set))(CLINE_CUR_PARAMS(&cline), param_key.mem, ps);
-				strbuf_soft_reset (&param_key);
+				strbuf_soft_reset (&ctx.str);
 			}
 
 			/*
@@ -95,11 +93,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			 * parameters.
 			 */
 			if (p_ctx == p_key) {
-
 				TRANSFER(&cline_key, &ctx.str);
-
-				NEW(content_set, p);
-				PUSH(LLIST(content_set))(&cline, p);
 			}
 
 			if      (c == ':') p_ctx = p_value;
@@ -128,11 +122,12 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 * the end here.
 		 */
 
-		TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
-		handle_kv(&cline_key, &cline, &ctx);
+		// TODO
+		handle_kv(&cline_key, &cline_val, &content_pair, &ctx);
 
 	}
 
+	/*
 	FREE(content_line)(&cline);
 	FREE(strbuf)(&cline_key);
 	FREE(strbuf)(&param_key);
@@ -140,6 +135,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
 	assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
 	assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
+	*/
 
 	FREE(parse_ctx)(&ctx);
 
@@ -151,9 +147,14 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
  */
 int handle_kv (
 	strbuf* key,
-	content_line* cline,
+	strbuf* val,
+	SCM* content_pair,
 	parse_ctx* ctx
 	) {
+
+	strbuf_cap (key);
+	strbuf_cap (val);
+	INFO_F("%s: %s", key->mem, val->mem);
 
 	/*
 	 * The key being BEGIN means that we decend into a new component.
@@ -161,16 +162,14 @@ int handle_kv (
 	if (strbuf_c(key, "BEGIN")) {
 		/* key \in { VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE, ...  } */
 
-		/*
-		 * Take a copy of the name of the entered component, and store
-		 * it on the stack of component names.
-		 */
-		NEW(strbuf, s);
-		DEEP_COPY(strbuf)(s, CLINE_CUR_VAL(cline));
-		PUSH(LLIST(strbuf))(&ctx->key_stack, s);
+		NEW(vcomponent, e,
+				ctx->str.mem,
+				ctx->filename);
+
+		SCM_PUSH_X(ctx->key_stack, scm_string_to_symbol(scm_from_utf8_stringn(ctx->str.mem, ctx->str.len)));
 
 		/* Clear the value list in the parse content_line */
-		RESET(LLIST(content_set))(cline);
+		// RESET(LLIST(content_set))(cline);
 
 		/*
 		 * Create the new curent component, link it with the current
@@ -178,36 +177,40 @@ int handle_kv (
 		 * Finally push the new component on to the top of the
 		 * component stack.
 		 */
-		NEW(vcomponent, e,
-				s->mem,
-				ctx->filename);
-		vcomponent* parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
+
+		// vcomponent* parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
+		vcomponent* parent = scm_to_vcomponent(scm_car(ctx->comp_stack));
 		PUSH(vcomponent)(parent, e);
 
-		PUSH(LLIST(vcomponent))(&ctx->comp_stack, e);
+		// PUSH(LLIST(vcomponent))(&ctx->comp_stack, e);
+		SCM_PUSH_X(ctx->comp_stack, scm_from_vcomponent (e));
 
 	/*
 	 * The end of a component, go back along the stack to the previous
 	 * component.
 	 */
 	} else if (strbuf_c(key, "END")) {
-		strbuf* expected_key = POP(LLIST(strbuf))(&ctx->key_stack);
+		// strbuf* expected_key = POP(LLIST(strbuf))(&ctx->key_stack);
+		SCM expected_key = scm_car(ctx->key_stack);
 
-		if (strbuf_cmp(expected_key, CLINE_CUR_VAL(cline)) != 0) {
+		if (! scm_is_eq (expected_key,
+					scm_string_to_symbol (scm_from_utf8_stringn (ctx->str.mem, ctx->str.len)))) {
 
-			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
-					expected_key->mem,
-					CLINE_CUR_VAL(cline)->mem,
-					vcomponent_get_val(
-						PEEK(LLIST(vcomponent))(&ctx->comp_stack),
-						"X-HNH-FILENAME"));
-			PUSH(LLIST(strbuf))(&ctx->key_stack, expected_key);
+			// ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
+			// 		expected_key->mem,
+			// 		CLINE_CUR_VAL(cline)->mem,
+			// 		vcomponent_get_val(
+			// 			PEEK(LLIST(vcomponent))(&ctx->comp_stack),
+			// 			"X-HNH-FILENAME"));
+			// PUSH(LLIST(strbuf))(&ctx->key_stack, expected_key);
 
 			return -1;
 
 		} else {
-			FFREE(strbuf, expected_key);
-			POP(LLIST(vcomponent))(&ctx->comp_stack);
+			// FFREE(strbuf, expected_key);
+			// POP(LLIST(vcomponent))(&ctx->comp_stack);
+			SCM_POP_X (ctx->key_stack);
+			SCM_POP_X (ctx->comp_stack);
 		}
 
 	/*
@@ -216,28 +219,22 @@ int handle_kv (
 	 */
 	} else {
 
-		/*
-		 * cline is the value store used during parsing, meaning that
-		 * its values WILL mutate at a later point. Therefore we take
-		 * a copy of it here.
-		 */
-		NEW(content_line, c);
-		DEEP_COPY(content_line)(c, cline);
+		SNEW(strbuf, sbuf);
+		TRANSFER (&sbuf, val);
 
-		/*
-		 * The PUSH(TRIE(T)) method handles collisions by calling
-		 * RESOLVE(T). content_line resolves by merging the new value
-		 * into the old value, and freeing the new value's container.
-		 *
-		 * This means that |c| declared above might be destroyed
-		 * here.
-		 */
-		PUSH(TRIE(content_line))(
-				&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
-				key->mem, c);
+		SCM str = scm_from_utf8_stringn (sbuf.mem, sbuf.len);
+		FREE(strbuf) (&sbuf);
+		scm_set_car_x (*content_pair, str);
 
-		RESET(LLIST(content_set))(cline);
+		vcomponent* e = scm_to_vcomponent (scm_car (ctx->comp_stack));
+		vcomponent_push_val (e, key, *content_pair);
+
+		*content_pair = scm_cons (SCM_BOOL_F, scm_make_hash_table (scm_from_ulong(32)));
+		scm_gc_protect_object (*content_pair);
 	}
+
+	strbuf_reset(key);
+	strbuf_reset(&ctx->str);
 
 	return 0;
 }
@@ -277,8 +274,9 @@ int fold(parse_ctx* ctx, char c) {
 
 
 INIT_F(parse_ctx, FILE* f, char* filename) {
-	INIT(LLIST(strbuf), &self->key_stack);
-	INIT(LLIST(vcomponent), &self->comp_stack);
+	self->key_stack = SCM_EOL;
+	self->comp_stack = SCM_EOL;
+
 	self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
 	strcpy(self->filename, filename);
 	self->f = f;
@@ -296,8 +294,10 @@ INIT_F(parse_ctx, FILE* f, char* filename) {
 
 FREE_F(parse_ctx) {
 
-	FREE(LLIST(strbuf))(&self->key_stack);
-	FREE(LLIST(vcomponent))(&self->comp_stack);
+	// FREE(LLIST(strbuf))(&self->key_stack);
+	// FREE(LLIST(vcomponent))(&self->comp_stack);
+	self->key_stack = SCM_UNDEFINED;
+	self->comp_stack = SCM_UNDEFINED;
 	free(self->filename);
 
 	self->line = 0;

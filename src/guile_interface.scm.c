@@ -34,6 +34,16 @@ SCM_DEFINE (make_vcomponent, "%vcomponent-make", 0, 1, 0,
 	return scm_from_vcomponent (cal);
 }
 
+SCM_DEFINE_PUBLIC (scm_vcomponent_get_hash_table, "%vcomponent-get-hash-table", 1, 0, 0,
+		(SCM comp),
+		"")
+{
+	scm_assert_foreign_object_type (vcomponent_type, comp);
+	vcomponent* cal = scm_foreign_object_ref (comp, 0);
+
+	return cal->clines;
+}
+
 /*
  * Returns a line from a component.
  */
@@ -44,6 +54,9 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 	scm_assert_foreign_object_type (vcomponent_type, calendar);
 	vcomponent* cal = scm_foreign_object_ref (calendar, 0);
 
+	return scm_hashq_ref (cal->clines, attr, SCM_BOOL_F);
+
+#if 0
 	const char* key = scm_i_string_chars (attr);
 	content_line* c = get_attributes (cal, key);
 
@@ -105,6 +118,7 @@ SCM_DEFINE (vcomponent_get_attribute, "%vcomponent-get-attribute", 2, 0, 0,
 	scm_hashq_set_x (content_set_lists, ptr, attrlist);
 
 	return attrlist;
+#endif
 }
 
 SCM_DEFINE (vcomponent_child_count, "%vcomponent-child-count", 1, 0, 0,
@@ -113,7 +127,8 @@ SCM_DEFINE (vcomponent_child_count, "%vcomponent-child-count", 1, 0, 0,
 {
 	scm_assert_foreign_object_type (vcomponent_type, component);
 	vcomponent* c = scm_foreign_object_ref (component, 0);
-	return scm_from_size_t (SIZE(LLIST(vcomponent))(&c->components));
+	// return scm_from_size_t (SIZE(LLIST(vcomponent))(&c->components));
+	return scm_length (c->components);
 }
 
 SCM_DEFINE(vcomponent_children, "%vcomponent-children", 1, 0, 0,
@@ -123,13 +138,16 @@ SCM_DEFINE(vcomponent_children, "%vcomponent-children", 1, 0, 0,
 	scm_assert_foreign_object_type (vcomponent_type, component);
 	vcomponent* cal = scm_foreign_object_ref (component, 0);
 
-	SCM llist = SCM_EOL;
-	FOR (LLIST, vcomponent, v, &cal->components) {
-		llist = scm_cons(scm_from_vcomponent(v), llist);
-	}
-	return llist;
+	// SCM llist = SCM_EOL;
+	// FOR (LLIST, vcomponent, v, &cal->components) {
+	// 	llist = scm_cons(scm_from_vcomponent(v), llist);
+	// }
+	// return llist;
+
+	return cal->components;
 }
 
+#if 0
 SCM_DEFINE(vcomponent_filter_children_x, "%vcomponent-filter-children!",
 		2, 0, 0,
 		(SCM pred, SCM component),
@@ -150,6 +168,7 @@ SCM_DEFINE(vcomponent_filter_children_x, "%vcomponent-filter-children!",
 
 	return SCM_UNSPECIFIED;
 }
+#endif
 
 SCM_DEFINE(vcomponent_push_child_x, "%vcomponent-push-child!", 2, 0, 0,
                (SCM component, SCM child),
@@ -218,6 +237,13 @@ SCM scm_from_vcomponent(vcomponent* v) {
 	return v->scm;
 }
 
+vcomponent* scm_to_vcomponent (SCM s) {
+	scm_assert_foreign_object_type (vcomponent_type, s);
+	vcomponent* comp = scm_foreign_object_ref (s, 0);
+	return comp;
+}
+
+#if 0
 SCM_DEFINE(vcomponent_attr_list, "%vcomponent-attribute-list", 1, 0, 0,
 		(SCM component),
 		"Returns list of all keys in component.")
@@ -235,6 +261,7 @@ SCM_DEFINE(vcomponent_attr_list, "%vcomponent-attribute-list", 1, 0, 0,
 
 	return llist;
 }
+#endif
 
 SCM_DEFINE(vcomponent_shallow_copy, "%vcomponent-shallow-copy", 1, 0, 0,
            (SCM component),

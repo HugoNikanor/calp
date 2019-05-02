@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <libguile.h>
 
 /* basename */
 #include <libgen.h>
@@ -42,11 +43,19 @@ int handle_file(vcomponent* cal, char* path) {
 	INFO("Parsing a single file");
 
 	/* NAME is the `fancy' name of the calendar. */
-	vcomponent_push_val(cal, "NAME", basename(path));
-	vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "file");
+	SNEW(strbuf, name);
+	strbuf_load (&name, "NAME");
+	SNEW(strbuf, sourcetype);
+	strbuf_load (&sourcetype, "X-HNH-SOURCETYPE"); 
+
+	const char* bname = basename(path);
+	vcomponent_push_val(cal, &name, scm_from_utf8_stringn (bname, strlen(bname)));
+	vcomponent_push_val(cal, &sourcetype, scm_from_utf8_symbol("file"));
 	char* resolved_path = realpath(path, NULL);
 	open_ics (resolved_path, cal);
 	free (resolved_path);
+	FREE(strbuf)(&name);
+	FREE(strbuf)(&sourcetype);
 
 	return 0;
 }
@@ -64,10 +73,19 @@ int handle_dir(vcomponent* cal, char* path) {
 	/* Slash to guarantee we have at least one */
 	buf[path_len - 1] = '/';
 
+	SNEW(strbuf, name);
+	strbuf_load (&name, "NAME");
+	SNEW(strbuf, sourcetype);
+	strbuf_load (&sourcetype, "X-HNH-SOURCETYPE"); 
+
+	const char* bname = basename(path);
 
 	/* NAME is the `fancy' name of the calendar. */
-	vcomponent_push_val(cal, "NAME", basename(path));
-	vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "vdir");
+	vcomponent_push_val(cal, &name, scm_from_utf8_stringn(bname, strlen(bname)));
+	vcomponent_push_val(cal, &sourcetype, scm_from_utf8_symbol("vdir"));
+
+	FREE(strbuf)(&name);
+	FREE(strbuf)(&sourcetype);
 
 	struct dirent* d;
 	while ((d = readdir(dir)) != NULL) {
@@ -90,7 +108,10 @@ int handle_dir(vcomponent* cal, char* path) {
 				info_buf[read - 1] = '\0';
 
 			fclose(f);
-			vcomponent_push_val(cal, "COLOR", info_buf);
+			SNEW(strbuf, color);
+			strbuf_load (&color, "COLOR");
+			vcomponent_push_val(cal, &color, scm_from_utf8_stringn(info_buf, strlen(info_buf)));
+			FREE(strbuf)(&color);
 		} else if (strcmp (d->d_name, "displayname") == 0) {
 			f = fopen(resolved_path, "r");
 			read = getline(&info_buf, &size, f);
@@ -104,7 +125,10 @@ int handle_dir(vcomponent* cal, char* path) {
 			 * This works since *currently* values are returned in
 			 * reverse order
 			 */
-			vcomponent_push_val(cal, "NAME", info_buf);
+			SNEW(strbuf, name);
+			strbuf_load (&name, "NAME");
+			vcomponent_push_val(cal, &name, scm_from_utf8_stringn(info_buf, strlen(info_buf)));
+			FREE(strbuf)(&name);
 		} else {
 			open_ics (resolved_path, cal);
 		}
