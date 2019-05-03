@@ -8,6 +8,7 @@
                 find-min
                 catch-multiple
                 quote?
+                re-export-modules
                 tree-map let-lazy)
   #:replace (let* set! define-syntax
                   when unless if))
@@ -316,3 +317,11 @@
         (else
          (cons (proc (car dotted-list))
                (map/dotted proc (cdr dotted-list))))))
+
+(define-syntax re-export-modules
+  (syntax-rules ()
+    ((_ (mod ...) ...)
+     (begin
+       (module-use! (module-public-interface (current-module))
+                    (resolve-interface '(mod ...)))
+       ...))))
