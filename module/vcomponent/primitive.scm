@@ -13,6 +13,8 @@
 
             %vcomponent-get-attribute
             %vcomponent-attribute-list
+            %vcomponent-get-hash-table
+
 
             %vcomponent-shallow-copy))
 

@@ -160,7 +160,7 @@ int handle_kv (
 		/* key \in { VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE, ...  } */
 
 		NEW(vcomponent, e,
-				ctx->str.mem,
+				val->mem,
 				ctx->filename);
 
 		SCM_PUSH_X(ctx->key_stack, scm_string_to_symbol(scm_from_utf8_stringn(ctx->str.mem, ctx->str.len)));

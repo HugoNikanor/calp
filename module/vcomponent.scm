@@ -40,6 +40,7 @@
        (set! (attr ev "DTSTART") (date->time-utc date)
              (attr ev "DTEND")   (date->time-utc end-date))
 
+       #;
        (when (prop (attr* ev 'DTSTART) 'TZID)
          (set! (zone-offset date) (get-tz-offset ev)
                (attr ev 'DTSTART) (date->time-utc date)
@@ -65,9 +66,9 @@
    component
    (as-symb attr)))
 
-(define (set-attr! component attr value)
-  (set! (car (get-attr component (as-string attr)))
-        value))
+;; (define (set-attr! component attr value)
+;;   (set! (car (get-attr component (as-string attr)))
+;;         value))
 
 (define-public value caar)
 (define-public next cdr)
@@ -87,11 +88,14 @@
 (define-public attr* get-attr)
 
 (define (get-first c a)
-  (and=> (car (get-attr c a)) car))
+  (and=> (get-attr c a) caar))
 
 (define (set-first! c a v)
-  (and=> (car (get-attr c a))
-         (lambda (f) (set! (car f) v))))
+  (let ((g (get-attr c a)))
+    (if g
+        (set! (caar g) v)
+        (hashq-set! (%vcomponent-get-hash-table c)
+                    a (list (cons v (make-hash-table)))))))
 
 (define-public attr
   (make-procedure-with-setter

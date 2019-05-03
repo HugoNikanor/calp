@@ -81,7 +81,7 @@
                   (and (time<=? start (attr ev 'DTSTART))
                        (time<? (attr ev 'DTSTART) end))))
               (attr (find-tz (parent ev)
-                             (car (prop (attr* ev 'DTSTART) 'TZID)))
+                             (prop (attr* ev 'DTSTART) 'TZID))
                     'X-HNH-TZSET))))
     (if (not ret)
         0 (parse-offset (attr (car ret) 'TZOFFSETTO)))))

@@ -142,9 +142,6 @@ int DEEP_COPY(vcomponent)(vcomponent* a, vcomponent* b) {
 
 // TODO
 int vcomponent_copy(vcomponent* dest, vcomponent* src) {
-	ERR("Deep copy not implemented for vcomponent");
-	(void) dest;
-	(void) src;
 
 #if 0
 	DEEP_COPY(TRIE(content_line))(&dest->clines, &src->clines);
@@ -156,6 +153,16 @@ int vcomponent_copy(vcomponent* dest, vcomponent* src) {
 
 	PUSH(vcomponent)(src->parent, dest);
 #endif
+	SCM proc = scm_c_eval_string("(lambda (dest) (lambda (k v) (hashq-set! dest k v)))");
+	SCM iproc = scm_call_1 (proc, dest->clines);
+	scm_hash_for_each (iproc, src->clines);
+
+	SCM lst = src->components;
+	while (! scm_is_null (lst)) {
+		PUSH(vcomponent)(dest, scm_to_vcomponent(SCM_CAR(lst)));
+	}
+
+	PUSH(vcomponent)(src->parent, dest);
 
 	return 0;
 }
