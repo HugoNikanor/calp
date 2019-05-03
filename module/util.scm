@@ -10,7 +10,7 @@
                 quote?
                 tree-map let-lazy)
   #:replace (let* set! define-syntax
-                  when unless))
+                  when unless if))
 
 ((@ (guile) define-syntax) define-syntax
   (syntax-rules ()
@@ -21,7 +21,24 @@
     ((_ otherwise ...)
      ((@ (guile) define-syntax) otherwise ...))))
 
-(define-public unspecified (if #f #f))
+(define-public *unspecified* ((@ (guile) if) #f #f))
+
+
+
+(define-syntax-rule (when pred body ...)
+  (if pred (begin body ...) '()))
+
+(define-syntax-rule (unless pred body ...)
+  (if pred '() (begin body ...)))
+
+(define-syntax if
+  (syntax-rules ()
+   [(_ p t)
+    (when p t)]
+
+   [(_ p t f ...)
+    ((@ (guile) if) p t
+     (begin f ...))]))
 
 
 
@@ -30,7 +47,6 @@
 (define-public symbol-upcase (compose string->symbol string-upcase symbol->string))
 
 (define-public symbol-downcase (compose string->symbol string-downcase symbol->string))
-
 
 (define-syntax for
   (syntax-rules (in)
@@ -76,9 +92,6 @@
                                (append public-fields private-fields))
        ,@(map (lambda (field) `(export ,field))
               public-fields))))
-
-
-
 
 
 
@@ -142,13 +155,6 @@
 
 
 
-(define-syntax-rule (when pred body ...)
-  (if pred (begin body ...) '()))
-
-(define-syntax-rule (unless pred body ...)
-  (if pred '() (begin body ...)))
-
-
 
 ;; Allow set to work on multiple values at once,
 ;; similar to Common Lisp's @var{setf}
@@ -176,7 +182,7 @@
 ;; Like set!, but applies a transformer on the already present value.
 (define-syntax mod!
   (syntax-rules (=)
-    ((_) unspecified)
+    ((_) *unspecified*)
     ((_ field = proc)
      (modf% field = proc))
 
