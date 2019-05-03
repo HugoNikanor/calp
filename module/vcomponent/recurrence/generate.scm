@@ -7,7 +7,7 @@
   #:use-module (ice-9 match)
 
   #:use-module (util)
-  #:use-module (vcomponent)
+  #:use-module (vcomponent base)
   #:use-module (vcomponent timezone)
   #:use-module (vcomponent recurrence internal)
   #:use-module (vcomponent recurrence parse)

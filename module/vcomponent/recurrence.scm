@@ -1,5 +1,5 @@
 (define-module (vcomponent recurrence)
-  #:use-module (vcomponent)
+  #:use-module (vcomponent base)
   #:use-module (vcomponent recurrence generate)
   #:re-export (generate-recurrence-set)
   #:export (repeating?))

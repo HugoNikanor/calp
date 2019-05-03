@@ -1,0 +1,11 @@
+(define-module (vcomponent util)
+  #:use-module (vcomponent util)
+  #:export (search))
+
+(define-public (search cal term)
+  (cdr (let ((events (filter (lambda (ev) (eq? 'VEVENT (type ev)))
+                             (children cal))))
+         (find (lambda (ev) (string-contains-ci (car ev) term))
+               (map cons (map (extract "SUMMARY")
+                              events)
+                    events)))))

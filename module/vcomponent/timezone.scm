@@ -1,5 +1,5 @@
 (define-module (vcomponent timezone)
-  :use-module (vcomponent)
+  :use-module (vcomponent base)
   :use-module ((srfi srfi-1) :select (find))
   :use-module (srfi srfi-19)
   :use-module (srfi srfi-19 util)
