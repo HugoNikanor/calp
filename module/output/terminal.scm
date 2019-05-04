@@ -56,69 +56,69 @@
   (define-values (height width) (get-terminal-size))
 
   (while #t
-    (let ((events
-           (group->event-list
-            (stream-car
-             ;; TODO reusing the same grouping causes it to lose events.
-             ;; I currently have no idea why, but it's BAD.
-             (get-groups-between (group-stream event-stream)
-                                 (time-utc->date time) (time-utc->date time))))))
+    ;; TODO reusing the same grouping causes it to lose events.
+    ;; I currently have no idea why, but it's BAD.
+    (let ((groups (get-groups-between (group-stream event-stream)
+                                      (time-utc->date time) (time-utc->date time))))
+      (let ((events
+             (if (stream-null? groups)
+                 '() (group->event-list (stream-car groups)))))
 
-      (cls)
-      (display-calendar-header! (time-utc->date time))
+        (cls)
+        (display-calendar-header! (time-utc->date time))
 
-      (let* ((date-width 20)
-             (location-width 15)
-             (summary-width (- width date-width location-width 6)))
-        (displayln
-         (box-top #\┬ #\─ date-width (+ summary-width 2) (1+ location-width)))
-        (display-event-table
-         events
-         #:cur-event cur-event
-         #:location-width location-width
-         #:summary-width summary-width)
-        (displayln
-         (box-top #\┴ #\─ date-width (+ summary-width 2) (1+ location-width))))
+        (let* ((date-width 20)
+               (location-width 15)
+               (summary-width (- width date-width location-width 6)))
+          (displayln
+           (box-top #\┬ #\─ date-width (+ summary-width 2) (1+ location-width)))
+          (display-event-table
+           events
+           #:cur-event cur-event
+           #:location-width location-width
+           #:summary-width summary-width)
+          (displayln
+           (box-top #\┴ #\─ date-width (+ summary-width 2) (1+ location-width))))
 
-      (unless (null? events)
-        (let ((ev (list-ref events cur-event)))
-          (format #t "~a~%~%  ~a~%~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
-                  (attr ev 'X-HNH-FILENAME)
-                  (attr ev 'SUMMARY)
-                  (or (and=> (attr ev 'LOCATION)
-                             (cut string-append "\x1b[1mPlats:\x1b[m " <> "\n")) "")
-                  (time->string (attr ev 'DTSTART) "~1 ~3")
-                  (time->string (attr ev 'DTEND) "~1 ~3")
-                  (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
-                                               #:width (min 70 width))
-                                    (- height 8 5 (length events) 5))))))
+        (unless (null? events)
+          (let ((ev (list-ref events cur-event)))
+            (format #t "~a~%~%  ~a~%~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
+                    (attr ev 'X-HNH-FILENAME)
+                    (attr ev 'SUMMARY)
+                    (or (and=> (attr ev 'LOCATION)
+                               (cut string-append "\x1b[1mPlats:\x1b[m " <> "\n")) "")
+                    (time->string (attr ev 'DTSTART) "~1 ~3")
+                    (time->string (attr ev 'DTEND) "~1 ~3")
+                    (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
+                                                 #:width (min 70 width))
+                                      (- height 8 5 (length events) 5))))))
 
-      (let ((char (read-char)))
-        ;; (format (current-error-port)
-        ;;         "c = ~c (~d)~%" char (char->integer char))
-        (case char
-          ((#\L #\l)
-           (set! time (add-day time)
-                 cur-event 0))
-          ((#\h #\H)
-           (set! time (remove-day time)
-                 cur-event 0))
-          ((#\t)
-           (set! time (date->time-utc (drop-time (current-date)))
-                 cur-event 0))
-          ((#\j #\J) (unless (= cur-event (1- (length events)))
-		       (mod! cur-event 1+)))
-          ((#\k #\K) (unless (= cur-event 0)
-		       (mod! cur-event 1-)))
-          ((#\p) (print-vcomponent (list-ref events cur-event)
-                                   (current-error-port)))
-	  ((#\g) (set! cur-event 0))
-	  ((#\G) (set! cur-event (1- (length events)))))
+        (let ((char (read-char)))
+          ;; (format (current-error-port)
+          ;;         "c = ~c (~d)~%" char (char->integer char))
+          (case char
+            ((#\L #\l)
+             (set! time (add-day time)
+                   cur-event 0))
+            ((#\h #\H)
+             (set! time (remove-day time)
+                   cur-event 0))
+            ((#\t)
+             (set! time (date->time-utc (drop-time (current-date)))
+                   cur-event 0))
+            ((#\j #\J) (unless (= cur-event (1- (length events)))
+                         (mod! cur-event 1+)))
+            ((#\k #\K) (unless (= cur-event 0)
+                         (mod! cur-event 1-)))
+            ((#\p) (print-vcomponent (list-ref events cur-event)
+                                     (current-error-port)))
+            ((#\g) (set! cur-event 0))
+            ((#\G) (set! cur-event (1- (length events)))))
 
-        (when (or (eof-object? char)
-                  (memv char (list #\q (ctrl #\C))))
-          (break)))
-      )))
+          (when (or (eof-object? char)
+                    (memv char (list #\q (ctrl #\C))))
+            (break)))
+        ))))
 
 (define options
   '((date (value #t) (single-char #\d))))

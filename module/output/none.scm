@@ -9,9 +9,8 @@
 
 (define (none-main calendars events args)
   (define date (drop-time (current-date)))
-  (group->event-list
-   (stream-car
-    ;; TODO reusing the same grouping causes it to lose events.
-    ;; I currently have no idea why, but it's BAD.
-    (get-groups-between (group-stream events)
-                        date date))))
+  (let ((groups (get-groups-between (group-stream events)
+                                    date date)))
+    (unless (stream-null? groups)
+      (group->event-list
+       (stream-car groups)))))
