@@ -225,6 +225,10 @@
 			#FFF0 90%, #0007 100%);
 }
 
+.event.generated {
+	background-color: #55FF5550;
+}
+
 .selected {
 	width: 100% !important;
 	left: 0 !important;

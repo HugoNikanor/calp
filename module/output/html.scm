@@ -230,9 +230,10 @@
            (meta (@ (name viewport)
                     (content "width=device-width, initial-scale=0.5")))
            (meta (@ (name description)
-                    (content "Calendar for the dates between " (date->string start)
-                             " and " (date->string end))))
+                    (content "Calendar for the dates between " ,(date->string start)
+                             " and " ,(date->string end))))
            ,(include-css "static/style.css")
+           ;; (script (@ (src "static/script.js")) "")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
                            (map (lambda (c)
                                   (let* ((name (html-attr (attr c 'NAME)))
