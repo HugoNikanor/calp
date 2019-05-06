@@ -8,22 +8,10 @@
              (srfi srfi-88)
              (ice-9 ftw)
              (ice-9 regex)
-             (ice-9 rdelim))
+             (ice-9 rdelim)
+             (glob))
 
-(define (p str)
-  "Pathify string."
-  (regexp-substitute/global
-   #f "~[^/]*" str
-   'pre (lambda (_) (getenv "HOME")) 'post))
-
-(define (filename-hidden? str)
-  (char=? #\. (string-ref str 0)))
-
-(calendar-files
- (let ((path #; "/mnt/arch/home/hugo/.calendars/"
-        (p "~/.calendars/")))
-   (map (cut string-append path <>)
-        (scandir path (negate filename-hidden?)))))
+(calendar-files (glob "~/.calendars/*"))
 
 ;;; TODO possibly replace with propper lookup
 (define my-courses
