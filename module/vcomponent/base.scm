@@ -5,7 +5,6 @@
   :use-module (vcomponent primitive)
   :use-module ((ice-9 optargs) :select (define*-public)))
 
-
 (define (get-attr component attr)
   (%vcomponent-get-attribute
    component
@@ -14,6 +13,8 @@
 (define (set-attr! component attr value)
   (set! (car (get-attr component (as-string attr)))
         value))
+
+(define-public value caar)
 
 (define-public (values-left-count attr-list)
   (length (take-while identity attr-list)))
