@@ -10,10 +10,20 @@
              (ice-9 regex)
              (ice-9 rdelim))
 
+(define (p str)
+  "Pathify string."
+  (regexp-substitute/global
+   #f "~[^/]*" str
+   'pre (lambda (_) (getenv "HOME")) 'post))
+
+(define (filename-hidden? str)
+  (char=? #\. (string-ref str 0)))
+
 (calendar-files
- (let ((path (string-append (getenv "HOME") "/.calendars/")))
+ (let ((path #; "/mnt/arch/home/hugo/.calendars/"
+        (p "~/.calendars/")))
    (map (cut string-append path <>)
-        (scandir path (lambda (str) (not (char=? #\. (string-ref str 0))))))))
+        (scandir path (negate filename-hidden?)))))
 
 ;;; TODO possibly replace with propper lookup
 (define my-courses
