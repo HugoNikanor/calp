@@ -325,3 +325,11 @@
        (module-use! (module-public-interface (current-module))
                     (resolve-interface '(mod ...)))
        ...))))
+
+(define-public (assq-merge a b)
+  (fold (lambda (entry alist)
+          (let* (((k . v) entry)
+                 (o (assq-ref alist k)))
+            (assq-set! alist k (append v (or o '())))))
+        (copy-tree a) b))
+

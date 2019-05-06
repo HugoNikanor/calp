@@ -37,6 +37,10 @@ attribute set to 0. Can also be seen as \"Start of day\""
               ((date-second) 0)
               ((date-nanosecond) 0)))
 
+
+(define-public (start-of-month date)
+  (set-fields date ((date-day) 1)))
+
 (define-public (start-of-day* time)
   (date->time-utc (drop-time (time-utc->date time))))
 
