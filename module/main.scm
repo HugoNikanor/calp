@@ -18,6 +18,7 @@
              (output terminal)
              (output none)
              (output text)
+             (server)
 
              (ice-9 getopt-long)
 
@@ -83,7 +84,8 @@
                     ((case (string->symbol (car ropt))
                        ((none) none-main)
                        ((html) html-main)
-                       ((term) terminal-main))
+                       ((term) terminal-main)
+                       ((server) server-main))
                      c e ropt)))
                 #:calendar-files (or (and=> (option-ref opts 'file #f)
                                             list)

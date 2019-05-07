@@ -211,17 +211,12 @@
                            (cons `(tr ,@w)
                                  (recur rest)))))))))
 
-(define-public (html-main calendars events args)
-
-  (define opts (getopt-long args opt-spec))
-
-  (define start (parse-freeform-date (option-ref opts 'from "2019-04-15")))
-  (define end   (parse-freeform-date (option-ref opts 'to   "2019-05-10")))
-
+(define-public (html-generate calendars events start end)
   (define evs (get-groups-between (group-stream events)
                                   start end))
 
   ;; (display "<!doctype HTML>") (newline)
+
   ((@ (sxml simple) sxml->xml)
    `(html (@ (lang sv))
           (head
@@ -259,3 +254,13 @@
                                              (current-date))))
                        (div (@ (class "eventlist"))
                             ,@(stream->list (stream-map fmt-day evs)))))))))
+
+(define-public (html-main calendars events args)
+  (define opts (getopt-long args opt-spec))
+  (define start (parse-freeform-date (option-ref opts 'from "2019-04-15")))
+  (define end   (parse-freeform-date (option-ref opts 'to   "2019-05-10")))
+
+
+  (html-generate calendars events start end))
+
+
