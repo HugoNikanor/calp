@@ -9,7 +9,10 @@
          (pointer->string epath) eerrno))
 
 (eval-when (expand)
- (read-enable 'curly-infix))
+  (define has-curly-infix
+    (memv 'curly-infix (read-options)))
+  (read-enable 'curly-infix))
+
 (define << ash)
 
 (define	GLOB_ERR	{1 << 0})#| Return on read errors.  |#
@@ -29,21 +32,31 @@
 (define GLOB_ONLYDIR	 {1 << 13})#| Match only directories.  |#
 (define GLOB_TILDE_CHECK {1 << 14})#| Like GLOB_TILDE but return an error
 				      if the user name is not available.  |#
+(eval-when (expand)
+  (unless has-curly-infix
+    (read-disable 'curly-infix)))
 
-(define glob%
+(define-values (glob% globfree%)
   (let ((this (dynamic-link)))
-   (pointer->procedure
-    int (dynamic-func "glob" this) `(* ,int * *))))
+    (values
+     (pointer->procedure int  (dynamic-func "glob" this)     `(* ,int * *))
+     (pointer->procedure void (dynamic-func "globfree" this) '(*)))))
+
+(define glob-flags (logior GLOB_MARK GLOB_BRACE GLOB_TILDE_CHECK))
 
 (define (glob str)
   (let ((bv (make-bytevector 100)))
-    (let*  ((globptr (glob% (string->pointer str)
-                            (logior GLOB_MARK GLOB_BRACE GLOB_TILDE_CHECK)
+    (let*  ((globret (glob% (string->pointer str)
+                            glob-flags
                             (procedure->pointer int glob-err (list '* int))
-                            (bytevector->pointer bv)))
-            (globstr (parse-c-struct (bytevector->pointer bv) (list size_t '* size_t))))
+                            (bytevector->pointer bv))))
+      (unless (zero? globret)
+        (error "Globret errror ~a" globret))
+      (let* ((globstr (parse-c-struct (bytevector->pointer bv) (list size_t '* size_t)))
+             ;; TODO the 'u64 requires that the system has 64 bit wide pointers...
+             (strvec (pointer->bytevector (cadr globstr) (car globstr) 0 'u64))
+             (ret (map (compose pointer->string make-pointer)
+                       (bytevector->uint-list strvec (native-endianness) (sizeof '*)))))
 
-      ;; TODO the 'u64 requires that the system has 64 bit wide pointers...
-      (let ((strvec (pointer->bytevector (cadr globstr) (car globstr) 0 'u64)))
-        (map (compose pointer->string make-pointer)
-             (bytevector->uint-list strvec (native-endianness) (sizeof '*)))))))
+        (globfree% (bytevector->pointer bv))
+        ret))))

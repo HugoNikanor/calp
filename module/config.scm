@@ -6,7 +6,6 @@
 
 (use-modules (srfi srfi-26)
              (srfi srfi-88)
-             (ice-9 ftw)
              (ice-9 regex)
              (ice-9 rdelim)
              (glob))
