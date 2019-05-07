@@ -9,6 +9,7 @@
                 catch-multiple
                 quote?
                 re-export-modules
+                use-modules*
                 tree-map let-lazy)
   #:replace (let* set! define-syntax
                   when unless if))
@@ -333,3 +334,11 @@
             (assq-set! alist k (append v (or o '())))))
         (copy-tree a) b))
 
+
+(define-macro (use-modules* . forms)
+  `(use-modules
+    ,@(concatenate
+       (map (lambda (form)
+              (map (lambda (sub) (list (car form) sub))
+                   (cadr form)))
+            forms))))
