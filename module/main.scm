@@ -17,6 +17,7 @@
              (output html)
              (output terminal)
              (output none)
+             (output text)
 
              (ice-9 getopt-long)
 
@@ -46,7 +47,9 @@
 
 (define options
   '((mode (value #t) (single-char #\m))
-    (files (value #t) (single-char #\f))
+    (file (value #t) (single-char #\f))
+    (output (value #t) (single-char #\o))
+    (format (value #f))
     (statprof (value optional))))
 
 (define (ornull a b)
@@ -65,16 +68,24 @@
              (thunk))))
 
      (lambda ()
-       (init
-        (lambda (c e)
-          (let ((ropt (ornull (option-ref opts '() '())
-                              '("term"))))
-            ((case (string->symbol (car ropt))
-               ((none) none-main)
-               ((html) html-main)
-               ((term) terminal-main))
-             c e ropt)))
-        #:calendar-files (or (and=> (option-ref opts 'files #f)
-                                    list)
-                             (calendar-files)))))
-    (newline)))
+       (with-output-to-port (open-output-port (option-ref opts 'output "-"))
+         (lambda ()
+           (if (option-ref opts 'format #f)
+               (for-each (lambda (l) (display l) (newline))
+                         (flow-text
+                          (with-input-from-port (open-input-port (option-ref opts 'file "-"))
+                            (@ (ice-9 rdelim) read-string))))
+
+               (init
+                (lambda (c e)
+                  (let ((ropt (ornull (option-ref opts '() '())
+                                      '("term"))))
+                    ((case (string->symbol (car ropt))
+                       ((none) none-main)
+                       ((html) html-main)
+                       ((term) terminal-main))
+                     c e ropt)))
+                #:calendar-files (or (and=> (option-ref opts 'file #f)
+                                            list)
+                                     (calendar-files))))
+           (newline)))))))
