@@ -245,10 +245,14 @@
                                 calendars))))
           (body
            (div (@ (class "root"))
-                (main (@ (class "calendar"))
+                (main
+                 (div (@ (class "calendar"))
                       ,(time-marker-div)
                       (div (@ (class "days"))
                            ,@(stream->list (stream-map lay-out-day evs))))
+                 (footer (span "Page generated " ,(date->string (current-date)))
+                         (span (a (@ (href "https://git.hornquist.se/calparse"))
+                                  "Source Code"))))
                 (aside (@ (class "sideinfo"))
                        (div (@ (class "about"))
                             (div ,(cal-table (start-of-month start)
