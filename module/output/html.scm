@@ -127,7 +127,7 @@
 (define (fmt-time-span ev)
   (let* ((fmt (if (time<? (time-difference (attr ev 'DTEND) (attr ev 'DTSTART))
                           (make-duration (* 3600 24)))
-                  "~H:~M" "~Y-~m-~d ~H:~M"))
+                  "~H:~M" "~Y-~m-~d ~H:~M"))
          (start (time->string (attr ev 'DTSTART) fmt))
          (end (time->string (attr ev 'DTEND) fmt)))
     (values start end)))

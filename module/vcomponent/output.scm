@@ -33,7 +33,7 @@
                    (make-string depth #\:)
                    key
                    (concatenate (hash-map->list list (cdr at)))
-                   (v at))))
+                   (value at))))
     (if descend?
      (for-each (lambda (e) (print-vcomponent e port #:descend? #t #:depth (1+ depth)))
                (children comp)))))
