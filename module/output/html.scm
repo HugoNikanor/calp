@@ -173,6 +173,7 @@
                                (cdr p)))
                        param)) ,d)))
 
+
 ;; 0 indexed, starting at monday.
 (define (week-day date)
   (modulo (1- (date-week-day date)) 7))
@@ -211,6 +212,12 @@
                            (cons `(tr ,@w)
                                  (recur rest)))))))))
 
+(define *repo-url* "https://git.hornquist.se")
+
+(define (get-git-version)
+ (read ((@ (ice-9 popen) open-input-pipe)
+        "git rev-parse HEAD")))
+
 (define-public (html-generate calendars events start end)
   (define evs (get-groups-between (group-stream events)
                                   start end))
@@ -246,8 +253,12 @@
                       (div (@ (class "days"))
                            ,@(stream->list (stream-map lay-out-day evs))))
                  (footer (span "Page generated " ,(date->string (current-date)))
-                         (span (a (@ (href "https://git.hornquist.se/calparse"))
-                                  "Source Code"))))
+                         (span (a (@ (href ,*repo-url* "/calparse"))
+                                  "Source Code"))
+                         ,(let* ((hash (get-git-version))
+                                 (url (format #f "~a/calparse/commit/?id=~a"
+                                              *repo-url* hash)))
+                            `(span "Version " (a (@ (href ,url)) ,hash)))))
                 (aside (@ (class "sideinfo"))
                        (div (@ (class "about"))
                             (div ,(cal-table (start-of-month start)
