@@ -215,8 +215,9 @@
 (define *repo-url* "https://git.hornquist.se")
 
 (define (get-git-version)
- (read ((@ (ice-9 popen) open-input-pipe)
-        "git rev-parse HEAD")))
+  (symbol->string
+   (read ((@ (ice-9 popen) open-input-pipe)
+          "git rev-parse HEAD"))))
 
 (define-public (html-generate calendars events start end)
   (define evs (get-groups-between (group-stream events)
