@@ -51,7 +51,8 @@
                      (cdr (iota (1+ (length intersect)))))))))))
 
 (define-macro (make-routes . routes)
-  `(lambda (request body)
+
+  `(lambda (request body . state)
      (let ((r:method  (request-method  request))
            (r:uri     (request-uri     request))
            (r:version (request-version request))
@@ -65,9 +66,20 @@
              (r:path     (uri-path     r:uri))
              (r:query    (uri-query    r:uri))
              (r:fragment (uri-fragment r:uri)))
-         (call/ec (lambda (return)
-                    (apply
-                     (cond ,@(map generate-case routes)
-                           (else (lambda* _ (return (build-response #:code 404)
-                                                    "404 Not Fonud"))))
-                     (parse-query r:query))))))))
+
+
+         (call-with-values
+             (lambda ()
+              (call/ec (lambda (return)
+                         (apply
+                          (cond ,@(map generate-case routes)
+                                (else (lambda* _ (return (build-response #:code 404)
+                                                         "404 Not Fonud"))))
+                          (append
+                           (parse-query r:query)
+
+                           (when (memv 'application/x-www-form-urlencoded
+                                    (or (assoc-ref r:headers 'content-type) '()))
+                             (parse-query (uri-decode (bytevector->string body "UTF-8")))))))))
+           (lambda (a b . new-state)
+             (values a b (if (null? new-state) state (car new-state)))))))))

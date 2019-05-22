@@ -12,15 +12,14 @@
              (server macro)
 
              (ice-9 iconv)
+             (srfi srfi-88)
 
              (sxml simple)
              (ice-9 ftw))
 
-(define *name* "")
-
-(define (form-page)
+(define (form-page name)
   `(div
-    (p "hello" ,*name*)
+    (p "Hello " ,name)
     (form (@ (action "/form")
              (method POST))
           (input (@ (type text)
@@ -42,18 +41,13 @@
    (GET "/form" ()
         (return
          '((content-type text/html))
-         (sxml->xml-string (form-page))))
+         (sxml->xml-string (form-page state))))
 
-   (POST "/form" ()
-         (when (memv 'application/x-www-form-urlencoded (assoc-ref r:headers 'content-type))
-           (apply (lambda* (#:key name #:allow-other-keys)
-                    (format #t "*name* := [~a] Received [~a]~%" *name* name)
-                    (set! *name* name))
-                  (parse-query (uri-decode (bytevector->string body "UTF-8")))))
+   (POST "/form" (name)
          (return (build-response
                   #:code 303
                   #:headers `((location . ,(string->uri-reference "/form"))))
-                 ""))
+                 "" name))
 
 
    (GET "/ls" ()
@@ -77,4 +71,5 @@
                 (call-with-input-file (string-append "./" file)
                   (@ (ice-9 rdelim) read-string))))))
 
-(run-server routes)
+(run-server routes 'http '() "Default Name")
+
