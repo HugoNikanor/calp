@@ -32,23 +32,35 @@
 
        ;; TZSET is the generated recurrence set of a timezone
        (set! (attr tz 'X-HNH-TZSET)
-             (make-tz-set tz)))
+             (make-tz-set tz)
+             #;
+             ((@ (srfi srfi-41) stream)
+              (list
+               (car (children tz))
+               (cadr (children tz))))
+             ))
 
   (for ev in (children cal 'VEVENT)
-       (define date     (parse-datetime (attr ev 'DTSTART)))
-       (define end-date (parse-datetime (attr ev 'DTEND)))
+       (define dptr (attr* ev 'DTSTART))
+       (define eptr (attr* ev 'DTEND))
 
-       (set! (attr ev "DTSTART") (date->time-utc date)
-             (attr ev "DTEND")   (date->time-utc end-date))
+       (define date     (parse-datetime (value dptr)))
+       (define end-date
+         (if (value eptr)
+             (parse-datetime (value eptr))
+             (set (date-hour date) = (+ 1))))
+
+       (set! (value dptr) (date->time-utc date)
+             (value eptr) (date->time-utc end-date))
 
        (when (prop (attr* ev 'DTSTART) 'TZID)
          (set! (zone-offset date) (get-tz-offset ev)
-               (attr ev 'DTSTART) (date->time-utc date)
+               (value dptr) (date->time-utc date)
 
                ;; The standard says that DTEND must have the same
                ;; timezone as DTSTART. Here we trust that blindly.
                (zone-offset end-date) (zone-offset date)
-               (attr ev 'DTEND) (date->time-utc end-date)))))
+               (value eptr) (date->time-utc end-date)))))
 
 
 ;; (define-public value caar)

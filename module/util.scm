@@ -2,6 +2,7 @@
   #:use-module (srfi srfi-1)
   #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module ((sxml fold) #:select (fold-values))
+  #:use-module (srfi srfi-9 gnu)
   #:export (for define-quick-record
                 mod! sort* sort*!
                 mod/r! set/r!
@@ -10,6 +11,7 @@
                 quote?
                 re-export-modules
                 use-modules*
+                -> set
                 tree-map let-lazy)
   #:replace (let* set! define-syntax
                   when unless if))
@@ -342,3 +344,23 @@
               (map (lambda (sub) (list (car form) sub))
                    (cadr form)))
             forms))))
+
+
+
+(define-syntax ->
+  (syntax-rules ()
+    [(-> obj) obj]
+    [(-> obj (func args ...) rest ...)
+     (-> (func obj args ...) rest ...)]
+    [(-> obj func rest ...)
+     (-> (func obj) rest ...)]))
+
+
+(define-syntax set
+  (syntax-rules (=)
+    [(set (acc obj)  value)
+     (set-fields
+      obj ((acc) value))]
+    [(set (acc obj) = (op rest ...))
+     (set-fields
+      obj ((acc) (op (acc obj) rest ...)))]))
