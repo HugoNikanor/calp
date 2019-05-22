@@ -3,8 +3,10 @@
 
 (use-modules* (web (server request response uri))
               (output (html))
-              (ice-9 (match control rdelim curried-definitions))
-              (srfi (srfi-1 srfi-19)))
+              (server (util macro))
+              (ice-9 (match control rdelim curried-definitions
+                            regex #| regex here due to bad macros |#  ))
+              (srfi (srfi-1 srfi-19 srfi-88)))
 
 (define month-names
   '(jan feb mar apr may jun jul aug sep oct nov dec))
@@ -26,6 +28,7 @@
      read-string)))
 
 ;;; TODO "/static/*"
+#;
 (define (make-handler calendars events)
   (lambda (request request-body)
     (format (current-error-port) "[~a] ~a~%"
@@ -51,5 +54,26 @@
                 (ret (build-response #:code 404)
                      "404 Not Fonud"))))))))))
 
+(define* (date key: (year 0) (month 0) (day 0) (hour 0) (minute 0) (second 0) (nsecs 0) (zone 0))
+  (make-date nsecs second minute hour day month year zone))
+
+(define (make-make-routes calendar events)
+  (make-routes
+
+   (GET "/" (m)
+        (let* ((start (if m
+                          (date year: 2019 day: 1 month: (string->number m))
+                          (current-date)))
+               (end (set (date-month start) = (+ 1))))
+          (return '((content-type text/html))
+                  (with-output-to-string
+                    (lambda () (html-generate calendar events start end))))))
+
+   (GET "/static/:filename/" (filename)
+        ((serve-file return) filename))
+
+   ))
+
+
 (define-public (server-main c e args)
-  (run-server (make-handler c e)))
+  (run-server (make-make-routes c e)))
