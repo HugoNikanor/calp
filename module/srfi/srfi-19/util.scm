@@ -11,7 +11,8 @@
             ;; time-add
             make-duration
             time->string
-            add-day remove-day))
+            add-day remove-day
+            date))
 
 #;
 (define (copy-date date)
@@ -129,3 +130,6 @@ attribute set to 0. Can also be seen as \"Start of day\""
 ;; TODO actually allow many form date form.
 (define-public (parse-freeform-date str)
   (string->date str "~Y-~m-~d"))
+
+(define* (date #:key (year 0) (month 0) (day 0) (hour 0) (minute 0) (second 0) (nsecs 0) (zone 0))
+  (make-date nsecs second minute hour day month year zone))

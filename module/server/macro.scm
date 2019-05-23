@@ -52,7 +52,7 @@
 
 (define-macro (make-routes . routes)
 
-  `(lambda (request body . state)
+  `(lambda* (request body #:optional state)
      (let ((r:method  (request-method  request))
            (r:uri     (request-uri     request))
            (r:version (request-version request))
@@ -81,5 +81,5 @@
                            (when (memv 'application/x-www-form-urlencoded
                                     (or (assoc-ref r:headers 'content-type) '()))
                              (parse-query (uri-decode (bytevector->string body "UTF-8")))))))))
-           (lambda (a b . new-state)
-             (values a b (if (null? new-state) state (car new-state)))))))))
+           (lambda* (a b #:optional new-state)
+             (values a b (or new-state state))))))))

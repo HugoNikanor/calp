@@ -15,7 +15,9 @@
              (srfi srfi-88)
 
              (sxml simple)
-             (ice-9 ftw))
+             (ice-9 ftw)
+             (ice-9 rdelim)
+             )
 
 (define (form-page name)
   `(div
@@ -68,8 +70,7 @@
 
    (GET "/ls/:file" (file)
         (return '((content-type text/plain))
-                (call-with-input-file (string-append "./" file)
-                  (@ (ice-9 rdelim) read-string))))))
+                (call-with-input-file file read-string)))))
 
 (run-server routes 'http '() "Default Name")
 

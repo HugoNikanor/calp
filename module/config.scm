@@ -10,7 +10,7 @@
              (ice-9 rdelim)
              (glob))
 
-(calendar-files (glob "~/.calendars/*"))
+(calendar-files (glob "~/.local/var/cal/*"))
 
 ;;; TODO possibly replace with propper lookup
 (define my-courses
