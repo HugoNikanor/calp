@@ -75,10 +75,11 @@
 
   (define opts (getopt-long args options))
   (define port (option-ref opts 'port 8080))
-  (define addr (inet-aton (option-ref opts 'addr "127.0.0.1")))
+  (define addr (option-ref opts 'addr INADDR_LOOPBACK))
+
 
   (format #t "Starting server on ~a:~a~%I'm ~a, runing from ~a~%"
-          (inet-ntoa addr) port
+          (number->string addr 16) port
           (getpid) (getcwd))
 
   (run-server (make-make-routes c e)
