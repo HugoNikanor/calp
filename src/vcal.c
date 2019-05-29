@@ -124,7 +124,8 @@ int vcomponent_copy(vcomponent* dest, vcomponent* src) {
 		PUSH(LLIST(vcomponent))(&dest->components, c);
 	}
 
-	PUSH(vcomponent)(src->parent, dest);
+	dest->parent = src->parent;
+	// PUSH(vcomponent)(src->parent, dest);
 
 	return 0;
 }
