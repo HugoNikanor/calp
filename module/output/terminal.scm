@@ -23,6 +23,11 @@
 
   #:export (terminal-main))
 
+
+(define (open-in-editor fname)
+  (system (string-append (getenv "EDITOR") " " fname)))
+
+
 (define (box-top intersection line . lengths)
   (reduce (lambda (str done) (string-append done (string intersection) str))
           "" (map (cut make-string <> line) lengths)))
@@ -112,6 +117,27 @@
                          (mod! cur-event 1-)))
             ((#\p) (print-vcomponent (list-ref events cur-event)
                                      (current-error-port)))
+            ((#\E) (serialize-vcomponent (list-ref events cur-event) (open-output-file "/tmp/event.ics")))
+            ((#\e)
+             (let ((fname (tmpnam)))
+               (with-output-to-file fname
+                 (lambda () (serialize-vcomponent (list-ref events cur-event))))
+               (open-in-editor fname)
+               (with-input-from-file fname
+                 (lambda ()
+                   ;; TODO readinig back this partal vcomponent somehow fails.
+                   ;; TODO Create a "display-in-parent" procedure, which takes a vcomponent
+                   ;;      and displays it within the context of it's parents, N steps up.
+                   ;;         This is different that display on parent since that would also
+                   ;;      display all our siblings, which is not always wanted.
+                   (let ((ev ((@ (vcomponent primitive) %vcomponent-make) fname)))
+                     (serialize-vcomponent ev (current-error-port))
+
+                     (push-child! (parent (list-ref events cur-event)) ev)
+                     (format (current-error-port) "Children: ~a~%start: ~a~%" (children ev)
+                             (attr ev 'DTSTART))
+                     (set! event-stream (stream-insert ev-time<? ev event-stream)))))))
+
             ((#\g) (set! cur-event 0))
             ((#\G) (set! cur-event (1- (length events)))))
 
