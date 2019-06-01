@@ -117,6 +117,12 @@ int handle_dir(vcomponent* cal, char* path) {
 }
 
 int get_extension(const char* filename, char* ext, ssize_t max_len) {
+
+	if (filename == NULL) {
+		ext[0] = '\0';
+		return 0;
+	}
+
 	int ext_idx = -1;
 	ext[0] = '\0';
 	for (int i = 0; filename[i] != '\0'; i++) {
