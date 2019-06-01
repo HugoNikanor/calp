@@ -8,8 +8,8 @@
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
   #:use-module (util)
-  #:use-module (terminal escape)
-  #:use-module (terminal util)
+  #:use-module (vulgar escape)
+  #:use-module (vulgar util)
   #:use-module (vcomponent output)
   #:use-module (vcomponent group)
 

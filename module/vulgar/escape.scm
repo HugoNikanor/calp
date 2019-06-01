@@ -1,8 +1,8 @@
 ;;; Module for terminal (ANSI) escape codes.
 
-(define-module (terminal escape)
+(define-module (vulgar escape)
   #:use-module (srfi srfi-60)
-  #:use-module (terminal termios)
+  #:use-module (vulgar termios)
   #:use-module (util)
   #:export (with-vulgar))
 

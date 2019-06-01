@@ -1,4 +1,4 @@
-(define-module (terminal util)
+(define-module (vulgar util)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-60)
   #:use-module (util)
