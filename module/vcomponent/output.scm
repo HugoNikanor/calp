@@ -57,7 +57,6 @@
             (else => string)))
         (string->list str))))
 
-;;; TODO parameters ( ;KEY=val: )
 (define* (serialize-vcomponent comp #:optional (port (current-output-port)))
   "Recursively write a component back to its ICS form.
 Removes the X-HNH-FILENAME attribute, and sets PRODID to
@@ -66,25 +65,23 @@ Removes the X-HNH-FILENAME attribute, and sets PRODID to
    (comp (prodid "HugoNikanor-calparse"))
 
    (format port "BEGIN:~a~%" (type comp))
+
    (let ((kvs (map (lambda (key) (list key (attr comp key)))
-                   (filter (negate (cut key=? <> 'X-HNH-FILENAME))
-                           (attributes comp)))))
+                   (attributes comp))))
      (for kv in kvs
           (let* (((key value) kv))
             (catch 'wrong-type-arg
               (lambda ()
-                (format port "~a:~a~%" key
+                (format port "~a~:{;~a=~a~}:~a~%"
+                        key
+                        (properties (attr* comp key))
                         (string->ics-safe-string
-                         (or (case key
-                               ((DTSTART DTEND)
-                                (if (string? value)
-                                    value
-                                    (time->string value "~Y~m~dT~H~M~S")))
-
-                               ((DURATION) "Just forget it")
-
-                               (else value))
-                             ""))))
+                         (case key
+                           ((DTSTART DTEND)
+                            (if (string? value)
+                                value
+                                (time->string value "~Y~m~dT~H~M~S")))
+                           (else value)))))
 
               ;; Catch
               (lambda (type proc fmt . args)
