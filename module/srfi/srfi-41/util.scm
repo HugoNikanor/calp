@@ -21,6 +21,9 @@
                (m ms (stream-car+cdr min)))
           (stream-cons m (interleave-streams < (cons ms other)))))))
 
+(define-public (stream-insert < item s)
+  (interleave-streams < (list (stream item) s)))
+
 (define-public (filter-sorted-stream proc stream)
   (stream-take-while
    proc (stream-drop-while
