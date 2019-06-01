@@ -13,6 +13,7 @@
 
   #:use-module (ice-9 getopt-long)
 
+  #:use-module (git)
   #:use-module (parameters)
   #:use-module (config))
 
@@ -212,12 +213,7 @@
                            (cons `(tr ,@w)
                                  (recur rest)))))))))
 
-(define *repo-url* "https://git.hornquist.se")
-
-(define (get-git-version)
-  (symbol->string
-   (read ((@ (ice-9 popen) open-input-pipe)
-          "git rev-parse HEAD"))))
+(define repo-url (make-parameter "https://git.hornquist.se"))
 
 (define-public (html-generate calendars events start end)
   (define evs (get-groups-between (group-stream events)
@@ -236,7 +232,7 @@
                     (content "Calendar for the dates between " ,(date->string start)
                              " and " ,(date->string end))))
            ,(include-css "static/style.css")
-           ;; (script (@ (src "static/script.js")) "")
+           (script (@ (src "static/script.js")) "")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
                            (map (lambda (c)
                                   (let* ((name (html-attr (attr c 'NAME)))
@@ -254,11 +250,11 @@
                       (div (@ (class "days"))
                            ,@(stream->list (stream-map lay-out-day evs))))
                  (footer (span "Page generated " ,(date->string (current-date)))
-                         (span (a (@ (href ,*repo-url* "/calparse"))
+                         (span (a (@ (href ,(repo-url) "/calparse"))
                                   "Source Code"))
                          ,(let* ((hash (get-git-version))
                                  (url (format #f "~a/calparse/commit/?id=~a"
-                                              *repo-url* hash)))
+                                              (repo-url) hash)))
                             `(span "Version " (a (@ (href ,url)) ,hash)))))
                 (aside (@ (class "sideinfo"))
                        (div (@ (class "about"))
@@ -271,7 +267,6 @@
   (define opts (getopt-long args opt-spec))
   (define start (parse-freeform-date (option-ref opts 'from "2019-04-15")))
   (define end   (parse-freeform-date (option-ref opts 'to   "2019-05-10")))
-
 
   (html-generate calendars events start end))
 
