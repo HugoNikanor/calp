@@ -4,7 +4,7 @@
 (use-modules (ice-9 getopt-long)
              (vcomponent)
              (vcomponent output)
-             (vulgar util)
+             (vulgar color)
              (srfi srfi-1))
 
 (define-public (info-main calendars events args)

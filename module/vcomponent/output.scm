@@ -7,19 +7,7 @@
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 format)
   #:export (print-vcomponent
-            serialize-vcomponent
-            color-if
-            STR-YELLOW STR-RESET))
-
-(define STR-YELLOW "\x1b[0;33m")
-(define STR-RESET "\x1b[m")
-
-(define-syntax-rule (color-if pred color body ...)
-  (let ((pred-value pred))
-    (format #f "~a~a~a"
-            (if pred-value color "")
-            (begin body ...)
-            (if pred-value STR-RESET ""))))
+            serialize-vcomponent))
 
 (define* (print-vcomponent comp #:optional (port #t) #:key (descend? #t) (depth 0))
   (let ((kvs (map (lambda (key) (cons key (attr* comp key)))

@@ -1,6 +1,10 @@
-;;; Module for terminal (ANSI) escape codes.
+;;; Commentary:
 
-(define-module (vulgar escape)
+;; I don't curse, I'm just vulgar.
+
+;;; Code:
+
+(define-module (vulgar)
   #:use-module (srfi srfi-60)
   #:use-module (vulgar termios)
   #:use-module (util)
@@ -10,8 +14,6 @@
   (display "\x1b[H")                    ; Move cursor to the origin
   (display "\x1b[J")                    ; Clear everything after cursor
   )
-
-;;; I don't curse, I'm just vulgar.
 
 (define-syntax with-vulgar
   (syntax-rules ()

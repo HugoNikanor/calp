@@ -8,8 +8,10 @@
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
   #:use-module (util)
-  #:use-module (vulgar escape)
-  #:use-module (vulgar util)
+  #:use-module (vulgar)
+  #:use-module (vulgar info)
+  #:use-module (vulgar color)
+  #:use-module (vulgar components)
   #:use-module (vcomponent output)
   #:use-module (vcomponent group)
 
@@ -142,7 +144,7 @@
             ((#\G) (set! cur-event (1- (length events)))))
 
           (when (or (eof-object? char)
-                    (memv char (list #\q (ctrl #\C))))
+                    (memv char '(#\q)))
             (break)))
         ))))
 
