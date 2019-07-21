@@ -1,4 +1,4 @@
-.PHONY: all clean tests
+.PHONY: all clean tests html
 
 CC  := gcc
 
@@ -65,6 +65,11 @@ $(OBJDIR)/%.scm.go: %.scm $(SO_FILES)
 
 %.pdf: %.dot
 	dot -Tpdf -o $@ $<
+
+html: $(GO_FILES)
+	mkdir -p html
+	ln -sf ../static html
+	module/main.scm html -f 2019-07-01 -t 2019-08-30 > html/index.html
 
 tags: $(C_FILES) $(H_FILES)
 	ctags -R
