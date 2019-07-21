@@ -7,6 +7,7 @@ SRCDIR = src
 LIBDIR = lib
 
 export LD_LIBRARY_PATH=$(PWD)/$(LIBDIR)
+export GUILE_AUTO_COMPILE=0
 
 CFLAGS  = -std=gnu11 -Wall -Wextra -ggdb -fPIC $(shell guile-config compile)
 LDFLAGS = $(shell guile-config link)
