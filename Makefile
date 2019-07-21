@@ -2,18 +2,14 @@
 
 CC  := gcc
 
-OBJDIR = obj
-SRCDIR = src
-LIBDIR = lib
-
-export LD_LIBRARY_PATH=$(PWD)/$(LIBDIR)
+export LD_LIBRARY_PATH=$(PWD)/lib
 export GUILE_AUTO_COMPILE=0
 
 CFLAGS  = -std=gnu11 -Wall -Wextra -ggdb -fPIC $(shell guile-config compile)
 LDFLAGS = $(shell guile-config link)
 
 LIBS = libguile-calendar.so
-SO_FILES = $(addprefix $(LIBDIR)/, $(LIBS))
+SO_FILES = $(addprefix lib/, $(LIBS))
 
 H_FILES = $(wildcard src/*.h)
 C_FILES = $(wildcard src/*.c)
@@ -26,7 +22,7 @@ X_FILES = $(SCM_C_FILES:.scm.c=.x)
 O_FILES = $(C_FILES:src/%.c=obj/%.o)
 
 SCM_FILES = $(shell find module/ -type f -name \*.scm)
-GO_FILES = $(addprefix obj/,$(addsuffix .go,$(SCM_FILES)))
+GO_FILES = $(SCM_FILES:%=obj/%.go)
 
 GUILE_C_FLAGS = -Lmodule \
 				-Wunused-variable -Wunused-toplevel \
@@ -44,20 +40,20 @@ parse: $(O_FILES)
 src/%.x : src/%.scm.c
 	guile-snarf -o $@ $< $(CFLAGS)
 
-$(OBJDIR)/%.scm.o : src/%.scm.c src/%.x
-	@mkdir -p $(OBJDIR)
+obj/%.scm.o : src/%.scm.c src/%.x
+	@mkdir -p obj
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-$(OBJDIR)/%.o : src/%.c # $(H_FILES) $(X_FILES)
-	@mkdir -p $(OBJDIR)
+obj/%.o : src/%.c # $(H_FILES) $(X_FILES)
+	@mkdir -p obj
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-$(LIBDIR)/%.so: $(O_FILES)
-	@mkdir -p $(LIBDIR)
+lib/%.so: $(O_FILES)
+	@mkdir -p lib
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
-$(OBJDIR)/%.scm.go: %.scm $(SO_FILES)
-	@mkdir -p $(OBJDIR)
+obj/%.scm.go: %.scm $(SO_FILES)
+	@mkdir -p obj
 	guild compile $(GUILE_C_FLAGS) -o $@ $<
 
 .SECONDARY += %.dot
@@ -78,9 +74,10 @@ tags: $(C_FILES) $(H_FILES)
 
 clean:
 	-rm parse
-	-rm -r $(OBJDIR)/*
-	-rm $(LIBDIR)/*.so
-	-rm $(SRCDIR)/*.x
+	-rm -r html
+	-rm -r obj
+	-rm -r lib
+	-rm src/*.x
 
 
 tests:
