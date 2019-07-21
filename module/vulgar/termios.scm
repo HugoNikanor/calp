@@ -36,7 +36,7 @@
 ;; int, * → int, and bind it to a scheme procedure of the same name.
 ;; 
 ;; Currently only links to the library stored in the variable lib, when called.
-(eval-when (compile)
+(eval-when (compile expand)
  (read-hash-extend
   #\$ (lambda (c port)
         (let* ((name (string-trim-both (read-delimited ":" port)))

@@ -1,4 +1,4 @@
-.PHONY: all clean tests guild-stuff guile-none
+.PHONY: all clean tests
 
 CC  := gcc
 
@@ -6,10 +6,10 @@ OBJDIR = obj
 SRCDIR = src
 LIBDIR = lib
 
-CFLAGS  = -std=gnu11 -Wall -Wextra \
-		  -ggdb -fPIC \
-		  $(shell guile-config compile)
-LDFLAGS = -fPIC $(shell guile-config link)
+export LD_LIBRARY_PATH=$(PWD)/$(LIBDIR)
+
+CFLAGS  = -std=gnu11 -Wall -Wextra -ggdb -fPIC $(shell guile-config compile)
+LDFLAGS = $(shell guile-config link)
 
 LIBS = libguile-calendar.so
 SO_FILES = $(addprefix $(LIBDIR)/, $(LIBS))
@@ -24,38 +24,40 @@ X_FILES = $(SCM_C_FILES:.scm.c=.x)
 
 O_FILES = $(C_FILES:src/%.c=obj/%.o)
 
-all: parse $(SO_FILES) guild-stuff guile-none
+SCM_FILES = $(shell find module/ -type f -name \*.scm)
+GO_FILES = $(addprefix obj/,$(addsuffix .go,$(SCM_FILES)))
 
-guild-stuff:
-	guild compile module/vcomponent/primitive.scm
+GUILE_C_FLAGS = -Lmodule \
+				-Wunused-variable -Wunused-toplevel \
+				-Wshadowed-toplevel -Wunbound-variable \
+				-Wmacro-use-before-definition -Warity-mismatch \
+				-Wduplicate-case-datum -Wbad-case-datum
 
-guile-none:
-	module/main.scm none
 
+all: $(SO_FILES) $(GO_FILES)
+
+# Old C main
 parse: $(O_FILES)
 	$(CC) -o $@ $^ $(LDFLAGS)
-
-$(O_FILES): | $(OBJDIR)
-
-$(SO_FILES): | $(LIBDIR)
 
 src/%.x : src/%.scm.c
 	guile-snarf -o $@ $< $(CFLAGS)
 
 $(OBJDIR)/%.scm.o : src/%.scm.c src/%.x
+	@mkdir -p $(OBJDIR)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(OBJDIR)/%.o : src/%.c # $(H_FILES) $(X_FILES)
+	@mkdir -p $(OBJDIR)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
-
-$(LIBDIR):
-	mkdir -p $(LIBDIR)
-
 $(LIBDIR)/%.so: $(O_FILES)
+	@mkdir -p $(LIBDIR)
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
+
+$(OBJDIR)/%.scm.go: %.scm $(SO_FILES)
+	@mkdir -p $(OBJDIR)
+	guild compile $(GUILE_C_FLAGS) -o $@ $<
 
 .SECONDARY += %.dot
 %.dot: testcal/%.ics parse
@@ -70,11 +72,10 @@ tags: $(C_FILES) $(H_FILES)
 
 clean:
 	-rm parse
-	-rm $(OBJDIR)/*.o
-	-rmdir $(OBJDIR)
+	-rm -r $(OBJDIR)/*
 	-rm $(LIBDIR)/*.so
 	-rm $(SRCDIR)/*.x
-	-rm -r $$HOME/.cache/guile/ccache/2.2-LE-8-3.A/$$PWD
+
 
 tests:
 	tests/run-tests.scm

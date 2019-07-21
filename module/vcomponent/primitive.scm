@@ -16,7 +16,4 @@
 
             %vcomponent-shallow-copy))
 
-(setenv "LD_LIBRARY_PATH"
-        (string-append (dirname (dirname (dirname (current-filename))))
-                       "/lib"))
 (load-extension "libguile-calendar" "init_lib")

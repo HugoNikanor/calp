@@ -1,8 +1,17 @@
-#!/usr/bin/guile \
--e main -s
-!#
+#!/bin/bash
+# -*- mode: scheme -*-
 
-(add-to-load-path (dirname (current-filename)))
+root=$(dirname $(dirname $(realpath $0)))
+
+GUILE_LOAD_PATH="$root/module:$GUILE_LOAD_PATH"
+GUILE_LOAD_COMPILED_PATH="root/obj/module:$GUILE_LOAD_COMPILED_PATH"
+LD_LIBRARY_PATH="$root/lib:$LD_LIBRARY_PATH"
+
+export GUILE_LOAD_PATH GUILE_LOAD_COMPILED_PATH LD_LIBRARY_PATH
+export GUILE_AUTO_COMPILE=0
+
+exec guile -e main -s $0 "$@"
+!#
 
 (use-modules (srfi srfi-1)
              (srfi srfi-19)
