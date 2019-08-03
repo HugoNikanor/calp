@@ -26,7 +26,6 @@ exec guile -e main -s $0 "$@"
 
              (output html)
              (output terminal)
-             (output none)
              (output text)
              (output import)
              (output info)
@@ -93,7 +92,6 @@ exec guile -e main -s $0 "$@"
              (let ((ropt (ornull (option-ref opts '() '())
                                  '("term"))))
                ((case (string->symbol (car ropt))
-                  ((none) none-main)
                   ((html) html-main)
                   ((term) terminal-main)
                   ((import) import-main)
