@@ -47,7 +47,7 @@ typedef struct {
 
 	FILE* f;
 
-   /*
+	/*
 	 * context stacks used since ICS files form a tree. key_stack is
 	 * only for sequrity purposes.
 	 */
@@ -68,7 +68,7 @@ typedef struct {
 	 * String which we write everything read into.
 	 * Later copied to appropiate places.
 	 */
-	strbuf str;
+	// strbuf str;
 } parse_ctx;
 
 INIT_F(parse_ctx, FILE* f, char* filename);
@@ -117,6 +117,6 @@ int handle_kv(
  */
 int fold(parse_ctx* ctx, char c);
 
-int handle_escape (parse_ctx* ctx);
+char handle_escape (parse_ctx* ctx);
 
 #endif /* PARSE_H */

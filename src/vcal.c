@@ -61,11 +61,11 @@ INIT_F(vcomponent, const char* type, const char* filename) {
 		/*
 		 * NOTE
 		 * RFC-7986 adds additional parameters linked to this one.
-		 * - `SOURCE' :: where a (possibly) updated version of the data can be
-		 *   found 
+		 * - `SOURCE' :: where a (possibly) updated version of the
+		 *   data can be found
 		 * - `URL' :: Where the same data can be fonud, but
 		 *   differently (but not where the original data can be fonud
-		 *   agani).
+		 *   again).
 		 */
 		vcomponent_push_val (self, "X-HNH-FILENAME", filename);
 	}

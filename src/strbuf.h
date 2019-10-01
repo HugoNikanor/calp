@@ -15,7 +15,6 @@
  */
 typedef struct {
 	char* mem;
-	SCM scm;
 	/* TODO add support for negative ptr */
 	int ptr;
 	unsigned int alloc;

@@ -9,6 +9,10 @@
 
 #include "err.h"
 
+#include <libguile.h>
+#include "struct.h"
+#include "guile_type_helpers.h"
+
 // #define TYPE vcomponent
 // #include "linked_list.inc.h"
 // #undef TYPE
@@ -21,9 +25,32 @@
 #undef V
 
 /*
+           +-------------------------------------------------------+
+           v                                                       |
+  BEGIN → key -------------------------------→ ':' → value → CRLF -+-→ EOF
+           |                                    ^
+           v                                    |
+          ';' → param-key → ':' → param-value --+
+           ^                                    |
+           +------------------------------------+
+
+
+   vcomponent := map<string, list<line>>
+   line := pair<value, attributes>
+   attributes := map<string, list<value>>
+
+
+ */
+
+#define string_eq(a, b) scm_string_eq(a, b, SCM_BOOL_F,SCM_BOOL_F,SCM_BOOL_F,SCM_BOOL_F)
+
+/*
  * name *(";" param) ":" value CRLF
  */
 int parse_file(char* filename, FILE* f, vcomponent* root) {
+	scm_c_use_module ("(vcomponent struct)");
+
+
 	part_context p_ctx = p_key;
 
 	SNEW(parse_ctx, ctx, f, filename);
@@ -36,9 +63,18 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	 * {cline,param}_key is also temporary register used during
 	 * parsing.
 	 */
-	SNEW(content_line, cline);
-	SNEW(strbuf, cline_key);
-	SNEW(strbuf, param_key);
+	// SNEW(content_line, cline);
+	// SNEW(strbuf, param_key);
+	// SNEW(strbuf, param_val);
+	// SNEW(strbuf, attr_key);
+	// SNEW(strbuf, attr_val);
+
+	SNEW(strbuf, str);
+	SCM component;          /* TODO init to root */
+	SCM line = scm_make_vline();
+	SCM attr_key;           /* string */
+	SCM line_key;           /* string */
+	SCM param_set;          /*  hashtable */
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
@@ -48,21 +84,48 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 			if (fold(&ctx, c) > 0) {
 				/* Actuall end of line, handle value */
-				TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
-				handle_kv(&cline_key, &cline, &ctx);
+				// TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
+				/*
+				 * The key being BEGIN means that we decend into a new component.
+				 */
+				if (string_eq(line_key, scm_from_utf8_string("BEGIN"))) {
+					/* key \in { VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE, ...  } */
+					SCM child = scm_make_vcomponent(scm_from_strbuf(&str));
+					scm_add_child_x (component, child);
+					component = child;
+
+				} else if (string_eq(line_key, scm_from_utf8_string("END"))) {
+					// TODO make current component be parent of current component?
+					component = scm_component_parent(component);
+
+					/*
+					 * A regular key, value pair. Push it into to the current
+					 * component.
+					 */
+				} else {
+					scm_set_value_x(line, scm_from_strbuf(&str));
+					scm_add_line_x(component, line_key, line);
+					line = scm_make_vline();
+				}
+
+				strbuf_soft_reset (&str);
 				p_ctx = p_key;
 			} /* Else continue on current line */
 
 		/* We have an escaped character */
 		} else if (c == '\\') {
-			handle_escape (&ctx);
+			char esc = handle_escape (&ctx);
+			strbuf_append(&str, esc);
 
 		/* Border between param {key, value} */
 		} else if (p_ctx == p_param_name && c == '=') {
 
 			/* Save the current parameter key */
-			TRANSFER (&param_key, &ctx.str);
+			// TODO
+			// TRANSFER (&param_key, &ctx.str);
+			attr_key = scm_from_strbuf(&str);
 			p_ctx = p_param_value;
+			strbuf_soft_reset (&str);
 
 		/*
 		 * One of four cases:
@@ -77,15 +140,8 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			 * the current parameter set. */
 			if (p_ctx == p_param_value) {
 				/* save current parameter value. */
-
-				NEW(strbuf, s);
-				TRANSFER(s, &ctx.str);
-
-				NEW(param_set, ps);
-				PUSH(param_set)(ps, s);
-
-				PUSH(TRIE(param_set))(CLINE_CUR_PARAMS(&cline), param_key.mem, ps);
-				strbuf_soft_reset (&param_key);
+				scm_add_attribute_x(line, line_key, scm_from_strbuf(&str));
+				strbuf_soft_reset (&str);
 			}
 
 			/*
@@ -96,10 +152,12 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			 */
 			if (p_ctx == p_key) {
 
-				TRANSFER(&cline_key, &ctx.str);
+				// TRANSFER(&cline_key, &ctx.str);
 
-				NEW(content_set, p);
-				PUSH(LLIST(content_set))(&cline, p);
+				// NEW(content_set, p);
+				// PUSH(LLIST(content_set))(&cline, p);
+				attr_key = scm_from_strbuf(&str);
+				strbuf_soft_reset (&str);
 			}
 
 			if      (c == ':') p_ctx = p_value;
@@ -110,7 +168,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		 * the current string.
 		 */
 		} else {
-			strbuf_append(&ctx.str, c);
+			strbuf_append(&str, c);
 
 			++ctx.column;
 			++ctx.pcolumn;
@@ -121,123 +179,30 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 		ERR("Error parsing");
 	}
 	/* Check to see if empty line */
-	else if (ctx.str.ptr != 0) {
+	else if (str.ptr != 0) {
 		/*
 		 * The standard (3.4, l. 2675) says that each icalobject must
 		 * end with CRLF. My files however does not, so we also parse
 		 * the end here.
 		 */
 
-		TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
-		handle_kv(&cline_key, &cline, &ctx);
+		// TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
+		// TODO
+		// handle_kv(&cline_key, &cline, &ctx);
 
 	}
 
-	FREE(content_line)(&cline);
-	FREE(strbuf)(&cline_key);
-	FREE(strbuf)(&param_key);
+	// FREE(content_line)(&cline);
+	// FREE(strbuf)(&cline_key);
+	// FREE(strbuf)(&param_key);
+
+	FREE(strbuf)(&str);
 
 	assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
 	assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
 	assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
 
 	FREE(parse_ctx)(&ctx);
-
-	return 0;
-}
-
-/*
- * We have a complete key value pair.
- */
-int handle_kv (
-	strbuf* key,
-	content_line* cline,
-	parse_ctx* ctx
-	) {
-
-	/*
-	 * The key being BEGIN means that we decend into a new component.
-	 */
-	if (strbuf_c(key, "BEGIN")) {
-		/* key \in { VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE, ...  } */
-
-		/*
-		 * Take a copy of the name of the entered component, and store
-		 * it on the stack of component names.
-		 */
-		NEW(strbuf, s);
-		DEEP_COPY(strbuf)(s, CLINE_CUR_VAL(cline));
-		PUSH(LLIST(strbuf))(&ctx->key_stack, s);
-
-		/* Clear the value list in the parse content_line */
-		RESET(LLIST(content_set))(cline);
-
-		/*
-		 * Create the new curent component, link it with the current
-		 * component in a parent/child relationship.
-		 * Finally push the new component on to the top of the
-		 * component stack.
-		 */
-		NEW(vcomponent, e,
-				s->mem,
-				ctx->filename);
-		vcomponent* parent = PEEK(LLIST(vcomponent))(&ctx->comp_stack);
-		PUSH(vcomponent)(parent, e);
-
-		PUSH(LLIST(vcomponent))(&ctx->comp_stack, e);
-
-	/*
-	 * The end of a component, go back along the stack to the previous
-	 * component.
-	 */
-	} else if (strbuf_c(key, "END")) {
-		strbuf* expected_key = POP(LLIST(strbuf))(&ctx->key_stack);
-
-		if (strbuf_cmp(expected_key, CLINE_CUR_VAL(cline)) != 0) {
-
-			ERR_P(ctx, "Expected END:%s, got END:%s.\n%s line",
-					expected_key->mem,
-					CLINE_CUR_VAL(cline)->mem,
-					vcomponent_get_val(
-						PEEK(LLIST(vcomponent))(&ctx->comp_stack),
-						"X-HNH-FILENAME"));
-			PUSH(LLIST(strbuf))(&ctx->key_stack, expected_key);
-
-			return -1;
-
-		} else {
-			FFREE(strbuf, expected_key);
-			POP(LLIST(vcomponent))(&ctx->comp_stack);
-		}
-
-	/*
-	 * A regular key, value pair. Push it into to the current
-	 * component.
-	 */
-	} else {
-
-		/*
-		 * cline is the value store used during parsing, meaning that
-		 * its values WILL mutate at a later point. Therefore we take
-		 * a copy of it here.
-		 */
-		NEW(content_line, c);
-		DEEP_COPY(content_line)(c, cline);
-
-		/*
-		 * The PUSH(TRIE(T)) method handles collisions by calling
-		 * RESOLVE(T). content_line resolves by merging the new value
-		 * into the old value, and freeing the new value's container.
-		 *
-		 * This means that |c| declared above might be destroyed
-		 * here.
-		 */
-		PUSH(TRIE(content_line))(
-				&PEEK(LLIST(vcomponent))(&ctx->comp_stack)->clines,
-				key->mem, c);
-
-		RESET(LLIST(content_set))(cline);
-	}
 
 	return 0;
 }
@@ -289,7 +254,7 @@ INIT_F(parse_ctx, FILE* f, char* filename) {
 	self->pline   = 1;
 	self->pcolumn = 1;
 
-	INIT(strbuf, &self->str);
+	// INIT(strbuf, &self->str);
 
 	return 0;
 }
@@ -302,12 +267,12 @@ FREE_F(parse_ctx) {
 
 	self->line = 0;
 	self->column = 0;
-	FREE(strbuf)(&self->str);
+	// FREE(strbuf)(&self->str);
 
 	return 0;
 }
 
-int handle_escape (parse_ctx* ctx) {
+char handle_escape (parse_ctx* ctx) {
 	char esc = fgetc(ctx->f);
 
 	/*
@@ -340,11 +305,13 @@ int handle_escape (parse_ctx* ctx) {
 		ERR_P(ctx, "Non escapable character '%c' (%i)", esc, esc);
 	}
 
-	/* save escapade character as a normal character */
-	strbuf_append(&ctx->str, esc);
-
 	++ctx->column;
 	++ctx->pcolumn;
 
-	return 0;
+	return esc;
+
+	/* save escapade character as a normal character */
+	// strbuf_append(&ctx->str, esc);
+
+	// return 0;
 }
