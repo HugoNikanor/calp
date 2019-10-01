@@ -8,11 +8,12 @@
 
 /* basename */
 #include <libgen.h>
+#include <libguile.h>
 
 #include "parse.h"
 #include "err.h"
 
-int read_vcalendar(vcomponent* cal, char* path) {
+int read_vcalendar(SCM cal, char* path) {
 
 	struct stat statbuf;
 	if (stat (path, &statbuf) != 0) {
@@ -38,12 +39,12 @@ int read_vcalendar(vcomponent* cal, char* path) {
 	return 0;
 }
 
-int handle_file(vcomponent* cal, char* path) {
+int handle_file(SCM cal, char* path) {
 	INFO("Parsing a single file");
 
 	/* NAME is the `fancy' name of the calendar. */
-	vcomponent_push_val(cal, "NAME", basename(path));
-	vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "file");
+	// vcomponent_push_val(cal, "NAME", basename(path));
+	// vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "file");
 	char* resolved_path = realpath(path, NULL);
 	open_ics (resolved_path, cal);
 	free (resolved_path);
@@ -52,7 +53,7 @@ int handle_file(vcomponent* cal, char* path) {
 }
 
 
-int handle_dir(vcomponent* cal, char* path) {
+int handle_dir(SCM cal, char* path) {
 	INFO("Parsing a directory");
 	DIR* dir = opendir(path);
 
@@ -66,8 +67,8 @@ int handle_dir(vcomponent* cal, char* path) {
 
 
 	/* NAME is the `fancy' name of the calendar. */
-	vcomponent_push_val(cal, "NAME", basename(path));
-	vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "vdir");
+	// vcomponent_push_val(cal, "NAME", basename(path));
+	// vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "vdir");
 
 	struct dirent* d;
 	while ((d = readdir(dir)) != NULL) {
@@ -90,7 +91,8 @@ int handle_dir(vcomponent* cal, char* path) {
 				info_buf[read - 1] = '\0';
 
 			fclose(f);
-			vcomponent_push_val(cal, "COLOR", info_buf);
+			// TODO 
+			// vcomponent_push_val(cal, "COLOR", info_buf);
 		} else if (strcmp (d->d_name, "displayname") == 0) {
 			f = fopen(resolved_path, "r");
 			read = getline(&info_buf, &size, f);
@@ -104,7 +106,8 @@ int handle_dir(vcomponent* cal, char* path) {
 			 * This works since *currently* values are returned in
 			 * reverse order
 			 */
-			vcomponent_push_val(cal, "NAME", info_buf);
+			// TODO
+			// vcomponent_push_val(cal, "NAME", info_buf);
 		} else {
 			open_ics (resolved_path, cal);
 		}
@@ -149,7 +152,7 @@ int check_ext (const char* path, const char* ext) {
 	return has_ext && strcmp(buf, ext) == 0;
 }
 
-int open_ics (char* resolved_path, vcomponent* cal) {
+int open_ics (char* resolved_path, SCM cal) {
 	if (! check_ext(resolved_path, "ics") ) return 2;
 
 	FILE* f = fopen(resolved_path, "r");

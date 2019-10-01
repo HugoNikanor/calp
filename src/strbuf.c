@@ -10,7 +10,6 @@ INIT_F(strbuf) {
 	self->mem   = (char*) calloc(sizeof(*self->mem), self->alloc);
 	self->ptr   = 0;
 	self->len   = 0;
-	self->scm = NULL;
 	return 0;
 }
 
@@ -67,18 +66,6 @@ int DEEP_COPY(strbuf)(strbuf* dest, strbuf* src) {
 		/* +1 in length is to have room for  '\0'. */
 		strbuf_realloc(dest, src->len + 1);
 		retval = 1;
-	}
-
-	if (src->scm != NULL) {
-		/*
-		 * Upon Vcomponent binding into scheme I place all
-		 * strings inside cons cells. This leads to a deep
-		 * copy being required. copy-tree however returns
-		 * the same object for atoms and scheme strings.
-		 */
-		dest->scm = scm_copy_tree(src->scm);
-		/* NOTE This is a bit of a leaky abstraction.  */
-		scm_gc_protect_object(dest->scm);
 	}
 
 	dest->len = src->len;

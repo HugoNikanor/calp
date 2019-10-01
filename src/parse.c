@@ -5,7 +5,7 @@
 #include <assert.h>
 
 #include "macro.h"
-#include "vcal.h"
+// #include "vcal.h"
 
 #include "err.h"
 
@@ -17,12 +17,12 @@
 // #include "linked_list.inc.h"
 // #undef TYPE
 
-#define T strbuf
-#define V strbuf
-#include "pair.h"
-#include "pair.inc.h"
-#undef T
-#undef V
+// #define T strbuf
+// #define V strbuf
+// #include "pair.h"
+// #include "pair.inc.h"
+// #undef T
+// #undef V
 
 /*
            +-------------------------------------------------------+
@@ -47,14 +47,12 @@
 /*
  * name *(";" param) ":" value CRLF
  */
-int parse_file(char* filename, FILE* f, vcomponent* root) {
-	scm_c_use_module ("(vcomponent struct)");
-
+int parse_file(char* filename, FILE* f, SCM root) {
 
 	part_context p_ctx = p_key;
 
 	SNEW(parse_ctx, ctx, f, filename);
-	PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
+	// PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
 
 	/*
 	 * Create a content_line which we use as storage while we are
@@ -70,11 +68,10 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 	// SNEW(strbuf, attr_val);
 
 	SNEW(strbuf, str);
-	SCM component;          /* TODO init to root */
+	SCM component = root;
 	SCM line = scm_make_vline();
 	SCM attr_key;           /* string */
-	SCM line_key;           /* string */
-	SCM param_set;          /*  hashtable */
+	SCM line_key = scm_from_utf8_string("");           /* string */
 
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
@@ -103,7 +100,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 					 * component.
 					 */
 				} else {
-					scm_set_value_x(line, scm_from_strbuf(&str));
+					scm_struct_set_x(line, vline_value, scm_from_strbuf(&str));
 					scm_add_line_x(component, line_key, line);
 					line = scm_make_vline();
 				}
@@ -140,7 +137,7 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 			 * the current parameter set. */
 			if (p_ctx == p_param_value) {
 				/* save current parameter value. */
-				scm_add_attribute_x(line, line_key, scm_from_strbuf(&str));
+				scm_add_attribute_x(line, attr_key, scm_from_strbuf(&str));
 				strbuf_soft_reset (&str);
 			}
 
@@ -198,9 +195,9 @@ int parse_file(char* filename, FILE* f, vcomponent* root) {
 
 	FREE(strbuf)(&str);
 
-	assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
-	assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
-	assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
+	// assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
+	// assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
+	// assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
 
 	FREE(parse_ctx)(&ctx);
 
@@ -242,8 +239,8 @@ int fold(parse_ctx* ctx, char c) {
 
 
 INIT_F(parse_ctx, FILE* f, char* filename) {
-	INIT(LLIST(strbuf), &self->key_stack);
-	INIT(LLIST(vcomponent), &self->comp_stack);
+	// INIT(LLIST(strbuf), &self->key_stack);
+	// INIT(LLIST(vcomponent), &self->comp_stack);
 	self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
 	strcpy(self->filename, filename);
 	self->f = f;
@@ -261,8 +258,8 @@ INIT_F(parse_ctx, FILE* f, char* filename) {
 
 FREE_F(parse_ctx) {
 
-	FREE(LLIST(strbuf))(&self->key_stack);
-	FREE(LLIST(vcomponent))(&self->comp_stack);
+	// FREE(LLIST(strbuf))(&self->key_stack);
+	// FREE(LLIST(vcomponent))(&self->comp_stack);
 	free(self->filename);
 
 	self->line = 0;

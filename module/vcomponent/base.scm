@@ -6,11 +6,16 @@
   :use-module ((ice-9 optargs) :select (define*-public)))
 
 (define (get-attr component attr)
+  (hash-ref (struct-ref component 3)
+            (as-string attr))
+  #;
   (%vcomponent-get-attribute
    component
    (as-string attr)))
 
 (define (set-attr! component attr value)
+  'noop
+  #;
   (set! (car (get-attr component (as-string attr)))
         value))
 
@@ -49,21 +54,24 @@
   (hash-map->list cons (cdar attrptr)))
 
 (define-public type (make-procedure-with-setter
-                     %vcomponent-get-type
-                     %vcomponent-set-type!))
-(define-public parent %vcomponent-parent)
-(define-public push-child! %vcomponent-push-child!)
-(define-public (attributes component) (map string->symbol (%vcomponent-attribute-list component)))
+                     (lambda (c) (struct-ref c 0))
+                     (lambda (c v) struct-set! c 0 v)
+                    ))
+(define-public (parent c) (struct-ref c 2))
+(define-public push-child! add-child!)
+(define-public (attributes component) '("noop")
+  #; (map string->symbol (%vcomponent-attribute-list component))
+  )
 
 (define*-public (children component #:optional only-type)
-  (let ((childs (%vcomponent-children component)))
+  (let ((childs (slot-ref component 1)))
     (if only-type
         (filter (lambda (e) (eq? only-type (type e))) childs)
         childs)))
 
-(define-public copy-vcomponent %vcomponent-shallow-copy)
+;; (define-public copy-vcomponent %vcomponent-shallow-copy)
 
-(define-public filter-children! %vcomponent-filter-children!)
+;; (define-public filter-children! %vcomponent-filter-children!)
 
 (define-public (extract field)
   (lambda (e) (attr e field)))

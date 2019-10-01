@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "strbuf.h"
-#include "vcal.h"
+// #include "vcal.h"
 
 // #define TYPE vcomponent
 // #include "linked_list.h"
@@ -51,8 +51,8 @@ typedef struct {
 	 * context stacks used since ICS files form a tree. key_stack is
 	 * only for sequrity purposes.
 	 */
-	LLIST(strbuf) key_stack;
-	LLIST(vcomponent) comp_stack;
+	// LLIST(strbuf) key_stack;
+	// LLIST(vcomponent) comp_stack;
 
 	/* Number for unfolded lines
 	 * TODO remove this
@@ -82,18 +82,7 @@ FREE_F(parse_ctx);
  * Once It has parsed a full line it calls handel_kv. Which build my
  * actuall datastructure.
  */
-int parse_file(char* filename, FILE* f, vcomponent* cal);
-
-/*
- * Called whenever parse_file finishes a line. Copies the contents of
- * ctx and the current content_line into the object stack, stored in
- * ctx. 
- */
-int handle_kv(
-		strbuf* key,
-		content_line*  cline,
-		parse_ctx*     ctx
-		);
+int parse_file(char* filename, FILE* f, SCM cal);
 
 /*
  * Input

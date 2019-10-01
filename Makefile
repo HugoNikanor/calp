@@ -66,7 +66,7 @@ obj/%.scm.go: %.scm $(SO_FILES)
 html: $(GO_FILES)
 	mkdir -p html
 	ln -sf ../static html
-	module/main.scm html -f 2019-07-01 -t 2019-08-30 > html/index.html
+	module/main.scm html -f 2019-10-01 -t 2019-12-31 > html/index.html
 
 tags: $(C_FILES) $(H_FILES)
 	ctags -R

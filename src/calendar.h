@@ -1,7 +1,9 @@
 #ifndef CALENDAR_H
 #define CALENDAR_H
 
-#include "vcal.h"
+#include <libguile.h>
+
+// #include "vcal.h"
 
 /*
  * Reads all ics flies in path into the given vcomponent. The
@@ -11,7 +13,7 @@
  * path should either be a single .ics file (vcalendar), or a
  * directory directly containing .ics files (vdir).
  */
-int read_vcalendar(vcomponent* cal, char* path);
+int read_vcalendar(SCM cal, char* path);
 
 /*
  * Gets extension from filename. Writes output to ext.
@@ -27,15 +29,15 @@ int get_extension(const char* filename, char* ext, ssize_t max_len);
 int check_ext (const char* path, const char* ext);
 
 /* Handle a lone ics file */
-int handle_file(vcomponent* cal, char* path);
+int handle_file(SCM cal, char* path);
 
 /* Handle a directory of ics files */
-int handle_dir(vcomponent* cal, char* path);
+int handle_dir(SCM cal, char* path);
 
 /*
  * Helper for opening a single ICS file. Handles file internally, and
  * writes output to cal.
  */
-int open_ics (char* resolved_path, vcomponent* cal);
+int open_ics (char* resolved_path, SCM cal);
 
 #endif /* CALENDAR_H */

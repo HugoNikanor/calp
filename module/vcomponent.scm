@@ -1,5 +1,5 @@
 (define-module (vcomponent)
-  #:use-module ((vcomponent primitive) :select (%vcomponent-make))
+  #:use-module ((vcomponent primitive) :select (parse-path make-vcomponent))
   #:use-module (vcomponent datetime)
   #:use-module (vcomponent recurrence)
   #:use-module (vcomponent timezone)
@@ -81,8 +81,8 @@
 
 (define* (make-vcomponent #:optional path)
   (if (not path)
-      (%vcomponent-make)
-      (let* ((root (%vcomponent-make path))
+      (make-vcomponent)
+      (let* ((root (parse-path path))
              (component
               (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
                 ;; == Single ICS file ==

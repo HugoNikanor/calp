@@ -2,18 +2,36 @@
 
 #include <libguile.h>
 
-SCM_DEFINE(scm_make_vcomponent, "make-vcomponent", 1, 0, 0,
+SCM vcomponent_vtable;
+SCM vline_vtable;
+
+SCM_DEFINE(scm_make_vcomponent, "make-vcomponent", 0, 1, 0,
            (SCM type),
            "")
 {
-	SCM str = scm_from_utf8_string("pr" "pw" "pw" "pr");
-	SCM vcomponent_vtable = scm_make_vtable(str, SCM_BOOL_F);
+
+	if (SCM_UNBNDP (type)) type = SCM_BOOL_F;
+
+	if (scm_is_false(type)) type = scm_from_utf8_symbol("VIRTUAL");
+
 	return scm_c_make_struct (vcomponent_vtable, scm_from_int(0),
 	                          type, SCM_EOL, SCM_BOOL_F,
 	                          scm_make_hash_table(SCM_BOOL_F),
 	                          SCM_UNDEFINED);
 }
 
+
+
+SCM_DEFINE(scm_parse_cal_path, "parse-path", 1, 0, 0,
+           (SCM path),
+           "")
+{
+	SCM root = scm_make_vcomponent(SCM_BOOL_F);
+
+        char* p = scm_to_utf8_stringn(path, NULL);
+        scm_read_vcalendar(root, p);
+        free(p);
+}
 
 SCM_DEFINE(scm_add_line_x, "add-line!", 3, 0, 0,
            (SCM vcomponent, SCM key, SCM line),
@@ -39,9 +57,6 @@ SCM_DEFINE(scm_add_child_x, "add-child!", 2, 0, 0,
 SCM_DEFINE(scm_make_vline, "make-vline", 0, 0, 0,
            (), "")
 {
-	SCM vline_vtable =
-		scm_make_vtable(scm_from_utf8_string("pw" "pw"),
-		                SCM_BOOL_F);
 	return scm_c_make_struct (vline_vtable, scm_from_int(0),
 	                          SCM_BOOL_F, scm_make_hash_table(SCM_BOOL_F),
 	                          SCM_UNDEFINED);
@@ -56,4 +71,21 @@ SCM_DEFINE(scm_add_attribute_x, "add-attribute!", 3, 0, 0,
 	scm_hash_set_x (table, key,
 	                scm_cons(value, scm_hash_ref(table, key, SCM_EOL)));
 	return SCM_UNSPECIFIED;
+}
+
+void init_lib (void) {
+	// init_vcomponent_type();
+	// content_set_lists = scm_make_weak_key_hash_table (scm_from_uint(0x100));
+	SCM str = scm_from_utf8_string("pr" "pw" "pw" "pr");
+	SCM vcomponent_vtable = scm_make_vtable(str, SCM_BOOL_F);
+	scm_set_struct_vtable_name_x (vcomponent_vtable, scm_from_utf8_symbol("vcomponent"));
+
+	SCM vline_vtable =
+		scm_make_vtable(scm_from_utf8_string("pw" "pw"),
+		                SCM_BOOL_F);
+	scm_set_struct_vtable_name_x (vline_vtable, scm_from_utf8_symbol("vline"));
+
+#ifndef SCM_MAGIC_SNARFER
+#include "struct.x"
+#endif
 }
