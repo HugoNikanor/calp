@@ -65,6 +65,7 @@ exec guile -e main -s $0 "$@"
     (file (value #t) (single-char #\f))
     (output (value #t) (single-char #\o))
     (format (value #f))
+    (width (value #t) (single-char #\w))
     (statprof (value optional))))
 
 (define (ornull a b)
@@ -84,7 +85,8 @@ exec guile -e main -s $0 "$@"
           (for-each (lambda (l) (display l) (newline))
                     (flow-text
                      (with-input-from-port (open-input-port (option-ref opts 'file "-"))
-                       (@ (ice-9 rdelim) read-string))))
+                       (@ (ice-9 rdelim) read-string))
+                     #:width (or (string->number (option-ref opts 'width "")) 70)))
 
           (init
            (lambda (c e)

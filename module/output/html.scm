@@ -269,5 +269,3 @@
   (define end   (parse-freeform-date (option-ref opts 'to   "2019-05-10")))
 
   (html-generate calendars events start end))
-
-
