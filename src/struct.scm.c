@@ -3,6 +3,7 @@
 #include <libguile.h>
 
 #include "parse.h"
+#include "calendar.h"
 
 SCM vcomponent_vtable;
 SCM vline_vtable;
@@ -12,10 +13,9 @@ SCM_DEFINE(scm_make_vcomponent, "make-vcomponent", 0, 1, 0,
            "")
 {
 
-	if (SCM_UNBNDP (type))
+	if (SCM_UNBNDP (type) || scm_is_false (type))
 		type = scm_from_utf8_symbol("VIRTUAL");
 
-	/* This segfaults */
 	return scm_make_struct_no_tail
 		(vcomponent_vtable,
 		 scm_list_4(type, SCM_EOL, SCM_BOOL_F,
@@ -31,13 +31,7 @@ SCM_DEFINE(scm_parse_cal_path, "parse-cal-path", 1, 0, 0,
 	SCM root = scm_make_vcomponent(SCM_UNSPECIFIED);
 
         char* p = scm_to_utf8_stringn(path, NULL);
-        // scm_read_vcalendar(root, p);
-        /* TODO check that path is good? */
-        printf("Parsing [%s]\n", p);
-        FILE* f = fopen(p, "r");
-        printf("FILE = %p\n", f);
-        parse_file (p, f, root);
-        /* TODO free file */
+        read_vcalendar(root, p);
         free(p);
 
         return root;
