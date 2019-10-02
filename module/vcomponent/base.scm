@@ -6,8 +6,9 @@
   :use-module ((ice-9 optargs) :select (define*-public)))
 
 (define (get-attr component attr)
-  (hash-ref (struct-ref component 3)
-            (as-string attr))
+  (and=> (hash-ref (struct-ref component 3)
+                   (as-string attr))
+         (lambda (l) (struct-ref l 0)))
   #;
   (%vcomponent-get-attribute
    component
@@ -19,26 +20,29 @@
   (set! (car (get-attr component (as-string attr)))
         value))
 
-(define-public value caar)
+;; (define-public value caar)
 
-(define-public (values-left-count attr-list)
-  (length (take-while identity attr-list)))
+;; (define-public (values-left-count attr-list)
+;;   (length (take-while identity attr-list)))
 
-(define-public (value-count attr-list)
-  (length (take-while identity (cdr (drop-while identity attr-list)))))
+;; (define-public (value-count attr-list)
+;;   (length (take-while identity (cdr (drop-while identity attr-list)))))
 
 (define-public attr* get-attr)
 
-(define (get-first c a)
-  (and=> (car (get-attr c a)) car))
+;; (define (get-first c a)
+;;   (and=> (car (get-attr c a)) car))
 
-(define (set-first! c a v)
-  (and=> (car (get-attr c a))
-         (lambda (f) (set! (car f) v))))
+;; (define (set-first! c a v)
+;;   (and=> (car (get-attr c a))
+;;          (lambda (f) (set! (car f) v))))
 
 (define-public attr
   (make-procedure-with-setter
-   get-first set-first!))
+;    get-first set-first!
+   get-attr
+   set-attr!
+   ))
 
 
 (define-public prop
@@ -64,7 +68,7 @@
   )
 
 (define*-public (children component #:optional only-type)
-  (let ((childs (slot-ref component 1)))
+  (let ((childs (struct-ref component 1)))
     (if only-type
         (filter (lambda (e) (eq? only-type (type e))) childs)
         childs)))

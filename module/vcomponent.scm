@@ -82,59 +82,60 @@
 (define* (make-vcomponent #:optional path)
   (if (not path)
       (make-vcomponent)
-      (let* ((root (parse-cal-path path))
-             (component
-              (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
-                ;; == Single ICS file ==
-                ;; Remove the abstract ROOT component,
-                ;; returning the wanted VCALENDAR component
-                ((file)
-                 ;; TODO test this when an empty file is given.
-                 (car (children root)))
+      (let ((root (parse-cal-path path)))
+        (format #t "root = ~a~%" root )
+        (let* ((component
+                      (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
+                        ;; == Single ICS file ==
+                        ;; Remove the abstract ROOT component,
+                        ;; returning the wanted VCALENDAR component
+                        ((file)
+                         ;; TODO test this when an empty file is given.
+                         (display "Hello\n")
+                         (car (children root)))
 
-                ;; == Assume vdir ==
-                ;; Also removes the abstract ROOT component, but also
-                ;; merges all VCALENDAR's children into the a newly
-                ;; created VCALENDAR component, and return that component.
-                ;;
-                ;; TODO the other VCALENDAR components might not get thrown away,
-                ;; this since I protect them from the GC in the C code.
-                ((vdir)
-                 (let ((accum (make-vcomponent))
-                       (ch (children root)))
-                   (set! (type accum) "VCALENDAR")
+                        ;; == Assume vdir ==
+                        ;; Also removes the abstract ROOT component, but also
+                        ;; merges all VCALENDAR's children into the a newly
+                        ;; created VCALENDAR component, and return that component.
+                        ;;
+                        ;; TODO the other VCALENDAR components might not get thrown away,
+                        ;; this since I protect them from the GC in the C code.
+                        ((vdir)
+                         (let ((accum (make-vcomponent))
+                               (ch (children root)))
+                           (set! (type accum) "VCALENDAR")
 
-                   (unless (null? ch)
-                    (for key in (attributes (car ch))
-                         (set! (attr accum key) (attr (car ch) key))))
+                           (unless (null? ch)
+                             (for key in (attributes (car ch))
+                                  (set! (attr accum key) (attr (car ch) key))))
 
-                   (for cal in ch
-                        (for component in (children cal)
-                             (case (type component)
-                               ((VTIMEZONE)
-                                (unless (find (lambda (z)
-                                                (string=? (attr z "TZID")
-                                                          (attr component "TZID")))
-                                              (children accum 'VTIMEZONE))
-                                  (push-child! accum component)))
-                               (else (push-child! accum component)))))
-                   ;; return
-                   accum))
+                           (for cal in ch
+                                (for component in (children cal)
+                                     (case (type component)
+                                       ((VTIMEZONE)
+                                        (unless (find (lambda (z)
+                                                        (string=? (attr z "TZID")
+                                                                  (attr component "TZID")))
+                                                      (children accum 'VTIMEZONE))
+                                          (push-child! accum component)))
+                                       (else (push-child! accum component)))))
+                           ;; return
+                           accum))
 
-                ((no-type) (throw 'no-type))
+                        ((no-type) (throw 'no-type)))))
 
-                (else (throw 'something)))))
+                (display "Here?\n")
+                (parse-dates! component)
 
-        (parse-dates! component)
+                (unless (attr component "NAME")
+                  (set! (attr component "NAME")
+                    (or (attr component "X-WR-CALNAME")
+                        (attr root      "NAME"))))
 
-        (unless (attr component "NAME")
-          (set! (attr component "NAME")
-                (or (attr component "X-WR-CALNAME")
-                    (attr root      "NAME"))))
+                (unless (attr component "COLOR")
+                  (set! (attr component "COLOR")
+                    (attr root      "COLOR")))
 
-        (unless (attr component "COLOR")
-          (set! (attr component "COLOR")
-                (attr root      "COLOR")))
-
-        ;; return
-        component)))
+                ;; return
+                component))))
