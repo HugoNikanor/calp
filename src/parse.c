@@ -42,7 +42,7 @@
 
  */
 
-#define string_eq(a, b) scm_string_eq(a, b, SCM_BOOL_F,SCM_BOOL_F,SCM_BOOL_F,SCM_BOOL_F)
+#define string_eq(a, b) scm_is_true(scm_string_eq(a, b, SCM_UNDEFINED,SCM_UNDEFINED,SCM_UNDEFINED,SCM_UNDEFINED))
 
 /*
  * name *(";" param) ":" value CRLF
@@ -73,11 +73,15 @@ int parse_file(char* filename, FILE* f, SCM root) {
 	SCM attr_key;           /* string */
 	SCM line_key = scm_from_utf8_string("");           /* string */
 
+	INFO("Starting parsing");
 	char c;
+	INFO("here");
 	while ( (c = fgetc(f)) != EOF) {
+		INFO_F("LOOP %c", c);
 
 		/* We have a linebreak */
 		if (c == '\r' || c == '\n') {
+			INFO("EOL");
 
 			if (fold(&ctx, c) > 0) {
 				/* Actuall end of line, handle value */
@@ -87,12 +91,14 @@ int parse_file(char* filename, FILE* f, SCM root) {
 				 */
 				if (string_eq(line_key, scm_from_utf8_string("BEGIN"))) {
 					/* key \in { VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE, ...  } */
-					SCM child = scm_make_vcomponent(scm_from_strbuf(&str));
+					INFO("Creating child");
+					SCM child = scm_make_vcomponent(scm_string_to_symbol(scm_from_strbuf(&str)));
 					scm_add_child_x (component, child);
 					component = child;
 
 				} else if (string_eq(line_key, scm_from_utf8_string("END"))) {
 					// TODO make current component be parent of current component?
+					INFO("back to parent");
 					component = scm_component_parent(component);
 
 					/*
@@ -100,6 +106,7 @@ int parse_file(char* filename, FILE* f, SCM root) {
 					 * component.
 					 */
 				} else {
+					INFO("Adding attribute");
 					scm_struct_set_x(line, vline_value, scm_from_strbuf(&str));
 					scm_add_line_x(component, line_key, line);
 					line = scm_make_vline();
@@ -120,6 +127,7 @@ int parse_file(char* filename, FILE* f, SCM root) {
 			/* Save the current parameter key */
 			// TODO
 			// TRANSFER (&param_key, &ctx.str);
+			INFO("Param key");
 			attr_key = scm_from_strbuf(&str);
 			p_ctx = p_param_value;
 			strbuf_soft_reset (&str);
@@ -136,6 +144,7 @@ int parse_file(char* filename, FILE* f, SCM root) {
 			/* We got a parameter value, push the current string to
 			 * the current parameter set. */
 			if (p_ctx == p_param_value) {
+				INFO("param value");
 				/* save current parameter value. */
 				scm_add_attribute_x(line, attr_key, scm_from_strbuf(&str));
 				strbuf_soft_reset (&str);
@@ -149,11 +158,13 @@ int parse_file(char* filename, FILE* f, SCM root) {
 			 */
 			if (p_ctx == p_key) {
 
+				INFO("key");
 				// TRANSFER(&cline_key, &ctx.str);
 
 				// NEW(content_set, p);
 				// PUSH(LLIST(content_set))(&cline, p);
-				attr_key = scm_from_strbuf(&str);
+				// attr_key 
+				line_key = scm_from_strbuf(&str);
 				strbuf_soft_reset (&str);
 			}
 
@@ -173,7 +184,7 @@ int parse_file(char* filename, FILE* f, SCM root) {
 	}
 
 	if (! feof(f)) {
-		ERR("Error parsing");
+		ERR_F("Error parsing errno = %i", errno);
 	}
 	/* Check to see if empty line */
 	else if (str.ptr != 0) {

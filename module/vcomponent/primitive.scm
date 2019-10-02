@@ -17,7 +17,7 @@
                                         ;
   %vcomponent-shallow-copy)
 
-  (make-vcomponent add-line! add-child! make-vline add-attribute! parse-path)
+  (make-vcomponent add-line! add-child! make-vline add-attribute! parse-cal-path)
   )
 
 (load-extension "libguile-calendar" "init_lib")

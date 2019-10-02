@@ -2,6 +2,8 @@
 
 #include <libguile.h>
 
+#include "parse.h"
+
 SCM vcomponent_vtable;
 SCM vline_vtable;
 
@@ -10,27 +12,35 @@ SCM_DEFINE(scm_make_vcomponent, "make-vcomponent", 0, 1, 0,
            "")
 {
 
-	if (SCM_UNBNDP (type)) type = SCM_BOOL_F;
+	if (SCM_UNBNDP (type))
+		type = scm_from_utf8_symbol("VIRTUAL");
 
-	if (scm_is_false(type)) type = scm_from_utf8_symbol("VIRTUAL");
-
-	return scm_c_make_struct (vcomponent_vtable, scm_from_int(0),
-	                          type, SCM_EOL, SCM_BOOL_F,
-	                          scm_make_hash_table(SCM_BOOL_F),
-	                          SCM_UNDEFINED);
+	/* This segfaults */
+	return scm_make_struct_no_tail
+		(vcomponent_vtable,
+		 scm_list_4(type, SCM_EOL, SCM_BOOL_F,
+		            scm_make_hash_table(scm_from_int(0x10))));
 }
 
 
 
-SCM_DEFINE(scm_parse_cal_path, "parse-path", 1, 0, 0,
+SCM_DEFINE(scm_parse_cal_path, "parse-cal-path", 1, 0, 0,
            (SCM path),
            "")
 {
-	SCM root = scm_make_vcomponent(SCM_BOOL_F);
+	SCM root = scm_make_vcomponent(SCM_UNSPECIFIED);
 
         char* p = scm_to_utf8_stringn(path, NULL);
-        scm_read_vcalendar(root, p);
+        // scm_read_vcalendar(root, p);
+        /* TODO check that path is good? */
+        printf("Parsing [%s]\n", p);
+        FILE* f = fopen(p, "r");
+        printf("FILE = %p\n", f);
+        parse_file (p, f, root);
+        /* TODO free file */
         free(p);
+
+        return root;
 }
 
 SCM_DEFINE(scm_add_line_x, "add-line!", 3, 0, 0,
@@ -57,9 +67,9 @@ SCM_DEFINE(scm_add_child_x, "add-child!", 2, 0, 0,
 SCM_DEFINE(scm_make_vline, "make-vline", 0, 0, 0,
            (), "")
 {
-	return scm_c_make_struct (vline_vtable, scm_from_int(0),
-	                          SCM_BOOL_F, scm_make_hash_table(SCM_BOOL_F),
-	                          SCM_UNDEFINED);
+	return scm_make_struct_no_tail
+		(vline_vtable, 
+		 scm_list_2(SCM_BOOL_F, scm_make_hash_table(scm_from_int(0x10))));
 }
 
 
@@ -77,10 +87,10 @@ void init_lib (void) {
 	// init_vcomponent_type();
 	// content_set_lists = scm_make_weak_key_hash_table (scm_from_uint(0x100));
 	SCM str = scm_from_utf8_string("pr" "pw" "pw" "pr");
-	SCM vcomponent_vtable = scm_make_vtable(str, SCM_BOOL_F);
+	vcomponent_vtable = scm_make_vtable(str, SCM_BOOL_F);
 	scm_set_struct_vtable_name_x (vcomponent_vtable, scm_from_utf8_symbol("vcomponent"));
 
-	SCM vline_vtable =
+	vline_vtable =
 		scm_make_vtable(scm_from_utf8_string("pw" "pw"),
 		                SCM_BOOL_F);
 	scm_set_struct_vtable_name_x (vline_vtable, scm_from_utf8_symbol("vline"));

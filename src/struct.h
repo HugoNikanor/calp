@@ -8,8 +8,8 @@
 #define vcomponent_parent   scm_from_uint8(2)
 #define vcomponent_lines    scm_from_uint8(3)
 
-inline SCM scm_component_parent(SCM component) {
-	return scm_struct_ref (component, vcomponent_parent); }
+#define scm_component_parent(component) \
+	scm_struct_ref (component, vcomponent_parent)
 
 #define vline_value      scm_from_uint8(0)
 #define vline_attributes scm_from_uint8(1)
