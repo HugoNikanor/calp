@@ -11,7 +11,7 @@
                 quote?
                 re-export-modules
                 use-modules*
-                -> set
+                -> set aif
                 tree-map let-lazy)
   #:replace (let* set! define-syntax
                   when unless if))
@@ -44,6 +44,13 @@
     ((@ (guile) if) p t
      (begin f ...))]))
 
+(define-syntax aif
+  (lambda (stx)
+    (syntax-case stx ()
+      [(_ condition true-clause false-clause)
+       (with-syntax ((it (datum->syntax stx 'it)))
+         #'(let ((it condition))
+             (if it true-clause false-clause)))])))
 
 
 (define-public upstring->symbol (compose string->symbol string-upcase))

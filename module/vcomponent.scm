@@ -1,5 +1,5 @@
 (define-module (vcomponent)
-  #:use-module ((vcomponent primitive) :select (parse-cal-path make-vcomponent))
+  #:use-module ((vcomponent primitive) :select (parse-cal-path (make-vcomponent . primitive-make-vcomponent)))
   #:use-module (vcomponent datetime)
   #:use-module (vcomponent recurrence)
   #:use-module (vcomponent timezone)
@@ -26,7 +26,9 @@
 (define (parse-dates! cal)
   "Parse all start times into scheme date objects."
 
-  (for tz in (children cal 'VTIMEZONE)
+  (for tz in (filter (lambda (o) (eq? 'VTIMEZONE (type o))) (children cal))
+       (format #t "TZ = ~a~%" tz)
+
        (for-each (lambda (p) (mod! (attr p "DTSTART") string->time-utc))
                  (children tz))
 
@@ -40,15 +42,24 @@
                (cadr (children tz))))
              ))
 
-  (for ev in (children cal 'VEVENT)
+  (for ev in (filter (lambda (o) (eq? 'VEVENT (type o))) (children cal))
        (define dptr (attr* ev 'DTSTART))
        (define eptr (attr* ev 'DTEND))
 
-       (define date     (parse-datetime (value dptr)))
+       (define date (parse-datetime (value dptr)))
        (define end-date
-         (if (value eptr)
-             (parse-datetime (value eptr))
-             (set (date-hour date) = (+ 1))))
+         (begin (format #t "end-date, file = ~a~%" (attr ev 'X-HNH-FILENAME))
+                ;; It's here it crashes!
+                ;; (value eptr)
+                ;; /home/hugo/.local/var/cal/lithekod_styrelse/9cd19ed2ac0f68f68c405010e43bcf3a5fd6ca01e8f2e0ccf909a0f2fa96532f.ics
+                ;; An object apparently doesn't need to have a DTEND...
+          (aif (value eptr)
+               (parse-datetime it)
+               (set (date-hour date) = (+ 1)))))
+
+       (format #t "ev = ~a~%file = ~a~%" ev (attr ev 'X-HNH-FILENAME))
+
+       ;; (format #t "ev = ~a~%file = ~a~%" ev (attr ev 'X-HNH-FILENAME))
 
        (set! (value dptr) (date->time-utc date)
              (value eptr) (date->time-utc end-date))
@@ -78,10 +89,9 @@
 ;;   (make-procedure-with-setter car set-car!))
 
 
-
 (define* (make-vcomponent #:optional path)
   (if (not path)
-      (make-vcomponent)
+      (primitive-make-vcomponent)
       (let ((root (parse-cal-path path)))
         (format #t "root = ~a~%" root )
         (let* ((component
@@ -102,14 +112,16 @@
                         ;; TODO the other VCALENDAR components might not get thrown away,
                         ;; this since I protect them from the GC in the C code.
                         ((vdir)
-                         (let ((accum (make-vcomponent))
+                         (let ((accum (primitive-make-vcomponent 'VCALENDAR))
                                (ch (children root)))
-                           (set! (type accum) "VCALENDAR")
 
+                           ;; What does this even do?
                            (unless (null? ch)
+                             (format #t "Looping over attributes~%")
                              (for key in (attributes (car ch))
                                   (set! (attr accum key) (attr (car ch) key))))
 
+                           (format #t "Looping over children, again")
                            (for cal in ch
                                 (for component in (children cal)
                                      (case (type component)
@@ -117,7 +129,7 @@
                                         (unless (find (lambda (z)
                                                         (string=? (attr z "TZID")
                                                                   (attr component "TZID")))
-                                                      (children accum 'VTIMEZONE))
+                                                      (filter (lambda (o) (eq? 'VTIMEZONE (type o))) (children accum)))
                                           (push-child! accum component)))
                                        (else (push-child! accum component)))))
                            ;; return
@@ -127,6 +139,7 @@
 
                 (display "Here?\n")
                 (parse-dates! component)
+                (display "Theren")
 
                 (unless (attr component "NAME")
                   (set! (attr component "NAME")

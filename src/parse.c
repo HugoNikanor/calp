@@ -94,6 +94,16 @@ int parse_file(char* filename, FILE* f, SCM root) {
 					INFO("Creating child");
 					SCM child = scm_make_vcomponent(scm_string_to_symbol(scm_from_strbuf(&str)));
 					scm_add_child_x (component, child);
+
+					/* TODO it should be possible to create this object once
+					   at the top of this function
+					 */
+					SCM templine = scm_make_vline();
+					scm_struct_set_x(templine, vline_value,
+					                 scm_from_utf8_stringn(filename, strlen(filename)));
+					scm_add_line_x(child, scm_from_utf8_string("X-HNH-FILENAME"),
+					               templine);
+
 					component = child;
 
 				} else if (string_eq(line_key, scm_from_utf8_string("END"))) {
@@ -195,7 +205,7 @@ int parse_file(char* filename, FILE* f, SCM root) {
 		 * end with CRLF. My files however does not, so we also parse
 		 * the end here.
 		 */
-		ERR("Not implemented");
+		ERR("Handling of missing trailing endline not reimplemented.");
 
 		// TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
 		// TODO
