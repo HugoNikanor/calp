@@ -47,8 +47,7 @@ int handle_file(SCM cal, char* path) {
 	/* NAME is the `fancy' name of the calendar. */
 	// vcomponent_push_val(cal, "NAME", basename(path));
 	// vcomponent_push_val(cal, "X-HNH-SOURCETYPE", "file");
-	SCM line = scm_make_vline();
-	scm_struct_set_x(line, vline_value, scm_from_utf8_string("file"));
+	SCM line = scm_make_vline(scm_from_utf8_string("file"));
 	scm_add_line_x(cal, scm_from_utf8_string("X-HNH-SOURCETYPE"), line);
 	char* resolved_path = realpath(path, NULL);
 	open_ics (resolved_path, cal);
@@ -73,8 +72,7 @@ int handle_dir(SCM cal, char* path) {
 
 	/* NAME is the `fancy' name of the calendar. */
 	// vcomponent_push_val(cal, "NAME", basename(path));
-	SCM line = scm_make_vline();
-	scm_struct_set_x(line, vline_value, scm_from_utf8_string("vdir"));
+	SCM line = scm_make_vline(scm_from_utf8_string("vdir"));
 	scm_add_line_x(cal, scm_from_utf8_string("X-HNH-SOURCETYPE"), line);
 
 	struct dirent* d;

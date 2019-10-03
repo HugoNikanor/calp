@@ -41,7 +41,7 @@
               (format #t "map = ~a~%" (struct-ref component 3))
               (let ((return (hash-set! (struct-ref component 3)
                                 (as-string attr)
-                                value)))
+                                (make-vline value))))
 
                 (format #t "Return = ~a~%" return)
                 return

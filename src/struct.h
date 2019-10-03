@@ -17,7 +17,7 @@
 SCM scm_make_vcomponent(SCM);
 SCM scm_add_line_x (SCM, SCM, SCM);
 SCM scm_add_child_x (SCM, SCM);
-SCM scm_make_vline ();
+SCM scm_make_vline (SCM);
 SCM scm_add_attribute_x (SCM, SCM, SCM);
 
 #endif /* STRUCT_H */

@@ -73,6 +73,8 @@
           (date->time-utc d))
 
     (when (attr e 'DTEND)
+      (format #t "file = ~a~%dtstart = ~a~%duration = ~a~%"
+              (attr e 'X-HNH-FILENAME) (attr e 'DTSTART) (attr e 'DURATION))
      (set! (attr e 'DTEND)
            (add-duration (attr e 'DTSTART) (attr e 'DURATION))))
 
@@ -124,12 +126,21 @@
   (if (not (attr event 'RRULE))
       (stream event)
       (begin
+        (format #t "!!! DURATION = ~a~%" (attr event 'DURATION))
         (when (and (attr event 'DTEND)
                    (not (attr event 'DURATION)))
-          (set! (attr event "DURATION")
-                (time-difference
-                 (attr event "DTEND")
-                 (attr event "DTSTART"))))
+          (let ((dt (time-difference  (attr event "DTEND") (attr event "DTSTART") )))
+           (format #t "duration = ~a~%start = ~a, end = ~a~%diff = ~a~%"
+                   (attr event "DURATION")
+                   (attr event "DTSTART") (attr event "DTEND")
+                   dt)
+           (set! (attr event "DURATION")
+             dt
+             #;
+             (time-difference
+             (attr event "DTEND")
+             (attr event "DTSTART")))))
+        (format #t "||| DURATION = ~a~%" (attr* event "DURATION"))
         (if (attr event "RRULE")
             (recur-event-stream event (parse-recurrence-rule (attr event "RRULE")))
             ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather

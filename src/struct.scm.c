@@ -28,7 +28,7 @@ SCM_DEFINE(scm_parse_cal_path, "parse-cal-path", 1, 0, 0,
            (SCM path),
            "")
 {
-	SCM root = scm_make_vcomponent(SCM_UNSPECIFIED);
+	SCM root = scm_make_vcomponent(SCM_UNDEFINED);
 
         char* p = scm_to_utf8_stringn(path, NULL);
         read_vcalendar(root, p);
@@ -58,12 +58,15 @@ SCM_DEFINE(scm_add_child_x, "add-child!", 2, 0, 0,
 }
 
 
-SCM_DEFINE(scm_make_vline, "make-vline", 0, 0, 0,
-           (), "")
+SCM_DEFINE(scm_make_vline, "make-vline", 0, 1, 0,
+           (SCM value), "")
 {
+
+	if (SCM_UNBNDP (value)) value = SCM_BOOL_F;
+
 	return scm_make_struct_no_tail
-		(vline_vtable, 
-		 scm_list_2(SCM_BOOL_F, scm_make_hash_table(scm_from_int(0x10))));
+		(vline_vtable,
+		 scm_list_2(value, scm_make_hash_table(scm_from_int(0x10))));
 }
 
 

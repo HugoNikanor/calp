@@ -69,7 +69,7 @@ int parse_file(char* filename, FILE* f, SCM root) {
 
 	SNEW(strbuf, str);
 	SCM component = root;
-	SCM line = scm_make_vline();
+	SCM line = scm_make_vline(SCM_UNDEFINED);
 	SCM attr_key;           /* string */
 	SCM line_key = scm_from_utf8_string("");           /* string */
 
@@ -98,9 +98,8 @@ int parse_file(char* filename, FILE* f, SCM root) {
 					/* TODO it should be possible to create this object once
 					   at the top of this function
 					 */
-					SCM templine = scm_make_vline();
-					scm_struct_set_x(templine, vline_value,
-					                 scm_from_utf8_stringn(filename, strlen(filename)));
+					SCM templine =
+						scm_make_vline(scm_from_utf8_stringn(filename, strlen(filename)));
 					scm_add_line_x(child, scm_from_utf8_string("X-HNH-FILENAME"),
 					               templine);
 
@@ -120,7 +119,7 @@ int parse_file(char* filename, FILE* f, SCM root) {
 					INFO_F("Adding attribute [%s]", str.mem);
 					scm_struct_set_x(line, vline_value, scm_from_strbuf(&str));
 					scm_add_line_x(component, line_key, line);
-					line = scm_make_vline();
+					line = scm_make_vline(SCM_UNDEFINED);
 				}
 
 				strbuf_soft_reset (&str);
