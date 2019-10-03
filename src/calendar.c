@@ -96,8 +96,8 @@ int handle_dir(SCM cal, char* path) {
 				info_buf[read - 1] = '\0';
 
 			fclose(f);
-			// TODO 
-			// vcomponent_push_val(cal, "COLOR", info_buf);
+			scm_add_line_x(cal, scm_from_utf8_string("COLOR"),
+			               scm_make_vline(scm_from_utf8_stringn(info_buf, read)));
 		} else if (strcmp (d->d_name, "displayname") == 0) {
 			f = fopen(resolved_path, "r");
 			read = getline(&info_buf, &size, f);
@@ -111,8 +111,8 @@ int handle_dir(SCM cal, char* path) {
 			 * This works since *currently* values are returned in
 			 * reverse order
 			 */
-			// TODO
-			// vcomponent_push_val(cal, "NAME", info_buf);
+			scm_add_line_x(cal, scm_from_utf8_string("NAME"),
+			               scm_make_vline(scm_from_utf8_stringn(info_buf, read)));
 		} else {
 			open_ics (resolved_path, cal);
 		}
