@@ -180,12 +180,12 @@ int parse_file(char* filename, FILE* f, SCM root) {
 		 * The standard (3.4, l. 2675) says that each icalobject must
 		 * end with CRLF. My files however does not, so we also parse
 		 * the end here.
+		 *
+		 * Actually we don't any more.
+		 * Since the last thing in a file should always be END:VCALENDAR
+		 * it might be a good idea to verify that. Or we could just, you
+		 * know, not.
 		 */
-		ERR("Handling of missing trailing endline not reimplemented.");
-
-		// TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
-		// TODO
-		// handle_kv(&cline_key, &cline, &ctx);
 
 	}
 
