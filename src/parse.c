@@ -73,6 +73,9 @@ int parse_file(char* filename, FILE* f, SCM root) {
 	SCM attr_key;           /* string */
 	SCM line_key = scm_from_utf8_string("");           /* string */
 
+	SCM scm_filename = scm_from_utf8_stringn(filename, strlen(filename));
+	SCM filename_key = scm_from_utf8_string("X-HNH-FILENAME");
+
 	char c;
 	while ( (c = fgetc(f)) != EOF) {
 		/* We have a linebreak */
@@ -91,15 +94,11 @@ int parse_file(char* filename, FILE* f, SCM root) {
 					/* TODO it should be possible to create this object once
 					   at the top of this function
 					 */
-					SCM templine =
-						scm_make_vline(scm_from_utf8_stringn(filename, strlen(filename)));
-					scm_add_line_x(child, scm_from_utf8_string("X-HNH-FILENAME"),
-					               templine);
+					scm_add_line_x(child, filename_key, scm_make_vline(scm_filename));
 
 					component = child;
 
 				} else if (string_eq(line_key, scm_from_utf8_string("END"))) {
-					// TODO make current component be parent of current component?
 					component = scm_component_parent(component);
 
 					/*
@@ -153,12 +152,6 @@ int parse_file(char* filename, FILE* f, SCM root) {
 			 * parameters.
 			 */
 			if (p_ctx == p_key) {
-
-				// TRANSFER(&cline_key, &ctx.str);
-
-				// NEW(content_set, p);
-				// PUSH(LLIST(content_set))(&cline, p);
-				// attr_key 
 				line_key = scm_from_strbuf(&str);
 				strbuf_soft_reset (&str);
 			}
