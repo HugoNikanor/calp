@@ -5,18 +5,6 @@
   :use-module (vcomponent primitive)
   :use-module ((ice-9 optargs) :select (define*-public)))
 
-;; (define og-struct-ref struct-ref)
-;; (define (struct-ref struct field)
-;;   (format #t "struct = ~a, field = ~a~%" struct field)
-;;   (og-struct-ref struct field))
-
-(use-modules (system vm trap-state))
-
-(install-trap-handler! (lambda args (format #t "args = ~a~%" args)))
-
-(add-trace-at-procedure-call! struct-ref)
-(add-trap-at-procedure-call! struct-ref)
-
 ;; vline → value
 (define-public value
   (make-procedure-with-setter
@@ -34,20 +22,11 @@
          value))
 
 (define (set-attr! component attr value)
-  (format #t "attr = ~a~%" attr)
   (aif (attr* component attr)
-       (begin (format #t "Existed~%") (struct-set! it 0 value))
-       (begin (format #t "Creating, component = ~a, attr = ~a, value = ~a~%" component attr value)
-              (format #t "map = ~a~%" (struct-ref component 3))
-              (let ((return (hash-set! (struct-ref component 3)
-                                (as-string attr)
-                                (make-vline value))))
-
-                (format #t "Return = ~a~%" return)
-                return
-                )
-
-              )))
+       (struct-set! it 0 value)
+       (hash-set! (struct-ref component 3)
+                  (as-string attr)
+                  (make-vline value))))
 
 ;; (define-public (values-left-count attr-list)
 ;;   (length (take-while identity attr-list)))

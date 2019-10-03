@@ -27,8 +27,6 @@
   "Parse all start times into scheme date objects."
 
   (for tz in (filter (lambda (o) (eq? 'VTIMEZONE (type o))) (children cal))
-       (format #t "TZ = ~a~%" tz)
-
        (for-each (lambda (p) (mod! (attr p "DTSTART") string->time-utc))
                  (children tz))
 
@@ -49,7 +47,6 @@
        (define date (parse-datetime (value dptr)))
        (define end-date
          (cond [(not eptr)
-                (format #t "date = ~a~%" date)
                 (let ((d (set (date-hour date) = (+ 1))))
                   (set! (attr ev 'DTEND) d
                         eptr (attr* ev 'DTEND))
@@ -57,18 +54,11 @@
                   )]
                [(value eptr) => parse-datetime]
                [else
-                (format #t "date = ~a~%" date)
                 (set (date-hour date) = (+ 1))])
          )
 
-       (format #t "ev = ~a~%file = ~a~%" ev (attr ev 'X-HNH-FILENAME))
-
-       ;; (format #t "ev = ~a~%file = ~a~%" ev (attr ev 'X-HNH-FILENAME))
-
        (set! (value dptr) (date->time-utc date)
              (value eptr) (date->time-utc end-date))
-
-       (format #t "After first set")
 
        (when (prop (attr* ev 'DTSTART) 'TZID)
          (set! (zone-offset date) (get-tz-offset ev)
@@ -99,7 +89,6 @@
   (if (not path)
       (primitive-make-vcomponent)
       (let ((root (parse-cal-path path)))
-        (format #t "root = ~a~%" root )
         (let* ((component
                       (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
                         ;; == Single ICS file ==
@@ -107,7 +96,6 @@
                         ;; returning the wanted VCALENDAR component
                         ((file)
                          ;; TODO test this when an empty file is given.
-                         (display "Hello\n")
                          (car (children root)))
 
                         ;; == Assume vdir ==
@@ -123,11 +111,9 @@
 
                            ;; What does this even do?
                            (unless (null? ch)
-                             (format #t "Looping over attributes~%")
                              (for key in (attributes (car ch))
                                   (set! (attr accum key) (attr (car ch) key))))
 
-                           (format #t "Looping over children, again")
                            (for cal in ch
                                 (for component in (children cal)
                                      (case (type component)
@@ -143,9 +129,7 @@
 
                         ((no-type) (throw 'no-type)))))
 
-                (display "Here?\n")
                 (parse-dates! component)
-                (display "Theren")
 
                 (unless (attr component "NAME")
                   (set! (attr component "NAME")
