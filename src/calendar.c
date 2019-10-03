@@ -72,6 +72,8 @@ int handle_dir(SCM cal, char* path) {
 
 	/* NAME is the `fancy' name of the calendar. */
 	// vcomponent_push_val(cal, "NAME", basename(path));
+	scm_add_line_x(cal, scm_from_utf8_string("NAME"),
+	               scm_make_vline(scm_from_utf8_stringn(basename(path), strlen(basename(path)))));
 	SCM line = scm_make_vline(scm_from_utf8_string("vdir"));
 	scm_add_line_x(cal, scm_from_utf8_string("X-HNH-SOURCETYPE"), line);
 

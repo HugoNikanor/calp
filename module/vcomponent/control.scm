@@ -5,7 +5,7 @@
 
 
 (eval-when (expand load)                ; No idea why I must have load here.
-  (define href (make-procedure-with-setter hashq-ref hashq-set!))
+  (define href (make-procedure-with-setter hash-ref hash-set!))
 
   (define (set-temp-values! table component kvs)
     (for-each (lambda (kv)
