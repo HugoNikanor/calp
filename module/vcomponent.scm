@@ -48,14 +48,18 @@
 
        (define date (parse-datetime (value dptr)))
        (define end-date
-         (begin (format #t "end-date, file = ~a~%" (attr ev 'X-HNH-FILENAME))
-                ;; It's here it crashes!
-                ;; (value eptr)
-                ;; /home/hugo/.local/var/cal/lithekod_styrelse/9cd19ed2ac0f68f68c405010e43bcf3a5fd6ca01e8f2e0ccf909a0f2fa96532f.ics
-                ;; An object apparently doesn't need to have a DTEND...
-          (aif (value eptr)
-               (parse-datetime it)
-               (set (date-hour date) = (+ 1)))))
+         (cond [(not eptr)
+                (format #t "date = ~a~%" date)
+                (let ((d (set (date-hour date) = (+ 1))))
+                  (set! (attr ev 'DTEND) d
+                        eptr (attr* ev 'DTEND))
+                  d
+                  )]
+               [(value eptr) => parse-datetime]
+               [else
+                (format #t "date = ~a~%" date)
+                (set (date-hour date) = (+ 1))])
+         )
 
        (format #t "ev = ~a~%file = ~a~%" ev (attr ev 'X-HNH-FILENAME))
 
@@ -63,6 +67,8 @@
 
        (set! (value dptr) (date->time-utc date)
              (value eptr) (date->time-utc end-date))
+
+       (format #t "After first set")
 
        (when (prop (attr* ev 'DTSTART) 'TZID)
          (set! (zone-offset date) (get-tz-offset ev)
