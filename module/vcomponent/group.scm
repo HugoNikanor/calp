@@ -7,6 +7,7 @@
   #:use-module (srfi srfi-41 util)
   #:export (group-stream))
 
+;; TODO templetize this
 (define-stream (group-stream in-stream)
   (define (ein? day) (lambda (e) (event-contains? e (date->time-utc day))))
 

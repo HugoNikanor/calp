@@ -67,6 +67,7 @@
     ;; I currently have no idea why, but it's BAD.
     (let ((groups (get-groups-between (group-stream event-stream)
                                       (time-utc->date time) (time-utc->date time))))
+      (format (current-error-port) "len(groups) = ~a~%" (stream-length groups))
       (let ((events
              (if (stream-null? groups)
                  '() (group->event-list (stream-car groups)))))

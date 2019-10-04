@@ -46,9 +46,11 @@ exec guile -e main -s $0 "$@"
 ;; Given as a sepparate function from main to ease debugging.
 (define* (init proc #:key (calendar-files (calendar-files)))
   (define calendars (map make-vcomponent calendar-files))
-  (define events (concatenate (map (lambda (cal) (filter (lambda (o) (eq? 'VEVENT (type o)))
-                                                    (children cal)))
-                                   calendars)))
+  (define events (concatenate
+                  ;; TODO does this drop events?
+                  (map (lambda (cal) (filter (lambda (o) (eq? 'VEVENT (type o)))
+                                        (children cal)))
+                       calendars)))
 
   (let* ((repeating regular (partition repeating? events)))
 

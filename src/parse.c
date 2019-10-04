@@ -91,9 +91,6 @@ int parse_file(char* filename, FILE* f, SCM root) {
 					SCM child = scm_make_vcomponent(scm_string_to_symbol(scm_from_strbuf(&str)));
 					scm_add_child_x (component, child);
 
-					/* TODO it should be possible to create this object once
-					   at the top of this function
-					 */
 					scm_add_line_x(child, filename_key, scm_make_vline(scm_filename));
 
 					component = child;

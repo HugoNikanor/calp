@@ -51,6 +51,9 @@
                  (get-tz-offset e)
                  0))))
 
+    (set! (attr ev 'DTSTART)
+      (copy-time (attr ev 'DTSTART)))
+
     (let ((i (interval r)))
      (case (freq r)
        ((SECONDLY) (mod! (second d) = (+ i)))

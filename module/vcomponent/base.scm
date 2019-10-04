@@ -3,6 +3,7 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-17)
   :use-module (vcomponent primitive)
+  :use-module (ice-9 hash-table)
   :use-module ((ice-9 optargs) :select (define*-public)))
 
 ;; vline → value
@@ -76,12 +77,20 @@
 (define*-public (children component)
   (struct-ref component 1))
 
+(define (copy-vline vline)
+  (make-struct/no-tail (struct-vtable vline)
+                       (struct-ref vline 0)
+                       ;; TODO deep-copy on properties?
+                       (struct-ref vline 1)))
+
 (define-public (copy-vcomponent component)
   (make-struct/no-tail (struct-vtable component)
                        (struct-ref component 0)
                        (struct-ref component 1)
                        (struct-ref component 2)
-                       (struct-ref component 3)))
+                       (alist->hash-table
+                        (hash-map->list (lambda (key value) (cons key (copy-vline value)))
+                                        (struct-ref component 3)))))
 
 ;; (define-public filter-children! %vcomponent-filter-children!)
 
