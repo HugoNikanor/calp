@@ -24,11 +24,19 @@
 (define-public (stream-insert < item s)
   (interleave-streams < (list (stream item) s)))
 
-(define-public (filter-sorted-stream proc stream)
+;; Requires that stream is a total order in regards to what we filter
+;; on. From there it knows that once it has found the first element
+;; that satisfies our predicate all remaining elements satisfying pred
+;; will be in direct succession.
+(define-public (filter-sorted-stream pred stream)
   (stream-take-while
-   proc (stream-drop-while
-         (negate proc) stream)))
+   pred (stream-drop-while
+         (negate pred) stream)))
 
+
+;; Simmilar to the regular @code{filter-sorted-stream}, but once an
+;; element satisfies @code{keep-remaning?} then the remaining tail
+;; of the stream is all assumed to be good.
 (define-public (filter-sorted-stream* pred? keep-remaining? stream)
   (cond [(stream-null? stream) stream-null]
         [(keep-remaining? (stream-car stream)) stream]

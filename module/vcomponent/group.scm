@@ -20,6 +20,11 @@
 
           (let ((head (stream-take-while (ein? day) stream))
                 (tail
+                 ;; This is a filter, instead of a stream-span together with head,
+                 ;; since events can span multiple days.
+                 ;; This starts with taking everything which end after the beginning
+                 ;; of tommorow, and finishes with the rest when it finds the first
+                 ;; object which begins tomorow (after midnight, exclusize).
                  (filter-sorted-stream*
                   (lambda (e) (time<? tomorow (attr e 'DTEND)))
                   (lambda (e) (time<=? tomorow (attr e 'DTSTART)))
