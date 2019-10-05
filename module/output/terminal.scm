@@ -62,10 +62,12 @@
 
   (define-values (height width) (get-terminal-size))
 
+  (define grouped-stream (group-stream event-stream))
+
   (while #t
     ;; TODO reusing the same grouping causes it to lose events.
     ;; I currently have no idea why, but it's BAD.
-    (let ((groups (get-groups-between (group-stream event-stream)
+    (let ((groups (get-groups-between grouped-stream
                                       (time-utc->date time) (time-utc->date time))))
       (format (current-error-port) "len(groups) = ~a~%" (stream-length groups))
       (let ((events
@@ -157,5 +159,6 @@
     (let ((time (date->time-utc
                  (drop-time (or (and=> (option-ref opts 'date #f) parse-freeform-date)
                                 (current-date))))))
+      ;; (format (current-error-port) "len(events) = ~a~%" (stream-length events))
       (with-vulgar
        (lambda () (main-loop time events))))))

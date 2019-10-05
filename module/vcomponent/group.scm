@@ -5,7 +5,7 @@
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
-  #:export (group-stream))
+  #:export (group-stream get-groups-between))
 
 ;; TODO templetize this
 (define-stream (group-stream in-stream)
@@ -16,7 +16,8 @@
     (if (stream-null? stream)
         stream-null
         (let* ((day (stream-car days))
-               (tomorow (add-day (date->time-utc (drop-time day)))))
+               (tomorow (date->time-utc (stream-car (stream-cdr days)))))
+
           (let ((head (stream-take-while (ein? day) stream))
                 (tail
                  (filter-sorted-stream*
@@ -24,11 +25,12 @@
                   (lambda (e) (time<=? tomorow (attr e 'DTSTART)))
                   stream)))
 
+
             (stream-cons (cons day head)
                          (loop (stream-cdr days)
                                tail)))))))
 
-(define-public (get-groups-between groups start-date end-date)
+(define (get-groups-between groups start-date end-date)
   (filter-sorted-stream
    ;; TODO in-date-range? drops the first date
    (compose (in-date-range? start-date end-date)

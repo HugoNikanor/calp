@@ -363,6 +363,9 @@
      (-> (func obj) rest ...)]))
 
 
+;; Non-destructive set, syntax extension from set-fields from (srfi
+;; srfi-9 gnu). Also doubles as a non-destructive mod!, if the `='
+;; operator is used.
 (define-syntax set
   (syntax-rules (=)
     [(set (acc obj)  value)
