@@ -58,11 +58,13 @@
 
           [else (stream-zip strm (stream-cdr strm))])))
 
+;; str ::= ±[0-9]{4}
+;; str → int seconds
 (define (parse-offset str)
-  (let* (((pm h1 h0 m1 m0) (string->list str)))
-    ((primitive-eval (symbol pm))
-     (+ (* 60 (string->number (list->string (list m1 m0))))
-        (* 60 60 (string->number (list->string (list h1 h0))))))))
+  (let* (((± h1 h0 m1 m0) (string->list str)))
+    ((primitive-eval (symbol ±))
+     (+ (* 60    (string->number (string m1 m0)))
+        (* 60 60 (string->number (string h1 h0)))))))
 
 ;; Finds the VTIMEZONE with id @var{tzid} in calendar.
 ;; Crashes on error.
