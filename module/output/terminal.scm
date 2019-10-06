@@ -138,7 +138,7 @@
                    (let ((ev ((@ (vcomponent primitive) %vcomponent-make) fname)))
                      (serialize-vcomponent ev (current-error-port))
 
-                     (push-child! (parent (list-ref events cur-event)) ev)
+                     (add-child! (parent (list-ref events cur-event)) ev)
                      (format (current-error-port) "Children: ~a~%start: ~a~%" (children ev)
                              (attr ev 'DTSTART))
                      (set! event-stream (stream-insert ev-time<? ev event-stream)))))))

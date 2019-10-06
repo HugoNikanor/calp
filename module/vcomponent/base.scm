@@ -6,6 +6,8 @@
   :use-module (ice-9 hash-table)
   :use-module ((ice-9 optargs) :select (define*-public)))
 
+(export add-child!)
+
 ;; vline → value
 (define-public value
   (make-procedure-with-setter
@@ -29,25 +31,10 @@
                   (as-string attr)
                   (make-vline value))))
 
-;; (define-public (values-left-count attr-list)
-;;   (length (take-while identity attr-list)))
-
-;; (define-public (value-count attr-list)
-;;   (length (take-while identity (cdr (drop-while identity attr-list)))))
-
-;; (define (get-first c a)
-;;   (and=> (car (get-attr c a)) car))
-
-;; (define (set-first! c a v)
-;;   (and=> (car (get-attr c a))
-;;          (lambda (f) (set! (car f) v))))
-
 (define-public attr
   (make-procedure-with-setter
-;    get-first set-first!
    get-attr
-   set-attr!
-   ))
+   set-attr!))
 
 
 (define-public prop
@@ -68,11 +55,9 @@
                     ))
 
 (define-public (parent c) (struct-ref c 2))
-(define-public push-child! add-child!)
+
 (define-public (attributes component)
-  (hash-map->list cons (struct-ref component 3))
-  #; (map string->symbol (%vcomponent-attribute-list component))
-  )
+  (hash-map->list cons (struct-ref component 3)))
 
 (define*-public (children component)
   (struct-ref component 1))
@@ -91,8 +76,6 @@
                        (alist->hash-table
                         (hash-map->list (lambda (key value) (cons key (copy-vline value)))
                                         (struct-ref component 3)))))
-
-;; (define-public filter-children! %vcomponent-filter-children!)
 
 (define-public (extract field)
   (lambda (e) (attr e field)))

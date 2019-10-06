@@ -68,7 +68,8 @@
 ;; Crashes on error.
 (define (find-tz cal tzid)
   (let ((ret (find (lambda (tz) (string=? tzid (attr tz 'TZID)))
-                   (children cal 'VTIMEZONE))))
+                   (filter (lambda (o) (eq? 'VTIMEZONE (type o)))
+                           (children cal)))))
     ret))
 
 ;; Takes a VEVENT.

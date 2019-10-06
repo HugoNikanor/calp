@@ -7,14 +7,6 @@
 
 (use-modules* (web (response uri)))
 
-(define (not-null? obj)
-  (if (null? obj) #f obj))
-
-(define (match-count pattern str)
-  (fold-matches pattern str 0
-                (lambda (_ count)
-                  (1+ count))))
-
 
 
 (define-public (parse-endpoint-string str)
@@ -53,6 +45,8 @@
 (define-macro (make-routes . routes)
 
   `(lambda* (request body #:optional state)
+     ;; ALl these bindings generate compile time warnings since the expansion
+     ;; of the macro might not use them. This isn't really a problem.
      (let ((r:method  (request-method  request))
            (r:uri     (request-uri     request))
            (r:version (request-version request))

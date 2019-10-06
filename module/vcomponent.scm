@@ -32,13 +32,7 @@
 
        ;; TZSET is the generated recurrence set of a timezone
        (set! (attr tz 'X-HNH-TZSET)
-             (make-tz-set tz)
-             #;
-             ((@ (srfi srfi-41) stream)
-              (list
-               (car (children tz))
-               (cadr (children tz))))
-             ))
+             (make-tz-set tz)))
 
   (for ev in (filter (lambda (o) (eq? 'VEVENT (type o))) (children cal))
        (define dptr (attr* ev 'DTSTART))
@@ -50,12 +44,10 @@
                 (let ((d (set (date-hour date) = (+ 1))))
                   (set! (attr ev 'DTEND) d
                         eptr (attr* ev 'DTEND))
-                  d
-                  )]
+                  d)]
                [(value eptr) => parse-datetime]
                [else
-                (set (date-hour date) = (+ 1))])
-         )
+                (set (date-hour date) = (+ 1))]))
 
        (set! (value dptr) (date->time-utc date)
              (value eptr) (date->time-utc end-date))
@@ -68,21 +60,6 @@
                ;; timezone as DTSTART. Here we trust that blindly.
                (zone-offset end-date) (zone-offset date)
                (value eptr) (date->time-utc end-date)))))
-
-
-;; (define-public value caar)
-;; (define-public next cdr)
-;; (define-public next! pop!)
-
-
-;; (define-public (reset! attr-list)
-;;   (while (not (car attr-list))
-;;     (next! attr-list))
-;;   (next! attr-list))
-
-;; value
-;; (define-public v
-;;   (make-procedure-with-setter car set-car!))
 
 
 (define* (make-vcomponent #:optional path)
@@ -121,9 +98,10 @@
                                         (unless (find (lambda (z)
                                                         (string=? (attr z "TZID")
                                                                   (attr component "TZID")))
-                                                      (filter (lambda (o) (eq? 'VTIMEZONE (type o))) (children accum)))
-                                          (push-child! accum component)))
-                                       (else (push-child! accum component)))))
+                                                      (filter (lambda (o) (eq? 'VTIMEZONE (type o)))
+                                                              (children accum)))
+                                          (add-child! accum component)))
+                                       (else (add-child! accum component)))))
                            ;; return
                            accum))
 
