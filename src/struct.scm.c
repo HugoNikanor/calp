@@ -81,8 +81,6 @@ SCM_DEFINE(scm_add_attribute_x, "add-attribute!", 3, 0, 0,
 }
 
 void init_lib (void) {
-	// init_vcomponent_type();
-	// content_set_lists = scm_make_weak_key_hash_table (scm_from_uint(0x100));
 	SCM str = scm_from_utf8_string("pr" "pw" "pw" "pr");
 	vcomponent_vtable = scm_make_vtable(str, SCM_BOOL_F);
 	scm_set_struct_vtable_name_x (vcomponent_vtable, scm_from_utf8_symbol("vcomponent"));

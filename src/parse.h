@@ -47,13 +47,6 @@ typedef struct {
 
 	FILE* f;
 
-	/*
-	 * context stacks used since ICS files form a tree. key_stack is
-	 * only for sequrity purposes.
-	 */
-	// LLIST(strbuf) key_stack;
-	// LLIST(vcomponent) comp_stack;
-
 	/* Number for unfolded lines
 	 * TODO remove this
 	 * */
@@ -64,11 +57,6 @@ typedef struct {
 	int pline;
 	int pcolumn;
 
-	/*
-	 * String which we write everything read into.
-	 * Later copied to appropiate places.
-	 */
-	// strbuf str;
 } parse_ctx;
 
 INIT_F(parse_ctx, FILE* f, char* filename);

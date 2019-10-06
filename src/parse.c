@@ -5,24 +5,12 @@
 #include <assert.h>
 
 #include "macro.h"
-// #include "vcal.h"
 
 #include "err.h"
 
 #include <libguile.h>
 #include "struct.h"
 #include "guile_type_helpers.h"
-
-// #define TYPE vcomponent
-// #include "linked_list.inc.h"
-// #undef TYPE
-
-// #define T strbuf
-// #define V strbuf
-// #include "pair.h"
-// #include "pair.inc.h"
-// #undef T
-// #undef V
 
 /*
            +-------------------------------------------------------+
@@ -42,7 +30,6 @@
 
  */
 
-#define string_eq(a, b) scm_is_true(scm_string_eq(a, b, SCM_UNDEFINED,SCM_UNDEFINED,SCM_UNDEFINED,SCM_UNDEFINED))
 
 /*
  * name *(";" param) ":" value CRLF
@@ -52,26 +39,12 @@ int parse_file(char* filename, FILE* f, SCM root) {
 	part_context p_ctx = p_key;
 
 	SNEW(parse_ctx, ctx, f, filename);
-	// PUSH(LLIST(vcomponent))(&ctx.comp_stack, root);
-
-	/*
-	 * Create a content_line which we use as storage while we are
-	 * parsing. This object is constantly broken down and rebuilt.
-	 *
-	 * {cline,param}_key is also temporary register used during
-	 * parsing.
-	 */
-	// SNEW(content_line, cline);
-	// SNEW(strbuf, param_key);
-	// SNEW(strbuf, param_val);
-	// SNEW(strbuf, attr_key);
-	// SNEW(strbuf, attr_val);
 
 	SNEW(strbuf, str);
 	SCM component = root;
 	SCM line = scm_make_vline(SCM_UNDEFINED);
 	SCM attr_key;           /* string */
-	SCM line_key = scm_from_utf8_string("");           /* string */
+	SCM line_key = scm_from_utf8_string("");
 
 	SCM scm_filename = scm_from_utf8_stringn(filename, strlen(filename));
 	SCM filename_key = scm_from_utf8_string("X-HNH-FILENAME");
@@ -82,13 +55,12 @@ int parse_file(char* filename, FILE* f, SCM root) {
 		if (c == '\r' || c == '\n') {
 			if (fold(&ctx, c) > 0) {
 				/* Actuall end of line, handle value */
-				// TRANSFER(CLINE_CUR_VAL(&cline), &ctx.str);
 				/*
 				 * The key being BEGIN means that we decend into a new component.
 				 */
 				if (string_eq(line_key, scm_from_utf8_string("BEGIN"))) {
 					/* key \in { VCALENDAR, VEVENT, VALARM, VTODO, VTIMEZONE, ...  } */
-					SCM child = scm_make_vcomponent(scm_string_to_symbol(scm_from_strbuf(&str)));
+					SCM child = scm_make_vcomponent(scm_from_strbuf_symbol(&str));
 					scm_add_child_x (component, child);
 
 					scm_add_line_x(child, filename_key, scm_make_vline(scm_filename));
@@ -186,15 +158,7 @@ int parse_file(char* filename, FILE* f, SCM root) {
 
 	}
 
-	// FREE(content_line)(&cline);
-	// FREE(strbuf)(&cline_key);
-	// FREE(strbuf)(&param_key);
-
 	FREE(strbuf)(&str);
-
-	// assert(POP(LLIST(vcomponent))(&ctx.comp_stack) == root);
-	// assert(EMPTY(LLIST(strbuf))(&ctx.key_stack));
-	// assert(EMPTY(LLIST(vcomponent))(&ctx.comp_stack));
 
 	FREE(parse_ctx)(&ctx);
 
@@ -236,8 +200,6 @@ int fold(parse_ctx* ctx, char c) {
 
 
 INIT_F(parse_ctx, FILE* f, char* filename) {
-	// INIT(LLIST(strbuf), &self->key_stack);
-	// INIT(LLIST(vcomponent), &self->comp_stack);
 	self->filename = (char*) calloc(sizeof(*filename), strlen(filename) + 1);
 	strcpy(self->filename, filename);
 	self->f = f;
@@ -248,20 +210,15 @@ INIT_F(parse_ctx, FILE* f, char* filename) {
 	self->pline   = 1;
 	self->pcolumn = 1;
 
-	// INIT(strbuf, &self->str);
-
 	return 0;
 }
 
 FREE_F(parse_ctx) {
 
-	// FREE(LLIST(strbuf))(&self->key_stack);
-	// FREE(LLIST(vcomponent))(&self->comp_stack);
 	free(self->filename);
 
 	self->line = 0;
 	self->column = 0;
-	// FREE(strbuf)(&self->str);
 
 	return 0;
 }
@@ -302,10 +259,6 @@ char handle_escape (parse_ctx* ctx) {
 	++ctx->column;
 	++ctx->pcolumn;
 
+	/* Returns the escaped char, for appending to the current string */
 	return esc;
-
-	/* save escapade character as a normal character */
-	// strbuf_append(&ctx->str, esc);
-
-	// return 0;
 }
