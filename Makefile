@@ -33,10 +33,6 @@ GUILE_C_FLAGS = -Lmodule \
 
 all: $(SO_FILES) $(GO_FILES)
 
-# Old C main
-parse: $(O_FILES)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
 src/%.x : src/%.scm.c
 	guile-snarf -o $@ $< $(CFLAGS)
 
@@ -56,13 +52,6 @@ obj/%.scm.go: %.scm # $(SO_FILES)
 	@mkdir -p obj
 	guild compile $(GUILE_C_FLAGS) -o $@ $<
 
-.SECONDARY += %.dot
-%.dot: testcal/%.ics parse
-	./parse $< -g $@
-
-%.pdf: %.dot
-	dot -Tpdf -o $@ $<
-
 html: $(GO_FILES)
 	mkdir -p html
 	ln -sf ../static html
@@ -73,7 +62,6 @@ tags: $(C_FILES) $(H_FILES)
 	./rfc-tags rfc5545.txt >> tags
 
 clean:
-	-rm parse
 	-rm -r html
 	-rm -r obj
 	-rm -r lib

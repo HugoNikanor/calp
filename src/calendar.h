@@ -3,8 +3,6 @@
 
 #include <libguile.h>
 
-// #include "vcal.h"
-
 /*
  * Reads all ics flies in path into the given vcomponent. The
  * component is assumed to be a abstract ROOT element, whose first
