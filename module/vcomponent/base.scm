@@ -39,9 +39,9 @@
 (define-public prop
   (make-procedure-with-setter
    (lambda (attr-obj prop-key)
-     (hash-ref (struct-ref attr-obj 1) prop-key))
+     (hash-ref (struct-ref attr-obj 1) (as-string prop-key)))
    (lambda (attr-obj prop-key val)
-     (hash-set! (struct-ref attr-obj 1) prop-key val))))
+     (hash-set! (struct-ref attr-obj 1) (as-string prop-key) val))))
 
 ;; Returns the properties of attribute as an assoc list.
 ;; @code{(map car <>)} leads to available properties.
