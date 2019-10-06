@@ -17,8 +17,6 @@ C_FILES = $(wildcard src/*.c)
 SCM_C_FILES = $(wildcard src/*.scm.c)
 X_FILES = $(SCM_C_FILES:.scm.c=.x)
 
-.SECONDARY: $(X_FILES)
-
 O_FILES = $(C_FILES:src/%.c=obj/%.o)
 
 SCM_FILES = $(shell find module/ -type f -name \*.scm)
@@ -30,6 +28,9 @@ GUILE_C_FLAGS = -Lmodule \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
 
+.SECONDARY: $(X_FILES) $(O_FILES)
+
+
 
 all: $(SO_FILES) $(GO_FILES)
 

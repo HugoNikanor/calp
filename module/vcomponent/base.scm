@@ -4,9 +4,8 @@
   :use-module (srfi srfi-17)
   :use-module (vcomponent primitive)
   :use-module (ice-9 hash-table)
-  :use-module ((ice-9 optargs) :select (define*-public)))
-
-(export add-child!)
+  :use-module ((ice-9 optargs) :select (define*-public))
+  :re-export (add-child!))
 
 ;; vline → value
 (define-public value
