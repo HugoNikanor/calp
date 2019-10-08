@@ -92,12 +92,14 @@ int handle_dir(SCM cal, char* path) {
 		if (strcmp (d->d_name, "color") == 0) {
 			f = fopen(resolved_path, "r");
 			read = getline(&info_buf, &size, f);
+			// TODO this isn't actually needed since we trim the
+			// string into an SCM string directly here.
 			if (info_buf[read - 1] == '\n')
 				info_buf[read - 1] = '\0';
 
 			fclose(f);
 			scm_add_line_x(cal, scm_from_utf8_string("COLOR"),
-			               scm_make_vline(scm_from_utf8_stringn(info_buf, read)));
+			               scm_make_vline(scm_from_utf8_stringn(info_buf, read - 1)));
 		} else if (strcmp (d->d_name, "displayname") == 0) {
 			f = fopen(resolved_path, "r");
 			read = getline(&info_buf, &size, f);
