@@ -114,7 +114,8 @@
                 (unless (attr component "NAME")
                   (set! (attr component "NAME")
                     (or (attr component "X-WR-CALNAME")
-                        (attr root      "NAME"))))
+                        (attr root      "NAME")
+                        "[NAMELESS]")))
 
                 (unless (attr component "COLOR")
                   (set! (attr component "COLOR")
