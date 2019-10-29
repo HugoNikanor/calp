@@ -1,14 +1,7 @@
 #!/bin/bash
 # -*- mode: scheme -*-
 
-root=$(dirname $(dirname $(realpath $0)))
-
-GUILE_LOAD_PATH="$root/module:$GUILE_LOAD_PATH"
-GUILE_LOAD_COMPILED_PATH="$root/obj/module:$GUILE_LOAD_COMPILED_PATH"
-LD_LIBRARY_PATH="$root/lib:$LD_LIBRARY_PATH"
-
-export GUILE_LOAD_PATH GUILE_LOAD_COMPILED_PATH LD_LIBRARY_PATH
-export GUILE_AUTO_COMPILE=0
+. $(dirname $(dirname $(realpath $0)))/env
 
 exec guile -e main -s $0 "$@"
 !#
