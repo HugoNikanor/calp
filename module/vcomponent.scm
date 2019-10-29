@@ -42,7 +42,8 @@
 
        (define date (parse-datetime (value dptr)))
        (define end-date
-         (cond [(not eptr)
+         (cond ;; [(attr ev 'DURATION) => (lambda (d) (add-duration ...))]
+          [(not eptr)
                 (let ((d (set (date-hour date) = (+ 1))))
                   (set! (attr ev 'DTEND) d
                         eptr (attr* ev 'DTEND))
@@ -88,22 +89,38 @@
                          (let ((accum (primitive-make-vcomponent 'VCALENDAR))
                                (ch (children root)))
 
-                           ;; What does this even do?
+                           ;; Copy attributes from our parsed VCALENDAR
+                           ;; to our newly created one.
                            (unless (null? ch)
                              (for key in (attributes (car ch))
                                   (set! (attr accum key) (attr (car ch) key))))
 
-                           (for cal in ch
-                                (for component in (children cal)
-                                     (case (type component)
-                                       ((VTIMEZONE)
-                                        (unless (find (lambda (z)
-                                                        (string=? (attr z "TZID")
-                                                                  (attr component "TZID")))
-                                                      (filter (lambda (o) (eq? 'VTIMEZONE (type o)))
-                                                              (children accum)))
-                                          (add-child! accum component)))
-                                       (else (add-child! accum component)))))
+                           ;; Merge all children
+                           (let ((tz '()))
+                            (for cal in ch
+                                 (for component in (children cal)
+                                      (case (type component)
+                                        ((VTIMEZONE)
+                                         (set! tz (cons component tz))
+                                         #;
+                                         (unless (find (lambda (z)
+                                                         (string=? (attr z "TZID")
+                                                                   (attr component "TZID")))
+                                                       (filter (lambda (o) (eq? 'VTIMEZONE (type o)))
+                                                               (children accum)))
+                                           (add-child! accum component)))
+                                        ((VEVENT)
+                                         (add-child! accum component)
+                                         )
+                                        (else => (lambda (type)
+                                                   (format (current-error-port)
+                                                           "Got unexpected component of type ~a~%" type))
+                                              #; (add-child! accum component)
+                                              ))))
+
+                            (unless (null? tz)
+                             (add-child! accum (car tz)))
+                            )
                            ;; return
                            accum))
 
