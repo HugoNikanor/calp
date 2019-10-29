@@ -23,6 +23,7 @@ exec guile -e main -s $0 "$@"
              (output text)
              (output import)
              (output info)
+             (output ical)
              (server)
 
              (ice-9 getopt-long)
@@ -93,6 +94,7 @@ exec guile -e main -s $0 "$@"
                   ((term) terminal-main)
                   ((import) import-main)
                   ((info) info-main)
+                  ((ical) ical-main)
                   ((server) server-main))
                 c e ropt)))
            calendar-files: (or (and=> (option-ref opts 'file #f)
