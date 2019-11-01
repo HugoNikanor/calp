@@ -49,7 +49,11 @@ lib/%.so: $(O_FILES)
 	@mkdir -p lib
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
-obj/%.scm.go: %.scm # $(SO_FILES)
+obj/module/vcomponent/primitive.scm.go: module/vcomponent/primitive.scm $(SO_FILES)
+	@mkdir -p obj
+	guild compile $(GUILE_C_FLAGS) -o $@ $<
+
+obj/%.scm.go: %.scm 
 	@mkdir -p obj
 	guild compile $(GUILE_C_FLAGS) -o $@ $<
 

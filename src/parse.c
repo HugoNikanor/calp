@@ -18,7 +18,7 @@
   BEGIN → key -------------------------------→ ':' → value → CRLF -+-→ EOF
            |                                    ^
            v                                    |
-          ';' → param-key → ':' → param-value --+
+          ';' → param-key → '=' → param-value --+
            ^                                    |
            +------------------------------------+
 
