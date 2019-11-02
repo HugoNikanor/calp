@@ -1,11 +1,11 @@
 (define-module (output ical)
-  use-module: (ice-9 getopt-long)
-  use-module: (ice-9 format)
-  use-module: (vcomponent)
-  use-module: (srfi srfi-19)
-  use-module: (srfi srfi-19 util)
-  use-module: (srfi srfi-41)
-  use-module: (srfi srfi-41 util)
+  :use-module (ice-9 getopt-long)
+  :use-module (ice-9 format)
+  :use-module (vcomponent)
+  :use-module (srfi srfi-19)
+  :use-module (srfi srfi-19 util)
+  :use-module (srfi srfi-41)
+  :use-module (srfi srfi-41 util)
   )
 
 (define opt-spec
