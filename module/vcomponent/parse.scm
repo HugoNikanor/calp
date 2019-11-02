@@ -1,5 +1,5 @@
 
-(define-module (parse)
+(define-module (vcomponent parse)
   :use-module (rnrs io ports)
   :use-module (rnrs bytevectors)
   :use-module (srfi srfi-9)
@@ -7,6 +7,15 @@
   :use-module ((ice-9 ftw) :select (scandir ftw)))
 
 
+
+(define-record-type <vline>
+  (make-vline% value parameters)
+  vline?
+  (value get-vline-value set-vline-value!)
+  (parameters get-vline-parameters))
+
+(define* (make-vline value #:optional ht)
+  (make-vline% value (or ht (make-hash-table))))
 
 (define-record-type <vcomponent>
   (make-vcomponent% type children parent attributes)
@@ -26,7 +35,7 @@
 (define* (get-attribute-value component key #:optional default)
   (cond [(hashq-ref (get-component-attributes component)
                     key #f)
-         => cdr]
+         => get-vline-value]
         [else default]))
 
 (define (get-attribute component key)
@@ -36,8 +45,12 @@
 (define (set-attribute! component key value)
   (let ((ht (get-component-attributes component)))
    (cond [(hashq-ref ht key #f)
-          => (lambda (pair) (set-cdr! pair value))]
-         [else (hashq-set! ht key (cons (make-hash-table) value))])))
+          => (lambda (vline) (set-vline-value! vline value))]
+         [else (hashq-set! ht key (make-vline value))])))
+
+(define (set-vline! component key vline)
+  (hashq-set! (get-component-attributes component)
+              key vline))
 
 
 
@@ -145,6 +158,10 @@
             (strbuf (make-strbuf)))
         (with-throw-handler #t
           (lambda ()
+
+            (set-attribute! component 'X-HNH-FILENAME
+                            (get-filename ctx))
+
             (while #t
               (let ((c (get-u8 (current-input-port))))
                 (cond
@@ -176,21 +193,26 @@
                   (case (fold-proc ctx c)
                     [(end-of-line)
                      (let ((str (strbuf->string strbuf)))
-                       (cond [(string=? (get-line-key ctx) "BEGIN")
+                       (cond [(eq? (get-line-key ctx) 'BEGIN)
                               (let ((child (make-vcomponent (string->symbol str))))
+                                ;; TOOD remove this copying of attributes!!!
+                                (for-each (lambda (pair)
+                                            (set-attribute! child
+                                                            (car pair)
+                                                            (cdr pair)))
+                                          (hash-map->list
+                                           cons (get-component-attributes component)))
                                 (add-child! component child)
                                 (set! component child))]
 
-                             [(string=? (get-line-key ctx) "END")
+                             [(eq? (get-line-key ctx) 'END)
                               (set! component (get-component-parent component))]
 
                              [else
-                              (let ((ht (get-component-attributes component)))
-                                ;; TODO repeated keys
-                                (hashq-set! ht (string->symbol (get-line-key ctx))
-                                            (cons (get-param-table ctx)
-                                                  str))
-                                (set-param-table! ctx (make-hash-table)))])
+                              ;; TODO repeated keys
+                              (set-vline! component (get-line-key ctx)
+                                          (make-vline str (get-param-table ctx)))
+                              (set-param-table! ctx (make-hash-table))])
 
                        (strbuf-reset! strbuf)
                        (set-ctx! ctx 'key))]
@@ -219,14 +241,16 @@
                   (increment-column! ctx)]
 
                  ;; Delimiter between param key and param value
-                 [(and (eq? (get-ctx ctx) 'panam-name) (char=? #\= (integer->char c)))
-                  (set-param-key! ctx (strbuf->string strbuf))
+                 [(and (eq? (get-ctx ctx) 'param-name)
+                       (char=? #\= (integer->char c)))
+                  (set-param-key! ctx (string->symbol (strbuf->string strbuf)))
                   (strbuf-reset! strbuf)
                   (set-ctx! ctx 'param-value)]
 
                  ;; Delimiter between parameters (;), or between
                  ;; "something" and attribute value (:)
-                 [(memv (integer->char c) '(#\: #\;))
+                 [(and (memv (integer->char c) '(#\: #\;))
+                       (memv (get-ctx ctx) '(param-value key)))
                   (case (get-ctx ctx)
                     [(param-value)
                      (hashq-set! (get-param-table ctx)
@@ -234,7 +258,7 @@
                                  (strbuf->string strbuf))
                      (strbuf-reset! strbuf)]
                     [(key)
-                     (set-line-key! ctx (strbuf->string strbuf))
+                     (set-line-key! ctx (string->symbol (strbuf->string strbuf)))
                      (strbuf-reset! strbuf)])
 
                   (set-ctx! ctx (case (integer->char c)
@@ -261,7 +285,9 @@ row ~a	column ~a	ctx = ~a
 (define-public (read-vcalendar path)
   (define st (stat path))
   (case (stat:type st)
-    [(regular) (list (call-with-input-file path parse-calendar))]
+    [(regular) (let ((comp (call-with-input-file path parse-calendar)))
+                 (set-attribute! comp 'X-HNH-SOURCETYPE "file")
+                 (list comp))]
     [(directory)
      (map (lambda (fname)
             (call-with-input-file
@@ -291,3 +317,6 @@ row ~a	column ~a	ctx = ~a
   ((@ (ice-9 threads) n-par-map) 12
    (lambda (fname) (call-with-input-file fname parse-calendar))
    list))
+
+
+(export add-child! make-vcomponent get-vline-value set-vline-value! get-component-parent get-component-children get-attribute-value set-attribute! get-component-attributes component-type make-vcomponent% make-vline get-vline-parameters)

@@ -2,33 +2,43 @@
   :use-module (util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-17)
-  :use-module (vcomponent primitive)
+  :use-module ((vcomponent parse)
+               :renamer (lambda (symb)
+                          (case symb
+                            ;; [(set-attribute!) 'get-attribute]
+                            [(make-vcomponent) 'primitive-make-vcomponent]
+                            [else symb])))
   :use-module (ice-9 hash-table)
   :use-module ((ice-9 optargs) :select (define*-public))
-  :re-export (add-child!))
+  :re-export (add-child! primitive-make-vcomponent))
+
+(define-public (parse-cal-path path)
+  (let ((parent (primitive-make-vcomponent)))
+    (for-each (lambda (child) (add-child! parent child))
+              (read-vcalendar path))
+    (if (null? (get-component-children parent))
+        (set-attribute! parent 'X-HNH-SOURCETYPE "vdir")
+        (set-attribute! parent 'X-HNH-SOURCETYPE
+                        (get-attribute-value (car (get-component-children parent))
+                                             'X-HNH-SOURCETYPE "vdir")))
+    parent))
 
 ;; vline → value
 (define-public value
   (make-procedure-with-setter
-   (lambda (vline) (struct-ref vline 0))
-   (lambda (vline value) (struct-set! vline 0 value))))
+   get-vline-value set-vline-value!))
 
 ;; vcomponent x (or str symb) → vline
 (define-public (attr* component attr)
-  (hash-ref (struct-ref component 3)
-            (as-string attr)))
+  (hashq-ref (get-component-attributes component)
+             (as-symb attr)))
 
 ;; vcomponent x (or str symb) → value
-(define (get-attr component attr)
-  (and=> (attr* component attr)
-         value))
+(define (get-attr component key)
+  (get-attribute-value component (as-symb key) #f))
 
-(define (set-attr! component attr value)
-  (aif (attr* component attr)
-       (struct-set! it 0 value)
-       (hash-set! (struct-ref component 3)
-                  (as-string attr)
-                  (make-vline value))))
+(define (set-attr! component key value)
+  (set-attribute! component (as-symb key) value))
 
 (define-public attr
   (make-procedure-with-setter
@@ -39,42 +49,46 @@
 (define-public prop
   (make-procedure-with-setter
    (lambda (attr-obj prop-key)
-     (hash-ref (struct-ref attr-obj 1) (as-string prop-key)))
+     ;; TODO `list' is a hack since a bit to much code depends
+     ;; on prop always returning a list of values.
+     (and=> (hashq-ref (get-vline-parameters attr-obj)
+                       (as-symb prop-key))
+            list))
    (lambda (attr-obj prop-key val)
-     (hash-set! (struct-ref attr-obj 1) (as-string prop-key) val))))
+     (hashq-set! (get-vline-parameters attr-obj)
+                 (as-symb prop-key) val))))
 
 ;; Returns the properties of attribute as an assoc list.
 ;; @code{(map car <>)} leads to available properties.
 (define-public (properties attrptr)
-  (hash-map->list cons (struct-ref attrptr 1)))
+  (hash-map->list cons (get-attribute-parameters attrptr)))
 
 (define-public type (make-procedure-with-setter
-                     (lambda (c) (struct-ref c 0))
-                     (lambda (c v) struct-set! c 0 v)
-                    ))
+                     (lambda (c) (component-type c))
+                     (lambda (c v) ; struct-set! c 0 v
+                       (format (current-error-port)
+                               "This method is a deprecated NOOP"))))
 
-(define-public (parent c) (struct-ref c 2))
+(define-public parent get-component-parent)
 
 (define-public (attributes component)
-  (hash-map->list cons (struct-ref component 3)))
+  (hash-map->list cons (get-component-attributes component)))
 
-(define*-public (children component)
-  (struct-ref component 1))
+(define*-public children get-component-children)
 
 (define (copy-vline vline)
-  (make-struct/no-tail (struct-vtable vline)
-                       (struct-ref vline 0)
-                       ;; TODO deep-copy on properties?
-                       (struct-ref vline 1)))
+  (make-vline (get-vline-value vline)
+              ;; TODO deep-copy on properties?
+              (get-vline-parameters vline)))
 
 (define-public (copy-vcomponent component)
-  (make-struct/no-tail (struct-vtable component)
-                       (struct-ref component 0)
-                       (struct-ref component 1)
-                       (struct-ref component 2)
-                       (alist->hash-table
-                        (hash-map->list (lambda (key value) (cons key (copy-vline value)))
-                                        (struct-ref component 3)))))
+  (make-vcomponent% (component-type component)
+                    (get-component-children component)
+                    (get-component-parent component)
+                    ;; attributes
+                    (alist->hashq-table
+                     (hash-map->list (lambda (key value) (cons key (copy-vline value)))
+                                     (get-component-attributes component)))))
 
 (define-public (extract field)
   (lambda (e) (attr e field)))

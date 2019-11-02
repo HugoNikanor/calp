@@ -1,7 +1,4 @@
 (define-module (vcomponent)
-  #:use-module ((vcomponent primitive)
-                :select (parse-cal-path
-                         (make-vcomponent . primitive-make-vcomponent)))
   #:use-module (vcomponent datetime)
   #:use-module (vcomponent recurrence)
   #:use-module (vcomponent timezone)
@@ -124,7 +121,7 @@
                            ;; return
                            accum))
 
-                        ((no-type) (throw 'no-type)))))
+                        ((no-type) (error 'no-type)))))
 
                 (parse-dates! component)
 
