@@ -4,7 +4,7 @@
   :use-module (rnrs bytevectors)
   :use-module (srfi srfi-9)
   :use-module ((ice-9 textual-ports) :select (unget-char))
-  :use-module ((ice-9 ftw) :select (scandir)))
+  :use-module ((ice-9 ftw) :select (scandir ftw)))
 
 
 
@@ -271,3 +271,23 @@ row ~a	column ~a	ctx = ~a
                                     (string= "ics" (string-take-right s 3))))))]
     [(block-special char-special fifo socket unknown symlink)
      => (lambda (t) (error "Can't parse file of type " t))]))
+
+
+(define-public (read-tree path)
+  (define list '())
+  (ftw path
+       (lambda (filename statinfo flag)
+         (case flag
+           [(regular)
+            (case (stat:type statinfo)
+              [(regular)
+               (when (and (not (string= "." (string-take filename 1)))
+                          (string= "ics" (string-take-right filename 3)))
+                 (set! list (cons filename list)))
+               #t]
+              [else #t])]
+           [(directory) #t]
+           [else #f])))
+  ((@ (ice-9 threads) n-par-map) 12
+   (lambda (fname) (call-with-input-file fname parse-calendar))
+   list))

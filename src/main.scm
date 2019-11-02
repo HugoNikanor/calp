@@ -15,7 +15,7 @@
 
 
   (format (current-error-port) "Parsing ~s~%" (cadr args))
-  (let ((cal (read-vcalendar (cadr args))))
+  (let ((cal (read-tree (cadr args))))
     (format #t "cal = ~a~%" cal)
     (format (current-error-port) "~a events~%" (length cal)))
 
