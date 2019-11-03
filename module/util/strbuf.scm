@@ -1,3 +1,8 @@
+;;; Description:
+;; Alternative class to regular string, optimized for really fast appending,
+;; Works on a byte level, and isn't really good for anything else.
+;;; Code:
+
 (define-module (util strbuf)
   :use-module (srfi srfi-9)
   :use-module (rnrs bytevectors)
