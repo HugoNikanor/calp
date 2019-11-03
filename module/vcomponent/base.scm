@@ -16,11 +16,12 @@
   (let ((parent (primitive-make-vcomponent)))
     (for-each (lambda (child) (add-child! parent child))
               (read-vcalendar path))
-    (if (null? (get-component-children parent))
-        (set-attribute! parent 'X-HNH-SOURCETYPE "vdir")
-        (set-attribute! parent 'X-HNH-SOURCETYPE
-                        (get-attribute-value (car (get-component-children parent))
-                                             'X-HNH-SOURCETYPE "vdir")))
+    (set-attribute!
+     parent 'X-HNH-SOURCETYPE
+     (if (null? (get-component-children parent))
+         "vdir"
+         (get-attribute-value (car (get-component-children parent))
+                              'X-HNH-SOURCETYPE "vdir")))
     parent))
 
 ;; vline → value
@@ -72,7 +73,7 @@
 (define-public parent get-component-parent)
 
 (define-public (attributes component)
-  (hash-map->list cons (get-component-attributes component)))
+  (map car (hash-map->list cons (get-component-attributes component))))
 
 (define*-public children get-component-children)
 

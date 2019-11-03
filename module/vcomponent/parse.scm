@@ -3,6 +3,7 @@
   :use-module (rnrs io ports)
   :use-module (rnrs bytevectors)
   :use-module (srfi srfi-9)
+  :use-module ((ice-9 rdelim) :select (read-line))
   :use-module ((ice-9 textual-ports) :select (unget-char))
   :use-module ((ice-9 ftw) :select (scandir ftw)))
 
@@ -289,12 +290,26 @@ row ~a	column ~a	ctx = ~a
                  (set-attribute! comp 'X-HNH-SOURCETYPE "file")
                  (list comp))]
     [(directory)
-     (map (lambda (fname)
-            (call-with-input-file
-                (string-append path file-name-separator-string fname)
-              parse-calendar))
-          (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
-                                    (string= "ics" (string-take-right s 3))))))]
+
+     (let ((/ (lambda args (string-join args file-name-separator-string 'infix))))
+       (let ((color
+              (catch 'system-error
+                (lambda () (call-with-input-file (/ path "color") read-line))
+                (const "#FFFFFF")))
+             (name
+              (catch 'system-error
+                (lambda () (call-with-input-file (/ path "displayname") read-line))
+                (const (basename path)))))
+
+         (map (lambda (fname)
+                (let ((fullname (/ path fname)))
+                  (let ((cal (call-with-input-file fullname
+                               parse-calendar)))
+                    (set-attribute! cal 'COLOR color)
+                    (set-attribute! cal 'NAME name)
+                    cal)))
+              (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
+                                        (string= "ics" (string-take-right s 3))))))))]
     [(block-special char-special fifo socket unknown symlink)
      => (lambda (t) (error "Can't parse file of type " t))]))
 
