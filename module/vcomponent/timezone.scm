@@ -28,15 +28,20 @@
 ;; :         TZOFFSETFROM: +0200
 ;; @end example
 
-;; Given a tz stream of length 2, takes the time difference between the DTSTART
-;; of those two. And creates a new VTIMEZONE with that end time.
-;; TODO set remaining properties, and type of the newly created component.
+;; Given a tz stream of length 2, extrapolates when the next timezone
+;; change aught to be.
+;; Currently it does so by taking the first time zone, and adding one
+;; year. This kind of works.
+;; Previously it took the difference between element 2 and 1, and added
+;; that to the start of the secound time zone. This was even more wrong.
+;; TODO? set remaining properties, and type of the newly created component.
 (define (extrapolate-tz-stream strm)
-  (let ((nevent (copy-vcomponent (stream-ref strm 1))))
-    (mod! (attr nevent 'DTSTART)
-          = (add-duration (time-difference
-                           (attr (stream-ref strm 1) 'DTSTART)
-                           (attr (stream-ref strm 0) 'DTSTART))))
+  (let ((nevent (copy-vcomponent (stream-car strm))))
+    (set! (attr nevent 'DTSTART)
+      (date->time-utc
+       (set (date-year
+             (time-utc->date (attr nevent 'DTSTART)))
+            = (+ 1))))
     (stream-append strm (stream nevent))))
 
 ;; The RFC requires that at least one DAYLIGHT or STANDARD component is present.
@@ -58,17 +63,20 @@
 
           [else (stream-zip strm (stream-cdr strm))])))
 
+;; str ::= ±[0-9]{4}
+;; str → int seconds
 (define (parse-offset str)
-  (let* (((pm h1 h0 m1 m0) (string->list str)))
-    ((primitive-eval (symbol pm))
-     (+ (* 60 (string->number (list->string (list m1 m0))))
-        (* 60 60 (string->number (list->string (list h1 h0))))))))
+  (let* (((± h1 h0 m1 m0) (string->list str)))
+    ((primitive-eval (symbol ±))
+     (+ (* 60    (string->number (string m1 m0)))
+        (* 60 60 (string->number (string h1 h0)))))))
 
 ;; Finds the VTIMEZONE with id @var{tzid} in calendar.
 ;; Crashes on error.
 (define (find-tz cal tzid)
   (let ((ret (find (lambda (tz) (string=? tzid (attr tz 'TZID)))
-                   (children cal 'VTIMEZONE))))
+                   (filter (lambda (o) (eq? 'VTIMEZONE (type o)))
+                           (children cal)))))
     ret))
 
 ;; Takes a VEVENT.

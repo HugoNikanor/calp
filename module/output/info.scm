@@ -11,7 +11,9 @@
   (format #t "~%Found ~a calendars, named:~%~{ - [~4@a] ~a~a\x1b[m~%~}~%"
           (length calendars)
           (concatenate
-           (zip (map (lambda (c) (length (children c 'VEVENT))) calendars)
+           (zip (map (lambda (c) (length (filter (lambda (e) (eq? 'VEVENT (type e)))
+                                            (children c))))
+                     calendars)
                 (map (compose color-escape (extract 'COLOR)) calendars)
                 (map (extract 'NAME) calendars)))))
 

@@ -1,69 +1,123 @@
 (define-module (vcomponent base)
   :use-module (util)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-9)
   :use-module (srfi srfi-17)
-  :use-module (vcomponent primitive)
-  :use-module ((ice-9 optargs) :select (define*-public)))
+  :use-module (ice-9 hash-table)
+  :use-module ((ice-9 optargs) :select (define*-public))
+  )
 
-(define (get-attr component attr)
-  (%vcomponent-get-attribute
-   component
-   (as-string attr)))
+
 
-(define (set-attr! component attr value)
-  (set! (car (get-attr component (as-string attr)))
-        value))
+;; The <vline> type is a bit to many times refered to as a attr ptr.
+(define-record-type <vline>
+  (make-vline% value parameters)
+  vline?
+  (value get-vline-value set-vline-value!)
+  (parameters get-vline-parameters))
 
-(define-public value caar)
+(define*-public (make-vline value #:optional ht)
+  (make-vline% value (or ht (make-hash-table))))
 
-(define-public (values-left-count attr-list)
-  (length (take-while identity attr-list)))
+(define-record-type <vcomponent>
+  (make-vcomponent% type children parent attributes)
+  vcomponent?
+  (type type)
+  (children children set-component-children!)
+  (parent get-component-parent set-component-parent!)
+  (attributes get-component-attributes))
+(export children type)
 
-(define-public (value-count attr-list)
-  (length (take-while identity (cdr (drop-while identity attr-list)))))
+;; TODO should this also update the parent
+(define-public parent
+  (make-procedure-with-setter
+   get-component-parent set-component-parent!))
 
-(define-public attr* get-attr)
+(define*-public (make-vcomponent #:optional (type 'VIRTUAL))
+  (make-vcomponent% type '() #f (make-hash-table)))
 
-(define (get-first c a)
-  (and=> (car (get-attr c a)) car))
+(define-public (add-child! parent child)
+  (set-component-children! parent (cons child (children parent)))
+  (set-component-parent! child parent))
 
-(define (set-first! c a v)
-  (and=> (car (get-attr c a))
-         (lambda (f) (set! (car f) v))))
+(define* (get-attribute-value component key #:optional default)
+  (cond [(hashq-ref (get-component-attributes component)
+                    key #f)
+         => get-vline-value]
+        [else default]))
+
+(define (get-attribute component key)
+  (hashq-ref (get-component-attributes component)
+             key))
+
+(define (set-attribute! component key value)
+  (let ((ht (get-component-attributes component)))
+   (cond [(hashq-ref ht key #f)
+          => (lambda (vline) (set-vline-value! vline value))]
+         [else (hashq-set! ht key (make-vline value))])))
+
+(define-public (set-vline! component key vline)
+  (hashq-set! (get-component-attributes component)
+              key vline))
+
+
+
+;; vline → value
+(define-public value
+  (make-procedure-with-setter
+   get-vline-value set-vline-value!))
+
+;; vcomponent x (or str symb) → vline
+(define-public (attr* component attr)
+  (hashq-ref (get-component-attributes component)
+             (as-symb attr)))
+
+;; vcomponent x (or str symb) → value
+(define (get-attr component key)
+  (get-attribute-value component (as-symb key) #f))
+
+(define (set-attr! component key value)
+  (set-attribute! component (as-symb key) value))
 
 (define-public attr
   (make-procedure-with-setter
-   get-first set-first!))
+   get-attr
+   set-attr!))
 
 
 (define-public prop
   (make-procedure-with-setter
    (lambda (attr-obj prop-key)
-     (hashq-ref (cdar attr-obj) prop-key))
+     ;; TODO `list' is a hack since a bit to much code depends
+     ;; on prop always returning a list of values.
+     (and=> (hashq-ref (get-vline-parameters attr-obj)
+                       (as-symb prop-key))
+            list))
    (lambda (attr-obj prop-key val)
-     (hashq-set! (cdar attr-obj) prop-key val))))
+     (hashq-set! (get-vline-parameters attr-obj)
+                 (as-symb prop-key) val))))
 
 ;; Returns the properties of attribute as an assoc list.
 ;; @code{(map car <>)} leads to available properties.
 (define-public (properties attrptr)
-  (hash-map->list cons (cdar attrptr)))
+  (hash-map->list cons (get-vline-parameters attrptr)))
 
-(define-public type (make-procedure-with-setter
-                     %vcomponent-get-type
-                     %vcomponent-set-type!))
-(define-public parent %vcomponent-parent)
-(define-public push-child! %vcomponent-push-child!)
-(define-public (attributes component) (map string->symbol (%vcomponent-attribute-list component)))
+(define-public (attributes component)
+  (map car (hash-map->list cons (get-component-attributes component))))
 
-(define*-public (children component #:optional only-type)
-  (let ((childs (%vcomponent-children component)))
-    (if only-type
-        (filter (lambda (e) (eq? only-type (type e))) childs)
-        childs)))
+(define (copy-vline vline)
+  (make-vline (get-vline-value vline)
+              ;; TODO deep-copy on properties?
+              (get-vline-parameters vline)))
 
-(define-public copy-vcomponent %vcomponent-shallow-copy)
-
-(define-public filter-children! %vcomponent-filter-children!)
+(define-public (copy-vcomponent component)
+  (make-vcomponent% (type component)
+                    (children component)
+                    (parent component)
+                    ;; attributes
+                    (alist->hashq-table
+                     (hash-map->list (lambda (key value) (cons key (copy-vline value)))
+                                     (get-component-attributes component)))))
 
 (define-public (extract field)
   (lambda (e) (attr e field)))

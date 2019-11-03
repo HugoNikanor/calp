@@ -1,0 +1,12 @@
+# -*- mode: sh -*-
+
+root=$(dirname $(realpath $BASH_SOURCE))
+
+GUILE_LOAD_PATH="$root/module:$GUILE_LOAD_PATH"
+#GUILE_LOAD_COMPILED_PATH="$root/obj/module:$GUILE_LOAD_COMPILED_PATH"
+#LD_LIBRARY_PATH="$root/lib:$LD_LIBRARY_PATH"
+
+export GUILE_LOAD_PATH GUILE_LOAD_COMPILED_PATH LD_LIBRARY_PATH
+#export GUILE_AUTO_COMPILE=0
+
+# exec "$@"

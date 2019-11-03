@@ -108,9 +108,9 @@ attribute set to 0. Can also be seen as \"Start of day\""
 (define-public (day-stream start-day)
   (stream-iterate
    (lambda (d)
-     (mod! (day d) = (+ 1))
-     (set! d (drop-time (normalize-date* d)))
-     d)
+     (drop-time
+      (normalize-date*
+       (set (date-day d) = (+ 1)))))
    (drop-time start-day)))
 
 (define-public (in-date-range? start-date end-date)

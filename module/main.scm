@@ -1,14 +1,7 @@
 #!/bin/bash
 # -*- mode: scheme -*-
 
-root=$(dirname $(dirname $(realpath $0)))
-
-GUILE_LOAD_PATH="$root/module:$GUILE_LOAD_PATH"
-GUILE_LOAD_COMPILED_PATH="$root/obj/module:$GUILE_LOAD_COMPILED_PATH"
-LD_LIBRARY_PATH="$root/lib:$LD_LIBRARY_PATH"
-
-export GUILE_LOAD_PATH GUILE_LOAD_COMPILED_PATH LD_LIBRARY_PATH
-export GUILE_AUTO_COMPILE=0
+. $(dirname $(dirname $(realpath $0)))/env
 
 exec guile -e main -s $0 "$@"
 !#
@@ -29,6 +22,7 @@ exec guile -e main -s $0 "$@"
              (output text)
              (output import)
              (output info)
+             (output ical)
              (server)
 
              (ice-9 getopt-long)
@@ -44,8 +38,12 @@ exec guile -e main -s $0 "$@"
 ;;
 ;; Given as a sepparate function from main to ease debugging.
 (define* (init proc #:key (calendar-files (calendar-files)))
-  (define calendars (map make-vcomponent calendar-files))
-  (define events (concatenate (map (cut children <> 'VEVENT) calendars)))
+  (define calendars (map parse-calendar calendar-files))
+  (define events (concatenate
+                  ;; TODO does this drop events?
+                  (map (lambda (cal) (filter (lambda (o) (eq? 'VEVENT (type o)))
+                                        (children cal)))
+                       calendars)))
 
   (let* ((repeating regular (partition repeating? events)))
 
@@ -96,6 +94,7 @@ exec guile -e main -s $0 "$@"
                   ((term) terminal-main)
                   ((import) import-main)
                   ((info) info-main)
+                  ((ical) ical-main)
                   ((server) server-main))
                 c e ropt)))
            calendar-files: (or (and=> (option-ref opts 'file #f)

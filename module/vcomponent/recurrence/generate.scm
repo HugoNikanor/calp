@@ -51,6 +51,9 @@
                  (get-tz-offset e)
                  0))))
 
+    (set! (attr ev 'DTSTART)
+      (copy-time (attr ev 'DTSTART)))
+
     (let ((i (interval r)))
      (case (freq r)
        ((SECONDLY) (mod! (second d) = (+ i)))
@@ -73,8 +76,8 @@
           (date->time-utc d))
 
     (when (attr e 'DTEND)
-     (set! (attr e 'DTEND)
-           (add-duration (attr e 'DTSTART) (attr e 'DURATION))))
+      (set! (attr e 'DTEND)
+        (add-duration (attr e 'DTSTART) (attr e 'DURATION))))
 
     ;; Return
     e))
@@ -127,9 +130,9 @@
         (when (and (attr event 'DTEND)
                    (not (attr event 'DURATION)))
           (set! (attr event "DURATION")
-                (time-difference
-                 (attr event "DTEND")
-                 (attr event "DTSTART"))))
+            (time-difference
+             (attr event "DTEND")
+             (attr event "DTSTART"))))
         (if (attr event "RRULE")
             (recur-event-stream event (parse-recurrence-rule (attr event "RRULE")))
             ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather

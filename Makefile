@@ -17,8 +17,6 @@ C_FILES = $(wildcard src/*.c)
 SCM_C_FILES = $(wildcard src/*.scm.c)
 X_FILES = $(SCM_C_FILES:.scm.c=.x)
 
-.SECONDARY: $(X_FILES)
-
 O_FILES = $(C_FILES:src/%.c=obj/%.o)
 
 SCM_FILES = $(shell find module/ -type f -name \*.scm)
@@ -30,12 +28,11 @@ GUILE_C_FLAGS = -Lmodule \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
 
+.SECONDARY: $(X_FILES) $(O_FILES)
+
+
 
 all: $(SO_FILES) $(GO_FILES)
-
-# Old C main
-parse: $(O_FILES)
-	$(CC) -o $@ $^ $(LDFLAGS)
 
 src/%.x : src/%.scm.c
 	guile-snarf -o $@ $< $(CFLAGS)
@@ -52,28 +49,24 @@ lib/%.so: $(O_FILES)
 	@mkdir -p lib
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
-obj/%.scm.go: %.scm $(SO_FILES)
+obj/module/vcomponent/primitive.scm.go: module/vcomponent/primitive.scm $(SO_FILES)
 	@mkdir -p obj
 	guild compile $(GUILE_C_FLAGS) -o $@ $<
 
-.SECONDARY += %.dot
-%.dot: testcal/%.ics parse
-	./parse $< -g $@
-
-%.pdf: %.dot
-	dot -Tpdf -o $@ $<
+obj/%.scm.go: %.scm 
+	@mkdir -p obj
+	guild compile $(GUILE_C_FLAGS) -o $@ $<
 
 html: $(GO_FILES)
 	mkdir -p html
 	ln -sf ../static html
-	module/main.scm html -f 2019-07-01 -t 2019-08-30 > html/index.html
+	module/main.scm html -f 2019-10-01 -t 2019-12-31 > html/index.html
 
 tags: $(C_FILES) $(H_FILES)
 	ctags -R
 	./rfc-tags rfc5545.txt >> tags
 
 clean:
-	-rm parse
 	-rm -r html
 	-rm -r obj
 	-rm -r lib
