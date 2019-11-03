@@ -117,10 +117,6 @@
             (strbuf (make-strbuf)))
         (with-throw-handler #t
           (lambda ()
-
-            (set! (attr component 'X-HNH-FILENAME)
-              (get-filename ctx))
-
             (while #t
               (let ((c (get-u8 (current-input-port))))
                 (cond
@@ -131,36 +127,37 @@
                   ;; We never check the final line here. But since it
                   ;; ALWAYS should be "END:VCOMPONENT", and we do all
                   ;; the setup at creation this shouldn't be a problem.
-                  (break (case (get-ctx ctx)
-                           [(key)             ; line ended
-                            (let ((root-component (car (children component))))
-                              (set! (parent root-component) #f)
-                              root-component)]
-                           [(value)           ; still ending line
-                            (set! (parent component) #f)
-                            component]
-                           [else => (lambda (a)
-                                      (scm-error 'wrong-type-arg "parse-break"
-                                                 (string-append
-                                                  "Bad context at end of file. "
-                                                  "Expected `key' or `value', got ~a")
-                                                 (list a) #f))]))]
+                  (let ((component
+                         (case (get-ctx ctx)
+                           ;; Line ended before we came here, get the actual root
+                           ;; component (instead of our virtual one:
+                           [(key) (car (children component))]
+                           ;; Line wasn't ended before we get here, so our current
+                           ;; component is our "actual" root.
+                           [(value) component]
+                           [else
+                            => (lambda (a)
+                                 (scm-error
+                                  'wrong-type-arg "parse-break"
+                                  (string-append
+                                   "Bad context at end of file. "
+                                   "Expected `key' or `value', got ~a")
+                                  (list a) #f))])))
+                    ;; == NOTE ==
+                    ;; This sets to the VCALENDAR, which is correct,
+                    ;; but the program later squashes together everything
+                    ;; and drops this information.
+                    (set! (attr component 'X-HNH-FILENAME) (get-filename ctx)
+                          (parent component) #f)
+                    (break component))]
 
                  ;; End of line
                  [(memv (integer->char c) '(#\return #\newline))
                   (case (fold-proc ctx c)
                     [(end-of-line)
                      (let ((str (strbuf->string strbuf)))
-                       (cond [(eq? (get-line-key ctx) 'BEGIN)
+                       (cond [(eq? 'BEGIN (get-line-key ctx))
                               (let ((child (make-vcomponent (string->symbol str))))
-                                ;; TOOD remove this copying of attributes!!!
-                                (for-each (lambda (pair)
-                                            (set! (attr child (car pair))
-                                              (cdr pair)))
-                                          (hash-map->list
-                                           cons ((@@ (vcomponent base)
-                                                     get-component-attributes)
-                                                 component)))
                                 (add-child! component child)
                                 (set! component child))]
 
@@ -245,7 +242,7 @@ row ~a	column ~a	ctx = ~a
   (define st (stat path))
   (case (stat:type st)
     [(regular) (let ((comp (call-with-input-file path parse-calendar)))
-                 (set! (attribute comp 'X-HNH-SOURCETYPE) "file")
+                 (set! (attr comp 'X-HNH-SOURCETYPE) "file")
                  (list comp))]
     [(directory)
 
