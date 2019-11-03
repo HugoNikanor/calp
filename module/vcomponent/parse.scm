@@ -1,82 +1,15 @@
-
 (define-module (vcomponent parse)
   :use-module (rnrs io ports)
   :use-module (rnrs bytevectors)
   :use-module (srfi srfi-9)
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module ((ice-9 textual-ports) :select (unget-char))
-  :use-module ((ice-9 ftw) :select (scandir ftw)))
+  :use-module ((ice-9 ftw) :select (scandir ftw))
 
-
+  :use-module (util)
+  :use-module (vcomponent base)
 
-(define-record-type <vline>
-  (make-vline% value parameters)
-  vline?
-  (value get-vline-value set-vline-value!)
-  (parameters get-vline-parameters))
-
-(define* (make-vline value #:optional ht)
-  (make-vline% value (or ht (make-hash-table))))
-
-(define-record-type <vcomponent>
-  (make-vcomponent% type children parent attributes)
-  vcomponent?
-  (type component-type)
-  (children get-component-children set-component-children!)
-  (parent get-component-parent set-component-parent!)
-  (attributes get-component-attributes))
-
-(define* (make-vcomponent #:optional (type 'VIRTUAL))
-  (make-vcomponent% type '() #f (make-hash-table #x10)))
-
-(define (add-child! parent child)
-  (set-component-children! parent (cons child (get-component-children parent)))
-  (set-component-parent! child parent))
-
-(define* (get-attribute-value component key #:optional default)
-  (cond [(hashq-ref (get-component-attributes component)
-                    key #f)
-         => get-vline-value]
-        [else default]))
-
-(define (get-attribute component key)
-  (hashq-ref (get-component-attributes component)
-             key))
-
-(define (set-attribute! component key value)
-  (let ((ht (get-component-attributes component)))
-   (cond [(hashq-ref ht key #f)
-          => (lambda (vline) (set-vline-value! vline value))]
-         [else (hashq-set! ht key (make-vline value))])))
-
-(define (set-vline! component key vline)
-  (hashq-set! (get-component-attributes component)
-              key vline))
-
-
-
-(define-record-type <parse-ctx>
-  (make-parse-ctx% filename row col ctx line-key param-key param-table)
-  parse-ctx?
-  (filename get-filename)               ; string
-  (row get-row set-row!)                ; [0, ]
-  (col get-col set-col!)                ; [1, )
-  (ctx get-ctx set-ctx!)                ; '(key value param-name param-value escape)
-  (line-key get-line-key set-line-key!) ; string
-  (param-key get-param-key set-param-key!)       ; string
-  (param-table get-param-table set-param-table!) ; hash-map
   )
-
-(define (make-parse-ctx filename)
-  (make-parse-ctx% filename 1 0 'key
-                   #f #f (make-hash-table)))
-
-(define (increment-column! ctx)
-  (set-col! ctx (1+ (get-col ctx))))
-
-(define (increment-row! ctx)
-  (set-col! ctx 0)
-  (set-row! ctx (1+ (get-row ctx))))
 
 
 
@@ -116,6 +49,31 @@
       (strbuf-realloc! strbuf)
       (strbuf-append! strbuf u8)))
   (set-length! strbuf (1+ (get-length strbuf))))
+
+
+
+(define-record-type <parse-ctx>
+  (make-parse-ctx% filename row col ctx line-key param-key param-table)
+  parse-ctx?
+  (filename get-filename)               ; string
+  (row get-row set-row!)                ; [0, ]
+  (col get-col set-col!)                ; [1, )
+  (ctx get-ctx set-ctx!)                ; '(key value param-name param-value escape)
+  (line-key get-line-key set-line-key!) ; string
+  (param-key get-param-key set-param-key!)       ; string
+  (param-table get-param-table set-param-table!) ; hash-map
+  )
+
+(define (make-parse-ctx filename)
+  (make-parse-ctx% filename 1 0 'key
+                   #f #f (make-hash-table)))
+
+(define (increment-column! ctx)
+  (set-col! ctx (1+ (get-col ctx))))
+
+(define (increment-row! ctx)
+  (set-col! ctx 0)
+  (set-row! ctx (1+ (get-row ctx))))
 
 
 
@@ -160,8 +118,8 @@
         (with-throw-handler #t
           (lambda ()
 
-            (set-attribute! component 'X-HNH-FILENAME
-                            (get-filename ctx))
+            (set! (attr component 'X-HNH-FILENAME)
+              (get-filename ctx))
 
             (while #t
               (let ((c (get-u8 (current-input-port))))
@@ -175,12 +133,11 @@
                   ;; the setup at creation this shouldn't be a problem.
                   (break (case (get-ctx ctx)
                            [(key)             ; line ended
-                            (let ((root-component
-                                   (car (get-component-children component))))
-                              (set-component-parent! root-component #f)
+                            (let ((root-component (car (children component))))
+                              (set! (parent root-component) #f)
                               root-component)]
                            [(value)           ; still ending line
-                            (set-component-parent! component #f)
+                            (set! (parent component) #f)
                             component]
                            [else => (lambda (a)
                                       (scm-error 'wrong-type-arg "parse-break"
@@ -198,16 +155,17 @@
                               (let ((child (make-vcomponent (string->symbol str))))
                                 ;; TOOD remove this copying of attributes!!!
                                 (for-each (lambda (pair)
-                                            (set-attribute! child
-                                                            (car pair)
-                                                            (cdr pair)))
+                                            (set! (attr child (car pair))
+                                              (cdr pair)))
                                           (hash-map->list
-                                           cons (get-component-attributes component)))
+                                           cons ((@@ (vcomponent base)
+                                                     get-component-attributes)
+                                                 component)))
                                 (add-child! component child)
                                 (set! component child))]
 
                              [(eq? (get-line-key ctx) 'END)
-                              (set! component (get-component-parent component))]
+                              (set! component (parent component))]
 
                              [else
                               ;; TODO repeated keys
@@ -287,7 +245,7 @@ row ~a	column ~a	ctx = ~a
   (define st (stat path))
   (case (stat:type st)
     [(regular) (let ((comp (call-with-input-file path parse-calendar)))
-                 (set-attribute! comp 'X-HNH-SOURCETYPE "file")
+                 (set! (attribute comp 'X-HNH-SOURCETYPE) "file")
                  (list comp))]
     [(directory)
 
@@ -305,14 +263,27 @@ row ~a	column ~a	ctx = ~a
                 (let ((fullname (/ path fname)))
                   (let ((cal (call-with-input-file fullname
                                parse-calendar)))
-                    (set-attribute! cal 'COLOR color)
-                    (set-attribute! cal 'NAME name)
+                    (set! (attr cal 'COLOR) color
+                          (attr cal 'NAME) name)
                     cal)))
               (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
                                         (string= "ics" (string-take-right s 3))))))))]
     [(block-special char-special fifo socket unknown symlink)
      => (lambda (t) (error "Can't parse file of type " t))]))
 
+
+(define-public (parse-cal-path path)
+  (let ((parent (make-vcomponent)))
+    (for-each (lambda (child) (add-child! parent child))
+              (read-vcalendar path))
+    (set! (attr parent 'X-HNH-SOURCETYPE)
+      (if (null? (children parent))
+          "vdir"
+          (or (attr (car (children parent))
+                    'X-HNH-SOURCETYPE)
+              "vdir")))
+    parent))
+
 
 (define-public (read-tree path)
   (define list '())
@@ -332,6 +303,3 @@ row ~a	column ~a	ctx = ~a
   ((@ (ice-9 threads) n-par-map) 12
    (lambda (fname) (call-with-input-file fname parse-calendar))
    list))
-
-
-(export add-child! make-vcomponent get-vline-value set-vline-value! get-component-parent get-component-children get-attribute-value set-attribute! get-component-attributes component-type make-vcomponent% make-vline get-vline-parameters)

@@ -1,23 +1,66 @@
 (define-module (vcomponent base)
   :use-module (util)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-9)
   :use-module (srfi srfi-17)
-  :use-module (vcomponent parse)
   :use-module (ice-9 hash-table)
   :use-module ((ice-9 optargs) :select (define*-public))
-  :re-export (add-child! make-vcomponent))
+  )
 
-(define-public (parse-cal-path path)
-  (let ((parent (make-vcomponent)))
-    (for-each (lambda (child) (add-child! parent child))
-              (read-vcalendar path))
-    (set-attribute!
-     parent 'X-HNH-SOURCETYPE
-     (if (null? (get-component-children parent))
-         "vdir"
-         (get-attribute-value (car (get-component-children parent))
-                              'X-HNH-SOURCETYPE "vdir")))
-    parent))
+
+
+;; The <vline> type is a bit to many times refered to as a attr ptr.
+(define-record-type <vline>
+  (make-vline% value parameters)
+  vline?
+  (value get-vline-value set-vline-value!)
+  (parameters get-vline-parameters))
+
+(define*-public (make-vline value #:optional ht)
+  (make-vline% value (or ht (make-hash-table))))
+
+(define-record-type <vcomponent>
+  (make-vcomponent% type children parent attributes)
+  vcomponent?
+  (type type)
+  (children children set-component-children!)
+  (parent get-component-parent set-component-parent!)
+  (attributes get-component-attributes))
+(export children type)
+
+;; TODO should this also update the parent
+(define-public parent
+  (make-procedure-with-setter
+   get-component-parent set-component-parent!))
+
+(define*-public (make-vcomponent #:optional (type 'VIRTUAL))
+  (make-vcomponent% type '() #f (make-hash-table)))
+
+(define-public (add-child! parent child)
+  (set-component-children! parent (cons child (children parent)))
+  (set-component-parent! child parent))
+
+(define* (get-attribute-value component key #:optional default)
+  (cond [(hashq-ref (get-component-attributes component)
+                    key #f)
+         => get-vline-value]
+        [else default]))
+
+(define (get-attribute component key)
+  (hashq-ref (get-component-attributes component)
+             key))
+
+(define (set-attribute! component key value)
+  (let ((ht (get-component-attributes component)))
+   (cond [(hashq-ref ht key #f)
+          => (lambda (vline) (set-vline-value! vline value))]
+         [else (hashq-set! ht key (make-vline value))])))
+
+(define-public (set-vline! component key vline)
+  (hashq-set! (get-component-attributes component)
+              key vline))
+
+
 
 ;; vline → value
 (define-public value
@@ -57,20 +100,10 @@
 ;; Returns the properties of attribute as an assoc list.
 ;; @code{(map car <>)} leads to available properties.
 (define-public (properties attrptr)
-  (hash-map->list cons (get-attribute-parameters attrptr)))
-
-(define-public type (make-procedure-with-setter
-                     (lambda (c) (component-type c))
-                     (lambda (c v) ; struct-set! c 0 v
-                       (format (current-error-port)
-                               "This method is a deprecated NOOP"))))
-
-(define-public parent get-component-parent)
+  (hash-map->list cons (get-vline-parameters attrptr)))
 
 (define-public (attributes component)
   (map car (hash-map->list cons (get-component-attributes component))))
-
-(define*-public children get-component-children)
 
 (define (copy-vline vline)
   (make-vline (get-vline-value vline)
@@ -78,9 +111,9 @@
               (get-vline-parameters vline)))
 
 (define-public (copy-vcomponent component)
-  (make-vcomponent% (component-type component)
-                    (get-component-children component)
-                    (get-component-parent component)
+  (make-vcomponent% (type component)
+                    (children component)
+                    (parent component)
                     ;; attributes
                     (alist->hashq-table
                      (hash-map->list (lambda (key value) (cons key (copy-vline value)))

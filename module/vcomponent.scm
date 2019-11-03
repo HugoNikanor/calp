@@ -3,6 +3,7 @@
   #:use-module (vcomponent recurrence)
   #:use-module (vcomponent timezone)
   #:use-module (vcomponent base)
+  #:use-module (vcomponent parse)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-19 util)
