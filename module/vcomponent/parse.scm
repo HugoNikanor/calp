@@ -1,5 +1,5 @@
 (define-module (vcomponent parse)
-  :use-module (rnrs io ports)
+  :use-module ((rnrs io ports) :select (get-u8))
   :use-module (rnrs bytevectors)
   :use-module (srfi srfi-9)
   :use-module ((ice-9 rdelim) :select (read-line))
@@ -7,50 +7,12 @@
   :use-module ((ice-9 ftw) :select (scandir ftw))
 
   :use-module (util)
+  :use-module (util strbuf)
   :use-module (vcomponent base)
-
   )
 
 
 
-(define-record-type <strbuf>
-  (make-strbuf% len bytes)
-  strbuf?
-  (len get-length set-length!)
-  (bytes get-bytes set-bytes!))
-
-(define (make-strbuf)
-  (make-strbuf% 0 (make-u8vector #x1000)))
-
-(define (strbuf-realloc! strbuf)
-  (let* ((len (u8vector-length (get-bytes strbuf)))
-         (nv (make-u8vector (ash len 1))))
-    (bytevector-copy! (get-bytes strbuf) 0
-                      nv 0 len)
-    (set-bytes! strbuf nv)))
-
-(define (strbuf->string strbuf)
-  (let ((bv (make-u8vector (get-length strbuf))))
-    (bytevector-copy! (get-bytes strbuf) 0
-                      bv 0
-                      (get-length strbuf))
-    (bytevector->string bv (native-transcoder))))  ; TODO charset
-
-(define (strbuf-reset! strbuf)
-  (set-length! strbuf 0))
-
-(define (strbuf-append! strbuf u8)
-  (catch 'out-of-range
-    (lambda ()
-     (u8vector-set! (get-bytes strbuf)
-                    (get-length strbuf)
-                    u8))
-    (lambda (err . args)
-      (strbuf-realloc! strbuf)
-      (strbuf-append! strbuf u8)))
-  (set-length! strbuf (1+ (get-length strbuf))))
-
-
 
 (define-record-type <parse-ctx>
   (make-parse-ctx% filename row col ctx line-key param-key param-table)
