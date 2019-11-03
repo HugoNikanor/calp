@@ -2,18 +2,13 @@
   :use-module (util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-17)
-  :use-module ((vcomponent parse)
-               :renamer (lambda (symb)
-                          (case symb
-                            ;; [(set-attribute!) 'get-attribute]
-                            [(make-vcomponent) 'primitive-make-vcomponent]
-                            [else symb])))
+  :use-module (vcomponent parse)
   :use-module (ice-9 hash-table)
   :use-module ((ice-9 optargs) :select (define*-public))
-  :re-export (add-child! primitive-make-vcomponent))
+  :re-export (add-child! make-vcomponent))
 
 (define-public (parse-cal-path path)
-  (let ((parent (primitive-make-vcomponent)))
+  (let ((parent (make-vcomponent)))
     (for-each (lambda (child) (add-child! parent child))
               (read-vcalendar path))
     (set-attribute!
