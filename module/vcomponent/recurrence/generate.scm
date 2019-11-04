@@ -8,7 +8,6 @@
 
   #:use-module (util)
   #:use-module (vcomponent base)
-  #:use-module (vcomponent timezone)
   #:use-module (vcomponent recurrence internal)
   #:use-module (vcomponent recurrence parse)
 
