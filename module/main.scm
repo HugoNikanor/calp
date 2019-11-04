@@ -97,9 +97,9 @@ exec guile -e main -s $0 "$@"
                   ((ical) ical-main)
                   ((server) server-main))
                 c e ropt)))
-           calendar-files: (or (and=> (option-ref opts 'file #f)
-                                       list)
-                                (calendar-files))))
+           calendar-files: (cond [(option-ref opts 'file #f) => list]
+                                 [else (calendar-files)])
+           ))
       (newline)))
 
   (when stprof
