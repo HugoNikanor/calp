@@ -40,7 +40,7 @@
 
 
 (define (fold-proc ctx c)
-  ;; First extra character optionall read is to get the \n if our line
+  ;; First extra character optional read is to get the \n if our line
   ;; ended with \r\n. Secound read is to get the first character of the
   ;; next line. The initial \r which might recide in @var{c} is discarded.
   (let ((pair (cons (if (char=? #\newline (integer->char c))

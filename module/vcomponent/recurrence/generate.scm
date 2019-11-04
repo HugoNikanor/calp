@@ -43,6 +43,41 @@
 ;; TODO My current naïve aproach to simple adding a constant time to an event
 ;; breaks with time-zones. betwen 12:00 two adjacent days might NOT be 24h.
 ;; Specifically, 23h or 25h when going between summer and "normal" time.
+
+(define (next-event ev r)
+  (let ((e (copy-vcomponent ev))
+        (tz (getenv "TZ")))
+    ;; (setenv "TZ" (car (prop (attr* e 'DTSTART) 'TZID)))
+    (aif (prop (attr* e 'DTSTART) 'TZID)
+         (setenv "TZ" (car it))
+         ;; Should missing be this, or explicitly GMT?
+         (unsetenv "TZ"))
+
+    (let ((d (time-utc->date (attr e 'DTSTART)))
+          (i (interval r)))
+      (case (freq r)
+        ((SECONDLY) (mod! (second d) = (+ i)))
+        ((MINUTELY) (mod! (minute d) = (+ i)))
+        ((HOURLY)   (mod! (hour   d) = (+ i)))
+        ((DAILY)    (mod! (day    d) = (+ i)))
+        ((WEEKLY)   (mod! (day    d) = (+ (* i 7))))
+        ((MONTHLY)  (mod! (month  d) = (+ i)))
+        ((YEARLY)   (mod! (year   d) = (+ i))))
+
+      (set! (zone-offset d)
+        (zone-offset (time-utc->date (date->time-utc d))))
+
+      (set! (attr e 'DTSTART) (date->time-utc d)))
+
+    (when (attr e 'DTEND)
+      (set! (attr e 'DTEND)
+        (add-duration (attr e 'DTSTART) (attr e 'DURATION))))
+
+    (setenv "TZ" tz)
+
+    e))
+
+#;
 (define (next-event ev r)
   (let* ((e (copy-vcomponent ev))
          (d (time-utc->date
@@ -68,6 +103,8 @@
           (date->time-utc d))
 
     (when (prop (attr* e 'DTSTART) 'TZID)
+      ;; (list "Europe/Stockholm"), or similar
+      ;; (format (current-error-port) "TZID = ~a~%" (prop (attr* e 'DTSTART) 'TZID))
       (let ((of (get-tz-offset e)))
         ;; This addition works, but we still get lunch at 13
         (set! (zone-offset d) of)))

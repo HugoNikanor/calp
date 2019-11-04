@@ -16,8 +16,8 @@
   (value get-vline-value set-vline-value!)
   (parameters get-vline-parameters))
 
-(define*-public (make-vline value #:optional ht)
-  (make-vline% value (or ht (make-hash-table))))
+(define*-public (make-vline value #:optional (ht (make-hash-table)))
+  (make-vline% value ht))
 
 (define-record-type <vcomponent>
   (make-vcomponent% type children parent attributes)

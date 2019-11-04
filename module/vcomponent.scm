@@ -26,6 +26,7 @@
 (define (parse-dates! cal)
   "Parse all start times into scheme date objects."
 
+  #;
   (for tz in (filter (lambda (o) (eq? 'VTIMEZONE (type o))) (children cal))
        (for-each (lambda (p) (mod! (attr p "DTSTART") string->time-utc))
                  (children tz))
@@ -35,32 +36,45 @@
              (make-tz-set tz)))
 
   (for ev in (filter (lambda (o) (eq? 'VEVENT (type o))) (children cal))
-       (define dptr (attr* ev 'DTSTART))
-       (define eptr (attr* ev 'DTEND))
+       (let ((tz (getenv "TZ")))
+         (aif (prop (attr* ev 'DTSTART) 'TZID)
+              (setenv "TZ" (car it))
+              (unsetenv "TZ"))
+         (let*
+             ((dptr (attr* ev 'DTSTART))
+              (eptr (attr* ev 'DTEND))
 
-       (define date (parse-datetime (value dptr)))
-       (define end-date
-         (cond ;; [(attr ev 'DURATION) => (lambda (d) (add-duration ...))]
-          [(not eptr)
-                (let ((d (set (date-hour date) = (+ 1))))
-                  (set! (attr ev 'DTEND) d
-                        eptr (attr* ev 'DTEND))
-                  d)]
-               [(value eptr) => parse-datetime]
-               [else
-                (set (date-hour date) = (+ 1))]))
+              (date (parse-datetime (value dptr)))
+              (end-date
+               (cond ;; [(attr ev 'DURATION) => (lambda (d) (add-duration ...))]
+                [(not eptr)
+                 (let ((d (set (date-hour date) = (+ 1))))
+                   (set! (attr ev 'DTEND) d
+                         eptr (attr* ev 'DTEND))
+                   d)]
+                [(value eptr) => parse-datetime]
+                [else
+                 (set (date-hour date) = (+ 1))])))
 
-       (set! (value dptr) (date->time-utc date)
-             (value eptr) (date->time-utc end-date))
+           (set! (value dptr) (date->time-utc date)
+                 (value eptr) (date->time-utc end-date))
 
-       (when (prop (attr* ev 'DTSTART) 'TZID)
-         (set! (zone-offset date) (get-tz-offset ev)
-               (value dptr) (date->time-utc date)
+           (when (prop (attr* ev 'DTSTART) 'TZID)
+             ;; (format (current-error-port) "date = ~a~%" date)
+             (set! (zone-offset date) (zone-offset (time-utc->date (value dptr))))
+             ;; (format (current-error-port) "date = ~a~%" date)
+                   ;; set! (zone-offset date) (get-tz-offset ev)
 
-               ;; The standard says that DTEND must have the same
-               ;; timezone as DTSTART. Here we trust that blindly.
-               (zone-offset end-date) (zone-offset date)
-               (value eptr) (date->time-utc end-date)))))
+             (set!
+                 (value dptr) (date->time-utc date)
+
+                 ;; The standard says that DTEND must have the same
+                 ;; timezone as DTSTART. Here we trust that blindly.
+                 (zone-offset end-date) (zone-offset date)
+                 (value eptr) (date->time-utc end-date))))
+
+
+         (setenv "TZ" tz))))
 
 
 (define* (parse-calendar path)
@@ -97,14 +111,12 @@
                         (for component in (children cal)
                              (case (type component)
                                ((VTIMEZONE)
-                                (set! tz (cons component tz))
-                                #;
-                                (unless (find (lambda (z)
-                                (string=? (attr z "TZID")
-                                (attr component "TZID")))
-                                (filter (lambda (o) (eq? 'VTIMEZONE (type o)))
-                                (children accum)))
-                                (add-child! accum component)))
+                                ;; (set! tz (cons component tz))
+                                (unless (find (lambda (o) (and (eq? 'VTIMEZONE (type o))
+                                                          (string=? (attr o "TZID")
+                                                                    (attr component "TZID"))))
+                                              (children accum))
+                                  (add-child! accum component)))
                                ((VEVENT)
                                 (add-child! accum component)
                                 )
