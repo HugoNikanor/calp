@@ -1,5 +1,5 @@
 #!/bin/bash
-# -*- mode: scheme -*-
+# -*- mode: scheme; geiser-scheme-implementation: guile -*-
 
 . $(dirname $(dirname $(realpath $0)))/env
 
