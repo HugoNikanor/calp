@@ -12,7 +12,7 @@
                 re-export-modules
                 use-modules*
                 -> set aif
-                tree-map let-lazy)
+                tree-map let-lazy let-env)
   #:replace (let* set! define-syntax
                   when unless if))
 
@@ -374,3 +374,17 @@
     [(set (acc obj) = (op rest ...))
      (set-fields
       obj ((acc) (op (acc obj) rest ...)))]))
+
+
+
+;; TODO multiple values
+(define-syntax let-env
+  (syntax-rules ()
+    [(_ ((name value))
+        body ...)
+     (let ((sname (symbol->string (quote name))))
+      (let ((ogenv (getenv sname)))
+        (setenv sname value)
+        (let ((return (begin body ...)))
+          (setenv sname ogenv)
+          return)))]))

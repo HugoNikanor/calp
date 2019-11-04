@@ -44,13 +44,8 @@
 ;; Specifically, 23h or 25h when going between summer and "normal" time.
 
 (define (next-event ev r)
-  (let ((e (copy-vcomponent ev))
-        (tz (getenv "TZ")))
-    ;; (setenv "TZ" (car (prop (attr* e 'DTSTART) 'TZID)))
-    (aif (prop (attr* e 'DTSTART) 'TZID)
-         (setenv "TZ" (car it))
-         ;; Should missing be this, or explicitly GMT?
-         (unsetenv "TZ"))
+  (let ((e (copy-vcomponent ev)))
+    (let-env ((TZ (and=> (prop (attr* e 'DTSTART) 'TZID) car))))
 
     (let ((d (time-utc->date (attr e 'DTSTART)))
           (i (interval r)))
@@ -71,8 +66,6 @@
     (when (attr e 'DTEND)
       (set! (attr e 'DTEND)
         (add-duration (attr e 'DTSTART) (attr e 'DURATION))))
-
-    (setenv "TZ" tz)
 
     e))
 
