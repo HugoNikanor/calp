@@ -19,20 +19,8 @@
 
 (re-export-modules (vcomponent base))
 
-(define string->time-utc
-  (compose date->time-utc parse-datetime))
-
 (define (parse-dates! cal)
   "Parse all start times into scheme date objects."
-
-  #;
-  (for tz in (filter (lambda (o) (eq? 'VTIMEZONE (type o))) (children cal))
-       (for-each (lambda (p) (mod! (attr p "DTSTART") string->time-utc))
-                 (children tz))
-
-       ;; TZSET is the generated recurrence set of a timezone
-       (set! (attr tz 'X-HNH-TZSET)
-             (make-tz-set tz)))
 
   (for ev in (filter (lambda (o) (eq? 'VEVENT (type o))) (children cal))
        (let ((tz (getenv "TZ")))
@@ -59,18 +47,15 @@
                  (value eptr) (date->time-utc end-date))
 
            (when (prop (attr* ev 'DTSTART) 'TZID)
-             ;; (format (current-error-port) "date = ~a~%" date)
-             (set! (zone-offset date) (zone-offset (time-utc->date (value dptr))))
-             ;; (format (current-error-port) "date = ~a~%" date)
-                   ;; set! (zone-offset date) (get-tz-offset ev)
+             ;; Re-align date to have correect timezone. This is since time->date gives
+             ;; correct, but the code above may (?) fail to update the timezone.
+             (set! (zone-offset date) (zone-offset (time-utc->date (value dptr)))
+                   (value dptr) (date->time-utc date)
 
-             (set!
-                 (value dptr) (date->time-utc date)
-
-                 ;; The standard says that DTEND must have the same
-                 ;; timezone as DTSTART. Here we trust that blindly.
-                 (zone-offset end-date) (zone-offset date)
-                 (value eptr) (date->time-utc end-date))))
+                   ;; The standard says that DTEND must have the same
+                   ;; timezone as DTSTART. Here we trust that blindly.
+                   (zone-offset end-date) (zone-offset date)
+                   (value eptr) (date->time-utc end-date))))
 
 
          (setenv "TZ" tz))))
