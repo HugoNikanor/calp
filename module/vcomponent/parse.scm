@@ -1,6 +1,7 @@
 (define-module (vcomponent parse)
   :use-module ((rnrs io ports) :select (get-u8))
   :use-module (rnrs bytevectors)
+  :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module ((ice-9 textual-ports) :select (unget-char))
@@ -10,6 +11,8 @@
   :use-module (util strbuf)
   :use-module (vcomponent base)
   )
+
+(use-modules ((rnrs base) #:select (assert)))
 
 
 
@@ -200,48 +203,49 @@ row ~a	column ~a	ctx = ~a
 
 
 
-(define-public (read-vcalendar path)
+(define (parse-vdir path)
+  (let ((/ (lambda args (string-join args file-name-separator-string 'infix))))
+    (let ((color
+           (catch 'system-error
+             (lambda () (call-with-input-file (/ path "color") read-line))
+             (const "#FFFFFF")))
+          (name
+           (catch 'system-error
+             (lambda () (call-with-input-file (/ path "displayname") read-line))
+             (const (basename path "/")))))
+
+      (reduce (lambda (item calendar)
+                (assert (eq? 'VCALENDAR (type calendar)))
+                (assert (eq? 'VCALENDAR (type item)))
+                (for child in (children item)
+                     (assert (memv (type child) '(VTIMEZONE VEVENT)))
+                     (add-child! calendar child))
+                calendar)
+              (make-vcomponent)
+              (map (lambda (fname)
+                     (let ((fullname (/ path fname)))
+                       (let ((cal (call-with-input-file fullname
+                                    parse-calendar)))
+                         (set! (attr cal 'COLOR) color
+                               (attr cal 'NAME) name)
+                         cal)))
+                   (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
+                                             (string= "ics" (string-take-right s 3))))))))))
+
+(define-public (parse-cal-path path)
   (define st (stat path))
   (case (stat:type st)
-    [(regular) (let ((comp (call-with-input-file path parse-calendar)))
-                 (set! (attr comp 'X-HNH-SOURCETYPE) "file")
-                 (list comp))]
+    [(regular)
+     (let ((comp (call-with-input-file path parse-calendar)))
+       (set! (attr comp 'X-HNH-SOURCETYPE) "file")
+       comp) ]
     [(directory)
-
-     (let ((/ (lambda args (string-join args file-name-separator-string 'infix))))
-       (let ((color
-              (catch 'system-error
-                (lambda () (call-with-input-file (/ path "color") read-line))
-                (const "#FFFFFF")))
-             (name
-              (catch 'system-error
-                (lambda () (call-with-input-file (/ path "displayname") read-line))
-                (const (basename path)))))
-
-         (map (lambda (fname)
-                (let ((fullname (/ path fname)))
-                  (let ((cal (call-with-input-file fullname
-                               parse-calendar)))
-                    (set! (attr cal 'COLOR) color
-                          (attr cal 'NAME) name)
-                    cal)))
-              (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
-                                        (string= "ics" (string-take-right s 3))))))))]
+     (let ((comp (parse-vdir path)))
+       (set! (attr comp 'X-HNH-SOURCETYPE) "vdir")
+       comp)]
     [(block-special char-special fifo socket unknown symlink)
      => (lambda (t) (error "Can't parse file of type " t))]))
 
-
-(define-public (parse-cal-path path)
-  (let ((parent (make-vcomponent)))
-    (for-each (lambda (child) (add-child! parent child))
-              (read-vcalendar path))
-    (set! (attr parent 'X-HNH-SOURCETYPE)
-      (if (null? (children parent))
-          "vdir"
-          (or (attr (car (children parent))
-                    'X-HNH-SOURCETYPE)
-              "vdir")))
-    parent))
 
 
 (define-public (read-tree path)
