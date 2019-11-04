@@ -79,74 +79,12 @@
 
 (define* (parse-calendar path)
   (let ((component (parse-cal-path path)))
-    ;; let*
-    #;
-    ((component
-      (case (string->symbol (or (attr root "X-HNH-SOURCETYPE") "no-type"))
-        ;; == Single ICS file ==
-        ;; Remove the abstract ROOT component,
-        ;; returning the wanted VCALENDAR component
-        ((file)
-         ;; TODO test this when an empty file is given.
-         (car (children root)))
-
-        ;; == Assume vdir ==
-        ;; Also removes the abstract ROOT component, but also
-        ;; merges all VCALENDAR's children into the a newly
-        ;; created VCALENDAR component, and return that component.
-        ;;
-        ;; TODO the other VCALENDAR components might not get thrown away,
-        ;; this since I protect them from the GC in the C code.
-        ((vdir)
-         (let ((accum (make-vcomponent 'VCALENDAR))
-               (ch (children root)))
-
-           ;; Copy attributes from our parsed VCALENDAR
-           ;; to our newly created one.
-           (unless (null? ch)
-             (for key in (attributes (car ch))
-                  (set! (attr accum key) (attr (car ch) key))))
-
-           ;; Merge all children
-           (let ((tz '()))
-             (for cal in ch
-                  (for component in (children cal)
-                       (case (type component)
-                         ((VTIMEZONE)
-                          ;; (set! tz (cons component tz))
-                          (unless (find (lambda (o) (and (eq? 'VTIMEZONE (type o))
-                                                    (string=? (attr o "TZID")
-                                                              (attr component "TZID"))))
-                                        (children accum))
-                            (add-child! accum component)))
-                         ((VEVENT)
-                          (add-child! accum component)
-                          )
-                         (else => (lambda (type)
-                                    (format (current-error-port)
-                                            "Got unexpected component of type ~a~%" type))
-                               #; (add-child! accum component)
-                               ))))
-
-             (unless (null? tz)
-               (add-child! accum (car tz)))
-             )
-           ;; return
-           accum))
-
-        ((no-type) (error 'no-type)))))
-
     (parse-dates! component)
 
     (unless (attr component "NAME")
       (set! (attr component "NAME")
         (or (attr component "X-WR-CALNAME")
             "[NAMELESS]")))
-
-    #;
-    (unless (attr component "COLOR")
-      (set! (attr component "COLOR")
-        (attr root      "COLOR")))
 
     ;; return
     component))
