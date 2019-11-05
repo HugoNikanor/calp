@@ -3,6 +3,9 @@
   :use-module (rnrs bytevectors)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
+  :use-module (srfi srfi-19)
+  :use-module (srfi srfi-19 setters)
+  :use-module (srfi srfi-19 util)
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module ((ice-9 textual-ports) :select (unget-char))
   :use-module ((ice-9 ftw) :select (scandir ftw))
@@ -10,6 +13,7 @@
   :use-module (util)
   :use-module (util strbuf)
   :use-module (vcomponent base)
+  :use-module (vcomponent datetime)
   )
 
 (use-modules ((rnrs base) #:select (assert)))
@@ -74,7 +78,7 @@
 
            'end-of-line])))
 
-(define (parse-calendar port)
+(define-public (parse-calendar port)
   (with-input-from-port port
     (lambda ()
       (let ((component (make-vcomponent))
@@ -203,6 +207,47 @@ row ~a	column ~a	ctx = ~a
 
 
 
+;; All VTIMEZONE's seem to be in "local" time in relation to
+;; themselves. Therefore, a simple comparison should work,
+;; and then the TZOFFSETTO attribute can be subtracted from
+;; the event DTSTART to get UTC time.
+
+(define (parse-dates! cal)
+  "Parse all start times into scheme date objects."
+
+  (for ev in (filter (lambda (o) (eq? 'VEVENT (type o))) (children cal))
+       (let-env ((TZ (and=> (prop (attr* ev 'DTSTART) 'TZID) car)))
+                (let*
+                    ((dptr (attr* ev 'DTSTART))
+                     (eptr (attr* ev 'DTEND))
+
+                     (date (parse-datetime (value dptr)))
+                     (end-date
+                      (cond ;; [(attr ev 'DURATION) => (lambda (d) (add-duration ...))]
+                       [(not eptr)
+                        (let ((d (set (date-hour date) = (+ 1))))
+                          (set! (attr ev 'DTEND) d
+                                eptr (attr* ev 'DTEND))
+                          d)]
+                       [(value eptr) => parse-datetime]
+                       [else
+                        (set (date-hour date) = (+ 1))])))
+
+                  (set! (value dptr) (date->time-utc date)
+                        (value eptr) (date->time-utc end-date))
+
+                  (when (prop (attr* ev 'DTSTART) 'TZID)
+                    ;; Re-align date to have correect timezone. This is since time->date gives
+                    ;; correct, but the code above may (?) fail to update the timezone.
+                    (set! (zone-offset date) (zone-offset (time-utc->date (value dptr)))
+                          (value dptr) (date->time-utc date)
+
+                          ;; The standard says that DTEND must have the same
+                          ;; timezone as DTSTART. Here we trust that blindly.
+                          (zone-offset end-date) (zone-offset date)
+                          (value eptr) (date->time-utc end-date)))))))
+
+
 (define (parse-vdir path)
   (let ((/ (lambda args (string-join args file-name-separator-string 'infix))))
     (let ((color
@@ -234,17 +279,29 @@ row ~a	column ~a	ctx = ~a
 
 (define-public (parse-cal-path path)
   (define st (stat path))
-  (case (stat:type st)
-    [(regular)
-     (let ((comp (call-with-input-file path parse-calendar)))
-       (set! (attr comp 'X-HNH-SOURCETYPE) "file")
-       comp) ]
-    [(directory)
-     (let ((comp (parse-vdir path)))
-       (set! (attr comp 'X-HNH-SOURCETYPE) "vdir")
-       comp)]
-    [(block-special char-special fifo socket unknown symlink)
-     => (lambda (t) (error "Can't parse file of type " t))]))
+  (define cal
+   (case (stat:type st)
+     [(regular)
+      (let ((comp (call-with-input-file path parse-calendar)))
+        (set! (attr comp 'X-HNH-SOURCETYPE) "file")
+        comp) ]
+     [(directory)
+      (let ((comp (parse-vdir path)))
+        (set! (attr comp 'X-HNH-SOURCETYPE) "vdir")
+        comp)]
+     [(block-special char-special fifo socket unknown symlink)
+      => (lambda (t) (error "Can't parse file of type " t))]))
+
+    (parse-dates! cal)
+
+    (unless (attr cal "NAME")
+      (set! (attr cal "NAME")
+        (or (attr cal "X-WR-CALNAME")
+            "[NAMELESS]")))
+
+    cal
+
+  )
 
 
 
