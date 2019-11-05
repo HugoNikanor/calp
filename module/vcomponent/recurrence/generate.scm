@@ -69,48 +69,6 @@
 
     e))
 
-#;
-(define (next-event ev r)
-  (let* ((e (copy-vcomponent ev))
-         (d (time-utc->date
-             (attr e 'DTSTART)
-             (if (prop (attr* ev 'DTSTART) 'TZID)
-                 (get-tz-offset e)
-                 0))))
-
-    (set! (attr ev 'DTSTART)
-      (copy-time (attr ev 'DTSTART)))
-
-    (let ((i (interval r)))
-     (case (freq r)
-       ((SECONDLY) (mod! (second d) = (+ i)))
-       ((MINUTELY) (mod! (minute d) = (+ i)))
-       ((HOURLY)   (mod! (hour   d) = (+ i)))
-       ((DAILY)    (mod! (day    d) = (+ i)))
-       ((WEEKLY)   (mod! (day    d) = (+ (* i 7))))
-       ((MONTHLY)  (mod! (month  d) = (+ i)))
-       ((YEARLY)   (mod! (year   d) = (+ i)))))
-
-    (set! (attr e 'DTSTART)
-          (date->time-utc d))
-
-    (when (prop (attr* e 'DTSTART) 'TZID)
-      ;; (list "Europe/Stockholm"), or similar
-      ;; (format (current-error-port) "TZID = ~a~%" (prop (attr* e 'DTSTART) 'TZID))
-      (let ((of (get-tz-offset e)))
-        ;; This addition works, but we still get lunch at 13
-        (set! (zone-offset d) of)))
-
-    (set! (attr e 'DTSTART)
-          (date->time-utc d))
-
-    (when (attr e 'DTEND)
-      (set! (attr e 'DTEND)
-        (add-duration (attr e 'DTSTART) (attr e 'DURATION))))
-
-    ;; Return
-    e))
-
 ;; BYDAY and the like depend on the freq?
 ;; Line 7100
 ;; Table @@ 2430
