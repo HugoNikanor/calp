@@ -78,6 +78,7 @@
 
            'end-of-line])))
 
+;; Reads a vcomponent from the given port.
 (define-public (parse-calendar port)
   (with-input-from-port port
     (lambda ()
@@ -212,6 +213,8 @@ row ~a	column ~a	ctx = ~a
 ;; and then the TZOFFSETTO attribute can be subtracted from
 ;; the event DTSTART to get UTC time.
 
+;; Goes through a vcomponent, finds all it's direct children of type VEVENT
+;; and parses their DTSTART and DTEND attributes
 (define (parse-dates! cal)
   "Parse all start times into scheme date objects."
 
@@ -248,6 +251,9 @@ row ~a	column ~a	ctx = ~a
                           (value eptr) (date->time-utc end-date)))))))
 
 
+;; Takse a path to a vdir, and returns all ics files in the directory merged
+;; together into a single vcalendar. The first found vcalendar is used as the
+;; parent. Meaning other vcalendars are discarded.
 (define (parse-vdir path)
   (let ((/ (lambda args (string-join args file-name-separator-string 'infix))))
     (let ((color
@@ -277,6 +283,7 @@ row ~a	column ~a	ctx = ~a
                    (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
                                              (string= "ics" (string-take-right s 3))))))))))
 
+;; Parse a vdir or ics file at the given path.
 (define-public (parse-cal-path path)
   (define st (stat path))
   (define cal
@@ -305,6 +312,8 @@ row ~a	column ~a	ctx = ~a
 
 
 
+;; DEPRECATED
+;; find all ics files in a tree, and does something with them
 (define-public (read-tree path)
   (define list '())
   (ftw path
