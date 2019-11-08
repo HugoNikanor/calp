@@ -98,11 +98,21 @@ attribute set to 0. Can also be seen as \"Start of day\""
         (time<? s1-end s2-end))))
 
 (define-public (normalize-date date)
+
   (time-utc->date (date->time-utc date)
                   (zone-offset date)))
 
-(define-public normalize-date*
-  (compose time-utc->date date->time-utc))
+;; Normalize a date on a weird form back into a propper form,
+;; for example, 2019-11-32 becomes 2019-12-02.
+;; The whole adding 10 seconds and then removing them is a dirty
+;; hack to handle leap seconds. NOTE this should be reworked.
+(define-public (normalize-date* date)
+  (define next-date
+    (date-second
+     (time-utc->date
+      (add-duration (date->time-utc date)
+                    (make-time time-duration 0 10)))
+     (set next-date 0))))
 
 ;; Returns a stream of date objects, one day appart, staring from start-day.
 (define-public (day-stream start-day)
