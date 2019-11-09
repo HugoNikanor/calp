@@ -51,13 +51,22 @@
 	flex-direction: column;
 }
 
+.sideinfo .nav {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-size: 150%;
+}
+
 .sideinfo .about {
 	display: flex;
 	justify-content: center;
 }
 
-.sideinfo .about > div {
-	margin: 1em;
+.sideinfo .small-calendar {
+	margin-left: 1em;
+        margin-right: 1em;
 }
 
 .sideinfo .eventlist {

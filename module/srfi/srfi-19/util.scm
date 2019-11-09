@@ -98,7 +98,6 @@ attribute set to 0. Can also be seen as \"Start of day\""
         (time<? s1-end s2-end))))
 
 (define-public (normalize-date date)
-
   (time-utc->date (date->time-utc date)
                   (zone-offset date)))
 
@@ -113,14 +112,30 @@ attribute set to 0. Can also be seen as \"Start of day\""
                    (make-time time-duration 0 10))))
   (set (date-second next-date) 0))
 
-;; Returns a stream of date objects, one day appart, staring from start-day.
-(define-public (day-stream start-day)
+(define-public (normalize-date** date)
+  (define next-date
+    (time-utc->date
+     (subtract-duration (date->time-utc date)
+                        (make-time time-duration 0 7200))))
+  (set (date-second next-date) 0))
+
+;; date x (date → date) → stream<date>
+(define (date-increment-stream start-date transfer-proc)
   (stream-iterate
    (lambda (d)
      (drop-time
       (normalize-date*
-       (set (date-day d) = (+ 1)))))
-   (drop-time start-day)))
+       ;; NOTE Adds one hour to compensate for summer -> winter time transition
+       ;; TODO figure out better way to do this.
+       (set (date-hour (transfer-proc d)) = (+ 1)))))
+   (drop-time start-date)))
+
+;; Returns a stream of date objects, one day appart, staring from start-day.
+(define-public (day-stream start-day)
+  (date-increment-stream start-day (lambda (d) (set (date-day d) = (+ 1)))))
+
+(define-public (month-stream start-date)
+  (date-increment-stream start-date (lambda (d) (set (date-month d) = (+ 1)))))
 
 (define-public (in-date-range? start-date end-date)
   (lambda (date)

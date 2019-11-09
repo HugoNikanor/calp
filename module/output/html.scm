@@ -121,9 +121,6 @@
             (rel "stylesheet")
             (href ,path))))
 
-(define opt-spec
-  '((from (value #t) (single-char #\f))
-    (to (value #t) (single-char #\t))))
 
 (define (fmt-time-span ev)
   (let* ((fmt (if (time<? (time-difference (attr ev 'DTEND) (attr ev 'DTSTART))
@@ -189,7 +186,15 @@
 ;; 29 30
 ;; @end example
 (define (cal-table date today)
-  (let ((td (lambda (p) (lambda (d) `(td (@ ,p) ,d)))))
+  #;(define (pad0 d) (when (< d 10) (format #f h0)))
+  (define (pad0 d) (format #f "~2,'0d" d))
+  (define last-month-date (normalize-date* (set (date-month date) = (- 1))))
+  (define next-month-date (normalize-date* (set (date-month date) = (+ 1))))
+  (let ((td (lambda (attr other-date) (lambda (d) `(td (@ ,attr) (a (@ (href ,(date->string other-date "~Y-~m-~d")
+                                                                   ".html#" ,(date->string other-date "~Y-~m-")
+                                                                   ,(pad0 d))
+                                                             (class "hidelink")) ,d))))))
+
     `(table (@ (class "small-calendar"))
             (thead (tr ,@(map (lambda (d) `(td ,d)) '(MÅ TI ON TO FR LÖ SÖ))))
             (tbody ,@(let recur
@@ -197,16 +202,17 @@
                                       (month-len (days-in-month month))
                                       (prev-month-len (days-in-month (previous-month month)))
                                       (month-start (week-day date)))
-                                 (append (map (td '(class "prev"))
+                                 (append (map (td '(class "prev") last-month-date)
                                               (iota month-start (- prev-month-len month-start)))
                                          (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
                                                           ,@(cdr p)))
+                                              ;; TODO only today in current month
                                               (map (lambda (d) `((@ (class ,(when (= d (date-day today)) "today")))
                                                             (a (@ (href "#" ,(date->string date "~Y-~m-")
-                                                                        ,(when (< d 10) 0) ,d)
+                                                                        ,(pad0 d))
                                                                   (class "hidelink")) ,d)))
                                                    (iota month-len 1)))
-                                         (map (td '(class "next"))
+                                         (map (td '(class "next") next-month-date)
                                               (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))))
                        (unless (null? lst)
                          (let* ((w rest (split-at lst 7)))
@@ -259,14 +265,48 @@
                             `(span "Version " (a (@ (href ,url)) ,hash)))))
                 (aside (@ (class "sideinfo"))
                        (div (@ (class "about"))
+                            (div (@ (class "nav"))
+                                 (a (@ (href "#")) "«"))
                             (div ,(cal-table (start-of-month start)
-                                             (current-date))))
+                                             (current-date)))
+                            (div (@ (class "nav"))
+                                 (a (@ (href "#")) "»")))
                        (div (@ (class "eventlist"))
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
+(define opt-spec
+  '((from (value #t) (single-char #\f))
+    (to (value #t) (single-char #\t))
+    (chunked)
+    )
+  )
+
 (define-public (html-main calendars events args)
   (define opts (getopt-long args opt-spec))
-  (define start (parse-freeform-date (option-ref opts 'from "2019-04-15")))
-  (define end   (parse-freeform-date (option-ref opts 'to   "2019-05-10")))
 
-  (html-generate calendars events start end))
+  (cond [(option-ref opts 'chunked #f)
+         (let* ((start (cond [(option-ref opts 'from #f) => parse-freeform-date]
+                             [else (start-of-month (current-date))])))
+
+           (stream-for-each (lambda (pair)
+                              (format (current-error-port) "d = ~a~%u = ~a~%" (car pair) (cadr pair))
+                              (let ((fname (format #f "./html/~a.html" (date->string (car pair) "~1"))))
+                                (format (current-error-port) "Writing to [~a]~%" fname)
+                                (with-output-to-file fname
+                                  (lambda () (apply html-generate calendars events pair)))))
+                            (let ((ms (month-stream start)))
+                              (stream-take
+                               12 (stream-zip
+                                   ms (stream-map (lambda (d) (normalize-date**
+                                                          (set (date-day d) = (- 1))))
+                                                  (stream-cdr ms))))
+                              )))
+
+
+         ]
+        [else
+         (let* ((start (cond [(option-ref opts 'from #f) => parse-freeform-date]
+                            [else (start-of-month (current-date))]))
+                (end (cond [(option-ref opts 'to  #f) => parse-freeform-date]
+                           [else (normalize-date* (set (date-month start) = (+ 1)))])))
+           (html-generate calendars events start end))]))
