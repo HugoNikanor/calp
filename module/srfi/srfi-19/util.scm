@@ -108,11 +108,10 @@ attribute set to 0. Can also be seen as \"Start of day\""
 ;; hack to handle leap seconds. NOTE this should be reworked.
 (define-public (normalize-date* date)
   (define next-date
-    (date-second
-     (time-utc->date
-      (add-duration (date->time-utc date)
-                    (make-time time-duration 0 10)))
-     (set next-date 0))))
+    (time-utc->date
+     (add-duration (date->time-utc date)
+                   (make-time time-duration 0 10))))
+  (set (date-second next-date) 0))
 
 ;; Returns a stream of date objects, one day appart, staring from start-day.
 (define-public (day-stream start-day)
