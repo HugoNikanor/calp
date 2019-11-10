@@ -120,7 +120,7 @@ attribute set to 0. Can also be seen as \"Start of day\""
   (set (date-second next-date) 0))
 
 ;; date x (date → date) → stream<date>
-(define (date-increment-stream start-date transfer-proc)
+(define (date-increment-stream* start-date transfer-proc)
   (stream-iterate
    (lambda (d)
      (drop-time
@@ -130,9 +130,18 @@ attribute set to 0. Can also be seen as \"Start of day\""
        (set (date-hour (transfer-proc d)) = (+ 1)))))
    (drop-time start-date)))
 
+;; Just dropping timezones seems to work when we are dealing with months...
+(define (date-increment-stream start-date transfer-proc)
+  (stream-iterate
+   (lambda (d)
+     (drop-time
+      (normalize-date
+       (transfer-proc d))))
+   (drop-time start-date)))
+
 ;; Returns a stream of date objects, one day appart, staring from start-day.
 (define-public (day-stream start-day)
-  (date-increment-stream start-day (lambda (d) (set (date-day d) = (+ 1)))))
+  (date-increment-stream* start-day (lambda (d) (set (date-day d) = (+ 1)))))
 
 (define-public (month-stream start-date)
   (date-increment-stream start-date (lambda (d) (set (date-month d) = (+ 1)))))

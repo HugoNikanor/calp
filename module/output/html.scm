@@ -265,12 +265,16 @@
                             `(span "Version " (a (@ (href ,url)) ,hash)))))
                 (aside (@ (class "sideinfo"))
                        (div (@ (class "about"))
-                            (div (@ (class "nav"))
-                                 (a (@ (href "#")) "«"))
+                            (a (@ (href ,(date->string (set (date-month start) = (- 1)) "~Y-~m-~d") ".html")
+                                  (class "nav hidelink"))
+                               (div (@ (class "nav"))
+                                    "«"))
                             (div ,(cal-table (start-of-month start)
                                              (current-date)))
-                            (div (@ (class "nav"))
-                                 (a (@ (href "#")) "»")))
+                            (a (@ (href ,(date->string (set (date-month start) = (+ 1)) "~Y-~m-~d") ".html")
+                                  (class "nav hidelink"))
+                               (div (@ (class "nav"))
+                                    "»")))
                        (div (@ (class "eventlist"))
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
@@ -297,7 +301,7 @@
                             (let ((ms (month-stream start)))
                               (stream-take
                                12 (stream-zip
-                                   ms (stream-map (lambda (d) (normalize-date**
+                                   ms (stream-map (lambda (d) (normalize-date
                                                           (set (date-day d) = (- 1))))
                                                   (stream-cdr ms))))
                               )))
