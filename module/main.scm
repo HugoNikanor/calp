@@ -95,7 +95,8 @@ exec guile -e main -s $0 "$@"
                   ((import) import-main)
                   ((info) info-main)
                   ((ical) ical-main)
-                  ((server) server-main))
+                  ((server) server-main)
+                  (else => (lambda (s) (error "Unsupported mode of operation:" s))))
                 c e ropt)))
            calendar-files: (cond [(option-ref opts 'file #f) => list]
                                  [else (calendar-files)])
