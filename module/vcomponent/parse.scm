@@ -268,6 +268,17 @@ row ~a	column ~a	ctx = ~a
       (reduce (lambda (item calendar)
                 (assert (eq? 'VCALENDAR (type calendar)))
                 (assert (eq? 'VCALENDAR (type item)))
+
+                (unless (= 1 (length (filter (lambda (e) (eq? 'VEVENT (type e)))
+                                             (children item))))
+                  (format (current-error-port)
+                          "WARNING: File contains more that 1 VEVENT~%~a~%"
+                          (attr item 'X-HNH-FILENAME)))
+
+                ;; TODO The vdir standard says that each file should contain
+                ;; EXACTLY one event. It can however contain multiple VEVENT
+                ;; components, but they are still the same event. Probable exceptions
+                ;; to a recurrence rule.
                 (for child in (children item)
                      (assert (memv (type child) '(VTIMEZONE VEVENT)))
                      (add-child! calendar child))
