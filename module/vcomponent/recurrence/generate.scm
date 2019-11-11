@@ -65,7 +65,7 @@
 
              (when (attr e 'DTEND)
                (set! (attr e 'DTEND)
-                 (add-duration (attr e 'DTSTART) (attr e 'DURATION)))))
+                 (add-duration (attr e 'DTSTART) (attr e 'X-HNH-DURATION)))))
 
     e))
 
@@ -114,12 +114,11 @@
   (if (not (attr event 'RRULE))
       (stream event)
       (begin
-        (when (and (attr event 'DTEND)
-                   (not (attr event 'DURATION)))
-          (set! (attr event "DURATION")
-            (time-difference
-             (attr event "DTEND")
-             (attr event "DTSTART"))))
+        (set! (attr event 'X-HNH-DURATION)
+          (cond [(attr event 'DURATION) => identity]
+                [(attr event 'DTEND) => (lambda (end)
+                                          (time-difference
+                                           end (attr event "DTSTART")))]))
         (if (attr event "RRULE")
             (recur-event-stream event (parse-recurrence-rule (attr event "RRULE")))
             ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather
