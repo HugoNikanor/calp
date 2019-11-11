@@ -100,9 +100,12 @@
 ;; Returns the properties of attribute as an assoc list.
 ;; @code{(map car <>)} leads to available properties.
 (define-public (properties attrptr)
-  (hash-map->list cons (get-vline-parameters attrptr)))
+  (hash-map->list list (get-vline-parameters attrptr)))
 
 (define-public (attributes component)
+  (get-component-attributes component))
+
+(define-public (attribute-keys component)
   (map car (hash-map->list cons (get-component-attributes component))))
 
 (define (copy-vline vline)
