@@ -281,6 +281,8 @@ row ~a	column ~a	ctx = ~a
                 ;; to a recurrence rule.
                 (for child in (children item)
                      (assert (memv (type child) '(VTIMEZONE VEVENT)))
+                     (set! (attr child 'X-HNH-FILENAME)
+                       (attr (parent child) 'X-HNH-FILENAME))
                      (add-child! calendar child))
                 calendar)
               (make-vcomponent)
