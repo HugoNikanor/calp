@@ -176,6 +176,12 @@
 (define (week-day date)
   (modulo (1- (date-week-day date)) 7))
 
+(define* (month+ date #:optional (change 1))
+  (normalize-date* (set (date-month date) = (+ change))))
+
+(define* (month- date #:optional (change -1))
+  (month+ date change))
+
 ;; date should be start of month
 ;; @example
 ;; må ti on to fr lö sö
@@ -188,12 +194,13 @@
 (define (cal-table date today)
   #;(define (pad0 d) (when (< d 10) (format #f h0)))
   (define (pad0 d) (format #f "~2,'0d" d))
-  (define last-month-date (normalize-date* (set (date-month date) = (- 1))))
-  (define next-month-date (normalize-date* (set (date-month date) = (+ 1))))
-  (let ((td (lambda (attr other-date) (lambda (d) `(td (@ ,attr) (a (@ (href ,(date->string other-date "~Y-~m-~d")
-                                                                   ".html#" ,(date->string other-date "~Y-~m-")
-                                                                   ,(pad0 d))
-                                                             (class "hidelink")) ,d))))))
+  (let ((td (lambda (attr other-date)
+              (lambda (d)
+                `(td (@ ,attr)
+                     (a (@ (href ,(date->string other-date "~Y-~m-~d")
+                                 ".html#" ,(date->string other-date "~Y-~m-")
+                                 ,(pad0 d))
+                           (class "hidelink")) ,d))))))
 
     `(table (@ (class "small-calendar"))
             (thead (tr ,@(map (lambda (d) `(td ,d)) '(MÅ TI ON TO FR LÖ SÖ))))
@@ -202,7 +209,7 @@
                                       (month-len (days-in-month month))
                                       (prev-month-len (days-in-month (previous-month month)))
                                       (month-start (week-day date)))
-                                 (append (map (td '(class "prev") last-month-date)
+                                 (append (map (td '(class "prev") (month- date))
                                               (iota month-start (- prev-month-len month-start)))
                                          (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
                                                           ,@(cdr p)))
@@ -212,7 +219,7 @@
                                                                         ,(pad0 d))
                                                                   (class "hidelink")) ,d)))
                                                    (iota month-len 1)))
-                                         (map (td '(class "next") next-month-date)
+                                         (map (td '(class "next") (month+ date))
                                               (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))))
                        (unless (null? lst)
                          (let* ((w rest (split-at lst 7)))
@@ -249,6 +256,7 @@
                                     (list name (or bg-color 'white) (or fg-color 'black)
                                           name (or bg-color 'black))))
                                 calendars))))
+
           (body
            (div (@ (class "root"))
                 (main
@@ -257,6 +265,7 @@
                       ,(time-marker-div)
                       (div (@ (class "days"))
                            ,@(stream->list (stream-map lay-out-day evs))))
+
                  ;; Page footer
                  (footer (span "Page generated " ,(date->string (current-date)))
                          (span (a (@ (href ,(repo-url) "/calparse"))
@@ -265,26 +274,29 @@
                                  (url (format #f "~a/calparse/commit/?id=~a"
                                               (repo-url) hash)))
                             `(span "Version " (a (@ (href ,url)) ,hash)))))
+
                 ;; Whole sidebar
                 (aside (@ (class "sideinfo"))
                        ;; Small calendar and navigation
                        (div (@ (class "about"))
                             ;; prev button
-                            (a (@ (href ,(date->string (set (date-month start) = (- 1))
+                            (a (@ (href ,(date->string (month- start)
                                                        "~Y-~m-~d") ".html")
                                   (class "nav hidelink"))
                                (div (@ (class "nav"))
                                     "«"))
+
                             ;; calendar table
                             (div ,(cal-table (start-of-month start)
                                              (current-date)))
 
                             ;; next next-button
-                            (a (@ (href ,(date->string (set (date-month start) = (+ 1))
+                            (a (@ (href ,(date->string (month+ start)
                                                        "~Y-~m-~d") ".html")
                                   (class "nav hidelink"))
                                (div (@ (class "nav"))
                                     "»")))
+
                        ;; List of events
                        (div (@ (class "eventlist"))
                             ,@(stream->list (stream-map fmt-day evs)))))))))
