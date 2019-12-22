@@ -233,7 +233,11 @@
                                   start end))
 
   ;; (display "<!doctype HTML>") (newline)
-
+  (define (nav-link display date)
+    `(a (@ (href ,(date->string date "~Y-~m-~d") ".html")
+           (class "nav hidelink"))
+        (div (@ (class "nav"))
+             ,display)))
 
   ((@ (sxml simple) sxml->xml)
    `(html (@ (lang sv))
@@ -280,22 +284,14 @@
                        ;; Small calendar and navigation
                        (div (@ (class "about"))
                             ;; prev button
-                            (a (@ (href ,(date->string (month- start)
-                                                       "~Y-~m-~d") ".html")
-                                  (class "nav hidelink"))
-                               (div (@ (class "nav"))
-                                    "«"))
+                            ,(nav-link "«" (month- start))
 
                             ;; calendar table
                             (div ,(cal-table (start-of-month start)
                                              (current-date)))
 
-                            ;; next next-button
-                            (a (@ (href ,(date->string (month+ start)
-                                                       "~Y-~m-~d") ".html")
-                                  (class "nav hidelink"))
-                               (div (@ (class "nav"))
-                                    "»")))
+                            ;; next button
+                            ,(nav-link "»" (month+ start)))
 
                        ;; List of events
                        (div (@ (class "eventlist"))
