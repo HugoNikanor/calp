@@ -252,10 +252,12 @@
           (body
            (div (@ (class "root"))
                 (main
+                 ;; Actuall calendar
                  (div (@ (class "calendar"))
                       ,(time-marker-div)
                       (div (@ (class "days"))
                            ,@(stream->list (stream-map lay-out-day evs))))
+                 ;; Page footer
                  (footer (span "Page generated " ,(date->string (current-date)))
                          (span (a (@ (href ,(repo-url) "/calparse"))
                                   "Source Code"))
@@ -263,18 +265,27 @@
                                  (url (format #f "~a/calparse/commit/?id=~a"
                                               (repo-url) hash)))
                             `(span "Version " (a (@ (href ,url)) ,hash)))))
+                ;; Whole sidebar
                 (aside (@ (class "sideinfo"))
+                       ;; Small calendar and navigation
                        (div (@ (class "about"))
-                            (a (@ (href ,(date->string (set (date-month start) = (- 1)) "~Y-~m-~d") ".html")
+                            ;; prev button
+                            (a (@ (href ,(date->string (set (date-month start) = (- 1))
+                                                       "~Y-~m-~d") ".html")
                                   (class "nav hidelink"))
                                (div (@ (class "nav"))
                                     "«"))
+                            ;; calendar table
                             (div ,(cal-table (start-of-month start)
                                              (current-date)))
-                            (a (@ (href ,(date->string (set (date-month start) = (+ 1)) "~Y-~m-~d") ".html")
+
+                            ;; next next-button
+                            (a (@ (href ,(date->string (set (date-month start) = (+ 1))
+                                                       "~Y-~m-~d") ".html")
                                   (class "nav hidelink"))
                                (div (@ (class "nav"))
                                     "»")))
+                       ;; List of events
                        (div (@ (class "eventlist"))
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
