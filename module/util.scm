@@ -314,28 +314,13 @@
           (append done ((if (list? subl) flatten list) subl)))
         '() lst))
 
-(define* (tree-map proc tree #:key (descend (const #t)))
-  (cond ((not (list? tree)) (proc tree))
-        ((null? tree) '())
-        ((list? (car tree))
-         (cons (if (descend (car tree))
-                   (tree-map proc (car tree) #:descend descend)
-                   (car tree))
-               (tree-map proc (cdr tree) #:descend descend)))
-        (else (cons (proc (car tree))
-                    (tree-map proc (cdr tree) #:descend descend)))))
-
-(define (quote? form)
-  (and (not (null? form))
-       (eq? 'quote (car form))))
-
-(define-macro (let-lazy bindings . body)
-  (let ((keys (map car bindings)))
-    `(let ,(map (lambda (b) `(,(car b) (delay ,@(cdr b))))
-                bindings)
-       ,@(tree-map (lambda (t) (if (memv t keys) `(force ,t) t))
-                   body #:descend (negate quote?)))))
-
+(define-syntax let-lazy
+  (syntax-rules ()
+    [(_ ((field value) ...)
+        body ...)
+     (let ((field (delay value)) ...)
+       (let-syntax ((field (identifier-syntax (force field))) ...)
+         body ...))]))
 
 (define-public (map/dotted proc dotted-list)
   (cond ((null? dotted-list) '())
