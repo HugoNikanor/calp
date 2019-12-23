@@ -132,6 +132,8 @@
                                 (set! component child))]
 
                              [(eq? (get-line-key ctx) 'END)
+                              (case (type component)                ; HERE
+                                [(VEVENT DAYLIGHT STANDARD) (parse-date! component)])
                               (set! component (parent component))]
 
                              [else
@@ -208,52 +210,47 @@ row ~a	column ~a	ctx = ~a
 
 
 
+(define (parse-date! ev)
+  (awhen (attr* ev 'RECURRENCE-ID)
+         (let-env ((TZ (and=> (prop it 'TZID) car)))
+                  (set! (value it)
+                    (date->time-utc (parse-datetime (value it))))))
+
+  (let-env ((TZ (and=> (prop (attr* ev 'DTSTART) 'TZID) car)))
+           (let*
+               ((dptr (attr* ev 'DTSTART))
+                (eptr (attr* ev 'DTEND))
+
+                (date (parse-datetime (value dptr)))
+                (end-date
+                 (cond ;; [(attr ev 'DURATION) => (lambda (d) (add-duration ...))]
+                  [(not eptr)
+                   (let ((d (set (date-hour date) = (+ 1))))
+                     (set! (attr ev 'DTEND) d
+                           eptr (attr* ev 'DTEND))
+                     d)]
+                  [(value eptr) => parse-datetime]
+                  [else
+                   (set (date-hour date) = (+ 1))])))
+
+             (set! (value dptr) (date->time-utc date)
+                   (value eptr) (date->time-utc end-date))
+
+             (when (prop (attr* ev 'DTSTART) 'TZID)
+               ;; Re-align date to have correect timezone. This is since time->date gives
+               ;; correct, but the code above may (?) fail to update the timezone.
+               (set! (zone-offset date) (zone-offset (time-utc->date (value dptr)))
+                     (value dptr) (date->time-utc date)
+
+                     ;; The standard says that DTEND must have the same
+                     ;; timezone as DTSTART. Here we trust that blindly.
+                     (zone-offset end-date) (zone-offset date)
+                     (value eptr) (date->time-utc end-date))))))
+
+
 ;; All VTIMEZONE's seem to be in "local" time in relation to
 ;; themselves. Therefore, a simple comparison should work,
-;; and then the TZOFFSETTO attribute can be subtracted from
-;; the event DTSTART to get UTC time.
-
-;; Goes through a vcomponent, finds all it's direct children of type VEVENT
-;; and parses their DTSTART and DTEND attributes
-(define (parse-dates! cal)
-  "Parse all start times into scheme date objects."
-
-  (for ev in (filter (lambda (o) (eq? 'VEVENT (type o))) (children cal))
-       (let-env ((TZ (and=> (prop (attr* ev 'DTSTART) 'TZID) car)))
-                (let*
-                    ((dptr (attr* ev 'DTSTART))
-                     (eptr (attr* ev 'DTEND))
-
-                     (date (parse-datetime (value dptr)))
-                     (end-date
-                      (cond ;; [(attr ev 'DURATION) => (lambda (d) (add-duration ...))]
-                       [(not eptr)
-                        (let ((d (set (date-hour date) = (+ 1))))
-                          (set! (attr ev 'DTEND) d
-                                eptr (attr* ev 'DTEND))
-                          d)]
-                       [(value eptr) => parse-datetime]
-                       [else
-                        (set (date-hour date) = (+ 1))])))
-
-                  (set! (value dptr) (date->time-utc date)
-                        (value eptr) (date->time-utc end-date))
-
-                  (when (prop (attr* ev 'DTSTART) 'TZID)
-                    ;; Re-align date to have correect timezone. This is since time->date gives
-                    ;; correct, but the code above may (?) fail to update the timezone.
-                    (set! (zone-offset date) (zone-offset (time-utc->date (value dptr)))
-                          (value dptr) (date->time-utc date)
-
-                          ;; The standard says that DTEND must have the same
-                          ;; timezone as DTSTART. Here we trust that blindly.
-                          (zone-offset end-date) (zone-offset date)
-                          (value eptr) (date->time-utc end-date)))))))
-
-
-;; Takse a path to a vdir, and returns all ics files in the directory merged
-;; together into a single vcalendar. The first found vcalendar is used as the
-;; parent. Meaning other vcalendars are discarded.
+;; and then the TZOFFSETTO attribute can be subtd.
 (define (parse-vdir path)
   (let ((/ (lambda args (string-join args file-name-separator-string 'infix))))
     (let ((color
@@ -266,24 +263,48 @@ row ~a	column ~a	ctx = ~a
              (const (basename path "/")))))
 
       (reduce (lambda (item calendar)
-                (assert (eq? 'VCALENDAR (type calendar)))
+
+                (define-values (events other) (partition (lambda (e) (eq? 'VEVENT (type e)))
+                                                         (children item)))
+
+                ;; (assert (eq? 'VCALENDAR (type calendar)))
                 (assert (eq? 'VCALENDAR (type item)))
 
-                (unless (= 1 (length (filter (lambda (e) (eq? 'VEVENT (type e)))
-                                             (children item))))
-                  (format (current-error-port)
-                          "WARNING: File contains more that 1 VEVENT~%~a~%"
-                          (attr item 'X-HNH-FILENAME)))
-
-                ;; TODO The vdir standard says that each file should contain
-                ;; EXACTLY one event. It can however contain multiple VEVENT
-                ;; components, but they are still the same event. Probable exceptions
-                ;; to a recurrence rule.
                 (for child in (children item)
-                     (assert (memv (type child) '(VTIMEZONE VEVENT)))
                      (set! (attr child 'X-HNH-FILENAME)
-                       (attr (parent child) 'X-HNH-FILENAME))
-                     (add-child! calendar child))
+                       (attr (parent child) 'X-HNH-FILENAME)))
+
+                ;; NOTE The vdir standard says that each file should contain
+                ;; EXACTLY one event. It can however contain multiple VEVENT
+                ;; components, but they are still the same event.
+                ;; In our case this means exceptions to reccurence rules, which
+                ;; is set up here, and then later handled in rrule-generate.
+                (case (length events)
+                  [(0) (format (current-error-port)
+                           "WARNING: No events in component~%~a~%"
+                           (attr item 'X-HNH-FILENAME))]
+                  [(1)
+                   (let ((child (car events)))
+                    (assert (memv (type child) '(VTIMEZONE VEVENT)))
+                    (add-child! calendar child))]
+
+                  ;; two or more
+                  [else
+
+                   ;; Sorting on SEQUENCE here would have been nice.
+                   ;; But the patches can apparently share a sequence number
+                   ;; of 0 with the original event!
+                   ;; (╯°□°）╯ ┻━┻
+                   (let* ((head (find (negate (extract 'RECURRENCE-ID))
+                                      events))
+                          (rest (delete head events eq?)))
+
+                     (set! (attr head 'X-HNH-ALTERNATIVES)
+                       (sort*! rest ;; HERE
+                               time<? (extract 'RECURRENCE-ID)))
+                     (add-child! calendar head))])
+
+                ;; return
                 calendar)
               (make-vcomponent)
               (map (lambda (fname)
@@ -312,7 +333,7 @@ row ~a	column ~a	ctx = ~a
      [(block-special char-special fifo socket unknown symlink)
       => (lambda (t) (error "Can't parse file of type " t))]))
 
-    (parse-dates! cal)
+    ;; (parse-dates! cal)
 
     (unless (attr cal "NAME")
       (set! (attr cal "NAME")
