@@ -1,5 +1,4 @@
 (define-module (output ical)
-  :use-module (ice-9 getopt-long)
   :use-module (ice-9 format)
   :use-module (ice-9 match)
   :use-module (util)
@@ -11,14 +10,11 @@
   :use-module (srfi srfi-41 util)
   )
 
-(define opt-spec
-  '((from (value #t) (single-char #\f))
-    (to (value #t) (single-char #\t))))
 
 ;; Format value depending on key type.
 ;; Should NOT emit the key.
 (define (value-format key vline)
-  (catch 'wrong-type-arg
+  (with-throw-handler 'wrong-type-arg
     (lambda ()
      (case key
        ((DTSTART DTEND)
@@ -38,7 +34,7 @@
        (else (escape-chars (value vline)))))
     (lambda (err caller fmt args call-args)
       (format (current-error-port)
-              "WARNING: ~k~%" fmt args)
+              "WARNING: key = ~a, caller = ~s, call-args = ~s~%~k~%" key caller call-args fmt args)
       (with-output-to-string (lambda () (display (value vline))))
       )))
 
@@ -101,14 +97,7 @@ CALSCALE:GREGORIAN\r
 (define (print-footer)
   (format #t "END:VCALENDAR\r\n"))
 
-(define-public (ical-main calendars events args)
-  (define opts (getopt-long args opt-spec))
-
-  (define start (cond [(option-ref opts 'from #f) => parse-freeform-date]
-                      [else (start-of-month (current-date))]))
-  (define end   (cond [(option-ref opts 'to  #f) => parse-freeform-date]
-                      [else (normalize-date* (set (date-month start) = (+ 1)))]))
-
+(define-public (ical-main calendars events start end)
   (print-header)
 
   (let ((tzs (make-hash-table)))

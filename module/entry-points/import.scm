@@ -1,5 +1,8 @@
-(define-module (output import)
-  :use-module (util))
+(define-module (entry-points import)
+  :export (main)
+  :use-module (util)
+  :use-module (ice-9 getopt-long)
+  )
 
 (define options
   '((calendar (value #t) (single-char #\c))
@@ -29,3 +32,6 @@
 
 
   )
+
+(define (main . _)
+  'noop)

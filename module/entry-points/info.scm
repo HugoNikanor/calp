@@ -1,4 +1,5 @@
-(define-module (output info)
+(define-module (entry-points info)
+  :export (main)
   :use-module (util))
 
 (use-modules (ice-9 getopt-long)
@@ -7,7 +8,10 @@
              (vulgar color)
              (srfi srfi-1))
 
-(define-public (info-main calendars events args)
+(define (main args)
+  (define-values (calendars events)
+    (load-calendars))
+
   (format #t "~%Found ~a calendars, named:~%~{ - [~4@a] ~a~a\x1b[m~%~}~%"
           (length calendars)
           (concatenate

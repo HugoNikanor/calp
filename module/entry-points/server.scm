@@ -1,4 +1,5 @@
-(define-module (server)
+(define-module (entry-points server)
+  :export (main)
   :use-module (util))
 
 (use-modules* (web (server request response uri))

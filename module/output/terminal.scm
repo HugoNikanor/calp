@@ -19,11 +19,10 @@
   #:use-module (vcomponent datetime)
 
   #:use-module (ice-9 format)
-  #:use-module (ice-9 getopt-long)
   #:use-module (parameters)
   #:use-module (config)
 
-  #:export (terminal-main))
+  #:export (main-loop))
 
 
 (define (open-in-editor fname)
@@ -150,15 +149,3 @@
                     (memv char '(#\q)))
             (break)))
         ))))
-
-(define options
-  '((date (value #t) (single-char #\d))))
-
-(define (terminal-main calendars events args)
-  (let ((opts (getopt-long args options)))
-    (let ((time (date->time-utc
-                 (drop-time (or (and=> (option-ref opts 'date #f) parse-freeform-date)
-                                (current-date))))))
-      ;; (format (current-error-port) "len(events) = ~a~%" (stream-length events))
-      (with-vulgar
-       (lambda () (main-loop time events))))))

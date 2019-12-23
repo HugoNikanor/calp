@@ -26,7 +26,7 @@
   (children children set-component-children!)
   (parent get-component-parent set-component-parent!)
   (attributes get-component-attributes))
-(export children type)
+(export vcomponent? children type)
 
 ;; TODO should this also update the parent
 (define-public parent

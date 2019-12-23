@@ -8,22 +8,21 @@ exec guile -e main -s $0 "$@"
 
 (use-modules (srfi srfi-1)
              (srfi srfi-19)
-             (srfi srfi-26)
              (srfi srfi-41)
              (srfi srfi-41 util)
-             (srfi srfi-88)
-             (util)
-             (vcomponent)
-             (vcomponent recurrence)
-             (vcomponent datetime)
+             (srfi srfi-88)             ; keyword syntax
 
-             (output html)
-             (output terminal)
-             (output text)
-             (output import)
-             (output info)
-             (output ical)
-             (server)
+             (util)
+             (util io)
+
+             ((entry-points html)     :prefix     html-)
+             ((entry-points terminal) :prefix terminal-)
+             ((entry-points import)   :prefix   import-)
+             ((entry-points text)     :prefix     text-)
+             ((entry-points info)     :prefix     info-)
+             ((entry-points ical)     :prefix     ical-)
+
+             ((entry-points server)   :prefix   server-)
 
              (ice-9 getopt-long)
 
@@ -32,37 +31,9 @@ exec guile -e main -s $0 "$@"
              (parameters)
              (config))
 
-;; Reads all calendar files from disk, and creates a list of "regular" events,
-;; and a stream of "repeating" events, which are passed in that order to the
-;; given procedure @var{proc}.
-;;
-;; Given as a sepparate function from main to ease debugging.
-(define* (init proc #:key (calendar-files (calendar-files)))
-  (define calendars (map parse-cal-path calendar-files))
-  (define events (concatenate
-                  ;; TODO does this drop events?
-                  (map (lambda (cal) (filter (lambda (o) (eq? 'VEVENT (type o)))
-                                        (children cal)))
-                       calendars)))
-
-  (let* ((repeating regular (partition repeating? events)))
-
-    (set! repeating (sort*! repeating time<? (extract 'DTSTART))
-          regular   (sort*! regular   time<? (extract 'DTSTART)))
-
-    (proc
-     calendars
-     (interleave-streams
-      ev-time<?
-      (cons (list->stream regular)
-            (map generate-recurrence-set repeating))))))
-
 (define options
   '((mode (value #t) (single-char #\m))
-    (file (value #t) (single-char #\f))
     (output (value #t) (single-char #\o))
-    (format (value #f))
-    (width (value #t) (single-char #\w))
     (statprof (value optional))))
 
 (define (ornull a b)
@@ -76,31 +47,21 @@ exec guile -e main -s $0 "$@"
   (when stprof
     (statprof-start))
 
-  (with-output-to-port (open-output-port (option-ref opts 'output "-"))
+  (with-output-to-port
+      (open-output-port (option-ref opts 'output "-"))
     (lambda ()
-      (if (option-ref opts 'format #f)
-          (for-each (lambda (l) (display l) (newline))
-                    (flow-text
-                     (with-input-from-port (open-input-port (option-ref opts 'file "-"))
-                       (@ (ice-9 rdelim) read-string))
-                     #:width (or (string->number (option-ref opts 'width "")) 70)))
-
-          (init
-           (lambda (c e)
-             (let ((ropt (ornull (option-ref opts '() '())
-                                 '("term"))))
-               ((case (string->symbol (car ropt))
-                  ((html) html-main)
-                  ((term) terminal-main)
-                  ((import) import-main)
-                  ((info) info-main)
-                  ((ical) ical-main)
-                  ((server) server-main)
-                  (else => (lambda (s) (error "Unsupported mode of operation:" s))))
-                c e ropt)))
-           calendar-files: (cond [(option-ref opts 'file #f) => list]
-                                 [else (calendar-files)])
-           ))
+      (let ((ropt (ornull (option-ref opts '() '())
+                          '("term"))))
+        ((case (string->symbol (car ropt))
+           ((html)       html-main)
+           ((term)   terminal-main)
+           ((import)   import-main)
+           ((text)       text-main)
+           ((info)       info-main)
+           ((ical)       ical-main)
+           ((server)   server-main)
+           (else => (lambda (s) (error "Unsupported mode of operation:" s))))
+         ropt))
       (newline)))
 
   (when stprof

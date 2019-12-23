@@ -11,8 +11,6 @@
   #:use-module (srfi srfi-19 util)
   #:use-module (output general)
 
-  #:use-module (ice-9 getopt-long)
-
   #:use-module (git)
   #:use-module (parameters)
   #:use-module (config))
@@ -297,39 +295,18 @@
                        (div (@ (class "eventlist"))
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
-(define opt-spec
-  '((from (value #t) (single-char #\f))
-    (to (value #t) (single-char #\t))
-    (chunked)
-    )
-  )
 
-(define-public (html-main calendars events args)
-  (define opts (getopt-long args opt-spec))
-
-  (cond [(option-ref opts 'chunked #f)
-         (let* ((start (cond [(option-ref opts 'from #f) => parse-freeform-date]
-                             [else (start-of-month (current-date))])))
-
-           (stream-for-each (lambda (pair)
-                              (format (current-error-port) "d = ~a~%u = ~a~%" (car pair) (cadr pair))
-                              (let ((fname (format #f "./html/~a.html" (date->string (car pair) "~1"))))
-                                (format (current-error-port) "Writing to [~a]~%" fname)
-                                (with-output-to-file fname
-                                  (lambda () (apply html-generate calendars events pair)))))
-                            (let ((ms (month-stream start)))
-                              (stream-take
-                               12 (stream-zip
-                                   ms (stream-map (lambda (d) (normalize-date
-                                                          (set (date-day d) = (- 1))))
-                                                  (stream-cdr ms))))
-                              )))
-
-
-         ]
-        [else
-         (let* ((start (cond [(option-ref opts 'from #f) => parse-freeform-date]
-                            [else (start-of-month (current-date))]))
-                (end (cond [(option-ref opts 'to  #f) => parse-freeform-date]
-                           [else (normalize-date* (set (date-month start) = (+ 1)))])))
-           (html-generate calendars events start end))]))
+(define-public (html-chunked-main calendars events start)
+  (stream-for-each (lambda (pair)
+                     (format (current-error-port) "d = ~a~%u = ~a~%" (car pair) (cadr pair))
+                     (let ((fname (format #f "./html/~a.html" (date->string (car pair) "~1"))))
+                       (format (current-error-port) "Writing to [~a]~%" fname)
+                       (with-output-to-file fname
+                         (lambda () (apply html-generate calendars events pair)))))
+                   (let ((ms (month-stream start)))
+                     (stream-take
+                      12 (stream-zip
+                          ms (stream-map (lambda (d) (normalize-date
+                                                 (set (date-day d) = (- 1))))
+                                         (stream-cdr ms))))
+                     )))
