@@ -90,16 +90,15 @@
      ((e _)
       (let ((expected-start (attr e 'DTSTART)))
         ;; If we have alternatives, check them
-        (cond [(attr e 'X-HNH-ALTERNATIVES)
-               (lambda (alternatives)
-                 ;; A recurrence id matching the expected time means that
-                 ;; we have an actuall alternative/exception, use that
-                 ;; instead of the regular event.
-                 (find (lambda (alt) (time=? expected-start (attr alt 'RECURRENCE-ID)))
-                       alternatives))
-               => identity]
-              ;; If we did't have an exception just return the regular event.
-              [else e]))))
+        (or (and=> (attr e 'X-HNH-ALTERNATIVES)
+                   (lambda (alternatives)
+                     ;; A recurrence id matching the expected time means that
+                     ;; we have an actuall alternative/exception, use that
+                     ;; instead of the regular event.
+                     (find (lambda (alt) (time=? expected-start (attr alt 'RECURRENCE-ID)))
+                           alternatives)))
+            ;; If we did't have an exception just return the regular event.
+            e))))
 
    ;; Event x Rule → Bool (continue?)
    (match-lambda
