@@ -1,6 +1,7 @@
 (define-module (output ical)
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 format)
+  :use-module (ice-9 match)
   :use-module (util)
   :use-module (vcomponent)
   :use-module (srfi srfi-1)
@@ -14,6 +15,8 @@
   '((from (value #t) (single-char #\f))
     (to (value #t) (single-char #\t))))
 
+;; Format value depending on key type.
+;; Should NOT emit the key.
 (define (value-format key vline)
   (catch 'wrong-type-arg
     (lambda ()
@@ -49,10 +52,14 @@
                            (else (display ch)))
                          ) str))))
 
-(define wrap-len 70 #; (floor/ 75 2)
-  )
-
-(define (ical-line-fold string)
+;; Fold long lines to limit width.
+;; Since this works in characters, but ics works in bytes
+;; this will overshoot when faced with multi-byte characters.
+;; But since the line wrapping is mearly a recomendation it's
+;; not a problem.
+;; Setting the wrap-len to slightly lower than allowed also help
+;; us not overshoot.
+(define* (ical-line-fold string #:key (wrap-len 70))
   (cond [(< wrap-len (string-length string))
          (format #f "~a\r\n ~a"
                  (string-take string wrap-len)
@@ -61,17 +68,21 @@
 
 (define (component->ical-string component)
   (format #t "BEGIN:~a\r\n" (type component))
-  (hash-for-each (lambda (key vline)
-                   ;; key;p1=v;p3=10:value
+  (hash-for-each
+   ;; Special cases depending on key.
+   ;; Value formatting is handled in @code{value-format}.
+   (match-lambda*
+     [('X-HNH-ALTERNATIVES _) 'noop]
 
-                   (display
-                    (ical-line-fold
-                     (format #f "~a~:{;~a=~@{~a~^,~}~}:~a"
-                             key (properties vline)
-                             ;; TODO wrap lines
-                             (value-format key vline))))
-                   (display "\r\n"))
-            (attributes component))
+     [(key vline)
+      (display
+       (ical-line-fold
+        ;; Expected output: key;p1=v;p3=10:value
+        (format #f "~a~:{;~a=~@{~a~^,~}~}:~a"
+                key (properties vline)
+                (value-format key vline))))
+      (display "\r\n")])
+   (attributes component))
   (for-each component->ical-string (children component))
   (format #t "END:~a\r\n" (type component))
 
