@@ -17,7 +17,7 @@
   (with-throw-handler 'wrong-type-arg
     (lambda ()
      (case key
-       ((DTSTART DTEND)
+       ((DTSTART DTEND RECURRENCE-ID)
         (time->string (value vline) (if (prop vline 'TZID)
                                         "~Y~m~dT~H~M~S"
                                         "~Y~m~dT~H~M~SZ" )))
@@ -41,12 +41,13 @@
 (define (escape-chars str)
   (with-output-to-string
     (lambda ()
-      (string-for-each (lambda (ch)
-                         (case ch
-                           ((#\, #\; #\\) => (lambda (c) (display "\\") (display c)))
-                           ((#\newline) (display "\\n"))
-                           (else (display ch)))
-                         ) str))))
+      (string-for-each
+       (lambda (ch)
+         (case ch
+           ((#\, #\; #\\) => (lambda (c) (display "\\") (display c)))
+           ((#\newline) (display "\\n"))
+           (else (display ch))))
+       str))))
 
 ;; Fold long lines to limit width.
 ;; Since this works in characters, but ics works in bytes
