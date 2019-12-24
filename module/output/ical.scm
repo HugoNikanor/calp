@@ -98,7 +98,8 @@ CALSCALE:GREGORIAN\r
 (define (print-footer)
   (format #t "END:VCALENDAR\r\n"))
 
-(define-public (ical-main calendars events start end)
+;; list x list x list x time x time → 
+(define-public (ical-main calendars regular-events repeating-events start end)
   (print-header)
 
   (let ((tzs (make-hash-table)))
@@ -109,11 +110,16 @@ CALSCALE:GREGORIAN\r
     (hash-for-each (lambda (key component) (component->ical-string component))
                    tzs))
 
-  ;; TODO this contains repeated events multiple times
-  (stream-for-each
+  ;; TODO add support for running without a range limiter, emiting all objects.
+  (for-each
    component->ical-string
-   (filter-sorted-stream (lambda (ev) ((in-date-range? start end)
-                                  (time-utc->date (attr ev 'DTSTART))))
-                         events))
+   (filter-sorted (lambda (ev) ((in-date-range? start end)
+                           (time-utc->date (attr ev 'DTSTART))))
+                  regular-events))
+
+  ;; TODO RECCURENCE-ID exceptions
+  ;; We just dump all repeating objects, since it's much cheaper to do it this way than
+  ;; to actually figure out which are applicable for the given date range.
+  (for-each component->ical-string repeating-events)
 
   (print-footer))
