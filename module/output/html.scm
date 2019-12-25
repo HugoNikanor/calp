@@ -61,6 +61,7 @@
   (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
   (string-filter (lambda (c) (char-set-contains? cs c)) str))
 
+;; Format single event for graphical display
 (define (vevent->sxml day ev)
   (define time (date->time-utc day))
   (define style
@@ -90,6 +91,7 @@
               (style ,style))
            ,((summary-filter) ev (attr ev 'SUMMARY)))))
 
+;; Lay out complete day (graphical)
 (define (lay-out-day day)
   (let* (((date . events) day))
     (fix-event-widths! (date->time-utc date) (stream->list events))
@@ -129,6 +131,7 @@
          (end (time->string (attr ev 'DTEND) fmt)))
     (values start end)))
 
+;; For sidebar, just text
 (define (fmt-single-event ev)
   `(article (@ (id ,(UID ev))
                (class "eventtext CAL_bg_"
@@ -143,10 +146,10 @@
                 `(div (b "Plats: ") ,(attr ev 'LOCATION)))
              ,(attr ev 'DESCRIPTION))))
 
+;; Single event in side bar (text objects)
 (define (fmt-day day)
   (let* (((date . events) day))
     `(section (@ (class "text-day"))
-              ;; TODO this gives date +1
               (header (h2 ,(let ((s (date->string date "~Y-~m-~d")))
                              `(a (@ (href "#" ,s)
                                     (class "hidelink")) ,s))))
