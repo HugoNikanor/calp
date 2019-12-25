@@ -1,5 +1,6 @@
 (define-module (output html)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
   #:use-module (vcomponent)
@@ -149,7 +150,16 @@
               (header (h2 ,(let ((s (date->string date "~Y-~m-~d")))
                              `(a (@ (href "#" ,s)
                                     (class "hidelink")) ,s))))
-              ,@(map fmt-single-event (stream->list events)))))
+              ,@(stream->list
+                 (stream-map fmt-single-event
+                             (stream-filter
+                              (lambda (ev)
+                                ;; If start was an earlier day
+                                ;; This removes all descriptions from events for previous days,
+                                ;; solving duplicates.
+                                (time<? (date->time-utc date)
+                                        (attr ev 'DTSTART)))
+                              events))))))
 
 (define (days-in-month n)
   (cond ((memv n '(1 3 5 7 8 10 12)) 31)
@@ -226,6 +236,11 @@
 
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
+;;; NOTE
+;;; The side bar filters all earlier events for each day to not create repeats,
+;;; and the html-generate procedure also filters, but instead to find earlier eventns.
+;;; All this filtering is probably slow, and should be looked into.
+
 (define-public (html-generate calendars events start end)
   (define evs (get-groups-between (group-stream events)
                                   start end))
@@ -293,6 +308,14 @@
 
                        ;; List of events
                        (div (@ (class "eventlist"))
+                            ;; Events which started before our start point, but "spill" into our time span.
+                            (section (@ (class "text-day"))
+                                     (header (h2 "Tidigare"))
+                                     ,@(stream->list
+                                        (stream-map fmt-single-event
+                                          (stream-take-while (compose (cut time<? <> (date->time-utc start))
+                                                                      (extract 'DTSTART))
+                                            (cdr (stream-car evs))))))
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
 
