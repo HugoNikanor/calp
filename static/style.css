@@ -261,24 +261,48 @@ body {
 	margin: 0 1em;
 }
 
-.event.continuing {
+/* */
+
+.events .event.continuing {
 	border-bottom: none;
-	background-image: linear-gradient(to top, #0007 0%,#FFF0 4em);
+	background-image: linear-gradient(to top, #0007 0%,#FFF0 2em);
 }
 
-.event.continued {
+.events .event.continued {
 	border-top: none;
-	background-image: linear-gradient(to bottom, #FFF7 0%,#FFF0 6em);
+	background-image: linear-gradient(to bottom, #FFF7 0%,#FFF0 3em);
 }
 
-.event.continued.continuing {
+.events .event.continued.continuing {
 	border-top: none;
-	border-top: none;
+	border-bottom: none;
 	background-image:
 		linear-gradient(to bottom,
 			#FFF7  0%, #FFF0 10%,
 			#FFF0 90%, #0007 100%);
 }
+
+/* */
+
+.wholeday .event.continuing {
+	border-right: none;
+	background-image: linear-gradient(to left, #0007 0%,#FFF0 4em);
+}
+
+.wholeday .event.continued {
+	border-left: none;
+	background-image: linear-gradient(to right, #FFF7 0%,#FFF0 6em);
+}
+
+.wholeday .event.continued.continuing {
+	border-left: none;
+	border-right: none;
+	background-image:
+		linear-gradient(to right,
+			#FFF7  0%, #FFF0 10%,
+			#FFF0 90%, #0007 100%);
+}
+
 
 .event.generated {
 	background-color: #55FF5550;
