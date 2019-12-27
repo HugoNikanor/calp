@@ -12,9 +12,19 @@
   #:use-module (srfi srfi-19 util)
   #:use-module (output general)
 
+  #:use-module (ice-9 regex)
+
   #:use-module (git)
   #:use-module (parameters)
   #:use-module (config))
+
+(define (td param)
+  (lambda (d) `(td (@ ,(map (lambda (p)
+                         (cons `(quote ,(car p))
+                               (cdr p)))
+                       param)) ,d)))
+
+(define (a link) `(a (@ (href ,link)) ,link))
 
 (define (date-link date)
   (date->string date "~Y-~m-~d"))
@@ -178,6 +188,17 @@
          (end (time->string (attr ev 'DTEND) fmt)))
     (values start end)))
 
+(define (description-preprocess text)
+  (define regexp (make-regexp "https?://\\S+"))
+
+  (let recur ((str text))
+    (let ((m (regexp-exec  regexp str)))
+      (if (not m)
+          '()
+          (cons* (match:prefix m)
+                 (a (match:substring m))
+                 (recur (match:suffix m)))))))
+
 ;; For sidebar, just text
 (define (fmt-single-event ev)
   `(article (@ (id ,(UID ev))
@@ -191,7 +212,7 @@
                 `(div ,start " — " ,end))
              ,(when (and=> (attr ev 'LOCATION) (negate string-null?))
                 `(div (b "Plats: ") ,(attr ev 'LOCATION)))
-             ,(attr ev 'DESCRIPTION))))
+             ,(and=> (attr ev 'DESCRIPTION) description-preprocess))))
 
 ;; Single event in side bar (text objects)
 (define (fmt-day day)
@@ -220,13 +241,6 @@
 
 (define (previous-month n)
   (1+ (modulo (- n 2) 12)))
-
-(define (td param)
-  (lambda (d) `(td (@ ,(map (lambda (p)
-                         (cons `(quote ,(car p))
-                               (cdr p)))
-                       param)) ,d)))
-
 
 ;; 0 indexed, starting at monday.
 (define (week-day date)
