@@ -120,13 +120,6 @@ body {
 	flex-grow: 2;
 }
 
-.clockbar {
-	/* This is relative for the .clock */
-	position: relative;
-	height: calc(100% - 50px - 10px);
-	width: 2.5em;
-}
-
 .sideclock {
 	/* border-right: 2px solid gray; */
 	z-index: 1;
@@ -163,10 +156,24 @@ body {
 	flex-grow: 1;
 }
 
+/* Clockbar is also .events */
+.clockbar {
+	/* Removing this draws timestamps on top of calendar instead of
+	 * besides it */
+	width: 2.5em;
+}
+
 .wholeday {
 	position: relative;
 	width: 100%;
-	height: 100px;
+	height: calc(3 * 1.5em);
+	padding-bottom: 2px;
+	border-bottom: 2px solid black;
+}
+
+.wholeday .event {
+	/* max-height: 1.5em; */
+	max-height: 33%;
 }
 
 /*
