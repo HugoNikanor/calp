@@ -91,20 +91,66 @@
               (style ,style))
            ,((summary-filter) ev (attr ev 'SUMMARY)))))
 
+(define (vevent->sxml-top day ev)
+  (define time (date->time-utc day))
+
+  (define style
+    (format #f "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"
+
+            (* 100 (x-pos ev))          ; left
+            (* 100 (width ev))          ; width
+
+            ;; top
+            (if (in-day? day (attr ev 'DTSTART))
+                (* 100/24
+                   (time->decimal-hour
+                    (time-difference (attr ev 'DTSTART)
+                                     (start-of-day* (attr ev 'DTSTART)))))
+                0)
+
+            ;; height
+            (* 100/24 (time->decimal-hour (event-length/day ev time))))
+)
+
+  ;; No diff
+  `(a (@ (href "#" ,(UID ev))
+         (class "hidelink"))
+      (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
+                ,(when (time<? (attr ev 'DTSTART) time)
+                   " continued")
+                ,(when (time<? (add-day time) (attr ev 'DTEND))
+                   " continuing"))
+              (style ,style))
+           ,((summary-filter) ev (attr ev 'SUMMARY))))
+  )
+
 ;; Lay out complete day (graphical)
 (define (lay-out-day day)
-  (let* (((date . events) day))
-    (fix-event-widths! (date->time-utc date) (stream->list events))
+  (let* (((date . events) day)
+         (time (date->time-utc date))
+         (long-events short-events
+                      (partition (lambda (ev)
+                                   (time<=? (make-duration (* 3600 24))
+                                            (time-difference (attr ev 'DTEND)
+                                                             (attr ev 'DTSTART))))
+                                 (stream->list events))))
+    (fix-event-widths! time short-events)
+    (fix-event-widths! time long-events)
     `(div (@ (class "day"))
           (div (@ (class "meta"))
                ,(let ((str (date-link date)))
                   `(span (@ (id ,str) (class "daydate")) ,str))
                (span (@ (class "dayname")) ,(date->string date "~a")))
+          (div (@ (class "wholeday"))
+               " " ; To prevent self closing div tag
+               ,@(map (lambda (e) (vevent->sxml-top date e))
+                      long-events))
           (div (@ (class "events"))
+               " " ; To prevent self closing div tag
                ,@(map (lambda (time)
                         `(div (@ (class "clock clock-" ,time)) ""))
                       (iota 12 0 2))
-               ,@(map (lambda (e) (vevent->sxml date e)) (stream->list events))))))
+               ,@(map (lambda (e) (vevent->sxml date e)) short-events)))))
 
 (define (time-marker-div)
   `(div (@ (class "sideclock"))
@@ -115,7 +161,7 @@
                            `(div (@ (class "clock clock-" ,time))
                                  (span (@ (class "clocktext"))
                                        ,time ":00")))
-                          (iota 12 0 2))))))
+                         (iota 12 0 2))))))
 
 (define (include-css path)
   `(link (@ (type "text/css")
@@ -162,7 +208,7 @@
                                 ;; events for previous days,
                                 ;; solving duplicates.
                                 (time<=? (date->time-utc date)
-                                        (attr ev 'DTSTART)))
+                                         (attr ev 'DTSTART)))
                               events))))))
 
 (define (days-in-month n)
@@ -259,13 +305,14 @@
           (head
            (title "Calendar")
            (meta (@ (charset "utf-8")))
+           (meta (@ (http-equiv "Content-Type")) "application/xhtml+xml")
            (meta (@ (name viewport)
                     (content "width=device-width, initial-scale=0.5")))
            (meta (@ (name description)
                     (content "Calendar for the dates between " ,(date->string start)
                              " and " ,(date->string end))))
            ,(include-css "static/style.css")
-           (script (@ (src "static/script.js")) "")
+           ;; (script (@ (src "static/script.js")) "")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
                            (map (lambda (c)
                                   (let* ((name (html-attr (attr c 'NAME)))
@@ -315,9 +362,9 @@
                                      (header (h2 "Tidigare"))
                                      ,@(stream->list
                                         (stream-map fmt-single-event
-                                          (stream-take-while (compose (cut time<? <> (date->time-utc start))
-                                                                      (extract 'DTSTART))
-                                            (cdr (stream-car evs))))))
+                                                    (stream-take-while (compose (cut time<? <> (date->time-utc start))
+                                                                                (extract 'DTSTART))
+                                                                       (cdr (stream-car evs))))))
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
 
