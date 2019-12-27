@@ -142,11 +142,11 @@
                   `(span (@ (id ,str) (class "daydate")) ,str))
                (span (@ (class "dayname")) ,(date->string date "~a")))
           (div (@ (class "wholeday"))
-               " " ; To prevent self closing div tag
+               "" ; To prevent self closing div tag
                ,@(map (lambda (e) (vevent->sxml-top date e))
                       long-events))
           (div (@ (class "events"))
-               " " ; To prevent self closing div tag
+               "" ; To prevent self closing div tag
                ,@(map (lambda (time)
                         `(div (@ (class "clock clock-" ,time)) ""))
                       (iota 12 0 2))
@@ -306,7 +306,7 @@
           (head
            (title "Calendar")
            (meta (@ (charset "utf-8")))
-           (meta (@ (http-equiv "Content-Type")) "application/xhtml+xml")
+           (meta (@ (http-equiv "Content-Type") (content "application/xhtml+xml")))
            (meta (@ (name viewport)
                     (content "width=device-width, initial-scale=0.5")))
            (meta (@ (name description)
