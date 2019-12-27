@@ -253,6 +253,7 @@
         (div (@ (class "nav"))
              ,display)))
 
+  (display "<!doctype HTML>\n")
   ((@ (sxml simple) sxml->xml)
    `(html (@ (lang sv))
           (head

@@ -1,3 +1,12 @@
+html {
+	height: 100%;
+}
+
+body {
+	height: 100%;
+	margin: 0;
+}
+
 .root {
 	display: flex;
 	margin: 0;
@@ -205,8 +214,8 @@
 
 .meta .dayname {
 	position: absolute;
-	left: 5;
-	top: 2;
+	left: 5px;
+	top: 2px;
 	color: grey;
 }
 
@@ -227,6 +236,7 @@
 
 .root footer {
 	font-family: monospace;
+	margin: 0.5em;
 }
 
 .root footer span {
