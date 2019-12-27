@@ -174,9 +174,6 @@
 (define (previous-month n)
   (1+ (modulo (- n 2) 12)))
 
-(define (next-month n)
-  (1+ (modulo n 12)))
-
 (define (td param)
   (lambda (d) `(td (@ ,(map (lambda (p)
                          (cons `(quote ,(car p))
