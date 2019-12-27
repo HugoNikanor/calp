@@ -158,9 +158,10 @@
                              (stream-filter
                               (lambda (ev)
                                 ;; If start was an earlier day
-                                ;; This removes all descriptions from events for previous days,
+                                ;; This removes all descriptions from
+                                ;; events for previous days,
                                 ;; solving duplicates.
-                                (time<? (date->time-utc date)
+                                (time<=? (date->time-utc date)
                                         (attr ev 'DTSTART)))
                               events))))))
 
