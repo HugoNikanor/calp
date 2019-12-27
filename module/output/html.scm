@@ -71,11 +71,10 @@
   (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
   (string-filter (lambda (c) (char-set-contains? cs c)) str))
 
-;; Format single event for graphical display
-(define (vevent->sxml day ev)
-  (define time (date->time-utc day))
+(define (create-block-general day ev fmt)
+ (define time (date->time-utc day))
   (define style
-    (format #f "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"
+    (format #f fmt
 
             (* 100 (x-pos ev))          ; left
             (* 100 (width ev))          ; width
@@ -99,40 +98,16 @@
                 ,(when (time<? (add-day time) (attr ev 'DTEND))
                    " continuing"))
               (style ,style))
-           ,((summary-filter) ev (attr ev 'SUMMARY)))))
-
-(define (vevent->sxml-top day ev)
-  (define time (date->time-utc day))
-
-  (define style
-    (format #f "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"
-
-            (* 100 (x-pos ev))          ; left
-            (* 100 (width ev))          ; width
-
-            ;; top
-            (if (in-day? day (attr ev 'DTSTART))
-                (* 100/24
-                   (time->decimal-hour
-                    (time-difference (attr ev 'DTSTART)
-                                     (start-of-day* (attr ev 'DTSTART)))))
-                0)
-
-            ;; height
-            (* 100/24 (time->decimal-hour (event-length/day ev time))))
-)
-
-  ;; No diff
-  `(a (@ (href "#" ,(UID ev))
-         (class "hidelink"))
-      (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
-                ,(when (time<? (attr ev 'DTSTART) time)
-                   " continued")
-                ,(when (time<? (add-day time) (attr ev 'DTEND))
-                   " continuing"))
-              (style ,style))
            ,((summary-filter) ev (attr ev 'SUMMARY))))
+
   )
+
+;; Format single event for graphical display
+(define (create-block day ev)
+  (create-block-general day ev "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"))
+
+(define (create-top-block day ev)
+  (create-block-general day ev "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"))
 
 ;; Lay out complete day (graphical)
 (define (lay-out-day day)
@@ -153,14 +128,14 @@
                (span (@ (class "dayname")) ,(date->string date "~a")))
           (div (@ (class "wholeday"))
                "" ; To prevent self closing div tag
-               ,@(map (lambda (e) (vevent->sxml-top date e))
+               ,@(map (lambda (e) (create-top-block date e))
                       long-events))
           (div (@ (class "events"))
                "" ; To prevent self closing div tag
                ,@(map (lambda (time)
                         `(div (@ (class "clock clock-" ,time)) ""))
                       (iota 12 0 2))
-               ,@(map (lambda (e) (vevent->sxml date e)) short-events)))))
+               ,@(map (lambda (e) (create-block date e)) short-events)))))
 
 (define (time-marker-div)
   `(div (@ (class "sideclock"))
