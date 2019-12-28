@@ -46,8 +46,10 @@ exec guile -e main -s $0 "$@"
   (when stprof
     (statprof-start))
 
-  (primitive-load (format #f "~a/.config/calp/config.scm"
-                          (getenv "HOME")))
+  (let ((config-file (format #f "~a/.config/calp/config.scm"
+                             (getenv "HOME"))))
+    (when (file-exists? config-file)
+     (primitive-load config-file)))
 
   (with-output-to-port
       (open-output-port (option-ref opts 'output "-"))
