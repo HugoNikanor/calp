@@ -69,6 +69,7 @@
    ;; Special cases depending on key.
    ;; Value formatting is handled in @code{value-format}.
    (match-lambda*
+     ;; Handled below
      [('X-HNH-ALTERNATIVES _) 'noop]
 
      [(key vline)
@@ -83,7 +84,9 @@
   (for-each component->ical-string (children component))
   (format #t "END:~a\r\n" (type component))
 
-  )
+  ;; If we have alternatives, splice them in here.
+  (cond [(attr component 'X-HNH-ALTERNATIVES)
+         => (lambda (alts) (map component->ical-string alts))]))
 
 (define (print-header)
   (format #t
