@@ -64,7 +64,11 @@ exec guile -e main -s $0 "$@"
            ((info)       info-main)
            ((ical)       ical-main)
            ((server)   server-main)
-           (else => (lambda (s) (error "Unsupported mode of operation:" s))))
+           (else => (lambda (s)
+                      (format (current-error-port)
+                              "Unsupported mode of operation: ~a~%"
+                              s)
+                      (exit 1))))
          ropt))
       (newline)))
 
