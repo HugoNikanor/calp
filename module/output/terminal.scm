@@ -20,7 +20,6 @@
 
   #:use-module (ice-9 format)
   #:use-module (parameters)
-  #:use-module (config)
 
   #:export (main-loop))
 

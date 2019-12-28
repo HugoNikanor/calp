@@ -28,8 +28,7 @@ exec guile -e main -s $0 "$@"
 
              (statprof)
 
-             (parameters)
-             (config))
+             (parameters))
 
 (define options
   '((mode (value #t) (single-char #\m))
@@ -46,6 +45,9 @@ exec guile -e main -s $0 "$@"
 
   (when stprof
     (statprof-start))
+
+  (primitive-load (format #f "~a/.config/calp/config.scm"
+                          (getenv "HOME")))
 
   (with-output-to-port
       (open-output-port (option-ref opts 'output "-"))

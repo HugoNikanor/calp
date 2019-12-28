@@ -8,7 +8,6 @@
   :use-module (ice-9 getopt-long)
 
   :use-module (parameters)
-  ;; :use-module (config)
   )
 
 

@@ -2,8 +2,6 @@
 ;;; Currently loaded by main, and requires that `calendar-files`
 ;;; is set to a list of files (or directories).
 
-(define-module (config) #:use-module (parameters))
-
 (use-modules (srfi srfi-26)
              (srfi srfi-88)
              (ice-9 regex)

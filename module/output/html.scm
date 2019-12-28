@@ -16,7 +16,7 @@
 
   #:use-module (git)
   #:use-module (parameters)
-  #:use-module (config))
+  )
 
 (define (td param)
   (lambda (d) `(td (@ ,(map (lambda (p)
