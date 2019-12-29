@@ -166,3 +166,16 @@ attribute set to 0. Can also be seen as \"Start of day\""
 
 (define* (date #:key (year 0) (month 0) (day 0) (hour 0) (minute 0) (second 0) (nsecs 0) (zone 0))
   (make-date nsecs second minute hour day month year zone))
+
+
+(define-public (date=? a b)
+
+  (and (= (year a) (year b))
+       (= (month a) (month b))
+       (= (day a) (day b))
+       ;; (= (hour a) (hour b))
+       ;; (= (minute a) (minute b))
+       ;; (= (second a) (second b))
+       )
+  ;; ( (nsecs b) (zone b))
+  )
