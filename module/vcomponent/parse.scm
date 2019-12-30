@@ -44,6 +44,11 @@
   (set-col! ctx 0)
   (set-row! ctx (1+ (get-row ctx))))
 
+(define-macro (with-vline-tz object . body)
+  `(let-env ((TZ (and=> (prop ,object 'TZID) car)))
+            ,@body))
+
+
 
 
 (define (fold-proc ctx c)
@@ -103,7 +108,10 @@
                            ;; component (instead of our virtual one:
                            [(key) (car (children component))]
                            ;; Line wasn't ended before we get here, so our current
-                           ;; component is our "actual" root.
+                           ;; component is our "actual" root. NOTE that this never
+                           ;; actually finalizes the root object, which matters if
+                           ;; if do something with the finalizer below.
+                           ;; At the time of writing we just set the parent.
                            [(value) component]
                            [else
                             => (lambda (a)
@@ -132,14 +140,54 @@
                                 (set! component child))]
 
                              [(eq? (get-line-key ctx) 'END)
-                              (case (type component)                ; HERE
-                                [(VEVENT DAYLIGHT STANDARD) (parse-date! component)])
-                              (set! component (parent component))]
+
+                              ;; Ensure that we have a DTEND
+                              ;; TODO Objects aren't required to have a DTEND, or a DURATION.
+                              ;; write fancier code which acknoledges this.
+                              (when (and (eq? 'VEVENT (type component))
+                                         (not (attr component 'DTEND)))
+                                (set! (attr component 'DTEND)
+                                  (add-duration (attr component 'DTSTART)
+                                                (make-duration 3600))))
+
+                              (set! component (parent component))
+                              ]
 
                              [else
                               ;; TODO repeated keys
-                              (set-vline! component (get-line-key ctx)
-                                          (make-vline str (get-param-table ctx)))
+                              (let ((it (make-vline str (get-param-table ctx))))
+                                ;; Type specific processing
+                                (case (get-line-key ctx)
+                                  [(DTSTART DTEND)
+                                   (with-vline-tz
+                                    it
+                                    ;; TODO many of these are way to low
+                                    (mod! (value it) (compose date->time-utc parse-datetime))
+
+                                    ;; NOTE The old parse-date! had this block.
+                                    ;; is it at all needed?
+                                    #;
+                                    (when (prop (attr* ev 'DTSTART) 'TZID) ;
+                                      ;; Re-align date to have correect timezone. This is since time->date gives ;
+                                      ;; correct, but the code above may (?) fail to update the timezone. ;
+                                      (set! (zone-offset date) (zone-offset (time-utc->date (value dptr))) ;
+                                            (value dptr) (date->time-utc date) ;
+                                        ; ; ; ;
+                                            ;; The standard says that DTEND must have the same ;
+                                            ;; timezone as DTSTART. Here we trust that blindly. ;
+                                            (zone-offset end-date) (zone-offset date) ;
+                                            (value eptr) (date->time-utc end-date))))]
+                                  [(RECURRENCE-ID)
+                                   (with-vline-tz
+                                    it (mod! (value it) (compose date->time-utc parse-datetime)))])
+
+
+                                ;; From RFC 5545 §3.6.1
+                                ;; DTEND and DURATION are mutually exclusive
+                                ;; DTSTART is required to exist while the other two are optional.
+                                ;; None can appear more than once.
+
+                                (set-vline! component (get-line-key ctx) it))
                               (set-param-table! ctx (make-hash-table))])
 
                        (strbuf-reset! strbuf)
@@ -209,43 +257,6 @@ row ~a	column ~a	ctx = ~a
                     (get-line-key ctx) (get-param-key ctx))))))))
 
 
-
-(define (parse-date! ev)
-  (awhen (attr* ev 'RECURRENCE-ID)
-         (let-env ((TZ (and=> (prop it 'TZID) car)))
-                  (set! (value it)
-                    (date->time-utc (parse-datetime (value it))))))
-
-  (let-env ((TZ (and=> (prop (attr* ev 'DTSTART) 'TZID) car)))
-           (let*
-               ((dptr (attr* ev 'DTSTART))
-                (eptr (attr* ev 'DTEND))
-
-                (date (parse-datetime (value dptr)))
-                (end-date
-                 (cond ;; [(attr ev 'DURATION) => (lambda (d) (add-duration ...))]
-                  [(not eptr)
-                   (let ((d (set (date-hour date) = (+ 1))))
-                     (set! (attr ev 'DTEND) d
-                           eptr (attr* ev 'DTEND))
-                     d)]
-                  [(value eptr) => parse-datetime]
-                  [else
-                   (set (date-hour date) = (+ 1))])))
-
-             (set! (value dptr) (date->time-utc date)
-                   (value eptr) (date->time-utc end-date))
-
-             (when (prop (attr* ev 'DTSTART) 'TZID)
-               ;; Re-align date to have correect timezone. This is since time->date gives
-               ;; correct, but the code above may (?) fail to update the timezone.
-               (set! (zone-offset date) (zone-offset (time-utc->date (value dptr)))
-                     (value dptr) (date->time-utc date)
-
-                     ;; The standard says that DTEND must have the same
-                     ;; timezone as DTSTART. Here we trust that blindly.
-                     (zone-offset end-date) (zone-offset date)
-                     (value eptr) (date->time-utc end-date))))))
 
 
 ;; All VTIMEZONE's seem to be in "local" time in relation to
@@ -332,8 +343,6 @@ row ~a	column ~a	ctx = ~a
         comp)]
      [(block-special char-special fifo socket unknown symlink)
       => (lambda (t) (error "Can't parse file of type " t))]))
-
-    ;; (parse-dates! cal)
 
     (unless (attr cal "NAME")
       (set! (attr cal "NAME")
