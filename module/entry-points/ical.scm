@@ -11,7 +11,8 @@
 
 (define opt-spec
   '((from (value #t) (single-char #\F))
-    (to (value #t) (single-char #\T))))
+    (to (value #t) (single-char #\T))
+    (file (value #t) (single-char #\f))))
 
 (define (main args)
   (define opts (getopt-long args opt-spec))
