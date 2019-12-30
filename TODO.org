@@ -1,0 +1,47 @@
+
+* Att göra
+** TODO [#A] ICAL RDATE
+** TODO [#A] Hastighet
+ Om man tar bort upprepande events kan man nästa halvera körtiden.
+
+Tror majoriteten av tiden går åt i parse-steget.
+** Config
+*** TODO [#B] Hantera saknad eller tom konfiguration vid "typ" html.
+
+** Terminal
+*** TODO [#B] Terminal interface on small terminal.
+
+** HTML
+*** TODO [#B] HTML output lista alla kalendrar
+
+Motsvarande =calp info='s output
+
+    #+BEGIN_EXAMPLE
+Found 17 calendars, named:
+ - [ 526] Calendar
+ - [  46] D3.b
+ - [ 479] d_sektionen
+ - [  35] Facebook
+ - [  66] formulastudent
+ - [  28] formulastudent_management
+ - [   0] [NAMELESS]
+ - [  78] lithekod
+ - [ 144] lithekod_styrelse
+ - [  56] STABEN
+ - [   1] TDDB68
+ - [   5] TDDC78
+ - [   5] TDDE04
+ - [  16] TDDI41_TDP031
+ - [   7] test
+ - [   2] TSRT04
+ - [   1] TSTE24
+    #+END_EXAMPLE
+
+
+*** TODO [#B] HTML Månadsvy
+    fullskärm 7x5 dagar.
+
+*** TODO [#B] Överlappande events
+
+  [[./doc/cal-overlap.png]]
+
