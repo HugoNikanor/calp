@@ -112,11 +112,15 @@
 
 (define-macro (define-quick-record name . fields)
   (let ((public-fields  (or (assoc-ref fields #:public)  '()))
-        (private-fields (or (assoc-ref fields #:private) '())))
+        (private-fields (or (assoc-ref fields #:private) '()))
+        (printer (and=> (assoc-ref fields #:printer) car)))
     `(begin
        ,@(%define-quick-record '(@ (srfi srfi-9 gnu) define-immutable-record-type)
                                #f name
                                (append public-fields private-fields))
+       (when ,printer
+         ((@ (srfi srfi-9 gnu) set-record-type-printer!)
+          ,(class-name name) ,printer))
        ,@(map (lambda (field) `(export ,field))
               public-fields))))
 
