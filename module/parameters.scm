@@ -12,7 +12,8 @@
 (define (ensure pred?)
   (lambda (v)
     (unless (pred? v)
-      (error "Bad value to config"))
+      (error (format #f "Value [~s] doesn't satisfy condition ~a"
+               v (or (procedure-name pred?) ""))))
     v))
 
 (define-public calendar-files
