@@ -1,5 +1,8 @@
 
 * Att göra
+** Tester
+*** Object utan DTEND
+*** Object med DURATION istället för DTEND
 ** TODO [#A] ICAL RDATE
 ** TODO [#A] Hastighet
  Om man tar bort upprepande events kan man nästa halvera körtiden.
