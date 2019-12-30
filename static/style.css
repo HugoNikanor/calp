@@ -330,3 +330,10 @@ body {
 .clock-20 { top: calc(100%/24 * 20); }
 .clock-22 { top: calc(100%/24 * 22); }
 .clock-24 { top: calc(100%/24 * 24); }
+
+.current-time {
+    width: calc(100% + 2em);
+    height: 4px;
+    background: blue;
+    left: -1em;
+}

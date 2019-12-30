@@ -3,11 +3,20 @@ function part_to_hour (f) {
     return Math.floor(10 * 24 * f) / 10;
 }
 
+function hour_to_part (hour) {
+    return 100 * (hour / 24)
+}
+
+function time_to_percent (time) {
+    // Decimal time
+    return hour_to_part(time.getHours() + (time.getMinutes() / 60)) + "%"
+}
+
 var start_time = 0
 var start_fraq = 0
 
 var parent
-var createdEvents = false
+var createdEvent = false
 
 function onmousedownhandler (e) {
     last = this
@@ -57,7 +66,41 @@ function onmouseuphandler (e) {
 
 }
 
+function time_to_date (time) {
+    return [ time.getFullYear(),
+             String(time.getMonth() + 1).padStart(2, '0'),
+             String(time.getDate()).padStart(2, '0') ].join("-");
+}
+
+var bar_object = false
+
+function update_current_time_bar () {
+    var now = new Date()
+    var today = document
+        .getElementById(time_to_date(now))
+        .parentElement
+        .parentElement
+
+    var event_area = today.getElementsByClassName("events")[0]
+
+    if (bar_object) {
+        bar_object.parentNode.removeChild(bar_object)
+    } else {
+        bar_object = document.createElement("div")
+        bar_object.className = "event current-time"
+        bar_object.id = "bar"
+    }
+
+    bar_object.style.top = time_to_percent(now)
+    event_area.append(bar_object)
+}
+
 window.onload = function () {
+
+    update_current_time_bar()
+    // once a minute for now, could probably be slowed to every 10 minutes
+    window.setInterval(update_current_time_bar, 1000 * 60)
+
     for (let c of document.getElementsByClassName("events")) {
         c.onmousedown = onmousedownhandler;
         c.onmouseup = onmouseuphandler;
