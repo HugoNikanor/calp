@@ -15,12 +15,13 @@ exec guile -e main -s $0 "$@"
              (util)
              (util io)
 
-             ((entry-points html)     :prefix     html-)
-             ((entry-points terminal) :prefix terminal-)
-             ((entry-points import)   :prefix   import-)
-             ((entry-points text)     :prefix     text-)
-             ((entry-points info)     :prefix     info-)
-             ((entry-points ical)     :prefix     ical-)
+             ((entry-points html)      :prefix      html-)
+             ((entry-points terminal)  :prefix  terminal-)
+             ((entry-points import)    :prefix    import-)
+             ((entry-points text)      :prefix      text-)
+             ((entry-points info)      :prefix      info-)
+             ((entry-points ical)      :prefix      ical-)
+             ((entry-points benchmark) :prefix benchmark-)
 
              ((entry-points server)   :prefix   server-)
 
@@ -64,6 +65,7 @@ exec guile -e main -s $0 "$@"
            ((info)       info-main)
            ((ical)       ical-main)
            ((server)   server-main)
+           ((benchmark) benchmark-main)
            (else => (lambda (s)
                       (format (current-error-port)
                               "Unsupported mode of operation: ~a~%"
