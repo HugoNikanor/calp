@@ -43,18 +43,23 @@
      (format (current-error-port) "Running test ~a~%" fname)
      (test-group
       fname
-      (with-input-from-file (string-append here "/" fname)
+      (with-throw-handler #t
         (lambda ()
-          (let ((modules (read)))
-            (eval-in-sandbox
-             `(begin ,@(read-multiple))
-             #:module (make-sandbox-module
-                       (append modules
-                               '(((srfi srfi-64) test-assert test-equal test-error)
-                                 ((ice-9 ports) call-with-input-string)
-                                 ((guile) make-struct/no-tail)
-                                 )
-                               all-pure-bindings))))))))
+          (with-input-from-file (string-append here "/" fname)
+            (lambda ()
+              (let ((modules (read)))
+                (eval-in-sandbox
+                 `(begin ,@(read-multiple))
+                 #:time-limit 5          ; larger than should be needed
+                 #:module (make-sandbox-module
+                           (append modules
+                                   '(((srfi srfi-64) test-assert test-equal test-error)
+                                     ((ice-9 ports) call-with-input-string)
+                                     ((guile) make-struct/no-tail)
+                                     )
+                                   all-pure-bindings)))))))
+        (lambda args (format (current-error-port)
+                        "Test really crashed: ~a~%" args) ))))
 (test-end "tests")
 
 
