@@ -96,13 +96,13 @@
 (define (%define-quick-record internal-define bang? name fields)
   (let ((symb (gensym)))
     `((,internal-define ,(class-name name)
-             (,(constructor name) ,@fields)
-             ,(pred name)
-             ,@(map (lambda (f) `(,f ,(getter f symb) ,(setter f symb bang?)))
-                    fields))
-            ,@(map (lambda (f) `(define ,f (make-procedure-with-setter
-                                       ,(getter f symb) ,(setter f symb bang?))))
-                   fields))))
+                        (,(constructor name) ,@fields)
+                        ,(pred name)
+                        ,@(map (lambda (f) `(,f ,(getter f symb) ,(setter f symb bang?)))
+                               fields))
+      ,@(map (lambda (f) `(define ,f (make-procedure-with-setter
+                                 ,(getter f symb) ,(setter f symb bang?))))
+             fields))))
 
 ;;; Creates srfi-9 define{-immutable,}-record-type declations.
 ;;; Also creates srfi-17 accessor ((set! (access field) value))
