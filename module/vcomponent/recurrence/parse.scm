@@ -1,14 +1,16 @@
 (define-module (vcomponent recurrence parse)
+  #:duplicates (last)                   ; Replace @var{count}
+
+  #:export (parse-recurrence-rule)
+
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19)           ; Datetime
   #:use-module (srfi srfi-19 util)
   #:use-module (srfi srfi-26)
   #:use-module ((vcomponent datetime) #:select (parse-datetime))
-  #:duplicates (last)                   ; Replace @var{count}
   #:use-module (vcomponent recurrence internal)
   #:use-module (util)
-  #:use-module (ice-9 match)
-  #:export (parse-recurrence-rule))
+  #:use-module (ice-9 match))
 
 
 ;; @example
@@ -76,7 +78,7 @@
           (else o)))))
 
    ;; obj
-   (make-recur-rule 1 'MO)
+   (make-recur-rule (interval 1) (wkst 'MO))
 
    ;; ((key val) ...)
    (map (cut string-split <> #\=)
