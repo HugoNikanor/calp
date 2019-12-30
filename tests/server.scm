@@ -1,6 +1,6 @@
-(use-modules (server macro))
+(((server macro) parse-endpoint-string))
 
-(parse-endpoint-string "/static/:dir/:file")
+(test-assert (parse-endpoint-string "/static/:dir/:file"))
 ;; => "/static/([^/]+)/([^/]+)"
 ;; => (dir file)
 

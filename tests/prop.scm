@@ -1,9 +1,12 @@
-(use-modules (vcomponent)
-             (util))
+(((vcomponent base) prop attr* properties)
+ ((vcomponent parse) parse-calendar)
+ ((util) sort*))
 
-(define v (make-vcomponent
-           (string-append (getenv "TESTPATH")
-                          "/prop.ics")))
+(define v (call-with-input-string
+              "BEGIN:VCOMPONENT
+KEY;A=1;B=2:Some text
+END:VCOMPONENT"
+              parse-calendar))
 
 (test-equal '("1") (prop (attr* v 'KEY) 'A))
 (test-equal '("2") (prop (attr* v 'KEY) 'B))

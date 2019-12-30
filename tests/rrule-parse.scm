@@ -1,16 +1,11 @@
-(use-modules (vcomponent recurrence parse))
+(((vcomponent recurrence parse)
+  parse-recurrence-rule)
+ ((vcomponent recurrence) make-recur-rule))
 
-(define-syntax mkrule
-  (syntax-rules ()
-    ((_ (key val) ...)
-     ((record-constructor (@@ (vcomponent recurrence internal) <recur-rule>)
-                          (quote (key ...)))
-      (quote val) ...))))
-
-(test-equal (mkrule (freq HOURLY) (wkst MO) (interval 1))
+(test-equal (make-recur-rule (freq 'HOURLY) (wkst 'MO) (interval 1))
   (parse-recurrence-rule "FREQ=HOURLY"))
 
-(test-equal (mkrule (freq HOURLY) (count 3) (interval 1) (wkst MO))
+(test-equal (make-recur-rule (freq 'HOURLY) (count 3) (interval 1) (wkst 'MO))
     (parse-recurrence-rule "FREQ=HOURLY;COUNT=3"))
 
 ;;; TODO write tests for these cases
@@ -20,7 +15,7 @@
 ;; => #<<recur-rule> freq: #<<recur-rule> freq: #f until: #f count: #f interval: 1 bysecond: #f byminute: #f byhour: #f byday: #f bymonthday: #f byyearday: #f byweekno: #f bymonth: #f bysetpos: #f wkst: MO> until: #f count: 3 interval: 1 bysecond: #f byminute: #f byhour: #f byday: #f bymonthday: #f byyearday: #f byweekno: #f bymonth: #f bysetpos: #f wkst: MO>
 ;; ERR unfulfilled-constraint [ERR] doesn't fulfill constraint of type [FREQ], ignoring
 
-(parse-recurrence-rule "FREQ=HOURLY;COUNT=err")
+(test-error 'wrong-type-argument (parse-recurrence-rule "FREQ=HOURLY;COUNT=err"))
 ;; => #<<recur-rule> freq: HOURLY until: #f count: #f interval: 1
 ;;    bysecond: #f byminute: #f byhour: #f byday: #f bymonthday: #f
 ;;    byyearday: #f byweekno: #f bymonth: #f bysetpos: #f wkst: MO>

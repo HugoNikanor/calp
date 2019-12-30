@@ -7,15 +7,16 @@
 
 ;;; Code:
 
-(use-modules (terminal termios)
-             ((util) :select (mod!))
-             ((srfi srfi-60)
-              :renamer (lambda (symb)
-                         (case symb
-                           ((bitwise-ior) '||)
-                           ((bitwise-not) '~)
-                           ((bitwise-and) '&)
-                           (else symb)))))
+(((util) mod!)
+ ((vulgar termios)
+  make-termios copy-termios
+  lflag
+  tcgetattr! tcsetattr!
+  ECHO ICANON)
+ ((srfi srfi-60)
+  (bitwise-ior . ||)
+  (bitwise-not . ~)
+  (bitwise-and . &)))
 
 (define-syntax-rule (&= lvalue val)
   (mod! lvalue (lambda (v) (& v val))))
