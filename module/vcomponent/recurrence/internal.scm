@@ -32,7 +32,7 @@
          (display "#<<recur-rule>" port)
          (for field in (record-type-fields <recur-rule>)
               (awhen (get field)
-                     (display " ")
+                     (display " " port)
                      (display field port)
                      (display "=" port)
                      (display

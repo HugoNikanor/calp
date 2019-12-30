@@ -1,7 +1,8 @@
 (((srfi srfi-41) stream-take stream-map)
  ((srfi srfi-1) find)
+ ((srfi srfi-19 util) day-stream)
  ((guile) make-struct/no-tail)
- ((vcomponent base) children extract type)
+ ((vcomponent base) children extract type attr)
  ((vcomponent) parse-calendar)
  ((vcomponent recurrence) generate-recurrence-set))
 
