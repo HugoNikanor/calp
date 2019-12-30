@@ -16,7 +16,7 @@
 ;; Reads all calendar files from disk, generate recurence-sets for all repeating events,
 ;; and returns a list of calendars, and a stream of all events "ready" for display.
 (define* (load-calendars #:key (calendar-files (calendar-files)))
-  (let* ((calendars regular repeating (load-calendars* calendar-files: calendar-files)))
+  (let* ((calendars regular repeating (load-calendars* #:calendar-files calendar-files)))
     (values
      calendars
      (interleave-streams
