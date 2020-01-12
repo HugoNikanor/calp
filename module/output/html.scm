@@ -255,7 +255,7 @@
                                       (prev-month-len (days-in-month (previous-month month)))
                                       (month-start (week-day date)))
                                  (append (map (td '(class "prev") (month- date))
-                                              (iota month-start (- prev-month-len month-start)))
+                                              (iota month-start (1+ (- prev-month-len month-start))))
                                          (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
                                                           ,@(cdr p)))
                                               (map (lambda (d) `((@ (class ,(when (date=? today (set (date-day date) d))
