@@ -208,11 +208,18 @@
                                          (attr ev 'DTSTART)))
                               events))))))
 
-(define (days-in-month n)
-  (cond ((memv n '(1 3 5 7 8 10 12)) 31)
-        ((memv n '(4 6 9 11)) 30)
-        ;; TODO leap years
-        (else 28)))
+(define (days-in-month date)
+  (define rem=0? (compose zero? remainder))
+  (let ((m (date-month date)))
+   (cond ((memv m '(1 3 5 7 8 10 12)) 31)
+         ((memv m '(4 6 9 11)) 30)
+         (else
+          ;; Please don't mention non-gregorian calendars.
+          (let ((y (date-year date)))
+            (if (and (rem=0? y 4)
+                     (or (not (rem=0? y 100))
+                         (rem=0? y 400)))
+                29 28))))))
 
 (define (previous-month n)
   (1+ (modulo (- n 2) 12)))
@@ -251,8 +258,9 @@
             (thead (tr ,@(map (lambda (d) `(td ,d)) '(MÅ TI ON TO FR LÖ SÖ))))
             (tbody ,@(let recur
                          ((lst (let* ((month (date-month date))
-                                      (month-len (days-in-month month))
-                                      (prev-month-len (days-in-month (previous-month month)))
+                                      (month-len (days-in-month date))
+                                      (prev-month-len (days-in-month (month- date) #; (previous-month month)
+                                                       ))
                                       (month-start (week-day date)))
                                  (append (map (td '(class "prev") (month- date))
                                               (iota month-start (1+ (- prev-month-len month-start))))
