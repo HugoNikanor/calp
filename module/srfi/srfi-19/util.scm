@@ -14,6 +14,11 @@
             add-day remove-day
             date))
 
+(set-record-type-printer!
+ (@@ (srfi srfi-19) date)
+ (lambda (r p) (display (date->string r "~Y-~m-~d ~H:~M:~S~z")
+                   p)))
+
 #;
 (define (copy-date date)
   "Returns a copy of the given date structure"
