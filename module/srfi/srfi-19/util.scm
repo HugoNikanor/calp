@@ -169,8 +169,14 @@ attribute set to 0. Can also be seen as \"Start of day\""
 (define-public (parse-freeform-date str)
   (string->date str "~Y-~m-~d"))
 
-(define* (date #:key (year 0) (month 0) (day 0) (hour 0) (minute 0) (second 0) (nsecs 0) (zone 0))
-  (make-date nsecs second minute hour day month year zone))
+
+;; Easier constructor for date objects
+;; Default values set to the begining of time.
+(define* (date #:key
+               (year 1970) (month 1) (day 1)
+               (hour 0) (minute 0) (second 0)
+               (nsecs 0) (tz 0))
+  (make-date nsecs second minute hour day month year tz))
 
 
 (define-public (date=? a b)
