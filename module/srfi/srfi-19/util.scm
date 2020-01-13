@@ -37,11 +37,11 @@
 (define (drop-time date)
   "Returns a copy of date; with the hour, minute, second and nanosecond
 attribute set to 0. Can also be seen as \"Start of day\""
-  (set-fields date
-              ((date-hour) 0)
-              ((date-minute) 0)
-              ((date-second) 0)
-              ((date-nanosecond) 0)))
+  (set-> date
+         (date-hour 0)
+         (date-minute 0)
+         (date-second 0)
+         (date-nanosecond 0)))
 
 
 (define-public (start-of-month date)
