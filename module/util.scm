@@ -12,7 +12,7 @@
                 quote?
                 re-export-modules
                 use-modules*
-                -> set aif awhen
+                -> set set-> aif awhen
                 tree-map let-lazy let-env)
   #:replace (let* set! define-syntax
                   when unless if))
@@ -380,6 +380,12 @@
     [(set (acc obj) = (op rest ...))
      (set-fields
       obj ((acc) (op (acc obj) rest ...)))]))
+
+(define-syntax set->
+  (syntax-rules ()
+    [(_ obj) obj]
+    [(_ obj (func args ...) rest ...)
+     (set-> (set (func obj) args ...) rest ...)]))
 
 
 
