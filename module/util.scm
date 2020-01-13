@@ -389,14 +389,19 @@
 
 
 
-;; TODO multiple values
 (define-syntax let-env
   (syntax-rules ()
-    [(_ ((name value))
+    [(_ ((name value) ...)
         body ...)
-     (let ((sname (symbol->string (quote name))))
-      (let ((ogenv (getenv sname)))
-        (setenv sname value)
-        (let ((return (begin body ...)))
-          (setenv sname ogenv)
-          return)))]))
+
+     (let ((env-pairs
+            (map (lambda (n new-value)
+                   (list n new-value (getenv n)))
+                 (list (symbol->string (quote name)) ...)
+                 (list value ...))))
+       (for-each (lambda (pair) (setenv (car pair) (cadr pair)))
+                 env-pairs)
+       (let ((return (begin body ...)))
+        (for-each (lambda (pair) (setenv (car pair) (caddr pair)))
+                  env-pairs)
+        return))]))
