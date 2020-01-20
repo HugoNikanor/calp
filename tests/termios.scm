@@ -16,21 +16,24 @@
  ((srfi srfi-60)
   (bitwise-ior . ||)
   (bitwise-not . ~)
-  (bitwise-and . &)))
+  (bitwise-and . &))
+ ((guile) open-input-file))
+
+(define tty (open-input-file "/dev/tty"))
 
 (define-syntax-rule (&= lvalue val)
   (mod! lvalue (lambda (v) (& v val))))
 
 (define t (make-termios))
 
-(test-equal 0 (tcgetattr! t))
+(test-equal 0 (tcgetattr! t tty))
 (define ifl (lflag t))
 
 (define copy (copy-termios t))
 
 #!curly-infix { (lflag t) &= (~ (|| ECHO ICANON)) }
 
-(test-equal 0 (tcsetattr! t))
+(test-equal 0 (tcsetattr! t tty))
 (test-equal (& ifl (~ (|| ECHO ICANON)))
   (lflag t))
-(test-equal 0 (tcsetattr! copy))
+(test-equal 0 (tcsetattr! copy tty))
