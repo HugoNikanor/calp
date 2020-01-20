@@ -124,6 +124,10 @@ attribute set to 0. Can also be seen as \"Start of day\""
                         (make-time time-duration 0 7200))))
   (set (date-second next-date) 0))
 
+(define*-public (normalize-date/tz date #:optional (tz "Europe/Stockholm"))
+  (let-env ((TZ tz))
+           (-> date date->time-utc time-utc->date)))
+
 ;; date x (date → date) → stream<date>
 (define (date-increment-stream* start-date transfer-proc)
   (stream-iterate
