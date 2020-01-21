@@ -304,7 +304,7 @@ row ~a	column ~a	ctx = ~a
                 ;; return
                 calendar)
               (make-vcomponent)
-              (map (lambda (fname)
+              ((@ (ice-9 threads) par-map) (lambda (fname)
                      (let ((fullname (/ path fname)))
                        (let ((cal (call-with-input-file fullname
                                     parse-calendar)))

@@ -368,6 +368,8 @@
 
 
 (define-public (html-chunked-main calendars events start)
+  ;; NOTE Something here isn't thread safe.
+  ;; TODO make it thread safe
   (stream-for-each (lambda (pair)
                      (format (current-error-port) "d = ~a~%u = ~a~%" (car pair) (cadr pair))
                      (let ((fname (format #f "./html/~a.html" (date->string (car pair) "~1"))))
