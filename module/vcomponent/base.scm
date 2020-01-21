@@ -28,6 +28,14 @@
   (attributes get-component-attributes))
 (export vcomponent? children type)
 
+((@ (srfi srfi-9 gnu) set-record-type-printer!)
+ <vcomponent>
+ (lambda (c p)
+   (format p "#<<vcomponent> ~a, len(child)=~a, parent=~a>~%"
+           (type c)
+           (length (children c))
+           (and=> (get-component-parent c) type))))
+
 ;; TODO should this also update the parent
 (define-public parent
   (make-procedure-with-setter
