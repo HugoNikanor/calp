@@ -38,17 +38,25 @@
                               (location-width 20))
  (for-each
   (lambda (ev i)
-    (format #t "~a │ ~a~a~a~a │ ~a~a~a~%"
-            (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
-            (if (= i cur-event) "\x1b[7m" "")
-            (color-escape (attr (parent ev) 'COLOR))
-            ;; Summary filter is a hook for the user
-            (trim-to-width ((summary-filter) ev (attr ev 'SUMMARY)) summary-width)
-            STR-RESET
-            (if (attr ev 'LOCATION) "" "\x1b[1;30m")
-            (trim-to-width
-             (or (attr ev 'LOCATION) "INGEN LOKAL") location-width)
-            STR-RESET))
+    (display
+     (string-append
+      (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
+      " │ "
+      (if (= i cur-event) "\x1b[7m" "")
+      (color-escape (attr (parent ev) 'COLOR))
+      ;; Summary filter is a hook for the user
+      (let ((dirty (attr ev 'X-HNH-DIRTY)))
+        (string-append
+         (if dirty "* " "")
+         (trim-to-width ((summary-filter) ev (attr ev 'SUMMARY)) (- summary-width
+                                                                    (if dirty 2 0)))))
+      STR-RESET
+      " │ "
+      (if (attr ev 'LOCATION) "" "\x1b[1;30m")
+      (trim-to-width
+       (or (attr ev 'LOCATION) "INGEN LOKAL") location-width)
+      STR-RESET
+      "\n")))
   events
   (iota (length events))))
 
@@ -126,20 +134,18 @@
                (with-output-to-file fname
                  (lambda () (serialize-vcomponent (list-ref events cur-event))))
                (open-in-editor fname)
-               (with-input-from-file fname
-                 (lambda ()
-                   ;; TODO readinig back this partal vcomponent somehow fails.
-                   ;; TODO Create a "display-in-parent" procedure, which takes a vcomponent
-                   ;;      and displays it within the context of it's parents, N steps up.
-                   ;;         This is different that display on parent since that would also
-                   ;;      display all our siblings, which is not always wanted.
-                   (let ((ev ((@ (vcomponent primitive) %vcomponent-make) fname)))
-                     (serialize-vcomponent ev (current-error-port))
+               (let ((ev (parse-cal-path fname)))
+                 (serialize-vcomponent ev (current-error-port))
 
-                     (add-child! (parent (list-ref events cur-event)) ev)
-                     (format (current-error-port) "Children: ~a~%start: ~a~%" (children ev)
-                             (attr ev 'DTSTART))
-                     (set! event-stream (stream-insert ev-time<? ev event-stream)))))))
+                 ;; TODO remove child
+
+                 (add-child! (parent (list-ref events cur-event)) ev)
+                 (format (current-error-port) "Children: ~a~%start: ~a~%" (children ev)
+                         (attr ev 'DTSTART))
+                 (set! (attr ev 'X-HNH-DIRTY) #t)
+                 (set! event-stream (stream-insert ev-time<? ev event-stream))
+                 (set! grouped-stream (group-stream event-stream))
+                 )))
 
             ((#\g) (set! cur-event 0))
             ((#\G) (set! cur-event (1- (length events)))))

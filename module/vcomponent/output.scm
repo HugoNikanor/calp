@@ -55,7 +55,7 @@ Removes the X-HNH-FILENAME attribute, and sets PRODID to
    (format port "BEGIN:~a~%" (type comp))
 
    (let ((kvs (map (lambda (key) (list key (attr comp key)))
-                   (attributes comp))))
+                   (attribute-keys comp))))
      (for kv in kvs
           (let* (((key value) kv))
             (catch 'wrong-type-arg
