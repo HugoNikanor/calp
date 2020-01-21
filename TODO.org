@@ -10,6 +10,7 @@
 Tror majoriteten av tiden går åt i parse-steget.
 ** Config
 *** TODO [#B] Hantera saknad eller tom konfiguration vid "typ" html.
+*** TODO Bättre felmedelanden vid saknar config
 
 ** Terminal
 *** TODO [#B] Terminal interface on small terminal.
@@ -48,3 +49,5 @@ Found 17 calendars, named:
 
   [[./doc/cal-overlap.png]]
 
+** Text Output
+\r vid text output?

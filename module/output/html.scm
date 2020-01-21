@@ -110,6 +110,7 @@
   (create-block-general day ev "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"))
 
 ;; Lay out complete day (graphical)
+;; (date . (events)) -> sxml
 (define (lay-out-day day)
   (let* (((date . events) day)
          (time (date->time-utc date))
