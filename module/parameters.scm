@@ -22,3 +22,7 @@
 
 (define-public summary-filter
   (make-parameter (lambda (_ a) a) (ensure procedure?)))
+
+;; ev x str -> sxml
+(define-public description-filter
+  (make-parameter (lambda (_ a) a) (ensure procedure?)))

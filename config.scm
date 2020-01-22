@@ -2,10 +2,13 @@
 ;;; Currently loaded by main, and requires that `calendar-files`
 ;;; is set to a list of files (or directories).
 
+(use-modules (vcomponent))
+
 (use-modules (srfi srfi-26)
              (srfi srfi-88)
              (ice-9 regex)
              (ice-9 rdelim)
+             (sxml simple)
              (glob))
 
 (calendar-files (glob "~/.local/var/cal/*"))
@@ -28,3 +31,30 @@
     #f "T[A-Z]{3}[0-9]{2}" str
     'pre (lambda (m) (aref my-courses (string->symbol (match:substring m))))
     'post)))
+
+(define (a link) `(a (@ (href ,link)) ,link))
+
+(define (parse-html str)
+  (xml->sxml (string-append "<div>" str "</div>")
+             default-entity-handler:
+             (lambda (port name)
+               (case name
+                 [(nbsp) " "]
+                 [else (symbol->string name)]))) )
+
+(define (parse-links str)
+  (define regexp (make-regexp "https?://\\S+"))
+  (let recur ((str str))
+    (let ((m (regexp-exec regexp str)))
+      (if (not m)
+          '()
+          (cons* (match:prefix m)
+                 (a (match:substring m))
+                 (recur (match:suffix m)))))))
+
+(description-filter
+ (lambda (ev str)
+   (cond [(member (attr (parent ev) 'NAME) '("d_sektionen" #; "lithekod"
+                                             ))
+          (parse-html str)]
+         [else (parse-links str)])))
