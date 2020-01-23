@@ -13,7 +13,9 @@
                 re-export-modules
                 use-modules*
                 -> set set-> aif awhen
-                tree-map let-lazy let-env)
+                tree-map let-lazy let-env
+                case* define-many
+                )
   #:replace (let* set! define-syntax
                   when unless if))
 
@@ -187,6 +189,13 @@
 
 
 
+;; Like `case', but evals the case parameters
+(define-syntax case*
+  (syntax-rules (else)
+    [(_ invalue ((value ...) body ...) ...)
+     (cond ((memv invalue (list value ...))
+            body ...)
+           ...)]))
 
 ;; Allow set to work on multiple values at once,
 ;; similar to Common Lisp's @var{setf}
@@ -241,6 +250,13 @@
      (begin (mod! args ...)
             (set/r! ffield (fproc ffield))))))
 
+
+(define-syntax define-many
+  (syntax-rules ()
+    [(_) (begin)]
+    [(_ (symbols ...) value rest ...)
+     (begin (define symbols value) ...
+            (define-many rest ...))]))
 
 ;; This function borrowed from web-ics (calendar util)
 (define* (sort* items comperator #:optional (get identity))
@@ -374,7 +390,7 @@
 ;; operator is used.
 (define-syntax set
   (syntax-rules (=)
-    [(set (acc obj)  value)
+    [(set (acc obj) value)
      (set-fields
       obj ((acc) value))]
     [(set (acc obj) = (op rest ...))
