@@ -398,8 +398,10 @@
       obj ((acc) (op (acc obj) rest ...)))]))
 
 (define-syntax set->
-  (syntax-rules ()
+  (syntax-rules (=)
     [(_ obj) obj]
+    [(_ obj (func = (op args ...)) rest ...)
+     (set-> (set (func obj) (op (func obj) args ...)) rest ...)]
     [(_ obj (func args ...) rest ...)
      (set-> (set (func obj) args ...) rest ...)]))
 
