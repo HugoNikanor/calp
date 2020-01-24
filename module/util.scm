@@ -190,6 +190,9 @@
 
 
 
+(define-public (swap f)
+  (lambda args (apply f (reverse args))))
+
 ;; Like `case', but evals the case parameters
 (define-syntax case*
   (syntax-rules (else)
