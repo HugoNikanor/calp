@@ -15,6 +15,7 @@
                 -> set set-> aif awhen
                 tree-map let-lazy let-env
                 case* define-many
+                and=>>
                 )
   #:replace (let* set! define-syntax
                   when unless if))
@@ -404,6 +405,13 @@
      (set-> (set (func obj) (op (func obj) args ...)) rest ...)]
     [(_ obj (func args ...) rest ...)
      (set-> (set (func obj) args ...) rest ...)]))
+
+(define-syntax and=>>
+  (syntax-rules ()
+    [(_ value) value]
+    [(_ value proc rest ...)
+     (and=>> (and=> value proc)
+             rest ...)]))
 
 
 
