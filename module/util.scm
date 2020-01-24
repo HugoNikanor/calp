@@ -258,9 +258,13 @@
 (define-syntax define-many
   (syntax-rules ()
     [(_) (begin)]
+    [(_ def) (begin)]
     [(_ (symbols ...) value rest ...)
      (begin (define symbols value) ...
-            (define-many rest ...))]))
+            (define-many rest ...))]
+    [(_ def (symbols ...) value rest ...)
+     (begin (def symbols value) ...
+            (define-many def rest ...))]))
 
 ;; This function borrowed from web-ics (calendar util)
 (define* (sort* items comperator #:optional (get identity))
@@ -387,7 +391,6 @@
      (-> (func obj args ...) rest ...)]
     [(-> obj func rest ...)
      (-> (func obj) rest ...)]))
-
 
 ;; Non-destructive set, syntax extension from set-fields from (srfi
 ;; srfi-9 gnu). Also doubles as a non-destructive mod!, if the `='
