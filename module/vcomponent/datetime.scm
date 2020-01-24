@@ -1,10 +1,10 @@
 (define-module (vcomponent datetime)
   #:use-module (vcomponent base)
-  #:use-module (srfi srfi-19)
-  #:use-module (srfi srfi-19 util)
+  #:use-module (srfi srfi-19 alt)
+  #:use-module (srfi srfi-19 alt util)
   #:use-module (util)
 
-  #:export (parse-datetime
+  #:export (#;parse-datetime
             event-overlaps?
             overlapping?
             event-contains?
@@ -12,6 +12,7 @@
   )
 
 ;;; date time pointer
+#;
 (define (parse-datetime dtime)
   "Parse the given date[time] string into a date object."
   (string->date
@@ -33,30 +34,26 @@ Event must have the DTSTART and DTEND attribute set."
                       (attr event-b 'DTSTART)
                       (attr event-b 'DTEND)))
 
-(define (event-contains? ev time)
+(define (event-contains? ev datetime)
   "Does event overlap the date that contains time."
-  (let* ((date (time-utc->date time))
-         (start (date->time-utc (drop-time date)))
+  (let* ((start (get-date datetime))
          (end (add-day start)))
     (event-overlaps? ev start end)))
 
-(define (ev-time<? a b)
-  (time<? (attr a 'DTSTART)
-          (attr b 'DTSTART)))
+(define-public (ev-time<? a b)
+  (date/-time<? (attr a 'DTSTART)
+                (attr b 'DTSTART)))
 
 ;; Returns length of the event @var{e}, as a time-duration object.
 (define-public (event-length e)
-  (time-difference
+  (time-
    (attr e 'DTEND)
    (attr e 'DTSTART)))
 
 ;; Returns the length of the part of @var{e} which is within the day
 ;; starting at the time @var{start-of-day}.
 (define-public (event-length/day e start-of-day)
-  (time-difference
+  (time-
    (time-min (add-day start-of-day) (attr e 'DTEND))
    (time-max start-of-day (attr e 'DTSTART))))
 
-(define-public (ev-time<? a b)
-  (time<? (attr a 'DTSTART)
-          (attr b 'DTSTART)))

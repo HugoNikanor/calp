@@ -4,10 +4,9 @@
   #:export (parse-recurrence-rule)
 
   #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-19)           ; Datetime
-  #:use-module (srfi srfi-19 util)
+  #:use-module (srfi srfi-19 alt)           ; Datetime
+  #:use-module (srfi srfi-19 alt util)
   #:use-module (srfi srfi-26)
-  #:use-module ((vcomponent datetime) #:select (parse-datetime))
   #:use-module (vcomponent recurrence internal)
   #:use-module (util)
   #:use-module (ice-9 match))
@@ -50,7 +49,7 @@
      (let* (((key val) kv))
        (let-lazy
         ((symb (string->symbol val))
-         (date (date->time-utc (parse-datetime val)))
+         (date (parse-datetime val))
          (days (map parse-day-spec (string-split val #\,)))
          (num  (string->number val))
          (nums (map string->number (string-split val #\,))))

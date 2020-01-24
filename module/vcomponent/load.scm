@@ -2,7 +2,7 @@
   :export (load-calendars load-calendars*)
   :use-module (util)
   :use-module (srfi srfi-1)
-  :use-module (srfi srfi-19)
+  :use-module (srfi srfi-19 alt)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (parameters)
@@ -43,5 +43,5 @@
     ;; collection if sorted, but for the time beieng it's much
     ;; easier to always sort it.
     (values calendars
-            (sort*! regular   time<? (extract 'DTSTART))
-            (sort*! repeating time<? (extract 'DTSTART)))))
+            (sort*! regular   date/-time<? (extract 'DTSTART))
+            (sort*! repeating date/-time<? (extract 'DTSTART)))))

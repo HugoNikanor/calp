@@ -5,8 +5,8 @@
   :use-module ((vcomponent) :select (load-calendars*))
   :use-module ((parameters) :select (calendar-files))
   :use-module (ice-9 getopt-long)
-  :use-module (srfi srfi-19)
-  :use-module (srfi srfi-19 util)
+  :use-module (srfi srfi-19 alt)
+  :use-module (srfi srfi-19 alt util)
   )
 
 (define opt-spec
@@ -20,7 +20,9 @@
   (define start (cond [(option-ref opts 'from #f) => parse-freeform-date]
                       [else (start-of-month (current-date))]))
   (define end   (cond [(option-ref opts 'to  #f) => parse-freeform-date]
-                      [else (normalize-date* (set (date-month start) = (+ 1)))]))
+                      ;; [else (normalize-date* (set (month start) = (+ 1)))]
+                      [(date+ start (date month: 1))]
+                      ))
 
   ;; TODO this contains repeated events multiple times
   (define-values (calendars regular repeating)

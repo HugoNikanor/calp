@@ -3,9 +3,10 @@
   :use-module (rnrs bytevectors)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
-  :use-module (srfi srfi-19)
-  :use-module (srfi srfi-19 setters)
-  :use-module (srfi srfi-19 util)
+  :use-module (srfi srfi-19 alt)
+  ;; :use-module (srfi srfi-19 setters)
+  :use-module (srfi srfi-19 alt util)
+  :use-module (srfi srfi-26)
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module ((ice-9 textual-ports) :select (unget-char))
   :use-module ((ice-9 ftw) :select (scandir ftw))
@@ -14,6 +15,7 @@
   :use-module (util strbuf)
   :use-module (vcomponent base)
   :use-module (vcomponent datetime)
+  :use-module (srfi srfi-19 alt util)
   )
 
 (use-modules ((rnrs base) #:select (assert)))
@@ -147,25 +149,27 @@
                               (when (and (eq? 'VEVENT (type component))
                                          (not (attr component 'DTEND)))
                                 (set! (attr component 'DTEND)
-                                  (add-duration (attr component 'DTSTART)
-                                                (make-duration 3600))))
+                                  (let ((start (attr component 'DTSTART)))
+                                   (if (date? start)
+                                       (date+ start (date day: 1))
+                                       (datetime+ start (datetime time: (time hour: 1)))))))
 
-                              (set! component (parent component))
-                              ]
+                              (set! component (parent component))]
 
                              [else
                               ;; TODO repeated keys
                               (let ((it (make-vline str (get-param-table ctx))))
                                 ;; Type specific processing
                                 (case (get-line-key ctx)
-                                  [(DTSTART DTEND)
-                                   (with-vline-tz
-                                    it
-                                    ;; TODO many of these are way to low
-                                    (mod! (value it) (compose date->time-utc parse-datetime)))]
-                                  [(RECURRENCE-ID)
-                                   (with-vline-tz
-                                    it (mod! (value it) (compose date->time-utc parse-datetime)))])
+                                  [(DTSTART DTEND RECURRENCE-ID)
+
+                                   (let ((v (prop it 'VALUE)))
+                                     (mod! (value it)
+                                           (if (or (and=>> v car (cut string=? <> "DATE-TIME"))
+                                                   (string-contains (value it) "T"))
+                                               parse-datetime parse-date)))]
+
+                                  )
 
 
                                 ;; From RFC 5545 §3.6.1
@@ -298,7 +302,7 @@ row ~a	column ~a	ctx = ~a
 
                      (set! (attr head 'X-HNH-ALTERNATIVES)
                        (sort*! rest ;; HERE
-                               time<? (extract 'RECURRENCE-ID)))
+                               date/-time< (extract 'RECURRENCE-ID)))
                      (add-child! calendar head))])
 
                 ;; return

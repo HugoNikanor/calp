@@ -2,8 +2,8 @@
   #:use-module (output general)
   #:use-module (output text)
   #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-19)
-  #:use-module (srfi srfi-19 util)
+  #:use-module (srfi srfi-19 alt)
+  #:use-module (srfi srfi-19 alt util)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
@@ -63,7 +63,7 @@
 (define (displayln a)
   (display a) (newline))
 
-(define (main-loop time event-stream)
+(define (main-loop date event-stream)
   (define cur-event 0)
 
   (define-values (height width) (get-terminal-size))
@@ -74,14 +74,14 @@
     ;; TODO reusing the same grouping causes it to lose events.
     ;; I currently have no idea why, but it's BAD.
     (let ((groups (get-groups-between grouped-stream
-                                      (time-utc->date time) (time-utc->date time))))
+                                      date date)))
       (format (current-error-port) "len(groups) = ~a~%" (stream-length groups))
       (let ((events
              (if (stream-null? groups)
                  '() (group->event-list (stream-car groups)))))
 
         (cls)
-        (display-calendar-header! (time-utc->date time))
+        (display-calendar-header! date)
 
         (let* ((date-width 20)
                (location-width 15)
@@ -103,8 +103,16 @@
                     (attr ev 'SUMMARY)
                     (or (and=> (attr ev 'LOCATION)
                                (cut string-append "\x1b[1mPlats:\x1b[m " <> "\n")) "")
-                    (time->string (attr ev 'DTSTART) "~1 ~3")
-                    (time->string (attr ev 'DTEND) "~1 ~3")
+                    (let ((start (attr ev 'DTSTART)))
+                      (if (datetime? start)
+                          (string-append (date->string (date start))
+                                         (time->string (time start)))
+                          (date->string (date start))))
+                    (let ((end (attr ev 'DTEND)))
+                      (if (datetime? start)
+                          (string-append (date->string (date end))
+                                         (time->string (time end)))
+                          (date->string (date end))))
                     (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
                                                  #:width (min 70 width))
                                       (- height 8 5 (length events) 5))))))
@@ -114,13 +122,13 @@
           ;;         "c = ~c (~d)~%" char (char->integer char))
           (case char
             ((#\L #\l)
-             (set! time (add-day time)
+             (set! time (add-day date)
                    cur-event 0))
             ((#\h #\H)
-             (set! time (remove-day time)
+             (set! time (remove-day date)
                    cur-event 0))
             ((#\t)
-             (set! time (date->time-utc (drop-time (current-date)))
+             (set! time (current-date)
                    cur-event 0))
             ((#\j #\J) (unless (= cur-event (1- (length events)))
                          (mod! cur-event 1+)))
@@ -128,7 +136,8 @@
                          (mod! cur-event 1-)))
             ((#\p) (print-vcomponent (list-ref events cur-event)
                                      (current-error-port)))
-            ((#\E) (serialize-vcomponent (list-ref events cur-event) (open-output-file "/tmp/event.ics")))
+            ((#\E) (serialize-vcomponent (list-ref events cur-event)
+                                         (open-output-file "/tmp/event.ics")))
             ((#\e)
              (let ((fname (tmpnam)))
                (with-output-to-file fname

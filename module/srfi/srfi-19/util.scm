@@ -73,34 +73,6 @@ attribute set to 0. Can also be seen as \"Start of day\""
 (define (remove-day time)
   (add-duration time (make-duration (- (* 60 60 24)))))
 
-;; @verbatim
-;;    A          B          C          D          E         ¬F
-;; |s1|     :     |s2| : |s1|     :     |s2| :          : |s1|
-;; |  |     :     |  | : |  ||s2| : |s1||  | : |s1||s2| : |  |
-;; |  ||s2| : |s1||  | : |  ||  | : |  ||  | : |  ||  | :
-;;     |  | : |  |     : |  ||  | : |  ||  | : |  ||  | :     |s2|
-;;     |  | : |  |     : |  |     :     |  | :          :     |  |
-;; @end verbatim
-;; 
-;; E is covered by both case A and B.
-(define-public (timespan-overlaps? s1-begin s1-end s2-begin s2-end)
-  "Return whetever or not two timespans overlap."
-  (or
-   ;; A
-   (and (time<? s2-begin s1-end)
-        (time<? s1-begin s2-end))
-
-   ;; B
-   (and (time<? s1-begin s2-end)
-        (time<? s2-begin s1-end))
-
-   ;; C
-   (and (time<? s1-begin s2-begin)
-        (time<? s2-end s1-end))
-
-   ;; D
-   (and (time<? s2-begin s1-begin)
-        (time<? s1-end s2-end))))
 
 (define-public (normalize-date date)
   (time-utc->date (date->time-utc date)

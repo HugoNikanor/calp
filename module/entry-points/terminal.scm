@@ -3,8 +3,8 @@
   :use-module (output terminal)
   :use-module (vcomponent)
   :use-module (ice-9 getopt-long)
-  :use-module (srfi srfi-19)
-  :use-module (srfi srfi-19 util)
+  :use-module (srfi srfi-19 alt)
+  :use-module (srfi srfi-19 alt util)
   :use-module (parameters)
   :use-module (vulgar)
   )
@@ -20,9 +20,8 @@
      calendar-files: (cond [(option-ref opts 'file #f) => list]
                            [else (calendar-files)]) ))
 
-  (let ((time (date->time-utc
-               (drop-time (or (and=> (option-ref opts 'date #f) parse-freeform-date)
-                              (current-date))))))
+  (let ((time (drop-time (or (and=> (option-ref opts 'date #f) parse-freeform-date)
+                             (current-date)))))
     ;; (format (current-error-port) "len(events) = ~a~%" (stream-length events))
     (with-vulgar
      (lambda () (main-loop time events))))
