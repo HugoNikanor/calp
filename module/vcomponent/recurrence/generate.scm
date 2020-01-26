@@ -1,8 +1,8 @@
 (define-module (vcomponent recurrence generate)
   #:use-module ((srfi srfi-1) :select (find))
-  #:use-module (srfi srfi-19)           ; Datetime
-  #:use-module (srfi srfi-19 util)
-  #:use-module (srfi srfi-19 setters)
+  #:use-module (srfi srfi-19 alt)           ; Datetime
+  #:use-module (srfi srfi-19 alt util)
+  ;; #:use-module (srfi srfi-19 setters)
   #:use-module (srfi srfi-26)           ; Cut
   #:use-module (srfi srfi-41)           ; Streams
   #:use-module (ice-9 match)
@@ -48,25 +48,40 @@
   (let ((e (copy-vcomponent ev)))
     (let-env ((TZ (and=> (prop (attr* e 'DTSTART) 'TZID) car)))
 
-             (let ((d (time-utc->date (attr e 'DTSTART)))
+             (let ((d (attr e 'DTSTART))
                    (i (interval r)))
-               (case (freq r)
-                 ((SECONDLY) (mod! (second d) = (+ i)))
-                 ((MINUTELY) (mod! (minute d) = (+ i)))
-                 ((HOURLY)   (mod! (hour   d) = (+ i)))
-                 ((DAILY)    (mod! (day    d) = (+ i)))
-                 ((WEEKLY)   (mod! (day    d) = (+ (* i 7))))
-                 ((MONTHLY)  (mod! (month  d) = (+ i)))
-                 ((YEARLY)   (mod! (year   d) = (+ i))))
 
+               (set! (attr e 'DTSTART)
+                     ((if (date? d)
+                          identity
+                          (lambda (date)
+                            (datetime
+                             date
+                             (time+ (get-time d)
+                                    (case (freq r)
+                                      ((SECONDLY) (time second: i))
+                                      ((MINUTELY) (time minute: i))
+                                      ((HOURLY)   (time hour:   i))
+                                      (else (time)))))))
+
+                      (date+ (as-date d)
+                             (case (freq r)
+                               ((DAILY)    (date day:    i))
+                               ((WEEKLY)   (date day: (* i 7)))
+                               ((MONTHLY)  (date month:  i))
+                               ((YEARLY)   (date year:   i))
+                               (else (date))))))
+
+               #;
                (set! (zone-offset d)
                  (zone-offset (time-utc->date (date->time-utc d))))
+)
 
-               (set! (attr e 'DTSTART) (date->time-utc d)))
-
-             (when (attr e 'DTEND)
-               (set! (attr e 'DTEND)
-                 (add-duration (attr e 'DTSTART) (attr e 'X-HNH-DURATION)))))
+             (cond
+              [(attr e 'DTEND) date?
+               => (lambda (d) (date+ d (attr e 'X-HNH-DURATION)))]
+              [(attr e 'DTEND) datetime?
+               => (lambda (d) (datetime+ d (attr e 'X-HNH-DURATION)))]))
 
     e))
 
@@ -95,7 +110,10 @@
                      ;; A recurrence id matching the expected time means that
                      ;; we have an actuall alternative/exception, use that
                      ;; instead of the regular event.
-                     (find (lambda (alt) (time=? expected-start (attr alt 'RECURRENCE-ID)))
+                     ;; RFC 5545 3.8.4.4
+                     (find (lambda (alt) ((if (datetime? expected-start)
+                                         datetime= date=)
+                                     expected-start (attr alt 'RECURRENCE-ID)))
                            alternatives)))
             ;; If we did't have an exception just return the regular event.
             e))))
@@ -129,9 +147,13 @@
       (begin
         (set! (attr event 'X-HNH-DURATION)
           (cond [(attr event 'DURATION) => identity]
-                [(attr event 'DTEND) => (lambda (end)
-                                          (time-difference
-                                           end (attr event "DTSTART")))]))
+                [(attr event 'DTEND)
+                 => (lambda (end)
+                      ;; The value type of dtstart and dtend must be the same
+                      ;; according to RFC 5545 3.8.2.2 (Date-Time End).
+                      (if (date? end)
+                          (date- end (attr event 'DTSTART))
+                          (datetime- end (attr event 'DTSTART))))]))
         (if (attr event "RRULE")
             (recur-event-stream event (parse-recurrence-rule (attr event "RRULE")))
             ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather
