@@ -27,6 +27,11 @@
   (dec december  ) 12
   )
 
+
+;;; RECORD TYPES
+
+;;; DATE
+
 (define-immutable-record-type <date>
   (make-date year month day)
   date?
@@ -44,6 +49,8 @@
 
 (define*-public (date key: (year 0) (month 0) (day 0))
   (make-date year month day))
+
+;;; TIME
 
 (define-immutable-record-type <time>
   (make-time hour minute second utc)
@@ -70,7 +77,28 @@
 (define*-public (time key: (hour 0) (minute 0) (second 0) (utc #f))
   (make-time hour minute second utc))
 
+;;; DATETIME
+
+(define-immutable-record-type <datetime>
+  (make-datetime date time tz)
+  datetime?
+  (date get-date set-date!)
+  (time get-time set-time!)
+  (tz get-tz set-tz!))
+
+(export get-date get-time get-tz)
+
+(define*-public (datetime
+                key: date time
+                (year 0) (month 0) (day 0)
+                (hour 0) (minute 0) (second 0)
+                (tz #f))
+  (make-datetime (or date (make-date year month day))
+                 (or time (make-time hour minute second #f))
+                 tz))
+
 
+;;; UTIL
 
 ;; int -> bool
 (define-public (leap-year? year)
@@ -91,6 +119,9 @@
   (if (leap-year? (year date))
       366 365))
 
+
+;;; EQUIALENCE
+
 ;; 2020-01-10 + 0-0-30 = 2020-02-09
 ;; 10 + 30 = 40                            ; day + day
 ;; 40 > 31                                 ; target days > days in month
@@ -102,8 +133,68 @@
        (= (month a) (month b))
        (= (day a) (day b))))
 
-(define-public date=? date=)
+(define-public (time= a b)
+  (and (= (hour a) (hour b))
+       (= (minute a) (minute b))
+       (= (second a) (second b))))
 
+(define-public (datetime= a b)
+  (and (date= (get-date a) (get-date b))
+       (time= (get-time a) (get-time b))))
+
+(define-many define-public
+  (date=?) date=
+  (time=?) time=
+  (datetime=?) datetime=)
+
+(define-public (date< a b)
+  (let ((ay (year a))
+        (by (year b)))
+    (if (= ay ay)
+        (let ((am (month a))
+              (bm (month b)))
+          (if (= am bm)
+              (< (day a) (day b))
+              (< am bm)))
+        (< ay by))))
+
+
+(define-public (time< a b)
+  (let ((ah (hour a))
+        (bh (hour b)))
+    (if (= ah ah)
+        (let ((am (minute a))
+              (bm (minute b)))
+          (if (= am bm)
+              (< (second a) (second b))
+              (< am bm)))
+        (< ah bh))))
+
+
+(define-public (datetime< a b)
+  (if (date= (get-date a) (get-date b))
+      (time< (get-time a) (get-time b))
+      (date< (get-date a) (get-date b))))
+
+
+(define-many define-public
+  (date<?) date<
+  (date> date>?) (swap date<)
+
+  (time<?) time<
+  (time> time>?) (swap time<)
+
+  (time<= time<=?) (negate time>)
+  (time>= time>=?) (negate time<)
+
+  (datetime<?) datetime<
+  (datetime> datetime>?) (swap datetime<))
+
+
+
+;;; OPERATIONS
+
+;; Base and change inverted to better work with fold in the exported date+
 (define (date+% change base)
 
   ;; while (day base) > (days-in-month base)
@@ -160,37 +251,7 @@
 (define-public (date- base . rest)
   (fold date-% base rest))
 
-(define (time-% base change)
-
-  (define-values (second-fixed change*)
-    (let loop ((target base) (change change))
-      (if (> (second change) (second target))
-          (loop (set-> target
-                       (minute = (- 1))
-                       (second 60))
-                (set (second change) = (- (second target))))
-          (values (set (second target) = (- (second change)))
-                  (set (second change) 0)))))
-
-  (define-values (minute-fixed change**)
-    (let loop ((target second-fixed) (change change*))
-      (if (> (minute change) (minute target))
-          (loop (set-> target
-                       (hour = (- 1))
-                       (minute 60))
-                (set (minute change) = (- (minute target))))
-          (values (set (minute target) = (- (minute change)))
-                  (set (minute change) 0)))))
-
-
-  (if (>= (hour minute-fixed) (hour change))
-      (values (set (hour minute-fixed) = (- (hour change)))
-              0)
-      (values (set (hour minute-fixed) 0)
-              (- (hour change) (hour minute-fixed)))))
-
-(define-public (time- base . rest)
-  (fold time-% base rest))
+;;; time
 
 ;; time x time → time x int
 (define-public (time+% base change)
@@ -225,6 +286,7 @@
         (values (set (hour hour-almost-fixed) remainder) div))
       (values hour-almost-fixed 0)))
 
+;;; PLUS
 (define-public (time+ base . rest)
   (let ((sum 0))
     (let ((time (fold (lambda (next done)
@@ -234,24 +296,46 @@
                       base rest)))
       (values time sum))))
 
-(define-immutable-record-type <datetime>
-  (make-datetime date time tz)
-  datetime?
-  (date get-date set-date!)
-  (time get-time set-time!)
-  (tz get-tz set-tz!))
+(define (time-% base change)
 
-(export get-date get-time get-tz)
+  (define-values (second-fixed change*)
+    (let loop ((target base) (change change))
+      (if (> (second change) (second target))
+          (loop (set-> target
+                       (minute = (- 1))
+                       (second 60))
+                (set (second change) = (- (second target))))
+          (values (set (second target) = (- (second change)))
+                  (set (second change) 0)))))
 
-(define*-public (datetime
-                key: date time
-                (year 0) (month 0) (day 0)
-                (hour 0) (minute 0) (second 0)
-                (tz #f))
-  (make-datetime (or date (make-date year month day))
-                 (or time (make-time hour minute second #f))
-                 tz))
+  (define-values (minute-fixed change**)
+    (let loop ((target second-fixed) (change change*))
+      (if (> (minute change) (minute target))
+          (loop (set-> target
+                       (hour = (- 1))
+                       (minute 60))
+                (set (minute change) = (- (minute target))))
+          (values (set (minute target) = (- (minute change)))
+                  (set (minute change) 0)))))
 
+
+  (if (>= (hour minute-fixed) (hour change))
+      (values (set (hour minute-fixed) = (- (hour change)))
+              0)
+      (values (set (hour minute-fixed) 0)
+              (- (hour change) (hour minute-fixed)))))
+
+(define-public (time- base . rest)
+  (let ((sum 0))
+    (let ((time (fold (lambda (next done)
+                        (let* ((next-time rem (time-% done next)))
+                          (mod! sum = (+ rem))
+                          next-time))
+                      base rest)))
+      (values time sum))))
+
+
+;;; DATETIME
 
 (define-public (datetime+ base change)
   (let* ((time overflow (time+ (get-time base) (get-time change))))
@@ -267,62 +351,9 @@
                            (date day: overflow))
               time: time)))
 
-(define-public (time= a b)
-  (and (= (hour a) (hour b))
-       (= (minute a) (minute b))
-       (= (second a) (second b))))
-
-(define-public (datetime= a b)
-  (and (date= (get-date a) (get-date b))
-       (time= (get-time a) (get-time b))))
 
 
-
-
-(define-public (date< a b)
-  (let ((ay (year a))
-        (by (year b)))
-    (if (= ay ay)
-        (let ((am (month a))
-              (bm (month b)))
-          (if (= am bm)
-              (< (day a) (day b))
-              (< am bm)))
-        (< ay by))))
-
-
-(define-public (time< a b)
-  (let ((ah (hour a))
-        (bh (hour b)))
-    (if (= ah ah)
-        (let ((am (minute a))
-              (bm (minute b)))
-          (if (= am bm)
-              (< (second a) (second b))
-              (< am bm)))
-        (< ah bh))))
-
-
-(define-public (datetime< a b)
-  (if (date= (get-date a) (get-date b))
-      (time< (get-time a) (get-time b))
-      (date< (get-date a) (get-date b))))
-
-
-(define-many define-public
-  (date<?) date<
-  (date> date>?) (swap date<)
-
-  (time<?) time<
-  (time> time>?) (swap time<)
-
-  (time<= time<=?) (negate time>)
-  (time>= time>=?) (negate time<)
-
-  (datetime<?) datetime<
-  (datetime> datetime>?) (swap datetime<))
-
-
+;;; Parsers for vcomponent usage
 
 ;; substring to number, local here
 (define (s->n str from to)
