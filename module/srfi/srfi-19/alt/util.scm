@@ -19,12 +19,12 @@
   (stream-iterate (cut date+ <> #0-0-1)
                   start-day))
 
-(define (as-date date/-time)
+(define-public (as-date date/-time)
   (if (date? date/-time)
       date/-time
       (get-date date/-time)))
 
-(define (as-time date/-time)
+(define-public (as-time date/-time)
   (if (datetime? date/-time)
       (get-time date/-time)
       #00:00:00))
