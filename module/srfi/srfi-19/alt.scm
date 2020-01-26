@@ -35,8 +35,12 @@
 (set-record-type-printer!
  <date>
  (lambda (r p)
-   (format p "~4'0d­~2'0d­~2'0d"
-           (year r) (month r) (day r))))
+   (if (or (not (integer? (year r)))
+           (not (integer? (month r)))
+           (not (integer? (day r))))
+       (format p "BAD~s-~s-~s" (year r) (month r) (day r))
+       (format p "~4'0d-~2'0d-~2'0d"
+               (year r) (month r) (day r)))))
 
 (define*-public (date key: (year 0) (month 0) (day 0))
   (make-date year month day))
