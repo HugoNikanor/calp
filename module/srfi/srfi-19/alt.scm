@@ -45,6 +45,32 @@
 (define*-public (date key: (year 0) (month 0) (day 0))
   (make-date year month day))
 
+(define-immutable-record-type <time>
+  (make-time hour minute second utc)
+  time?
+  (hour hour) (minute minute) (second second)
+  (utc utc)                             ; bool
+  )
+
+(set-record-type-printer!
+ <time>
+ (lambda (r p)
+   (if (or (not (integer? (hour r)))
+           (not (integer? (minute r)))
+           (not (integer? (second r))))
+       (format p "BAD~s:~s:~s"
+               (hour r) (minute r) (second r))
+       (format p "~2'0d:~2'0d:~2'0d~a"
+               (hour r) (minute r) (second r)
+               (if (utc r) "Z" "")))))
+
+(define-public (time->string time _)
+  (with-output-to-string (lambda () (display time))))
+
+(define*-public (time key: (hour 0) (minute 0) (second 0) (utc #f))
+  (make-time hour minute second utc))
+
+
 
 ;; int -> bool
 (define-public (leap-year? year)
@@ -78,7 +104,7 @@
 
 (define-public date=? date=)
 
-(define (date+% base change)
+(define (date+% change base)
 
   ;; while (day base) > (days-in-month base)
   ;;     month++; days -= (days-in-month base)
@@ -105,7 +131,7 @@
 (define-public (date+ base . rest)
   (fold date+% base rest))
 
-(define-public (date- base change)
+(define (date-% change base)
 
   (define-values (days-fixed change*)
     (let loop ((target base) (change change))
@@ -131,7 +157,10 @@
 
   (set (year month-fixed) = (- (year change))))
 
-(define-public (time- base change)
+(define-public (date- base . rest)
+  (fold date-% base rest))
+
+(define (time-% base change)
 
   (define-values (second-fixed change*)
     (let loop ((target base) (change change))
@@ -153,33 +182,17 @@
           (values (set (minute target) = (- (minute change)))
                   (set (minute change) 0)))))
 
-  ;; change** should here should have both month and date = 0
 
-  (set (hour month-fixed) = (- (hour change)))
-  )
+  (if (>= (hour minute-fixed) (hour change))
+      (values (set (hour minute-fixed) = (- (hour change)))
+              0)
+      (values (set (hour minute-fixed) 0)
+              (- (hour change) (hour minute-fixed)))))
 
-
+(define-public (time- base . rest)
+  (fold time-% base rest))
 
-(define-immutable-record-type <time>
-  (make-time hour minute second utc)
-  time?
-  (hour hour) (minute minute) (second second)
-  (utc utc)                             ; bool
-  )
-
-(set-record-type-printer!
- <time>
- (lambda (r p)
-   (format p "~2'0d:~2'0d:~2'0d~a"
-           (hour r) (minute r) (second r)
-           (if (utc r) "Z" ""))))
-
-(define-public (time->string time _)
-  (with-output-to-string (lambda () (display time))))
-
-(define*-public (time key: (hour 0) (minute 0) (second 0) (utc #f))
-  (make-time hour minute second utc))
-
+;; time x time → time x int
 (define-public (time+% base change)
 
   ;; while (day base) > (days-in-month base)
@@ -213,7 +226,13 @@
       (values hour-almost-fixed 0)))
 
 (define-public (time+ base . rest)
-  (fold time+% base rest))
+  (let ((sum 0))
+    (let ((time (fold (lambda (next done)
+                        (let* ((next-time rem (time+% done next)))
+                          (mod! sum = (+ rem))
+                          next-time))
+                      base rest)))
+      (values time sum))))
 
 (define-immutable-record-type <datetime>
   (make-datetime date time tz)
@@ -224,26 +243,39 @@
 
 (export get-date get-time get-tz)
 
-(define*-public (make-datetime*
-                 key:
-                 (year 0) (month 0) (day 0)
-                 (hour 0) (minute 0) (second 0)
-                 (tz #f))
-  (make-datetime (make-date year month day)
-                 (make-time hour minute second #f)
+(define*-public (datetime
+                key: date time
+                (year 0) (month 0) (day 0)
+                (hour 0) (minute 0) (second 0)
+                (tz #f))
+  (make-datetime (or date (make-date year month day))
+                 (or time (make-time hour minute second #f))
                  tz))
 
-(define-public datetime
-  (match-lambda*
-    [(date time) (make-datetime date time #f)]
-    [(date time tz) (make-datetime date time #f)]
-    [args (apply make-datetime* args)]))
 
 (define-public (datetime+ base change)
   (let* ((time overflow (time+ (get-time base) (get-time change))))
-    (date+ (get-date base)
-           (get-date change)
-           (date day: overflow))))
+    (datetime date: (date+ (get-date base)
+                           (get-date change)
+                           (date day: overflow))
+              time: time)))
+
+(define-public (datetime- base change)
+  (let* ((time overflow (time- (get-time base) (get-time change))))
+    (datetime date: (date- (get-date base)
+                           (get-date change)
+                           (date day: overflow))
+              time: time)))
+
+(define-public (time= a b)
+  (and (= (hour a) (hour b))
+       (= (minute a) (minute b))
+       (= (second a) (second b))))
+
+(define-public (datetime= a b)
+  (and (date= (get-date a) (get-date b))
+       (time= (get-time a) (get-time b))))
+
 
 
 
@@ -284,6 +316,9 @@
   (time<?) time<
   (time> time>?) (swap time<)
 
+  (time<= time<=?) (negate time>)
+  (time>= time>=?) (negate time<)
+
   (datetime<?) datetime<
   (datetime> datetime>?) (swap datetime<))
 
@@ -307,8 +342,8 @@
 
 (define-public (parse-datetime str)
   (let* (((datestr timestr) (string-split str #\T)))
-    (datetime (parse-date datestr)
-              (parse-time timestr))))
+    (datetime date: (parse-date datestr)
+              time: (parse-time timestr))))
 
 
 (define-public (current-date)
@@ -337,8 +372,8 @@
 
 (define (parse-datetime% str)
   (let* (((date time) (string-split str #\T)))
-    `(datetime ,(parse-date date)
-               ,(parse-time time))))
+    `(datetime date: ,(parse-date% date)
+               time: ,(parse-time% time))))
 
 (define (date-reader chr port)
   (unread-char chr port)
