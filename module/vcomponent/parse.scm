@@ -167,7 +167,12 @@
                                      (mod! (value it)
                                            (if (or (and=>> v car (cut string=? <> "DATE-TIME"))
                                                    (string-contains (value it) "T"))
-                                               parse-datetime parse-date)))]
+                                               (begin
+                                                 (set! (prop it 'VALUE) "DATE-TIME")
+                                                 parse-datetime)
+                                               (begin
+                                                 (set! (prop it 'VALUE) "DATE")
+                                                 parse-date))))]
 
                                   )
 

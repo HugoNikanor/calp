@@ -3,6 +3,7 @@
   :use-module (util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-19 alt)
+  :use-module (srfi srfi-19 alt util)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (parameters)
@@ -19,10 +20,15 @@
   (let* ((calendars regular repeating (load-calendars* #:calendar-files calendar-files)))
     (values
      calendars
+     (list->stream regular)
+     #;
      (interleave-streams
       ev-time<?
       (cons (list->stream regular)
-            (map generate-recurrence-set repeating))))))
+            '()
+            ;; TODO reactivate this
+            #; (map generate-recurrence-set repeating)
+            )))))
 
 ;; Basic version, loads calendrs, sorts the events, and returns
 ;; regular and repeating events separated from each other.

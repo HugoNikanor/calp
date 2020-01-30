@@ -142,20 +142,32 @@
   ;; TODO DURATION might be used for something else, check applicable types
   ;; TODO Far from all events have DTEND
   ;;      VTIMEZONE's always lack it.
-  (if (not (attr event 'RRULE))
-      (stream event)
-      (begin
-        (set! (attr event 'X-HNH-DURATION)
-          (cond [(attr event 'DURATION) => identity]
-                [(attr event 'DTEND)
-                 => (lambda (end)
-                      ;; The value type of dtstart and dtend must be the same
-                      ;; according to RFC 5545 3.8.2.2 (Date-Time End).
-                      (if (date? end)
-                          (date- end (attr event 'DTSTART))
-                          (datetime- end (attr event 'DTSTART))))]))
-        (if (attr event "RRULE")
-            (recur-event-stream event (parse-recurrence-rule (attr event "RRULE")))
-            ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather
-            ;; just mention the current part. Handle this
-            stream-null))))
+  (catch #t
+    (lambda ()
+     (if (not (attr event 'RRULE))
+         (stream event)
+         (begin
+           (set! (attr event 'X-HNH-DURATION)
+             (cond [(attr event 'DURATION) => identity]
+                   [(attr event 'DTEND)
+                    => (lambda (end)
+                         ;; The value type of dtstart and dtend must be the same
+                         ;; according to RFC 5545 3.8.2.2 (Date-Time End).
+                         (if (date? end)
+                             (date- end (attr event 'DTSTART))
+                             (datetime- end (attr event 'DTSTART))))]))
+           (if (attr event "RRULE")
+               (recur-event-stream event (parse-recurrence-rule
+                                          (attr event "RRULE")
+                                          (if (string= "DATE" (and=> (prop (attr* event 'DTSTART) 'VALUE) car))
+                                              parse-date parse-datetime)))
+               ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather
+               ;; just mention the current part. Handle this
+               stream-null))))
+    (lambda (err . args)
+      (format (current-error-port)
+              "\x1b[0;31mError\x1b[m while parsing recurrence rule (ignoring and continuing)~%~a ~a~%~a~%~%"
+              err args
+              (attr event 'X-HNH-FILENAME))
+      (stream ; event
+       ))))

@@ -3,7 +3,8 @@
   #:use-module (vcomponent control)
   #:use-module (util)
   #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-19 util)
+  #:use-module (srfi srfi-19 alt)
+  #:use-module (srfi srfi-19 alt util)
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 format)
   #:export (print-vcomponent
@@ -66,9 +67,15 @@ Removes the X-HNH-FILENAME attribute, and sets PRODID to
                         (string->ics-safe-string
                          (case key
                            ((DTSTART DTEND)
-                            (if (string? value)
-                                value
-                                (time->string value "~Y~m~dT~H~M~S")))
+                            (cond [(string? value) value]
+                                  [(date? value) (date->string value "~H~M~S")]
+                                  [(datetime? value)
+                                   (string-append
+                                    (date->string (get-date value) "~Y~m~d")
+                                    "T"
+                                    (time->string (get-time value) "~H~M~S"))]))
+                           ((X-HNH-DURATION)
+                            (format #f "~s" value))
                            (else value)))))
 
               ;; Catch

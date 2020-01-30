@@ -34,9 +34,9 @@ Event must have the DTSTART and DTEND attribute set."
                       (attr event-b 'DTSTART)
                       (attr event-b 'DTEND)))
 
-(define (event-contains? ev datetime)
+(define (event-contains? ev date/-time)
   "Does event overlap the date that contains time."
-  (let* ((start (get-date datetime))
+  (let* ((start (as-date date/-time))
          (end (add-day start)))
     (event-overlaps? ev start end)))
 
@@ -52,8 +52,14 @@ Event must have the DTSTART and DTEND attribute set."
 
 ;; Returns the length of the part of @var{e} which is within the day
 ;; starting at the time @var{start-of-day}.
-(define-public (event-length/day e start-of-day)
+;; currently the secund argument is a date, but should possibly be changed
+;; to a datetime to allow for more explicit TZ handling?
+(define-public (event-length/day e)
   (time-
-   (time-min (add-day start-of-day) (attr e 'DTEND))
-   (time-max start-of-day (attr e 'DTSTART))))
+   (time-min #00:00:00 (as-time (attr e 'DTEND)))
+   (time-max #24:00:00 (as-time (attr e 'DTSTART)))))
 
+
+;; 22:00 - 03:00
+;; 2h för dag 1
+;; 3h för dag 2

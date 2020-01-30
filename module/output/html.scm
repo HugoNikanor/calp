@@ -8,8 +8,8 @@
   #:use-module (vcomponent datetime)
   #:use-module (util)
   #:use-module (util tree)
-  #:use-module (srfi srfi-19)
-  #:use-module (srfi srfi-19 util)
+  #:use-module (srfi srfi-19 alt)
+  #:use-module (srfi srfi-19 alt util)
   #:use-module (output general)
 
 
@@ -26,15 +26,14 @@
 (define (date-link date)
   (date->string date "~Y-~m-~d"))
 
-(define (time-link time)
-  (time->string time "~Y-~m-~d"))
-
 (define x-pos (make-object-property))
 (define width (make-object-property))
 
 (define (UID ev)
   (string-append
-   (time->string (attr ev 'DTSTART) "~s")
+   ;; (date/-time->string (attr ev 'DTSTART) "~s")
+   (date->string (as-date (attr ev 'DTSTART)) "~Y~m~d")
+   (time->string (as-time (attr ev 'DTSTART)) "~H~M~S")
    (html-attr (attr ev 'UID))))
 
 ;; Takes a list of vcomponents, sets their widths and x-positions to optimally
@@ -49,7 +48,7 @@
   ;; @var{x} is how for left in the container we are.
   (let inner ((x 0)
               (tree (make-tree overlapping?
-                               (sort* lst time>? (lambda (e) (event-length/day e start-of-day))))))
+                               (sort* lst time>? (lambda (e) (event-length/day e))))))
     (unless (null? tree)
       (let ((w (/ (- 1 x)
                   (+ 1 (length-of-longst-branch (left-subtree tree))))))
@@ -60,16 +59,17 @@
 
 ;; This should only be used on time intervals, never on absolute times.
 ;; For that see @var{date->decimal-hour}.
+;; NOTE Above comment probably deprecated
 (define (time->decimal-hour time)
-  (exact->inexact (/ (time-second time)
-                     3600)))
+  (exact->inexact (+ (/ (minute time) 60)
+                     (/ (second time) 3600))))
 
 (define (html-attr str)
   (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
   (string-filter (lambda (c) (char-set-contains? cs c)) str))
 
-(define (create-block-general day ev fmt)
- (define time (date->time-utc day))
+(define (create-block-general date ev fmt)
+ ;; (define time (date->time-utc day))
   (define style
     (format #f fmt
 
@@ -77,22 +77,24 @@
             (* 100 (width ev))          ; width
 
             ;; top
-            (if (in-day? day (attr ev 'DTSTART))
+            (if (in-day? date (attr ev 'DTSTART))
                 (* 100/24
                    (time->decimal-hour
-                    (time-difference (attr ev 'DTSTART)
-                                     (start-of-day* (attr ev 'DTSTART)))))
+                    (as-time (attr ev 'DTSTART))
+                    #;
+                    (time- (as-time (attr ev 'DTSTART))
+                           (start-of-day* (attr ev 'DTSTART)))))
                 0)
 
             ;; height
-            (* 100/24 (time->decimal-hour (event-length/day ev time)))))
+            (* 100/24 (time->decimal-hour (event-length/day ev)))))
 
   `(a (@ (href "#" ,(UID ev))
          (class "hidelink"))
       (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
-                ,(when (time<? (attr ev 'DTSTART) time)
+                ,(when (date<? (as-date (attr ev 'DTSTART)) date)
                    " continued")
-                ,(when (time<? (add-day time) (attr ev 'DTEND))
+                ,(when (date<? (add-day date) (as-date (attr ev 'DTEND)))
                    " continuing"))
               (style ,style))
            ,((summary-filter) ev (attr ev 'SUMMARY))))
@@ -100,25 +102,26 @@
   )
 
 ;; Format single event for graphical display
-(define (create-block day ev)
-  (create-block-general day ev "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"))
+(define (create-block date ev)
+  (create-block-general date ev "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"))
 
-(define (create-top-block day ev)
-  (create-block-general day ev "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"))
+(define (create-top-block date ev)
+  (create-block-general date ev "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"))
 
 ;; Lay out complete day (graphical)
 ;; (date . (events)) -> sxml
 (define (lay-out-day day)
   (let* (((date . events) day)
-         (time (date->time-utc date))
+         (time-obj (datetime date: date))
          (long-events short-events
                       (partition (lambda (ev)
-                                   (time<=? (make-duration (* 3600 24))
-                                            (time-difference (attr ev 'DTEND)
-                                                             (attr ev 'DTSTART))))
+                                   (or (date? (attr ev 'DTSTART))
+                                       (datetime<=? (datetime time: (time hour: 24))
+                                                    (datetime- (attr ev 'DTEND)
+                                                               (attr ev 'DTSTART)))))
                                  (stream->list events))))
-    (fix-event-widths! time short-events)
-    (fix-event-widths! time long-events)
+    (fix-event-widths! time-obj short-events)
+    (fix-event-widths! time-obj long-events)
     `(div (@ (class "day"))
           (div (@ (class "meta"))
                ,(let ((str (date-link date)))
@@ -154,12 +157,27 @@
 
 
 (define (fmt-time-span ev)
-  (let* ((fmt (if (time<? (time-difference (attr ev 'DTEND) (attr ev 'DTSTART))
-                          (make-duration (* 3600 24)))
-                  "~H:~M" "~Y-~m-~d ~H:~M"))
-         (start (time->string (attr ev 'DTSTART) fmt))
-         (end (time->string (attr ev 'DTEND) fmt)))
-    (values start end)))
+  (cond [(attr ev 'DTSTART) date?
+         => (lambda (s)
+              (cond [(attr ev 'DTEND)
+                     => (lambda (e)
+                          (if (date= e (date+ s (date day: 1)))
+                              (values (date->string s) "")
+                              (values (date->string s)
+                                      (date->string e))))]
+                    [else (date->string s)]))]
+        [else ; guaranteed datetime
+         ;; TODO rewrite this
+         (values (time->string (get-time (attr ev 'DTSTART)))
+                 (time->string (get-time (attr ev 'DTEND))))
+         #;
+         (let* ((fmt (if (date/-time<? (time- (attr ev 'DTEND) (attr ev 'DTSTART))
+                                       (time hour: 24))
+                         "~H:~M" "~Y-~m-~d ~H:~M"))
+                ;; TODO write these
+                (start (date/-time->string (attr ev 'DTSTART) fmt))
+                (end (date/-time->string (attr ev 'DTEND) fmt)))
+           (values start end))]))
 
 
 ;; For sidebar, just text
@@ -167,7 +185,7 @@
   `(article (@ (id ,(UID ev))
                (class "eventtext CAL_bg_"
                  ,(html-attr (attr (parent ev) 'NAME))))
-            (h3 (a (@ (href "#" ,(time-link (attr ev 'DTSTART)))
+            (h3 (a (@ (href "#" ,(date-link (as-date (attr ev 'DTSTART))))
                       (class "hidelink"))
                    ,(attr ev 'SUMMARY)))
             (div
@@ -192,35 +210,17 @@
                                 ;; This removes all descriptions from
                                 ;; events for previous days,
                                 ;; solving duplicates.
-                                (time<=? (date->time-utc date)
-                                         (attr ev 'DTSTART)))
+                                (date/-time<=? date
+                                               (attr ev 'DTSTART)))
                               events))))))
 
-(define (days-in-month date)
-  (define rem=0? (compose zero? remainder))
-  (let ((m (date-month date)))
-   (cond ((memv m '(1 3 5 7 8 10 12)) 31)
-         ((memv m '(4 6 9 11)) 30)
-         (else
-          ;; Please don't mention non-gregorian calendars.
-          (let ((y (date-year date)))
-            (if (and (rem=0? y 4)
-                     (or (not (rem=0? y 100))
-                         (rem=0? y 400)))
-                29 28))))))
+(define* (month+ date-object #:optional (change 1))
+  ;; (normalize-date* (set (date-month date) = (+ change)))
+  (date+ date-object (date month: change))
+  )
 
-(define (previous-month n)
-  (1+ (modulo (- n 2) 12)))
-
-;; 0 indexed, starting at monday.
-(define (week-day date)
-  (modulo (1- (date-week-day date)) 7))
-
-(define* (month+ date #:optional (change 1))
-  (normalize-date* (set (date-month date) = (+ change))))
-
-(define* (month- date #:optional (change -1))
-  (month+ date change))
+(define* (month- date-object #:optional (change 1))
+  (date- date-object (date month: change)))
 
 ;; date should be start of month
 ;; @example
@@ -245,16 +245,15 @@
     `(table (@ (class "small-calendar"))
             (thead (tr ,@(map (lambda (d) `(td ,d)) '(MÅ TI ON TO FR LÖ SÖ))))
             (tbody ,@(let recur
-                         ((lst (let* ((month (date-month date))
+                         ((lst (let* ((month (month date))
                                       (month-len (days-in-month date))
-                                      (prev-month-len (days-in-month (month- date) #; (previous-month month)
-                                                       ))
+                                      (prev-month-len (days-in-month (month- date)))
                                       (month-start (week-day date)))
                                  (append (map (td '(class "prev") (month- date))
                                               (iota month-start (1+ (- prev-month-len month-start))))
                                          (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
                                                           ,@(cdr p)))
-                                              (map (lambda (d) `((@ (class ,(when (date=? today (set (date-day date) d))
+                                              (map (lambda (d) `((@ (class ,(when (date=? today (set (day date) d))
                                                                          "today")))
                                                             (a (@ (href "#" ,(date->string date "~Y-~m-")
                                                                         ,(pad0 d))
@@ -274,9 +273,9 @@
 ;;; and the html-generate procedure also filters, but instead to find earlier eventns.
 ;;; All this filtering is probably slow, and should be looked into.
 
-(define-public (html-generate calendars events start end)
+(define-public (html-generate calendars events start-date end-date)
   (define evs (get-groups-between (group-stream events)
-                                  start end))
+                                  start-date end-date))
 
   ;; (display "<!doctype HTML>") (newline)
   (define (nav-link display date)
@@ -295,8 +294,8 @@
            (meta (@ (name viewport)
                     (content "width=device-width, initial-scale=0.5")))
            (meta (@ (name description)
-                    (content "Calendar for the dates between " ,(date->string start)
-                             " and " ,(date->string end))))
+                    (content "Calendar for the dates between " ,(date->string start-date)
+                             " and " ,(date->string end-date))))
            ,(include-css "static/style.css")
            (script (@ (src "static/script.js")) "")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
@@ -332,14 +331,14 @@
                        ;; Small calendar and navigation
                        (div (@ (class "about"))
                             ;; prev button
-                            ,(nav-link "«" (month- start))
+                            ,(nav-link "«" (month- start-date))
 
                             ;; calendar table
-                            (div ,(cal-table (start-of-month start)
+                            (div ,(cal-table (start-of-month start-date)
                                              (current-date)))
 
                             ;; next button
-                            ,(nav-link "»" (month+ start)))
+                            ,(nav-link "»" (month+ start-date)))
 
                        ;; List of events
                        (div (@ (class "eventlist"))
@@ -348,25 +347,25 @@
                                      (header (h2 "Tidigare"))
                                      ,@(stream->list
                                         (stream-map fmt-single-event
-                                                    (stream-take-while (compose (cut time<? <> (date->time-utc start))
+                                                    (stream-take-while (compose (cut date/-time<? <> start-date)
                                                                                 (extract 'DTSTART))
                                                                        (cdr (stream-car evs))))))
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
 
-(define-public (html-chunked-main calendars events start)
+(define-public (html-chunked-main calendars events start-date)
   ;; NOTE Something here isn't thread safe.
   ;; TODO make it thread safe
-  (stream-for-each (lambda (pair)
-                     (format (current-error-port) "d = ~a~%u = ~a~%" (car pair) (cadr pair))
-                     (let ((fname (format #f "./html/~a.html" (date->string (car pair) "~1"))))
-                       (format (current-error-port) "Writing to [~a]~%" fname)
-                       (with-output-to-file fname
-                         (lambda () (apply html-generate calendars events pair)))))
-                   (let ((ms (month-stream start)))
-                     (stream-take
-                      12 (stream-zip
-                          ms (stream-map (lambda (d) (normalize-date
-                                                 (set (date-day d) = (- 1))))
-                                         (stream-cdr ms))))
-                     )))
+  (stream-for-each
+   (lambda (pair)
+     (format (current-error-port) "d = ~a~%u = ~a~%" (car pair) (cadr pair))
+     (let ((fname (format #f "./html/~a.html" (date->string (car pair) "~1"))))
+       (format (current-error-port) "Writing to [~a]~%" fname)
+       (with-output-to-file fname
+         (lambda () (apply html-generate calendars events pair)))))
+   (let ((ms (month-stream start-date)))
+     (stream-take
+      12 (stream-zip
+          ms (stream-map (lambda (d) (date- d (date day: 1))) ; last in month
+                         (stream-cdr ms))))
+     )))

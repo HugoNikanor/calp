@@ -1,5 +1,5 @@
 (define-module (vulgar components)
-  #:use-module (srfi srfi-19)
+  #:use-module (srfi srfi-19 alt)
   #:use-module (util)
   #:export ())
 

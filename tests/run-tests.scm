@@ -14,8 +14,9 @@
 
 (use-modules (ice-9 ftw)
              (ice-9 sandbox)
-             (srfi srfi-64)
-             ((util) :select (for)))
+             (srfi srfi-64)             ; test suite
+             (srfi srfi-88)             ; suffix keywords
+             ((util) :select (for awhen)))
 
 (define files
   (scandir here
@@ -35,10 +36,16 @@
         (reverse done)
         (loop (cons sexp done))))))
 
+
 ;; TODO test-group fails if called before any test begin, since
 ;; (test-runner-current) needs to be a test-runner (dead or not),
 ;; but is initially bound to #f.
 (test-begin "tests")
+
+(awhen (member "--skip" (command-line))
+       (for skip in (cdr it)
+            (test-skip skip)))
+
 (for fname in files
      (format (current-error-port) "Running test ~a~%" fname)
      (test-group

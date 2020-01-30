@@ -7,7 +7,7 @@ exec guile -e main -s $0 "$@"
 !#
 
 (use-modules (srfi srfi-1)
-             (srfi srfi-19)
+             ;; (srfi srfi-19)
              (srfi srfi-41)
              (srfi srfi-41 util)
              (srfi srfi-88)             ; keyword syntax
@@ -40,7 +40,7 @@ exec guile -e main -s $0 "$@"
   (if (null? a)
       b a))
 
-(define (main args)
+(define (wrapped-main args)
   (define opts (getopt-long args options #:stop-at-first-non-option #t))
   (define stprof (option-ref opts 'statprof #f))
 
@@ -80,3 +80,28 @@ exec guile -e main -s $0 "$@"
                       style: (if (boolean? stprof)
                                  'flat
                                  (string->symbol stprof)))))
+
+
+(use-modules (system vm frame))
+
+(define (main args)
+  (with-throw-handler #t
+    (lambda () (wrapped-main args))
+    (lambda (err . args)
+      (define stack (make-stack #t))
+      (format
+       (current-error-port)
+       "bindings = (~a)~%"
+       (with-output-to-string
+         (lambda ()
+           (let loop ((frame (stack-ref stack 0)))
+             (when frame
+               (format #t "~{~a~^ ~}" (map binding-name (frame-bindings frame)))
+               (let ((event (and=> (frame-lookup-binding frame 'event)
+                                   binding-ref)))
+                 (when event
+                   (format (current-error-port) "event = ~a~%" event)
+                   ((@ (vcomponent output) serialize-vcomponent)
+                    event (current-error-port))))
+
+               (loop (frame-previous frame))))))))))

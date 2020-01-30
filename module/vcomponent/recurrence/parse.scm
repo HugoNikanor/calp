@@ -18,15 +18,20 @@
 ;; (<weekadynum>, ...)
 ;; @end example
 
+;;; weekdaynum can contain ±
+;;; only used in bywdaylist
+;;; only present with by BYDAY
+
 ;; Returns a pair, where the @code{car} is the offset
 ;; and @code{cdr} is the day symbol.
 ;; The @code{car} may be @code{#f}.
+;; str → (<num> . <symb>)
 (define (parse-day-spec str)
-  (let* ((numchars (append '(#\+ #\-) (map integer->char (iota 10 #x30))))
-         (num symb (span (cut memv <> numchars)
-                         (string->list str))))
-    (cons (string->number (list->string num))
-          (apply symbol symb))))
+  (let* ((numerical-characters (append '(#\+ #\-) (map integer->char (iota 10 #x30))))
+         (numbers letters (span (cut memv <> numerical-characters)
+                                (string->list str))))
+    (cons (string->number (list->string numbers))
+          (apply symbol letters))))
 
 (define-macro (quick-case key . cases)
   (let ((else-clause (or (assoc-ref cases 'else)
@@ -43,17 +48,20 @@
                  `(else ,@body)))
               cases))))
 
-(define (parse-recurrence-rule str)
+;; UNTIL must have the exact same value type as the DTSTART of the event from which
+;; this string came. I have however seen exceptions to that rule...
+(define* (parse-recurrence-rule str optional: (datetime-parser parse-datetime))
   (fold
    (lambda (kv o)
      (let* (((key val) kv))
        (let-lazy
         ((symb (string->symbol val))
-         (date (parse-datetime val))
+         (date (datetime-parser val))
          (days (map parse-day-spec (string-split val #\,)))
          (num  (string->number val))
          (nums (map string->number (string-split val #\,))))
 
+        ;; TODO I think it's an error to give BYHOUR and under for dates which aren't datetimes
         (quick-case (string->symbol key)
           (UNTIL (set! (until o) date))
 

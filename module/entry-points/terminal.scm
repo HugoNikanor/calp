@@ -20,9 +20,9 @@
      calendar-files: (cond [(option-ref opts 'file #f) => list]
                            [else (calendar-files)]) ))
 
-  (let ((time (drop-time (or (and=> (option-ref opts 'date #f) parse-freeform-date)
-                             (current-date)))))
+  (let ((date (or (and=> (option-ref opts 'date #f) parse-freeform-date)
+                  (current-date))))
     ;; (format (current-error-port) "len(events) = ~a~%" (stream-length events))
     (with-vulgar
-     (lambda () (main-loop time events))))
+     (lambda () (main-loop date events))))
 )

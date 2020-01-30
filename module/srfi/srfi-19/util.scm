@@ -166,3 +166,17 @@ attribute set to 0. Can also be seen as \"Start of day\""
        )
   ;; ( (nsecs b) (zone b))
   )
+
+;; Rounds a date towards the closest midnight
+;; TODO more general rounding
+(define-public (date-round date)
+  (set->
+   (if (< 12 (date-hour date))
+       ;; round up
+       (set (date-day date) = (+ 1))
+       ;; round down
+       date)
+   (date-day  = (+ 1))
+   (date-hour   0)
+   (date-minute 0)
+   (date-second 0)))

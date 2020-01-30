@@ -9,14 +9,14 @@
 
 ;; TODO templetize this
 (define-stream (group-stream in-stream)
-  (define (ein? day) (lambda (e) (event-contains? e (date->time-utc day))))
+  (define (ein? day) (lambda (e) (event-contains? e day)))
 
-  (let loop ((days (day-stream (time-utc->date (attr (stream-car in-stream) 'DTSTART))))
+  (let loop ((days (day-stream (as-date (attr (stream-car in-stream) 'DTSTART))))
              (stream in-stream))
     (if (stream-null? stream)
         stream-null
         (let* ((day (stream-car days))
-               (tomorow (date->time-utc (stream-car (stream-cdr days)))))
+               (tomorow (stream-car (stream-cdr days))))
 
           (let ((head (stream-take-while (ein? day) stream))
                 (tail
@@ -26,8 +26,8 @@
                  ;; of tommorow, and finishes with the rest when it finds the first
                  ;; object which begins tomorow (after midnight, exclusize).
                  (filter-sorted-stream*
-                  (lambda (e) (time<? tomorow (attr e 'DTEND)))
-                  (lambda (e) (time<=? tomorow (attr e 'DTSTART)))
+                  (lambda (e) (date/-time<? tomorow (attr e 'DTEND)))
+                  (lambda (e) (date/-time<=? tomorow (attr e 'DTSTART)))
                   stream)))
 
 

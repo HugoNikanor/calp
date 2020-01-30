@@ -1,3 +1,12 @@
+"Veckovy", månader efter sommartid saknar den förste.
+Lill-kallendern har inte det problemet
+
+Heldagsevents visa inte 00:00 - 00:00
+
+Omnormalizera alla tidsfällt överallt till att vara rimligga
+date := <year, month, date ?tz>
+time := <hour, minute, second>
+datetime := <date, time>
 
 * Att göra
 ** Tester

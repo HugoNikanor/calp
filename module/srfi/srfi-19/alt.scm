@@ -71,9 +71,6 @@
                (hour r) (minute r) (second r)
                (if (utc r) "Z" "")))))
 
-(define-public (time->string time _)
-  (with-output-to-string (lambda () (display time))))
-
 (define*-public (time key: (hour 0) (minute 0) (second 0) (utc #f))
   (make-time hour minute second utc))
 
@@ -113,12 +110,23 @@
          ((apr jun sep nov) 30)
          ((feb)
           (if (leap-year? (year date))
-              29 28))))
+              29 28))
+         (else (error "No month ~a (~a)" (month date) date))))
 
 (define-public (days-in-year date)
   (if (leap-year? (year date))
       366 365))
+
 
+(define-public (as-date date/-time)
+  (if (date? date/-time)
+      date/-time
+      (get-date date/-time)))
+
+(define-public (as-time date/-time)
+  (if (datetime? date/-time)
+      (get-time date/-time)
+      (time)))
 
 ;;; EQUIALENCE
 
@@ -147,7 +155,7 @@
   (time=?) time=
   (datetime=?) datetime=)
 
-(define-public (date< a b)
+(define (date<% a b)
   (let ((ay (year a))
         (by (year b)))
     (if (= ay ay)
@@ -157,6 +165,14 @@
               (< (day a) (day b))
               (< am bm)))
         (< ay by))))
+
+(define-public date<
+  (match-lambda*
+    [() #t]
+    [(_) #t]
+    [(first second . rest)
+     (and (date<% first second)
+          (apply date< second rest))]))
 
 
 (define-public (time< a b)
@@ -176,25 +192,39 @@
       (time< (get-time a) (get-time b))
       (date< (get-date a) (get-date b))))
 
+(define-public (date/-time< a b)
+  (if (date< (as-date a) (as-date b))
+      #t
+      (time< (as-time a) (as-time b))))
 
 (define-many define-public
   (date<?) date<
   (date> date>?) (swap date<)
+  (date<= date<=?) (negate date>)
+  (date>= date>=?) (negate date<)
 
   (time<?) time<
   (time> time>?) (swap time<)
-
   (time<= time<=?) (negate time>)
   (time>= time>=?) (negate time<)
 
   (datetime<?) datetime<
-  (datetime> datetime>?) (swap datetime<))
+  (datetime> datetime>?) (swap datetime<)
+  (datetime<= datetime<=?) (negate datetime>)
+  (datetime>= datetime>=?) (negate datetime<)
+
+  (date/-time<?) date/-time<
+  (date/-time> date/-time>?) (swap date/-time<)
+  (date/-time<= date/-time<=?) (negate date/-time>)
+  (date/-time>= date/-time>=?) (negate date/-time<)
+  )
 
 
 
 ;;; OPERATIONS
 
 ;; Base and change inverted to better work with fold in the exported date+
+#;
 (define (date+% change base)
 
   ;; while (day base) > (days-in-month base)
@@ -219,18 +249,82 @@
 
   (set (year months-fixed) = (+ (year change))))
 
-(define-public (date+ base . rest)
-  (fold date+% base rest))
+(define-public (date-zero? date)
+  (= 0 (year date) (month date) (day date)))
 
-(define (date-% change base)
+(define (date+%% change base)
 
   (define-values (days-fixed change*)
     (let loop ((target base) (change change))
+      ;; (format (current-error-port) "1 ~s : ~s~%" target change)
+      (if (> (days-in-month target) (+ (day change) (day target)))
+          ;; No date overflow, just add the change
+          (values (set-> target (day = (+ (day change))))
+                  (set-> change (day 0)))
+          ;; Date (and possibly year) overflow
+          (loop (if (= 12 (month target))
+                    (set-> target
+                           (year = (+ 1))
+                           (month 1)
+                           (day 1))
+                    (set-> target
+                           (month = (+ 1))
+                           (day 1)))
+                (set-> change (day = (- (1+ (- (days-in-month target) (day target))))))))))
+
+  (define-values (month-fixed change**)
+    (if (date-zero? change*)
+        (values days-fixed change*)
+     (let loop ((target days-fixed) (change change*))
+       ;; (format (current-error-port) "2 ~s : ~s~%" target change)
+       (if (>= 12 (+ (month change) (month target)))
+           (values (set (month target) = (+ (month change)))
+                   (set (month change) 0))
+
+           (loop (set-> target
+                        (year = (+ 1))
+                        (month 1))
+                 (set (month change) = (- 12 (month target))))
+           ))))
+
+  ;; change** should here should have both month and date = 0
+
+  (set (year month-fixed) = (+ (year change**))))
+
+(define (date+% change base)
+
+  (when (or (negative? (year change))
+            (negative? (month change))
+            (negative? (day change)))
+    (error "Change can't be negative"))
+
+  (when (or (negative? (month base))
+            (negative? (day base)))
+    (error "Base month or day can't be negative"))
+
+  (date+%% change base)
+  )
+
+;; @var{base} MUST be a valid real date. all rest arguments can however
+;; be "invalid" dates, such as 0000-00-10
+(define-public (date+ base . rest)
+  (fold date+% base rest))
+
+(define (date-%% change base)
+  (define-values (days-fixed change*)
+    (let loop ((target base) (change change))
       (if (>= (day change) (day target))
-          (loop (set-> target
-                       (month = (- 1))
-                       (day (days-in-month (set (month target) = (- 1)))))
-                (set (day change) = (- (day target))))
+          (let ((new-change (set (day change) = (- (day target)))))
+            (loop (if (= 1 (month target))
+                      (set-> target
+                             (year = (- 1))
+                             (month 12)
+                             (day 31)              ; days in december
+                             )
+                      (set-> target
+                             (month = (- 1))
+                             (day (days-in-month (set (month target) = (- 1))))))
+                  new-change))
           (values (set (day target) = (- (day change)))
                   (set (day change) 0)))))
 
@@ -246,7 +340,21 @@
 
   ;; change** should here should have both month and date = 0
 
-  (set (year month-fixed) = (- (year change))))
+  (set (year month-fixed) = (- (year change**))))
+
+(define (date-% change base)
+
+  (when (or (negative? (year change))
+            (negative? (month change))
+            (negative? (day change)))
+    (error "Change can't be negative"))
+
+  (when (or (negative? (month base))
+            (negative? (day base)))
+    (error "Base month or day can't be negative"))
+
+  (date-%% change base)
+  )
 
 (define-public (date- base . rest)
   (fold date-% base rest))
@@ -382,7 +490,6 @@
     (date year:  ((@ (srfi srfi-19) date-year) d)
           month: ((@ (srfi srfi-19) date-month) d)
           day:   ((@ (srfi srfi-19) date-day) d))))
-
 
 
 
