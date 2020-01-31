@@ -9,9 +9,12 @@
               (ice-9 (match control rdelim curried-definitions ftw
                             getopt-long
                             iconv regex #| regex here due to bad macros |#  ))
-              (srfi (srfi-1 srfi-19 srfi-88)))
+              (srfi (srfi-1 srfi-88)))
 
-(use-modules (srfi srfi-19 util))
+(use-modules (srfi srfi-19 alt)
+             (srfi srfi-19 alt util))
+
+;; (use-modules (srfi srfi-19 util))
 
 (define (file-extension name)
   (car (last-pair (string-split name #\.))))
@@ -41,7 +44,7 @@
                (start (if m
                           (date year: 2019 day: 1 month: (string->number m))
                           (current-date)))
-               (end (set (date-month start) = (+ 1))))
+               (end (set (month start) = (+ 1))))
 
           (return '((content-type text/html))
                   (with-output-to-string

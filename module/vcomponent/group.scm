@@ -37,7 +37,6 @@
 
 (define (get-groups-between groups start-date end-date)
   (filter-sorted-stream
-   ;; TODO in-date-range? drops the first date
    (compose (in-date-range? start-date end-date)
             car)
    groups))
