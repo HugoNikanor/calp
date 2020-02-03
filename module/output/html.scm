@@ -122,6 +122,9 @@
                                                                (attr ev 'DTSTART)))))
                                  (stream->list events))))
     ;; (format (current-error-port) "lay-out-day: ~a~%" (date->string date))
+    (format (current-error-port) "long=~a, short=~a~%"
+            (length long-events)
+            (length short-events))
     (fix-event-widths! time-obj short-events)
     (fix-event-widths! time-obj long-events)
     `(div (@ (class "day"))
@@ -184,7 +187,7 @@
 
 ;; For sidebar, just text
 (define (fmt-single-event ev)
-  (format (current-error-port) "fmt-single-event: ~a~%" (attr ev 'X-HNH-FILENAME))
+  ;; (format (current-error-port) "fmt-single-event: ~a~%" (attr ev 'X-HNH-FILENAME))
   `(article (@ (id ,(UID ev))
                (class "eventtext CAL_bg_"
                  ,(html-attr (attr (parent ev) 'NAME))))
@@ -201,7 +204,7 @@
 ;; Single event in side bar (text objects)
 (define (fmt-day day)
   (let* (((date . events) day))
-    (format (current-error-port) "fmt-day: ~a~%" (date->string date))
+    ;; (format (current-error-port) "fmt-day: ~a~%" (date->string date))
     `(section (@ (class "text-day"))
               (header (h2 ,(let ((s (date->string date "~Y-~m-~d")))
                              `(a (@ (href "#" ,s)

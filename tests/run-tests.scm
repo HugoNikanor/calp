@@ -57,7 +57,7 @@
               (let ((modules (read)))
                 (eval-in-sandbox
                  `(begin ,@(read-multiple))
-                 #:time-limit 5          ; larger than should be needed
+                 #:time-limit 60          ; larger than should be needed
                  #:module (make-sandbox-module
                            (append modules
                                    '(((srfi srfi-64) test-assert test-equal test-error)

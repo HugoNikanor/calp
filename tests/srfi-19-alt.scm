@@ -1,7 +1,6 @@
 (((srfi srfi-19 alt) date+ date-
   year month day
   date time
-  date<
   datetime
   datetime+
   datetime-
@@ -16,7 +15,7 @@
 (test-assert "Test year type"
   (integer? (year (date year: 2020))))
 
-(test-assert "Test month type"
+(test-assert "Test mmnth type"
   (integer? (month (date month: 1))))
 
 (test-assert "Test day type"
@@ -87,43 +86,14 @@
          (date day: 5)))
 
 
-(test-assert "date< empty"
-  (date<))
 
-(test-assert "date< single"
-  (date< #2020-01-10))
-
-(test-assert "date< double"
-  (date< #2020-01-10 #2020-01-11))
-
-(test-assert "date< tripple"
-  (date< #2020-01-10 #2020-01-11 #2020-01-12))
-
-(test-assert "date< tripple negate"
-  (not (date< #2020-01-10 #2020-01-12 #2020-01-11)))
-
-(test-assert "date<="
-  (not (date<= #2020-01-01 #2018-05-15 #2020-01-31)))
-
-(test-assert "date<= equal"
-  (date<= #2018-05-15 #2020-01-01))
-
-(test-assert "date<"
-  (not (date< #2020-01-01 #2018-05-15 #2020-01-31)))
-
-(test-assert "date>"
-  (not (date> #2020-01-31 #2018-05-15 #2020-01-01 )))
-
-(test-assert "date>="
-  (not (date>=  #2020-01-31  #2018-05-15 #2020-01-01)))
-
-(test-assert
-    (datetime- #2018-01-17T10:00:00
-               #2018-01-17T08:00:00))
+;; (test-assert
+;;     (datetime- #2018-01-17T10:00:00
+;;                #2018-01-17T08:00:00))
 
 
-(test-assert
-    (datetime<=? (datetime time: (time hour: 24))
-                 (datetime- #2018-01-17T10:00:00
-                            #2018-01-17T08:00:00)))
+;; (test-assert
+;;     (datetime<=? (datetime time: (time hour: 24))
+;;                  (datetime- #2018-01-17T10:00:00
+;;                             #2018-01-17T08:00:00)))
 

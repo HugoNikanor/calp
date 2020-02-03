@@ -174,6 +174,17 @@
      (and (date<% first second)
           (apply date< second rest))]))
 
+(define (date<=% a b)
+  (or (date= a b)
+      (date< a b)))
+
+(define-public date<=
+  (match-lambda*
+    [() #t]
+    [(_) #t]
+    [(first second . rest)
+     (and (date<=% first second)
+          (apply date<= second rest))]))
 
 (define-public (time< a b)
   (let ((ah (hour a))
@@ -186,11 +197,19 @@
               (< am bm)))
         (< ah bh))))
 
+(define-public (time<= a b)
+  (or (time= a b)
+      (time< a b)))
 
 (define-public (datetime< a b)
   (if (date= (get-date a) (get-date b))
       (time< (get-time a) (get-time b))
       (date< (get-date a) (get-date b))))
+
+(define-public (datetime<= a b)
+  (if (date= (get-date a) (get-date b))
+      (time<= (get-time a) (get-time b))
+      (date<= (get-date a) (get-date b))))
 
 (define-public (date/-time< a b)
   (if (date< (as-date a) (as-date b))
@@ -200,18 +219,18 @@
 (define-many define-public
   (date<?) date<
   (date> date>?) (swap date<)
-  (date<= date<=?) (negate date>)
-  (date>= date>=?) (negate date<)
+  (date<=?) date<=
+  (date>= date>=?) (swap date<=)
 
   (time<?) time<
   (time> time>?) (swap time<)
-  (time<= time<=?) (negate time>)
-  (time>= time>=?) (negate time<)
+  (time<=?) time<=
+  (time>= time>=?) (swap time<=)
 
   (datetime<?) datetime<
   (datetime> datetime>?) (swap datetime<)
-  (datetime<= datetime<=?) (negate datetime>)
-  (datetime>= datetime>=?) (negate datetime<)
+  (datetime<=?) datetime<=
+  (datetime>= datetime>=?) (swap datetime<=)
 
   (date/-time<?) date/-time<
   (date/-time> date/-time>?) (swap date/-time<)
