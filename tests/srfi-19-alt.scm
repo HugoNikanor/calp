@@ -1,4 +1,5 @@
 (((srfi srfi-19 alt) date+ date-
+  time+ time-
   year month day
   date time
   datetime
@@ -86,6 +87,13 @@
          (date day: 5)))
 
 
+(test-equal "time- self"
+  #00:00:00
+  (time- #10:20:30 #10:20:30))
+
+(test-equal "date- self"
+  #0000-00-00
+  (date- #2020-01-01 #2020-01-01))
 
 ;; (test-assert
 ;;     (datetime- #2018-01-17T10:00:00
