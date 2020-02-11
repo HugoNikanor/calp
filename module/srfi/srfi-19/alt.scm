@@ -296,14 +296,17 @@
         (values days-fixed change*)
      (let loop ((target days-fixed) (change change*))
        ;; (format (current-error-port) "2 ~s : ~s~%" target change)
-       (if (>= 12 (+ (month change) (month target)))
-           (values (set (month target) = (+ (month change)))
-                   (set (month change) 0))
-
+       (if (< 12 (+ (month change) (month target)))
+           ;; if we overflow into the next year
            (loop (set-> target
                         (year = (+ 1))
                         (month 1))
-                 (set (month change) = (- 12 (month target))))
+                 (set (month change) = (- (- 13 (month target)))))
+
+           ;; if we don't overflow our date
+           (values (set (month target) = (+ (month change)))
+                   (set (month change) 0))
+
            ))))
 
   ;; change** should here should have both month and date = 0
