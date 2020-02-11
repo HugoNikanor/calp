@@ -1,7 +1,10 @@
 (((srfi srfi-19 alt)
   date
+  datetime time
   date< date<=
   date> date>=
+  date/-time<
+  time<
   ))
 
 (test-assert "date< empty"
@@ -42,3 +45,21 @@
 
 (test-assert "date>="
   (not (date>=  #2020-01-31  #2018-05-15 #2020-01-01)))
+
+(test-assert "time< simple"
+  (time< #05:00:00 #10:00:00))
+
+(test-assert "time<"
+  (time< (time) #10:00:00))
+
+(test-assert "date/-time<"
+  (date/-time< #2020-01-01 #2020-01-02))
+
+(test-assert "not date/-time<"
+  (not (date/-time< #2020-01-01 #2020-01-01)))
+
+(test-assert "date/-time< only other dt"
+  (date/-time< #2020-01-01 #2020-01-02T10:00:00))
+
+(test-assert "date/-time< other dt, same date"
+  (date/-time< #2020-01-01 #2020-01-01T10:00:00))
