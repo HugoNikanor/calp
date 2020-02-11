@@ -189,7 +189,7 @@
 (define-public (time< a b)
   (let ((ah (hour a))
         (bh (hour b)))
-    (if (= ah ah)
+    (if (= ah bh)
         (let ((am (minute a))
               (bm (minute b)))
           (if (= am bm)
