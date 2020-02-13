@@ -487,6 +487,40 @@
                            (date day: overflow))
               time: time)))
 
+(define (datetime->srfi-19-date date)
+  ((@ (srfi srfi-19) make-date)
+    0
+    (second (get-time date))
+    (minute (get-time date))
+    (hour (get-time date))
+    (day (get-date date))
+    (month (get-date date))
+    (year (get-date date))
+    0                                   ; TODO TZ
+    ))
+
+(define (srfi-19-date->datetime o)
+  (let ((y ((@ (srfi srfi-19) date-year)   o)))
+    ;; TODO find better way to translate from 1970 to 0, since this WILL
+    ;; cause problems sooner or later.
+   (datetime year:   (if (= 1970 y) 0 y)
+             month:  (let ((m ((@ (srfi srfi-19) date-month) o)))
+                       (if (and (= 1970 y) (= 1 m)) 0 m))
+             day:    (let ((d ((@ (srfi srfi-19) date-day) o)))
+                       (if (and (= 1970 y) (= 1 d)) 0 d))
+             hour:   ((@ (srfi srfi-19) date-hour)   o)
+             minute: ((@ (srfi srfi-19) date-minute) o)
+             second: ((@ (srfi srfi-19) date-second) o)
+             )))
+
+
+(define-public (datetime-difference end start)
+  (let ((t
+         ((@ (srfi srfi-19) time-difference)
+          ((@ (srfi srfi-19) date->time-utc) (datetime->srfi-19-date end))
+          ((@ (srfi srfi-19) date->time-utc) (datetime->srfi-19-date start)))))
+    ((@ (srfi srfi-19) set-time-type!) t (@ (srfi srfi-19) time-utc))
+    (srfi-19-date->datetime ((@ (srfi srfi-19) time-utc->date) t 0))))  ; TODO tz offset
 
 
 ;;; Parsers for vcomponent usage

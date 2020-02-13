@@ -120,8 +120,8 @@
                       (partition (lambda (ev)
                                    (or (date? (attr ev 'DTSTART))
                                        (datetime<=? (datetime time: (time hour: 24))
-                                                    (datetime- (attr ev 'DTEND)
-                                                               (attr ev 'DTSTART)))))
+                                                    (datetime-difference (attr ev 'DTEND)
+                                                                         (attr ev 'DTSTART)))))
                                  (stream->list events))))
     ;; (format (current-error-port) "lay-out-day: ~a~%" (date->string date))
     (format (current-error-port) "long=~a, short=~a~%"

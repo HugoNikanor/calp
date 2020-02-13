@@ -6,9 +6,14 @@
   datetime+
   datetime-
   datetime<=?
+  datetime-difference
+  leap-year?
   )
  ((ice-9 format) format)
  )
+
+(test-equal "empty time"
+  (time) #00:00:00)
 
 (test-assert "Synatx date"
   #2020-01-01)
@@ -91,9 +96,9 @@
   #00:00:00
   (time- #10:20:30 #10:20:30))
 
-(test-equal "date- self"
-  #0000-00-00
-  (date- #2020-01-01 #2020-01-01))
+(test-equal "datetime-difference self"
+  #0000-00-00T00:00:00
+  (datetime-difference (datetime date: #2020-01-01) (datetime date: #2020-01-01)))
 
 ;; (test-assert
 ;;     (datetime- #2018-01-17T10:00:00
@@ -105,3 +110,14 @@
 ;;                  (datetime- #2018-01-17T10:00:00
 ;;                             #2018-01-17T08:00:00)))
 
+
+;; TODO
+;; at the time of writing this returns #2020-02-00
+;; The general question is, how is the last in a month handled?
+;; (test-equal
+;;     (date+ #2019-12-31 (date month: 1)))
+
+(test-assert (leap-year? 2020))
+
+(test-equal "Add to Leap day"
+    #2020-02-29 (date+ #2020-02-28 (date day: 1)))
