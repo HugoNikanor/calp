@@ -282,7 +282,7 @@
   (define-values (days-fixed change*)
     (let loop ((target base) (change change))
       ;; (format (current-error-port) "1 ~s : ~s~%" target change)
-      (if (> (days-in-month target) (+ (day change) (day target)))
+      (if (>= (days-in-month target) (+ (day change) (day target)))
           ;; No date overflow, just add the change
           (values (set-> target (day = (+ (day change))))
                   (set-> change (day 0)))

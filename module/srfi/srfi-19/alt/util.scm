@@ -7,7 +7,7 @@
   )
 
 (define-public (start-of-month date)
-  (set (day date) 0))
+  (set (day date) 1))
 
 
 (define-public (parse-freeform-date str)
