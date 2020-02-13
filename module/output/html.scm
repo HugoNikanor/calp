@@ -62,7 +62,8 @@
 ;; For that see @var{date->decimal-hour}.
 ;; NOTE Above comment probably deprecated
 (define (time->decimal-hour time)
-  (exact->inexact (+ (/ (minute time) 60)
+  (exact->inexact (+ (hour time)
+                     (/ (minute time) 60)
                      (/ (second time) 3600))))
 
 (define (html-attr str)
