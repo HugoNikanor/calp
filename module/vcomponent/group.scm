@@ -11,10 +11,10 @@
 (define-stream (group-stream in-stream)
   (define (ein? day) (lambda (e) (event-contains? e day)))
 
-  (let loop ((days (day-stream (as-date (attr (stream-car in-stream) 'DTSTART))))
-             (stream in-stream))
-    (if (stream-null? stream)
-        stream-null
+  (if (stream-null? in-stream)
+      stream-null
+      (let loop ((days (day-stream (as-date (attr (stream-car in-stream) 'DTSTART))))
+                 (stream in-stream))
         (let* ((day (stream-car days))
                (tomorow (stream-car (stream-cdr days))))
 
