@@ -174,17 +174,14 @@
                                       (date->string e))))]
                     [else (date->string s)]))]
         [else ; guaranteed datetime
-         ;; TODO rewrite this
-         (values (time->string (get-time (attr ev 'DTSTART)))
-                 (time->string (get-time (attr ev 'DTEND))))
-         #;
-         (let* ((fmt (if (date/-time<? (time- (attr ev 'DTEND) (attr ev 'DTSTART))
-                                       (time hour: 24))
-                         "~H:~M" "~Y-~m-~d ~H:~M"))
-                ;; TODO write these
-                (start (date/-time->string (attr ev 'DTSTART) fmt))
-                (end (date/-time->string (attr ev 'DTEND) fmt)))
-           (values start end))]))
+         (let ((s (attr ev 'DTSTART))
+               (e (attr ev 'DTEND)))
+           (let ((s-str (time->string (get-time s) "~H:~M"))
+                 (e-str (time->string (get-time e) "~H:~M")))
+             (if (date= (get-date s) (get-date e))
+                 (values s-str e-str)
+                 (values (string-append (date->string (get-date s) "~Y-~m-~d ") s-str)
+                         (string-append (date->string (get-date e) "~Y-~m-~d ") e-str)))))]))
 
 
 ;; For sidebar, just text
