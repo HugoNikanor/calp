@@ -39,7 +39,7 @@
 
 ;; Takes a list of vcomponents, sets their widths and x-positions to optimally
 ;; fill out the space, without any overlaps.
-(define (fix-event-widths! start-of-day lst)
+(define (fix-event-widths! date lst)
   ;; The tree construction is greedy. This means
   ;; that if  a smaller  event preceeds a longer
   ;; event it would capture  the longer event to
@@ -49,7 +49,8 @@
   ;; @var{x} is how for left in the container we are.
   (let inner ((x 0)
               (tree (make-tree overlapping?
-                               (sort* lst time>? (lambda (e) (event-length/day e))))))
+                               (sort* lst time>?
+                                      (lambda (e) (event-length/day date e))))))
     (unless (null? tree)
       (let ((w (/ (- 1 x)
                   (+ 1 (length-of-longst-branch (left-subtree tree))))))
@@ -89,7 +90,7 @@
                 0)
 
             ;; height
-            (* 100/24 (time->decimal-hour (event-length/day ev)))))
+            (* 100/24 (time->decimal-hour (event-length/day date ev)))))
 
   `(a (@ (href "#" ,(UID ev))
          (class "hidelink"))
@@ -126,8 +127,8 @@
     (format (current-error-port) "long=~a, short=~a~%"
             (length long-events)
             (length short-events))
-    (fix-event-widths! time-obj short-events)
-    (fix-event-widths! time-obj long-events)
+    (fix-event-widths! date short-events)
+    (fix-event-widths! date long-events)
     `(div (@ (class "day"))
           (div (@ (class "meta"))
                ,(let ((str (date-link date)))
