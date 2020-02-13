@@ -163,9 +163,4 @@
 
 (define-public (in-date-range? start-date end-date)
   (lambda (date)
-    ;; (format (current-error-port) "in-date-range? ~a < ~a < ~a = ~a~%"
-    ;;         (date->string start-date)
-    ;;         (date->string date)
-    ;;         (date->string end-date)
-    ;;         (date<= start-date date end-date) )
     (date<= start-date date end-date)))
