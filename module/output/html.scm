@@ -79,7 +79,7 @@
             (* 100 (width ev))          ; width
 
             ;; top
-            (if (in-day? date (attr ev 'DTSTART))
+            (if (date= date (as-date (attr ev 'DTSTART)))
                 (* 100/24
                    (time->decimal-hour
                     (as-time (attr ev 'DTSTART))

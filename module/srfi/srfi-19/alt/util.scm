@@ -158,8 +158,8 @@
 ;; given by @var{base-date}.
 ;; TODO test time zones
 ;; date x datetime → bool
-(define-public (in-day? base-date date/-time)
-  (date< base-date (as-date date/-time) (date+ base-date (date day: 1))))
+;; (define-public (in-day? base-date date/-time)
+;;   (date< base-date (as-date date/-time) (date+ base-date (date day: 1))))
 
 (define-public (in-date-range? start-date end-date)
   (lambda (date)
