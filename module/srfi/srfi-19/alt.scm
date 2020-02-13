@@ -539,7 +539,7 @@
   (time hour:   (s->n str 0 2)
         minute: (s->n str 2 4)
         second: (s->n str 4 6)
-        ;; TODO UTC
+        utc: (string=? "Z" (string-take-right str 1))
         ))
 
 (define-public (parse-datetime str)
