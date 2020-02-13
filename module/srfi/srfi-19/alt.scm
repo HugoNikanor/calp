@@ -158,7 +158,7 @@
 (define (date<% a b)
   (let ((ay (year a))
         (by (year b)))
-    (if (= ay ay)
+    (if (= ay by)
         (let ((am (month a))
               (bm (month b)))
           (if (= am bm)
