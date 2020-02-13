@@ -186,6 +186,7 @@
      (and (date<=% first second)
           (apply date<= second rest))]))
 
+;; TODO TZ
 (define-public (time< a b)
   (let ((ah (hour a))
         (bh (hour b)))

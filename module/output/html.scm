@@ -123,10 +123,7 @@
                                                     (datetime-difference (attr ev 'DTEND)
                                                                          (attr ev 'DTSTART)))))
                                  (stream->list events))))
-    ;; (format (current-error-port) "lay-out-day: ~a~%" (date->string date))
-    (format (current-error-port) "long=~a, short=~a~%"
-            (length long-events)
-            (length short-events))
+
     (fix-event-widths! date short-events)
     (fix-event-widths! date long-events)
     `(div (@ (class "day"))
@@ -203,7 +200,6 @@
 ;; Single event in side bar (text objects)
 (define (fmt-day day)
   (let* (((date . events) day))
-    ;; (format (current-error-port) "fmt-day: ~a~%" (date->string date))
     `(section (@ (class "text-day"))
               (header (h2 ,(let ((s (date->string date "~Y-~m-~d")))
                              `(a (@ (href "#" ,s)
@@ -221,9 +217,7 @@
                               events))))))
 
 (define* (month+ date-object #:optional (change 1))
-  ;; (normalize-date* (set (date-month date) = (+ change)))
-  (date+ date-object (date month: change))
-  )
+  (date+ date-object (date month: change)))
 
 (define* (month- date-object #:optional (change 1))
   (date- date-object (date month: change)))
@@ -280,10 +274,11 @@
 ;;; All this filtering is probably slow, and should be looked into.
 
 (define-public (html-generate calendars events start-date end-date)
+  ;; TODO maybe don't do this again for every month
   (define evs (get-groups-between (group-stream events)
                                   start-date end-date))
 
-  ;; (display "<!doctype HTML>") (newline)
+
   (define (nav-link display date)
     `(a (@ (href ,(date->string date "~Y-~m-~d") ".html")
            (class "nav hidelink"))
