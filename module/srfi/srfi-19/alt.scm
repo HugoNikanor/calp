@@ -212,9 +212,15 @@
       (date<= (get-date a) (get-date b))))
 
 (define-public (date/-time< a b)
-  (if (date< (as-date a) (as-date b))
-      #t
-      (time< (as-time a) (as-time b))))
+  ;; (format (current-error-port) "~a < ~a = " a b)
+  (let ((res
+         (cond [(date= (as-date a) (as-date b))
+                (time< (as-time a) (as-time b))]
+               [(date< (as-date a) (as-date b))
+                #t]
+               [else #f])))
+    ;; (format (current-error-port) "~a~%" res)
+    res))
 
 (define-many define-public
   (date<?) date<
