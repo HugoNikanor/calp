@@ -97,7 +97,7 @@
       (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
                 ,(when (date<? (as-date (attr ev 'DTSTART)) date)
                    " continued")
-                ,(when (date<? (add-day date) (as-date (attr ev 'DTEND)))
+                ,(when (date<? date (as-date (attr ev 'DTEND)))
                    " continuing"))
               (style ,style))
            ,((summary-filter) ev (attr ev 'SUMMARY))))
