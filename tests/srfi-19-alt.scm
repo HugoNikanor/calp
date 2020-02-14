@@ -4,7 +4,6 @@
   date time
   datetime
   datetime+
-  datetime-
   datetime<=?
   datetime-difference
   leap-year?
