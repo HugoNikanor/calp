@@ -116,11 +116,13 @@
                     (let ((start (attr ev 'DTSTART)))
                       (if (datetime? start)
                           (string-append (date->string (get-date start))
+                                         " "
                                          (time->string (get-time start)))
                           (date->string start)))
                     (let ((end (attr ev 'DTEND)))
                       (if (datetime? end)
                           (string-append (date->string (get-date end))
+                                         " "
                                          (time->string (get-time end)))
                           (date->string end)))
                     (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
