@@ -20,14 +20,10 @@
   (let* ((calendars regular repeating (load-calendars* #:calendar-files calendar-files)))
     (values
      calendars
-     (list->stream regular)
-     #;
      (interleave-streams
       ev-time<?
       (cons (list->stream regular)
-            '()
-            ;; TODO reactivate this
-            #; (map generate-recurrence-set repeating)
+            (map generate-recurrence-set repeating)
             )))))
 
 ;; Basic version, loads calendrs, sorts the events, and returns
