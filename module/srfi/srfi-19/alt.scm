@@ -385,6 +385,7 @@
   (date-%% change base)
   )
 
+;;; Only use this with extreme caution
 (define-public (date- base . rest)
   (fold date-% base rest))
 
@@ -507,6 +508,8 @@
              second: ((@ (srfi srfi-19) date-second) o)
              )))
 
+;;; the *-difference procedures takes two actual datetimes.
+;;; date- instead takes a date and a delta (but NOT an actual date).
 
 (define-public (datetime-difference end start)
   (let ((t
@@ -515,6 +518,10 @@
           ((@ (srfi srfi-19) date->time-utc) (datetime->srfi-19-date start)))))
     ((@ (srfi srfi-19) set-time-type!) t (@ (srfi srfi-19) time-utc))
     (srfi-19-date->datetime ((@ (srfi srfi-19) time-utc->date) t 0))))  ; TODO tz offset
+
+(define-public (date-difference end start)
+  (get-date (datetime-difference (datetime date: end)
+                                 (datetime date: start))))
 
 
 ;;; Parsers for vcomponent usage
