@@ -52,36 +52,41 @@
                    (i (interval r)))
 
                (set! (attr e 'DTSTART)
-                     ((if (date? d)
-                          identity
-                          (lambda (date)
-                            (datetime
-                             date
-                             (time+ (get-time d)
-                                    (case (freq r)
-                                      ((SECONDLY) (time second: i))
-                                      ((MINUTELY) (time minute: i))
-                                      ((HOURLY)   (time hour:   i))
-                                      (else (time)))))))
+                 ((if (date? d)
+                    identity
+                    (lambda (date)
+                      (datetime
+                        date: date
+                        time: (time+ (get-time d)
+                                     (case (freq r)
+                                       ((SECONDLY) (time second: i))
+                                       ((MINUTELY) (time minute: i))
+                                       ((HOURLY)   (time hour:   i))
+                                       (else (time)))))))
 
-                      (date+ (as-date d)
-                             (case (freq r)
-                               ((DAILY)    (date day:    i))
-                               ((WEEKLY)   (date day: (* i 7)))
-                               ((MONTHLY)  (date month:  i))
-                               ((YEARLY)   (date year:   i))
-                               (else (date))))))
+                  (date+ (as-date d)
+                         (case (freq r)
+                           ((DAILY)    (date day:    i))
+                           ((WEEKLY)   (date day: (* i 7)))
+                           ((MONTHLY)  (date month:  i))
+                           ((YEARLY)   (date year:   i))
+                           (else (date))))))
 
                #;
                (set! (zone-offset d)
                  (zone-offset (time-utc->date (date->time-utc d))))
-)
 
-             (cond
-              [(attr e 'DTEND) date?
-               => (lambda (d) (date+ d (attr e 'X-HNH-DURATION)))]
-              [(attr e 'DTEND) datetime?
-               => (lambda (d) (datetime+ d (attr e 'X-HNH-DURATION)))]))
+
+               (let ((start (attr e 'DTSTART))
+                     (end (attr e 'DTEND))
+                     (change (attr e 'X-HNH-DURATION)))
+                 (when end
+                   (set! (attr e 'DTEND)
+                     ((cond
+                        [(date? end)  date+ ]
+                        [(datetime? end) datetime+]
+                        [else (error "End neither date nor datetime ~a" end)])
+                      start change))))))
 
     e))
 
@@ -123,7 +128,8 @@
      ((e r)
       (or (and (not (until r)) (not (count r)))                   ; Never ending
           (and=> (count r) (negate zero?))                        ; COUNT
-          (and=> (until r) (cut time<=? (attr e 'DTSTART) <>))))) ; UNTIL
+          (and=> (until r) (lambda (dt) ((if (date? dt) date<= date/-time<=) ; UNTIL
+                                    (attr e 'DTSTART) dt))))))
 
    ;; Event x Rule → next (Event, Rule)
    (match-lambda
@@ -154,8 +160,8 @@
                          ;; The value type of dtstart and dtend must be the same
                          ;; according to RFC 5545 3.8.2.2 (Date-Time End).
                          (if (date? end)
-                             (date- end (attr event 'DTSTART))
-                             (datetime- end (attr event 'DTSTART))))]))
+                             (date-difference end (attr event 'DTSTART))
+                             (datetime-difference end (attr event 'DTSTART))))]))
            (if (attr event "RRULE")
                (recur-event-stream event (parse-recurrence-rule
                                           (attr event "RRULE")
