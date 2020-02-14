@@ -1,6 +1,6 @@
 (define-module (srfi srfi-19 alt)
   :export (date? year month day
-                 hour minute second
+                 hour minute second utc?
                  time? datetime?
                  )
 
@@ -56,7 +56,7 @@
   (make-time hour minute second utc)
   time?
   (hour hour) (minute minute) (second second)
-  (utc utc)                             ; bool
+  (utc utc?)                            ; bool
   )
 
 (set-record-type-printer!
@@ -69,7 +69,7 @@
                (hour r) (minute r) (second r))
        (format p "~2'0d:~2'0d:~2'0d~a"
                (hour r) (minute r) (second r)
-               (if (utc r) "Z" "")))))
+               (if (utc? r) "Z" "")))))
 
 (define*-public (time key: (hour 0) (minute 0) (second 0) (utc #f))
   (make-time hour minute second utc))

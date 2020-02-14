@@ -73,7 +73,7 @@ Removes the X-HNH-FILENAME attribute, and sets PRODID to
                                    (string-append
                                     (date->string (get-date value) "~Y~m~d")
                                     "T"
-                                    (time->string (get-time value) "~H~M~S"))]))
+                                    (time->string (get-time value) "~H~M~S~z"))]))
                            ((X-HNH-DURATION)
                             (format #f "~s" value))
                            (else value)))))
