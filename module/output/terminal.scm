@@ -40,7 +40,14 @@
   (lambda (ev i)
     (display
      (string-append
-      (time->string (attr ev 'DTSTART) "~1 ~3") ; TODO show truncated string
+      (if (datetime? (attr ev 'DTSTART))
+        (string-append (date->string (get-date (attr ev 'DTSTART)))
+                       " "
+                       (time->string (get-time (attr ev 'DTSTART))))
+        ((@ (texinfo string-utils) center-string)
+         (date->string (attr ev 'DTSTART))
+         19))
+       ; TODO show truncated string
       " │ "
       (if (= i cur-event) "\x1b[7m" "")
       (color-escape (attr (parent ev) 'COLOR))
@@ -103,16 +110,19 @@
                     (attr ev 'SUMMARY)
                     (or (and=> (attr ev 'LOCATION)
                                (cut string-append "\x1b[1mPlats:\x1b[m " <> "\n")) "")
+                    ;; NOTE RFC 5545 says that DTSTART and DTEND MUST
+                    ;; have the same type. However we believe that is
+                    ;; another story.
                     (let ((start (attr ev 'DTSTART)))
                       (if (datetime? start)
-                          (string-append (date->string (date start))
-                                         (time->string (time start)))
-                          (date->string (date start))))
+                          (string-append (date->string (get-date start))
+                                         (time->string (get-time start)))
+                          (date->string start)))
                     (let ((end (attr ev 'DTEND)))
-                      (if (datetime? start)
-                          (string-append (date->string (date end))
-                                         (time->string (time end)))
-                          (date->string (date end))))
+                      (if (datetime? end)
+                          (string-append (date->string (get-date end))
+                                         (time->string (get-time end)))
+                          (date->string end)))
                     (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
                                                  #:width (min 70 width))
                                       (- height 8 5 (length events) 5))))))
@@ -122,13 +132,13 @@
           ;;         "c = ~c (~d)~%" char (char->integer char))
           (case char
             ((#\L #\l)
-             (set! time (add-day date)
+             (set! date (add-day date)
                    cur-event 0))
             ((#\h #\H)
-             (set! time (remove-day date)
+             (set! date (remove-day date)
                    cur-event 0))
             ((#\t)
-             (set! time (current-date)
+             (set! date (current-date)
                    cur-event 0))
             ((#\j #\J) (unless (= cur-event (1- (length events)))
                          (mod! cur-event 1+)))
