@@ -481,13 +481,6 @@
                            (date day: overflow))
               time: time)))
 
-(define-public (datetime- base change)
-  (let* ((time overflow (time- (get-time base) (get-time change))))
-    (datetime date: (date- (get-date base)
-                           (get-date change)
-                           (date day: overflow))
-              time: time)))
-
 (define (datetime->srfi-19-date date)
   ((@ (srfi srfi-19) make-date)
     0
