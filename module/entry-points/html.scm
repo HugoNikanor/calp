@@ -15,6 +15,7 @@
   '((from (value #t) (single-char #\F))
     (to (value #t) (single-char #\T))
     (file (value #t) (single-char #\f))
+    (count (value #t))
     (chunked)))
 
 (define (main args)
@@ -24,6 +25,8 @@
   (define end (cond [(option-ref opts 'to  #f) => parse-freeform-date]
                     [else (date+ start (date month: 1)) ]))
 
+  (define count (and=> (option-ref opts 'count "12") string->number))
+
   (define-values (calendars events)
     (load-calendars
      calendar-files: (cond [(option-ref opts 'file #f) => list]
@@ -32,5 +35,5 @@
   ((@ (srfi srfi-41) stream->list) events)
 
   (if (option-ref opts 'chunked #f)
-      (html-chunked-main calendars events start)
+      (html-chunked-main count calendars events start)
       (html-generate calendars events start end)))

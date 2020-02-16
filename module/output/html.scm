@@ -354,7 +354,7 @@
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
 
-(define-public (html-chunked-main calendars events start-date)
+(define-public (html-chunked-main count calendars events start-date)
   ;; NOTE Something here isn't thread safe.
   ;; TODO make it thread safe
   (stream-for-each
@@ -366,7 +366,7 @@
          (lambda () (apply html-generate calendars events pair)))))
    (let ((ms (month-stream start-date)))
      (stream-take
-      12 (stream-zip
+      count (stream-zip
           ms (stream-map (lambda (d) (date- d (date day: 1))) ; last in month
                          (stream-cdr ms))))
      )))
