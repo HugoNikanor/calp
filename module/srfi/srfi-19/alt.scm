@@ -1,6 +1,6 @@
 (define-module (srfi srfi-19 alt)
   :export (date? year month day
-                 hour minute second utc?
+                 hour minute second
                  time? datetime?
                  )
 
@@ -53,11 +53,9 @@
 ;;; TIME
 
 (define-immutable-record-type <time>
-  (make-time hour minute second utc)
+  (make-time hour minute second)
   time?
-  (hour hour) (minute minute) (second second)
-  (utc utc?)                            ; bool
-  )
+  (hour hour) (minute minute) (second second))
 
 (set-record-type-printer!
  <time>
@@ -67,32 +65,39 @@
            (not (integer? (second r))))
        (format p "BAD~s:~s:~s"
                (hour r) (minute r) (second r))
-       (format p "~2'0d:~2'0d:~2'0d~a"
-               (hour r) (minute r) (second r)
-               (if (utc? r) "Z" "")))))
+       (format p "~2'0d:~2'0d:~2'0d"
+               (hour r) (minute r) (second r)))))
 
-(define*-public (time key: (hour 0) (minute 0) (second 0) (utc #f))
-  (make-time hour minute second utc))
+(define*-public (time key: (hour 0) (minute 0) (second 0))
+  (make-time hour minute second))
 
 ;;; DATETIME
 
 (define-immutable-record-type <datetime>
   (make-datetime date time tz)
   datetime?
-  (date get-date set-date!)
-  (time get-time set-time!)
-  (tz get-tz set-tz!))
+  (date get-date)
+  (time get-time%)
+  (tz tz) ; #f, 'UTC, 'Z
+  )
 
-(export get-date get-time get-tz)
+(export get-date)
 
 (define*-public (datetime
                 key: date time
                 (year 0) (month 0) (day 0)
                 (hour 0) (minute 0) (second 0)
-                (tz #f))
+                tz)
   (make-datetime (or date (make-date year month day))
-                 (or time (make-time hour minute second #f))
+                 (or time (make-time hour minute second))
                  tz))
+
+;;; TODO TODO fix timezones!!!!!!!!!!!!!!!!!
+(define-public (get-time dt)
+  (case (tz dt)
+    [(Z z) (time+ (get-time% dt) (time hour: 1))]
+    [(#f) (get-time% dt)]
+    [else (error "Timezones not yet quite implemented")]))
 
 
 ;;; UTIL
@@ -186,7 +191,6 @@
      (and (date<=% first second)
           (apply date<= second rest))]))
 
-;; TODO TZ
 (define-public (time< a b)
   (let ((ah (hour a))
         (bh (hour b)))
@@ -538,14 +542,14 @@
 (define-public (parse-time str)
   (time hour:   (s->n str 0 2)
         minute: (s->n str 2 4)
-        second: (s->n str 4 6)
-        utc: (string=? "Z" (string-take-right str 1))
-        ))
+        second: (s->n str 4 6)))
 
 (define-public (parse-datetime str)
   (let* (((datestr timestr) (string-split str #\T)))
     (datetime date: (parse-date datestr)
-              time: (parse-time timestr))))
+              time: (parse-time timestr)
+              tz: (if (string=? "Z" (string-take-right str 1))
+                      'Z #f))))
 
 
 (define-public (current-date)
@@ -565,16 +569,19 @@
 
 (define (parse-time% timestr)
   (let* (((hour minute second) (string-split timestr #\:)))
-    (let ((utc? (string-contains second "Z")))
-      (let ((hour (string->number hour))
-            (minute (string->number minute))
-            (second (string->number (if utc? (string-drop-right second 1) second))))
-        `(time hour: ,hour minute: ,minute second: ,second utc: ,utc?)))))
+    (let ((hour (string->number hour))
+          (minute (string->number minute))
+          (second (string->number second)))
+      `(time hour: ,hour minute: ,minute second: ,second))))
 
 (define (parse-datetime% str)
   (let* (((date time) (string-split str #\T)))
+    (when (string= "Z" (string-take-right str 1))
+      (set! time (string-drop-right time 1)))
     `(datetime date: ,(parse-date% date)
-               time: ,(parse-time% time))))
+               time: ,(parse-time% time)
+               tz: ,(and (string= "Z" (string-take-right str 1))
+                         'Z))))
 
 (define (date-reader chr port)
   (unread-char chr port)

@@ -108,7 +108,7 @@
                    ((#\H) (format #t "~2'0d" (hour time)))
                    ((#\M) (format #t "~2'0d" (minute time)))
                    ((#\S) (format #t "~2'0d" (second time)))
-                   ((#\z) (when (utc? time) (display "Z")))
+                   ;; ((#\z) (when (utc? time) (display "Z")))
                    (else (unless allow-unknown?
                            (error 'time->string "Invalid format token ~a" token))))
                  #f)
