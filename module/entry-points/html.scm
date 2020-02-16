@@ -32,8 +32,6 @@
      calendar-files: (cond [(option-ref opts 'file #f) => list]
                            [else (calendar-files)]) ))
 
-  ((@ (srfi srfi-41) stream->list) events)
-
   (if (option-ref opts 'chunked #f)
       (html-chunked-main count calendars events start)
       (html-generate calendars events start end)))

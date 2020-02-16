@@ -83,10 +83,7 @@
             (if (date= date (as-date (attr ev 'DTSTART)))
                 (* 100/24
                    (time->decimal-hour
-                    (as-time (attr ev 'DTSTART))
-                    #;
-                    (time- (as-time (attr ev 'DTSTART))
-                           (start-of-day* (attr ev 'DTSTART)))))
+                    (as-time (attr ev 'DTSTART))))
                 0)
 
             ;; height
@@ -97,6 +94,9 @@
       (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
                 ,(when (date<? (as-date (attr ev 'DTSTART)) date)
                    " continued")
+                ;; TODO all day events usually have the day after as DTEND.
+                ;; So a whole day event the 6 june would have a DTEND of the
+                ;; 7 june.
                 ,(when (date<? date (as-date (attr ev 'DTEND)))
                    " continuing"))
               (style ,style))
