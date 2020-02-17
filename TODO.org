@@ -8,6 +8,8 @@ date := <year, month, date ?tz>
 time := <hour, minute, second>
 datetime := <date, time>
 
+Event 17:30 - 00:00 klassas som "långt" event
+
 * Att göra
 ** Tester
 *** Object utan DTEND

@@ -243,7 +243,9 @@
                            (class "hidelink")) ,d))))))
 
     `(table (@ (class "small-calendar"))
-            (thead (tr ,@(map (lambda (d) `(td ,d)) '(MÅ TI ON TO FR LÖ SÖ))))
+            ;; NOTE Sunday first since my code assumes that is the first day of the week.
+            ;; TODO make displayed first day of the week configurable.
+            (thead (tr ,@(map (lambda (d) `(td ,d)) '(SÖ MÅ TI ON TO FR LÖ))))
             (tbody ,@(let recur
                          ((lst (let* ((month (month date))
                                       (month-len (days-in-month date))
