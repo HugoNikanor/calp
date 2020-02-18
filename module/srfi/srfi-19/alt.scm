@@ -92,23 +92,30 @@
                  (or time (make-time hour minute second))
                  tz))
 
+;; datetime → datetime
+;; Takes a datetime in any timezone, and renormalize it to local time
+;; (as defined by TZ). This means that given UTC 10:00 new years day
+;; would return 11:00 new years day if ran in sweden.
 (define-public (get-datetime dt)
-
   (let ((t (get-time% dt))
         (d (get-date dt)))
+    ;; NOTE there isn't any stable way to craft the tm objects.
+    ;; I could call mktime on some date, and replace the fields
+    ;; with the set-tm:*, but that is worse that breaking the API.
     (let ((v (vector (second t)
                      (minute t)
                      (hour t)
                      (day d)
                      (1- (month d))
                      (- (year d) 1900)
-                     0
-                     0
-                     -1
-                     0 #f)))
+                     0 0                ; wday & yday (ignored)
+                     -1                 ; DST unknown
+                     0                  ; UTC offset (ignored)
+                     #f                 ; TZ name
+                     )))
       (let ((tm
-             (localtime
-              (car
+             (localtime ; localtime convertion since the returned tm object is
+              (car      ; in the parsed timezone.
                (cond [(not (tz dt)) (mktime v)]
                      [(string=? "local" (tz dt)) (mktime v)]
                      [else (mktime v (tz dt))])))))
@@ -120,6 +127,11 @@
                   second: (tm:sec  tm))))))
 
 ;; Deprecated
+;; datetime → time
+;; Returns the local time from a date. Meaning that if the given datetime has
+;; timezone info it's discarded and a local timestamp produced.
+;; It's deprecated since the local time of a datetime can be in another date
+;; than the original. which is fun...
 (define-public (get-time dt)
   (get-time% (get-datetime dt)))
 
@@ -568,6 +580,8 @@
         minute: (s->n str 2 4)
         second: (s->n str 4 6)))
 
+;;; TODO when parsing recurrence rules sometimes I think this is
+;;; sent regular dates
 (define*-public (parse-datetime str optional: tz)
   (let* (((datestr timestr) (string-split str #\T)))
     (datetime date: (parse-date datestr)

@@ -241,14 +241,16 @@
                   (increment-column! ctx)]))))
 
           (lambda _
-            (format (current-error-port)
-                    "== PARSE ERROR ==
+            ;; display is atomic, format isn't
+            (display
+             (format #f
+                     "== PARSE ERROR ==
 filename = ~a
 row ~a	column ~a	ctx = ~a
 ~a ; ~a = ... : ...~%~%"
-                    (get-filename ctx)
-                    (get-row ctx) (get-col ctx) (get-ctx ctx)
-                    (get-line-key ctx) (get-param-key ctx))))))))
+                     (get-filename ctx)
+                     (get-row ctx) (get-col ctx) (get-ctx ctx)
+                     (get-line-key ctx) (get-param-key ctx)))))))))
 
 
 
