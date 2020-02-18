@@ -1,5 +1,5 @@
-(define-module (srfi srfi-19 alt util)
-  :use-module (srfi srfi-19 alt)
+(define-module (datetime util)
+  :use-module (datetime)
   :use-module ((srfi srfi-1) :select (fold))
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)

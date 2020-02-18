@@ -5,8 +5,8 @@
   :use-module ((vcomponent) :select (load-calendars*))
   :use-module ((parameters) :select (calendar-files))
   :use-module (ice-9 getopt-long)
-  :use-module (srfi srfi-19 alt)
-  :use-module (srfi srfi-19 alt util)
+  :use-module (datetime)
+  :use-module (datetime util)
   )
 
 (define opt-spec

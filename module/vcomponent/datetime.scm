@@ -1,7 +1,7 @@
 (define-module (vcomponent datetime)
   #:use-module (vcomponent base)
-  #:use-module (srfi srfi-19 alt)
-  #:use-module (srfi srfi-19 alt util)
+  #:use-module (datetime)
+  #:use-module (datetime util)
   #:use-module (util)
 
   #:export (#;parse-datetime

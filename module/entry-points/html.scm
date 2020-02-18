@@ -3,8 +3,8 @@
   :use-module (output html)
   :use-module (util)
   :use-module (vcomponent)
-  :use-module (srfi srfi-19 alt)
-  :use-module (srfi srfi-19 alt util)
+  :use-module (datetime)
+  :use-module (datetime util)
   :use-module (ice-9 getopt-long)
 
   :use-module (parameters)

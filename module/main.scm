@@ -7,7 +7,6 @@ exec guile -e main -s $0 "$@"
 !#
 
 (use-modules (srfi srfi-1)
-             ;; (srfi srfi-19)
              (srfi srfi-41)
              (srfi srfi-41 util)
              (srfi srfi-88)             ; keyword syntax

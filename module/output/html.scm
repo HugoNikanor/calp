@@ -9,8 +9,8 @@
   #:use-module (util)
   #:use-module (util tree)
   #:duplicates (last)
-  #:use-module (srfi srfi-19 alt)
-  #:use-module (srfi srfi-19 alt util)
+  #:use-module (datetime)
+  #:use-module (datetime util)
   #:use-module (output general)
 
 

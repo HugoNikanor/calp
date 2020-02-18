@@ -11,10 +11,8 @@
                             iconv regex #| regex here due to bad macros |#  ))
               (srfi (srfi-1 srfi-88)))
 
-(use-modules (srfi srfi-19 alt)
-             (srfi srfi-19 alt util))
-
-;; (use-modules (srfi srfi-19 util))
+(use-modules (datetime)
+             (datetime util))
 
 (define (file-extension name)
   (car (last-pair (string-split name #\.))))

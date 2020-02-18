@@ -1,4 +1,4 @@
-(define-module (srfi srfi-19 alt)
+(define-module (datetime)
   :export (date? year month day
                  hour minute second
                  time? datetime?

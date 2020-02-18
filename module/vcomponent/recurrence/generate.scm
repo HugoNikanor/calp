@@ -1,8 +1,7 @@
 (define-module (vcomponent recurrence generate)
   #:use-module ((srfi srfi-1) :select (find))
-  #:use-module (srfi srfi-19 alt)           ; Datetime
-  #:use-module (srfi srfi-19 alt util)
-  ;; #:use-module (srfi srfi-19 setters)
+  #:use-module (datetime)
+  #:use-module (datetime util)
   #:use-module (srfi srfi-26)           ; Cut
   #:use-module (srfi srfi-41)           ; Streams
   #:use-module (ice-9 match)
