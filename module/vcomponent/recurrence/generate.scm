@@ -165,7 +165,7 @@
            (if (attr event "RRULE")
                (recur-event-stream event (parse-recurrence-rule
                                           (attr event "RRULE")
-                                          (if (string= "DATE" (and=> (prop (attr* event 'DTSTART) 'VALUE) car))
+                                          (if (eq? 'DATE (and=> (prop (attr* event 'DTSTART) 'VALUE) car))
                                               parse-date parse-datetime)))
                ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather
                ;; just mention the current part. Handle this

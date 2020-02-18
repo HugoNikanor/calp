@@ -163,18 +163,17 @@
                                 (case (get-line-key ctx)
                                   [(DTSTART DTEND RECURRENCE-ID)
 
-                                   (let ((v (prop it 'VALUE)))
-                                     (mod! (value it)
-                                           (if (or (and=>> v car (cut string=? <> "DATE-TIME"))
-                                                   (string-contains (value it) "T"))
-                                               (begin
-                                                 (set! (prop it 'VALUE) "DATE-TIME")
-                                                 parse-datetime)
-                                               (begin
-                                                 (set! (prop it 'VALUE) "DATE")
-                                                 parse-date))))]
+                                   ;; '("Africa/Ceuta" "Europe/Stockholm" "local")
+                                   (let ((tz (or (and=> (prop it 'TZID) car)
+                                                 (and (string= "Z" (string-take-right (value it) 1)) "UTC"))))
 
-                                  )
+                                     (let ((type (and=> (prop it 'VALUE) car)))
+                                       (if (or (and=> type (cut string=? <> "DATE-TIME"))
+                                               (string-contains (value it) "T"))
+                                           (set! (value it) (parse-datetime (value it) tz)
+                                                 (prop it 'VALUE) 'DATE-TIME)
+                                           (set! (value it) (parse-date (value it))
+                                                 (prop it 'VALUE) 'DATE))))])
 
 
                                 ;; From RFC 5545 §3.6.1

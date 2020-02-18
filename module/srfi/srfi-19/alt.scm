@@ -544,12 +544,11 @@
         minute: (s->n str 2 4)
         second: (s->n str 4 6)))
 
-(define-public (parse-datetime str)
+(define*-public (parse-datetime str optional: tz)
   (let* (((datestr timestr) (string-split str #\T)))
     (datetime date: (parse-date datestr)
               time: (parse-time timestr)
-              tz: (if (string=? "Z" (string-take-right str 1))
-                      'Z #f))))
+              tz: tz)))
 
 
 (define-public (current-date)
