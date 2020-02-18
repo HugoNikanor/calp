@@ -84,20 +84,44 @@
 (export get-date)
 
 (define*-public (datetime
-                key: date time
-                (year 0) (month 0) (day 0)
-                (hour 0) (minute 0) (second 0)
-                tz)
+                 key: date time
+                 (year 0) (month 0) (day 0)
+                 (hour 0) (minute 0) (second 0)
+                 tz)
   (make-datetime (or date (make-date year month day))
                  (or time (make-time hour minute second))
                  tz))
 
-;;; TODO TODO fix timezones!!!!!!!!!!!!!!!!!
+(define-public (get-datetime dt)
+
+  (let ((t (get-time% dt))
+        (d (get-date dt)))
+    (let ((v (vector (second t)
+                     (minute t)
+                     (hour t)
+                     (day d)
+                     (1- (month d))
+                     (- (year d) 1900)
+                     0
+                     0
+                     -1
+                     0 #f)))
+      (let ((tm
+             (localtime
+              (car
+               (cond [(not (tz dt)) (mktime v)]
+                     [(string=? "local" (tz dt)) (mktime v)]
+                     [else (mktime v (tz dt))])))))
+        (datetime year:   (+ 1900 (tm:year tm))
+                  month:  (1+ (tm:mon  tm))
+                  day:    (tm:mday tm)
+                  hour:   (tm:hour tm)
+                  minute: (tm:min  tm)
+                  second: (tm:sec  tm))))))
+
+;; Deprecated
 (define-public (get-time dt)
-  (case (tz dt)
-    [(Z z) (time+ (get-time% dt) (time hour: 1))]
-    [(#f) (get-time% dt)]
-    [else (error "Timezones not yet quite implemented")]))
+  (get-time% (get-datetime dt)))
 
 
 ;;; UTIL
