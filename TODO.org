@@ -5,6 +5,14 @@ Heldagsevents visa inte 00:00 - 00:00
 
 Event 17:30 - 00:00 klassas som "långt" event
 
+Omnormalizering av datum för addition?
+Exemplet nedan misslyckas då månad 0 saknas...
+#+BEGIN: example
+(test-equal "datetime addition"
+  (datetime hour: 2)
+  (datetime+ (datetime hour: 1) (datetime hour: 1)))
+#+END
+
 * Att göra
 ** Tester
 *** Object utan DTEND
