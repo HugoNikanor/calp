@@ -3,11 +3,6 @@ Lill-kallendern har inte det problemet
 
 Heldagsevents visa inte 00:00 - 00:00
 
-Omnormalizera alla tidsfällt överallt till att vara rimligga
-date := <year, month, date ?tz>
-time := <hour, minute, second>
-datetime := <date, time>
-
 Event 17:30 - 00:00 klassas som "långt" event
 
 * Att göra
