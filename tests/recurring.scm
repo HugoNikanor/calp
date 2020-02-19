@@ -1,7 +1,5 @@
 (((srfi srfi-41) stream-take stream-map stream->list stream-car)
- ;; ((srfi srfi-19) date->time-utc time-utc->date)
- ;; ((srfi srfi-19 util) day-stream)
- ((srfi srfi-19 alt util) day-stream)
+ ((datetime util) day-stream)
  ((vcomponent base) extract attr)
 
  ((vcomponent) parse-calendar)

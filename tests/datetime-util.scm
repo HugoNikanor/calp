@@ -1,5 +1,5 @@
-(((srfi srfi-19 alt) date time)
- ((srfi srfi-19 alt util) month-stream in-date-range?)
+(((datetime) date time)
+ ((datetime util) month-stream in-date-range?)
  ((srfi srfi-41) stream->list stream-take
   ))
 

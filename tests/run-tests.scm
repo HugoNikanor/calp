@@ -16,7 +16,10 @@
              (ice-9 sandbox)
              (srfi srfi-64)             ; test suite
              (srfi srfi-88)             ; suffix keywords
-             ((util) :select (for awhen)))
+             ((util) :select (for awhen))
+             ;; datetime introduces the reader extensions for datetimes,
+             ;; which leaks into the sandboxes below.
+             (datetime))
 
 (define files
   (scandir here
