@@ -282,6 +282,14 @@ body {
 			#FFF0 90%, #0007 100%);
 }
 
+.event.tentative {
+    border: 3px dashed black;
+}
+
+.eventlist article.tentative {
+    border-left-style: dashed;
+}
+
 /* */
 
 .wholeday .event.continuing {

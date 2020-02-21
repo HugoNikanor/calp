@@ -92,6 +92,8 @@
   `(a (@ (href "#" ,(UID ev))
          (class "hidelink"))
       (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
+                ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                   " tentative")
                 ,(when (date<? (as-date (attr ev 'DTSTART)) date)
                    " continued")
                 ;; TODO all day events usually have the day after as DTEND.
@@ -186,7 +188,9 @@
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (attr ev 'X-HNH-FILENAME))
   `(article (@ (id ,(UID ev))
                (class "eventtext CAL_bg_"
-                 ,(html-attr (attr (parent ev) 'NAME))))
+                 ,(html-attr (attr (parent ev) 'NAME))
+                 ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                    " tentative")))
             (h3 (a (@ (href "#" ,(date-link (as-date (attr ev 'DTSTART))))
                       (class "hidelink"))
                    ,(attr ev 'SUMMARY)))
