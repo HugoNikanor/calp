@@ -54,7 +54,8 @@
 
 (description-filter
  (lambda (ev str)
-   (cond [(member (attr (parent ev) 'NAME) '("d_sektionen" #; "lithekod"
-                                             ))
-          (parse-html str)]
+   (cond [(member (attr (parent ev) 'NAME) '("d_sektionen" "lithekod"))
+          (parse-html (regexp-substitute/global
+                        #f "<br>" str
+                        'pre "<br/>" 'post))]
          [else (parse-links str)])))
