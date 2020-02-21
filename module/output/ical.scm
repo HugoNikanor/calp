@@ -18,12 +18,20 @@
     (lambda ()
      (case key
        ((DTSTART DTEND RECURRENCE-ID)
-        (time->string (value vline) (if (prop vline 'TZID)
-                                        "~Y~m~dT~H~M~S"
-                                        "~Y~m~dT~H~M~SZ" )))
+        (with-output-to-string
+          (lambda ()
+            (display (date->string (as-date (value vline))
+                                   "~Y~m~d"))
+            (when (eq? 'DATE-TIME (and=> (prop vline 'VALUE) car))
+              (display (time->string (get-time (value vline))
+                                     "T~H~M~S"))
+              (let ((tz (and=> (prop vline 'TZID) car)))
+               (when (and tz (string= tz "UTC"))
+                 (display #\Z))))))
+        )
        ((DURATION X-HNH-DURATION)
      #; (time->string value "~H~M~S")
-        (let ((s (time-second (value vline))))
+        (let ((s (second (value vline))))
           (format #f "~a~a~a"
                   (floor/ s 3600)
                   (floor/ (modulo s 3600) 60)
@@ -117,7 +125,7 @@ CALSCALE:GREGORIAN\r
   (for-each
    component->ical-string
    (filter-sorted (lambda (ev) ((in-date-range? start end)
-                           (time-utc->date (attr ev 'DTSTART))))
+                           (as-date (attr ev 'DTSTART))))
                   regular-events))
 
   ;; TODO RECCURENCE-ID exceptions
