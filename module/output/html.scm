@@ -156,11 +156,17 @@
                                        ,time ":00")))
                          (iota 12 0 2))))))
 
-(define (include-css path)
+(define (include-css path . extra-attributes)
   `(link (@ (type "text/css")
             (rel "stylesheet")
-            (href ,path))))
+            (href ,path)
+            ,@extra-attributes)))
 
+(define (include-alt-css path . extra-attributes)
+  `(link (@ (type "text/css")
+            (rel "alternate stylesheet")
+            (href ,path)
+            ,@extra-attributes)))
 
 (define (fmt-time-span ev)
   (cond [(attr ev 'DTSTART) date?
@@ -304,6 +310,8 @@
                     (content "Calendar for the dates between " ,(date->string start-date)
                              " and " ,(date->string end-date))))
            ,(include-css "static/style.css")
+           ,(include-alt-css "static/dark.css"  '(title "Dark"))
+           ,(include-alt-css "static/light.css" '(title "Light"))
            (script (@ (src "static/script.js")) "")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
                            (map (lambda (c)

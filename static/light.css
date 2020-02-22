@@ -1,0 +1,12 @@
+main {
+    background-color: white;
+    color: black;
+}
+
+main a {
+    color: blue;
+}
+
+main .day {
+    border-color: black;
+}

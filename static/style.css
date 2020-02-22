@@ -343,5 +343,6 @@ body {
     width: calc(100% + 2em);
     height: 4px;
     background: blue;
+    border-color: blue;
     left: -1em;
 }
