@@ -233,6 +233,24 @@
 (define* (month- date-object #:optional (change 1))
   (date- date-object (date month: change)))
 
+;; Given a list, partitions it up into sublists of width length,
+;;; each starting with 'tr.
+(define (tablify list width)
+  (unless (null? list)
+    (let* ((row rest (split-at list width)))
+      (cons `(tr ,@row)
+            (tablify rest width)))))
+
+(define (month-days date week-start)
+  (let* ((month (month date))
+         (month-len (days-in-month date))
+         (prev-month-len (days-in-month (month- date)))
+         (month-start (modulo (- (week-day date) week-start) 7)))
+    (values
+     (iota month-start (1+ (- prev-month-len month-start)))
+     (iota month-len 1)
+     (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))
+
 ;; date should be start of month
 ;; @example
 ;; må ti on to fr lö sö
@@ -261,15 +279,13 @@
                                         week-start)
                                   7))))
 
-          ((tbody ,@(let* ((month (month date))
-                           (month-len (days-in-month date))
-                           (prev-month-len (days-in-month (month- date)))
-                           (month-start (modulo (- (week-day date) week-start) 7)))
+          ((tbody ,@(let* ((last current next
+                                 (month-days date week-start)))
                       (define lst
                         (append
                          ;; ... 28 29 |
                          (map (td '(class "prev") (month- date))
-                              (iota month-start (1+ (- prev-month-len month-start))))
+                              last)
                          ;; 1 2 ... 30 31
                          (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
                                           ,@(cdr p)))
@@ -277,16 +293,13 @@
                                                          "today")))
                                             (a (@ (href "#" ,(date->string date "~Y-~m-~d"))
                                                   (class "hidelink")) ,d)))
-                                   (iota month-len 1)))
+                                   current))
                          ;; | 1 2 ...
                          (map (td '(class "next") (month+ date))
-                              (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))
+                              next)))
 
-                      (let recur ((lst lst))
-                        (unless (null? lst)
-                          (let* ((w rest (split-at lst 7)))
-                            (cons `(tr ,@w)
-                                  (recur rest))))))))))
+                      (tablify lst 7))))))
+
 
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
