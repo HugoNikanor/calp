@@ -303,12 +303,22 @@
 
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
+
+(define-public (render-calendar event-groups)
+  `(div (@ (class "calendar"))
+        ,(time-marker-div)
+       (div (@ (class "days"))
+            ,@(stream->list (stream-map lay-out-day event-groups)))))
+
+
 ;;; NOTE
 ;;; The side bar filters all earlier events for each day to not create repeats,
 ;;; and the html-generate procedure also filters, but instead to find earlier eventns.
 ;;; All this filtering is probably slow, and should be looked into.
 
-(define-public (html-generate calendars events start-date end-date)
+
+
+(define-public (html-generate calendars events start-date end-date render-calendar)
   ;; TODO maybe don't do this again for every month
   (define evs (get-groups-between (group-stream events)
                                   start-date end-date))
@@ -350,10 +360,7 @@
            (div (@ (class "root"))
                 (main
                  ;; Actuall calendar
-                 (div (@ (class "calendar"))
-                      ,(time-marker-div)
-                      (div (@ (class "days"))
-                           ,@(stream->list (stream-map lay-out-day evs))))
+                 ,(render-calendar evs)
 
                  ;; Page footer
                  (footer (span "Page generated " ,(date->string (current-date)))
@@ -401,7 +408,7 @@
      (let ((fname (format #f "./html/~a.html" (date->string (car pair) "~1"))))
        (format (current-error-port) "Writing to [~a]~%" fname)
        (with-output-to-file fname
-         (lambda () (apply html-generate calendars events pair)))))
+         (lambda () (html-generate calendars events (car pair) (cadr pair) render-calendar)))))
    (let ((ms (month-stream start-date)))
      (stream-take
       count (stream-zip

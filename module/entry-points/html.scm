@@ -34,4 +34,4 @@
 
   (if (option-ref opts 'chunked #f)
       (html-chunked-main count calendars events start)
-      (html-generate calendars events start end)))
+      (html-generate calendars events start end render-calendar)))
