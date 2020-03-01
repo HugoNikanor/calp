@@ -256,31 +256,37 @@
   `(table (@ (class "small-calendar"))
           ;; NOTE Sunday first since my code assumes that is the first day of the week.
           (thead (tr ,@(map (lambda (d) `(td ,(week-day-name d 2)))
-                            ; '(SÖ MÅ TI ON TO FR LÖ)
+                            ;; '(SÖ MÅ TI ON TO FR LÖ)
                             (take (drop (apply circular-list (iota 7))
                                         week-start)
                                   7))))
-          (tbody ,@(let recur
-                       ((lst (let* ((month (month date))
-                                    (month-len (days-in-month date))
-                                    (prev-month-len (days-in-month (month- date)))
-                                    (month-start (modulo (- (week-day date) week-start) 7)))
-                               ;; ... 28 29 | 1 2 ... 30 31 | 1 2 ...
-                               (append (map (td '(class "prev") (month- date))
-                                            (iota month-start (1+ (- prev-month-len month-start))))
-                                       (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
-                                                        ,@(cdr p)))
-                                            (map (lambda (d) `((@ (class ,(when (date=? today (set (day date) d))
-                                                                       "today")))
-                                                          (a (@ (href "#" ,(date->string date "~Y-~m-~d"))
-                                                                (class "hidelink")) ,d)))
-                                                 (iota month-len 1)))
-                                       (map (td '(class "next") (month+ date))
-                                            (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))))
-                     (unless (null? lst)
-                       (let* ((w rest (split-at lst 7)))
-                         (cons `(tr ,@w)
-                               (recur rest))))))))
+
+          ((tbody ,@(let* ((month (month date))
+                           (month-len (days-in-month date))
+                           (prev-month-len (days-in-month (month- date)))
+                           (month-start (modulo (- (week-day date) week-start) 7)))
+                      (define lst
+                        (append
+                         ;; ... 28 29 |
+                         (map (td '(class "prev") (month- date))
+                              (iota month-start (1+ (- prev-month-len month-start))))
+                         ;; 1 2 ... 30 31
+                         (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
+                                          ,@(cdr p)))
+                              (map (lambda (d) `((@ (class ,(when (date=? today (set (day date) d))
+                                                         "today")))
+                                            (a (@ (href "#" ,(date->string date "~Y-~m-~d"))
+                                                  (class "hidelink")) ,d)))
+                                   (iota month-len 1)))
+                         ;; | 1 2 ...
+                         (map (td '(class "next") (month+ date))
+                              (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))
+
+                      (let recur ((lst lst))
+                        (unless (null? lst)
+                          (let* ((w rest (split-at lst 7)))
+                            (cons `(tr ,@w)
+                                  (recur rest))))))))))
 
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
