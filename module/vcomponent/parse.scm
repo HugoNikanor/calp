@@ -91,6 +91,19 @@
       (let ((component (make-vcomponent))
             (ctx (make-parse-ctx (port-filename port)))
             (strbuf (make-strbuf)))
+        (define (warning fmt . args)
+          (display
+           (format #f
+                   "== PARSE WARNING ==
+filename = ~a
+row ~a	column ~a	ctx = ~a
+~a ; ~a = ... : ...
+~?~%~%"
+                   (get-filename ctx)
+                   (get-row ctx) (get-col ctx) (get-ctx ctx)
+                   (get-line-key ctx) (get-param-key ctx)
+                   fmt args)) )
+
         (with-throw-handler #t
           (lambda ()
             (while #t
@@ -206,7 +219,7 @@
 
                     [(#\n #\N) (strbuf-append! strbuf (char->integer #\newline))]
                     [(#\; #\, #\\) => (lambda (c) (strbuf-append! strbuf (char->integer c)))]
-                    [else => (lambda (c) (throw 'escape-error "Non-escapable character" c))])
+                    [else => (lambda (c) (warning "Non-escapable character: ~a" c))])
                   (increment-column! ctx)]
 
                  ;; Delimiter between param key and param value
