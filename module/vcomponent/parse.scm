@@ -45,6 +45,12 @@
   (set-col! ctx 0)
   (set-row! ctx (1+ (get-row ctx))))
 
+(define (ctx-dump-strings! ctx)
+  (set-line-key! ctx "")
+  (set-param-key! ctx "")
+  ;; (set-param-table! ctx (make-hash-table))
+  )
+
 (define-macro (with-vline-tz object . body)
   `(let-env ((TZ (and=> (prop ,object 'TZID) car)))
             ,@body))
@@ -148,55 +154,62 @@ row ~a	column ~a	ctx = ~a
                   (case (fold-proc ctx c)
                     [(end-of-line)
                      (let ((str (strbuf->string strbuf)))
-                       (cond [(eq? 'BEGIN (get-line-key ctx))
-                              (let ((child (make-vcomponent (string->symbol str))))
-                                (add-child! component child)
-                                (set! component child))]
+                       ;; I believe that an empty line is against the standard
+                       ;; in every whey. But it's nice to handle it.
+                       (if (and (eq? 'key (get-ctx ctx))
+                                (string-null? str))
+                           (warning "Unexpected completely empty line")
+                           (begin
+                             (cond [(eq? 'BEGIN (get-line-key ctx))
+                                    (let ((child (make-vcomponent (string->symbol str))))
+                                      (add-child! component child)
+                                      (set! component child))]
 
-                             [(eq? (get-line-key ctx) 'END)
+                                   [(eq? (get-line-key ctx) 'END)
 
-                              ;; Ensure that we have a DTEND
-                              ;; TODO Objects aren't required to have a DTEND, or a DURATION.
-                              ;; write fancier code which acknoledges this.
-                              (when (and (eq? 'VEVENT (type component))
-                                         (not (attr component 'DTEND)))
-                                (set! (attr component 'DTEND)
-                                  (let ((start (attr component 'DTSTART)))
-                                   (if (date? start)
-                                       (date+ start (date day: 1))
-                                       (datetime+ start (datetime time: (time hour: 1)))))))
+                                    ;; Ensure that we have a DTEND
+                                    ;; TODO Objects aren't required to have a DTEND, or a DURATION.
+                                    ;; write fancier code which acknoledges this.
+                                    (when (and (eq? 'VEVENT (type component))
+                                               (not (attr component 'DTEND)))
+                                      (set! (attr component 'DTEND)
+                                        (let ((start (attr component 'DTSTART)))
+                                          (if (date? start)
+                                              (date+ start (date day: 1))
+                                              (datetime+ start (datetime time: (time hour: 1)))))))
 
-                              (set! component (parent component))]
+                                    (set! component (parent component))]
 
-                             [else
-                              ;; TODO repeated keys
-                              (let ((it (make-vline str (get-param-table ctx))))
-                                ;; Type specific processing
-                                (case (get-line-key ctx)
-                                  [(DTSTART DTEND RECURRENCE-ID)
+                                   [else
+                                    ;; TODO repeated keys
+                                    (let ((it (make-vline str (get-param-table ctx))))
+                                      ;; Type specific processing
+                                      (case (get-line-key ctx)
+                                        [(DTSTART DTEND RECURRENCE-ID)
 
-                                   ;; '("Africa/Ceuta" "Europe/Stockholm" "local")
-                                   (let ((tz (or (and=> (prop it 'TZID) car)
-                                                 (and (string= "Z" (string-take-right (value it) 1)) "UTC"))))
+                                         ;; '("Africa/Ceuta" "Europe/Stockholm" "local")
+                                         (let ((tz (or (and=> (prop it 'TZID) car)
+                                                       (and (string= "Z" (string-take-right (value it) 1)) "UTC"))))
 
-                                     (let ((type (and=> (prop it 'VALUE) car)))
-                                       (if (or (and=> type (cut string=? <> "DATE-TIME"))
-                                               (string-contains (value it) "T"))
-                                           (set! (value it) (parse-datetime (value it) tz)
-                                                 (prop it 'VALUE) 'DATE-TIME)
-                                           (set! (value it) (parse-date (value it))
-                                                 (prop it 'VALUE) 'DATE))))])
+                                           (let ((type (and=> (prop it 'VALUE) car)))
+                                             (if (or (and=> type (cut string=? <> "DATE-TIME"))
+                                                     (string-contains (value it) "T"))
+                                                 (set! (value it) (parse-datetime (value it) tz)
+                                                       (prop it 'VALUE) 'DATE-TIME)
+                                                 (set! (value it) (parse-date (value it))
+                                                       (prop it 'VALUE) 'DATE))))])
 
 
-                                ;; From RFC 5545 §3.6.1
-                                ;; DTEND and DURATION are mutually exclusive
-                                ;; DTSTART is required to exist while the other two are optional.
-                                ;; None can appear more than once.
+                                      ;; From RFC 5545 §3.6.1
+                                      ;; DTEND and DURATION are mutually exclusive
+                                      ;; DTSTART is required to exist while the other two are optional.
+                                      ;; None can appear more than once.
 
-                                (set-vline! component (get-line-key ctx) it))
-                              (set-param-table! ctx (make-hash-table))])
+                                      (set-vline! component (get-line-key ctx) it))
+                                    (set-param-table! ctx (make-hash-table))])))
 
                        (strbuf-reset! strbuf)
+                       (ctx-dump-strings! ctx)
                        (set-ctx! ctx 'key))]
                     [(fold) 'noop] ; Good case, here to catch errors in else
                     [else => (lambda (a) (error "Bad return from fold, unexpected" a))])]
