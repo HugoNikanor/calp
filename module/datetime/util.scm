@@ -65,16 +65,21 @@
   (sat) 6
   )
 
-(define-public (week-day-name week-day-number)
+(define*-public (week-day-name week-day-number optional: truncate-to)
   ;; TODO internationalization
-  (case* week-day-number
-         [(sun 7) "Sön"]
-         [(mon) "Mån"]
-         [(tue) "Tis"]
-         [(wed) "Ons"]
-         [(thu) "Tor"]
-         [(fri) "Fre"]
-         [(sat) "Lör"]))
+  (let ((str
+         (case* week-day-number
+                [(sun 7) "Söndag"]
+                [(mon) "Måndag"]
+                [(tue) "Tisdag"]
+                [(wed) "Onsdag"]
+                [(thu) "Torsdag"]
+                [(fri) "Fredag"]
+                [(sat) "Lördag"]
+                [else (error 'argument-error "No day ~a in week" week-day-number)])))
+    (if truncate-to
+        (string-take str truncate-to)
+        str)))
 
 (define*-public (date->string date optional: (fmt "~Y-~m-~d") key: allow-unknown?)
   (with-output-to-string

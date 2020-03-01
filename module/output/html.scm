@@ -12,6 +12,7 @@
   #:use-module (datetime)
   #:use-module (datetime util)
   #:use-module (output general)
+  #:use-module (ice-9 curried-definitions)
 
 
   #:use-module (git)
@@ -241,42 +242,45 @@
 ;; 22 23 24 25 26 27 28
 ;; 29 30
 ;; @end example
-(define (cal-table date today)
-  #;(define (pad0 d) (when (< d 10) (format #f h0)))
-  (define (pad0 d) (format #f "~2,'0d" d))
-  (let ((td (lambda (attr other-date)
-              (lambda (d)
-                `(td (@ ,attr)
-                     (a (@ (href ,(date->string other-date "~Y-~m-~d")
-                                 ".html#" ,(date->string other-date "~Y-~m-")
-                                 ,(pad0 d))
-                           (class "hidelink")) ,d))))))
+;; date - a date in the month to display
+;; today - used to highlight current date
+;; week-start - which day the week begins on, see (datetime util)
+(define (cal-table date today week-start)
+  (define ((td attr other-date) text)
+    `(td (@ ,attr)
+         (a (@ (href ,(date->string other-date "~Y-~m-~d")
+                     ".html#" ,(date->string other-date "~Y-~m-~d"))
+               (class "hidelink"))
+            ,text)))
 
-    `(table (@ (class "small-calendar"))
-            ;; NOTE Sunday first since my code assumes that is the first day of the week.
-            ;; TODO make displayed first day of the week configurable.
-            (thead (tr ,@(map (lambda (d) `(td ,d)) '(SÖ MÅ TI ON TO FR LÖ))))
-            (tbody ,@(let recur
-                         ((lst (let* ((month (month date))
-                                      (month-len (days-in-month date))
-                                      (prev-month-len (days-in-month (month- date)))
-                                      (month-start (week-day date)))
-                                 (append (map (td '(class "prev") (month- date))
-                                              (iota month-start (1+ (- prev-month-len month-start))))
-                                         (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
-                                                          ,@(cdr p)))
-                                              (map (lambda (d) `((@ (class ,(when (date=? today (set (day date) d))
-                                                                         "today")))
-                                                            (a (@ (href "#" ,(date->string date "~Y-~m-")
-                                                                        ,(pad0 d))
-                                                                  (class "hidelink")) ,d)))
-                                                   (iota month-len 1)))
-                                         (map (td '(class "next") (month+ date))
-                                              (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))))
-                       (unless (null? lst)
-                         (let* ((w rest (split-at lst 7)))
-                           (cons `(tr ,@w)
-                                 (recur rest)))))))))
+  `(table (@ (class "small-calendar"))
+          ;; NOTE Sunday first since my code assumes that is the first day of the week.
+          (thead (tr ,@(map (lambda (d) `(td ,(week-day-name d 2)))
+                            ; '(SÖ MÅ TI ON TO FR LÖ)
+                            (take (drop (apply circular-list (iota 7))
+                                        week-start)
+                                  7))))
+          (tbody ,@(let recur
+                       ((lst (let* ((month (month date))
+                                    (month-len (days-in-month date))
+                                    (prev-month-len (days-in-month (month- date)))
+                                    (month-start (modulo (- (week-day date) week-start) 7)))
+                               ;; ... 28 29 | 1 2 ... 30 31 | 1 2 ...
+                               (append (map (td '(class "prev") (month- date))
+                                            (iota month-start (1+ (- prev-month-len month-start))))
+                                       (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
+                                                        ,@(cdr p)))
+                                            (map (lambda (d) `((@ (class ,(when (date=? today (set (day date) d))
+                                                                       "today")))
+                                                          (a (@ (href "#" ,(date->string date "~Y-~m-~d"))
+                                                                (class "hidelink")) ,d)))
+                                                 (iota month-len 1)))
+                                       (map (td '(class "next") (month+ date))
+                                            (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))))
+                     (unless (null? lst)
+                       (let* ((w rest (split-at lst 7)))
+                         (cons `(tr ,@w)
+                               (recur rest))))))))
 
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
@@ -350,7 +354,8 @@
 
                             ;; calendar table
                             (div ,(cal-table (start-of-month start-date)
-                                             (current-date)))
+                                             (current-date)
+                                             (week-start)))
 
                             ;; next button
                             ,(nav-link "»" (month+ start-date)))

@@ -9,7 +9,8 @@
              (ice-9 regex)
              (ice-9 rdelim)
              (sxml simple)
-             (glob))
+             (glob)
+             (datetime util))
 
 (calendar-files (glob "~/.local/var/cal/*"))
 
@@ -59,3 +60,5 @@
                         #f "<br>" str
                         'pre "<br/>" 'post))]
          [else (parse-links str)])))
+
+(week-start mon)

@@ -26,3 +26,8 @@
 ;; ev x str -> sxml
 (define-public description-filter
   (make-parameter (lambda (_ a) a) (ensure procedure?)))
+
+(use-modules (datetime util))
+
+(define-public week-start
+  (make-parameter sun (ensure (lambda (x) (<= sun x sat)))))
