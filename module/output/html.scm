@@ -13,6 +13,7 @@
   #:use-module (datetime util)
   #:use-module (output general)
   #:use-module (ice-9 curried-definitions)
+  #:use-module (ice-9 match)
 
 
   #:use-module (git)
@@ -403,15 +404,14 @@
   ;; NOTE Something here isn't thread safe.
   ;; TODO make it thread safe
   (stream-for-each
-   (lambda (pair)
-     (format (current-error-port) "d = ~a~%u = ~a~%" (car pair) (cadr pair))
-     (let ((fname (format #f "./html/~a.html" (date->string (car pair) "~1"))))
-       (format (current-error-port) "Writing to [~a]~%" fname)
-       (with-output-to-file fname
-         (lambda () (html-generate calendars events (car pair) (cadr pair) render-calendar)))))
+   (match-lambda
+     [(start-date end-date)
+      (let ((fname (format #f "./html/~a.html" (date->string start-date "~1"))))
+        (format (current-error-port) "Writing to [~a]~%" fname)
+        (with-output-to-file fname
+          (lambda () (html-generate calendars events start-date end-date render-calendar))))])
    (let ((ms (month-stream start-date)))
      (stream-take
       count (stream-zip
-          ms (stream-map (lambda (d) (date- d (date day: 1))) ; last in month
-                         (stream-cdr ms))))
-     )))
+             ms (stream-map (lambda (d) (date- d (date day: 1))) ; last in month
+                            (stream-cdr ms)))))))
