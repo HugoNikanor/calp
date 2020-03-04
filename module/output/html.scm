@@ -268,7 +268,7 @@
   (define ((td attr other-date) text)
     `(td (@ ,attr)
          (a (@ (href ,(date->string other-date "~Y-~m-~d")
-                     ".html#" ,(date->string other-date "~Y-~m-~d"))
+                     ".html#" ,(date->string (set (day other-date) text) "~Y-~m-~d"))
                (class "hidelink"))
             ,text)))
 
@@ -292,7 +292,8 @@
                                           ,@(cdr p)))
                               (map (lambda (d) `((@ (class ,(when (date=? today (set (day date) d))
                                                          "today")))
-                                            (a (@ (href "#" ,(date->string date "~Y-~m-~d"))
+                                            (a (@ (href "#" ,(date->string (set (day date) d)
+                                                                           "~Y-~m-~d"))
                                                   (class "hidelink")) ,d)))
                                    current))
                          ;; | 1 2 ...
