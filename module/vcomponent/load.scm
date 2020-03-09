@@ -1,6 +1,7 @@
 (define-module (vcomponent load)
   :export (load-calendars load-calendars*)
   :use-module (util)
+  :use-module (util time)
   :use-module (srfi srfi-1)
   :use-module (datetime)
   :use-module (datetime util)
@@ -17,7 +18,9 @@
 ;; Reads all calendar files from disk, generate recurence-sets for all repeating events,
 ;; and returns a list of calendars, and a stream of all events "ready" for display.
 (define* (load-calendars #:key (calendar-files (calendar-files)))
+  (report-time! "Parsing ~a calendars" (length calendar-files))
   (let* ((calendars regular repeating (load-calendars* #:calendar-files calendar-files)))
+    (report-time! "Calendars loaded, interleaving and reccurring")
     (values
      calendars
      (interleave-streams
@@ -39,8 +42,10 @@
                                         (children cal)))
                        calendars)))
 
+  (report-time! "Parse done, partitioning...")
   (let* ((repeating regular (partition repeating? events)))
 
+    (report-time! "Sorting")
     ;; NOTE There might be instances where we don't care if the
     ;; collection if sorted, but for the time beieng it's much
     ;; easier to always sort it.

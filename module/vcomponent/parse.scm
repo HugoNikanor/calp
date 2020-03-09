@@ -11,6 +11,7 @@
   :use-module ((ice-9 ftw) :select (scandir ftw))
 
   :use-module (util)
+  :use-module (util time)
   :use-module (util strbuf)
   :use-module (vcomponent base)
   :use-module (vcomponent datetime)
@@ -92,6 +93,7 @@
 
 ;; Reads a vcomponent from the given port.
 (define-public (parse-calendar port)
+  ;; (report-time! "Parsing ~a" port)
   (with-input-from-port port
     (lambda ()
       (let ((component (make-vcomponent))
@@ -359,6 +361,7 @@ row ~a	column ~a	ctx = ~a
         (set! (attr comp 'X-HNH-SOURCETYPE) "file")
         comp) ]
      [(directory)
+      (report-time! "Parsing ~a" path)
       (let ((comp (parse-vdir path)))
         (set! (attr comp 'X-HNH-SOURCETYPE) "vdir")
         comp)]

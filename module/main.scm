@@ -13,6 +13,7 @@ exec guile -e main -s $0 "$@"
 
              (util)
              (util io)
+             (util time)
 
              ((entry-points html)      :prefix      html-)
              ((entry-points terminal)  :prefix  terminal-)
@@ -84,6 +85,7 @@ exec guile -e main -s $0 "$@"
 (use-modules (system vm frame))
 
 (define (main args)
+  (report-time! "Program start")
   (with-throw-handler #t
     (lambda () (wrapped-main args))
     (lambda (err . args)

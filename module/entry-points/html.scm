@@ -2,6 +2,7 @@
   :export (main)
   :use-module (output html)
   :use-module (util)
+  :use-module (util time)
   :use-module (vcomponent)
   :use-module (datetime)
   :use-module (datetime util)
@@ -31,6 +32,9 @@
     (load-calendars
      calendar-files: (cond [(option-ref opts 'file #f) => list]
                            [else (calendar-files)]) ))
+
+
+  (report-time! "Calendars loaded")
 
   (if (option-ref opts 'chunked #f)
       (html-chunked-main count calendars events start)
