@@ -32,10 +32,6 @@ body {
 	padding: 5px;
 }
 
-.small-calendar td:nth-child(7).cur {
-	color: red;
-}
-
 .calendarlist li {
     list-style-type: none;
     border-left-width: 1em;
