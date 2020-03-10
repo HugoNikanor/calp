@@ -36,6 +36,13 @@ body {
 	color: red;
 }
 
+.calendarlist li {
+    list-style-type: none;
+    border-left-width: 1em;
+    border-left-style: solid;
+    padding-left: 1ex;
+}
+
 .small-calendar .today {
 	border: 1px solid black;
 }

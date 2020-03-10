@@ -388,8 +388,16 @@
                             ;; next button
                             ,(nav-link "»" (month+ start-date)))
 
+
                        ;; List of events
                        (div (@ (class "eventlist"))
+                            ;; List of calendars
+                            (div (@ (class "calendarlist"))
+                                 (ul ,@(map (lambda (calendar)
+                                              `(li (@ (class "CAL_bg_" ,(html-attr (attr calendar 'NAME))))
+                                                   ,(attr calendar 'NAME)))
+                                            calendars)))
+
                             ;; Events which started before our start point, but "spill" into our time span.
                             (section (@ (class "text-day"))
                                      (header (h2 "Tidigare"))
