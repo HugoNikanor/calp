@@ -401,6 +401,14 @@
 
 
 (define-public (html-chunked-main count calendars events start-date)
+  ;; TODO This still doesn't account for PWD, file existing but is of
+  ;; wrong type, html directory existing but static symlink missing,
+  ;; static being a different file type, and probably something else
+  ;; i'm missing.
+  (unless (file-exists? "./html")
+    (mkdir "./html")
+    (symlink "../static" "./html/static"))
+
   ;; NOTE Something here isn't thread safe.
   ;; TODO make it thread safe
   (stream-for-each
