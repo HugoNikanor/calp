@@ -1,0 +1,66 @@
+Blandat
+=======
+
+Event 17:30 - 00:00 klassas som "långt" event
+---------------------------------------------
+
+Properties
+==========
+
+Object utan DTEND
+-----------------
+
+Object med DURATION istället för DTEND
+--------------------------------------
+
+ICAL RDATE
+----------
+
+Konfiguration
+=============
+
+Hantera saknad eller tom konfiguration
+--------------------------------------
+
+Bättre felmedelanden vid saknad config
+--------------------------------------
+
+Terminal
+========
+
+Terminal interface on small terminal.
+-------------------------------------
+
+Handle systems with bad `cal' programs
+--------------------------------------
+
+HTML
+====
+output lista alla kalendrar
+---------------------------
+
+Motsvarande =calp info='s output
+
+	Found 17 calendars, named:
+	 - [ 526] Calendar
+	 - [  46] D3.b
+	 - [ 479] d_sektionen
+	 - [  35] Facebook
+	 - [  66] formulastudent
+	 - [  28] formulastudent_management
+	 - [   0] [NAMELESS]
+	 - [  78] lithekod
+	 - [ 144] lithekod_styrelse
+	 - [  56] STABEN
+	 - [   1] TDDB68
+	 - [   5] TDDC78
+	 - [   5] TDDE04
+	 - [  16] TDDI41_TDP031
+	 - [   7] test
+	 - [   2] TSRT04
+	 - [   1] TSTE24
+
+
+Månadsvy
+--------
+fullskärm 7x5 dagar.
