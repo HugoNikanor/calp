@@ -182,11 +182,25 @@ row ~a	column ~a	ctx = ~a
 
                                     (set! component (parent component))]
 
-                                   [else
+                                   [else ; Regular key-value line
                                     ;; TODO repeated keys
                                     (let ((it (make-vline str (get-param-table ctx))))
                                       ;; Type specific processing
                                       (case (get-line-key ctx)
+                                        ;; As far as I can tell the RFC says nothing about special
+                                        ;; encoding for individual fields. It mentieons UTF-8, and
+                                        ;; that transfer encoding should be set in the mime-headers.
+                                        ;; That however seems like a breach of abstractions.
+                                        ;; Currently I allow a CHARSET property on SUMMARY fields,
+                                        ;; since I know that at least www.lysator.liu.se/alma/alma.cgi
+                                        ;; uses it.
+                                        [(SUMMARY)
+                                         (cond [(and=> (prop it 'CHARSET) car)
+                                                => (lambda (encoding)
+                                                     (set! (value it)
+                                                       (strbuf->string strbuf ((@ (rnrs io ports) make-transcoder)
+                                                                               encoding))))])]
+
                                         [(DTSTART DTEND RECURRENCE-ID)
 
                                          ;; '("Africa/Ceuta" "Europe/Stockholm" "local")
