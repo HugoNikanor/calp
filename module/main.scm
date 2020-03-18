@@ -32,9 +32,8 @@ exec guile -e main -s $0 "$@"
              (parameters))
 
 (define options
-  '((mode (value #t) (single-char #\m))
-    (output (value #t) (single-char #\o))
-    (statprof (value optional))))
+  '((statprof (value optional))
+    (help (single-char #\h))))
 
 (define (ornull a b)
   (if (null? a)
@@ -52,27 +51,23 @@ exec guile -e main -s $0 "$@"
     (when (file-exists? config-file)
      (primitive-load config-file)))
 
-  (with-output-to-port
-      (open-output-port (option-ref opts 'output "-"))
-    (lambda ()
-      (let ((ropt (ornull (option-ref opts '() '())
-                          '("term"))))
-        ((case (string->symbol (car ropt))
-           ((html)       html-main)
-           ((term)   terminal-main)
-           ((import)   import-main)
-           ((text)       text-main)
-           ((info)       info-main)
-           ((ical)       ical-main)
-           ((server)   server-main)
-           ((benchmark) benchmark-main)
-           (else => (lambda (s)
-                      (format (current-error-port)
-                              "Unsupported mode of operation: ~a~%"
-                              s)
-                      (exit 1))))
-         ropt))
-      (newline)))
+  (let ((ropt (ornull (option-ref opts '() '())
+                      '("term"))))
+    ((case (string->symbol (car ropt))
+       ((html)       html-main)
+       ((term)   terminal-main)
+       ((import)   import-main)
+       ((text)       text-main)
+       ((info)       info-main)
+       ((ical)       ical-main)
+       ((server)   server-main)
+       ((benchmark) benchmark-main)
+       (else => (lambda (s)
+                  (format (current-error-port)
+                          "Unsupported mode of operation: ~a~%"
+                          s)
+                  (exit 1))))
+     ropt))
 
   (when stprof
     (statprof-stop)
