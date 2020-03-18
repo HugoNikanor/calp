@@ -23,6 +23,10 @@
   (stream-iterate (cut date+ <> #0-1-0)
                   start-day))
 
+(define-public (week-stream start-day)
+  (stream-iterate (cut date+ <> (date day: 7))
+                  start-day))
+
 (define-public (time-min a b)
   (if (time<? a b) a b))
 
