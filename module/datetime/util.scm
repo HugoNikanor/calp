@@ -1,6 +1,6 @@
 (define-module (datetime util)
   :use-module (datetime)
-  :use-module ((srfi srfi-1) :select (fold))
+  :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
   :use-module (util)
@@ -33,6 +33,11 @@
 (define-public (time-max a b)
   (if (time<? a b) b a))
 
+(define*-public (month+ date-object #:optional (change 1))
+  (date+ date-object (date month: change)))
+
+(define*-public (month- date-object #:optional (change 1))
+  (date- date-object (date month: change)))
 
 ;; https://projecteuclid.org/euclid.acta/1485888738
 ;; 1. Begel.
@@ -174,3 +179,43 @@
 (define-public (in-date-range? start-date end-date)
   (lambda (date)
     (date<= start-date date end-date)))
+
+;; Returns a list of the seven week days, with @var{week-start}
+;; as the beginning of the week.
+;; @example
+;; '(SÖ MÅ TI ON TO FR LÖ)
+;; @end example
+(define-public (weekday-list week-start)
+  (take (drop (apply circular-list (iota 7))
+              week-start)
+        7))
+
+
+;; Given a month and and which day the week starts on,
+;; returns three values, which are:
+;; The days leading up to the current month, but share a week
+;; The days in the current month
+;; The days after the current month, but which shares a week.
+;; 
+;;       mars 2020
+;; må ti on to fr lö sö
+;;                    1
+;;  2  3  4  5  6  7  8
+;;  9 10 11 12 13 14 15
+;; 16 17 18 19 20 21 22
+;; 23 24 25 26 27 28 29
+;; 30 31
+;; (month-days #2020-03-01 mon)
+;; => (24 25 26 27 28 29)
+;; => (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31)
+;; => (1 2 3 4 5)
+(define-public (month-days date week-start)
+  (let* ((month (month date))
+         (month-len (days-in-month date))
+         (prev-month-len (days-in-month (month- date)))
+         (month-start (modulo (- (week-day date) week-start) 7)))
+    (values
+     (iota month-start (1+ (- prev-month-len month-start)))
+     (iota month-len 1)
+     (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))
+

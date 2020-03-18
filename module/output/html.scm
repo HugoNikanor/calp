@@ -228,11 +228,6 @@
                                                (attr ev 'DTSTART)))
                               events))))))
 
-(define* (month+ date-object #:optional (change 1))
-  (date+ date-object (date month: change)))
-
-(define* (month- date-object #:optional (change 1))
-  (date- date-object (date month: change)))
 
 ;; Given a list, partitions it up into sublists of width length,
 ;;; each starting with 'tr.
@@ -242,15 +237,6 @@
       (cons `(tr ,@row)
             (tablify rest width)))))
 
-(define (month-days date week-start)
-  (let* ((month (month date))
-         (month-len (days-in-month date))
-         (prev-month-len (days-in-month (month- date)))
-         (month-start (modulo (- (week-day date) week-start) 7)))
-    (values
-     (iota month-start (1+ (- prev-month-len month-start)))
-     (iota month-len 1)
-     (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))
 
 ;; date should be start of month
 ;; @example
@@ -273,12 +259,8 @@
             ,text)))
 
   `(table (@ (class "small-calendar"))
-          ;; NOTE Sunday first since my code assumes that is the first day of the week.
           (thead (tr ,@(map (lambda (d) `(td ,(week-day-name d 2)))
-                            ;; '(SÖ MÅ TI ON TO FR LÖ)
-                            (take (drop (apply circular-list (iota 7))
-                                        week-start)
-                                  7))))
+                            (weekday-list week-start))))
 
           ((tbody ,@(let* ((last current next
                                  (month-days date week-start)))
