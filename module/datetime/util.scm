@@ -192,7 +192,7 @@
 
 
 ;; Given a month and and which day the week starts on,
-;; returns three values, which are:
+;; returns three lists, which are:
 ;; The days leading up to the current month, but share a week
 ;; The days in the current month
 ;; The days after the current month, but which shares a week.
@@ -206,16 +206,18 @@
 ;; 23 24 25 26 27 28 29
 ;; 30 31
 ;; (month-days #2020-03-01 mon)
-;; => (24 25 26 27 28 29)
-;; => (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31)
-;; => (1 2 3 4 5)
+;; => (2020-02-24 ... 2020-02-29)
+;; => (2020-03-01 ... 2020-03-31)
+;; => (2020-04-01 ... 2020-04-05)
+;; TODO Currently givining a non-start-of-month date for @var{date} is an error.
 (define-public (month-days date week-start)
-  (let* ((month (month date))
-         (month-len (days-in-month date))
+  (let* ((month-len (days-in-month date))
          (prev-month-len (days-in-month (month- date)))
          (month-start (modulo (- (week-day date) week-start) 7)))
     (values
-     (iota month-start (1+ (- prev-month-len month-start)))
-     (iota month-len 1)
-     (iota (modulo (- (* 7 5) month-len month-start) 7) 1))))
+     (map (lambda (d) (set (day (month- date)) d))
+          (iota month-start (1+ (- prev-month-len month-start))))
+     (map (lambda (d) (set (day date) d)) (iota month-len 1))
+     (map (lambda (d) (set (day (month+ date)) d))
+          (iota (modulo (- (* 7 5) month-len month-start) 7) 1)))))
 
