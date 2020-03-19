@@ -290,8 +290,8 @@
 ;; (stream event-group) -> sxml
 (define (render-calendar-table event-groups)
   `(table (@ (border 1))
-          (thead (tr ,@(map (lambda (d) `(th ,d))
-                            '(Måndag Tisdag Onsdag Torsdag Fredag Lördag Söndag))))
+          (thead (tr ,@(map (lambda (d) `(th ,(week-day-name d)))
+                            (weekday-list (week-start)))))
           (tbody
            ,@(tablify (stream->list (stream-map
                                      (match-lambda
