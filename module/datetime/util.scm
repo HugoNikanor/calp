@@ -90,20 +90,42 @@
         (string-take str truncate-to)
         str)))
 
+(define (month-name month)
+  (case month
+    [(1) "Jan"]
+    [(2) "Feb"]
+    [(3) "Mar"]
+    [(4) "Apr"]
+    [(5) "Maj"]
+    [(6) "Jun"]
+    [(7) "Jul"]
+    [(8) "Aug"]
+    [(9) "Sep"]
+    [(10) "Okt"]
+    [(11) "Nov"]
+    [(12) "Dec"]
+    [else (error "No month ~a" month)]))
+
 (define*-public (date->string date optional: (fmt "~Y-~m-~d") key: allow-unknown?)
   (with-output-to-string
     (lambda ()
       (fold (lambda (token state)
               (case state
+                ;; TODO add #\_ to change pad to spaces
                 ((#\~)
                  (case token
                    ((#\~) (display "~"))
                    ((#\Y) (format #t "~4'0d" (year date)))
                    ((#\m) (format #t "~2'0d" (month date)))
                    ((#\d) (format #t "~2'0d" (day date)))
+                   ;; Should be same as ~_d
+                   ((#\e) (format #t "~2' d" (day date)))
                    ((#\1) (format #t "~4'0d-~2'0d-~2'0d"
                                   (year date) (month date) (day date)))
                    ((#\a) (display (week-day-name (week-day date))))
+                   ;; abriviated locale month name
+                   ;; TODO locale
+                   ((#\b) (display (month-name (month date))))
                    (else (unless allow-unknown?
                            (error 'date->string "Invalid format token ~a" token))))
                  #f)
