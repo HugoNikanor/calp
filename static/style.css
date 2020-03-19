@@ -128,6 +128,11 @@ body {
        NOTE that I'm not sure this is actually the
        correct way to do it. */
     grid-template-rows: 2em;
+    grid-auto-rows: 1fr;
+
+    max-height: 100%;
+    /* Apparently needed to ensure that parent can contain all its children */
+    min-height: 0;
 }
 
 .caltable .thead {
