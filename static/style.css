@@ -114,6 +114,21 @@ body {
 	max-width: calc(100% - 20em);
 	display: flex;
 	flex-direction: column;
+        flex-grow: 1;
+}
+
+main table {
+    width: 100%;
+    height: 90%; /* TODO */
+    border-collapse: collapse;
+}
+
+main table thead {
+    height: 1em;
+}
+
+main table td {
+    width: calc(100%/7);
 }
 
 .calendar {

@@ -285,6 +285,21 @@
        (div (@ (class "days"))
             ,@(stream->list (stream-map lay-out-day event-groups)))))
 
+;; TODO this currently only popuplates the table with the number of events for
+;;      each day. It should show all the actual events.
+;; (stream event-group) -> sxml
+(define (render-calendar-table event-groups)
+  `(table (@ (border 1))
+          (thead (tr ,@(map (lambda (d) `(th ,d))
+                            '(Måndag Tisdag Onsdag Torsdag Fredag Lördag Söndag))))
+          (tbody
+           ,@(tablify (stream->list (stream-map
+                                     (match-lambda
+                                       [(day-date . events)
+                                        `(td ,(stream-length events))])
+                                     event-groups))
+                      7))))
+
 
 ;;; NOTE
 ;;; The side bar filters all earlier events for each day to not create repeats,
@@ -407,3 +422,20 @@
                  (map (cut date- <> (date day: 1)) ; last in month
                       (cdr ms))))))))
 
+
+(define-public (html-table-main count calendars events start-date)
+  ;; TODO same file creation as in html-chunked-main
+  (stream-for-each
+   (lambda (start-of-month)
+     (let ((fname (format #f "./html/~a.html" (date->string start-of-month "~1"))))
+       (format (current-error-port) "Writing to [~a]~%" fname)
+       (let* ((before current after (month-days start-of-month (week-start))))
+         (with-output-to-file fname
+           ;; TODO this produces incorrect next and prev links
+           ;; TODO It actually produces almost all date links wrong
+           (lambda () (html-generate calendars events
+                                ;; Appends for case where before or after is empty
+                                (car (append before current))
+                                (last (append current after))
+                                render-calendar-table))))))
+   (stream-take count (month-stream start-date))))
