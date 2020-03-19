@@ -111,10 +111,10 @@ body {
 }
 
 .root main {
-	/* max-width: calc(100% - 20em); */
 	display: flex;
 	flex-direction: column;
         flex-grow: 1;
+        min-width: 0;
 }
 
 /* ---------------------------------------- */
