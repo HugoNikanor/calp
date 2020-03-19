@@ -2,7 +2,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-41)
   #:use-module (util) ; let*, find-min
-  #:export (stream-car+cdr interleave-streams))
+  #:export (stream-car+cdr interleave-streams with-streams))
 
 (define (stream-car+cdr stream)
   (values (stream-car stream)
@@ -52,3 +52,38 @@
   (cond ((stream-null? stream) #f)
         ((pred (stream-car stream)) (stream-car stream))
         (else (stream-find pred (stream-cdr stream)))))
+
+;; Evaluates @var{body} in a context where most list fundamentals are
+;; replaced by stream alternatives.
+;; commented defifinitions are items which could be included, but for
+;; one reason or another isn't.
+;; TODO Possibly give access to list-primitives under a list- prefix.
+(define-macro (with-streams . body)
+  `(let-syntax
+       ((cons        (identifier-syntax stream-cons))
+        (null?       (identifier-syntax stream-null?))
+        (pair?       (identifier-syntax stream-pair?))
+        (car         (identifier-syntax stream-car))
+        (cdr         (identifier-syntax stream-cdr))
+        ;;           stream-lambda
+        ;;           define-stream
+        (append      (identifier-syntax stream-append))
+        (concat      (identifier-syntax stream-concat))
+        ;; (const    stream-constant)
+        (drop        (identifier-syntax stream-drop))
+        (drop-while  (identifier-syntax stream-drop-while))
+        (filter      (identifier-syntax stream-filter))
+        (fold        (identifier-syntax stream-fold))
+        (for-each    (identifier-syntax stream-for-each))
+        (length      (identifier-syntax stream-length))
+        ;;           stream-let
+        (map         (identifier-syntax stream-map))
+        ;;           stream-match
+        ;;           stream-range
+        ;;           stream-ref
+        (reverse     (identifier-syntax stream-reverse))
+        ;;           stream-scan
+        (take        (identifier-syntax stream-take))
+        (take-while  (identifier-syntax stream-take-while))
+        (zip         (identifier-syntax stream-zip)))
+     ,@body))
