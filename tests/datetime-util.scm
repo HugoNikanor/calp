@@ -1,5 +1,5 @@
 (((datetime) date time)
- ((datetime util) month-stream in-date-range?)
+ ((datetime util) month-stream in-date-range? time->string)
  ((srfi srfi-41) stream->list stream-take
   ))
 
@@ -23,3 +23,11 @@
 (test-assert "in-date-range?"
   (not ((in-date-range? #2020-01-01 #2020-02-29)
         #2018-02-02)))
+
+
+(test-equal "time fmt default"
+  "10:20:30" (time->string #10:20:30))
+
+(test-equal "time fmt custom"
+  "103020" (time->string #10:20:30 "~H~S~M"))
+
