@@ -81,6 +81,8 @@
 
 
 
+;;; Procedures for wide output
+
 
 (define x-pos (make-object-property))
 (define width (make-object-property))
@@ -200,7 +202,7 @@
             ,@(stream->list (stream-map lay-out-day event-groups)))))
 
 
-
+;;; Prodcedures for text output
 
 ;; For sidebar, just text
 (define (fmt-single-event ev)
@@ -240,6 +242,51 @@
                               events))))))
 
 
+;;; Table output
+
+
+
+(define (make-small-block event)
+  `(a (@ (href "#" ,(UID event))
+         (class "hidelink"))
+      (div (@ (class "inline-event CAL_"
+                ,(html-attr (attr (parent event) 'NAME))))
+           ,((summary-filter) event (attr event 'SUMMARY)))))
+
+;; (stream event-group) -> sxml
+(define (render-calendar-table event-groups)
+  `(div (@ (class "caltable"))
+        ,@(map (lambda (d) `(div (@ (class "thead")) ,(week-day-name d)))
+               (weekday-list (week-start)))
+        ,@(cons
+           ;; First day is a special case, since I always want to show a full date there.
+           ;; For all other days I'm only interested in the parts that change.
+           (let* (((day-date . events) (stream-car event-groups)))
+             `(div (@ (class "cal-cell"))
+                   (div (@ (class "date-info"))
+                        (span (@ (class "day-number")) ,(date->string day-date "~e"))
+                        (span (@ (class "month-name")) ,(date->string day-date "~b"))
+                        (span (@ (class "year-number")) ", ",(date->string day-date "~Y")))
+                   ,@(stream->list (stream-map make-small-block events))))
+           (stream->list
+            (stream-map
+             (match-lambda
+               [(day-date . events)
+                `(div (@ (class "cal-cell"))
+                      (div (@ (class "date-info"))
+                           (span (@ (class "day-number")) ,(date->string day-date "~e"))
+                           ,(when (= 1 (day day-date))
+                              `(span (@ (class "month-name")) ,(date->string day-date "~b")))
+                           ,(when (= 1 (month day-date) (day day-date))
+                              `(span (@ (class "year-number"))
+                                     ", " ,(date->string day-date "~Y"))))
+                      ,@(stream->list
+                         (stream-map make-small-block events)))])
+             (stream-cdr event-groups))))))
+
+
+
+;;; General HTML help
 
 
 
@@ -297,49 +344,7 @@
 
 
 
-
-
-
-(define (make-small-block event)
-  `(a (@ (href "#" ,(UID event))
-         (class "hidelink"))
-      (div (@ (class "inline-event CAL_"
-                ,(html-attr (attr (parent event) 'NAME))))
-           ,((summary-filter) event (attr event 'SUMMARY)))))
-
-;; (stream event-group) -> sxml
-(define (render-calendar-table event-groups)
-  `(div (@ (class "caltable"))
-        ,@(map (lambda (d) `(div (@ (class "thead")) ,(week-day-name d)))
-               (weekday-list (week-start)))
-        ,@(cons
-           ;; First day is a special case, since I always want to show a full date there.
-           ;; For all other days I'm only interested in the parts that change.
-           (let* (((day-date . events) (stream-car event-groups)))
-             `(div (@ (class "cal-cell"))
-                   (div (@ (class "date-info"))
-                        (span (@ (class "day-number")) ,(date->string day-date "~e"))
-                        (span (@ (class "month-name")) ,(date->string day-date "~b"))
-                        (span (@ (class "year-number")) ", ",(date->string day-date "~Y")))
-                   ,@(stream->list (stream-map make-small-block events))))
-           (stream->list
-            (stream-map
-             (match-lambda
-               [(day-date . events)
-                `(div (@ (class "cal-cell"))
-                      (div (@ (class "date-info"))
-                           (span (@ (class "day-number")) ,(date->string day-date "~e"))
-                           ,(when (= 1 (day day-date))
-                              `(span (@ (class "month-name")) ,(date->string day-date "~b")))
-                           ,(when (= 1 (month day-date) (day day-date))
-                              `(span (@ (class "year-number"))
-                                     ", " ,(date->string day-date "~Y"))))
-                      ,@(stream->list
-                         (stream-map make-small-block events)))])
-             (stream-cdr event-groups))))))
-
-
-
+;;; Main-stuff
 
 
 ;;; NOTE
