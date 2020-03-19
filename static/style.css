@@ -132,11 +132,39 @@ body {
 
 .caltable .thead {
     font-weight: bold;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.caltable div {
+.caltable .thead,
+.caltable .tbody {
     border: 1px solid gray;
+}
+
+.caltable .tbody {
+    overflow-y: auto;
+}
+
+.inline-event {
+    font-size: 8pt;
+    border-radius: 5px;
+    padding: 2px;
+    margin: 2px;
+    font-family: arial;
+}
+
+.date-info .day-number {
+    font-size: 150%;
+    padding: 2pt;
+}
+
+.date-info .month-name {
+    color: gray;
+}
+
+.date-info .year-number {
+    color: gray;
 }
 
 /* ---------------------------------------- */
