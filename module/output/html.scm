@@ -301,8 +301,7 @@
            ;; First day is a special case, since I always want to show a full date there.
            ;; For all other days I'm only interested in the parts that change.
            (let* (((day-date . events) (stream-car event-groups)))
-             `(div (@ (class "tbody")) "")
-             `(div (@ (class "tbody"))
+             `(div (@ (class "cal-cell"))
                    (div (@ (class "date-info"))
                         (span (@ (class "day-number")) ,(date->string day-date "~e"))
                         (span (@ (class "month-name")) ,(date->string day-date "~b"))
@@ -312,7 +311,7 @@
             (stream-map
              (match-lambda
                [(day-date . events)
-                `(div (@ (class "tbody"))
+                `(div (@ (class "cal-cell"))
                       (div (@ (class "date-info"))
                            (span (@ (class "day-number")) ,(date->string day-date "~e"))
                            ,(when (= 1 (day day-date))

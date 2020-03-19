@@ -143,11 +143,11 @@ body {
 }
 
 .caltable .thead,
-.caltable .tbody {
+.caltable .cal-cell {
     border: 1px solid gray;
 }
 
-.caltable .tbody {
+.caltable .cal-cell {
     overflow-y: auto;
 }
 
