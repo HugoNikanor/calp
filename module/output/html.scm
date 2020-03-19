@@ -289,16 +289,16 @@
 ;;      each day. It should show all the actual events.
 ;; (stream event-group) -> sxml
 (define (render-calendar-table event-groups)
-  `(table (@ (border 1))
-          (thead (tr ,@(map (lambda (d) `(th ,(week-day-name d)))
-                            (weekday-list (week-start)))))
-          (tbody
-           ,@(tablify (stream->list (stream-map
-                                     (match-lambda
-                                       [(day-date . events)
-                                        `(td ,(stream-length events))])
-                                     event-groups))
-                      7))))
+  `(div (@ (class "caltable"))
+        ,@(map (lambda (d) `(div (@ (class "thead")) ,(week-day-name d)))
+               (weekday-list (week-start)))
+        ,@(stream->list
+           (stream-map
+            (match-lambda
+              [(day-date . events)
+               `(div (@ (class "tbody"))
+                     ,(stream-length events))])
+            event-groups))))
 
 
 ;;; NOTE

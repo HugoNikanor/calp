@@ -117,19 +117,29 @@ body {
         flex-grow: 1;
 }
 
-main table {
-    width: 100%;
-    height: 90%; /* TODO */
-    border-collapse: collapse;
+/* ---------------------------------------- */
+
+.caltable {
+    flex-grow: 10;
+
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    /* This is for the first name, the week days.
+       NOTE that I'm not sure this is actually the
+       correct way to do it. */
+    grid-template-rows: 2em;
 }
 
-main table thead {
-    height: 1em;
+.caltable .thead {
+    font-weight: bold;
+    text-align: center;
 }
 
-main table td {
-    width: calc(100%/7);
+.caltable div {
+    border: 1px solid gray;
 }
+
+/* ---------------------------------------- */
 
 .calendar {
 	width: 100%;
