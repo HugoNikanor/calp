@@ -1,8 +1,9 @@
 (define-module (datetime)
   :export (date? year month day
                  hour minute second
-                 time? datetime?
-                 )
+                 time? datetime?)
+  ;; To resolve colision with cadr-second from srfi-1
+  :replace (second)
 
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
