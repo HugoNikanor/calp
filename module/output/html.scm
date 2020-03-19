@@ -401,7 +401,9 @@
         (with-output-to-file fname
           (lambda () (html-generate calendars events start-date end-date render-calendar))))])
    (let ((ms (month-stream start-date)))
-     (stream-take
-      count (stream-zip
-             ms (stream-map (lambda (d) (date- d (date day: 1))) ; last in month
-                            (stream-cdr ms)))))))
+     (with-streams
+      (take count
+            (zip ms
+                 (map (cut date- <> (date day: 1)) ; last in month
+                      (cdr ms))))))))
+
