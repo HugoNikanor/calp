@@ -251,12 +251,12 @@
 ;; today - used to highlight current date
 ;; week-start - which day the week begins on, see (datetime util)
 (define (cal-table date today week-start)
-  (define ((td attr other-date) text)
+  (define ((td attr) date)
     `(td (@ ,attr)
-         (a (@ (href ,(date->string other-date "~Y-~m-~d")
-                     ".html#" ,(date->string (set (day other-date) text) "~Y-~m-~d"))
+         (a (@ (href ,(date->string (set (day date) 1) "~Y-~m-~d")
+                     ".html#" ,(date->string date "~Y-~m-~d"))
                (class "hidelink"))
-            ,text)))
+            ,(day date))))
 
   `(table (@ (class "small-calendar"))
           (thead (tr ,@(map (lambda (d) `(td ,(week-day-name d 2)))
@@ -267,20 +267,11 @@
                       (define lst
                         (append
                          ;; ... 28 29 |
-                         (map (td '(class "prev") (month- date))
-                              last)
+                         (map (td '(class "prev")) last)
                          ;; 1 2 ... 30 31
-                         (map (lambda (p) `(td (@ ,@(assq-merge '((class " cur ")) (cdar p)))
-                                          ,@(cdr p)))
-                              (map (lambda (d) `((@ (class ,(when (date=? today (set (day date) d))
-                                                         "today")))
-                                            (a (@ (href "#" ,(date->string (set (day date) d)
-                                                                           "~Y-~m-~d"))
-                                                  (class "hidelink")) ,d)))
-                                   current))
+                         (map (td '(class "cur")) current)
                          ;; | 1 2 ...
-                         (map (td '(class "next") (month+ date))
-                              next)))
+                         (map (td '(class "next")) next)))
 
                       (tablify lst 7))))))
 
