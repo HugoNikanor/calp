@@ -20,24 +20,70 @@
   #:use-module (parameters)
   )
 
-(define (td param)
-  (lambda (d) `(td (@ ,(map (lambda (p)
-                         (cons `(quote ,(car p))
-                               (cdr p)))
-                       param)) ,d)))
 
 (define (date-link date)
   (date->string date "~Y-~m-~d"))
 
-(define x-pos (make-object-property))
-(define width (make-object-property))
-
+;; Generate an UID for an event
+;; TODO currently not guaranteed to be unique
 (define (UID ev)
   (string-append
    ;; (date/-time->string (attr ev 'DTSTART) "~s")
    (date->string (as-date (attr ev 'DTSTART)) "~Y~m~d")
    (time->string (as-time (attr ev 'DTSTART)) "~H~M~S")
    (html-attr (attr ev 'UID))))
+
+;; This should only be used on time intervals, never on absolute times.
+;; For that see @var{date->decimal-hour}.
+;; NOTE Above comment probably deprecated
+(define (time->decimal-hour time)
+  (exact->inexact (+ (hour time)
+                     (/ (minute time) 60)
+                     (/ (second time) 3600))))
+
+;; Retuns an HTML-safe version of @var{str}.
+(define (html-attr str)
+  (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
+  (string-filter (lambda (c) (char-set-contains? cs c)) str))
+
+;; Takes an event, and returns a pretty string for the time interval
+;; the event occupies.
+(define (fmt-time-span ev)
+  (cond [(attr ev 'DTSTART) date?
+         => (lambda (s)
+              (cond [(attr ev 'DTEND)
+                     => (lambda (e)
+                          (if (date= e (date+ s (date day: 1)))
+                              (values (date->string s) "")
+                              (values (date->string s)
+                                      (date->string e))))]
+                    [else (date->string s)]))]
+        [else ; guaranteed datetime
+         (let ((s (attr ev 'DTSTART))
+               (e (attr ev 'DTEND)))
+           (let ((s-str (time->string (get-time s) "~H:~M"))
+                 (e-str (time->string (get-time e) "~H:~M")))
+             (if (date= (get-date s) (get-date e))
+                 (values s-str e-str)
+                 (values (string-append (date->string (get-date s) "~Y-~m-~d ") s-str)
+                         (string-append (date->string (get-date e) "~Y-~m-~d ") e-str)))))]))
+
+
+
+
+;; Given a list, partitions it up into sublists of width length,
+;;; each starting with 'tr.
+(define (tablify list width)
+  (unless (null? list)
+    (let* ((row rest (split-at list width)))
+      (cons `(tr ,@row)
+            (tablify rest width)))))
+
+
+
+
+(define x-pos (make-object-property))
+(define width (make-object-property))
 
 ;; Takes a list of vcomponents, sets their widths and x-positions to optimally
 ;; fill out the space, without any overlaps.
@@ -61,17 +107,6 @@
         (inner (+ x w) (left-subtree tree))
         (inner x (right-subtree tree))))))
 
-;; This should only be used on time intervals, never on absolute times.
-;; For that see @var{date->decimal-hour}.
-;; NOTE Above comment probably deprecated
-(define (time->decimal-hour time)
-  (exact->inexact (+ (hour time)
-                     (/ (minute time) 60)
-                     (/ (second time) 3600))))
-
-(define (html-attr str)
-  (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
-  (string-filter (lambda (c) (char-set-contains? cs c)) str))
 
 (define (create-block-general date ev fmt)
  ;; (define time (date->time-utc day))
@@ -158,37 +193,13 @@
                                        ,time ":00")))
                          (iota 12 0 2))))))
 
-(define (include-css path . extra-attributes)
-  `(link (@ (type "text/css")
-            (rel "stylesheet")
-            (href ,path)
-            ,@extra-attributes)))
+(define-public (render-calendar event-groups)
+  `(div (@ (class "calendar"))
+        ,(time-marker-div)
+       (div (@ (class "days"))
+            ,@(stream->list (stream-map lay-out-day event-groups)))))
 
-(define (include-alt-css path . extra-attributes)
-  `(link (@ (type "text/css")
-            (rel "alternate stylesheet")
-            (href ,path)
-            ,@extra-attributes)))
-
-(define (fmt-time-span ev)
-  (cond [(attr ev 'DTSTART) date?
-         => (lambda (s)
-              (cond [(attr ev 'DTEND)
-                     => (lambda (e)
-                          (if (date= e (date+ s (date day: 1)))
-                              (values (date->string s) "")
-                              (values (date->string s)
-                                      (date->string e))))]
-                    [else (date->string s)]))]
-        [else ; guaranteed datetime
-         (let ((s (attr ev 'DTSTART))
-               (e (attr ev 'DTEND)))
-           (let ((s-str (time->string (get-time s) "~H:~M"))
-                 (e-str (time->string (get-time e) "~H:~M")))
-             (if (date= (get-date s) (get-date e))
-                 (values s-str e-str)
-                 (values (string-append (date->string (get-date s) "~Y-~m-~d ") s-str)
-                         (string-append (date->string (get-date e) "~Y-~m-~d ") e-str)))))]))
+
 
 
 ;; For sidebar, just text
@@ -228,14 +239,23 @@
                                                (attr ev 'DTSTART)))
                               events))))))
 
+
 
-;; Given a list, partitions it up into sublists of width length,
-;;; each starting with 'tr.
-(define (tablify list width)
-  (unless (null? list)
-    (let* ((row rest (split-at list width)))
-      (cons `(tr ,@row)
-            (tablify rest width)))))
+
+
+(define (include-css path . extra-attributes)
+  `(link (@ (type "text/css")
+            (rel "stylesheet")
+            (href ,path)
+            ,@extra-attributes)))
+
+(define (include-alt-css path . extra-attributes)
+  `(link (@ (type "text/css")
+            (rel "alternate stylesheet")
+            (href ,path)
+            ,@extra-attributes)))
+
+
 
 
 ;; date should be start of month
@@ -276,14 +296,9 @@
                       (tablify lst 7))))))
 
 
-(define repo-url (make-parameter "https://git.hornquist.se"))
+
 
 
-(define-public (render-calendar event-groups)
-  `(div (@ (class "calendar"))
-        ,(time-marker-div)
-       (div (@ (class "days"))
-            ,@(stream->list (stream-map lay-out-day event-groups)))))
 
 (define (make-small-block event)
   `(a (@ (href "#" ,(UID event))
@@ -324,11 +339,15 @@
              (stream-cdr event-groups))))))
 
 
+
+
+
 ;;; NOTE
 ;;; The side bar filters all earlier events for each day to not create repeats,
 ;;; and the html-generate procedure also filters, but instead to find earlier eventns.
 ;;; All this filtering is probably slow, and should be looked into.
 
+(define repo-url (make-parameter "https://git.hornquist.se"))
 
 
 (define-public (html-generate calendars events start-date end-date render-calendar)
