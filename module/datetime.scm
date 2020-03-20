@@ -93,39 +93,48 @@
                  (or time (make-time hour minute second))
                  tz))
 
+
+
+;; NOTE there isn't any stable way to craft the tm objects.
+;; I could call mktime on some date, and replace the fields
+;; with the set-tm:*, but that is worse that breaking the API.
+(define (datetime->tm datetime)
+  (let ((t (get-time% datetime))
+        (d (get-date  datetime)))
+    (vector (second t)
+            (minute t)
+            (hour t)
+            (day d)
+            (1- (month d))
+            (- (year d) 1900)
+            0 0                ; wday & yday (ignored)
+            -1                 ; DST unknown
+            0                  ; UTC offset (ignored)
+            #f                 ; TZ name
+            )))
+
+(define (tm->datetime tm)
+  (datetime year:   (+ 1900 (tm:year tm))
+            month:  (1+ (tm:mon  tm))
+            day:    (tm:mday tm)
+            hour:   (tm:hour tm)
+            minute: (tm:min  tm)
+            second: (tm:sec  tm)))
+
+
 ;; datetime → datetime
 ;; Takes a datetime in any timezone, and renormalize it to local time
 ;; (as defined by TZ). This means that given UTC 10:00 new years day
 ;; would return 11:00 new years day if ran in sweden.
 (define-public (get-datetime dt)
-  (let ((t (get-time% dt))
-        (d (get-date dt)))
-    ;; NOTE there isn't any stable way to craft the tm objects.
-    ;; I could call mktime on some date, and replace the fields
-    ;; with the set-tm:*, but that is worse that breaking the API.
-    (let ((v (vector (second t)
-                     (minute t)
-                     (hour t)
-                     (day d)
-                     (1- (month d))
-                     (- (year d) 1900)
-                     0 0                ; wday & yday (ignored)
-                     -1                 ; DST unknown
-                     0                  ; UTC offset (ignored)
-                     #f                 ; TZ name
-                     )))
-      (let ((tm
-             (localtime ; localtime convertion since the returned tm object is
-              (car      ; in the parsed timezone.
-               (cond [(not (tz dt)) (mktime v)]
-                     [(string=? "local" (tz dt)) (mktime v)]
-                     [else (mktime v (tz dt))])))))
-        (datetime year:   (+ 1900 (tm:year tm))
-                  month:  (1+ (tm:mon  tm))
-                  day:    (tm:mday tm)
-                  hour:   (tm:hour tm)
-                  minute: (tm:min  tm)
-                  second: (tm:sec  tm))))))
+  (let ((v (datetime->tm dt)))
+    (let ((tm
+           (localtime ; localtime convertion since the returned tm object is
+            (car      ; in the parsed timezone.
+             (cond [(not (tz dt)) (mktime v)]
+                   [(string=? "local" (tz dt)) (mktime v)]
+                   [else (mktime v (tz dt))])))))
+      (tm->datetime tm))))
 
 ;; Deprecated
 ;; datetime → time
