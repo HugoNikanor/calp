@@ -117,10 +117,11 @@
         (inner x (right-subtree tree))))))
 
 
-(define (create-block-general date ev fmt)
+;; Format single event for graphical display
+(define (create-block date ev)
  ;; (define time (date->time-utc day))
   (define style
-    (format #f fmt
+    (format #f "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"
 
             (* 100 (x-pos ev))          ; left
             (* 100 (width ev))          ; width
@@ -151,10 +152,6 @@
            ,((summary-filter) ev (attr ev 'SUMMARY))))
 
   )
-
-;; Format single event for graphical display
-(define (create-block date ev)
-  (create-block-general date ev "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"))
 
 (define (create-top-block start-date end-date ev)
 
