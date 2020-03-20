@@ -95,8 +95,15 @@ function update_current_time_bar () {
     event_area.append(bar_object)
 }
 
-window.onload = function () {
+function toggle_event_pupup () {
+    console.log(this);
+    this.getElementsByClassName("popup")[0].classList.toggle("show");
+}
 
+window.onload = function () {
+    console.log("Running");
+
+    /*
     update_current_time_bar()
     // once a minute for now, could probably be slowed to every 10 minutes
     window.setInterval(update_current_time_bar, 1000 * 60)
@@ -105,5 +112,10 @@ window.onload = function () {
         c.onmousedown = onmousedownhandler;
         c.onmouseup = onmouseuphandler;
         c.onmousemove = onmousemovehandler;
+    }
+    */
+
+    for (let e of document.getElementsByClassName("event-inner")) {
+        e.onclick = toggle_event_pupup;
     }
 }

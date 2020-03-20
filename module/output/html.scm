@@ -88,6 +88,18 @@
 
 
 
+(define (event-debug-html event)
+  `(table
+    (tbody
+     ,@(hash-map->list
+        (match-lambda*
+          [(key vline)
+           `(tr (th ,key) (td ,(format #f "~a" (value vline))))]
+          [_ (error "What are you doing‽")])
+        (attributes event)))))
+
+
+
 ;;; Procedures for wide output
 
 
@@ -149,7 +161,11 @@
                 ,(when (date<? date (as-date (attr ev 'DTEND)))
                    " continuing"))
               (style ,style))
-           ,((summary-filter) ev (attr ev 'SUMMARY))))
+           (div (@ (class "event-inner"))
+            (div (@ (class "popup"))
+                 ,(event-debug-html ev))
+            (div (@ (class "body"))
+                 ,((summary-filter) ev (attr ev 'SUMMARY))))))
 
   )
 
@@ -183,9 +199,11 @@
                 ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
                    " tentative"))
               (style ,style))
-           ,((summary-filter) ev (attr ev 'SUMMARY))))
-
-  )
+           (div (@ (class "event-inner"))
+                (div (@ (class "popup"))
+                     ,(event-debug-html ev))
+                (div (@ (class "body"))
+                     ,((summary-filter) ev (attr ev 'SUMMARY)))))))
 
 
 ;; Lay out complete day (graphical)

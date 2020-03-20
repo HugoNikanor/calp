@@ -293,9 +293,10 @@ html, body {
 	border: 2px solid black;
 	font-size: 8pt;
 
-	overflow: hidden;
+	/* overflow: hidden; */
 
-	z-index: 0;
+        /* Setting this makes popups render under */
+	/* z-index: 0; */
 }
 
 .root footer {
@@ -391,4 +392,69 @@ html, body {
     background: blue;
     border-color: blue;
     left: -1em;
+}
+
+.event-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.event-inner .popup {
+    visibility: hidden;
+    position: absolute;
+    left: 10%;
+    bottom: 125%;
+    z-index: 100;
+
+    background-color: #dedede;
+    color: black;
+    border: 2px solid black;
+
+    font-size: 8pt;
+    font-family: monospace;
+
+    white-space: pre;
+    overflow-y: scroll;
+    max-width: 100ch;
+    max-height: 60ch;
+}
+
+.event-inner .popup td {
+    white-space: pre-line;
+}
+
+/* Arrow pointing at origin of popup
+   Currently broken due to an overflow: scroll
+*/
+/* .event-inner .popup:after { */
+
+/*     content: ""; */
+/*     position: absolute; */
+/*     top: 100%; */
+/*     /\* left: 5%; *\/ */
+/*     border-style: solid; */
+/*     border-width: 1.5em; */
+/*     /\* margin-left: -2em; *\/ */
+/*     border-color: transparent; */
+/*     border-top-color: #555; */
+/* } */
+
+.popup th {
+    text-align: right;
+    vertical-align: top;
+}
+
+.popup th::after {
+    content: ": ";
+}
+
+.popup.show {
+    visibility: visible;
+}
+
+.event-inner .body {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
 }
