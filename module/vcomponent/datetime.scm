@@ -46,9 +46,19 @@ Event must have the DTSTART and DTEND attribute set."
 
 ;; Returns length of the event @var{e}, as a time-duration object.
 (define-public (event-length e)
-  (time-
-   (attr e 'DTEND)
-   (attr e 'DTSTART)))
+  (if (not (attr e 'DTEND))
+      (datetime date:
+                (if (date? (attr e 'DTSTART))
+                    #24:00:00
+                    #01:00:00))
+      (let ((ret (datetime-difference (as-datetime (attr e 'DTEND))
+                                      (as-datetime (attr e 'DTSTART)))))
+        (format (current-error-port) "ret = ~a~%" ret)
+        ret)))
+
+(define-public (event-length/clamped start-date end-date e)
+  (datetime-difference (datetime-min (datetime date: end-date)   (as-datetime (attr e 'DTEND)))
+                       (datetime-max (datetime date: start-date) (as-datetime (attr e 'DTSTART)))))
 
 ;; Returns the length of the part of @var{e} which is within the day
 ;; starting at the time @var{start-of-day}.

@@ -81,11 +81,7 @@
                      (change (attr e 'X-HNH-DURATION)))
                  (when end
                    (set! (attr e 'DTEND)
-                     ((cond
-                        [(date? end)  date+ ]
-                        [(datetime? end) datetime+]
-                        [else (error "End neither date nor datetime ~a" end)])
-                      start change))))))
+                     (datetime+ (as-datetime start) (datetime time: change)))))))
 
     e))
 
@@ -159,8 +155,9 @@
                          ;; The value type of dtstart and dtend must be the same
                          ;; according to RFC 5545 3.8.2.2 (Date-Time End).
                          (if (date? end)
-                             (date-difference end (attr event 'DTSTART))
-                             (datetime-difference end (attr event 'DTSTART))))]))
+                             (time second: (print-and-return (date-difference end (attr event 'DTSTART))))
+                             (time second: (print-and-return (datetime-difference end (attr event 'DTSTART))))))]))
+           (format (current-error-port) "duration = ~a~%" (attr event 'X-HNH-DURATION))
            (if (attr event "RRULE")
                (recur-event-stream event (parse-recurrence-rule
                                           (attr event "RRULE")
@@ -171,8 +168,9 @@
                stream-null))))
     (lambda (err . args)
       (format (current-error-port)
-              "\x1b[0;31mError\x1b[m while parsing recurrence rule (ignoring and continuing)~%~a ~a~%~a~%~%"
+              "\x1b[0;31mError\x1b[m while parsing recurrence rule (ignoring and continuing)~%~a ~s~%~a~%~%"
               err args
               (attr event 'X-HNH-FILENAME))
       (stream ; event
-       ))))
+       )
+      )))

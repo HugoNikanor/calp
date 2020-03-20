@@ -41,6 +41,13 @@
                      (/ (minute time) 60)
                      (/ (second time) 3600))))
 
+(define (datetime->decimal-hour datetime)
+  ;; (+ (time->decimal-hour (get-time datetime))
+  ;;    (date->decimal-hour (get-date datetime)))
+  (+ (time->decimal-hour (get-time datetime))
+     ;; TODO
+     (* 3600 24 (day (get-date datetime)))))
+
 ;; Retuns an HTML-safe version of @var{str}.
 (define (html-attr str)
   (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
@@ -89,7 +96,7 @@
 
 ;; Takes a list of vcomponents, sets their widths and x-positions to optimally
 ;; fill out the space, without any overlaps.
-(define (fix-event-widths! date lst)
+(define* (fix-event-widths! lst key: event-length-key (event-length-comperator date/-time>?))
   ;; The tree construction is greedy. This means
   ;; that if  a smaller  event preceeds a longer
   ;; event it would capture  the longer event to
@@ -99,8 +106,8 @@
   ;; @var{x} is how for left in the container we are.
   (let inner ((x 0)
               (tree (make-tree overlapping?
-                               (sort* lst time>?
-                                      (lambda (e) (event-length/day date e))))))
+                               (sort* lst event-length-comperator event-length-key
+                                      ))))
     (unless (null? tree)
       (let ((w (/ (- 1 x)
                   (+ 1 (length-of-longst-branch (left-subtree tree))))))
@@ -149,39 +156,99 @@
 (define (create-block date ev)
   (create-block-general date ev "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"))
 
-(define (create-top-block date ev)
-  (create-block-general date ev "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"))
+(define (create-top-block start-date end-date ev)
+
+  ;; TODO
+  (define total-length (exact->inexact (/ (date-difference (date+ end-date (date day: 1)) start-date) 3600)))
+
+  (define style
+    (format #f "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"
+
+            ;; Prevent collisions
+            (* 100 (x-pos ev))          ; top
+            (* 100 (width ev))          ; height
+
+            ;; Set start time
+            ;; left
+            (* 100
+               (/ (datetime-difference (as-datetime (attr ev 'DTSTART)) (datetime date: start-date))
+                  3600 total-length))
+
+            ;; Set length of event, which makes end time
+            ;; width
+            (* 100
+               (/ (event-length/clamped start-date end-date ev)
+                  3600 total-length))))
+
+  `(a (@ (href "#" ,(UID ev))
+         (class "hidelink"))
+      (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
+                ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                   " tentative"))
+              (style ,style))
+           ,((summary-filter) ev (attr ev 'SUMMARY))))
+
+  )
+
 
 ;; Lay out complete day (graphical)
 ;; (date . (events)) -> sxml
 (define (lay-out-day day)
   (let* (((day-date . events) day)
          (time-obj (datetime date: day-date))
-         (long-events short-events
+         (_ short-events
                       (partition (lambda (ev)
                                    (or (date? (attr ev 'DTSTART))
-                                       (datetime<=? (datetime date: (date day: 1))
+                                       (;datetime<=? (datetime date: (date day: 1))
+                                        <= (* 3600 24)
                                                     (datetime-difference (attr ev 'DTEND)
                                                                          (attr ev 'DTSTART)))))
                                  (stream->list events))))
 
-    (fix-event-widths! day-date short-events)
-    (fix-event-widths! day-date long-events)
-    `(div (@ (class "day"))
+    (fix-event-widths! short-events event-length-key: (lambda (e) (event-length/day day-date e)))
+    ;; (fix-event-widths! day-date long-events)
+    `(;div (@ (class "day"))
           (div (@ (class "meta"))
                ,(let ((str (date-link day-date)))
                   `(span (@ (id ,str) (class "daydate")) ,str))
                (span (@ (class "dayname")) ,(date->string day-date "~a")))
-          (div (@ (class "wholeday"))
-               "" ; To prevent self closing div tag
-               ,@(map (lambda (e) (create-top-block day-date e))
-                      long-events))
+          ;; (div (@ (class "wholeday"))
+          ;;      "" ; To prevent self closing div tag
+          ;;      ,@(map (lambda (e) (create-top-block day-date e))
+          ;;             long-events))
           (div (@ (class "events"))
                "" ; To prevent self closing div tag
                ,@(map (lambda (time)
                         `(div (@ (class "clock clock-" ,time)) ""))
                       (iota 12 0 2))
                ,@(map (lambda (e) (create-block day-date e)) short-events)))))
+
+(define (lay-out-long-events event-groups)
+
+  (define start (car (stream-car event-groups)))
+  (define end (car (stream-car (stream-reverse event-groups))))
+
+  (stream-map
+   (match-lambda
+     [(d . events)
+      (let* ((long-events _
+                (partition (lambda (ev)
+                             (or (date? (attr ev 'DTSTART))
+                                 (; datetime<=? (datetime date: (date day: 1))
+                                  <= (* 3600 24)
+                                              (datetime-difference (attr ev 'DTEND)
+                                                                   (attr ev 'DTSTART)))))
+                           (stream->list events))))
+        (let ((long-events
+               (filter (lambda (e) (date= d (as-date (attr e 'DTSTART))))
+                       long-events)))
+          (fix-event-widths! long-events event-length-key: event-length
+                             event-length-comperator: >)
+          (map (lambda (e) (create-top-block start end e))
+               long-events)
+
+          ))])
+   event-groups))
 
 (define (time-marker-div)
   `(div (@ (class "sideclock"))
@@ -197,9 +264,13 @@
 
 (define-public (render-calendar event-groups)
   `(div (@ (class "calendar"))
-        ,(time-marker-div)
+        ;; ,(time-marker-div)
        (div (@ (class "days"))
-            ,@(stream->list (stream-map lay-out-day event-groups)))))
+            (div (@ (class "longevents")
+                    (style "grid-column-end:" ,(1+ (stream-length event-groups))))
+                 ""                     ; prevent self-closing
+                 ,@(stream->list (lay-out-long-events event-groups)))
+            ,@(concatenate (stream->list (stream-map lay-out-day event-groups))))))
 
 
 ;;; Prodcedures for text output

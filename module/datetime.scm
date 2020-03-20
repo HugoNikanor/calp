@@ -144,8 +144,8 @@
 ;; than the original. which is fun...
 (define-public (get-time dt)
   (get-time% (get-datetime dt)))
-
 
+
 ;;; UTIL
 
 ;; int -> bool
@@ -170,14 +170,23 @@
 
 
 (define-public (as-date date/-time)
-  (if (date? date/-time)
-      date/-time
-      (get-date date/-time)))
+  (cond [(datetime? date/-time) (get-date date/-time)]
+        [(date? date/-time) date/-time]
+        [(time? date/-time) (date)]
+        [else "Object not a date, time, or datetime object ~a" date/-time]))
 
 (define-public (as-time date/-time)
-  (if (datetime? date/-time)
-      (get-time date/-time)
-      (time)))
+  (cond [(datetime? date/-time) (get-time date/-time)]
+        [(date? date/-time) (time)]
+        [(time? date/-time) date/-time]
+        [else "Object not a date, time, or datetime object ~a" date/-time]))
+
+(define-public (as-datetime dt)
+  (cond [(datetime? dt) dt]
+        [(date? dt) (datetime date: dt time: (time))]
+        [(time? dt) (datetime time: dt date: (date))]
+        [else "Object not a date, time, or datetime object ~a" dt]))
+
 
 ;;; EQUIALENCE
 
@@ -263,15 +272,7 @@
       (date<= (get-date a) (get-date b))))
 
 (define-public (date/-time< a b)
-  ;; (format (current-error-port) "~a < ~a = " a b)
-  (let ((res
-         (cond [(date= (as-date a) (as-date b))
-                (time< (as-time a) (as-time b))]
-               [(date< (as-date a) (as-date b))
-                #t]
-               [else #f])))
-    ;; (format (current-error-port) "~a~%" res)
-    res))
+  (datetime< (as-datetime a) (as-datetime b)))
 
 (define-many define-public
   (date<?) date<
@@ -532,46 +533,45 @@
                            (date day: overflow))
               time: time)))
 
-(define (datetime->srfi-19-date date)
-  ((@ (srfi srfi-19) make-date)
-    0
-    (second (get-time date))
-    (minute (get-time date))
-    (hour (get-time date))
-    (day (get-date date))
-    (month (get-date date))
-    (year (get-date date))
-    0                                   ; TODO TZ
-    ))
+;; (define (datetime->srfi-19-date date)
+;;   ((@ (srfi srfi-19) make-date)
+;;     0
+;;     (second (get-time date))
+;;     (minute (get-time date))
+;;     (hour (get-time date))
+;;     (day (get-date date))
+;;     (month (get-date date))
+;;     (year (get-date date))
+;;     0                                   ; TODO TZ
+;;     ))
 
-(define (srfi-19-date->datetime o)
-  (let ((y ((@ (srfi srfi-19) date-year)   o)))
-    ;; TODO find better way to translate from 1970 to 0, since this WILL
-    ;; cause problems sooner or later.
-   (datetime year:   (if (= 1970 y) 0 y)
-             month:  (let ((m ((@ (srfi srfi-19) date-month) o)))
-                       (if (and (= 1970 y) (= 1 m)) 0 m))
-             day:    (let ((d ((@ (srfi srfi-19) date-day) o)))
-                       (if (and (= 1970 y) (= 1 d)) 0 d))
-             hour:   ((@ (srfi srfi-19) date-hour)   o)
-             minute: ((@ (srfi srfi-19) date-minute) o)
-             second: ((@ (srfi srfi-19) date-second) o)
-             )))
+;; (define (srfi-19-date->datetime o)
+;;   (let ((y ((@ (srfi srfi-19) date-year)   o)))
+;;     ;; TODO find better way to translate from 1970 to 0, since this WILL
+;;     ;; cause problems sooner or later.
+;;    (datetime year:   (if (= 1970 y) 0 y)
+;;              month:  (let ((m ((@ (srfi srfi-19) date-month) o)))
+;;                        (if (and (= 1970 y) (= 1 m)) 0 m))
+;;              day:    (let ((d ((@ (srfi srfi-19) date-day) o)))
+;;                        (if (and (= 1970 y) (= 1 d)) 0 d))
+;;              hour:   ((@ (srfi srfi-19) date-hour)   o)
+;;              minute: ((@ (srfi srfi-19) date-minute) o)
+;;              second: ((@ (srfi srfi-19) date-second) o)
+;;              )))
 
 ;;; the *-difference procedures takes two actual datetimes.
 ;;; date- instead takes a date and a delta (but NOT an actual date).
 
+;; TODO TZ
+;; NOTE currently returns the time span in seconds as an int.
+;; Who knew that months doesn't have a constant width...
 (define-public (datetime-difference end start)
-  (let ((t
-         ((@ (srfi srfi-19) time-difference)
-          ((@ (srfi srfi-19) date->time-utc) (datetime->srfi-19-date end))
-          ((@ (srfi srfi-19) date->time-utc) (datetime->srfi-19-date start)))))
-    ((@ (srfi srfi-19) set-time-type!) t (@ (srfi srfi-19) time-utc))
-    (srfi-19-date->datetime ((@ (srfi srfi-19) time-utc->date) t 0))))  ; TODO tz offset
+  (- (car (mktime (datetime->tm end)))
+     (car (mktime (datetime->tm start)))))
 
 (define-public (date-difference end start)
-  (get-date (datetime-difference (datetime date: end)
-                                 (datetime date: start))))
+  (datetime-difference (datetime date: end)
+                       (datetime date: start)))
 
 
 ;;; Parsers for vcomponent usage

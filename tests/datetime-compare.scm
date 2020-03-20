@@ -64,4 +64,8 @@
 (test-assert "date/-time< other dt, same date"
   (date/-time< #2020-01-01 #2020-01-01T10:00:00))
 
+(test-assert "date/-time< time-only"
+  (date/-time< #00:00:00 #10:00:00))
+
 (test-assert (not (date/-time< #2018-11-30T08:10:00 #2014-04-13T16:00:00)))
+
