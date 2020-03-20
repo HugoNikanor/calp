@@ -16,6 +16,7 @@
                 tree-map let-lazy let-env
                 case* define-many
                 and=>>
+                print-and-return
                 )
   #:replace (let* set! define-syntax
                   when unless if))
@@ -187,6 +188,16 @@
 (define (improper->proper-list lst len)
   (let* ((head tail (split-at lst len)))
     (append head (list tail))))
+
+
+
+(define-macro (print-and-return expr)
+  (let ((str (gensym "str"))
+        (result (gensym "result")))
+    `(let* ((,result ,expr)
+            (,str (format #f "~a [~a]~%" ,result (quote ,expr))))
+       (display ,str (current-error-port))
+       ,result)))
 
 
 
