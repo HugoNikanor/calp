@@ -33,6 +33,12 @@
 (define-public (time-max a b)
   (if (time<? a b) b a))
 
+(define-public (datetime-min a b)
+  (if (datetime< a b) a b))
+
+(define-public (datetime-max a b)
+  (if (datetime< a b) b a))
+
 (define*-public (month+ date-object #:optional (change 1))
   (date+ date-object (date month: change)))
 
