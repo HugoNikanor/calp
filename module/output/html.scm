@@ -251,7 +251,7 @@
   ;; element to make rest of grid align correct.
   ;; Could be extended to contain something fun.
   `((div (@ (style "grid-row: 1 / span 2")) "")
-    (div (@ (class "events sideclock"))
+    (div (@ (class "sideclock"))
          ,@(map (lambda (time)
                   `(div (@ (class "clock clock-" ,time))
                         (span (@ (class "clocktext"))
