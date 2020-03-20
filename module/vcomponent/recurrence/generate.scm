@@ -155,9 +155,8 @@
                          ;; The value type of dtstart and dtend must be the same
                          ;; according to RFC 5545 3.8.2.2 (Date-Time End).
                          (if (date? end)
-                             (time second: (print-and-return (date-difference end (attr event 'DTSTART))))
-                             (time second: (print-and-return (datetime-difference end (attr event 'DTSTART))))))]))
-           (format (current-error-port) "duration = ~a~%" (attr event 'X-HNH-DURATION))
+                             (time second: (date-difference end (attr event 'DTSTART)))
+                             (time second: (datetime-difference end (attr event 'DTSTART)))))]))
            (if (attr event "RRULE")
                (recur-event-stream event (parse-recurrence-rule
                                           (attr event "RRULE")

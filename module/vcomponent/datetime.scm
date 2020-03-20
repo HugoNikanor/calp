@@ -51,10 +51,8 @@ Event must have the DTSTART and DTEND attribute set."
                 (if (date? (attr e 'DTSTART))
                     #24:00:00
                     #01:00:00))
-      (let ((ret (datetime-difference (as-datetime (attr e 'DTEND))
-                                      (as-datetime (attr e 'DTSTART)))))
-        (format (current-error-port) "ret = ~a~%" ret)
-        ret)))
+      (datetime-difference (as-datetime (attr e 'DTEND))
+                           (as-datetime (attr e 'DTSTART)))))
 
 (define-public (event-length/clamped start-date end-date e)
   (datetime-difference (datetime-min (datetime date: end-date)   (as-datetime (attr e 'DTEND)))
