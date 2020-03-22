@@ -1,4 +1,4 @@
-(define-module (output html)
+ (define-module (output html)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
@@ -234,24 +234,11 @@
            ,@(map (lambda (e) (create-block day-date e)) short-events)))))
 
 
-(define (lay-out-long-events event-groups)
-
-  (define start (car (stream-car event-groups)))
-  (define end (car (stream-car (stream-reverse event-groups))))
-
-  (stream-map
-   (match-lambda
-     [(d . events)
-      (let* ((long-events _ (partition long-event? (stream->list events))))
-        (let ((long-events
-               (filter (lambda (e) (date= d (as-date (attr e 'DTSTART))))
-                       long-events)))
-          (fix-event-widths! long-events event-length-key: event-length
-                             event-length-comperator: >)
-          (map (lambda (e) (create-top-block start end e))
-               long-events)
-          ))])
-   event-groups))
+(define (lay-out-long-events start end events)
+  (fix-event-widths! events event-length-key: event-length
+                     event-length-comperator: >)
+  (map (lambda (e) (create-top-block start end e))
+       events))
 
 (define (time-marker-div)
   ;; element to make rest of grid align correct.
@@ -264,17 +251,48 @@
                               ,time ":00")))
                 (iota 12 0 2)))))
 
-(define-public (render-calendar event-groups)
-  `(div (@ (class "calendar"))
-       (div (@ (class "days"))
-            ,@(time-marker-div)
-            (div (@ (class "longevents")
-                    (style "grid-column-end: span " ,(stream-length event-groups)))
-                 ""                     ; prevent self-closing
-                 ,@(stream->list (lay-out-long-events event-groups)))
-            ,@(concatenate (stream->list (stream-map lay-out-day event-groups))))))
+;; date, date, [sorted-stream events] → [list events]
+;;; TODO
+(define (events-between start-date end-date events)
+  (filter-sorted-stream
+   (lambda (e)
+     (timespan-overlaps? start-date end-date
+                         (attr e 'DTSTART) (attr e 'DTEND)))
+   events))
 
-
+;; Returns number of days in time interval.
+;; @example
+;; (days-between #2020-01-01 #2020-01-05)
+;; ⇒ 5
+;; @end example
+;; date, date → int
+(define (days-between start-date end-date)
+  ;; TODO do rounding better
+  (inexact->exact (ceiling (1+ (exact->inexact (/ (date-difference end-date start-date)
+                                                86400))))))
+
+;; date, date → [list date]
+(define (date-range start end)
+  (stream->list
+   (stream-take-while (lambda (d) (date<= d end))
+                      (day-stream start))))
+
+(define*-public (render-calendar key: events start-date end-date #:allow-other-keys)
+  (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events)))))
+   `(div (@ (class "calendar"))
+         (div (@ (class "days"))
+              ,@(time-marker-div)
+              (div (@ (class "longevents")
+                      (style "grid-column-end: span " ,(days-between start-date end-date)))
+                   ""                   ; prevent self-closing
+                   ,@(lay-out-long-events start-date end-date long-events))
+              ,@(let* ((r (date-range start-date end-date))
+                       (event-groups (get-groups-between (group-stream (list->stream short-events))
+                                                         start-date end-date)))
+                  (concatenate  (stream->list (stream-map lay-out-day event-groups))
+                                ))))))
+
+  
 ;;; Prodcedures for text output
 
 ;; For sidebar, just text
@@ -324,7 +342,11 @@
            ,((summary-filter) event (attr event 'SUMMARY)))))
 
 ;; (stream event-group) -> sxml
-(define (render-calendar-table event-groups)
+(define* (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
+
+  (define event-groups (get-groups-between (group-stream events)
+                                           pre-start post-end))
+
   `(div (@ (class "caltable"))
         ,@(map (lambda (d) `(div (@ (class "thead")) ,(week-day-name d)))
                (weekday-list (week-start)))
@@ -343,7 +365,11 @@
              (match-lambda
                [(day-date . events)
                 `(div (@ (class "cal-cell"))
-                      (div (@ (class "date-info"))
+                      (div (@ (class "date-info "
+                                ,(when (or (date< day-date start-date)
+                                           (date< end-date day-date))
+                                   "non-current")
+                                ))
                            (span (@ (class "day-number")) ,(date->string day-date "~e"))
                            ,(when (= 1 (day day-date))
                               `(span (@ (class "month-name")) ,(date->string day-date "~b")))
@@ -420,7 +446,6 @@
 
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
-
 ;;; calendars
 ;;; events
 ;;; grouped events
@@ -429,17 +454,29 @@
 ;;; end-date
 ;;; post-end-date
 ;;; render-procedure
-(define-public (html-generate calendars events start-date end-date render-calendar)
+(define*-public (html-generate calendars events start-date end-date render-calendar
+                               key:
+                               next-start ; date → date
+                               prev-start ; date → date
+                               (pre-start start-date)
+                               (post-end end-date))
   ;; TODO maybe don't do this again for every month
-  (define evs (get-groups-between (group-stream events)
-                                  start-date end-date))
+  ;; (define evs (get-groups-between (group-stream events)
+  ;;                                 start-date end-date))
 
+  (define month-base (start-of-month start-date))
 
   (define (nav-link display date)
     `(a (@ (href ,(date->string date "~Y-~m-~d") ".html")
            (class "nav hidelink"))
         (div (@ (class "nav"))
              ,display)))
+
+  (unless next-start
+    (error 'html-generate "Next-start needs to be a procedure"))
+
+  (unless prev-start
+    (error 'html-generate "Prev-start needs to be a procedure"))
 
   (display "<!doctype HTML>\n")
   ((@ (sxml simple) sxml->xml)
@@ -471,7 +508,15 @@
            (div (@ (class "root"))
                 (main
                  ;; Actuall calendar
-                 ,(render-calendar evs)
+                 ,(render-calendar calendars: calendars
+                                   events: events
+                                   start-date: start-date
+                                   end-date: end-date
+                                   pre-start: pre-start
+                                   post-end: post-end
+                                   next-start: next-start
+                                   prev-start: prev-start
+                                   )
 
                  ;; Page footer
                  (footer (span "Page generated " ,(date->string (current-date)))
@@ -487,14 +532,15 @@
                        ;; Small calendar and navigation
                        (div (@ (class "about"))
                             ;; prev button
-                            ,(nav-link "«" (month- start-date))
+                            ,(nav-link "«" (prev-start start-date))
 
                             ;; calendar table
+                            ;; TODO
                             (div ,(cal-table (start-of-month start-date)
                                              (week-start)))
 
                             ;; next button
-                            ,(nav-link "»" (month+ start-date)))
+                            ,(nav-link "»" (next-start start-date)))
 
 
                        ;; List of events
@@ -507,6 +553,7 @@
                                             calendars)))
 
                             ;; Events which started before our start point, but "spill" into our time span.
+                            #;
                             (section (@ (class "text-day"))
                                      (header (h2 "Tidigare"))
                                      ,@(stream->list
@@ -514,6 +561,7 @@
                                                     (stream-take-while (compose (cut date/-time<? <> start-date)
                                                                                 (extract 'DTSTART))
                                                                        (cdr (stream-car evs))))))
+                            #;
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
 
@@ -534,7 +582,10 @@
       (let ((fname (format #f "./html/~a.html" (date->string start-date "~1"))))
         (format (current-error-port) "Writing to [~a]~%" fname)
         (with-output-to-file fname
-          (lambda () (html-generate calendars events start-date end-date render-calendar))))])
+          (lambda () (html-generate calendars events start-date end-date render-calendar
+                               next-start: month+
+                               prev-start: month-
+                               ))))])
    (let ((ms (month-stream start-date)))
      (with-streams
       (take count
@@ -555,7 +606,14 @@
            ;; TODO It actually produces almost all date links wrong
            (lambda () (html-generate calendars events
                                 ;; Appends for case where before or after is empty
-                                (car (append before current))
-                                (last (append current after))
-                                render-calendar-table))))))
+                                (car current) (date- (if (null? after)
+                                                         (last current)
+                                                         (car after))
+                                                     (date day: 1))
+                                render-calendar-table
+                                next-start: month+
+                                prev-start: month-
+                                pre-start: (car (append before current))
+                                post-end: (last (append current after))
+                                ))))))
    (stream-take count (month-stream start-date))))

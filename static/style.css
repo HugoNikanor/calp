@@ -159,6 +159,10 @@ html, body {
     font-family: arial;
 }
 
+.date-info.non-current {
+    color: lightgray !important;
+}
+
 .date-info .day-number {
     font-size: 150%;
     padding: 2pt;
