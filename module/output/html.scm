@@ -409,11 +409,30 @@
 ;; @end example
 ;; date - a date in the month to display
 ;; week-start - which day the week begins on, see (datetime util)
-(define (cal-table date week-start)
-  (define ((td attr) date)
-    `(td (@ ,attr)
-         (a (@ (href ,(date->string (set (day date) 1) "~Y-~m-~d")
-                     ".html#" ,(date->string date "~Y-~m-~d"))
+(define* (cal-table key:
+                    start-date
+                    end-date
+                    (week-start (week-start))
+                    next-start
+                    prev-start)
+  (define (td date)
+    `(td (@ (class
+              ,(when (date< date start-date) "prev ")
+              ,(when (date< end-date date) "next ")))
+         (a (@ (href ,(cond [(date< date start-date)
+                             ;; TODO find a prettier way to generate links to previous and next time intervals
+                             ;; TODO also, it would do good with a bit of testing for off-by-one errors
+                             (date->string
+                              (stream-find (lambda (d) (date<= d date (next-start d)))
+                                           (stream-iterate prev-start start-date))
+                              "~Y-~m-~d.html")]
+                            [(date< end-date date)
+                             (date->string
+                              (stream-find (lambda (d) (and (date<= d date)
+                                                       (date< date (next-start d))))
+                                           (stream-iterate next-start start-date))
+                              "~Y-~m-~d.html" )])
+                     "#" ,(date->string date "~Y-~m-~d"))
                (class "hidelink"))
             ,(day date))))
 
@@ -422,17 +441,12 @@
                             (weekday-list week-start))))
 
           ((tbody ,@(let* ((last current next
-                                 (month-days date week-start)))
-                      (define lst
-                        (append
-                         ;; ... 28 29 |
-                         (map (td '(class "prev")) last)
-                         ;; 1 2 ... 30 31
-                         (map (td '(class "cur")) current)
-                         ;; | 1 2 ...
-                         (map (td '(class "next")) next)))
-
-                      (tablify lst 7))))))
+                                 ;; A calendar table is always exactly one month, therefore
+                                 ;; it's safe to say that we are interested in the month which
+                                 ;; start-date is part of
+                                 (month-days (start-of-month start-date) week-start)))
+                      (tablify (map td (append last current next))
+                               7))))))
 
 
 
@@ -536,8 +550,10 @@
 
                             ;; calendar table
                             ;; TODO
-                            (div ,(cal-table (start-of-month start-date)
-                                             (week-start)))
+                            (div ,(cal-table start-date: start-date end-date: end-date
+                                             next-start: next-start
+                                             prev-start: prev-start
+                                             ))
 
                             ;; next button
                             ,(nav-link "»" (next-start start-date)))

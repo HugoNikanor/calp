@@ -44,7 +44,7 @@
      (html-generate calendars events start end render-calendar)]
     [(wide)                             ; previously `chunked'
      (html-chunked-main count calendars events start (date month: 1))]
-    [(week)
+    [(week)                             ; TOOD handle week-start
      (html-chunked-main count calendars events start (date day: 7))]
     [(table)
      (html-table-main count calendars events start)]

@@ -48,6 +48,8 @@
         [else (filter-sorted-stream* pred? keep-remaining?
                                      (stream-cdr stream))]))
 
+;; Finds the first element in stream satisfying pred.
+;; Returns #f if nothing was found
 (define-public (stream-find pred stream)
   (cond ((stream-null? stream) #f)
         ((pred (stream-car stream)) (stream-car stream))
