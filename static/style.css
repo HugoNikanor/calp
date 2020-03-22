@@ -343,17 +343,17 @@ html, body {
 
 /* */
 
-.wholeday .event.continuing {
+.longevents .event.continuing {
 	border-right: none;
 	background-image: linear-gradient(to left, #0007 0%,#FFF0 4em);
 }
 
-.wholeday .event.continued {
+.longevents .event.continued {
 	border-left: none;
 	background-image: linear-gradient(to right, #FFF7 0%,#FFF0 6em);
 }
 
-.wholeday .event.continued.continuing {
+.longevents .event.continued.continuing {
 	border-left: none;
 	border-right: none;
 	background-image:
