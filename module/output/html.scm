@@ -226,7 +226,7 @@
 (define (lay-out-day day)
   (let* (((day-date . events) day)
          (time-obj (datetime date: day-date))
-         (_ short-events (partition long-event? (stream->list events))))
+         (short-events (stream->list events)))
 
     (fix-event-widths! short-events event-length-key: (lambda (e) (event-length/day day-date e)))
     `((div (@ (class "meta"))
