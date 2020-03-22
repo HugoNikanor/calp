@@ -193,8 +193,9 @@
             ;; Set start time
             ;; left
             (* 100
-               (/ (datetime-difference (as-datetime (attr ev 'DTSTART)) (datetime date: start-date))
-                  3600 total-length))
+               (let ((dt (datetime date: start-date)))
+                 (/ (datetime-difference (datetime-max dt (as-datetime (attr ev 'DTSTART))) dt)
+                    3600 total-length)))
 
             ;; Set length of event, which makes end time
             ;; width
@@ -262,7 +263,7 @@
 (define (events-between start-date end-date events)
   (filter-sorted-stream
    (lambda (e)
-     (timespan-overlaps? start-date end-date
+     (timespan-overlaps? start-date (date+ end-date (date day: 1))
                          (attr e 'DTSTART) (attr e 'DTEND)))
    events))
 
