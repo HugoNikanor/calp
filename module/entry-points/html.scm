@@ -44,8 +44,13 @@
      (html-generate calendars events start end render-calendar)]
     [(wide)                             ; previously `chunked'
      (html-chunked-main count calendars events start (date month: 1))]
-    [(week)                             ; TOOD handle week-start
-     (html-chunked-main count calendars events start (date day: 7))]
+    [(week)
+     ;; TODO The small calendar is always centered on months, it might
+     ;; be a good idea to instead center it on the current week, meaning
+     ;; that the active row is always in the center
+     (html-chunked-main count calendars events
+                        (previous-week-start start (week-start))
+                        (date day: 7))]
     [(table)
      (html-table-main count calendars events start)]
     [else
