@@ -41,13 +41,6 @@
                      (/ (minute time) 60)
                      (/ (second time) 3600))))
 
-(define (datetime->decimal-hour datetime)
-  ;; (+ (time->decimal-hour (get-time datetime))
-  ;;    (date->decimal-hour (get-date datetime)))
-  (+ (time->decimal-hour (get-time datetime))
-     ;; TODO
-     (* 3600 24 (day (get-date datetime)))))
-
 ;; Retuns an HTML-safe version of @var{str}.
 (define (html-attr str)
   (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
