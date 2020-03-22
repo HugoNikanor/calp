@@ -565,7 +565,7 @@
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
 
-(define-public (html-chunked-main count calendars events start-date)
+(define-public (html-chunked-main count calendars events start-date chunk-length)
   ;; TODO This still doesn't account for PWD, file existing but is of
   ;; wrong type, html directory existing but static symlink missing,
   ;; static being a different file type, and probably something else
@@ -583,10 +583,10 @@
         (format (current-error-port) "Writing to [~a]~%" fname)
         (with-output-to-file fname
           (lambda () (html-generate calendars events start-date end-date render-calendar
-                               next-start: month+
-                               prev-start: month-
+                               next-start: (lambda (d) (date+ d chunk-length))
+                               prev-start: (lambda (d) (date- d chunk-length))
                                ))))])
-   (let ((ms (month-stream start-date)))
+   (let ((ms (stream-iterate (cut date+ <> chunk-length) start-date)))
      (with-streams
       (take count
             (zip ms

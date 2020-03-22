@@ -18,7 +18,7 @@
     (file (value #t) (single-char #\f))
     (count (value #t))
     (style (value #t) (predicate ,(lambda (v) (memv (string->symbol v)
-                                            '(wide unchunked table)))))))
+                                            '(wide week unchunked table)))))))
 
 (define (main args)
   (define opts (getopt-long args opt-spec))
@@ -43,7 +43,9 @@
     [(unchunked)
      (html-generate calendars events start end render-calendar)]
     [(wide)                             ; previously `chunked'
-     (html-chunked-main count calendars events start)]
+     (html-chunked-main count calendars events start (date month: 1))]
+    [(week)
+     (html-chunked-main count calendars events start (date day: 7))]
     [(table)
      (html-table-main count calendars events start)]
     [else
