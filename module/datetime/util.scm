@@ -70,6 +70,17 @@
         (zeller J (1- K) (+ m 12) (day date))
         (zeller J K (month date) (day date)))))
 
+;; Given a date, returns the earliest start of week going backwards from that date.
+;; sön 22 mar 2020 20:09:57 CET
+;; @example
+;; (previous-week-start #2020-03-22 mon)
+;; => 2020-03-16
+(define-public (previous-week-start date* week-start)
+  ((@ (srfi srfi-41 util) stream-find)
+   (lambda (d) (= week-start (week-day d)))
+   ((@ (srfi srfi-41) stream-iterate) (cut date- <> (date day: 1))
+    date*)))
+
 (define-many define-public
   (sun) 0
   (mon) 1
