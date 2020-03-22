@@ -343,23 +343,31 @@ html, body {
 
 /* */
 
+.longevents .event {
+    border-radius: 1em;
+    padding-left: 1em;
+}
+
 .longevents .event.continuing {
 	border-right: none;
-	background-image: linear-gradient(to left, #0007 0%,#FFF0 4em);
+	/* background-image: linear-gradient(to left, #0007 0%,#FFF0 4em); */
+        border-radius: 1em 0 0 1em;
 }
 
 .longevents .event.continued {
 	border-left: none;
-	background-image: linear-gradient(to right, #FFF7 0%,#FFF0 6em);
+	/* background-image: linear-gradient(to right, #FFF7 0%,#FFF0 6em); */
+        border-radius: 0 1em 1em 0;
 }
 
 .longevents .event.continued.continuing {
 	border-left: none;
 	border-right: none;
-	background-image:
-		linear-gradient(to right,
-			#FFF7  0%, #FFF0 10%,
-			#FFF0 90%, #0007 100%);
+	/* background-image: */
+	/* 	linear-gradient(to right, */
+	/* 		#FFF7  0%, #FFF0 10%, */
+	/* 		#FFF0 90%, #0007 100%); */
+        border-radius: 0;
 }
 
 
