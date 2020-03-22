@@ -86,6 +86,15 @@
       (cons `(tr ,@row)
             (tablify rest width)))))
 
+;; An event is considered long if it's DTSTARt (and thereby DTEND) lacks a time component,
+;; or if the total length of the event is greater than 24h.
+;; For practical purposes, an event being long means that it shouldn't be rendered as a part
+;; of a regular day.
+(define (long-event? ev)
+  (or (date? (attr ev 'DTSTART))
+      (<= (* 3600 24)
+       (datetime-difference (attr ev 'DTEND)
+                            (attr ev 'DTSTART)))))
 
 
 (define (event-debug-html event)
@@ -211,32 +220,19 @@
 (define (lay-out-day day)
   (let* (((day-date . events) day)
          (time-obj (datetime date: day-date))
-         (_ short-events
-                      (partition (lambda (ev)
-                                   (or (date? (attr ev 'DTSTART))
-                                       (;datetime<=? (datetime date: (date day: 1))
-                                        <= (* 3600 24)
-                                                    (datetime-difference (attr ev 'DTEND)
-                                                                         (attr ev 'DTSTART)))))
-                                 (stream->list events))))
+         (_ short-events (partition long-event? (stream->list events))))
 
     (fix-event-widths! short-events event-length-key: (lambda (e) (event-length/day day-date e)))
-    ;; (fix-event-widths! day-date long-events)
-    `(;div (@ (class "day"))
-          (div (@ (class "meta"))
-               ,(let ((str (date-link day-date)))
-                  `(span (@ (id ,str) (class "daydate")) ,str))
-               (span (@ (class "dayname")) ,(date->string day-date "~a")))
-          ;; (div (@ (class "wholeday"))
-          ;;      "" ; To prevent self closing div tag
-          ;;      ,@(map (lambda (e) (create-top-block day-date e))
-          ;;             long-events))
-          (div (@ (class "events"))
-               "" ; To prevent self closing div tag
-               ,@(map (lambda (time)
-                        `(div (@ (class "clock clock-" ,time)) ""))
-                      (iota 12 0 2))
-               ,@(map (lambda (e) (create-block day-date e)) short-events)))))
+    `((div (@ (class "meta"))
+           ,(let ((str (date-link day-date)))
+              `(span (@ (id ,str) (class "daydate")) ,str))
+           (span (@ (class "dayname")) ,(date->string day-date "~a")))
+      (div (@ (class "events"))
+           ,@(map (lambda (time)
+                    `(div (@ (class "clock clock-" ,time)) ""))
+                  (iota 12 0 2))
+           ,@(map (lambda (e) (create-block day-date e)) short-events)))))
+
 
 (define (lay-out-long-events event-groups)
 
@@ -246,14 +242,7 @@
   (stream-map
    (match-lambda
      [(d . events)
-      (let* ((long-events _
-                (partition (lambda (ev)
-                             (or (date? (attr ev 'DTSTART))
-                                 (; datetime<=? (datetime date: (date day: 1))
-                                  <= (* 3600 24)
-                                              (datetime-difference (attr ev 'DTEND)
-                                                                   (attr ev 'DTSTART)))))
-                           (stream->list events))))
+      (let* ((long-events _ (partition long-event? (stream->list events))))
         (let ((long-events
                (filter (lambda (e) (date= d (as-date (attr e 'DTSTART))))
                        long-events)))
@@ -261,7 +250,6 @@
                              event-length-comperator: >)
           (map (lambda (e) (create-top-block start end e))
                long-events)
-
           ))])
    event-groups))
 
@@ -322,14 +310,11 @@
                                 ;; This removes all descriptions from
                                 ;; events for previous days,
                                 ;; solving duplicates.
-                                (date/-time<=? date
-                                               (attr ev 'DTSTART)))
+                                (date/-time<=? date (attr ev 'DTSTART)))
                               events))))))
 
 
 ;;; Table output
-
-
 
 (define (make-small-block event)
   `(a (@ (href "#" ,(UID event))
@@ -351,7 +336,7 @@
                    (div (@ (class "date-info"))
                         (span (@ (class "day-number")) ,(date->string day-date "~e"))
                         (span (@ (class "month-name")) ,(date->string day-date "~b"))
-                        (span (@ (class "year-number")) ", ",(date->string day-date "~Y")))
+                        (span (@ (class "year-number")) ", " ,(date->string day-date "~Y")))
                    ,@(stream->list (stream-map make-small-block events))))
            (stream->list
             (stream-map
@@ -373,8 +358,6 @@
 
 ;;; General HTML help
 
-
-
 (define (include-css path . extra-attributes)
   `(link (@ (type "text/css")
             (rel "stylesheet")
@@ -389,7 +372,6 @@
 
 
 
-
 ;; date should be start of month
 ;; @example
 ;; må ti on to fr lö sö
@@ -400,9 +382,8 @@
 ;; 29 30
 ;; @end example
 ;; date - a date in the month to display
-;; today - used to highlight current date
 ;; week-start - which day the week begins on, see (datetime util)
-(define (cal-table date today week-start)
+(define (cal-table date week-start)
   (define ((td attr) date)
     `(td (@ ,attr)
          (a (@ (href ,(date->string (set (day date) 1) "~Y-~m-~d")
@@ -440,6 +421,14 @@
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
 
+;;; calendars
+;;; events
+;;; grouped events
+;;; pre-start-date
+;;; start-date
+;;; end-date
+;;; post-end-date
+;;; render-procedure
 (define-public (html-generate calendars events start-date end-date render-calendar)
   ;; TODO maybe don't do this again for every month
   (define evs (get-groups-between (group-stream events)
@@ -502,7 +491,6 @@
 
                             ;; calendar table
                             (div ,(cal-table (start-of-month start-date)
-                                             (current-date)
                                              (week-start)))
 
                             ;; next button
