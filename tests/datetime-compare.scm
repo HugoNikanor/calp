@@ -64,6 +64,12 @@
 (test-assert "date/-time< other dt, same date"
   (date/-time< #2020-01-01 #2020-01-01T10:00:00))
 
+;; In UTC+2 (CEST) the below datetime overflows into midnight the following
+;; day. Earlier versions of this program only looked at the time component
+(test-assert "date/-time< TZ overflow"
+  (date/-time< #2020-04-05
+               (datetime date: #2020-04-05 time: #22:00:00 tz: "UTC")))
+
 (test-assert "date/-time< time-only"
   (date/-time< #00:00:00 #10:00:00))
 
