@@ -81,7 +81,9 @@
                      (change (attr e 'X-HNH-DURATION)))
                  (when end
                    (set! (attr e 'DTEND)
-                     (datetime+ (as-datetime start) (datetime time: change)))))))
+                     (if (date? start)
+                         (date+ start change)
+                         (datetime+ start (datetime time: change))))))))
 
     e))
 
@@ -155,7 +157,7 @@
                          ;; The value type of dtstart and dtend must be the same
                          ;; according to RFC 5545 3.8.2.2 (Date-Time End).
                          (if (date? end)
-                             (time second: (date-difference end (attr event 'DTSTART)))
+                             (date-difference end (attr event 'DTSTART))
                              (time second: (datetime-difference end (attr event 'DTSTART)))))]))
            (if (attr event "RRULE")
                (recur-event-stream event (parse-recurrence-rule

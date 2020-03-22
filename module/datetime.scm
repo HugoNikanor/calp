@@ -570,8 +570,9 @@
      (car (mktime (datetime->tm start)))))
 
 (define-public (date-difference end start)
-  (datetime-difference (datetime date: end)
-                       (datetime date: start)))
+  (date day: (/ (datetime-difference (datetime date: end)
+                                     (datetime date: start))
+                86400)))
 
 
 ;;; Parsers for vcomponent usage

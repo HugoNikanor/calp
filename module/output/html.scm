@@ -180,8 +180,8 @@
 
 (define (create-top-block start-date end-date ev)
 
-  ;; TODO
-  (define total-length (exact->inexact (/ (date-difference (date+ end-date (date day: 1)) start-date) 3600)))
+  ;; NOTE be vary of api changes to date-diffenence
+  (define total-length (* 24 (day (date-difference (date+ end-date (date day: 1)) start-date))))
 
   (define style
     (format #f "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"
@@ -274,9 +274,8 @@
 ;; @end example
 ;; date, date → int
 (define (days-between start-date end-date)
-  ;; TODO do rounding better
-  (inexact->exact (ceiling (1+ (exact->inexact (/ (date-difference end-date start-date)
-                                                86400))))))
+  ;; TODO be vary if date-difference changes again
+  (1+ (day (date-difference end-date start-date))))
 
 ;; date, date → [list date]
 (define (date-range start end)
