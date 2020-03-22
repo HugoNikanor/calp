@@ -142,8 +142,8 @@
 ;; timezone info it's discarded and a local timestamp produced.
 ;; It's deprecated since the local time of a datetime can be in another date
 ;; than the original. which is fun...
-(define-public (get-time dt)
-  (get-time% (get-datetime dt)))
+;; (define-public (get-time dt)
+;;   (get-time% (get-datetime dt)))
 
 
 ;;; UTIL
@@ -176,7 +176,7 @@
         [else "Object not a date, time, or datetime object ~a" date/-time]))
 
 (define-public (as-time date/-time)
-  (cond [(datetime? date/-time) (get-time date/-time)]
+  (cond [(datetime? date/-time) (get-time% (get-datetime date/-time))]
         [(date? date/-time) (time)]
         [(time? date/-time) date/-time]
         [else "Object not a date, time, or datetime object ~a" date/-time]))
@@ -207,8 +207,10 @@
        (= (second a) (second b))))
 
 (define-public (datetime= a b)
-  (and (date= (get-date a) (get-date b))
-       (time= (get-time a) (get-time b))))
+  (let ((a (get-datetime a))
+        (b (get-datetime b)))
+   (and (date= (get-date a) (get-date b))
+        (time= (get-time% a) (get-time% b)))))
 
 (define-many define-public
   (date=?) date=
@@ -530,12 +532,15 @@
 
 ;;; DATETIME
 
+;; NOTE that base is re-normalized, but change isn't. This is due to base
+;; hopefully being a real date, but change just being a difference.
 (define-public (datetime+ base change)
-  (let* ((time overflow (time+ (get-time base) (get-time change))))
-    (datetime date: (date+ (get-date base)
-                           (get-date change)
-                           (date day: overflow))
-              time: time)))
+  (let ((base (get-datetime base)))
+   (let* ((time overflow (time+ (get-time% base) (get-time% change))))
+     (datetime date: (date+ (get-date base)
+                            (get-date change)
+                            (date day: overflow))
+               time: time))))
 
 ;; (define (datetime->srfi-19-date date)
 ;;   ((@ (srfi srfi-19) make-date)

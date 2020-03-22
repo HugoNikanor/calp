@@ -16,30 +16,31 @@
 (define (value-format key vline)
   (with-throw-handler 'wrong-type-arg
     (lambda ()
-     (case key
-       ((DTSTART DTEND RECURRENCE-ID)
-        (with-output-to-string
-          (lambda ()
-            (display (date->string (as-date (value vline))
-                                   "~Y~m~d"))
-            (when (eq? 'DATE-TIME (and=> (prop vline 'VALUE) car))
-              (display (time->string (get-time (value vline))
-                                     "T~H~M~S"))
-              (let ((tz (and=> (prop vline 'TZID) car)))
-               (when (and tz (string= tz "UTC"))
-                 (display #\Z))))))
-        )
-       ((DURATION X-HNH-DURATION)
-     #; (time->string value "~H~M~S")
-        (let ((s (second (value vline))))
-          (format #f "~a~a~a"
-                  (floor/ s 3600)
-                  (floor/ (modulo s 3600) 60)
-                  (modulo s 60))
-          ))
-       ((RRULE) (value vline))
+      (case key
+        ((DTSTART DTEND RECURRENCE-ID)
+         (with-output-to-string
+           (lambda ()
+             (case (and=> (prop vline 'VALUE) car)
+               [(DATE) (display (date->string (as-date (value vline))
+                                              "~Y~m~d"))]
+               [(DATE-TIME)
+                (display (datetime->string (value vline) "~Y~m~dT~H~M~S"))
+                (let ((tz (and=> (prop vline 'TZID) car)))
+                  (when (and tz (string= tz "UTC"))
+                    (display #\Z)))]
+               [else
+                (error "Unknown VALUE type")]))))
+        ((DURATION X-HNH-DURATION)
+         #; (time->string value "~H~M~S")
+         (let ((s (second (value vline))))
+           (format #f "~a~a~a"
+                   (floor/ s 3600)
+                   (floor/ (modulo s 3600) 60)
+                   (modulo s 60))
+           ))
+        ((RRULE) (value vline))
 
-       (else (escape-chars (value vline)))))
+        (else (escape-chars (value vline)))))
     (lambda (err caller fmt args call-args)
       (format (current-error-port)
               "WARNING: key = ~a, caller = ~s, call-args = ~s~%~k~%" key caller call-args fmt args)

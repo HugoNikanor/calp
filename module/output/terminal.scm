@@ -41,12 +41,10 @@
     (display
      (string-append
       (if (datetime? (attr ev 'DTSTART))
-        (string-append (date->string (get-date (attr ev 'DTSTART)))
-                       " "
-                       (time->string (get-time (attr ev 'DTSTART))))
-        ((@ (texinfo string-utils) center-string)
-         (date->string (attr ev 'DTSTART))
-         19))
+          (datetime->string (attr ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
+          ((@ (texinfo string-utils) center-string)
+           (date->string (attr ev 'DTSTART))
+           19))
        ; TODO show truncated string
       " │ "
       (if (= i cur-event) "\x1b[7m" "")
@@ -115,15 +113,11 @@
                     ;; another story.
                     (let ((start (attr ev 'DTSTART)))
                       (if (datetime? start)
-                          (string-append (date->string (get-date start))
-                                         " "
-                                         (time->string (get-time start)))
+                          (datetime->string (attr ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
                           (date->string start)))
                     (let ((end (attr ev 'DTEND)))
                       (if (datetime? end)
-                          (string-append (date->string (get-date end))
-                                         " "
-                                         (time->string (get-time end)))
+                          (datetime->string (attr ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
                           (date->string end)))
                     (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
                                                  #:width (min 70 width))

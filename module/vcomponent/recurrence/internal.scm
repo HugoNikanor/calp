@@ -38,7 +38,7 @@
                      (display
                       (case field
                         ;; TODO check over date/time/datetime here
-                        ((until) ((@ (datetime util) time->string) it))
+                        ;; ((until) ((@ (datetime util) time->string) it))
                         (else it))
                       port)))
          (display ">" port))))))

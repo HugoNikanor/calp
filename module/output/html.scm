@@ -28,9 +28,7 @@
 ;; TODO currently not guaranteed to be unique
 (define (UID ev)
   (string-append
-   ;; (date/-time->string (attr ev 'DTSTART) "~s")
-   (date->string (as-date (attr ev 'DTSTART)) "~Y~m~d")
-   (time->string (as-time (attr ev 'DTSTART)) "~H~M~S")
+   (datetime->string (as-datetime (attr ev 'DTSTART)) "~Y~m~d~H~M~S")
    (html-attr (attr ev 'UID))))
 
 ;; This should only be used on time intervals, never on absolute times.
@@ -61,12 +59,10 @@
         [else ; guaranteed datetime
          (let ((s (attr ev 'DTSTART))
                (e (attr ev 'DTEND)))
-           (let ((s-str (time->string (get-time s) "~H:~M"))
-                 (e-str (time->string (get-time e) "~H:~M")))
-             (if (date= (get-date s) (get-date e))
-                 (values s-str e-str)
-                 (values (string-append (date->string (get-date s) "~Y-~m-~d ") s-str)
-                         (string-append (date->string (get-date e) "~Y-~m-~d ") e-str)))))]))
+           (let ((fmt-str (if (date= (get-date s) (get-date e))
+                              "~H:~M" "~Y-~m-~d ~H:~M")))
+             (values (datetime->string s fmt-str)
+                     (datetime->string e fmt-str))))]))
 
 
 

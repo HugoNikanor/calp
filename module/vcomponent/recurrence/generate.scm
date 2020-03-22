@@ -50,30 +50,25 @@
              (let ((d (attr e 'DTSTART))
                    (i (interval r)))
 
-               (set! (attr e 'DTSTART)
-                 ((if (date? d)
-                    identity
-                    (lambda (date)
-                      (datetime
-                        date: date
-                        time: (time+ (get-time d)
-                                     (case (freq r)
-                                       ((SECONDLY) (time second: i))
-                                       ((MINUTELY) (time minute: i))
-                                       ((HOURLY)   (time hour:   i))
-                                       (else (time)))))))
-
-                  (date+ (as-date d)
-                         (case (freq r)
-                           ((DAILY)    (date day:    i))
-                           ((WEEKLY)   (date day: (* i 7)))
-                           ((MONTHLY)  (date month:  i))
-                           ((YEARLY)   (date year:   i))
-                           (else (date))))))
+               (let ((date-change (case (freq r)
+                                    ((DAILY)    (date day:    i))
+                                    ((WEEKLY)   (date day: (* i 7)))
+                                    ((MONTHLY)  (date month:  i))
+                                    ((YEARLY)   (date year:   i))
+                                    (else (date))))
+                     (time-change (case (freq r)
+                                    ((SECONDLY) (time second: i))
+                                    ((MINUTELY) (time minute: i))
+                                    ((HOURLY)   (time hour:   i))
+                                    (else (time)))))
+                (set! (attr e 'DTSTART)
+                  (if (date? d)
+                      (date+ d date-change)
+                      (datetime+ d (datetime date: date-change time: time-change)))))
 
                #;
-               (set! (zone-offset d)
-                 (zone-offset (time-utc->date (date->time-utc d))))
+               (set! (zone-offset d)    ;
+               (zone-offset (time-utc->date (date->time-utc d))))
 
 
                (let ((start (attr e 'DTSTART))
