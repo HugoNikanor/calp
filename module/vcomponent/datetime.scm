@@ -55,7 +55,7 @@ Event must have the DTSTART and DTEND attribute set."
                            (as-datetime (attr e 'DTSTART)))))
 
 (define-public (event-length/clamped start-date end-date e)
-  (datetime-difference (datetime-min (datetime date: end-date)   (as-datetime (attr e 'DTEND)))
+  (datetime-difference (datetime-min (datetime date: (date+ end-date (date day: 1)))   (as-datetime (attr e 'DTEND)))
                        (datetime-max (datetime date: start-date) (as-datetime (attr e 'DTSTART)))))
 
 ;; Returns the length of the part of @var{e} which is within the day
