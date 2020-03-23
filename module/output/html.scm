@@ -479,10 +479,8 @@
                                (pre-start start-date)
                                (post-end end-date))
   ;; TODO maybe don't do this again for every month
-  ;; (define evs (get-groups-between (group-stream events)
-  ;;                                 start-date end-date))
-
-  (define month-base (start-of-month start-date))
+  (define evs (get-groups-between (group-stream events)
+                                  start-date end-date))
 
   (define (nav-link display date)
     `(a (@ (href ,(date->string date "~Y-~m-~d") ".html")
@@ -573,7 +571,6 @@
                                             calendars)))
 
                             ;; Events which started before our start point, but "spill" into our time span.
-                            #;
                             (section (@ (class "text-day"))
                                      (header (h2 "Tidigare"))
                                      ,@(stream->list
@@ -581,7 +578,6 @@
                                                     (stream-take-while (compose (cut date/-time<? <> start-date)
                                                                                 (extract 'DTSTART))
                                                                        (cdr (stream-car evs))))))
-                            #;
                             ,@(stream->list (stream-map fmt-day evs)))))))))
 
 
