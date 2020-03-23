@@ -129,7 +129,7 @@
 
 ;; Format single event for graphical display
 (define (create-block date ev)
- ;; (define time (date->time-utc day))
+  ;; (define time (date->time-utc day))
   (define style
     (format #f "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"
 
@@ -221,15 +221,12 @@
          (short-events (stream->list events)))
 
     (fix-event-widths! short-events event-length-key: (lambda (e) (event-length/day day-date e)))
-    `((div (@ (class "meta"))
-           ,(let ((str (date-link day-date)))
-              `(span (@ (id ,str) (class "daydate")) ,str))
-           (span (@ (class "dayname")) ,(date->string day-date "~a")))
-      (div (@ (class "events"))
-           ,@(map (lambda (time)
-                    `(div (@ (class "clock clock-" ,time)) ""))
-                  (iota 12 0 2))
-           ,@(map (lambda (e) (create-block day-date e)) short-events)))))
+
+    `(div (@ (class "events"))
+          ,@(map (lambda (time)
+                   `(div (@ (class "clock clock-" ,time)) ""))
+                 (iota 12 0 2))
+          ,@(map (lambda (e) (create-block day-date e)) short-events))))
 
 
 (define (lay-out-long-events start end events)
@@ -278,19 +275,26 @@
                       (day-stream start))))
 
 (define*-public (render-calendar key: events start-date end-date #:allow-other-keys)
-  (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events)))))
-   `(div (@ (class "calendar"))
-         (div (@ (class "days"))
-              ,@(time-marker-div)
-              (div (@ (class "longevents")
-                      (style "grid-column-end: span " ,(days-between start-date end-date)))
-                   ""                   ; prevent self-closing
-                   ,@(lay-out-long-events start-date end-date long-events))
-              ,@(let* ((r (date-range start-date end-date))
-                       (event-groups (get-groups-between (group-stream (list->stream short-events))
-                                                         start-date end-date)))
-                  (concatenate  (stream->list (stream-map lay-out-day event-groups))
-                                ))))))
+  (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))
+         (range (date-range start-date end-date)))
+    `(div (@ (class "calendar"))
+          (div (@ (class "days"))
+               ,@(time-marker-div)
+               (div (@ (class "longevents")
+                       (style "grid-column-end: span " ,(days-between start-date end-date)))
+                    ""                  ; prevent self-closing
+                    ,@(lay-out-long-events start-date end-date long-events))
+               ,@(map (lambda (day-date)
+                        `(div (@ (class "meta"))
+                              ,(let ((str (date-link day-date)))
+                                 `(span (@ (id ,str) (class "daydate")) ,str))
+                              (span (@ (class "dayname")) ,(date->string day-date "~a"))) )
+                      range)
+               ,@(stream->list
+                  (stream-map
+                   lay-out-day
+                   (get-groups-between (group-stream (list->stream short-events))
+                                       start-date end-date)))))))
 
   
 ;;; Prodcedures for text output
