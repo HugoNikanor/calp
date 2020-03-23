@@ -1,35 +1,35 @@
 html {
-	height: 100%;
+    height: 100%;
 }
 
 html, body {
-	height: 100%;
-	margin: 0;
+    height: 100%;
+    margin: 0;
 }
 
 .root {
-	display: flex;
-	margin: 0;
-	max-width: 100%;
-	height: 100%;
+    display: flex;
+    margin: 0;
+    max-width: 100%;
+    height: 100%;
 }
 
 .small-calendar {
-	text-align: right;
-	border-collapse: collapse;
+    text-align: right;
+    border-collapse: collapse;
 }
 
 .small-calendar thead {
-	border-bottom: 1px solid black;
+    border-bottom: 1px solid black;
 }
 
 .small-calendar .prev,
 .small-calendar .next {
-	color: grey;
+    color: grey;
 }
 
 .small-calendar td {
-	padding: 5px;
+    padding: 5px;
 }
 
 .calendarlist li {
@@ -40,27 +40,27 @@ html, body {
 }
 
 .small-calendar .today {
-	border: 1px solid black;
+    border: 1px solid black;
 }
 
 .text-day {
-	border-left: 2px solid black;
-	border-top: 2px solid black;
-	padding-left: 2px;
-	margin-top: 1em;
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+    padding-left: 2px;
+    margin-top: 1em;
 }
 
 .text-day header h2 {
-	width: 100%;
-	text-align: center;
-	font-size: 14pt;
+    width: 100%;
+    text-align: center;
+    font-size: 14pt;
 }
 
 .sideinfo {
-	width: 20em;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
+    width: 20em;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .sideinfo .nav {
@@ -72,47 +72,47 @@ html, body {
 }
 
 .sideinfo .about {
-	display: flex;
-	justify-content: center;
+    display: flex;
+    justify-content: center;
 }
 
 .sideinfo .small-calendar {
-	margin-left: 1em;
+    margin-left: 1em;
         margin-right: 1em;
 }
 
 .sideinfo .eventlist {
-	overflow: scroll;
+    overflow: scroll;
 }
 
 .sideinfo .eventlist article {
-	border-bottom: 1px solid black;
-	margin-top: 1em;
-	border-left-style: solid;
-	border-left-width: 6px;
-	padding-left: 2px;
+    border-bottom: 1px solid black;
+    margin-top: 1em;
+    border-left-style: solid;
+    border-left-width: 6px;
+    padding-left: 2px;
 }
 
 .sideinfo .eventlist {
-	white-space: pre-line;
-	font-size: 10pt;
+    white-space: pre-line;
+    font-size: 10pt;
 }
 
 .sideinfo .eventlist h3 {
-	font-size: 12pt;
-	border-bottom: 1px solid gray;
-	margin-bottom: 0;
-	font-weight: 300;
+    font-size: 12pt;
+    border-bottom: 1px solid gray;
+    margin-bottom: 0;
+    font-weight: 300;
 }
 
 .hidelink {
-	color: inherit;
-	text-decoration: none;
+    color: inherit;
+    text-decoration: none;
 }
 
 .root main {
-	display: flex;
-	flex-direction: column;
+    display: flex;
+    flex-direction: column;
         flex-grow: 1;
         min-width: 0;
 }
@@ -179,26 +179,26 @@ html, body {
 /* ---------------------------------------- */
 
 .calendar {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-grow: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-grow: 2;
 }
 
 .sideclock {
-	/* border-right: 2px solid gray; */
-	/* height: 100%; */
-	padding: 0;
+    /* border-right: 2px solid gray; */
+    /* height: 100%; */
+    padding: 0;
         grid-row: 3;
         position: relative;
 }
 .sideclock .day {
-	border: 1px transparent;
-	min-width: 0;
+    border: 1px transparent;
+    min-width: 0;
 }
 
 .days .meta {
-	border-bottom: 2px solid gray;
+    border-bottom: 2px solid gray;
         grid-row: 1;
 }
 
@@ -213,31 +213,31 @@ html, body {
 }
 
 .days {
-	display: grid;
+    display: grid;
         grid-template-rows: 4em 4em auto;
         grid-template-columns: 5em auto;
-	width: 100%;
-	height: 100%;
-	padding: 0;
-	overflow-x: scroll;
-	/* scroll-snap-type: x mandatory; */
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    overflow-x: scroll;
+    /* scroll-snap-type: x mandatory; */
 }
 
 .events {
-	position: relative;
-	/* width: 100%; */
-	/* height: calc(100% - 50px); */
-	/* flex-grow: 1; */
+    position: relative;
+    /* width: 100%; */
+    /* height: calc(100% - 50px); */
+    /* flex-grow: 1; */
         /* since day container no longer exists */
         border: 1px solid gray;
-	/* scroll-snap-align: start; */
+    /* scroll-snap-align: start; */
 }
 
 /* Clockbar is also .events */
 /* .clockbar { */
-/* 	/\* Removing this draws timestamps on top of calendar instead of */
-/* 	 * besides it *\/ */
-/* 	width: 2.5em; */
+/*     /\* Removing this draws timestamps on top of calendar instead of */
+/*      * besides it *\/ */
+/*     width: 2.5em; */
 /* } */
 
 /*
@@ -245,92 +245,92 @@ html, body {
  * Making placing it on the correct line much simpler.
  */
 .clock, .event {
-	position: absolute;
-	box-sizing: border-box;
-	margin: 0;
-	display: block;
+    position: absolute;
+    box-sizing: border-box;
+    margin: 0;
+    display: block;
 }
 
 .clock {
-	color: gray;
-	border-top: 1px dotted gray;
+    color: gray;
+    border-top: 1px dotted gray;
         width: 100%;
 }
 
 .sideclock .clock {
-	/* border: none; */
+    /* border: none; */
         border-top: 1px dotted gray;
         grid-row: 3;
 }
 
 .clocktext {
-	z-index: 1;
-	text-align: right;
+    z-index: 1;
+    text-align: right;
 }
 
 .meta {
-	/* height: 50px; */
-	width: 100%;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	position: relative;
+    /* height: 50px; */
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
 
         margin-left: 1em;
         margin-right: 1em;
 }
 
 .meta .dayname {
-	position: absolute;
-	left: 5px;
-	top: 2px;
-	color: grey;
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    color: grey;
 }
 
 .meta .daydate {
-	font-size: 200%;
+    font-size: 200%;
 }
 
 .event {
-	width: 100%;
+    width: 100%;
 
-	border: 2px solid black;
-	font-size: 8pt;
+    border: 2px solid black;
+    font-size: 8pt;
 
-	/* overflow: hidden; */
+    /* overflow: hidden; */
 
         /* Setting this makes popups render under */
-	/* z-index: 0; */
+    /* z-index: 0; */
 }
 
 .root footer {
-	font-family: monospace;
-	margin: 0.5em;
+    font-family: monospace;
+    margin: 0.5em;
 }
 
 .root footer span {
-	margin: 0 1em;
+    margin: 0 1em;
 }
 
 /* */
 
 .events .event.continuing {
-	border-bottom: none;
-	background-image: linear-gradient(to top, #0007 0%,#FFF0 2em);
+    border-bottom: none;
+    background-image: linear-gradient(to top, #0007 0%,#FFF0 2em);
 }
 
 .events .event.continued {
-	border-top: none;
-	background-image: linear-gradient(to bottom, #FFF7 0%,#FFF0 3em);
+    border-top: none;
+    background-image: linear-gradient(to bottom, #FFF7 0%,#FFF0 3em);
 }
 
 .events .event.continued.continuing {
-	border-top: none;
-	border-bottom: none;
-	background-image:
-		linear-gradient(to bottom,
-			#FFF7  0%, #FFF0 10%,
-			#FFF0 90%, #0007 100%);
+    border-top: none;
+    border-bottom: none;
+    background-image:
+        linear-gradient(to bottom,
+            #FFF7  0%, #FFF0 10%,
+            #FFF0 90%, #0007 100%);
 }
 
 .event.tentative {
@@ -349,39 +349,39 @@ html, body {
 }
 
 .longevents .event.continuing {
-	border-right: none;
-	/* background-image: linear-gradient(to left, #0007 0%,#FFF0 4em); */
+    border-right: none;
+    /* background-image: linear-gradient(to left, #0007 0%,#FFF0 4em); */
         border-radius: 1em 0 0 1em;
 }
 
 .longevents .event.continued {
-	border-left: none;
-	/* background-image: linear-gradient(to right, #FFF7 0%,#FFF0 6em); */
+    border-left: none;
+    /* background-image: linear-gradient(to right, #FFF7 0%,#FFF0 6em); */
         border-radius: 0 1em 1em 0;
 }
 
 .longevents .event.continued.continuing {
-	border-left: none;
-	border-right: none;
-	/* background-image: */
-	/* 	linear-gradient(to right, */
-	/* 		#FFF7  0%, #FFF0 10%, */
-	/* 		#FFF0 90%, #0007 100%); */
+    border-left: none;
+    border-right: none;
+    /* background-image: */
+    /*     linear-gradient(to right, */
+    /*         #FFF7  0%, #FFF0 10%, */
+    /*         #FFF0 90%, #0007 100%); */
         border-radius: 0;
 }
 
 
 .event.generated {
-	background-color: #55FF5550;
+    background-color: #55FF5550;
 }
 
 /* .selected { */
-/* 	width: 100% !important; */
-/* 	left: 0 !important; */
-/* 	z-index: 1 !important; */
+/*     width: 100% !important; */
+/*     left: 0 !important; */
+/*     z-index: 1 !important; */
 
-/* 	margin-top: 3mm; */
-/* 	margin-left: 3mm; */
+/*     margin-top: 3mm; */
+/*     margin-left: 3mm; */
 /* } */
 
 .clock-0  { top: calc(100%/24 *  0); }
@@ -470,3 +470,6 @@ html, body {
     width: 100%;
     height: 100%;
 }
+
+/* vim:expandtab:softtabstop=4:shiftwidth=4:
+ */
