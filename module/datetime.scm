@@ -579,7 +579,7 @@
      (car (mktime (datetime->tm start)))))
 
 (define-public (date-difference end start)
-  (date day: (/ (datetime-difference (datetime date: end)
+  (date day: (ceiling-quotient (datetime-difference (datetime date: end)
                                      (datetime date: start))
                 86400)))
 

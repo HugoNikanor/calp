@@ -10,6 +10,7 @@
   #:export (print-vcomponent
             serialize-vcomponent))
 
+;;; TODO this is broken,2020-03-22
 (define* (print-vcomponent comp #:optional (port #t) #:key (descend? #t) (depth 0))
   (let ((kvs (map (lambda (key) (cons key (attr* comp key)))
                   (attributes comp))))
@@ -68,13 +69,9 @@ Removes the X-HNH-FILENAME attribute, and sets PRODID to
                          (case key
                            ((DTSTART DTEND)
                             (cond [(string? value) value]
-                                  [(date? value) (date->string value "~H~M~S")]
+                                  [(date? value) (date->string value "~Y~m~d")]
                                   [(datetime? value)
-                                   (string-append
-                                    (date->string (get-date value) "~Y~m~d")
-                                    "T"
-                                    (time->string (get-time value) "~H~M~S" ; ~z
-                                                  ))]))
+                                   (datetime->string value)]))
                            ((X-HNH-DURATION)
                             (format #f "~s" value))
                            (else value)))))

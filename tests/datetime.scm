@@ -96,7 +96,8 @@
   (time- #10:20:30 #10:20:30))
 
 (test-equal "datetime-difference self"
-  #0000-00-00T00:00:00
+  ;; #0000-00-00T00:00:00
+  0
   (datetime-difference (datetime date: #2020-01-01) (datetime date: #2020-01-01)))
 
 ;; (test-assert
