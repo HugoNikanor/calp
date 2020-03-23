@@ -52,9 +52,10 @@
               (cond [(attr ev 'DTEND)
                      => (lambda (e)
                           (if (date= e (date+ s (date day: 1)))
-                              (values (date->string s) "")
+                              (date->string s)  ; start = end, only return one value
                               (values (date->string s)
                                       (date->string e))))]
+                    ;; no end value, just return start
                     [else (date->string s)]))]
         [else ; guaranteed datetime
          (let ((s (attr ev 'DTSTART))
@@ -311,8 +312,9 @@
                       (class "hidelink"))
                    ,(attr ev 'SUMMARY)))
             (div
-             ,(let* ((start end (fmt-time-span ev)))
-                `(div ,start " — " ,end))
+             ,(call-with-values (lambda () (fmt-time-span ev))
+                (match-lambda* [(start end) `(div ,start " — " ,end)]
+                               [(start) `(div ,start)]))
              ,(when (and=> (attr ev 'LOCATION) (negate string-null?))
                 `(div (b "Plats: ") ,(attr ev 'LOCATION)))
              ,(and=> (attr ev 'DESCRIPTION) (lambda (str) ((description-filter) ev str))))))
