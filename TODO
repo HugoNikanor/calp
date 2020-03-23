@@ -1,14 +1,23 @@
 Blandat
 =======
 
-Event 17:30 - 00:00 klassas som "långt" event
----------------------------------------------
+Felaktig längd på event
+-----------------------
+
+Följande event har någonting udda för sig.
+
+/home/hugo/.local/var/cal/d_sektionen/37cb2cbc5316a4848eff1e380ab064832b17183ee1b5b96a5c002c6b089dad49.ics
+DTSTART	#<<datetime> date: 2020-02-03 time: 16:30:00 tz: "UTC">
+DTEND	#<<datetime> date: 2020-02-03 time: 23:00:00 tz: "UTC">
+SUMMARY	Vintermöte
 
 Properties
 ==========
 
 Object utan DTEND
 -----------------
+Just nu sätts heldagsevents till att sluta en dag senare,
+och "vanliga" event är 1 timme långa. Se vad standarden säger.
 
 Object med DURATION istället för DTEND
 --------------------------------------
@@ -37,6 +46,19 @@ Handle systems with bad `cal' programs
 HTML
 ====
 
-Månadsvy
---------
-fullskärm 7x5 dagar.
+Icke-linjär tidsskala
+---------------------
+
+
+ICS
+===
+
+VTIMEZONE i output
+------------------
+Min nuvranade taktik för att hantera tidszoner är att jag under inläsningen
+struntar fullständigt i alla VTIMEZONE-objekt, hoppas att all TZID:n följer
+tzdb-standarden (ex. "Europe/Stockholm"), vilket den inte måste göra.
+Vid utmatning av en VCALENDAR måste dock alla använda tidszoner redovisas.
+Antingen:
+- spara undan de inlästa, eller
+- generera nya from tzdb.
