@@ -248,13 +248,16 @@
                 (iota 12 0 2)))))
 
 ;; date, date, [sorted-stream events] → [list events]
-;;; TODO
 (define (events-between start-date end-date events)
-  (filter-sorted-stream
-   (lambda (e)
-     (timespan-overlaps? start-date (date+ end-date (date day: 1))
-                         (attr e 'DTSTART) (attr e 'DTEND)))
-   events))
+  (define (overlaps e)
+    (timespan-overlaps? start-date (date+ end-date (date day: 1))
+                        (attr e 'DTSTART) (attr e 'DTEND)))
+
+  (stream-filter overlaps
+                 (get-stream-interval
+                  overlaps
+                  (lambda (e) (not (date< end-date (as-date (attr e 'DTSTART)))))
+                  events)))
 
 ;; Returns number of days in time interval.
 ;; @example

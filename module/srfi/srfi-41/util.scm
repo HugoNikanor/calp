@@ -28,6 +28,10 @@
 ;; on. From there it knows that once it has found the first element
 ;; that satisfies our predicate all remaining elements satisfying pred
 ;; will be in direct succession.
+;; Does have some drawbacks, concider an event between 2020-01-01 and 2020-12-31.
+;; The collection is sorted on start time, and we want all events overlapping the
+;; interval 2020-02-01 to 2020-02-29. We would get the long event, but then probably
+;; stop because all regular small events in january.
 (define-public (filter-sorted-stream pred stream)
   (stream-take-while
    pred (stream-drop-while
@@ -47,6 +51,16 @@
                        (stream-cdr stream)))]
         [else (filter-sorted-stream* pred? keep-remaining?
                                      (stream-cdr stream))]))
+
+
+;; returns all object in stream from the first object satisfying
+;; start-pred, until the last object which sattisfies end-pred.
+(define-public (get-stream-interval start-pred end-pred stream)
+  (stream-take-while
+   end-pred (stream-drop-while
+             (negate start-pred)
+             stream)))
+
 
 ;; Finds the first element in stream satisfying pred.
 ;; Returns #f if nothing was found
