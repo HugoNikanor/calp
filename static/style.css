@@ -220,7 +220,7 @@ html, body {
 	height: 100%;
 	padding: 0;
 	overflow-x: scroll;
-	scroll-snap-type: x mandatory;
+	/* scroll-snap-type: x mandatory; */
 }
 
 .events {
@@ -230,7 +230,7 @@ html, body {
 	/* flex-grow: 1; */
         /* since day container no longer exists */
         border: 1px solid gray;
-	scroll-snap-align: start;
+	/* scroll-snap-align: start; */
 }
 
 /* Clockbar is also .events */

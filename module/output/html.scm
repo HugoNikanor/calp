@@ -160,10 +160,12 @@
                    " continuing"))
               (style ,style))
            (div (@ (class "event-inner"))
-            (div (@ (class "popup"))
-                 ,(event-debug-html ev))
-            (div (@ (class "body"))
-                 ,((summary-filter) ev (attr ev 'SUMMARY))))))
+                ;; NOTE These popup's are far from good. Main problem being that
+                ;; the often render off-screen for events high up on the screen.
+                (div (@ (class "popup"))
+                     ,(event-debug-html ev))
+                (div (@ (class "body"))
+                     ,((summary-filter) ev (attr ev 'SUMMARY))))))
 
   )
 
