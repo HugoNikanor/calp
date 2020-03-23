@@ -308,7 +308,7 @@ row ~a	column ~a	ctx = ~a
           (name
            (catch 'system-error
              (lambda () (call-with-input-file (/ path "displayname") read-line))
-             (const (basename path "/")))))
+             (const #f))))
 
       (reduce (lambda (item calendar)
 
@@ -369,25 +369,25 @@ row ~a	column ~a	ctx = ~a
 (define-public (parse-cal-path path)
   (define st (stat path))
   (define cal
-   (case (stat:type st)
-     [(regular)
-      (let ((comp (call-with-input-file path parse-calendar)))
-        (set! (attr comp 'X-HNH-SOURCETYPE) "file")
-        comp) ]
-     [(directory)
-      (report-time! "Parsing ~a" path)
-      (let ((comp (parse-vdir path)))
-        (set! (attr comp 'X-HNH-SOURCETYPE) "vdir")
-        comp)]
-     [(block-special char-special fifo socket unknown symlink)
-      => (lambda (t) (error "Can't parse file of type " t))]))
+    (case (stat:type st)
+      [(regular)
+       (let ((comp (call-with-input-file path parse-calendar)))
+         (set! (attr comp 'X-HNH-SOURCETYPE) "file")
+         comp) ]
+      [(directory)
+       (report-time! "Parsing ~a" path)
+       (let ((comp (parse-vdir path)))
+         (set! (attr comp 'X-HNH-SOURCETYPE) "vdir")
+         comp)]
+      [(block-special char-special fifo socket unknown symlink)
+       => (lambda (t) (error "Can't parse file of type " t))]))
 
-    (unless (attr cal "NAME")
-      (set! (attr cal "NAME")
-        (or (attr cal "X-WR-CALNAME")
-            "[NAMELESS]")))
+  (unless (attr cal "NAME")
+    (set! (attr cal "NAME")
+      (or (attr cal "X-WR-CALNAME")
+          (string-append "[" (basename path) "]"))))
 
-    cal
+  cal
 
   )
 
