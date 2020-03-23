@@ -291,10 +291,10 @@
                               (span (@ (class "dayname")) ,(date->string day-date "~a"))) )
                       range)
                ,@(stream->list
-                  (stream-map
-                   lay-out-day
-                   (get-groups-between (group-stream (list->stream short-events))
-                                       start-date end-date)))))))
+                     (stream-map
+                      lay-out-day
+                      (get-groups-between (group-stream (list->stream short-events))
+                                          start-date end-date)))))))
 
   
 ;;; Prodcedures for text output
@@ -464,20 +464,16 @@
 
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
-;;; calendars
-;;; events
-;;; grouped events
-;;; pre-start-date
-;;; start-date
-;;; end-date
-;;; post-end-date
-;;; render-procedure
-(define*-public (html-generate calendars events start-date end-date render-calendar
+(define*-public (html-generate calendars events start-date end-date
+                               render-calendar ; (bunch of kv args) → sxml
                                key:
                                next-start ; date → date
                                prev-start ; date → date
+                               ;; The pre and post dates are if we want to show some dates just outside our
+                               ;; actuall interval. Primarily for whole month views, which needs a bit on each side.
                                (pre-start start-date)
-                               (post-end end-date))
+                               (post-end end-date)
+                               )
   ;; TODO maybe don't do this again for every month
   (define evs (get-groups-between (group-stream events)
                                   start-date end-date))
