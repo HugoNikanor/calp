@@ -93,3 +93,13 @@ Event must have the DTSTART and DTEND attribute set."
 ;; 22:00 - 03:00
 ;; 2h för dag 1
 ;; 3h för dag 2
+
+;; An event is considered long if it's DTSTART (and thereby DTEND) lacks a time component,
+;; or if the total length of the event is greater than 24h.
+;; For practical purposes, an event being long means that it shouldn't be rendered as a part
+;; of a regular day.
+(define-public (long-event? ev)
+  (or (date? (attr ev 'DTSTART))
+      (datetime<= (datetime date: (date day: 1))
+                  (datetime-difference (attr ev 'DTEND)
+                                       (attr ev 'DTSTART)))))

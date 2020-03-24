@@ -648,6 +648,28 @@
 
 
 
+
+;; @example
+;; (time->decimal-hour #10:30:00) ; => 10.5
+;; @end example
+(define-public (time->decimal-hour time)
+  (exact->inexact (+ (hour time)
+                     (/ (minute time) 60)
+                     (/ (second time) 3600))))
+
+(define-public (datetime->decimal-hour dt)
+  (unless (and (zero? (month (get-date dt)))
+               (zero? (year (get-date dt))))
+    (error "Multi-month intervals not yet supported" dt))
+  ;; TODO
+  ;; (date-difference #2020-12-31 #2020-01-01) ; => 0000-11-30
+  ;; to get number of days in diff-time we need to count number of days
+  ;; in each month from start and forward
+  (+ (time->decimal-hour (get-time% dt))
+     (* (day (get-date dt)) 24)))
+
+
+
 ;;; Parsers for vcomponent usage
 
 ;; substring to number, local here

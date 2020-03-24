@@ -31,25 +31,6 @@
    (datetime->string (as-datetime (attr ev 'DTSTART)) "~Y~m~d~H~M~S")
    (html-attr (attr ev 'UID))))
 
-;; This should only be used on time intervals, never on absolute times.
-;; For that see @var{date->decimal-hour}.
-;; NOTE Above comment probably deprecated
-(define (time->decimal-hour time)
-  (exact->inexact (+ (hour time)
-                     (/ (minute time) 60)
-                     (/ (second time) 3600))))
-
-(define (datetime->decimal-hour dt)
-  (unless (and (zero? (month (get-date dt)))
-               (zero? (year (get-date dt))))
-    (error "Multi-month intervals not yet supported" dt))
-  ;; TODO
-  ;; (date-difference #2020-12-31 #2020-01-01) ; => 0000-11-30
-  ;; to get number of days in diff-time we need to count number of days
-  ;; in each month from start and forward
-  (+ (time->decimal-hour ((@ (datetime) get-time%) dt))
-     (* (day (get-date dt)) 24)))
-
 ;; Retuns an HTML-safe version of @var{str}.
 (define (html-attr str)
   (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
@@ -87,15 +68,7 @@
       (cons `(tr ,@row)
             (tablify rest width)))))
 
-;; An event is considered long if it's DTSTARt (and thereby DTEND) lacks a time component,
-;; or if the total length of the event is greater than 24h.
-;; For practical purposes, an event being long means that it shouldn't be rendered as a part
-;; of a regular day.
-(define (long-event? ev)
-  (or (date? (attr ev 'DTSTART))
-      (datetime<= (datetime date: (date day: 1))
-                  (datetime-difference (attr ev 'DTEND)
-                                       (attr ev 'DTSTART)))))
+
 
 
 (define (event-debug-html event)
