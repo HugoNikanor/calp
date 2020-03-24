@@ -495,6 +495,9 @@
                       base rest)))
       (values time sum))))
 
+;; hour is number of days we overflow (negative)
+;; (time- #03:00:00 #07:00:00) ; => 20:00:00 => 1
+;; time, Δtime → time, hour
 (define (time-% base change)
 
   (define-values (second-fixed change*)
@@ -521,8 +524,10 @@
   (if (>= (hour minute-fixed) (hour change))
       (values (set (hour minute-fixed) = (- (hour change)))
               0)
-      (values (set (hour minute-fixed) 0)
-              (- (hour change) (hour minute-fixed)))))
+      ;; TODO overflow more than one day
+      (let ((diff (- (hour change) (hour minute-fixed))))
+        (values (set (hour minute-fixed) (- 24 diff))
+                1))))
 
 (define-public (time- base . rest)
   (let ((sum 0))
