@@ -335,6 +335,11 @@
 (define-public (date-zero? date)
   (= 0 (year date) (month date) (day date)))
 
+;; TODO +1 month is weird for late days in a month.
+;; is the last of january +1 month the last of february,
+;; or a few days into march? It's at least not the 31 of
+;; February, as the code is currently written.
+;; (date+ #2020-01-31 #0000-01-00) ; => 2020-02-31
 (define (date+%% change base)
 
   (define-values (days-fixed change*)
@@ -384,12 +389,11 @@
             (negative? (day change)))
     (error "Change can't be negative"))
 
-  (when (or (negative? (month base))
-            (negative? (day base)))
-    (error "Base month or day can't be negative"))
+  (unless (and (< 0 (month base))
+               (< 0 (day base)))
+    (error "Base day and month needs to be at least one" base))
 
-  (date+%% change base)
-  )
+  (date+%% change base))
 
 ;; @var{base} MUST be a valid real date. all rest arguments can however
 ;; be "invalid" dates, such as 0000-00-10
@@ -448,6 +452,7 @@
 
 ;;; time
 
+;; overflow is number of days above
 ;; time x time → time x int
 (define-public (time+% base change)
 
@@ -471,7 +476,6 @@
                        (minute = (- 60))))
           target)))
 
-  ;;  ahtns auoe htns a oeuhnstaoue nhts aoeu nshtaoeu snht oeuia htns oaeu nsht aoeuö ntshaouentsh oaesnuthg aoeu nsthaoeu nshtaou eshtnnh toaeuhnst oeuhtns 
   (define hour-almost-fixed (set (hour minute-fixed) = (+ (hour change))))
 
   ;; (format #t "~s ~s ~s~%" second-fixed minute-fixed hour-almost-fixed)
@@ -531,6 +535,7 @@
 
 
 ;;; DATETIME
+
 
 ;; NOTE that base is re-normalized, but change isn't. This is due to base
 ;; hopefully being a real date, but change just being a difference.
