@@ -581,17 +581,71 @@
 ;;; the *-difference procedures takes two actual datetimes.
 ;;; date- instead takes a date and a delta (but NOT an actual date).
 
-;; TODO TZ
-;; NOTE currently returns the time span in seconds as an int.
-;; Who knew that months doesn't have a constant width...
-(define-public (datetime-difference end start)
-  (- (car (mktime (datetime->tm end)))
-     (car (mktime (datetime->tm start)))))
+;; Works on 0-based dates. So the last of January 2020 becomes
+;; 2020-00-30
+(define (date-difference% b a)
+  ;; #2020-01-01 #2020-00-26 → #2020-00-06 #2020-00-00
+  (define-values (b* a*)
+    (let loop ((b b) (a a))
+      ;; (format (current-error-port) "a=~a b=~a~%" a b)
+      (if (> (day a) (day b))
+          (let ((new-a (set (day a) = (- (1+ (day b))))))
+            (loop (if (= 0 (month b))
+                      (set-> b
+                             (year = (- 1))
+                             (month 11)
+                             (day 30)   ; Last day in december
+                             )
+                      (set-> b
+                             (month = (- 1))
+                             (day (1- (days-in-month (set (month b) = (- 0)))))))
+                  new-a))
+          ;; elif (> (day b) (day a))
+          (values (set (day b) = (- (day a)))
+                  (set (day a) 0)))))
 
-(define-public (date-difference end start)
-  (date day: (ceiling-quotient (datetime-difference (datetime date: end)
-                                     (datetime date: start))
-                86400)))
+  (define-values (b** a**)
+    (let loop ((b b*) (a a*))
+      (if (> (month a) (month b))
+          (loop (set-> b
+                       (year = (- 1))
+                       (month 11))
+                (set (month a) = (- (month b))))
+          ;; elif (> (month b) (month a))
+          (values (set (month b) = (- (month a)))
+                  (set (month a) 0)))))
+
+  ;; a** should here should have both month and date = 0
+
+  (set (year b**) = (- (year a**))))
+
+
+(define-public (date-difference b a)
+  (when (or (negative? (month b))
+            (negative? (day   b))
+            (negative? (month a))
+            (negative? (day   a)) )
+    (error "Negative months or days are an error"))
+
+  (date-difference% (set-> b
+                           (month = (- 1))
+                           (day = (- 1)))
+                    (set-> a
+                           (month = (- 1))
+                           (day = (- 1)))))
+
+
+(define-public (datetime-difference end* start*)
+  ;; NOTE Makes both start and end datetimes in the current local time.
+  (let ((end   (get-datetime end*))
+        (start (get-datetime start*)))
+   (let* ((fixed-time overflow (time- (get-time% end)
+                                      (get-time% start))))
+     (datetime date: (date-difference (date- (get-date end)
+                                             (date day: overflow))
+                                      (get-date start))
+               time: fixed-time))))
+
 
 
 ;;; Parsers for vcomponent usage

@@ -51,12 +51,20 @@ Event must have the DTSTART and DTEND attribute set."
                 (if (date? (attr e 'DTSTART))
                     #24:00:00
                     #01:00:00))
-      (datetime-difference (as-datetime (attr e 'DTEND))
-                           (as-datetime (attr e 'DTSTART)))))
+      ((if (date? (attr e 'DTSTART))
+           date-difference datetime-difference)
+       (attr e 'DTEND) (attr e 'DTSTART))))
 
 (define-public (event-length/clamped start-date end-date e)
-  (datetime-difference (datetime-min (datetime date: (date+ end-date (date day: 1)))   (as-datetime (attr e 'DTEND)))
-                       (datetime-max (datetime date: start-date) (as-datetime (attr e 'DTSTART)))))
+  (if (date? (attr e 'DTSTART))
+      (date-difference (date-min (date+ end-date (date day: 1))
+                                 (attr e 'DTEND))
+                       (date-max start-date
+                                 (attr e 'DTSTART)))
+      (datetime-difference (datetime-min (datetime date: (date+ end-date (date day: 1)))
+                                         (get-datetime (attr e 'DTEND)))
+                           (datetime-max (datetime date: start-date)
+                                         (get-datetime (attr e 'DTSTART))))))
 
 ;; Returns the length of the part of @var{e} which is within the day
 ;; starting at the time @var{start-of-day}.

@@ -82,9 +82,9 @@
 ;; of a regular day.
 (define (long-event? ev)
   (or (date? (attr ev 'DTSTART))
-      (<= (* 3600 24)
-       (datetime-difference (attr ev 'DTEND)
-                            (attr ev 'DTSTART)))))
+      (datetime<= (datetime date: (date day: 1))
+                  (datetime-difference (attr ev 'DTEND)
+                                       (attr ev 'DTSTART)))))
 
 
 (define (event-debug-html event)
@@ -185,15 +185,16 @@
             ;; Set start time
             ;; left
             (* 100
-               (let ((dt (datetime date: start-date)))
-                 (/ (datetime-difference (datetime-max dt (as-datetime (attr ev 'DTSTART))) dt)
-                    3600 total-length)))
+               (let* ((dt (datetime date: start-date))
+                      (diff (datetime-difference (datetime-max dt (as-datetime (attr ev 'DTSTART)))
+                                                 dt)))
+                 (/ (datetime->decimal-hour diff) total-length)))
 
             ;; Set length of event, which makes end time
             ;; width
             (* 100
-               (/ (event-length/clamped start-date end-date ev)
-                  3600 total-length))))
+               (/ (datetime->decimal-hour (as-datetime (event-length/clamped start-date end-date ev)))
+                  total-length))))
 
   `(a (@ (href "#" ,(UID ev))
          (class "hidelink"))
@@ -232,7 +233,7 @@
 
 (define (lay-out-long-events start end events)
   (fix-event-widths! events event-length-key: event-length
-                     event-length-comperator: >)
+                     event-length-comperator: date/-time>)
   (map (lambda (e) (create-top-block start end e))
        events))
 

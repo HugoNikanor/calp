@@ -78,7 +78,7 @@
                    (set! (attr e 'DTEND)
                      (if (date? start)
                          (date+ start change)
-                         (datetime+ start (datetime time: change))))))))
+                         (datetime+ start change)))))))
 
     e))
 
@@ -153,7 +153,7 @@
                          ;; according to RFC 5545 3.8.2.2 (Date-Time End).
                          (if (date? end)
                              (date-difference end (attr event 'DTSTART))
-                             (time second: (datetime-difference end (attr event 'DTSTART)))))]))
+                             (datetime-difference end (attr event 'DTSTART))))]))
            (if (attr event "RRULE")
                (recur-event-stream event (parse-recurrence-rule
                                           (attr event "RRULE")
