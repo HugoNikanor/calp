@@ -160,7 +160,8 @@
 
   `(a (@ (href "#" ,(UID ev))
          (class "hidelink"))
-      (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
+      (div (@ (class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
+                                                  "unknown"))
                 ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
                    " tentative")
                 ,(when (date<? (as-date (attr ev 'DTSTART)) date)
@@ -209,7 +210,7 @@
 
   `(a (@ (href "#" ,(UID ev))
          (class "hidelink"))
-      (div (@ (class "event CAL_" ,(html-attr (attr (parent ev) 'NAME))
+      (div (@ (class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME) "unknown"))
                 ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
                    " tentative")
                 ,(when (date/-time< (attr ev 'DTSTART) start-date)
@@ -317,7 +318,7 @@
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (attr ev 'X-HNH-FILENAME))
   `(article (@ (id ,(UID ev))
                (class "eventtext CAL_bg_"
-                 ,(html-attr (attr (parent ev) 'NAME))
+                 ,(html-attr (or (attr (parent ev) 'NAME) "unknown"))
                  ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
                     " tentative")))
             (h3 (a (@ (href "#" ,(date-link (as-date (attr ev 'DTSTART))))
