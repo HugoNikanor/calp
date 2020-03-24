@@ -3,6 +3,7 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
+  :use-module (srfi srfi-41 util)
   :use-module (util)
   )
 
@@ -299,3 +300,35 @@
      (map (lambda (d) (set (day (month+ date)) d))
           (iota (modulo (- (* 7 5) month-len month-start) 7) 1)))))
 
+
+
+
+(define-public (days-in-interval start-date end-date)
+  (let ((diff (date-difference (date+ end-date (date day: 1)) start-date)))
+    (with-streams
+     (fold + (day diff)
+           (map days-in-month
+                (take (+ (month diff)
+                         (* 12 (year diff)))
+                      (month-stream start-date)))))))
+
+;; @example
+;; (time->decimal-hour #10:30:00) ; => 10.5
+;; @end example
+(define-public (time->decimal-hour time)
+  (exact->inexact (+ (hour time)
+                     (/ (minute time) 60)
+                     (/ (second time) 3600))))
+
+(define*-public (datetime->decimal-hour dt optional: start-date)
+
+  (let ((date-diff
+         (cond [start-date
+                (let* ((end-date (date+ start-date (get-date dt))))
+                  (days-in-interval start-date end-date)) ]
+               [(or (not (zero? (month (get-date dt))))
+                    (not (zero? (year (get-date dt)))))
+                (error "Multi-month intervals only supported when start-date is given" dt)]
+               [else (day (get-date dt))])))
+    (+ (time->decimal-hour ((@ (datetime) get-time%) dt))
+       (* (1- date-diff) 24))))

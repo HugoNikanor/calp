@@ -161,8 +161,8 @@
 ;; better.
 (define (create-top-block start-date end-date ev)
 
-  ;; NOTE be vary of api changes to date-diffenence
-  (define total-length (* 24 (day (date-difference (date+ end-date (date day: 1)) start-date))))
+  (define total-length
+    (* 24 (days-in-interval start-date end-date)))
 
   (define style
     (format #f "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"
@@ -177,12 +177,13 @@
                (let* ((dt (datetime date: start-date))
                       (diff (datetime-difference (datetime-max dt (as-datetime (attr ev 'DTSTART)))
                                                  dt)))
-                 (/ (datetime->decimal-hour diff) total-length)))
+                 (/ (datetime->decimal-hour diff start-date) total-length)))
 
             ;; Set length of event, which makes end time
             ;; width
             (* 100
-               (/ (datetime->decimal-hour (as-datetime (event-length/clamped start-date end-date ev)))
+               (/ (datetime->decimal-hour (as-datetime (event-length/clamped start-date end-date ev))
+                                          start-date)
                   total-length))))
 
   `(a (@ (href "#" ,(UID ev))
