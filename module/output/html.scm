@@ -182,6 +182,10 @@
 
   )
 
+;; date{,time}-difference works in days, and days are simply multiplied by 24 to get hours.
+;; This means that a day is always assumed to be 24h, even when that's wrong. This might lead
+;; to some weirdness when the timezon switches (DST), but it makes everything else behave MUCH
+;; better.
 (define (create-top-block start-date end-date ev)
 
   ;; NOTE be vary of api changes to date-diffenence
