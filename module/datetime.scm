@@ -609,7 +609,8 @@
       (if (> (month a) (month b))
           (loop (set-> b
                        (year = (- 1))
-                       (month 11))
+                       (month 11)
+                       (day 30))
                 (set (month a) = (- (month b))))
           ;; elif (> (month b) (month a))
           (values (set (month b) = (- (month a)))
