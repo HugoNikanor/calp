@@ -33,6 +33,12 @@
 (define-public (time-max a b)
   (if (time<? a b) b a))
 
+(define-public (date-min a b)
+  (if (date< a b) a b))
+
+(define-public (date-max a b)
+  (if (date< a b) b a))
+
 (define-public (datetime-min a b)
   (if (datetime< a b) a b))
 
