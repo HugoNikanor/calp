@@ -173,19 +173,19 @@
   (cond [(datetime? date/-time) (get-date date/-time)]
         [(date? date/-time) date/-time]
         [(time? date/-time) (date)]
-        [else "Object not a date, time, or datetime object ~a" date/-time]))
+        [else (error "Object not a date, time, or datetime object ~a" date/-time)]))
 
 (define-public (as-time date/-time)
   (cond [(datetime? date/-time) (get-time% (get-datetime date/-time))]
         [(date? date/-time) (time)]
         [(time? date/-time) date/-time]
-        [else "Object not a date, time, or datetime object ~a" date/-time]))
+        [else (error "Object not a date, time, or datetime object ~a" date/-time)]))
 
 (define-public (as-datetime dt)
   (cond [(datetime? dt) dt]
         [(date? dt) (datetime date: dt time: (time))]
         [(time? dt) (datetime time: dt date: (date))]
-        [else "Object not a date, time, or datetime object ~a" dt]))
+        [else (error "Object not a date, time, or datetime object ~a" dt)]))
 
 
 ;;; EQUIALENCE
@@ -619,6 +619,7 @@
   ;; a** should here should have both month and date = 0
 
   (set (year b**) = (- (year a**))))
+
 
 
 (define-public (date-difference b a)

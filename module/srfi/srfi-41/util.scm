@@ -74,6 +74,8 @@
 ;; commented defifinitions are items which could be included, but for
 ;; one reason or another isn't.
 ;; TODO Possibly give access to list-primitives under a list- prefix.
+;; TODO since this macro is inhygienic it requires that (srfi srfi-41)
+;; is included at the point of use.
 (define-macro (with-streams . body)
   `(let-syntax
        ((cons        (identifier-syntax stream-cons))
