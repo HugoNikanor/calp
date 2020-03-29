@@ -667,9 +667,9 @@
         minute: (s->n str 2 4)
         second: (s->n str 4 6)))
 
-;;; TODO when parsing recurrence rules sometimes I think this is
-;;; sent regular dates
 (define*-public (parse-datetime str optional: tz)
+  (unless (string-any #\T str)
+    (throw 'parse-error "String ~a doesn't look like a valid datetime" str))
   (let* (((datestr timestr) (string-split str #\T)))
     (datetime date: (parse-date datestr)
               time: (parse-time timestr)

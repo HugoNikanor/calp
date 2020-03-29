@@ -120,7 +120,7 @@
      ((e r)
       (or (and (not (until r)) (not (count r)))                   ; Never ending
           (and=> (count r) (negate zero?))                        ; COUNT
-          (and=> (until r) (lambda (dt) ((if (date? dt) date<= date/-time<=) ; UNTIL
+          (and=> (until r) (lambda (dt) ((if (date? dt) date<= datetime<=) ; UNTIL
                                     (attr e 'DTSTART) dt))))))
 
    ;; Event x Rule → next (Event, Rule)
@@ -155,10 +155,11 @@
                              (date-difference end (attr event 'DTSTART))
                              (datetime-difference end (attr event 'DTSTART))))]))
            (if (attr event "RRULE")
-               (recur-event-stream event (parse-recurrence-rule
-                                          (attr event "RRULE")
-                                          (if (eq? 'DATE (and=> (prop (attr* event 'DTSTART) 'VALUE) car))
-                                              parse-date parse-datetime)))
+               (recur-event-stream
+                event (parse-recurrence-rule
+                       (attr event "RRULE")
+                       (if (date? (attr event 'DTSTART))
+                           parse-date parse-datetime)))
                ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather
                ;; just mention the current part. Handle this
                stream-null))))

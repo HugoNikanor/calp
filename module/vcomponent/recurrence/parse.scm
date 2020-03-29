@@ -48,8 +48,9 @@
                  `(else ,@body)))
               cases))))
 
-;; UNTIL must have the exact same value type as the DTSTART of the event from which
-;; this string came. I have however seen exceptions to that rule...
+;; RFC 5545, Section 3.3.10. Recurrence Rule, states that the UNTIL value MUST have
+;; the same type as the DTSTART of the event (date or datetime). I have seen events
+;; in the wild which didn't follow this. I consider that an user error.
 (define* (parse-recurrence-rule str optional: (datetime-parser parse-datetime))
   (fold
    (lambda (kv o)
