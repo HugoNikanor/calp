@@ -36,7 +36,12 @@
 (define (a link) `(a (@ (href ,link)) ,link))
 
 (define (parse-html str)
-  (xml->sxml (string-append "<div>" str "</div>")
+  ;; extra space to ensure that we don't get a self closing
+  ;; div tag in the final output
+  ;; TODO Fix a real sxml->html   | The space
+  ;; method instead of pretending |
+  ;; that HTML is XML.            v
+  (xml->sxml (string-append "<div> " str "</div>")
              default-entity-handler:
              (lambda (port name)
                (case name

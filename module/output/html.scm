@@ -416,19 +416,24 @@
     `(td (@ (class
               ,(when (date< date start-date) "prev ")
               ,(when (date< end-date date) "next ")))
-         (a (@ (href ,(cond [(date< date start-date)
-                             ;; TODO find a prettier way to generate links to previous and next time intervals
-                             ;; TODO also, it would do good with a bit of testing for off-by-one errors
-                             (date->string
-                              (stream-find (lambda (d) (date<= d date (next-start d)))
-                                           (stream-iterate prev-start start-date))
-                              "~Y-~m-~d.html")]
-                            [(date< end-date date)
-                             (date->string
-                              (stream-find (lambda (d) (and (date<= d date)
-                                                       (date< date (next-start d))))
-                                           (stream-iterate next-start start-date))
-                              "~Y-~m-~d.html" )])
+         (a (@ (href ,(cond
+                       ;; We are before our time interval
+                       [(date< date start-date)
+                        ;; TODO find a prettier way to generate links to previous and next time intervals
+                        ;; TODO also, it would do good with a bit of testing for off-by-one errors
+                        (date->string
+                         (stream-find (lambda (d) (date<= d date (next-start d)))
+                                      (stream-iterate prev-start start-date))
+                         "~Y-~m-~d.html")]
+                       ;; We are after our time interval
+                       [(date< end-date date)
+                        (date->string
+                         (stream-find (lambda (d) (and (date<= d date)
+                                                  (date< date (next-start d))))
+                                      (stream-iterate next-start start-date))
+                         "~Y-~m-~d.html" )]
+                       ;; We are in our time interval
+                       [else ""])
                      "#" ,(date->string date "~Y-~m-~d"))
                (class "hidelink"))
             ,(day date))))
@@ -489,7 +494,7 @@
           (head
            (title "Calendar")
            (meta (@ (charset "utf-8")))
-           (meta (@ (http-equiv "Content-Type") (content "application/xhtml+xml")))
+           ;; (meta (@ (http-equiv "Content-Type") (content "application/xhtml+xml")))
            (meta (@ (name viewport)
                     (content "width=device-width, initial-scale=0.5")))
            (meta (@ (name description)
