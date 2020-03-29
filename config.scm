@@ -55,7 +55,8 @@
 
 (description-filter
  (lambda (ev str)
-   (cond [(member (attr (parent ev) 'NAME) '("d_sektionen" "lithekod"))
+   (cond [(member (attr (parent ev) 'NAME)
+                  '("D-sektionens officiella kalender" "LiTHe kod"))
           (parse-html (regexp-substitute/global
                         #f "<br>" str
                         'pre "<br/>" 'post))]
