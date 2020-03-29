@@ -214,8 +214,8 @@ html, body {
 
 .days {
     display: grid;
-        grid-template-rows: 4em 4em auto;
-        grid-template-columns: 5em auto;
+    grid-template-rows: 4em 4em auto;
+    grid-template-columns: 5ch auto;
     width: 100%;
     height: 100%;
     padding: 0;
