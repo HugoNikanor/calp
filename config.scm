@@ -48,7 +48,7 @@
   (let recur ((str str))
     (let ((m (regexp-exec regexp str)))
       (if (not m)
-          '()
+          (list str)
           (cons* (match:prefix m)
                  (a (match:substring m))
                  (recur (match:suffix m)))))))

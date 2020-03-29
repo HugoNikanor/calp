@@ -49,12 +49,6 @@ HTML
 Icke-linjär tidsskala
 ---------------------
 
-DESCRIPTION
------------
-~/.local/var/cal/Calendar/7R16TKCKYXWW5SVUFDKWQO124I393KEYFU53.ics
-Sidopanelens beskrivning trunkeras till första stycket (precis efter
-första länken).
-
 Saknade dagar
 -------------
 Åtminstånde med `--output wide` renderas ibland inte de sista dagarna
