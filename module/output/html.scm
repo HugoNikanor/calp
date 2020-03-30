@@ -537,7 +537,21 @@
                          ,(let* ((hash (get-git-version))
                                  (url (format #f "~a/calparse/commit/?id=~a"
                                               (repo-url) hash)))
-                            `(span "Version " (a (@ (href ,url)) ,hash)))))
+                            `(span "Version " (a (@ (href ,url)) ,hash)))
+                         (span (@ (class "nav"))
+                               "View "
+                               (a (@ (href "/week/" ,(date->string
+                                                     (if (= 1 (day start-date))
+                                                         (start-of-week start-date (week-start))
+                                                         start-date)
+                                                     "~1")
+                                           ".html"))
+                                  "weekly")
+                               ", "
+                               (a (@ (href "/month/" ,(date->string (set (day start-date) 1) "~1") ".html"))
+                                  "monthly")
+                               ".")
+                         ))
 
                 ;; Whole sidebar
                 (aside (@ (class "sideinfo"))
