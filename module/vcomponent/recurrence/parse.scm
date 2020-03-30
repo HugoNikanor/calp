@@ -51,7 +51,7 @@
 ;; RFC 5545, Section 3.3.10. Recurrence Rule, states that the UNTIL value MUST have
 ;; the same type as the DTSTART of the event (date or datetime). I have seen events
 ;; in the wild which didn't follow this. I consider that an user error.
-(define* (parse-recurrence-rule str optional: (datetime-parser parse-datetime))
+(define* (parse-recurrence-rule str optional: (datetime-parser parse-ics-datetime))
   (fold
    (lambda (kv o)
      (let* (((key val) kv))

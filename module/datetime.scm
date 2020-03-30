@@ -657,22 +657,22 @@
 (define (s->n str from to)
   (string->number (substring/read-only str from to)))
 
-(define-public (parse-date str)
+(define-public (parse-ics-date str)
   (date year:  (s->n str 0 4)
         month: (s->n str 4 6)
         day:   (s->n str 6 8)))
 
-(define-public (parse-time str)
+(define-public (parse-ics-time str)
   (time hour:   (s->n str 0 2)
         minute: (s->n str 2 4)
         second: (s->n str 4 6)))
 
-(define*-public (parse-datetime str optional: tz)
+(define*-public (parse-ics-datetime str optional: tz)
   (unless (string-any #\T str)
     (throw 'parse-error "String ~a doesn't look like a valid datetime" str))
   (let* (((datestr timestr) (string-split str #\T)))
-    (datetime date: (parse-date datestr)
-              time: (parse-time timestr)
+    (datetime date: (parse-ics-date datestr)
+              time: (parse-ics-time timestr)
               tz: tz)))
 
 
@@ -691,12 +691,20 @@
   (let* (((year month day) (map string->number (string-split str #\-))))
     `(date year: ,year month: ,month day: ,day)))
 
+(define-public (parse-iso-date str)
+  (let* (((year month day) (map string->number (string-split str #\-))))
+    (date year: year month: month day: day)))
+
 (define (parse-time% timestr)
   (let* (((hour minute second) (string-split timestr #\:)))
     (let ((hour (string->number hour))
           (minute (string->number minute))
           (second (string->number second)))
       `(time hour: ,hour minute: ,minute second: ,second))))
+
+(define-public (parse-iso-time str)
+  (let* (((hour minute second) (map string->number (string-split str #\:))))
+    (time hour: hour minute: minute second: second)))
 
 (define (parse-datetime% str)
   (let* (((date time) (string-split str #\T)))

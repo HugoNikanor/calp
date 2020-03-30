@@ -159,7 +159,7 @@
                 event (parse-recurrence-rule
                        (attr event "RRULE")
                        (if (date? (attr event 'DTSTART))
-                           parse-date parse-datetime)))
+                           parse-ics-date parse-ics-datetime)))
                ;; TODO some events STANDARD and DAYLIGT doesn't have RRULE's, but rather
                ;; just mention the current part. Handle this
                stream-null))))

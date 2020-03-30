@@ -210,9 +210,9 @@ row ~a	column ~a	ctx = ~a
                                            (let ((type (and=> (prop it 'VALUE) car)))
                                              (if (or (and=> type (cut string=? <> "DATE-TIME"))
                                                      (string-contains (value it) "T"))
-                                                 (set! (value it) (parse-datetime (value it) tz)
+                                                 (set! (value it) (parse-ics-datetime (value it) tz)
                                                        (prop it 'VALUE) 'DATE-TIME)
-                                                 (set! (value it) (parse-date (value it))
+                                                 (set! (value it) (parse-ics-date (value it))
                                                        (prop it 'VALUE) 'DATE))))])
 
 
