@@ -16,17 +16,18 @@
     (date year: year month: month day: day)
     ))
 
-(define-public (day-stream start-day)
-  (stream-iterate (cut date+ <> #0-0-1)
+(define-public (date-stream date-increment start-day)
+  (stream-iterate (cut date+ <> date-increment)
                   start-day))
+
+(define-public (day-stream start-day)
+  (date-stream (date day: 1) start-day))
 
 (define-public (month-stream start-day)
-  (stream-iterate (cut date+ <> #0-1-0)
-                  start-day))
+  (date-stream (date month: 1) start-day))
 
 (define-public (week-stream start-day)
-  (stream-iterate (cut date+ <> (date day: 7))
-                  start-day))
+  (date-stream (date day: 7) start-day))
 
 (define-public (time-min a b)
   (if (time<? a b) a b))
