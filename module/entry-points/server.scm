@@ -104,17 +104,29 @@
 
 (define options
   '((port (value #t) (single-char #\p))
-    (addr (value #t))))
+    (addr (value #t))
+    (family (value #t)
+            (predicate ,(lambda (v) (memv (string->symbol (string-upcase v))
+                                  '(INET INET4 INET6)))))))
 
-(define-public (server-main c e args)
+(define-public (main args)
 
   (define opts (getopt-long args options))
   (define port (option-ref opts 'port 8080))
-  (define addr (option-ref opts 'addr INADDR_LOOPBACK))
+  (define family (case (string->symbol (string-upcase (option-ref opts 'family "INET6")))
+                   [(INET INET4) AF_INET]
+                   [(INET6) AF_INET6]
+                   [else (error "That address family is not supported")]) )
+  ;; TODO the guile methods wants the ip address in numeric form. This is currently extra impossible
+  (define addr (option-ref opts 'addr 0))
 
+  (define-values (c e)
+    (load-calendars
+     calendar-files: (cond [(option-ref opts 'file #f) => list]
+                           [else (calendar-files)]) ))
 
   (format #t "Starting server on ~a:~a~%I'm ~a, runing from ~a~%"
-          (number->string addr 16) port
+          (inet-ntop family addr) port
           (getpid) (getcwd))
 
   (run-server (make-make-routes c e)
