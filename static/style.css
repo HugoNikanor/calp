@@ -285,6 +285,9 @@ html, body {
 .root footer {
     font-family: monospace;
     margin: 0.5em;
+
+    display: flex;
+    justify-content: space-between;
 }
 
 .root footer span {
