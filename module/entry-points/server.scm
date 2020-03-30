@@ -54,12 +54,17 @@
          (sxml->xml-string
           (directory-table "static/"))))
 
-   (GET "/static/:filename" (filename)
+   (GET "/static/:filename.css" (filename)
         (return
-         `((content-type ,(case (string->symbol (file-extension filename))
-                            ((js) 'text/javascript)
-                            ((css) 'text/css))))
-         (call-with-input-file (string-append "static/" filename) read-string)))
+         `((content-type text/css))
+         (call-with-input-file (string-append "static/" filename ".css")
+           read-string)))
+
+   (GET "/static/:filename.js" (filename)
+        (return
+         `((content-type text/javascript))
+         (call-with-input-file (string-append "static/" filename ".js")
+           read-string)))
 
    (GET "/count" ()
         ;; (sleep 1)

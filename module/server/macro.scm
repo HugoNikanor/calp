@@ -10,7 +10,7 @@
 
 
 (define-public (parse-endpoint-string str)
-  (let ((rx (make-regexp ":([^/]+)")))
+  (let ((rx (make-regexp ":([^/.]+)")))
     (let loop ((str str)
                (string "")
                (tokens '()))
@@ -18,7 +18,7 @@
         (if (not m)
             (values (string-append string str) (reverse tokens))
             (loop (match:suffix m)
-                  (string-append string (match:prefix m) "([^/]+)")
+                  (string-append string (match:prefix m) "([^/.]+)")
                   (cons (string->symbol (match:substring m 1))
                         tokens)))))))
 
