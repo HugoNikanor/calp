@@ -27,12 +27,15 @@
 (define (directory-table dir)
   `(table
     (thead
-     (tr (th "Name") (th "Type") (th "Perm")))
+     (tr (th "") (th "Name") (th "Perm")))
     (tbody
      ,@(map (lambda (kv)
               (let* (((k stat) kv))
-                `(tr (td (a (@ (href ,dir ,k)) ,k))
-                     (td ,(stat:type stat))
+                `(tr (td ,(case (stat:type stat)
+                            [(directory) "📁"]
+                            [(regular) "📰"]
+                            [else "🙃"]))
+                     (td (a (@ (href "/" ,dir ,k)) ,k))
                      (td ,(number->string (stat:perms stat) 8)))))
             (cddr (file-system-tree dir))))))
 
