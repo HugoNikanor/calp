@@ -1,6 +1,9 @@
 (define-module (entry-points server)
   :export (main)
-  :use-module (util))
+  :use-module (util)
+  :use-module (vcomponent)
+  :use-module (parameters)
+  )
 
 (use-modules* (web (server request response uri))
               (output (html))
@@ -17,9 +20,9 @@
 (define (file-extension name)
   (car (last-pair (string-split name #\.))))
 
-(define (sxml->xml-string sxml)
+(define (sxml->html-string sxml)
   (with-output-to-string
-    (lambda () (sxml->xml sxml))))
+    (lambda () (display "<!doctype html>\n") (sxml->xml sxml))))
 
 (define (directory-table dir)
   `(table
@@ -37,21 +40,43 @@
 (define (make-make-routes calendar events)
   (make-routes
 
-   (GET "/" (y m) ; m in [1, 12]
-        (let* ((cd (current-date))
-               (start (if m
-                          (date year: 2019 day: 1 month: (string->number m))
-                          (current-date)))
-               (end (set (month start) = (+ 1))))
+   (GET "/week/:start-date.html" (start-date)
+        (let* ((start-date (parse-iso-date start-date)))
 
           (return '((content-type text/html))
                   (with-output-to-string
-                    (lambda () (html-generate calendar events start end))))))
+                    (lambda ()
+                      (html-generate calendars: calendar
+                                     events: events
+                                     start-date: start-date
+                                     end-date: (date+ start-date (date day: 6))
+                                     next-start: (lambda (d) (date+ d (date day: 7)))
+                                     prev-start: (lambda (d) (date- d (date day: 7)))
+                                     render-calendar: render-calendar
+                                     ))))))
+
+   (GET "/month/:start-date.html" (start-date)
+        (let* ((start-date (parse-iso-date start-date)))
+
+          (return '((content-type text/html))
+                  (with-output-to-string
+                    (lambda ()
+                      (html-generate calendars: calendar
+                                     events: events
+                                     start-date: start-date
+                                     end-date: (date- (month+ start-date)
+                                                      (date day: 1))
+                                     next-start: month+
+                                     prev-start: month-
+                                     render-calendar: render-calendar-table
+                                     pre-start: (start-of-week start-date)
+                                     post-end: (end-of-week start-date)
+                                     ))))))
 
    (GET "/static" ()
         (return
          '((content-type text/html))
-         (sxml->xml-string
+         (sxml->html-string
           (directory-table "static/"))))
 
    (GET "/static/:filename.css" (filename)
