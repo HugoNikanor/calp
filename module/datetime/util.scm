@@ -270,6 +270,22 @@
               week-start)
         7))
 
+;; given start of month, returns the date that week started on.
+;; (start-of-week #2020-05-01 mon)
+;; => 2020-04-27
+;; TODO update these two week-methods to do what they ostensibly do.
+(define*-public (start-of-week date optional: (week-start mon))
+  (let* ((prev-month-len (days-in-month (month- date)))
+         (month-start (modulo (- (week-day date) week-start) 7)))
+    (set (day (month- date)) (1+ (- prev-month-len month-start)))))
+
+;; (end-of-week #2020-04-01 mon)
+;; => 2020-05-03
+(define*-public (end-of-week date optional: (week-start mon))
+  (let* ((month-len (days-in-month date))
+         (month-start (modulo (- (week-day date) week-start) 7)))
+    (set (day (month+ date)) (modulo (- (* 7 5) month-len month-start) 7))))
+
 
 ;; Given a month and and which day the week starts on,
 ;; returns three lists, which are:
