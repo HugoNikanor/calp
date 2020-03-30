@@ -340,7 +340,7 @@
            ,((summary-filter) event (attr event 'SUMMARY)))))
 
 ;; (stream event-group) -> sxml
-(define* (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
+(define*-public (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
 
   (define event-groups (get-groups-between (group-stream events)
                                            pre-start post-end))
@@ -463,16 +463,17 @@
 
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
-(define*-public (html-generate calendars events start-date end-date
-                               render-calendar ; (bunch of kv args) → sxml
-                               key:
-                               next-start ; date → date
-                               prev-start ; date → date
-                               ;; The pre and post dates are if we want to show some dates just outside our
-                               ;; actuall interval. Primarily for whole month views, which needs a bit on each side.
-                               (pre-start start-date)
-                               (post-end end-date)
-                               )
+(define*-public (html-generate
+                 key:
+                 calendars events start-date end-date
+                 render-calendar          ; (bunch of kv args) → sxml
+                 next-start               ; date → date
+                 prev-start               ; date → date
+                 ;; The pre and post dates are if we want to show some dates just outside our
+                 ;; actuall interval. Primarily for whole month views, which needs a bit on each side.
+                 (pre-start start-date)
+                 (post-end end-date)
+                 )
   ;; TODO maybe don't do this again for every month
   (define evs (get-groups-between (group-stream events)
                                   start-date end-date))
@@ -593,7 +594,11 @@
       (let ((fname (format #f "./html/~a.html" (date->string start-date "~1"))))
         (format (current-error-port) "Writing to [~a]~%" fname)
         (with-output-to-file fname
-          (lambda () (html-generate calendars events start-date end-date render-calendar
+          (lambda () (html-generate calendars: calendars
+                               events: events
+                               start-date: start-date
+                               end-date: end-date
+                               render-calendar: render-calendar
                                next-start: (lambda (d) (date+ d chunk-length))
                                prev-start: (lambda (d) (date- d chunk-length))
                                ))))])
@@ -615,13 +620,15 @@
          (with-output-to-file fname
            ;; TODO this produces incorrect next and prev links
            ;; TODO It actually produces almost all date links wrong
-           (lambda () (html-generate calendars events
+           (lambda () (html-generate calendars: calendars
+                                events: events
                                 ;; Appends for case where before or after is empty
-                                (car current) (date- (if (null? after)
-                                                         (last current)
-                                                         (car after))
-                                                     (date day: 1))
-                                render-calendar-table
+                                start-date: (car current)
+                                end-date: (date- (if (null? after)
+                                                     (last current)
+                                                     (car after))
+                                                 (date day: 1))
+                                render-calendar: render-calendar-table
                                 next-start: month+
                                 prev-start: month-
                                 pre-start: (car (append before current))
