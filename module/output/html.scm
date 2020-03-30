@@ -335,7 +335,8 @@
   `(a (@ (href "#" ,(UID event))
          (class "hidelink"))
       (div (@ (class "inline-event CAL_"
-                ,(html-attr (attr (parent event) 'NAME))))
+                ;; TODO centralize handling of unnamed calendars once again.
+                ,(html-attr (or (attr (parent event) 'NAME) "unnamed"))))
            ,((summary-filter) event (attr event 'SUMMARY)))))
 
 ;; (stream event-group) -> sxml
