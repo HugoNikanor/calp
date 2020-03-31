@@ -2,7 +2,7 @@
   :export (main)
   :use-module (util)
   :use-module (vcomponent)
-  :use-module (parameters)
+  :use-module (util config all)
   )
 
 (use-modules* (web (server request response uri))

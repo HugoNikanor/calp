@@ -7,13 +7,14 @@
   :use-module (datetime util)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
-  :use-module (parameters)
+  ;; :use-module (parameters)
   ;; :use-module (vcomponent)
   :use-module (vcomponent base)
   :use-module ((vcomponent parse) :select (parse-cal-path))
   :use-module ((vcomponent recurrence) :select (generate-recurrence-set repeating?))
   :use-module ((vcomponent datetime) :select (ev-time<?)))
 
+(register-config! calendar-files '() (ensure list?))
 
 ;; Reads all calendar files from disk, generate recurence-sets for all repeating events,
 ;; and returns a list of calendars, and a stream of all events "ready" for display.

@@ -5,7 +5,7 @@
   :use-module (ice-9 getopt-long)
   :use-module (datetime)
   :use-module (datetime util)
-  :use-module (parameters)
+  :use-module (util config all)
   :use-module (vulgar)
   )
 

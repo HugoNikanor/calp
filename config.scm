@@ -4,13 +4,15 @@
 
 (use-modules (vcomponent))
 
-(use-modules (srfi srfi-26)
-             (srfi srfi-88)
+(use-modules (srfi srfi-88)
              (ice-9 regex)
-             (ice-9 rdelim)
+             ;; (ice-9 rdelim)
              (sxml simple)
              (glob)
-             (datetime util))
+             (datetime util)
+
+             (util config all)
+             )
 
 (calendar-files (glob "~/.local/var/cal/*"))
 

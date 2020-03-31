@@ -29,7 +29,7 @@ exec guile -e main -s $0 "$@"
 
              (statprof)
 
-             (parameters))
+             (util config all))
 
 (define options
   '((statprof (value optional))

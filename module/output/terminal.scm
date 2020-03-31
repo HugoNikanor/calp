@@ -19,7 +19,7 @@
   #:use-module (vcomponent datetime)
 
   #:use-module (ice-9 format)
-  #:use-module (parameters)
+  ;; #:use-module (parameters)
 
   #:export (main-loop))
 

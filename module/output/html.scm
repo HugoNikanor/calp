@@ -7,6 +7,7 @@
   #:use-module (vcomponent group)
   #:use-module (vcomponent datetime)
   #:use-module (util)
+  #:use-module (util config)
   #:use-module (util tree)
   #:duplicates (last)
   #:use-module (datetime)
@@ -17,9 +18,18 @@
 
 
   #:use-module (git)
-  #:use-module (parameters)
+  ;; #:use-module (module config all)
   )
 
+(register-config!
+  summary-filter
+  (lambda (_ a) a)
+  (ensure procedure?))
+
+(register-config!
+  description-filter
+  (lambda (_ a) a)
+  (ensure procedure?))
 
 (define (date-link date)
   (date->string date "~Y-~m-~d"))

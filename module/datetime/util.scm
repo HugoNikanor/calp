@@ -5,6 +5,7 @@
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (util)
+  :use-module (util config)
   )
 
 (define-public (start-of-month date)
@@ -349,3 +350,9 @@
                [else (day (get-date dt))])))
     (+ (time->decimal-hour ((@ (datetime) get-time%) dt))
        (* (1- date-diff) 24))))
+
+
+(register-config!
+  week-start
+  sun
+  (ensure (lambda (x) (<= sun x sat))))
