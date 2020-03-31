@@ -105,32 +105,59 @@
 (define options
   '((port (value #t) (single-char #\p))
     (addr (value #t))
-    (family (value #t)
-            (predicate ,(lambda (v) (memv (string->symbol (string-upcase v))
-                                  '(INET INET4 INET6)))))))
+    ;; TODO numbers as single-char seems to not work.
+    (six (single-char #\6))
+    (four (single-char #\4))))
 
 (define-public (main args)
 
   (define opts (getopt-long args options))
   (define port (option-ref opts 'port 8080))
-  (define family (case (string->symbol (string-upcase (option-ref opts 'family "INET6")))
-                   [(INET INET4) AF_INET]
-                   [(INET6) AF_INET6]
-                   [else (error "That address family is not supported")]) )
-  ;; TODO the guile methods wants the ip address in numeric form. This is currently extra impossible
-  (define addr (option-ref opts 'addr 0))
+  (define addr (option-ref opts 'addr #f))
+  (define family
+    (cond [(option-ref opts 'six  #f) AF_INET6]
+          [(option-ref opts 'four #f) AF_INET]
+          [(and addr (string-contains addr ":")) AF_INET6]
+          [(and addr (string-contains addr ".")) AF_INET]
+          [else AF_INET6]))
 
   (define-values (c e)
     (load-calendars
      calendar-files: (cond [(option-ref opts 'file #f) => list]
                            [else (calendar-files)]) ))
 
+
+
+
+  ;; update address if it was left blank. A bit clumsy since
+  ;; @var{addr} & @var{family} depend on each other.
+  ;; placed after load-calendars to keep Guile 2.2 compability.
+  (set! addr
+    (if addr addr
+      (if (eqv? family AF_INET6)
+        "::" "0.0.0.0")))
+
+  ;; NOTE The default make-default-socket is broken for IPv6.
+  ;; A patch has been submitted to the mailing list. 2020-03-31
+  (module-set!
+    (resolve-module '(web server http))
+    'make-default-socket
+    (lambda (family addr port)
+      (let ((sock (socket family SOCK_STREAM 0)))
+        (setsockopt sock SOL_SOCKET SO_REUSEADDR 1)
+        (bind sock family addr port)
+        sock)))
+
+
+  ;; TODO possibly test inet-pton here on address?
+
   (format #t "Starting server on ~a:~a~%I'm ~a, runing from ~a~%"
-          (inet-ntop family addr) port
+          addr port
           (getpid) (getcwd))
 
   (run-server (make-make-routes c e)
               'http
-              `(port: ,port
-                addr: ,addr)
+              `(family: ,family
+                port: ,port
+                host: ,addr)
               0))
