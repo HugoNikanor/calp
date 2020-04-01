@@ -37,6 +37,10 @@ html, body {
     border-left-width: 1em;
     border-left-style: solid;
     padding-left: 1ex;
+
+    /* force to single line */
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .small-calendar .today {
