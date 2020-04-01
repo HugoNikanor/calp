@@ -82,6 +82,9 @@
 
 (define-syntax for
   (syntax-rules (in)
+    ((for (<var> <vars> ...) in <collection> b1 body ...)
+     (for-each ((@ (ice-9 match) match-lambda) [(<var> <vars> ...) b1 body ...])
+               <collection>))
     ((for <var> in <collection> b1 body ...)
      (for-each (lambda (<var>) b1 body ...)
                <collection>))))
