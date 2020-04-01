@@ -9,12 +9,11 @@
              ;; (ice-9 rdelim)
              (sxml simple)
              (glob)
-             (datetime util)
 
-             (util config all)
+             (util config)
              )
 
-(calendar-files (glob "~/.local/var/cal/*"))
+(set-config! 'calendar-files (glob "~/.local/var/cal/*"))
 
 ;;; TODO possibly replace with propper lookup
 (define my-courses
@@ -28,7 +27,7 @@
 (define* (aref alist key optional: default)
   (or (assoc-ref alist key) default key))
 
-(summary-filter
+(set-config! 'summary-filter
  (lambda (ev str)
    (regexp-substitute/global
     #f "T[A-Z]{3}[0-9]{2}" str
@@ -60,7 +59,7 @@
                  (a (match:substring m))
                  (recur (match:suffix m)))))))
 
-(description-filter
+(set-config! 'description-filter
  (lambda (ev str)
    (cond [(member (attr (parent ev) 'NAME)
                   '("D-sektionens officiella kalender" "LiTHe kod"))
@@ -69,4 +68,4 @@
                         'pre "<br/>" 'post))]
          [else (parse-links str)])))
 
-(week-start mon)
+(set-config! 'week-start (@ (datetime util) mon))

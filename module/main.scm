@@ -29,7 +29,7 @@ exec guile -e main -s $0 "$@"
 
              (statprof)
 
-             (util config all))
+             )
 
 (define options
   '((statprof (value optional))
@@ -81,6 +81,7 @@ exec guile -e main -s $0 "$@"
 
 (define (main args)
   (report-time! "Program start")
+  ;; ((@ (util config) print-configuration-documentation))
   (with-throw-handler #t
     (lambda () (wrapped-main args))
     (lambda (err . args)

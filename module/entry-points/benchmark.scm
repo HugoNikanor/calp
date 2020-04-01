@@ -4,7 +4,6 @@
   :use-module (ice-9 getopt-long)
   :use-module (util)
   :use-module (vcomponent)
-  :use-module (util config all)
   )
 
 
@@ -14,5 +13,5 @@
 (define (main args)
   (define opts (getopt-long args opt-spec))
 
-  (load-calendars* calendar-files: (cond [(option-ref opts 'file #f) => list]
-                                         [else (calendar-files)])))
+  (cond [(option-ref opts 'file #f) => (compose load-calendars* list)]
+        [else (load-calendars)]))

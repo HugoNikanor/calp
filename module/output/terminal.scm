@@ -36,34 +36,35 @@
                               (cur-event -1)
                               (summary-width 30)
                               (location-width 20))
- (for-each
-  (lambda (ev i)
-    (display
-     (string-append
-      (if (datetime? (attr ev 'DTSTART))
-          (datetime->string (attr ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
-          ((@ (texinfo string-utils) center-string)
-           (date->string (attr ev 'DTSTART))
-           19))
-       ; TODO show truncated string
-      " │ "
-      (if (= i cur-event) "\x1b[7m" "")
-      (color-escape (attr (parent ev) 'COLOR))
-      ;; Summary filter is a hook for the user
-      (let ((dirty (attr ev 'X-HNH-DIRTY)))
-        (string-append
-         (if dirty "* " "")
-         (trim-to-width ((summary-filter) ev (attr ev 'SUMMARY)) (- summary-width
-                                                                    (if dirty 2 0)))))
-      STR-RESET
-      " │ "
-      (if (attr ev 'LOCATION) "" "\x1b[1;30m")
-      (trim-to-width
-       (or (attr ev 'LOCATION) "INGEN LOKAL") location-width)
-      STR-RESET
-      "\n")))
-  events
-  (iota (length events))))
+  (for-each
+   (lambda (ev i)
+     (display
+      (string-append
+       (if (datetime? (attr ev 'DTSTART))
+           (datetime->string (attr ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
+           ((@ (texinfo string-utils) center-string)
+            (date->string (attr ev 'DTSTART))
+            19))
+                                        ; TODO show truncated string
+       " │ "
+       (if (= i cur-event) "\x1b[7m" "")
+       (color-escape (attr (parent ev) 'COLOR))
+       ;; Summary filter is a hook for the user
+       (let ((dirty (attr ev 'X-HNH-DIRTY)))
+         (string-append
+          (if dirty "* " "")
+          ;; TODO reintroduce summary-filter
+          (trim-to-width (attr ev 'SUMMARY) (- summary-width
+                                               (if dirty 2 0)))))
+       STR-RESET
+       " │ "
+       (if (attr ev 'LOCATION) "" "\x1b[1;30m")
+       (trim-to-width
+        (or (attr ev 'LOCATION) "INGEN LOKAL") location-width)
+       STR-RESET
+       "\n")))
+   events
+   (iota (length events))))
 
 (define (displayln a)
   (display a) (newline))

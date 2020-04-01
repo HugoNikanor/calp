@@ -2,6 +2,7 @@
   :export (load-calendars load-calendars*)
   :use-module (util)
   :use-module (util time)
+  :use-module (util config)
   :use-module (srfi srfi-1)
   :use-module (datetime)
   :use-module (datetime util)
@@ -14,11 +15,11 @@
   :use-module ((vcomponent recurrence) :select (generate-recurrence-set repeating?))
   :use-module ((vcomponent datetime) :select (ev-time<?)))
 
-(register-config! calendar-files '() (ensure list?))
+(define-config calendar-files '() "" (ensure list?))
 
 ;; Reads all calendar files from disk, generate recurence-sets for all repeating events,
 ;; and returns a list of calendars, and a stream of all events "ready" for display.
-(define* (load-calendars #:key (calendar-files (calendar-files)))
+(define* (load-calendars #:optional (calendar-files (get-config 'calendar-files)))
   (report-time! "Parsing ~a calendars" (length calendar-files))
   (let* ((calendars regular repeating (load-calendars* #:calendar-files calendar-files)))
     (report-time! "Calendars loaded, interleaving and reccurring")
@@ -34,7 +35,7 @@
 ;; regular and repeating events separated from each other.
 ;; 
 ;; (list string) → (list calendar), (list event), (list event)
-(define* (load-calendars* #:key (calendar-files (calendar-files)))
+(define* (load-calendars* #:key (calendar-files (get-config 'calendar-files)))
 
   (define calendars (map parse-cal-path calendar-files))
   (define events (concatenate

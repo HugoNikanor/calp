@@ -7,8 +7,6 @@
   :use-module (datetime)
   :use-module (datetime util)
   :use-module (ice-9 getopt-long)
-
-  :use-module (util config all)
   )
 
 
@@ -32,9 +30,8 @@
   (define style (string->symbol (option-ref opts 'style "wide")))
 
   (define-values (calendars events)
-    (load-calendars
-     calendar-files: (cond [(option-ref opts 'file #f) => list]
-                           [else (calendar-files)]) ))
+    (cond [(option-ref opts 'file #f) => (compose load-calendars list)]
+          [else (load-calendars)]))
 
 
   (report-time! "Calendars loaded")
@@ -49,7 +46,7 @@
      ;; be a good idea to instead center it on the current week, meaning
      ;; that the active row is always in the center
      (html-chunked-main count calendars events
-                        (previous-week-start start (week-start))
+                        (previous-week-start start (get-config 'week-start))
                         (date day: 7))]
     [(table)
      (html-table-main count calendars events start)]

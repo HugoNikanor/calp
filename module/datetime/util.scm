@@ -352,7 +352,6 @@
        (* (1- date-diff) 24))))
 
 
-(register-config!
-  week-start
-  sun
+(define-config week-start sun
+  "First day of week"
   (ensure (lambda (x) (<= sun x sat))))

@@ -21,14 +21,12 @@
   ;; #:use-module (module config all)
   )
 
-(register-config!
-  summary-filter
-  (lambda (_ a) a)
+(define-config summary-filter (lambda (_ a) a)
+  ""
   (ensure procedure?))
 
-(register-config!
-  description-filter
-  (lambda (_ a) a)
+(define-config description-filter (lambda (_ a) a)
+  ""
   (ensure procedure?))
 
 (define (date-link date)
@@ -161,7 +159,7 @@
                 (div (@ (class "popup"))
                      ,(event-debug-html ev))
                 (div (@ (class "body"))
-                     ,((summary-filter) ev (attr ev 'SUMMARY))))))
+                     ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))))))
 
   )
 
@@ -212,7 +210,7 @@
                 (div (@ (class "popup"))
                      ,(event-debug-html ev))
                 (div (@ (class "body"))
-                     ,((summary-filter) ev (attr ev 'SUMMARY)))))))
+                     ,((get-config 'summary-filter) ev (attr ev 'SUMMARY)))))))
 
 
 ;; Lay out complete day (graphical)
@@ -318,7 +316,7 @@
                                [(start) `(div ,start)]))
              ,(when (and=> (attr ev 'LOCATION) (negate string-null?))
                 `(div (b "Plats: ") ,(attr ev 'LOCATION)))
-             ,(and=> (attr ev 'DESCRIPTION) (lambda (str) ((description-filter) ev str))))))
+             ,(and=> (attr ev 'DESCRIPTION) (lambda (str) ((get-config 'description-filter) ev str))))))
 
 ;; Single event in side bar (text objects)
 (define (fmt-day day)
@@ -347,7 +345,7 @@
       (div (@ (class "inline-event CAL_"
                 ;; TODO centralize handling of unnamed calendars once again.
                 ,(html-attr (or (attr (parent event) 'NAME) "unnamed"))))
-           ,((summary-filter) event (attr event 'SUMMARY)))))
+           ,((get-config 'summary-filter) event (attr event 'SUMMARY)))))
 
 ;; (stream event-group) -> sxml
 (define*-public (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
@@ -357,7 +355,7 @@
 
   `(div (@ (class "caltable"))
         ,@(map (lambda (d) `(div (@ (class "thead")) ,(week-day-name d)))
-               (weekday-list (week-start)))
+               (weekday-list (get-config 'week-start)))
         ,@(cons
            ;; First day is a special case, since I always want to show a full date there.
            ;; For all other days I'm only interested in the parts that change.
@@ -420,7 +418,7 @@
 (define* (cal-table key:
                     start-date
                     end-date
-                    (week-start (week-start))
+                    (week-start (get-config 'week-start))
                     next-start
                     prev-start)
   (define (td date)
@@ -552,7 +550,7 @@
                                "View "
                                (a (@ (href "/week/" ,(date->string
                                                      (if (= 1 (day start-date))
-                                                         (start-of-week start-date (week-start))
+                                                         (start-of-week start-date (get-config 'week-start))
                                                          start-date)
                                                      "~1")
                                            ".html"))
@@ -640,7 +638,7 @@
    (lambda (start-of-month)
      (let ((fname (format #f "./html/~a.html" (date->string start-of-month "~1"))))
        (format (current-error-port) "Writing to [~a]~%" fname)
-       (let* ((before current after (month-days start-of-month (week-start))))
+       (let* ((before current after (month-days start-of-month (get-config 'week-start))))
          (with-output-to-file fname
            ;; TODO this produces incorrect next and prev links
            ;; TODO It actually produces almost all date links wrong

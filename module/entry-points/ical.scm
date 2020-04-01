@@ -3,7 +3,6 @@
   :use-module (util)
   :use-module (output ical)
   :use-module ((vcomponent) :select (load-calendars*))
-  :use-module ((util config all) :select (calendar-files))
   :use-module (ice-9 getopt-long)
   :use-module (datetime)
   :use-module (datetime util)
@@ -26,8 +25,8 @@
 
   ;; TODO this contains repeated events multiple times
   (define-values (calendars regular repeating)
-    (load-calendars* calendar-files: (cond [(option-ref opts 'file #f) => list]
-                                           [else (calendar-files)]) ))
+    (cond [(option-ref opts 'file #f) => (compose load-calendars* list)]
+          [else (load-calendars*)]))
 
   (ical-main calendars regular repeating start end)
  )

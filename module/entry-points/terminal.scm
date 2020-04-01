@@ -5,7 +5,6 @@
   :use-module (ice-9 getopt-long)
   :use-module (datetime)
   :use-module (datetime util)
-  :use-module (util config all)
   :use-module (vulgar)
   )
 
@@ -16,9 +15,8 @@
 (define (main args)
   (define opts (getopt-long args options))
   (define-values (calendars events)
-    (load-calendars
-     calendar-files: (cond [(option-ref opts 'file #f) => list]
-                           [else (calendar-files)]) ))
+    (cond [(option-ref opts 'file #f) => (compose load-calendars list)]
+          [else (load-calendars)]))
 
   (let ((date (or (and=> (option-ref opts 'date #f) parse-freeform-date)
                   (current-date))))
