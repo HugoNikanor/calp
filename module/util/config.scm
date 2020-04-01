@@ -9,8 +9,10 @@
 
 (define-module (util config)
   :use-module (srfi srfi-9)
+  :use-module (srfi srfi-26)
+  :use-module (ice-9 match)
+  :use-module (ice-9 format)
   :use-module (util)
-  :export (register-config!)
                )
 
 (define-public (ensure pred?)
@@ -19,6 +21,8 @@
       (error (format #f "Value [~s] doesn't satisfy condition ~a"
                v (or (procedure-name pred?) ""))))
     v))
+
+
 
 (define-once config-values (make-hash-table))
 
@@ -55,3 +59,33 @@
                                      ,valid-value? (current-module)))])))
 
 (export define-config)
+
+(define-public (set-config! key value)
+  (cond [(hashq-ref config-values key)
+         => (cut set-value! <> value)]
+        [else (hashq-set! config-values key value)]))
+
+(define %uniq (gensym))
+(define*-public (get-config key optional: (default %uniq))
+  (let ((v (if (eq? default %uniq)
+               (let ((v (hashq-ref config-values key %uniq)))
+                 (when (eq? v %uniq)
+                   (error "Missing config" key))
+                 v)
+               (hashq-ref config-values key default))))
+    (if (config? v)
+        (get-value v)
+        v)))
+
+
+(define-public (print-configuration-documentation)
+  (define groups
+    (group-by (match-lambda [(__ v)
+                             (if (config? v)
+                                 (get-source-module v)
+                                 #f)])
+              (hash-map->list list config-values )) )
+  (for (module values) in groups
+       (format #t "~%~a~%" (module-name module))
+       (for (key value) in values
+            (format #t "  ~20,a | ~a~%" key (get-documentation value)))))
