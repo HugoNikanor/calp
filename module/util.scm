@@ -398,6 +398,12 @@
             (assq-set! alist k (append v (or o '())))))
         (copy-tree a) b))
 
+(define-public (group-by proc lst)
+  (let ((h (make-hash-table)))
+    (for value in lst
+         (let ((key (proc value)))
+           (hash-set! h key (cons value (hash-ref h key '())))))
+    (hash-map->list list h)))
 
 (define-macro (use-modules* . forms)
   `(use-modules
