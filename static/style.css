@@ -78,6 +78,9 @@ html, body {
 .sideinfo .about {
     display: flex;
     justify-content: center;
+
+	margin: 0 1em;
+	border-bottom: 2px solid gray;
 }
 
 .sideinfo .small-calendar {
