@@ -103,7 +103,10 @@
 
 (define*-public (week-day-name week-day-number optional: truncate-to)
   ;; NOTE this allows days larger than 7 (sunday if counting from monday).
-  (let ((str (locale-day (modulo (1+ week-day-number) 7))))
+  (let ((str (catch 'out-of-range
+               (lambda () (locale-day (1+ (modulo week-day-number 7))))
+               (lambda (oor str num) (scm-error 'out-of-range 'week-day-name "~a == (~a % 7) + 1"
+                                           (list num week-day-number) (list week-day-number))))))
     ;; I also know about the @var{locale-day-short} method, but I need
     ;; strings of length 2.
     (if truncate-to
