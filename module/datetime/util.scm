@@ -4,6 +4,7 @@
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
+  :use-module (ice-9 i18n)
   :use-module (util)
   :use-module (util config)
   )
@@ -101,36 +102,13 @@
   )
 
 (define*-public (week-day-name week-day-number optional: truncate-to)
-  ;; TODO internationalization
-  (let ((str
-         (case* week-day-number
-                [(sun 7) "Söndag"]
-                [(mon) "Måndag"]
-                [(tue) "Tisdag"]
-                [(wed) "Onsdag"]
-                [(thu) "Torsdag"]
-                [(fri) "Fredag"]
-                [(sat) "Lördag"]
-                [else (error 'argument-error "No day ~a in week" week-day-number)])))
+  ;; NOTE this allows days larger than 7 (sunday if counting from monday).
+  (let ((str (locale-day (modulo (1+ week-day-number) 7))))
+    ;; I also know about the @var{locale-day-short} method, but I need
+    ;; strings of length 2.
     (if truncate-to
         (string-take str truncate-to)
         str)))
-
-(define (month-name month)
-  (case month
-    [(1) "Jan"]
-    [(2) "Feb"]
-    [(3) "Mar"]
-    [(4) "Apr"]
-    [(5) "Maj"]
-    [(6) "Jun"]
-    [(7) "Jul"]
-    [(8) "Aug"]
-    [(9) "Sep"]
-    [(10) "Okt"]
-    [(11) "Nov"]
-    [(12) "Dec"]
-    [else (error "No month ~a" month)]))
 
 (define*-public (date->string date optional: (fmt "~Y-~m-~d") key: allow-unknown?)
   (with-output-to-string
@@ -150,8 +128,8 @@
                                   (year date) (month date) (day date)))
                    ((#\a) (display (week-day-name (week-day date))))
                    ;; abriviated locale month name
-                   ;; TODO locale
-                   ((#\b) (display (month-name (month date))))
+                   ((#\b) (display (locale-month-short (month date))))
+                   ((#\B) (display (locale-month (month date))))
                    (else (unless allow-unknown?
                            (error 'date->string "Invalid format token ~a" token))))
                  #f)
@@ -201,10 +179,10 @@
                    ((#\e) (format #t "~2' d" (day date)))
                    ((#\1) (format #t "~4'0d-~2'0d-~2'0d"
                                   (year date) (month date) (day date)))
-                   ((#\a) (display (week-day-name (week-day date))))
-                   ;; abriviated locale month name
-                   ;; TODO locale
-                   ((#\b) (display (month-name (month date))))
+                   ((#\A) (display (week-day-name (week-day date))))
+                   ((#\a) (display (week-day-name (week-day date) 3)))
+                   ((#\b) (display (locale-month-short (month date))))
+                   ((#\B) (display (locale-month (month date))))
                    (else (unless allow-unknown?
                            (error 'datetime->string "Invalid format token ~a" token))))
                  #f)
