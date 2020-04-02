@@ -110,52 +110,6 @@
         (string-take str truncate-to)
         str)))
 
-(define*-public (date->string date optional: (fmt "~Y-~m-~d") key: allow-unknown?)
-  (with-output-to-string
-    (lambda ()
-      (fold (lambda (token state)
-              (case state
-                ;; TODO add #\_ to change pad to spaces
-                ((#\~)
-                 (case token
-                   ((#\~) (display "~"))
-                   ((#\Y) (format #t "~4'0d" (year date)))
-                   ((#\m) (format #t "~2'0d" (month date)))
-                   ((#\d) (format #t "~2'0d" (day date)))
-                   ;; Should be same as ~_d
-                   ((#\e) (format #t "~2' d" (day date)))
-                   ((#\1) (format #t "~4'0d-~2'0d-~2'0d"
-                                  (year date) (month date) (day date)))
-                   ((#\a) (display (week-day-name (week-day date))))
-                   ;; abriviated locale month name
-                   ((#\b) (display (locale-month-short (month date))))
-                   ((#\B) (display (locale-month (month date))))
-                   (else (unless allow-unknown?
-                           (error 'date->string "Invalid format token ~a" token))))
-                 #f)
-                (else (unless (char=? #\~ token) (display token)) token)))
-            #f
-            (string->list fmt)))))
-
-;; (define*-public (time->string time optional: (fmt "~H:~M:~S") key: allow-unknown?)
-;;   (with-output-to-string
-;;     (lambda ()
-;;       (fold (lambda (token state)
-;;               (case state
-;;                 ((#\~)
-;;                  (case token
-;;                    ((#\~) (display "~"))
-;;                    ((#\H) (format #t "~2'0d" (hour time)))
-;;                    ((#\M) (format #t "~2'0d" (minute time)))
-;;                    ((#\S) (format #t "~2'0d" (second time)))
-;;                    ;; ((#\z) (when (utc? time) (display "Z")))
-;;                    (else (unless allow-unknown?
-;;                            (error 'time->string "Invalid format token ~a" token))))
-;;                  #f)
-;;                 (else (unless (char=? #\~ token) (display token)) token)))
-;;             #f
-;;             (string->list fmt)))))
-
 (define*-public (datetime->string datetime optional: (fmt "~Y-~m-~dT~H:~M:~S") key: allow-unknown?)
   (define dt (get-datetime datetime))
   (define date (get-date dt))
@@ -190,6 +144,11 @@
             #f
             (string->list fmt)))))
 
+(define*-public (date->string date optional: (fmt "~Y-~m-~d") key: allow-unknown?)
+  (datetime->string (datetime date: date) fmt allow-unknown?: allow-unknown?))
+
+(define*-public (time->string time optional: (fmt "~H:~M:~S") key: allow-unknown?)
+  (datetime->string (datetime time: time) fmt allow-unknown?: allow-unknown?))
 
 
 ;; @verbatim
