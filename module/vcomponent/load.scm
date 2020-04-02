@@ -15,7 +15,7 @@
   :use-module ((vcomponent recurrence) :select (generate-recurrence-set repeating?))
   :use-module ((vcomponent datetime) :select (ev-time<?)))
 
-(define-config calendar-files '() "" (ensure list?))
+(define-config calendar-files '() "" list?)
 
 ;; Reads all calendar files from disk, generate recurence-sets for all repeating events,
 ;; and returns a list of calendars, and a stream of all events "ready" for display.

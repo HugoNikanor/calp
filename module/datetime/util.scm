@@ -294,4 +294,4 @@
 
 (define-config week-start sun
   "First day of week"
-  (ensure (lambda (x) (<= sun x sat))))
+  (lambda (x) (<= sun x sat)))

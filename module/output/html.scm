@@ -23,11 +23,11 @@
 
 (define-config summary-filter (lambda (_ a) a)
   ""
-  (ensure procedure?))
+  procedure?)
 
 (define-config description-filter (lambda (_ a) a)
   ""
-  (ensure procedure?))
+  procedure?)
 
 (define (date-link date)
   (date->string date "~Y-~m-~d"))

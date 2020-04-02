@@ -15,15 +15,6 @@
   :use-module (util)
                )
 
-(define-public (ensure pred?)
-  (lambda (v)
-    (unless (pred? v)
-      (error (format #f "Value [~s] doesn't satisfy condition ~a"
-               v (or (procedure-name pred?) ""))))
-    v))
-
-
-
 (define-once config-values (make-hash-table))
 
 (define-record-type <config>
