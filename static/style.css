@@ -12,6 +12,14 @@ html, body {
     margin: 0;
     max-width: 100%;
     height: 100%;
+
+    flex-direction: row;
+}
+
+@media (max-aspect-ratio: 3/4) {
+    .root {
+        flex-direction: column;
+    }
 }
 
 .small-calendar {
@@ -61,10 +69,19 @@ html, body {
 }
 
 .sideinfo {
+    display: flex;
+
     width: 20em;
     height: 100%;
-    display: flex;
     flex-direction: column;
+}
+
+@media (max-aspect-ratio: 3/4) {
+    .sideinfo {
+        width: 100%;
+        height: 20em;
+        flex-direction: row;
+    }
 }
 
 .sideinfo .nav {
@@ -120,9 +137,12 @@ html, body {
 .root main {
     display: flex;
     flex-direction: column;
-        flex-grow: 1;
-        min-width: 0;
+    flex-grow: 1;
+
+    min-width: 0;  /* for wide */
+    min-height: 0; /* for tall */
 }
+
 
 /* ---------------------------------------- */
 
