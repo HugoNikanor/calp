@@ -528,6 +528,7 @@
            (div (@ (class "root"))
                 ;; Actuall calendar
                 (main
+                 ;; Actuall calendar
                  (@ (style "grid-area: main"))
                  ,(render-calendar calendars: calendars
                                    events: events
@@ -551,7 +552,7 @@
                     `(span "Version " (a (@ (href ,url)) ,short-hash))))
 
                 ;; Small calendar and navigation
-                (nav (@ (class "calnav") (style "grid-area: cal"))
+                (nav (@ (class "calnav") (style "grid-area: nav"))
                  (div (@ (class "change-view"))
                   (a (@ (href "/week/" ,(date->string
                                          (if (= 1 (day start-date))
@@ -564,24 +565,24 @@
 
                   (a (@ (href "/month/" ,(date->string (set (day start-date) 1) "~1")
                               ".html"))
-                     "monthly"))
+                     "monthly")))
 
-                 (details (@ (open) (style "grid-area: details"))
-                  (summary "Month overwiew")
-                  (div (@ (class "smallcall-head")) ,(string-titlecase (date->string start-date "~B ~Y")))
-                  (div (@ (class "smallcal"))
-                       ;; prev button
-                       ,(nav-link "«" (prev-start start-date))
+                (details (@ (open) (style "grid-area: cal"))
+                         (summary "Month overwiew")
+                         (div (@ (class "smallcall-head")) ,(string-titlecase (date->string start-date "~B ~Y")))
+                         (div (@ (class "smallcal"))
+                              ;; prev button
+                              ,(nav-link "«" (prev-start start-date))
 
-                       ;; calendar table
-                       ;; TODO
-                       (div ,(cal-table start-date: start-date end-date: end-date
-                                        next-start: next-start
-                                        prev-start: prev-start
-                                        ))
+                              ;; calendar table
+                              ;; TODO
+                              (div ,(cal-table start-date: start-date end-date: end-date
+                                               next-start: next-start
+                                               prev-start: prev-start
+                                               ))
 
-                       ;; next button
-                       ,(nav-link "»" (next-start start-date)))))
+                              ;; next button
+                              ,(nav-link "»" (next-start start-date))))
 
 
                 ;; List of calendars
