@@ -39,6 +39,13 @@ HTML
 Icke-linjär tidsskala
 ---------------------
 
+Brädd på elementen vid smal skärm.
+----------------------------------
+"Sido"-panelen lägger sig under inehållet när sidan blir för smal.
+Cutoff-punkten är dock lite för smal. Kom på hur minimi-brädden på
+<main/> beräknas, för att sätta ett korrekt värde.
+
+
 ICS
 ===
 

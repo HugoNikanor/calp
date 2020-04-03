@@ -526,8 +526,9 @@
 
           (body
            (div (@ (class "root"))
+                ;; Actuall calendar
                 (main
-                 ;; Actuall calendar
+                 (@ (style "grid-area: main"))
                  ,(render-calendar calendars: calendars
                                    events: events
                                    start-date: start-date
@@ -536,67 +537,74 @@
                                    post-end: post-end
                                    next-start: next-start
                                    prev-start: prev-start
-                                   )
+                                   ))
 
-                 ;; Page footer
-                 (footer (span "Page generated " ,(date->string (current-date)))
-                         (span (a (@ (href ,(repo-url) "/calparse"))
-                                  "Source Code"))
-                         ,(let* ((hash (get-git-version))
-                                 (url (format #f "~a/calparse/commit/?id=~a"
-                                              (repo-url) hash)))
-                            `(span "Version " (a (@ (href ,url)) ,hash)))
-                         (span (@ (class "nav"))
-                               "View "
-                               (a (@ (href "/week/" ,(date->string
-                                                     (if (= 1 (day start-date))
-                                                         (start-of-week start-date (get-config 'week-start))
-                                                         start-date)
-                                                     "~1")
-                                           ".html"))
-                                  "weekly")
-                               ", "
-                               (a (@ (href "/month/" ,(date->string (set (day start-date) 1) "~1") ".html"))
-                                  "monthly")
-                               ".")
-                         ))
+                ;; Page footer
+                (footer
+                 (@ (style "grid-area: footer"))
+                 (span "Page generated " ,(date->string (current-date)))
+                 (span (a (@ (href ,(repo-url) "/calparse"))
+                          "Source Code"))
+                 ,(let* ((long-hash short-hash (get-git-version))
+                         (url (format #f "~a/calparse/commit/?id=~a"
+                                      (repo-url) long-hash)))
+                    `(span "Version " (a (@ (href ,url)) ,short-hash))))
 
-                ;; Whole sidebar
-                (aside (@ (class "sideinfo"))
-                       ;; Small calendar and navigation
-                       (div (@ (class "about"))
-                            ;; prev button
-                            ,(nav-link "«" (prev-start start-date))
-
-                            ;; calendar table
-                            ;; TODO
-                            (div ,(cal-table start-date: start-date end-date: end-date
-                                             next-start: next-start
-                                             prev-start: prev-start
-                                             ))
-
-                            ;; next button
-                            ,(nav-link "»" (next-start start-date)))
+                ;; Small calendar and navigation
+                (nav (@ (class "calnav") (style "grid-area: cal"))
+                 (div (@ (class "change-view"))
+                  (a (@ (href "/week/" ,(date->string
+                                         (if (= 1 (day start-date))
+                                             (start-of-week start-date (get-config 'week-start))
+                                             start-date)
+                                         "~1")
+                              ".html"))
+                     "weekly")
 
 
-                       ;; List of events
-                       (div (@ (class "eventlist"))
-                            ;; List of calendars
-                            (div (@ (class "calendarlist"))
-                                 (ul ,@(map (lambda (calendar)
-                                              `(li (@ (class "CAL_bg_" ,(html-attr (attr calendar 'NAME))))
-                                                   ,(attr calendar 'NAME)))
-                                            calendars)))
+                  (a (@ (href "/month/" ,(date->string (set (day start-date) 1) "~1")
+                              ".html"))
+                     "monthly"))
 
-                            ;; Events which started before our start point, but "spill" into our time span.
-                            (section (@ (class "text-day"))
-                                     (header (h2 "Tidigare"))
-                                     ,@(stream->list
-                                        (stream-map fmt-single-event
-                                                    (stream-take-while (compose (cut date/-time<? <> start-date)
-                                                                                (extract 'DTSTART))
-                                                                       (cdr (stream-car evs))))))
-                            ,@(stream->list (stream-map fmt-day evs)))))))))
+                 (details (@ (open) (style "grid-area: details"))
+                  (summary "Month overwiew")
+                  (div (@ (class "smallcall-head")) ,(string-titlecase (date->string start-date "~B ~Y")))
+                  (div (@ (class "smallcal"))
+                       ;; prev button
+                       ,(nav-link "«" (prev-start start-date))
+
+                       ;; calendar table
+                       ;; TODO
+                       (div ,(cal-table start-date: start-date end-date: end-date
+                                        next-start: next-start
+                                        prev-start: prev-start
+                                        ))
+
+                       ;; next button
+                       ,(nav-link "»" (next-start start-date)))))
+
+
+                ;; List of calendars
+                (details (@ (class "calendarlist")
+                            (style "grid-area: details"))
+                         (summary "Calendar list")
+                         (ul ,@(map (lambda (calendar)
+                                      `(li (@ (class "CAL_bg_" ,(html-attr (attr calendar 'NAME))))
+                                           ,(attr calendar 'NAME)))
+                                    calendars)))
+
+                ;; List of events
+                (div (@ (class "eventlist")
+                        (style "grid-area: events"))
+                     ;; Events which started before our start point, but "spill" into our time span.
+                 (section (@ (class "text-day"))
+                          (header (h2 "Tidigare"))
+                          ,@(stream->list
+                             (stream-map fmt-single-event
+                                         (stream-take-while (compose (cut date/-time<? <> start-date)
+                                                                     (extract 'DTSTART))
+                                                            (cdr (stream-car evs))))))
+                 ,@(stream->list (stream-map fmt-day evs))))))))
 
 
 (define-public (html-chunked-main count calendars events start-date chunk-length)

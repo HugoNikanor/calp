@@ -5,8 +5,9 @@
   :export (get-git-version))
 
 (define (get-git-version)
-  (-> "git rev-parse HEAD"
-      open-input-pipe
-      read-line))
+  (values (-> "git rev-parse HEAD"
+              open-input-pipe read-line)
+          (-> "git rev-parse --short HEAD"
+              open-input-pipe read-line)))
 
 
