@@ -277,24 +277,24 @@
 (define*-public (render-calendar key: events start-date end-date #:allow-other-keys)
   (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))
          (range (date-range start-date end-date)))
-    `(div (@ (class "calendar"))
-          (div (@ (class "days"))
-               ,@(time-marker-div)
-               (div (@ (class "longevents")
-                       (style "grid-column-end: span " ,(days-between start-date end-date)))
-                    ""                  ; prevent self-closing
-                    ,@(lay-out-long-events start-date end-date long-events))
-               ,@(map (lambda (day-date)
-                        `(div (@ (class "meta"))
-                              ,(let ((str (date-link day-date)))
-                                 `(span (@ (id ,str) (class "daydate")) ,str))
-                              (span (@ (class "dayname")) ,(string-titlecase (date->string day-date "~a")))) )
-                      range)
-               ,@(stream->list
-                     (stream-map
-                      lay-out-day
-                      (get-groups-between (group-stream (list->stream short-events))
-                                          start-date end-date)))))))
+    `((div (@ (class "calendar"))
+           (div (@ (class "days"))
+                ,@(time-marker-div)
+                (div (@ (class "longevents")
+                        (style "grid-column-end: span " ,(days-between start-date end-date)))
+                     ""                 ; prevent self-closing
+                     ,@(lay-out-long-events start-date end-date long-events))
+                ,@(map (lambda (day-date)
+                         `(div (@ (class "meta"))
+                               ,(let ((str (date-link day-date)))
+                                  `(span (@ (id ,str) (class "daydate")) ,str))
+                               (span (@ (class "dayname")) ,(string-titlecase (date->string day-date "~a")))) )
+                       range)
+                ,@(stream->list
+                   (stream-map
+                    lay-out-day
+                    (get-groups-between (group-stream (list->stream short-events))
+                                        start-date end-date))))))))
 
   
 ;;; Prodcedures for text output
@@ -353,38 +353,40 @@
   (define event-groups (get-groups-between (group-stream events)
                                            pre-start post-end))
 
-  `(div (@ (class "caltable"))
-       ,@(map (lambda (d) `(div (@ (class "thead")) ,(string-titlecase (week-day-name d))))
-              (weekday-list (get-config 'week-start)))
-       ,@(cons
-          ;; First day is a special case, since I always want to show a full date there.
-          ;; For all other days I'm only interested in the parts that change.
-          (let* (((day-date . events) (stream-car event-groups)))
-            `(div (@ (class "cal-cell"))
-                  (div (@ (class "date-info"))
-                       (span (@ (class "day-number")) ,(date->string day-date "~e"))
-                       (span (@ (class "month-name")) ,(date->string day-date "~b"))
-                       (span (@ (class "year-number")) ", " ,(date->string day-date "~Y")))
-                  ,@(stream->list (stream-map make-small-block events))))
-          (stream->list
-           (stream-map
-            (match-lambda
-              [(day-date . events)
-               `(div (@ (class "cal-cell"))
-                     (div (@ (class "date-info "
-                               ,(when (or (date< day-date start-date)
-                                          (date< end-date day-date))
-                                  "non-current")
-                               ))
-                          (span (@ (class "day-number")) ,(date->string day-date "~e"))
-                          ,(when (= 1 (day day-date))
-                             `(span (@ (class "month-name")) ,(date->string day-date "~b")))
-                          ,(when (= 1 (month day-date) (day day-date))
-                             `(span (@ (class "year-number"))
-                                    ", " ,(date->string day-date "~Y"))))
-                     ,@(stream->list
-                        (stream-map make-small-block events)))])
-            (stream-cdr event-groups))))))
+  `((header (@ (class "table-head"))
+            ,(string-titlecase (date->string start-date "~B ~Y")))
+    (div (@ (class "caltable"))
+         ,@(map (lambda (d) `(div (@ (class "thead")) ,(string-titlecase (week-day-name d))))
+                (weekday-list (get-config 'week-start)))
+         ,@(cons
+            ;; First day is a special case, since I always want to show a full date there.
+            ;; For all other days I'm only interested in the parts that change.
+            (let* (((day-date . events) (stream-car event-groups)))
+              `(div (@ (class "cal-cell"))
+                    (div (@ (class "date-info"))
+                         (span (@ (class "day-number")) ,(date->string day-date "~e"))
+                         (span (@ (class "month-name")) ,(date->string day-date "~b"))
+                         (span (@ (class "year-number")) ", " ,(date->string day-date "~Y")))
+                    ,@(stream->list (stream-map make-small-block events))))
+            (stream->list
+             (stream-map
+              (match-lambda
+                [(day-date . events)
+                 `(div (@ (class "cal-cell"))
+                       (div (@ (class "date-info "
+                                 ,(when (or (date< day-date start-date)
+                                            (date< end-date day-date))
+                                    "non-current")
+                                 ))
+                            (span (@ (class "day-number")) ,(date->string day-date "~e"))
+                            ,(when (= 1 (day day-date))
+                               `(span (@ (class "month-name")) ,(date->string day-date "~b")))
+                            ,(when (= 1 (month day-date) (day day-date))
+                               `(span (@ (class "year-number"))
+                                      ", " ,(date->string day-date "~Y"))))
+                       ,@(stream->list
+                          (stream-map make-small-block events)))])
+              (stream-cdr event-groups)))))))
 
 
 
@@ -474,7 +476,7 @@
 (define*-public (html-generate
                  key:
                  calendars events start-date end-date
-                 render-calendar          ; (bunch of kv args) → sxml
+                 render-calendar          ; (bunch of kv args) → (list sxml)
                  next-start               ; date → date
                  prev-start               ; date → date
                  ;; The pre and post dates are if we want to show some dates just outside our
@@ -526,19 +528,18 @@
 
           (body
            (div (@ (class "root"))
-                ;; Actuall calendar
                 (main
                  ;; Actuall calendar
                  (@ (style "grid-area: main"))
-                 ,(render-calendar calendars: calendars
-                                   events: events
-                                   start-date: start-date
-                                   end-date: end-date
-                                   pre-start: pre-start
-                                   post-end: post-end
-                                   next-start: next-start
-                                   prev-start: prev-start
-                                   ))
+                 ,@(render-calendar calendars: calendars
+                                    events: events
+                                    start-date: start-date
+                                    end-date: end-date
+                                    pre-start: pre-start
+                                    post-end: post-end
+                                    next-start: next-start
+                                    prev-start: prev-start
+                                    ))
 
                 ;; Page footer
                 (footer

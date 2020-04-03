@@ -17,8 +17,8 @@ html, body {
     grid-template-rows: auto;
 
     grid-template-areas:
+        "main main nav"
         "main main cal"
-            "main main nav"
             "main main details"
             "main main events"
             "footer footer events";
@@ -28,6 +28,7 @@ html, body {
     .root {
         grid-template-areas:
             "main main"
+                "nav events"
                 "cal events"
                 "details events"
                 ". events"
@@ -45,6 +46,12 @@ html, body {
 .root main {
     min-width: 0;  /* for wide */
     min-height: 0; /* for tall */
+
+    /* apparently required if one wants to have multiple
+       items within main, without it overflowing
+    */
+    display: flex;
+    flex-direction: column;
 }
 
 /* Page footer
@@ -280,6 +287,12 @@ along with their colors.
 .date-info .year-number {
     color: gray;
 }
+
+.table-head {
+    font-size: 200%;
+    text-align: center;
+}
+
 
 /* Weekly calendar
 ----------------------------------------
