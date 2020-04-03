@@ -288,7 +288,7 @@
                         `(div (@ (class "meta"))
                               ,(let ((str (date-link day-date)))
                                  `(span (@ (id ,str) (class "daydate")) ,str))
-                              (span (@ (class "dayname")) ,(date->string day-date "~a"))) )
+                              (span (@ (class "dayname")) ,(string-titlecase (date->string day-date "~a")))) )
                       range)
                ,@(stream->list
                      (stream-map
@@ -354,37 +354,37 @@
                                            pre-start post-end))
 
   `(div (@ (class "caltable"))
-        ,@(map (lambda (d) `(div (@ (class "thead")) ,(week-day-name d)))
-               (weekday-list (get-config 'week-start)))
-        ,@(cons
-           ;; First day is a special case, since I always want to show a full date there.
-           ;; For all other days I'm only interested in the parts that change.
-           (let* (((day-date . events) (stream-car event-groups)))
-             `(div (@ (class "cal-cell"))
-                   (div (@ (class "date-info"))
-                        (span (@ (class "day-number")) ,(date->string day-date "~e"))
-                        (span (@ (class "month-name")) ,(date->string day-date "~b"))
-                        (span (@ (class "year-number")) ", " ,(date->string day-date "~Y")))
-                   ,@(stream->list (stream-map make-small-block events))))
-           (stream->list
-            (stream-map
-             (match-lambda
-               [(day-date . events)
-                `(div (@ (class "cal-cell"))
-                      (div (@ (class "date-info "
-                                ,(when (or (date< day-date start-date)
-                                           (date< end-date day-date))
-                                   "non-current")
-                                ))
-                           (span (@ (class "day-number")) ,(date->string day-date "~e"))
-                           ,(when (= 1 (day day-date))
-                              `(span (@ (class "month-name")) ,(date->string day-date "~b")))
-                           ,(when (= 1 (month day-date) (day day-date))
-                              `(span (@ (class "year-number"))
-                                     ", " ,(date->string day-date "~Y"))))
-                      ,@(stream->list
-                         (stream-map make-small-block events)))])
-             (stream-cdr event-groups))))))
+       ,@(map (lambda (d) `(div (@ (class "thead")) ,(string-titlecase (week-day-name d))))
+              (weekday-list (get-config 'week-start)))
+       ,@(cons
+          ;; First day is a special case, since I always want to show a full date there.
+          ;; For all other days I'm only interested in the parts that change.
+          (let* (((day-date . events) (stream-car event-groups)))
+            `(div (@ (class "cal-cell"))
+                  (div (@ (class "date-info"))
+                       (span (@ (class "day-number")) ,(date->string day-date "~e"))
+                       (span (@ (class "month-name")) ,(date->string day-date "~b"))
+                       (span (@ (class "year-number")) ", " ,(date->string day-date "~Y")))
+                  ,@(stream->list (stream-map make-small-block events))))
+          (stream->list
+           (stream-map
+            (match-lambda
+              [(day-date . events)
+               `(div (@ (class "cal-cell"))
+                     (div (@ (class "date-info "
+                               ,(when (or (date< day-date start-date)
+                                          (date< end-date day-date))
+                                  "non-current")
+                               ))
+                          (span (@ (class "day-number")) ,(date->string day-date "~e"))
+                          ,(when (= 1 (day day-date))
+                             `(span (@ (class "month-name")) ,(date->string day-date "~b")))
+                          ,(when (= 1 (month day-date) (day day-date))
+                             `(span (@ (class "year-number"))
+                                    ", " ,(date->string day-date "~Y"))))
+                     ,@(stream->list
+                        (stream-map make-small-block events)))])
+            (stream-cdr event-groups))))))
 
 
 
@@ -448,7 +448,7 @@
             ,(day date))))
 
   `(table (@ (class "small-calendar"))
-          (thead (tr ,@(map (lambda (d) `(td ,(week-day-name d 2)))
+          (thead (tr ,@(map (lambda (d) `(td ,(string-titlecase (week-day-name d 2))))
                             (weekday-list week-start))))
 
           ((tbody ,@(let* ((last current next
