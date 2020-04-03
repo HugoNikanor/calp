@@ -392,7 +392,8 @@ along with their colors.
 }
 
 .meta .daydate {
-    font-size: 200%;
+    white-space: nowrap;
+    font-size: 150%;
 }
 
 .event {
