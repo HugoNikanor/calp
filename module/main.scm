@@ -3,7 +3,7 @@
 
 . $(dirname $(dirname $(realpath $0)))/env
 
-exec guile -e main -s $0 "$@"
+exec guile --listen -e main -s $0 "$@"
 !#
 
 (use-modules (srfi srfi-1)
