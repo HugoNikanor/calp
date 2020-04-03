@@ -30,16 +30,25 @@
 ;; TODO possibly make @var{documentation} and @var{valid-value?} optional.
 (define-macro (define-config name default-value documentation valid-value?)
   `(let ((make-config (@@ (util config) make-config))
-         (config-values (@@ (util config) config-values)))
+         (config-values (@@ (util config) config-values))
+         (config? (@@ (util config) config?))
+         (get-value (@@ (util config) get-value)))
      (cond [(hashq-ref config-values (quote ,name))
             => (lambda (value)
+                 ;; When reloading a module an already defined configuration item
+                 ;; might be loaded again, just anwrap it and pretend that didn't
+                 ;; happen.
+                 (when (,config? value)
+                   (set! value (,get-value value)))
+
                  (unless (,valid-value? value)
-                   (throw 'config-error
-                          "Config [~a]: ~a doesn't sattisfy predicate ~s~%\"~a\"~%"
-                          (quote ,name)
-                          value
-                          ,valid-value?
-                          ,documentation))
+                   (scm-error 'config-error 'define-config
+                              "Config [~a]: ~a doesn't sattisfy predicate ~s~%\"~a\"~%"
+                              (list (quote ,name)
+                                    value
+                                    ,valid-value?
+                                    ,documentation)
+                              (list value)))
                  (hashq-set! config-values (quote ,name)
                              (make-config value ,documentation
                                           ,valid-value? (current-module))))]
