@@ -130,22 +130,36 @@ function new_popup () {
     popup = this.children[0].children[0]
     popup.classList.toggle("show")
 
+    /* x-axis fix */
+
     /* Popup should neven be wider than viewport */
-    popup.style.width = min(popup.style.width, days.offsetWidth - 10)
+    popup.style.width = min(popup.style.offsetWidth, days.offsetWidth - 10)
 
     /* find left edge of source element */
-    here = this.offsetParent.offsetLeft - days.scrollLeft + this.offsetLeft;
+    here_x = this.offsetParent.offsetLeft - days.scrollLeft + this.offsetLeft;
 
     /* Align popup with source */
     popup.style.left = "0px"
     /* move it if it would partially render outside */
-    if (here < 0) {
-        popup.style.left = "" + ((- here) + 10) + "px";
+    if (here_x < 0) {
+        popup.style.left = "" + ((- here_x) + 10) + "px";
     }
-    overflow = (here + popup.offsetWidth) - days.offsetWidth
-    if (overflow > 0) {
-        popup.style.left = "" + ((- overflow) - 10) + "px";
+    overflow_x = (here_x + popup.offsetWidth) - days.offsetWidth
+    if (overflow_x > 0) {
+        popup.style.left = "" + ((- overflow_x) - 10) + "px";
     }
+
+    /* y-axis fix */
+    popup.style.height = min(popup.style.offsetHeight, days.offsetHeight)
+    popup.style.bottom = "calc(100% + 2em)";
+
+    here_y = this.offsetParent.offsetTop + this.offsetTop;
+
+    overflow_y = here_y - popup.offsetHeight;
+    if (overflow_y < 0) {
+        popup.style.bottom = "calc(100% - " + ((- overflow_y) + 10) + "px)";
+    }
+
 }
 
 window.onload = function () {
