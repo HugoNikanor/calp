@@ -201,6 +201,7 @@ Each event within the eventlist
 
 .small-calendar td {
     padding: 5px;
+    box-sizing: border-box;
 }
 
 .small-calendar td a {
