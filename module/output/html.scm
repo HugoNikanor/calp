@@ -425,7 +425,9 @@
   (define (td date)
     `(td (@ (class
               ,(when (date< date start-date) "prev ")
-              ,(when (date< end-date date) "next ")))
+              ,(when (date< end-date date) "next "))
+            (id ,(date->string date "td-~Y-~m-~d"))
+            )
          (a (@ (href ,(cond
                        ;; We are before our time interval
                        [(date< date start-date)
@@ -444,7 +446,7 @@
                          "~Y-~m-~d.html" )]
                        ;; We are in our time interval
                        [else ""])
-                     "#" ,(date->string date "~Y-~m-~d"))
+                     "#" ,(date-link date))
                (class "hidelink"))
             ,(day date))))
 
@@ -511,6 +513,12 @@
            (meta (@ (name description)
                     (content "Calendar for the dates between " ,(date->string start-date)
                              " and " ,(date->string end-date))))
+           ;; NOTE this is only for the time actually part of this calendar.
+           ;; overflowing times from pre-start and post-end is currently ignored here.
+           (meta (@ (name start-time)
+                    (content ,(date->string start-date "~s"))))
+           (meta (@ (name end-time)
+                    (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
            ,(include-css "/static/style.css")
            ,(include-alt-css "/static/dark.css"  '(title "Dark"))
            ,(include-alt-css "/static/light.css" '(title "Light"))

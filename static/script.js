@@ -12,7 +12,10 @@ function time_to_percent (time) {
     return hour_to_part(time.getHours() + (time.getMinutes() / 60)) + "%"
 }
 
-var start_time = 0
+let start_time = new Date();
+let end_time = new Date();
+
+var event_start_time = 0
 var start_fraq = 0
 
 var parent
@@ -31,7 +34,7 @@ function onmousedownhandler (e) {
     console.log(comp.clientHeight)
     fraq = e.offsetY / comp.clientHeight
     start_fraq = fraq
-    start_time = part_to_hour(fraq);
+    event_start_time = part_to_hour(fraq);
     createdEvent = document.createElement("div");
     createdEvent.className = "event generated";
     createdEvent.style.pointerEvents = "none";
@@ -57,7 +60,7 @@ function onmousemovehandler (e) {
 
 function onmouseuphandler (e) {
     var end_time = part_to_hour(e.offsetY / this.clientHeight);
-    console.log("Creating event " + start_time + " - " + end_time);
+    console.log("Creating event " + event_start_time + " - " + end_time);
     createdEvent = false;
 
     for (let e of parent.children) {
@@ -73,9 +76,13 @@ function time_to_date (time) {
 }
 
 var bar_object = false
+var current_cell = false
 
 function update_current_time_bar () {
     var now = new Date()
+    if (! (start_time <= now.getTime() && now.getTime() < end_time))
+        return;
+
     var event_area = document.getElementById(time_to_date(now))
 
     if (bar_object) {
@@ -88,6 +95,14 @@ function update_current_time_bar () {
 
     bar_object.style.top = time_to_percent(now)
     event_area.append(bar_object)
+
+    /* */
+
+    if (current_cell) {
+        current_cell.style.border = "";
+    }
+    current_cell = document.getElementById("td-" + time_to_date(now))
+    current_cell.style.border = "1px solid black";
 }
 
 function toggle_event_pupup () {
@@ -96,6 +111,8 @@ function toggle_event_pupup () {
 }
 
 window.onload = function () {
+    start_time.setTime(document.querySelector("meta[name='start-time']").content * 1000)
+    end_time.setTime(document.querySelector("meta[name='end-time']").content * 1000)
 
     update_current_time_bar()
     // once a minute for now, could probably be slowed to every 10 minutes
