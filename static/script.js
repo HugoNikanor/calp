@@ -85,16 +85,18 @@ function update_current_time_bar () {
 
     var event_area = document.getElementById(time_to_date(now))
 
-    if (bar_object) {
-        bar_object.parentNode.removeChild(bar_object)
-    } else {
-        bar_object = document.createElement("div")
-        bar_object.className = "event current-time"
-        bar_object.id = "bar"
-    }
+    if (event_area) {
+        if (bar_object) {
+            bar_object.parentNode.removeChild(bar_object)
+        } else {
+            bar_object = document.createElement("div")
+            bar_object.className = "event current-time"
+            bar_object.id = "bar"
+        }
 
-    bar_object.style.top = time_to_percent(now)
-    event_area.append(bar_object)
+        bar_object.style.top = time_to_percent(now)
+        event_area.append(bar_object)
+    }
 
     /* */
 
