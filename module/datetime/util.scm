@@ -133,6 +133,7 @@
                    ((#\m) (format #t "~2'0d" (month date)))
                    ((#\d) (format #t "~2'0d" (day date)))
                    ;; Should be same as ~_d
+                   ((#\s) (display (datetime->unix-time datetime))) ; epoch time!
                    ((#\e) (format #t "~2' d" (day date)))
                    ((#\1) (format #t "~4'0d-~2'0d-~2'0d"
                                   (year date) (month date) (day date)))

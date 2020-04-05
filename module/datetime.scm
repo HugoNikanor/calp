@@ -98,6 +98,7 @@
 ;; NOTE there isn't any stable way to craft the tm objects.
 ;; I could call mktime on some date, and replace the fields
 ;; with the set-tm:*, but that is worse that breaking the API.
+;; TODO TZ!
 (define (datetime->tm datetime)
   (let ((t (get-time% datetime))
         (d (get-date  datetime)))
@@ -113,6 +114,7 @@
             #f                 ; TZ name
             )))
 
+;; TODO TZ
 (define (tm->datetime tm)
   (datetime year:   (+ 1900 (tm:year tm))
             month:  (1+ (tm:mon  tm))
@@ -120,6 +122,14 @@
             hour:   (tm:hour tm)
             minute: (tm:min  tm)
             second: (tm:sec  tm)))
+
+(define-public (datetime->unix-time dt)
+  (car (mktime (datetime->tm dt))))
+
+(define-public (unix-time->datetime n)
+  (tm->datetime (gmtime n)))
+
+;; TODO prodedure to change TZ for datetime object
 
 
 ;; datetime → datetime
