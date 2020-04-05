@@ -203,6 +203,11 @@ Each event within the eventlist
     padding: 5px;
 }
 
+.small-calendar td a {
+    /* Makes link fill box */
+    display: block;
+}
+
 /* Calendar List
 ----------------------------------------
 The list of all the loaded calendars,
