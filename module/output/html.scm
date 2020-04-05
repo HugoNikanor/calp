@@ -222,7 +222,7 @@
 
     (fix-event-widths! short-events event-length-key: (lambda (e) (event-length/day day-date e)))
 
-    `(div (@ (class "events"))
+    `(div (@ (class "events") (id ,(date-link day-date)))
           ,@(map (lambda (time)
                    `(div (@ (class "clock clock-" ,time)) ""))
                  (iota 12 0 2))
@@ -286,8 +286,7 @@
                      ,@(lay-out-long-events start-date end-date long-events))
                 ,@(map (lambda (day-date)
                          `(div (@ (class "meta"))
-                               ,(let ((str (date-link day-date)))
-                                  `(span (@ (id ,str) (class "daydate")) ,str))
+                               (span (@ (class "daydate")) ,(date->string day-date "~Y-~m-~d"))
                                (span (@ (class "dayname")) ,(string-titlecase (date->string day-date "~a")))) )
                        range)
                 ,@(stream->list

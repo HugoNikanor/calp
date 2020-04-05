@@ -76,12 +76,7 @@ var bar_object = false
 
 function update_current_time_bar () {
     var now = new Date()
-    var today = document
-        .getElementById(time_to_date(now))
-        .parentElement
-        .parentElement
-
-    var event_area = today.getElementsByClassName("events")[0]
+    var event_area = document.getElementById(time_to_date(now))
 
     if (bar_object) {
         bar_object.parentNode.removeChild(bar_object)
@@ -101,9 +96,7 @@ function toggle_event_pupup () {
 }
 
 window.onload = function () {
-    console.log("Running");
 
-    /*
     update_current_time_bar()
     // once a minute for now, could probably be slowed to every 10 minutes
     window.setInterval(update_current_time_bar, 1000 * 60)
@@ -113,7 +106,6 @@ window.onload = function () {
         c.onmouseup = onmouseuphandler;
         c.onmousemove = onmousemovehandler;
     }
-    */
 
     for (let e of document.getElementsByClassName("event-inner")) {
         e.onclick = toggle_event_pupup;
