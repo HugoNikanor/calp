@@ -80,6 +80,9 @@ var current_cell = false
 
 function update_current_time_bar () {
     var now = new Date()
+    /* TODO
+       The bar and box doesn't get cleared when we leave our time interval.
+    */
     if (! (start_time <= now.getTime() && now.getTime() < end_time))
         return;
 
