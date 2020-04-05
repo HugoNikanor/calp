@@ -45,6 +45,13 @@ Brädd på elementen vid smal skärm.
 Cutoff-punkten är dock lite för smal. Kom på hur minimi-brädden på
 <main/> beräknas, för att sätta ett korrekt värde.
 
+Events in pre-start and post-start not mentioned in event list
+--------------------------------------------------------------
+
+Fel färg månadsvy
+-----------------
+Om sista dagen i månadsvyn också är sista dagen på månaden renderas
+datumet med fel färg. (altså när post-end == '()) Se maj 2020.
 
 ICS
 ===

@@ -3,6 +3,7 @@
   :use-module (output html)
   :use-module (util)
   :use-module (util time)
+  :use-module (util config)
   :use-module (vcomponent)
   :use-module (datetime)
   :use-module (datetime util)

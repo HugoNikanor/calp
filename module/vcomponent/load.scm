@@ -21,7 +21,7 @@
 ;; and returns a list of calendars, and a stream of all events "ready" for display.
 (define* (load-calendars #:optional (calendar-files (get-config 'calendar-files)))
   (report-time! "Parsing ~a calendars" (length calendar-files))
-  (let* ((calendars regular repeating (load-calendars* #:calendar-files calendar-files)))
+  (let* ((calendars regular repeating (load-calendars* calendar-files)))
     (report-time! "Calendars loaded, interleaving and reccurring")
     (values
      calendars
@@ -35,7 +35,7 @@
 ;; regular and repeating events separated from each other.
 ;; 
 ;; (list string) → (list calendar), (list event), (list event)
-(define* (load-calendars* #:key (calendar-files (get-config 'calendar-files)))
+(define* (load-calendars* #:optional (calendar-files (get-config 'calendar-files)))
 
   (define calendars (map parse-cal-path calendar-files))
   (define events (concatenate

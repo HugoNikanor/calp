@@ -272,6 +272,9 @@ along with their colors.
 }
 
 .date-info.non-current {
+    /* TODO
+Find color between gray and lightgray
+*/
     color: lightgray !important;
 }
 
