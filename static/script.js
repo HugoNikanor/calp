@@ -115,6 +115,39 @@ function toggle_event_pupup () {
     this.getElementsByClassName("popup")[0].classList.toggle("show");
 }
 
+let days;
+
+function min(a, b) {
+    a < b ? a : b;
+}
+
+function max(a, b) {
+    a > b ? a : b;
+}
+
+function new_popup () {
+
+    popup = this.children[0].children[0]
+    popup.classList.toggle("show")
+
+    /* Popup should neven be wider than viewport */
+    popup.style.width = min(popup.style.width, days.offsetWidth - 10)
+
+    /* find left edge of source element */
+    here = this.offsetParent.offsetLeft - days.scrollLeft + this.offsetLeft;
+
+    /* Align popup with source */
+    popup.style.left = "0px"
+    /* move it if it would partially render outside */
+    if (here < 0) {
+        popup.style.left = "" + ((- here) + 10) + "px";
+    }
+    overflow = (here + popup.offsetWidth) - days.offsetWidth
+    if (overflow > 0) {
+        popup.style.left = "" + ((- overflow) - 10) + "px";
+    }
+}
+
 window.onload = function () {
     start_time.setTime(document.querySelector("meta[name='start-time']").content * 1000)
     end_time.setTime(document.querySelector("meta[name='end-time']").content * 1000)
@@ -123,13 +156,23 @@ window.onload = function () {
     // once a minute for now, could probably be slowed to every 10 minutes
     window.setInterval(update_current_time_bar, 1000 * 60)
 
-    for (let c of document.getElementsByClassName("events")) {
-        c.onmousedown = onmousedownhandler;
-        c.onmouseup = onmouseuphandler;
-        c.onmousemove = onmousemovehandler;
+    // for (let c of document.getElementsByClassName("events")) {
+    //     c.onmousedown = onmousedownhandler;
+    //     c.onmouseup = onmouseuphandler;
+    //     c.onmousemove = onmousemovehandler;
+    // }
+
+    // for (let e of document.getElementsByClassName("event-inner")) {
+    //     e.onclick = toggle_event_pupup;
+    // }
+
+    for (let e of document.getElementsByClassName("event")) {
+        e.onclick = new_popup;
     }
 
-    for (let e of document.getElementsByClassName("event-inner")) {
-        e.onclick = toggle_event_pupup;
-    }
+    days = document.getElementsByClassName("days")[0]
+    // days.scrollLeft == 0
+    // days.offsetWidth == viewable width
+    // days.offsetHeight == viewable height
+
 }
