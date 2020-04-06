@@ -34,6 +34,15 @@
 
 
 
+;; NOTE
+;; Instead of returning the empty list a better default value
+;; for when and unless would be the identity element for the
+;; current context.
+;; So (string-append (when #f ...)) would expand into
+;; (string-append (if #f ... "")).
+;; This however requires type interferance, which i don't
+;; *currently* have.
+
 (define-syntax-rule (when pred body ...)
   (if pred (begin body ...) '()))
 
@@ -404,6 +413,32 @@
          (let ((key (proc value)))
            (hash-set! h key (cons value (hash-ref h key '())))))
     (hash-map->list list h)))
+
+;; Returns the cross product between l1 and l2.
+;; each element is a cons cell.
+(define-public (cross-product l1 l2)
+  (concatenate
+   (map (lambda (a)
+          (map (lambda (b) (cons a b))
+               l2))
+        l1)))
+
+;; Given an arbitary tree, do a pre-order traversal, appending all strings.
+;; non-strings allso allowed, converted to strings and also appended.
+(define-public (string-flatten tree)
+  (cond [(string? tree) tree]
+        [(list? tree) (string-concatenate (map string-flatten tree))]
+        [else (format #f "~a" tree)]))
+
+(define-public (intersperce item list)
+  (let loop ((flipflop #f)
+             (rem list))
+    (if (null? rem)
+        '()
+        (if flipflop
+            (cons item (loop (not flipflop) rem))
+            (cons (car rem) (loop (not flipflop) (cdr rem)))
+            ))))
 
 (define-macro (use-modules* . forms)
   `(use-modules
