@@ -7,6 +7,7 @@
   :use-module (ice-9 i18n)
   :use-module (util)
   :use-module (util config)
+  :re-export (locale-month)
   )
 
 (define-public (start-of-month date)
