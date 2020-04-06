@@ -125,6 +125,7 @@
                  (case token
                    ((#\~) (display "~"))
                    ((#\H) (format #t "~2'0d" (hour time)))
+                   ((#\k) (format #t "~2' d" (hour time)))
                    ((#\M) (format #t "~2'0d" (minute time)))
                    ((#\S) (format #t "~2'0d" (second time)))
                    ;; TODO
