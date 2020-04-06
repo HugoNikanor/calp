@@ -76,7 +76,7 @@
           (BYSECOND (every (lambda (n) (<= 0 n 60)) nums) => (set! (bysecond o) nums))
           (BYMINUTE (every (lambda (n) (<= 0 n 59)) nums) => (set! (byminute o) nums))
           (BYHOUR   (every (lambda (n) (<= 0 n 23)) nums) => (set! (byhour   o) nums))
-          (BYMONTH  (every (lambda (n) (<= 1 n 12)) nums) => (set! (byweekno o) nums))
+          (BYMONTH  (every (lambda (n) (<= 1 n 12)) nums) => (set! (bymonth  o) nums))
 
           ;; May be negative
           (BYDAY (every (lambda (p) (memv (cdr p) weekdays)) days) => (set! (byday o) days))
