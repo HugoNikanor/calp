@@ -494,10 +494,16 @@ Find color between gray and lightgray
 */
 
 .event-inner .popup {
-    visibility: hidden;
+    /* visibility: hidden; */
     position: absolute;
-    left: 10%;
-    bottom: 125%;
+    display: block;
+    /* A scale(0%) is chosen for hiding the element for the following reasons:
+       - visibility: hidden still reserves space, which causes unwanted scroll-
+         bars since the final position of the popup is calculated at runtime
+       - Easier animation
+   */
+    transform: scale(0%);
+    transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
     z-index: 100;
 
     background-color: #dedede;
@@ -543,7 +549,8 @@ Find color between gray and lightgray
 }
 
 .popup.show {
-    visibility: visible;
+    /* visibility: visible; */
+    transform: scale(100%);
 }
 
 .event-inner .body {

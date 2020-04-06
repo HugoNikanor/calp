@@ -125,6 +125,9 @@ function max(a, b) {
     a > b ? a : b;
 }
 
+/*
+https://stackoverflow.com/questions/21064101/understanding-offsetwidth-clientwidth-scrollwidth-and-height-respectively
+*/
 function new_popup () {
 
     popup = this.children[0].children[0]
@@ -133,10 +136,11 @@ function new_popup () {
     /* x-axis fix */
 
     /* Popup should neven be wider than viewport */
-    popup.style.width = min(popup.style.offsetWidth, days.offsetWidth - 10)
+    popup.style.width = min(popup.style.offsetWidth, days.clientWidth - 10) + "px"
 
-    /* find left edge of source element */
-    here_x = this.offsetParent.offsetLeft - days.scrollLeft + this.offsetLeft;
+    /* find left edge of source element in viewport */
+    here_x = (this.offsetParent.offsetLeft + this.offsetLeft) - days.scrollLeft;
+    console.log(here_x)
 
     /* Align popup with source */
     popup.style.left = "0px"
@@ -144,9 +148,17 @@ function new_popup () {
     if (here_x < 0) {
         popup.style.left = "" + ((- here_x) + 10) + "px";
     }
-    overflow_x = (here_x + popup.offsetWidth) - days.offsetWidth
+    // overflow_x = (here_x + popup.offsetWidth) - days.offsetWidth
+    overflow_x = (here_x + popup.offsetWidth) - days.clientWidth
     if (overflow_x > 0) {
-        popup.style.left = "" + ((- overflow_x) - 10) + "px";
+        /* NOTE
+           Setting the style.left field changes the offsetWidth
+           of the object.
+           TODO
+           Get the popup to actually be inside the viewport!
+           */
+        // console.log(overflow_x)
+        popup.style.left = "-" + (overflow_x + 10) + "px";
     }
 
     /* y-axis fix */
@@ -180,11 +192,11 @@ window.onload = function () {
     //     e.onclick = toggle_event_pupup;
     // }
 
-    for (let e of document.getElementsByClassName("event")) {
+    days = document.getElementsByClassName("days")[0]
+    for (let e of days.getElementsByClassName("event")) {
         e.onclick = new_popup;
     }
 
-    days = document.getElementsByClassName("days")[0]
     // days.scrollLeft == 0
     // days.offsetWidth == viewable width
     // days.offsetHeight == viewable height
