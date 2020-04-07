@@ -435,6 +435,34 @@ Find color between gray and lightgray
     border: 3px dashed black;
 }
 
+.event .location {
+    display: block;
+    font-size: 80%;
+    font-style: italic;
+    white-space: pre;
+}
+
+.event .repeating {
+    float: left;
+    color: red;
+    font-size: 150%;
+}
+
+.eventtext .location {
+    display: inline-block;
+    vertical-align: text-top;
+}
+
+.eventtext .last-modified,
+.eventtext .rrule {
+    display: flex;
+    justify-content: right;
+    text-align: right;
+    font-size: 80%;
+    color: grey;
+    padding-right: 1em;
+}
+
 /* */
 
 .longevents .event {

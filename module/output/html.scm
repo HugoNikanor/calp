@@ -159,7 +159,14 @@
                 (div (@ (class "popup"))
                      ,(event-debug-html ev))
                 (div (@ (class "body"))
-                     ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))))))
+                     ,(when (attr ev 'RRULE)
+                        `(span (@ (class "repeating")) "↺"))
+                     ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
+                     ,(when (attr ev 'LOCATION)
+                        `(span (@ (class "location"))
+                               ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                            (attr ev 'LOCATION))))
+                     ))))
 
   )
 
@@ -308,14 +315,29 @@
                     " tentative")))
             (h3 (a (@ (href "#" ,(date-link (as-date (attr ev 'DTSTART))))
                       (class "hidelink"))
+                   ,(when (attr ev 'RRULE)
+                      `(span (@ (class "repeating")) "↺"))
                    ,(attr ev 'SUMMARY)))
             (div
              ,(call-with-values (lambda () (fmt-time-span ev))
                 (match-lambda* [(start end) `(div ,start " — " ,end)]
                                [(start) `(div ,start)]))
              ,(when (and=> (attr ev 'LOCATION) (negate string-null?))
-                `(div (b "Plats: ") ,(attr ev 'LOCATION)))
-             ,(and=> (attr ev 'DESCRIPTION) (lambda (str) ((get-config 'description-filter) ev str))))))
+                `(div (b "Plats: ") (div (@ (class "location")),(string-map (lambda (c) (if (char=? c #\,) #\newline c)) (attr ev 'LOCATION)))))
+             ,(and=> (attr ev 'DESCRIPTION) (lambda (str) ((get-config 'description-filter) ev str)))
+             ,(awhen (attr ev 'RRULE)
+                     `(span (@ (class "rrule"))
+                            "Upprepas "
+                            ,((compose (@ (vcomponent recurrence display) format-recurrence-rule)
+                                       (@ (vcomponent recurrence parse) parse-recurrence-rule))
+                              it)
+                            ;; TODO exdate
+                            "."))
+             ,(when (attr ev 'LAST-MODIFIED)
+                `(span (@ (class "last-modified")) "Senast ändrad "
+                       ,(datetime->string (attr ev 'LAST-MODIFIED) "~1 ~H:~M"))
+                )
+             )))
 
 ;; Single event in side bar (text objects)
 (define (fmt-day day)

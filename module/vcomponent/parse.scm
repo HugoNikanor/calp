@@ -201,7 +201,7 @@ row ~a	column ~a	ctx = ~a
                                                        (strbuf->string strbuf ((@ (rnrs io ports) make-transcoder)
                                                                                encoding))))])]
 
-                                        [(DTSTART DTEND RECURRENCE-ID)
+                                        [(DTSTART DTEND RECURRENCE-ID LAST-MODIFIED DTSTAMP)
 
                                          ;; '("Africa/Ceuta" "Europe/Stockholm" "local")
                                          (let ((tz (or (and=> (prop it 'TZID) car)
