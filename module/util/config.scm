@@ -31,7 +31,7 @@
 (define-macro (define-config name default-value documentation valid-value?)
   `(let ((make-config (@@ (util config) make-config))
          (config-values (@@ (util config) config-values))
-         (config? (@@ (util config) config?))
+         ;; (config? (@@ (util config) config?))
          (get-value (@@ (util config) get-value)))
      (cond [(hashq-ref config-values (quote ,name))
             => (lambda (value)
