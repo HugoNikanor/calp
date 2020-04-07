@@ -15,6 +15,7 @@
   #:use-module (output general)
   #:use-module (ice-9 curried-definitions)
   #:use-module (ice-9 match)
+  #:use-module (output text)
 
 
   #:use-module (git)
@@ -331,7 +332,17 @@
                             ,((compose (@ (vcomponent recurrence display) format-recurrence-rule)
                                        (@ (vcomponent recurrence parse) parse-recurrence-rule))
                               it)
-                            ;; TODO exdate
+                            ,@(awhen (attr ev 'EXDATE)
+                                     (list
+                                      ", undantaget "
+                                      (add-enumeration-punctuation
+                                       (map (lambda (d) (if (date? d)
+                                                       ;; TODO show year?
+                                                       (date->string d "~e ~b")
+                                                       ;; TODO only show time when it's different than the start time?
+                                                       ;; or possibly only when FREQ is hourly or lower.
+                                                       (datetime->string d "~e ~b ~k:~M")))
+                                            it))))
                             "."))
              ,(when (attr ev 'LAST-MODIFIED)
                 `(span (@ (class "last-modified")) "Senast ändrad "
