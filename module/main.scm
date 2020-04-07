@@ -28,23 +28,29 @@ exec guile -e main -s $0 "$@"
              (ice-9 getopt-long)
 
              (statprof)
+             (repl)
 
              )
 
 (define options
   '((statprof (value optional))
+    (repl (value optional))
     (help (single-char #\h))))
 
 (define (ornull a b)
   (if (null? a)
       b a))
 
+
 (define (wrapped-main args)
   (define opts (getopt-long args options #:stop-at-first-non-option #t))
   (define stprof (option-ref opts 'statprof #f))
+  (define repl (option-ref opts 'repl #f))
 
-  (when stprof
-    (statprof-start))
+  (when stprof (statprof-start))
+
+  (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a" (runtime-dir) (getpid)))]
+        [repl => repl-start])
 
   (let ((config-file (format #f "~a/.config/calp/config.scm"
                              (getenv "HOME"))))
