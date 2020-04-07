@@ -91,6 +91,36 @@
 
            'end-of-line])))
 
+(define (handle-value! key vline strbuf)
+  (case key
+    ;; As far as I can tell the RFC says nothing about special
+    ;; encoding for individual fields. It mentieons UTF-8, and
+    ;; that transfer encoding should be set in the mime-headers.
+    ;; That however seems like a breach of abstractions.
+    ;; Currently I allow a CHARSET property on SUMMARY fields,
+    ;; since I know that at least www.lysator.liu.se/alma/alma.cgi
+    ;; uses it.
+    [(SUMMARY)
+     (cond [(and=> (prop vline 'CHARSET) car)
+            => (lambda (encoding)
+                 (set! (value vline)
+                   (strbuf->string strbuf ((@ (rnrs io ports) make-transcoder)
+                                           encoding))))])]
+
+    [(DTSTART DTEND RECURRENCE-ID LAST-MODIFIED DTSTAMP EXDATE)
+
+     ;; '("Africa/Ceuta" "Europe/Stockholm" "local")
+     (let ((tz (or (and=> (prop vline 'TZID) car)
+                   (and (string= "Z" (string-take-right (value vline) 1)) "UTC"))))
+
+       (let ((type (and=> (prop vline 'VALUE) car)))
+         (if (or (and=> type (cut string=? <> "DATE-TIME"))
+                 (string-contains (value vline) "T"))
+             (set! (value vline) (parse-ics-datetime (value vline) tz)
+                   (prop vline 'VALUE) 'DATE-TIME)
+             (set! (value vline) (parse-ics-date (value vline))
+                   (prop vline 'VALUE) 'DATE))))]))
+
 ;; Reads a vcomponent from the given port.
 (define-public (parse-calendar port)
   ;; (report-time! "Parsing ~a" port)
@@ -99,6 +129,10 @@
       (let ((component (make-vcomponent))
             (ctx (make-parse-ctx (port-filename port)))
             (strbuf (make-strbuf)))
+        ;; TODO this would be a good candidate for a parameter,
+        ;; allowing any function to call warning whenever, but easily
+        ;; allowing a parent function to override waring with their
+        ;; own which can provide extra context.
         (define (warning fmt . args)
           (display
            (format #f
@@ -110,7 +144,8 @@ row ~a	column ~a	ctx = ~a
                    (get-filename ctx)
                    (get-row ctx) (get-col ctx) (get-ctx ctx)
                    (get-line-key ctx) (get-param-key ctx)
-                   fmt args)) )
+                   fmt args)
+           (current-error-port)))
 
         (with-throw-handler #t
           (lambda ()
@@ -156,78 +191,63 @@ row ~a	column ~a	ctx = ~a
                   (case (fold-proc ctx c)
                     [(end-of-line)
                      (let ((str (strbuf->string strbuf)))
-                       ;; I believe that an empty line is against the standard
-                       ;; in every whey. But it's nice to handle it.
-                       (if (and (eq? 'key (get-ctx ctx))
-                                (string-null? str))
-                           (warning "Unexpected completely empty line")
-                           (begin
-                             (cond [(eq? 'BEGIN (get-line-key ctx))
-                                    (let ((child (make-vcomponent (string->symbol str))))
-                                      (add-child! component child)
-                                      (set! component child))]
+                       (cond [(and (eq? 'key (get-ctx ctx))
+                                   (string-null? str))
+                              ;; I believe that an empty line is against the standard
+                              ;; in every way. But it's nice to handle it.
+                              (warning "Unexpected completely empty line")]
 
-                                   [(eq? (get-line-key ctx) 'END)
+                             [(eq? 'BEGIN (get-line-key ctx))
+                              (let ((child (make-vcomponent (string->symbol str))))
+                                (add-child! component child)
+                                (set! component child))]
 
-                                    ;; Ensure that we have a DTEND
-                                    ;; TODO Objects aren't required to have a DTEND, or a DURATION.
-                                    ;; write fancier code which acknoledges this.
-                                    (when (and (eq? 'VEVENT (type component))
-                                               (not (attr component 'DTEND)))
-                                      (set! (attr component 'DTEND)
-                                        (let ((start (attr component 'DTSTART)))
-                                          (if (date? start)
-                                              (date+ start (date day: 1))
-                                              (datetime+ start (datetime time: (time hour: 1)))))))
+                             [(eq? (get-line-key ctx) 'END)
 
-                                    (set! component (parent component))]
+                              ;; Ensure that we have a DTEND
+                              ;; TODO Objects aren't required to have a DTEND, or a DURATION.
+                              ;; write fancier code which acknoledges this.
+                              (when (and (eq? 'VEVENT (type component))
+                                         (not (attr component 'DTEND)))
+                                (set! (attr component 'DTEND)
+                                  (let ((start (attr component 'DTSTART)))
+                                    (if (date? start)
+                                        (date+ start (date day: 1))
+                                        (datetime+ start (datetime time: (time hour: 1)))))))
 
-                                   [else ; Regular key-value line
-                                    ;; TODO repeated keys
-                                    (let ((it (make-vline str (get-param-table ctx))))
-                                      ;; Type specific processing
-                                      (case (get-line-key ctx)
-                                        ;; As far as I can tell the RFC says nothing about special
-                                        ;; encoding for individual fields. It mentieons UTF-8, and
-                                        ;; that transfer encoding should be set in the mime-headers.
-                                        ;; That however seems like a breach of abstractions.
-                                        ;; Currently I allow a CHARSET property on SUMMARY fields,
-                                        ;; since I know that at least www.lysator.liu.se/alma/alma.cgi
-                                        ;; uses it.
-                                        [(SUMMARY)
-                                         (cond [(and=> (prop it 'CHARSET) car)
-                                                => (lambda (encoding)
-                                                     (set! (value it)
-                                                       (strbuf->string strbuf ((@ (rnrs io ports) make-transcoder)
-                                                                               encoding))))])]
+                              (set! component (parent component))]
 
-                                        [(DTSTART DTEND RECURRENCE-ID LAST-MODIFIED DTSTAMP)
+                             [else      ; Regular key-value line
+                              (let ((key (get-line-key ctx))
+                                    (vline (make-vline str (get-param-table ctx))))
+                                ;; Type specific processing
+                                (handle-value! key vline strbuf)
 
-                                         ;; '("Africa/Ceuta" "Europe/Stockholm" "local")
-                                         (let ((tz (or (and=> (prop it 'TZID) car)
-                                                       (and (string= "Z" (string-take-right (value it) 1)) "UTC"))))
+                                ;; From RFC 5545 §3.6.1
+                                ;; DTEND and DURATION are mutually exclusive
+                                ;; DTSTART is required to exist while the other two are optional.
 
-                                           (let ((type (and=> (prop it 'VALUE) car)))
-                                             (if (or (and=> type (cut string=? <> "DATE-TIME"))
-                                                     (string-contains (value it) "T"))
-                                                 (set! (value it) (parse-ics-datetime (value it) tz)
-                                                       (prop it 'VALUE) 'DATE-TIME)
-                                                 (set! (value it) (parse-ics-date (value it))
-                                                       (prop it 'VALUE) 'DATE))))])
-
-
-                                      ;; From RFC 5545 §3.6.1
-                                      ;; DTEND and DURATION are mutually exclusive
-                                      ;; DTSTART is required to exist while the other two are optional.
-                                      ;; None can appear more than once.
-
-                                      (set-vline! component (get-line-key ctx) it))
-                                    (set-param-table! ctx (make-hash-table))])))
+                                ;; Allowed (some) repeated keys
+                                (if (memv key '(EXDATE))
+                                    (aif (attr* component key)
+                                         (begin (warning "Merging EXDATE fields")
+                                                ;; updates the current vline
+                                                ;; NOTE that this discards any properties belonging to this object
+                                                (set! (value it) (cons (value vline) (value it))))
+                                         (begin (mod! (value vline) list)
+                                                (set-vline! component key vline)))
+                                    ;; Keys which aren't allowed to be repeated.
+                                    (begin
+                                      (awhen (attr* component key)
+                                             (warning "Key ~a encountered more than once, overriding old value [~a] with [~a]"
+                                                      key (value it) (value vline)))
+                                      (set-vline! component key vline))))
+                              (set-param-table! ctx (make-hash-table))])
 
                        (strbuf-reset! strbuf)
                        (ctx-dump-strings! ctx)
                        (set-ctx! ctx 'key))]
-                    [(fold) 'noop] ; Good case, here to catch errors in else
+                    [(fold) 'noop]     ; Good case, here to catch errors in else
                     [else => (lambda (a) (error "Bad return from fold, unexpected" a))])]
 
                  ;; Escaped characters
