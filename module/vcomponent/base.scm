@@ -14,7 +14,12 @@
   (make-vline% value parameters)
   vline?
   (value get-vline-value set-vline-value!)
-  (parameters get-vline-parameters))
+  (parameters get-vline-parameters)
+  ;; TODO Add slot for optional source object, containing
+  ;; - file of origin
+  ;; - position in that file
+  ;; - source string, before value parsing.
+  )
 
 (define*-public (make-vline value #:optional (ht (make-hash-table)))
   (make-vline% value ht))

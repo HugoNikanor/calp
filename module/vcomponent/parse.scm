@@ -230,10 +230,11 @@ row ~a	column ~a	ctx = ~a
                                 ;; Allowed (some) repeated keys
                                 (if (memv key '(EXDATE))
                                     (aif (attr* component key)
-                                         (begin (warning "Merging EXDATE fields")
-                                                ;; updates the current vline
-                                                ;; NOTE that this discards any properties belonging to this object
-                                                (set! (value it) (cons (value vline) (value it))))
+                                         ;; updates the current vline
+                                         ;; NOTE that this discards any properties belonging to this object
+                                         ;; TODO a more propper way to do it would be to store multiple vline
+                                         ;; objects for a given key.
+                                         (set! (value it) (cons (value vline) (value it)))
                                          (begin (mod! (value vline) list)
                                                 (set-vline! component key vline)))
                                     ;; Keys which aren't allowed to be repeated.
