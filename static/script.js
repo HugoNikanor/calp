@@ -174,6 +174,10 @@ function new_popup () {
 
 }
 
+function setVar(str, val) {
+	document.documentElement.style.setProperty("--" + str, val);
+}
+
 window.onload = function () {
     start_time.setTime(document.querySelector("meta[name='start-time']").content * 1000)
     end_time.setTime(document.querySelector("meta[name='end-time']").content * 1000)

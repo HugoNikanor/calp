@@ -1,5 +1,10 @@
 html {
     height: 100%;
+    /* TODO
+     * get the default values from the code.
+     */
+    --editmode: 1.0;
+    --event-font-size: 8pt;
 }
 
 html, body {
@@ -209,6 +214,27 @@ Each event within the eventlist
     display: block;
 }
 
+/* Sliders
+----------------------------------------
+ */
+
+.sliders label {
+    padding-left: 1em;
+}
+
+.sliders input[type="range"] {
+    width: 100%;
+    margin: 0;
+}
+
+.sliders .input-group {
+    display: flex;
+}
+
+.sliders .input-group input {
+    min-width: 0;
+}
+
 /* Calendar List
 ----------------------------------------
 The list of all the loaded calendars,
@@ -409,7 +435,9 @@ Find color between gray and lightgray
     width: 100%;
 
     border: 2px solid black;
-    font-size: 8pt;
+    font-size: var(--event-font-size);
+
+    transition: 0.3s;
 }
 
 .events .event.continuing {

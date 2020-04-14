@@ -30,6 +30,39 @@
   ""
   procedure?)
 
+
+(define* (slider-input key: variable
+                       (min 0)
+                       (max 10)
+                       (step 1)
+                       (value 1)
+                       (unit ""))
+  (let ((groupname (symbol->string (gensym "slider"))))
+    `(div (@ (class "input-group"))
+          (script
+           "function " ,groupname "fn (value) {"
+           "setVar('" ,variable "', value + '" ,unit "');"
+           "for (let el of document.getElementsByClassName('" ,groupname "')) {"
+           "    el.value = value;"
+           "}}")
+          (input (@ (type "range")
+                    (class ,groupname)
+                    (min ,min)
+                    (max ,max)
+                    (step ,step)
+                    (value ,value)
+                    (oninput ,groupname "fn(this.value)")
+                    ))
+          (input (@ (type "number")
+                    (class ,groupname)
+                    (min ,min)
+                    (max ,max)
+                    (step ,step)
+                    (value ,value)
+                    (oninput ,groupname "fn(this.value)"))
+                 )
+          )))
+
 (define (date-link date)
   (date->string date "~Y-~m-~d"))
 
@@ -125,7 +158,11 @@
 (define (create-block date ev)
   ;; (define time (date->time-utc day))
   (define style
-    (format #f "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"
+    ;; The calc's here is to enable an "edit-mode".
+    ;; Setting --editmode ≈ 0.8 gives some whitespace to the right of the events, alowing draging
+    ;; there for creating new events.
+    ;; TODO only include var and calc when editing should be enabled.
+    (format #f "left:calc(var(--editmode)*~,3f%);width:calc(var(--editmode)*~,3f%);top:~,3f%;height:~,3f%;"
 
             (* 100 (x-pos ev))          ; left
             (* 100 (width ev))          ; width
@@ -594,19 +631,19 @@
 
                 ;; Small calendar and navigation
                 (nav (@ (class "calnav") (style "grid-area: nav"))
-                 (div (@ (class "change-view"))
-                  (a (@ (href "/week/" ,(date->string
-                                         (if (= 1 (day start-date))
-                                             (start-of-week start-date (get-config 'week-start))
-                                             start-date)
-                                         "~1")
-                              ".html"))
-                     "weekly")
+                     (div (@ (class "change-view"))
+                          (a (@ (href "/week/" ,(date->string
+                                                 (if (= 1 (day start-date))
+                                                     (start-of-week start-date (get-config 'week-start))
+                                                     start-date)
+                                                 "~1")
+                                      ".html"))
+                             "weekly")
 
 
-                  (a (@ (href "/month/" ,(date->string (set (day start-date) 1) "~1")
-                              ".html"))
-                     "monthly")))
+                          (a (@ (href "/month/" ,(date->string (set (day start-date) 1) "~1")
+                                      ".html"))
+                             "monthly")))
 
                 (details (@ (open) (style "grid-area: cal"))
                          (summary "Month overwiew")
@@ -626,27 +663,49 @@
                               ,(nav-link "»" (next-start start-date))))
 
 
-                ;; List of calendars
-                (details (@ (class "calendarlist")
-                            (style "grid-area: details"))
-                         (summary "Calendar list")
-                         (ul ,@(map (lambda (calendar)
-                                      `(li (@ (class "CAL_bg_" ,(html-attr (attr calendar 'NAME))))
-                                           ,(attr calendar 'NAME)))
-                                    calendars)))
+                (div (@ (style "grid-area: details"))
+                     ;; TODO only include these sliders in debug builds
+                     (details (@ (class "sliders"))
+                              (summary "Option sliders")
+                              (label "Event blankspace")
+                              ,(slider-input
+                                variable: "editmode"
+                                min: 0
+                                max: 1
+                                step: 0.01
+                                value: 1)
+
+                              (label "Fontsize")
+                              ,(slider-input
+                                unit: "pt"
+                                min: 1
+                                max: 20
+                                step: 1
+                                value: 8
+                                variable: "event-font-size"))
+
+                     ;; List of calendars
+                     (details (@ (class "calendarlist")
+                                 #; (style "grid-area: details")
+                                 )
+                              (summary "Calendar list")
+                              (ul ,@(map (lambda (calendar)
+                                           `(li (@ (class "CAL_bg_" ,(html-attr (attr calendar 'NAME))))
+                                                ,(attr calendar 'NAME)))
+                                         calendars))))
 
                 ;; List of events
                 (div (@ (class "eventlist")
                         (style "grid-area: events"))
                      ;; Events which started before our start point, but "spill" into our time span.
-                 (section (@ (class "text-day"))
-                          (header (h2 "Tidigare"))
-                          ,@(stream->list
-                             (stream-map fmt-single-event
-                                         (stream-take-while (compose (cut date/-time<? <> start-date)
-                                                                     (extract 'DTSTART))
-                                                            (cdr (stream-car evs))))))
-                 ,@(stream->list (stream-map fmt-day evs))))))))
+                     (section (@ (class "text-day"))
+                              (header (h2 "Tidigare"))
+                              ,@(stream->list
+                                 (stream-map fmt-single-event
+                                             (stream-take-while (compose (cut date/-time<? <> start-date)
+                                                                         (extract 'DTSTART))
+                                                                (cdr (stream-car evs))))))
+                     ,@(stream->list (stream-map fmt-day evs))))))))
 
 
 (define-public (html-chunked-main count calendars events start-date chunk-length)
