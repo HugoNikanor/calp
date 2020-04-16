@@ -28,15 +28,15 @@
     (thead
      (tr (th "") (th "Name") (th "Perm")))
     (tbody
-     ,@(map (lambda (kv)
-              (let* (((k stat) kv))
+     ,@(map (lambda (k)
+              (let* ((stat (lstat k)))
                 `(tr (td ,(case (stat:type stat)
                             [(directory) "📁"]
                             [(regular) "📰"]
                             [else "🙃"]))
                      (td (a (@ (href "/" ,dir ,k)) ,k))
                      (td ,(number->string (stat:perms stat) 8)))))
-            (cddr (file-system-tree dir))))))
+            (cddr (scandir dir))))))
 
 
 (define (make-make-routes calendar events)
