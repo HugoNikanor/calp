@@ -13,6 +13,10 @@
 (define-public (start-of-month date)
   (set (day date) 1))
 
+(define-public (start-of-year date)
+  (set-> date
+         (day 1)
+         (month 1)))
 
 (define-public (parse-freeform-date str)
   (let* (((year month day) (map string->number (string-split str #\-))))
@@ -102,7 +106,36 @@
   (sat) 6
   )
 
+
+;; TODO parameter for default week start?
+
+;; given a date, returns the date the first week of that year starts on.
+;; @example
+;; (week-1-start #2020-04-01 mon)
+;; ⇒ 2019-12-30
+;; @end example
+(define*-public (week-1-start d optional: (wkst sun))
+  (let* ((ystart (start-of-year d))
+         (day-index (- (week-day ystart)
+                       wkst)))
+    (if (> 0 day-index)
+        (date+ ystart (date day: (abs day-index)))
+        (date- ystart (date day: day-index)))))
+
+(define*-public (week-number date optional: (wkst sun))
+  (let* ((week day (floor/ (days-in-interval (week-1-start date wkst) date)
+                           7)))
+    (if (zero? day)
+        week (1+ week))))
+
+
+(define*-public (date-starting-week week-number d optional: (wkst sun))
+  (date+ (week-1-start d wkst)
+         (date day: (* week-number 7))))
+
+
 (define*-public (week-day-name week-day-number optional: truncate-to)
+
   ;; NOTE this allows days larger than 7 (sunday if counting from monday).
   (let ((str (catch 'out-of-range
                (lambda () (locale-day (1+ (modulo week-day-number 7))))
