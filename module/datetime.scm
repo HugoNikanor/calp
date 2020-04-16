@@ -597,7 +597,6 @@
   ;; #2020-01-01 #2020-00-26 → #2020-00-06 #2020-00-00
   (define-values (b* a*)
     (let loop ((b b) (a a))
-      ;; (format (current-error-port) "a=~a b=~a~%" a b)
       (if (> (day a) (day b))
           (let ((new-a (set (day a) = (- (1+ (day b))))))
             (loop (if (= 0 (month b))
@@ -608,11 +607,14 @@
                              )
                       (set-> b
                              (month = (- 1))
-                             (day (1- (days-in-month (set (month b) = (- 0)))))))
+                             (day (1- (days-in-month b))))) ; last in prev month
                   new-a))
           ;; elif (> (day b) (day a))
           (values (set (day b) = (- (day a)))
                   (set (day a) 0)))))
+
+
+  ;; (day a*) should be 0 here.
 
   (define-values (b** a**)
     (let loop ((b b*) (a a*))
@@ -620,8 +622,9 @@
           (loop (set-> b
                        (year = (- 1))
                        (month 11)
-                       (day 30))
-                (set (month a) = (- (month b))))
+                       #; (day 30)
+                       )
+                (set (month a) = (- (1+ (month b)))))
           ;; elif (> (month b) (month a))
           (values (set (month b) = (- (month a)))
                   (set (month a) 0)))))
@@ -637,7 +640,7 @@
             (negative? (day   b))
             (negative? (month a))
             (negative? (day   a)) )
-    (error "Negative months or days are an error"))
+    (error "Negative months or days are errors"))
 
   (date-difference% (set-> b
                            (month = (- 1))
