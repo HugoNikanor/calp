@@ -199,6 +199,10 @@ Each event within the eventlist
     border-bottom: 1px solid black;
 }
 
+.small-calendar td:nth-child(1) {
+    border-right: 1px solid black;
+}
+
 .small-calendar .prev,
 .small-calendar .next {
     color: grey;

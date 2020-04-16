@@ -104,11 +104,13 @@
 
 ;; Given a list, partitions it up into sublists of width length,
 ;;; each starting with 'tr.
-(define (tablify list width)
+(define* (tablify  list width key: (proc identity) (wkst sun))
   (unless (null? list)
     (let* ((row rest (split-at list width)))
-      (cons `(tr ,@row)
-            (tablify rest width)))))
+      (cons `(tr (td ,(week-number (car row) wkst)) ,@(map proc row))
+            (tablify rest width
+                     proc: proc
+                     wkst: wkst)))))
 
 
 
@@ -521,7 +523,9 @@
             ,(day date))))
 
   `(table (@ (class "small-calendar"))
-          (thead (tr ,@(map (lambda (d) `(td ,(string-titlecase (week-day-name d 2))))
+          (thead (tr
+                  (td "v.")
+                  ,@(map (lambda (d) `(td ,(string-titlecase (week-day-name d 2))))
                             (weekday-list week-start))))
 
           ((tbody ,@(let* ((last current next
@@ -529,8 +533,8 @@
                                  ;; it's safe to say that we are interested in the month which
                                  ;; start-date is part of
                                  (month-days (start-of-month start-date) week-start)))
-                      (tablify (map td (append last current next))
-                               7))))))
+                      (tablify (append last current next)
+                               7 proc: td wkst: week-start))))))
 
 
 
