@@ -12,6 +12,18 @@
   #:use-module (ice-9 match))
 
 
+;; transform into weekday objects from
+(define (rfc->datetime-weekday symbol)
+  (case symbol
+    [(SU) sun]
+    [(MO) mon]
+    [(TU) tue]
+    [(WE) wed]
+    [(TH) thu]
+    [(FR) fri]
+    [(SA) sat]
+    [else => (lambda (d) (error "No such day ~a" d))]))
+
 ;; @example
 ;; <weekday> ∈ weekdays
 ;; <weekdaynum> ::= [[±] <num>] <weekday> ;; +3MO
@@ -31,7 +43,7 @@
          (numbers letters (span (cut memv <> numerical-characters)
                                 (string->list str))))
     (cons (string->number (list->string numbers))
-          (apply symbol letters))))
+          (rfc->datetime-weekday (apply symbol letters)))))
 
 (define-macro (quick-case key . cases)
   (let ((else-clause (or (assoc-ref cases 'else)
@@ -70,7 +82,7 @@
           (INTERVAL (<= 0 num) => (set! (interval o) num))
 
           (FREQ (memv symb intervals) => (set! (freq o) symb))
-          (WKST (memv symb weekdays)  => (set! (wkst o) symb))
+          (WKST (memv symb weekdays)  => (set! (wkst o) (cdar days)))
 
           ;; Always positive
           (BYSECOND (every (lambda (n) (<= 0 n 60)) nums) => (set! (bysecond o) nums))
@@ -89,7 +101,7 @@
           (else o)))))
 
    ;; obj
-   (make-recur-rule (interval 1) (wkst 'MO))
+   (make-recur-rule (interval 1) (wkst mon))
 
    ;; ((key val) ...)
    (map (cut string-split <> #\=)

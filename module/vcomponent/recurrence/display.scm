@@ -10,19 +10,6 @@
 (define (rrule-month->string n)
   (locale-month n))
 
-(define (rrule-week->string symb )
-  (week-day-name
-   (case symb
-     [(SU) sun]
-     [(MO) mon]
-     [(TU) tue]
-     [(WE) wed]
-     [(TH) thu]
-     [(FR) fri]
-     [(SA) sat]
-     [else (error "Invalid day symbol")])))
-
-
 ;; TODO this currently only groups on offsets, but not on days.
 ;; So 1MO, 1TU becomes "första måndagen och tisdagen", which is good
 ;; but 1MO, -1MO doesn't become "första och sista måndagen".
@@ -37,13 +24,13 @@
               [(#f)
                (list "varje "
                      (add-enumeration-punctuation
-                      (map (lambda (d) (list (rrule-week->string (cdr d))))
+                      (map (lambda (d) (list (week-day-name (cdr d))))
                            (cadr group)
                            )))]
               [else
                (list (number->string-ordinal (car group)) " "
                      (add-enumeration-punctuation
-                      (map (lambda (d) (list (rrule-week->string (cdr d)) "en"))
+                      (map (lambda (d) (list (week-day-name (cdr d)) "en"))
                            (cadr group))))])
             )
           groups))))
@@ -108,7 +95,7 @@
                ;; either MONTHLY or YEARLY
                [(WEEKLY) (aif (byday rrule)
                               (add-enumeration-punctuation
-                               (map (compose rrule-week->string cdr) it))
+                               (map (compose week-day-name cdr) it))
                               "vecka")]
                [(MONTHLY) "månad"]
                [(YEARLY) "år"]

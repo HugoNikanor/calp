@@ -3,6 +3,7 @@
 
   #:use-module (srfi srfi-88)           ; better keywords
   #:use-module ((vcomponent base) :select (attr))
+  #:use-module (datetime util)
   #:use-module (util)
   )
 
@@ -55,7 +56,7 @@
       val ...))))
 
 (define-public weekdays
-  '(SU MO TU WE TH FR SA))
+  (weekday-list sun))
 
 (define-public intervals
   '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))
