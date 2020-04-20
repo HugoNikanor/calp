@@ -463,6 +463,14 @@
     (let* ((row rest (split-at list width)))
       (cons row (group rest width)))))
 
+;; repeatedly apply proc to base unitl @var{until} is satisfied.
+;; (a → a), (a → bool), a → a
+(define-public (iterate proc until base)
+  (let loop ((o base))
+    (if (until o)
+        o
+        (loop (proc o)))))
+
 
 
 (define-syntax let-env
