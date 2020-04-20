@@ -336,3 +336,23 @@
 (define-config week-start sun
   "First day of week"
   (lambda (x) (<= sun x sat)))
+
+
+;; Returns the first instance of the given week-day in the given month.
+;; @example
+;; (find-first-week-day mon #2020-04-10)
+;; => 2020-04-06
+;; @end example
+(define-public (find-first-week-day wday month-date)
+  (let* ((mstart (start-of-month month-date))
+         (start-day (week-day mstart))
+         (diff (- wday start-day)))
+    (date+ mstart (date day: (modulo diff 7)))))
+
+;; returns instances of the given week-day in month.
+;; week-day, date → (list date)
+(define-public (all-wday-in-month wday month-date)
+  (stream->list
+   (stream-take-while
+    (lambda (d) (= (month d) (month month-date)))
+    (week-stream (find-first-week-day wday month-date)))))
