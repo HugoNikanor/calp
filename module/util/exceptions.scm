@@ -38,3 +38,15 @@
                     ,@(cddr (car case)))
                   ,g!rest))))))
 
+
+
+(define-public warning-handler
+  (make-parameter
+   (lambda (fmt . args)
+     (format (current-error-port)
+             "WARNING: ~?~%" fmt args))
+   procedure?))
+
+
+(define-public (warning fmt . args)
+  (apply (warning-handler) fmt (or args '())))
