@@ -128,8 +128,7 @@
      ((e r)
       (list (next-event e r)
             (if (count r)
-                ;; Note that this doesn't modify, since r is immutable.
-                (mod! (count r) 1-)
+                (set (count r) = (- 1))
                 r ))))
 
    ;; Seed

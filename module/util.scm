@@ -100,49 +100,6 @@
 
 
 
-;;; Helper macros to make define-quick-record better
-
-(define (class-name symb) (symbol-append '< symb '>))
-(define (constructor symb) (symbol-append 'make- symb))
-(define (pred symb) (symbol-append symb '?))
-
-(define (getter name symb) (symbol-append 'get- name '- symb))
-(define* (setter name symb #:optional bang?)
-  (symbol-append 'set- name '- symb (if bang? '! (symbol))))
-
-(define (%define-quick-record internal-define bang? name fields)
-  (let ((symb (gensym)))
-    `((,internal-define ,(class-name name)
-                        (,(constructor name) ,@fields)
-                        ,(pred name)
-                        ,@(map (lambda (f) `(,f ,(getter f symb) ,(setter f symb bang?)))
-                               fields))
-      ,@(map (lambda (f) `(define ,f (make-procedure-with-setter
-                                 ,(getter f symb) ,(setter f symb bang?))))
-             fields))))
-
-;;; Creates srfi-9 define{-immutable,}-record-type declations.
-;;; Also creates srfi-17 accessor ((set! (access field) value))
-
-;;; TODO allow extra properties to be sent to this macro,
-;;; such as @var{:muttable} or @var{:immutable}
-
-(define-macro (define-quick-record name . fields)
-  (let ((public-fields  (or (assoc-ref fields #:public)  '()))
-        (private-fields (or (assoc-ref fields #:private) '()))
-        (printer (and=> (assoc-ref fields #:printer) car)))
-    `(begin
-       ,@(%define-quick-record '(@ (srfi srfi-9 gnu) define-immutable-record-type)
-                               #f name
-                               (append public-fields private-fields))
-       (when ,printer
-         ((@ (srfi srfi-9 gnu) set-record-type-printer!)
-          ,(class-name name) ,printer))
-       ,@(map (lambda (field) `(export ,field))
-              public-fields))))
-
-
-
 ;; Replace let* with a version that can bind from lists.
 ;; Also supports SRFI-71 (extended let-syntax for multiple values)
 ;; @lisp

@@ -83,32 +83,32 @@
 
         ;; TODO I think it's an error to give BYHOUR and under for dates which aren't datetimes
         (quick-case (string->symbol key)
-          (UNTIL (set! (until o) date))
+          (UNTIL (set (until o) date))
 
-          (COUNT    (<= 0 num) => (set! (count o) num))
-          (INTERVAL (<= 0 num) => (set! (interval o) num))
+          (COUNT    (<= 0 num) => (set (count o) num))
+          (INTERVAL (<= 0 num) => (set (interval o) num))
 
-          (FREQ (memv symb intervals) => (set! (freq o) symb))
-          (WKST (memv symb weekdays)  => (set! (wkst o) (cdar days)))
+          (FREQ (memv symb intervals) => (set (freq o) symb))
+          (WKST (memv symb weekdays)  => (set (wkst o) (cdar days)))
 
           ;; Always positive
-          (BYSECOND (every (lambda (n) (<= 0 n 60)) nums) => (set! (bysecond o) nums))
-          (BYMINUTE (every (lambda (n) (<= 0 n 59)) nums) => (set! (byminute o) nums))
-          (BYHOUR   (every (lambda (n) (<= 0 n 23)) nums) => (set! (byhour   o) nums))
-          (BYMONTH  (every (lambda (n) (<= 1 n 12)) nums) => (set! (bymonth  o) nums))
+          (BYSECOND (every (lambda (n) (<= 0 n 60)) nums) => (set (bysecond o) nums))
+          (BYMINUTE (every (lambda (n) (<= 0 n 59)) nums) => (set (byminute o) nums))
+          (BYHOUR   (every (lambda (n) (<= 0 n 23)) nums) => (set (byhour   o) nums))
+          (BYMONTH  (every (lambda (n) (<= 1 n 12)) nums) => (set (bymonth  o) nums))
 
           ;; May be negative
-          (BYDAY (every (lambda (p) (memv (cdr p) weekdays)) days) => (set! (byday o) days))
+          (BYDAY (every (lambda (p) (memv (cdr p) weekdays)) days) => (set (byday o) days))
 
-          (BYMONTHDAY (every (lambda (n) (and (!= n 0) (<= -31  n 31)))  nums) => (set! (bymonthday o) nums))
-          (BYYEARDAY  (every (lambda (n) (and (!= n 0) (<= -366 n 366))) nums) => (set! (byyearday  o) nums))
-          (BYSETPOS   (every (lambda (n) (and (!= n 0) (<= -366 n 366))) nums) => (set! (bysetpos   o) nums))
-          (BYWEEKNO   (every (lambda (n) (and (!= n 0) (<= -53  n 53)))  nums) => (set! (byweekno   o) nums))
+          (BYMONTHDAY (every (lambda (n) (and (!= n 0) (<= -31  n 31)))  nums) => (set (bymonthday o) nums))
+          (BYYEARDAY  (every (lambda (n) (and (!= n 0) (<= -366 n 366))) nums) => (set (byyearday  o) nums))
+          (BYSETPOS   (every (lambda (n) (and (!= n 0) (<= -366 n 366))) nums) => (set (bysetpos   o) nums))
+          (BYWEEKNO   (every (lambda (n) (and (!= n 0) (<= -53  n 53)))  nums) => (set (byweekno   o) nums))
 
           (else o)))))
 
    ;; obj
-   (make-recur-rule (interval 1) (wkst mon))
+   (make-recur-rule interval: 1 wkst: mon)
 
    ;; ((key val) ...)
    (map (cut string-split <> #\=)
