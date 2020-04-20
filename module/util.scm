@@ -501,6 +501,11 @@
      (and=>> (and=> value proc)
              rest ...)]))
 
+(define-public (group list width)
+  (unless (null? list)
+    (let* ((row rest (split-at list width)))
+      (cons row (group rest width)))))
+
 
 
 (define-syntax let-env
