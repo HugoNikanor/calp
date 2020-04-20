@@ -307,6 +307,10 @@
                          (* 12 (year diff)))
                       (month-stream start-date)))))))
 
+(define-public (year-day date)
+  (days-in-interval (start-of-year date) date))
+
+
 ;; @example
 ;; (time->decimal-hour #10:30:00) ; => 10.5
 ;; @end example
