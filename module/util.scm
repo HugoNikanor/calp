@@ -416,12 +416,19 @@
 
 ;; Returns the cross product between l1 and l2.
 ;; each element is a cons cell.
-(define-public (cross-product l1 l2)
+(define (cross-product% l1 l2)
   (concatenate
    (map (lambda (a)
           (map (lambda (b) (cons a b))
                l2))
         l1)))
+
+(define-public (cross-product . args)
+  (if (null? args)
+      '()
+      (let* ((last rest (car+cdr (reverse args))))
+        (reduce-right cross-product% '()
+                      (reverse (cons (map list last) rest ))))))
 
 ;; Given an arbitary tree, do a pre-order traversal, appending all strings.
 ;; non-strings allso allowed, converted to strings and also appended.
