@@ -20,11 +20,12 @@
 
 (define-public (read-zoneinfo . ports-or-filenames)
   (parsed-zic->zoneinfo
-   (concatenate (map (lambda (port-or-filename)
-                       (if (port? port-or-filename)
-                           (parse-zic-file port-or-filename)
-                           (call-with-input-file port-or-filename parse-zic-file))))
-                ports-or-filenames)))
+   (concatenate
+    (map (lambda (port-or-filename)
+           (if (port? port-or-filename)
+               (parse-zic-file port-or-filename)
+               (call-with-input-file port-or-filename parse-zic-file)))
+         ports-or-filenames))))
 
 
 
