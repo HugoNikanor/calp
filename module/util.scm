@@ -12,7 +12,7 @@
                 quote?
                 re-export-modules
                 use-modules*
-                -> set set-> aif awhen
+                -> ->> set set-> aif awhen
                 tree-map let-lazy let-env
                 case* define-many
                 and=>>
@@ -457,6 +457,15 @@
      (-> (func obj args ...) rest ...)]
     [(-> obj func rest ...)
      (-> (func obj) rest ...)]))
+
+(define-syntax ->>
+  (syntax-rules ()
+    ((->> obj)
+     obj)
+    ((->> obj (func args ...) rest ...)
+     (->> (func args ... obj) rest ...))
+    ((->> obj func rest ...)
+     (->> (func obj) rest ...))))
 
 ;; Non-destructive set, syntax extension from set-fields from (srfi
 ;; srfi-9 gnu). Also doubles as a non-destructive mod!, if the `='
