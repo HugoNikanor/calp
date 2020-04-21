@@ -12,6 +12,7 @@
   :use-module (util)
   :use-module (util exceptions)
   :use-module (datetime)
+  :use-module (datetime util)
   :use-module (ice-9 rdelim)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
@@ -30,9 +31,9 @@
 
 
 (define-immutable-record-type <timespec> ; EXPORTED
-  (make-timespec time sign type)
+  (make-timespec timespec-time sign type)
   timespec?
-  (time timespec-time)                  ; <time>
+  (timespec-time timespec-time)         ; <time>
   (sign timespec-sign)                  ; '+ | '-
   ;; types:
   ;; w - wall clock time (local time)
@@ -41,6 +42,41 @@
   (type timespec-type))                 ; char
 
 (export timespec? timespec-time timespec-sign timespec-type)
+
+(define-public (timespec-zero)
+  (make-timespec (time) '+ #\w))
+
+(define-public (timespec-add . specs)
+  (unless (apply eqv? (map timespec-type specs))
+    (warning "Adding timespecs of differing types"))
+
+  (reduce (lambda (spec done)
+            (cond
+             ;; - -
+             ;; + +
+             [(eq? (timespec-sign done)
+                   (timespec-sign spec))
+              (set (timespec-time done) = (time+ (timespec-time spec)))]
+             ;; - +
+             [(and (eq? '- (timespec-sign done))
+                   (eq? '+ (timespec-sign spec)))
+              (let ((time-a (timespec-time done))
+                    (time-b (timespec-time spec)))
+                (if (time< time-a time-b)
+                    (make-timespec (time- time-b time-a)
+                                   '+ (timespec-type done))
+                    (set (timespec-time done) (time- time-b))))]
+             ;; + -
+             [(and (eq? '+ (timespec-sign done))
+                   (eq? '- (timespec-sign spec)))
+              (let ((time-a (timespec-time done))
+                    (time-b (timespec-time spec)))
+                (if (time< time-a time-b)
+                    (make-timespec (time- time-b time-a)
+                                   '- (timespec-type done))
+                    (set (timespec-time done) (time+ time-b))))]))
+          (timespec-zero)
+          specs))
 
 ;; <day-name> := 'mon | 'tue | 'wed | 'thu | 'sat | 'sun
 
@@ -52,10 +88,10 @@
   (from rule-from)                       ; int (year) | 'minimum | 'maximum
   (to rule-to)                           ; int (year) | 'minimum | 'maximum
   (in rule-in)                           ; int (month number)
-  (on rule-on)                           ; int (month day) | ('last <day-name>) | (<day-name> int ['< | '>])
+  (on rule-on)                           ; int (month day) | ('last <day-name>) | (['< | '>] <day-name> int)
   (at rule-at)                           ; <timespec>
   (save rule-save)                       ; <timespec>
-  (letters rule-letters)                 ; #f | string
+  (letters rule-letters)                 ; string
   )
 
 (export rule? rule-name rule-from rule-to rule-in rule-on rule-at rule-save rule-letters)
@@ -135,13 +171,13 @@
 
 (define (string->weekday name)
   (cond
-   [(string-prefix? name "Monday")    'mon]
-   [(string-prefix? name "Tuesday")   'tue]
-   [(string-prefix? name "Wednesday") 'wed]
-   [(string-prefix? name "Thursday")  'thu]
-   [(string-prefix? name "Friday")    'fri]
-   [(string-prefix? name "Saturday")  'sat]
-   [(string-prefix? name "Sunday")    'sun]
+   [(string-prefix? name "Monday")    mon]
+   [(string-prefix? name "Tuesday")   tue]
+   [(string-prefix? name "Wednesday") wed]
+   [(string-prefix? name "Thursday")  thu]
+   [(string-prefix? name "Friday")    fri]
+   [(string-prefix? name "Saturday")  sat]
+   [(string-prefix? name "Sunday")    sun]
    [else (error "Unknown week day" name)]))
 
 
@@ -160,9 +196,10 @@
          (string->number string)]
         [(string-index string #\=)
          => (lambda (idx)
-              (list (string->weekday (substring string 0 (1- idx)))
+              (list (symbol (string-ref string (1- idx)))
+                    (string->weekday (substring string 0 (1- idx)))
                     (string->number (substring string (1+ idx)))
-                    (symbol (string-ref string (1- idx)))))]))
+                    ))]))
 
 
 (define (parse-time string)
@@ -267,14 +304,15 @@
                                          parsed-from           ; from
                                          ;; to
                                          (if (string-prefix? to "only")
-                                             parsed-from
+                                             ;; parsed-from
+                                             'only
                                              (parse-from to))
                                          (month-name->number in) ; in
                                          (parse-day-spec on)     ; on
                                          (parse-time-spec at)    ; at
                                          (parse-time-spec save '(#\s #\d)) ; save
                                          (if (string= letters "-") ; letters
-                                             #f letters))
+                                             "" letters))
                               done) #f)))]
 
                        [(Zone)
@@ -353,14 +391,79 @@
       (for-each (lambda (link)
                   (let* ((name (link-name link))
                          (target (link-target link))
-                         (target-item (hash-ref zones link #f)))
-                    (if (not target)
-                        (warning "Unresolved link, target missing ~a -> ~a " name target)
+                         (target-item (hash-ref zones target #f)))
+                    (if (not target-item)
+                        (warning "Unresolved link, target missing ~a -> ~a" name target)
                         (hash-set! zones name target-item))))
                 (car it)))
 
     (make-zoneinfo rules zones)))
 
+
+
+
+(define-public (rule->dtstart rule)
+  ;; TODO rule-from can contain the symbol 'minimum
+  (define d (date year: (rule-from rule)
+                  month: (rule-in rule)
+                  day: 1))
+
+  (datetime
+   date:
+   (let ((on (rule-on rule)))
+     (cond [(number? on)
+            (set (day d) on)]
+           [(eq? 'last (car on))
+            (iterate (lambda (d) (date- d (date day: 1)))
+                     (lambda (d) (eqv? (cadr on) (week-day d)))
+                     (set (day d) (days-in-month d)))]
+           [else                        ; < | >
+            (let* (((<> wday base-day) on))
+              (iterate (lambda (d) ((if (eq? '< <>)
+                                   date- date+)
+                               d (date day: 1)))
+                       (lambda (d) (eqv? wday (week-day d)))
+                       (set (day d) base-day)))]))
+   time:
+   (let ((timespec (rule-at rule)))
+     ;; TODO check type?
+     ;; NOTE I really hope that AT can never be negative
+     (timespec-time timespec))))
+
+
+(use-modules (vcomponent recurrence internal))
+(define-public (rule->rrule rule)
+  (if (eq? 'only (rule-to rule))
+      #f
+      (let ((base (make-recur-rule
+                   freq: 'YEARLY
+                   interval: 1
+                   bymonth: (list (rule-in rule))
+                   until: (let ((to  (rule-to rule)))
+                            (if (eq? 'maximum to)
+                                ;; TODO I possibly need to check the start of
+                                ;; the next rule to know when this rule really
+                                ;; ends.
+                                #f (datetime
+                                    date: (date year: to month: 1 day: 1)))))))
+
+
+        (cond [(number? (rule-on rule))
+               (set (bymonthday base)
+                    (list (rule-on rule)))]
+
+              [(eqv? 'last (car (rule-on rule)))
+               (set (byday base) (list (cons -1 (cadr (rule-on rule)))))]
+
+              [else
+               (let* (((<> wday base-day) (rule-on rule)))
+                 (when (eq? '< <>)
+                   (warning "Counting backward for RRULES unsupported"))
+                 ;; TODO this only realy works when base-day = 7n + 1, n ∈ 𝐍
+                 (set (byday base)
+                      (list
+                       (cons (ceiling-quotient base-day 7)
+                             wday))))]))))
 
 ;; special case of format which works with %s and %z
 (define-public (zone-format fmt-string arg)
