@@ -345,6 +345,9 @@
 (define-public (date-zero? date)
   (= 0 (year date) (month date) (day date)))
 
+(define-public (time-zero? time)
+  (= 0 (hour time) (minute time) (second time)))
+
 ;; TODO +1 month is weird for late days in a month.
 ;; is the last of january +1 month the last of february,
 ;; or a few days into march? It's at least not the 31 of
