@@ -83,6 +83,8 @@
   )
 
 (export get-date)
+(define-public (get-timezone datetime)
+  (tz datetime))
 
 (define*-public (datetime
                  key: date time
