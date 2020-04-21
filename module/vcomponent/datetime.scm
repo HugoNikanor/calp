@@ -1,7 +1,9 @@
 (define-module (vcomponent datetime)
+  #:use-module (srfi srfi-1)
   #:use-module (vcomponent base)
   #:use-module (datetime)
   #:use-module (datetime util)
+  #:use-module (datetime zic)
   #:use-module (util)
 
   #:export (#;parse-datetime
@@ -103,3 +105,90 @@ Event must have the DTSTART and DTEND attribute set."
       (datetime<= (datetime date: (date day: 1))
                   (datetime-difference (attr ev 'DTEND)
                                        (attr ev 'DTSTART)))))
+
+
+
+
+
+(define-public (zoneinfo->vtimezone zoneinfo zone-name)
+  (define vtimezone (make-vcomponent 'VTIMEZONE))
+  (define last-until (datetime date: #1000-01-01))
+  (define last-offset (timespec-zero))
+  (set! (attr vtimezone 'TZID) zone-name)
+  (for zone-entry in (get-zone zoneinfo zone-name)
+       (cond [(zone-entry-rule zone-entry) timespec?
+              => (lambda (inline-rule)
+                   (let ((component (make-vcomponent 'DAYLIGHT))
+                         (new-timespec (timespec-add
+                                        (zone-entry-stdoff zone-entry)
+                                        inline-rule)))
+                     (set! (attr component 'DTSTART) last-until
+                           (attr component 'TZOFFSETFROM) last-offset
+                           (attr component 'TZOFFSETTO) new-timespec
+                           (attr component 'TZNAME) (zone-entry-format zone-entry)
+                           last-until (zone-entry-until zone-entry)
+                           last-offset new-timespec)
+                     (add-child! vtimezone component)))]
+
+             [(zone-entry-rule zone-entry)
+              => (lambda (rule-name)
+                   (map (lambda (rule)
+                          (let ((component (make-vcomponent
+                                            ;; NOTE the zoneinfo database doesn't
+                                            ;; come with information if a given
+                                            ;; rule is in standard or daylight time,
+                                            ;; since that's mostly nonsencical
+                                            ;; (e.g. war- and peacetime).
+                                            ;; But the ical standard requires that,
+                                            ;; so this is a fair compromize.
+                                            (if (string-null? (rule-letters rule))
+                                                'STANDARD 'DAYLIGHT)))
+                                (new-timespec (timespec-add
+                                               (zone-entry-stdoff zone-entry)
+                                               (rule-save rule))))
+
+                            (set! (attr component 'DTSTART) (rule->dtstart rule)
+                                  (attr component 'TZOFFSETFROM) last-offset
+                                  (attr component 'TZOFFSETTO) new-timespec
+                                  (attr component 'TZNAME) (zone-format
+                                                            (zone-entry-format zone-entry)
+                                                            (rule-letters rule))
+                                  ;; NOTE this can both be a number or the
+                                  ;; symbol 'maximum
+                                  last-until (zone-entry-until zone-entry)
+                                  last-offset new-timespec)
+
+                            (awhen (rule->rrule rule)
+                                   (set! (attr component 'RRULE) it))
+
+                            (add-child! vtimezone component)))
+                        (drop-while
+                         ;; TODO
+                         ;; some of the rules might not apply to us since we only
+                         ;; started using that rule set later. It's also possible
+                         ;; that we stopped using a ruleset which continues existing.
+                         ;;
+                         ;; Both these cases should be filtered here.
+                         (const #f)
+                         #;
+                         (lambda (rule)
+                           (rule-from rule) ; 1970
+                           (rule-in rule)   ; 4 (apr)
+                           (rule-on rule)   ; 5 | (last sat)
+
+                           (rule-to rule)
+
+                           last-until)
+                         (get-rule zoneinfo rule-name))))]
+
+             [else                      ; no rule
+              (let ((component (make-vcomponent 'STANDARD)))
+                ;; DTSTART MUST be a datetime in local time
+                (set! (attr component 'DTSTART) last-until
+                      (attr component 'TZOFFSETFROM) last-offset
+                      (attr component 'TZOFFSETTO) (zone-entry-stdoff zone-entry)
+                      (attr component 'TZNAME) (zone-entry-format zone-entry)
+                      last-until (zone-entry-until zone-entry)
+                      last-offset (zone-entry-stdoff zone-entry))
+                (add-child! vtimezone component))]))
+  vtimezone)
