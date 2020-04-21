@@ -85,6 +85,8 @@
         (zeller J (1- K) (+ m 12) (day date))
         (zeller J K (month date) (day date)))))
 
+
+
 ;; Given a date, returns the earliest start of week going backwards from that date.
 ;; sön 22 mar 2020 20:09:57 CET
 ;; @example
@@ -178,6 +180,7 @@
                    ((#\a) (display (week-day-name (week-day date) 3)))
                    ((#\b) (display (locale-month-short (month date))))
                    ((#\B) (display (locale-month (month date))))
+                   ((#\Z) (when (equal? "UTC" (get-timezone datetime)) (display "Z")))
                    (else (unless allow-unknown?
                            (error 'datetime->string "Invalid format token ~a" token))))
                  #f)
