@@ -228,7 +228,7 @@ row ~a	column ~a	ctx = ~a
                                 ;; DTSTART is required to exist while the other two are optional.
 
                                 ;; Allowed (some) repeated keys
-                                (if (memv key '(EXDATE))
+                                (if (memv key '(EXDATE ATTENDEE))
                                     (aif (attr* component key)
                                          ;; updates the current vline
                                          ;; NOTE that this discards any properties belonging to this object
