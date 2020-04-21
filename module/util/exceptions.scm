@@ -44,8 +44,7 @@
   (make-parameter
    (lambda (fmt . args)
      (format (current-error-port)
-             "WARNING: ~?~%" fmt args))
-   procedure?))
+             "WARNING: ~?~%" fmt args))))
 
 
 (define-public (warning fmt . args)
