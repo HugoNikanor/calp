@@ -53,7 +53,9 @@
                 ((key guard '=> body ...)
                  `((,key) (if (not ,guard)
                               (begin (warning (quote ,key)
-                                              (quote ,guard))
+                                              (quote ,guard)
+                                              (list ,@guard)
+                                              )
                                      ,@else-clause)
                               (begin ,@body))))
                 ((key body ...)
@@ -62,10 +64,13 @@
                  `(else ,@body)))
               cases))))
 
-(define (warning key guard )
-  (display (format #f "Warning RRULE guard failed for key ~a~%    guard: ~a~%"
-                   key guard)
+(define (warning key guard extra)
+  (display (format #f "Warning RRULE guard failed for key ~a~%    guard: ~a : ~s~%"
+                   key guard (map (lambda (o) (if (procedure? o)
+                                             (procedure-name o)
+                                             o)) extra))
            (current-error-port)))
+
 
 ;; RFC 5545, Section 3.3.10. Recurrence Rule, states that the UNTIL value MUST have
 ;; the same type as the DTSTART of the event (date or datetime). I have seen events
