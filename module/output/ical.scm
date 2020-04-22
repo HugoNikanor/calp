@@ -110,6 +110,9 @@
      ;; Handled below
      [('X-HNH-ALTERNATIVES _) 'noop]
 
+     ;; Remove from output
+     [('X-HNH-FILENAME _) 'noop]
+
      [(key vline)
       (display
        (ical-line-fold
