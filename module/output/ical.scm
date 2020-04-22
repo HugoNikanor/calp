@@ -146,13 +146,28 @@ CALSCALE:GREGORIAN\r
 (define-public (ical-main calendars regular-events repeating-events start end)
   (print-header)
 
-  (let ((tzs (make-hash-table)))
-    (for cal in calendars
-         (for tz in (filter (lambda (e) (eq? 'VTIMEZONE (type e))) (children cal))
-              (hash-set! tzs (attr tz 'TZID) tz)))
-
-    (hash-for-each (lambda (key component) (component->ical-string component))
-                   tzs))
+  (let ((zoneinfo
+         (apply read-zoneinfo
+                ;; TODO move this to config, and figure out
+                ;; how to best acquire/bundle zoneinfo.
+          ((@ (glob) glob) "~/down/tz/{africa,antartica,asia,australasia,europe,northamerica,southamerica,backward}")))
+        (tz-names
+         (lset-difference
+          equal? (lset-union
+                  equal? '("dummy")
+                  (concatenate
+                   (map (lambda (cal)
+                          (filter-map
+                           (lambda (vline)
+                             (and=> (prop vline 'TZID) car))
+                           (filter-map (extract* 'DTSTART)
+                                       (children cal))))
+                        calendars)))
+          '("dummy" "local"))))
+    (for-each
+     component->ical-string
+     (map (lambda (name) (zoneinfo->vtimezone zoneinfo name))
+          tz-names)))
 
   ;; TODO add support for running without a range limiter, emiting all objects.
   (for-each
