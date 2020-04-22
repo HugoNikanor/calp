@@ -3,49 +3,78 @@
   :use-module (ice-9 match)
   :use-module (util)
   :use-module (vcomponent)
+  :use-module (vcomponent datetime)
   :use-module (srfi srfi-1)
   :use-module (datetime)
   :use-module (datetime util)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
+  :use-module (datetime zic)
   )
-
 
 ;; Format value depending on key type.
 ;; Should NOT emit the key.
 (define (value-format key vline)
-  (with-throw-handler 'wrong-type-arg
-    (lambda ()
-      (case key
-        ((DTSTART DTEND RECURRENCE-ID)
-         (with-output-to-string
-           (lambda ()
-             (case (and=> (prop vline 'VALUE) car)
-               [(DATE) (display (date->string (as-date (value vline))
-                                              "~Y~m~d"))]
-               [(DATE-TIME)
-                (display (datetime->string (value vline) "~Y~m~dT~H~M~S"))
-                (let ((tz (and=> (prop vline 'TZID) car)))
-                  (when (and tz (string= tz "UTC"))
-                    (display #\Z)))]
-               [else
-                (error "Unknown VALUE type")]))))
-        ((DURATION X-HNH-DURATION)
-         #; (time->string value "~H~M~S")
-         (let ((s (second (value vline))))
-           (format #f "~a~a~a"
-                   (floor/ s 3600)
-                   (floor/ (modulo s 3600) 60)
-                   (modulo s 60))
-           ))
-        ((RRULE) (value vline))
+  (define (handle-value value)
+    (catch #t #; 'wrong-type-arg
+      (lambda ()
+        (case key
+          ((DTSTART DTEND RECURRENCE-ID DTSTAMP
+                    LAST-MODIFIED EXDATE)
+           (with-output-to-string
+             (lambda ()
+               (case (and=> (prop vline 'VALUE) car)
+                 [(DATE) (display (date->string (as-date value)
+                                                "~Y~m~d"))]
+                 [else              ; (DATE-TIME)
+                  (display (datetime->string value "~Y~m~dT~H~M~S"))
+                  (let ((tz (and=> (prop vline 'TZID) car)))
+                    (when (and tz (string= tz "UTC"))
+                      (display #\Z)))]))))
 
-        (else (escape-chars (value vline)))))
-    (lambda (err caller fmt args call-args)
-      (format (current-error-port)
-              "WARNING: key = ~a, caller = ~s, call-args = ~s~%~k~%" key caller call-args fmt args)
-      (with-output-to-string (lambda () (display (value vline))))
-      )))
+          [(TZOFFSETFROM TZOFFSETTO)
+           (with-output-to-string
+             (lambda ()
+               (display (if (time-zero? (timespec-time value))
+                            '+ (timespec-sign value)))
+               (display (time->string (timespec-time value) "~H~M"))
+               (when (not (zero? (second (timespec-time value))))
+                 (display (time->string (timespec-time value) "~S")))))]
+
+          ((DURATION X-HNH-DURATION)
+           #; (time->string value "~H~M~S")
+           (let ((s (second value)))
+             (format #f "~a~a~a"
+                     (floor/ s 3600)
+                     (floor/ (modulo s 3600) 60)
+                     (modulo s 60))
+             ))
+          [(RRULE)
+           ;; NOTE
+           ;; generated events are created with recur-rule objects.
+           ;; parsed objects keep their string representation.
+           ;; TODO normalize this.
+           (if ((@ (vcomponent recurrence internal) recur-rule?) value)
+               ((@ (vcomponent recurrence internal) recur-rule->rrule-string) value)
+               value)]
+
+          (else
+           (escape-chars value)
+           )))
+      (lambda (err caller fmt args call-args)
+        (define fallback-string
+          (with-output-to-string (lambda () (display value))))
+        (format (current-error-port)
+                "WARNING: key = ~a, caller = ~s, call-args = ~s~%~k~%Falling back to ~s~%"
+                key caller call-args fmt args
+                fallback-string)
+        fallback-string
+        )))
+
+  (if (list? (value vline))
+      (format #f "~{~a~^,~}"
+              (map handle-value (value vline)))
+      (handle-value (value vline))))
 
 (define (escape-chars str)
   (with-output-to-string
