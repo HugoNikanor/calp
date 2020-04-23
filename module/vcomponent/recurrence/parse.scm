@@ -82,6 +82,7 @@
        (let-lazy
         ((symb (string->symbol val))
          (date (datetime-parser val))
+         (day (rfc->datetime-weekday (string->symbol val)))
          (days (map parse-day-spec (string-split val #\,)))
          (num  (string->number val))
          (nums (map string->number (string-split val #\,))))
@@ -94,7 +95,7 @@
           (INTERVAL (<= 0 num) => (set (interval o) num))
 
           (FREQ (memv symb intervals) => (set (freq o) symb))
-          (WKST (memv symb weekdays)  => (set (wkst o) (cdar days)))
+          (WKST (memv day weekdays)  => (set (wkst o) day))
 
           ;; Always positive
           (BYSECOND (every (lambda (n) (<= 0 n 60)) nums) => (set (bysecond o) nums))
