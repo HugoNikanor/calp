@@ -72,7 +72,7 @@
                                      prev-start: month-
                                      render-calendar: render-calendar-table
                                      pre-start: (start-of-week start-date)
-                                     post-end: (end-of-week start-date)
+                                     post-end: (end-of-week (end-of-month start-date))
                                      ))))))
 
    (GET "/static" ()
