@@ -378,9 +378,14 @@
                                        (map (lambda (d) (if (date? d)
                                                        ;; TODO show year?
                                                        (date->string d "~e ~b")
-                                                       ;; TODO only show time when it's different than the start time?
+                                                       ;; NOTE only show time when it's different than the start time?
                                                        ;; or possibly only when FREQ is hourly or lower.
-                                                       (datetime->string d "~e ~b ~k:~M")))
+                                                       (if (memv ((@ (vcomponent recurrence internal ) freq) ((@ (vcomponent recurrence parse)
+                                                                          parse-recurrence-rule)
+                                                                       (attr ev 'RRULE)))
+                                                              '(HOURLY MINUTELY SECONDLY))
+                                                           (datetime->string d "~e ~b ~k:~M")
+                                                           (datetime->string d "~e ~b"))))
                                             it))))
                             "."))
              ,(when (attr ev 'LAST-MODIFIED)
