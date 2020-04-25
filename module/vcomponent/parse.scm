@@ -211,6 +211,11 @@ row ~a	column ~a	ctx = ~a
                                          (not (attr component 'DTEND)))
                                 (set! (attr component 'DTEND)
                                   (let ((start (attr component 'DTSTART)))
+                                    ;; p. 54, 3.6.1
+                                    ;; If DTSTART is a date then it's an all
+                                    ;; day event. If DTSTART instead is a
+                                    ;; datetime then the event has a length
+                                    ;; of 0?
                                     (if (date? start)
                                         (date+ start (date day: 1))
                                         (datetime+ start (datetime time: (time hour: 1)))))))
@@ -348,6 +353,11 @@ row ~a	column ~a	ctx = ~a
                 ;; components, but they are still the same event.
                 ;; In our case this means exceptions to reccurence rules, which
                 ;; is set up here, and then later handled in rrule-generate.
+                ;; NOTE These events also share UID, but are diferentiated
+                ;; by RECURRENCE-ID. As far as I can tell this goes against
+                ;; the standard. Section 3.8.4.4.
+                ;; TODO Also make this grouping when reading in a whole
+                ;; icalendar-file (one with multiple events)
                 (case (length events)
                   [(0) (format (current-error-port)
                            "WARNING: No events in component~%~a~%"
