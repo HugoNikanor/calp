@@ -186,12 +186,12 @@
                                                   "unknown"))
                 ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
                    " tentative")
-                ,(when (date<? (as-date (attr ev 'DTSTART)) date)
+                ,(when (date<? (as-date (get-datetime (attr ev 'DTSTART))) date)
                    " continued")
                 ;; TODO all day events usually have the day after as DTEND.
                 ;; So a whole day event the 6 june would have a DTEND of the
                 ;; 7 june.
-                ,(when (date<? date (as-date (attr ev 'DTEND)))
+                ,(when (date<? date (as-date (get-datetime (attr ev 'DTEND))))
                    " continuing"))
               (style ,style))
            (div (@ (class "event-inner"))

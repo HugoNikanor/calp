@@ -74,22 +74,24 @@ Event must have the DTSTART and DTEND attribute set."
 ;; to a datetime to allow for more explicit TZ handling?
 (define-public (event-length/day date e)
   ;; TODO date= > 2 elements
-  (cond [(and (date= (as-date (attr e 'DTSTART))
-                 (as-date (attr e 'DTEND)))
-              (date= (as-date (attr e 'DTSTART))
-                     date))
-         (time- (as-time (attr e 'DTEND))
-                (as-time (attr e 'DTSTART)))]
-        ;; Starts today, end in future day
-        [(date= (as-date (attr e 'DTSTART))
-                date)
-         (time- #24:00:00 (as-time (attr e 'DTSTART)))]
-        ;; Ends today, start earlier day
-        [(date= (as-date (attr e 'DTEND))
-                date)
-         (as-time (attr e 'DTEND))]
-        ;; start earlier date, end later date
-        [else #24:00:00]))
+  (let ((start (get-datetime (attr e 'DTSTART)))
+        (end (get-datetime (attr e 'DTEND))))
+    (cond [(and (date= (as-date start)
+                       (as-date end))
+                (date= (as-date start)
+                       date))
+           (time- (as-time end)
+                  (as-time start))]
+          ;; Starts today, end in future day
+          [(date= (as-date start)
+                  date)
+           (time- #24:00:00 (as-time start))]
+          ;; Ends today, start earlier day
+          [(date= (as-date end)
+                  date)
+           (as-time end)]
+          ;; start earlier date, end later date
+          [else #24:00:00])))
 
 
 ;; 22:00 - 03:00
