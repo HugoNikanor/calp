@@ -700,6 +700,9 @@
           month: ((@ (srfi srfi-19) date-month) d)
           day:   ((@ (srfi srfi-19) date-day) d))))
 
+(define-public (current-datetime)
+  (unix-time->datetime ((@ (guile) current-time))))
+
 
 
 
