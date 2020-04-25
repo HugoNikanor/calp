@@ -8,6 +8,7 @@
   #:export (group-stream get-groups-between))
 
 ;; TODO templetize this
+;; TODO this seems to behave weird if the first day of the week is empty (0 events).
 (define-stream (group-stream in-stream)
   (define (ein? day) (lambda (e) (event-contains? e day)))
 

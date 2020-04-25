@@ -116,6 +116,9 @@
         (date+ ystart (date day: (abs day-index)))
         (date- ystart (date day: day-index)))))
 
+;; TODO v. 1 sometimes is calculated wrong.
+;; (week-number #2020-01-01 mon) ; => 1
+;; (week-number #2019-12-31 mon) ; => 53 ; should be 1
 (define*-public (week-number date optional: (wkst sun))
   (let* ((week day (floor/ (days-in-interval (week-1-start date wkst) date)
                            7)))
@@ -300,6 +303,7 @@
                          (* 12 (year diff)))
                       (month-stream start-date)))))))
 
+;; also known as Julian day.
 (define-public (year-day date)
   (days-in-interval (start-of-year date) date))
 

@@ -343,7 +343,7 @@
                     (get-groups-between (group-stream (list->stream short-events))
                                         start-date end-date))))))))
 
-  
+
 ;;; Prodcedures for text output
 
 ;; For sidebar, just text

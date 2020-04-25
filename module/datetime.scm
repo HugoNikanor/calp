@@ -737,6 +737,7 @@
     `(datetime date: ,(parse-date% date)
                time: ,(parse-time% time)
                tz: ,(and (string= "Z" (string-take-right str 1))
+                         ;; TODO shouldn't this be "UTC"?
                          'Z))))
 
 (define (date-reader chr port)
