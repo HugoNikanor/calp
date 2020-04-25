@@ -39,4 +39,7 @@ appropriate modules will be compiled  (guile will  tell you  what it's
 doing). For building this README, run
 	module/main.scm text < README.in > README
 
+Techical Details
+----------------
+- Internally all weeks start on sunday, which is repsenented as `0'.
 
