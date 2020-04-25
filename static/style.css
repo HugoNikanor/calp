@@ -5,6 +5,7 @@ html {
      */
     --editmode: 1.0;
     --event-font-size: 8pt;
+    --gray: #757575;
 }
 
 html, body {
@@ -118,7 +119,7 @@ The sidebar with all the events
 
 .eventlist {
     overflow: scroll;
-    border-top: 3px solid gray;
+    border-top: 3px solid var(--gray);
 }
 
 .eventlist article {
@@ -136,7 +137,7 @@ The sidebar with all the events
 
 .eventlist h3 {
     font-size: 12pt;
-    border-bottom: 1px solid gray;
+    border-bottom: 1px solid var(--gray);
     margin-bottom: 0;
     font-weight: 300;
 }
@@ -205,7 +206,7 @@ Each event within the eventlist
 
 .small-calendar .prev,
 .small-calendar .next {
-    color: grey;
+    color: var(--gray);
 }
 
 .small-calendar td {
@@ -292,7 +293,7 @@ along with their colors.
 
 .caltable .thead,
 .caltable .cal-cell {
-    border: 1px solid gray;
+    border: 1px solid var(--gray);
 }
 
 .caltable .cal-cell {
@@ -320,11 +321,11 @@ Find color between gray and lightgray
 }
 
 .date-info .month-name {
-    color: gray;
+    color: var(--gray);
 }
 
 .date-info .year-number {
-    color: gray;
+    color: var(--gray);
 }
 
 .table-head {
@@ -357,8 +358,8 @@ Find color between gray and lightgray
 }
 
 .days .meta {
-    border-bottom: 2px solid gray;
-        grid-row: 1;
+    border-bottom: 2px solid var(--gray);
+    grid-row: 1;
 }
 
 .days .events {
@@ -383,7 +384,7 @@ Find color between gray and lightgray
 
 .events {
     position: relative;
-    border: 1px solid gray;
+    border: 1px solid var(--gray);
 }
 
 /*
@@ -398,13 +399,13 @@ Find color between gray and lightgray
 }
 
 .clock {
-    color: gray;
-    border-top: 1px dotted gray;
+    color: var(--gray);
+    border-top: 1px dotted var(--gray);
         width: 100%;
 }
 
 .sideclock .clock {
-    border-top: 1px dotted gray;
+    border-top: 1px dotted var(--gray);
     grid-row: 3;
 }
 
@@ -427,7 +428,7 @@ Find color between gray and lightgray
     position: absolute;
     left: 5px;
     top: 2px;
-    color: grey;
+    color: var(--gray);
 }
 
 .meta .daydate {
@@ -494,7 +495,7 @@ Find color between gray and lightgray
     justify-content: right;
     text-align: right;
     font-size: 80%;
-    color: grey;
+    color: var(--gray);
     padding-right: 1em;
 }
 
