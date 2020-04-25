@@ -47,7 +47,7 @@
      ;; be a good idea to instead center it on the current week, meaning
      ;; that the active row is always in the center
      (html-chunked-main count calendars events
-                        (previous-week-start start (get-config 'week-start))
+                        (start-of-week start (get-config 'week-start))
                         (date day: 7))]
     [(table)
      (html-table-main count calendars events start)]
