@@ -118,7 +118,7 @@
                           (date->string start)))
                     (let ((end (attr ev 'DTEND)))
                       (if (datetime? end)
-                          (datetime->string (attr ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
+                          (datetime->string (attr ev 'DTEND) "~Y-~m-~d ~H:~M:~S")
                           (date->string end)))
                     (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
                                                  #:width (min 70 width))
