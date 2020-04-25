@@ -69,6 +69,9 @@
         ((pred (stream-car stream)) (stream-car stream))
         (else (stream-find pred (stream-cdr stream)))))
 
+(define-public (stream-remove pred stream)
+  (stream-filter (negate pred) stream))
+
 ;; Evaluates @var{body} in a context where most list fundamentals are
 ;; replaced by stream alternatives.
 ;; commented defifinitions are items which could be included, but for
