@@ -474,9 +474,12 @@ Find color between gray and lightgray
     white-space: pre;
 }
 
+.repeating {
+    color: red;
+}
+
 .event .repeating {
     float: left;
-    color: red;
     font-size: 150%;
 }
 
