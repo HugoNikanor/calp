@@ -41,9 +41,10 @@
   (wkst wkst)                           ; weekday
   )
 
-(export freq until count interval bysecond byminute byhour
+(export freq until interval bysecond byminute byhour
         byday bymonthday byyearday byweekno bymonth bysetpos
         wkst)
+(export! count)
 
 (define*-public (make-recur-rule
                  key:
