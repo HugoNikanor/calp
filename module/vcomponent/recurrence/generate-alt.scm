@@ -296,12 +296,13 @@
 
 
   (define duration
-    ;; NOTE DTEND is an optional field. However, my current configuration for
-    ;; the parser always adds a DTEND field.
+    ;; NOTE DTEND is an optional field.
     (let ((end (attr base-event 'DTEND)))
-      (if (date? end)
-          (date-difference end (attr base-event 'DTSTART))
-          (datetime-difference end (attr base-event 'DTSTART)))))
+      (if end
+          (if (date? end)
+              (date-difference end (attr base-event 'DTSTART))
+              (datetime-difference end (attr base-event 'DTSTART)))
+          #f)))
 
   (define rrule-stream (rrule-instances base-event))
 
@@ -311,25 +312,26 @@
           (aif (hash-ref it dt)
                it ; RECURRENCE-ID objects come with their own DTEND
                (let ((ev (copy-vcomponent base-event)))
-                 (set! (attr ev 'DTSTART) dt
-                       ;; p. 123 (3.8.5.3 Recurrence Rule)
-                       ;; specifies that the DTEND should be updated to match how the
-                       ;; initial dtend related to the initial DTSTART. It also notes
-                       ;; that an event of 1 day in length might be longer or shorter
-                       ;; than 24h depending on timezone shifts.
-                       (attr ev 'DTEND) ((cond [(date? dt) date+]
-                                               [(datetime? dt) datetime+]
-                                               [else (error "Bad type")])
-                                         dt duration))
+                 (set! (attr ev 'DTSTART) dt)
+                 (when duration
+                   ;; p. 123 (3.8.5.3 Recurrence Rule)
+                   ;; specifies that the DTEND should be updated to match how the
+                   ;; initial dtend related to the initial DTSTART. It also notes
+                   ;; that an event of 1 day in length might be longer or shorter
+                   ;; than 24h depending on timezone shifts.
+                   (set! (attr ev 'DTEND) ((cond [(date? dt) date+]
+                                                 [(datetime? dt) datetime+]
+                                                 [else (error "Bad type")])
+                                           dt duration)))
                  ev)))
         (lambda (dt)
           (let ((ev (copy-vcomponent base-event)))
-            (set! (attr ev 'DTSTART) dt
-                  (attr ev 'DTEND) ((cond [(date? dt) date+]
-                                          [(datetime? dt) datetime+]
-                                          [else (error "Bad type")])
-                                    dt duration)
-                  )
+            (set! (attr ev 'DTSTART) dt)
+            (when duration
+             (set! (attr ev 'DTEND) ((cond [(date? dt) date+]
+                                           [(datetime? dt) datetime+]
+                                           [else (error "Bad type")])
+                                     dt duration)))
             ev)))
    rrule-stream))
 
