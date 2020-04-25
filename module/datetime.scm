@@ -560,12 +560,15 @@
 ;; NOTE that base is re-normalized, but change isn't. This is due to base
 ;; hopefully being a real date, but change just being a difference.
 (define-public (datetime+ base change)
-  (let ((base (get-datetime base)))
+  (let (; (base (get-datetime base))
+        )
    (let* ((time overflow (time+ (get-time% base) (get-time% change))))
      (datetime date: (date+ (get-date base)
                             (get-date change)
                             (date day: overflow))
-               time: time))))
+               time: time
+               tz: (get-timezone base)
+               ))))
 
 ;; (define (datetime->srfi-19-date date)
 ;;   ((@ (srfi srfi-19) make-date)
