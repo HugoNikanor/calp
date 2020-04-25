@@ -6,6 +6,7 @@
   :use-module (datetime)
   :use-module (datetime util)
   :use-module (srfi srfi-26)
+  :use-module ((ice-9 hash-table) :select (alist->hash-table))
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module ((ice-9 textual-ports) :select (unget-char))
   :use-module ((ice-9 ftw) :select (scandir ftw))
@@ -379,6 +380,11 @@ row ~a	column ~a	ctx = ~a
                           (rest (delete head events eq?)))
 
                      (set! (attr head 'X-HNH-ALTERNATIVES)
+                       (alist->hash-table
+                        (map cons
+                             (map (extract 'RECURRENCE-ID) rest)
+                             rest))
+                       #;
                        (sort*! rest ;; HERE
                                date/-time< (extract 'RECURRENCE-ID)))
                      (add-child! calendar head))])
