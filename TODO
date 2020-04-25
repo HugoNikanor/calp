@@ -36,6 +36,9 @@ Handle systems with bad `cal' programs
 HTML
 ====
 
+Exportera som ICS-knapp!
+------------------------
+
 Icke-linjär tidsskala
 ---------------------
 
@@ -65,3 +68,12 @@ Vid utmatning av en VCALENDAR måste dock alla använda tidszoner redovisas.
 Antingen:
 - spara undan de inlästa, eller
 - generera nya from tzdb.
+
+
+Text
+====
+Bibehåll ledande whitespace vid radbrott.
+-----------------------------------------
+Om en rad vilken börjar med ledande whitespace är längre än
+max-kolumnen bör dess fortsättningsrad ha lika mycket whitespace
+i början som grundraden.
