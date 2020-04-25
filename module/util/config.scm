@@ -29,11 +29,11 @@
 ;; similar to emacs defcustom
 ;; TODO possibly make @var{documentation} and @var{valid-value?} optional.
 (define-macro (define-config name default-value documentation valid-value?)
-  `(let ((make-config (@@ (util config) make-config))
-         (config-values (@@ (util config) config-values))
-         ;; (config? (@@ (util config) config?))
-         (get-value (@@ (util config) get-value)))
-     (cond [(hashq-ref config-values (quote ,name))
+  (let ((make-config '(@@ (util config) make-config))
+        (config-values '(@@ (util config) config-values))
+        (config? '(@@ (util config) config?))
+        (get-value '(@@ (util config) get-value)))
+    `(cond [(hashq-ref ,config-values (quote ,name))
             => (lambda (value)
                  ;; When reloading a module an already defined configuration item
                  ;; might be loaded again, just anwrap it and pretend that didn't
@@ -49,14 +49,14 @@
                                     ,valid-value?
                                     ,documentation)
                               (list value)))
-                 (hashq-set! config-values (quote ,name)
-                             (make-config value ,documentation
-                                          ,valid-value? (current-module))))]
+                 (hashq-set! ,config-values (quote ,name)
+                             (,make-config value ,documentation
+                                           ,valid-value? (current-module))))]
            ;; value not set in advance
            [else
-            (hashq-set! config-values (quote ,name)
-                        (make-config ,default-value ,documentation
-                                     ,valid-value? (current-module)))])))
+            (hashq-set! ,config-values (quote ,name)
+                        (,make-config ,default-value ,documentation
+                                      ,valid-value? (current-module)))])))
 
 (export define-config)
 
