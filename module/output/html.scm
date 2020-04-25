@@ -105,13 +105,13 @@
 
 ;; Given a list, partitions it up into sublists of width length,
 ;;; each starting with 'tr.
-(define* (tablify  list width key: (proc identity) (wkst sun))
+(define* (tablify list width key: (proc identity))
   (unless (null? list)
-    (let* ((row rest (split-at list width)))
+    (let* ((wkst (week-day (car list)))
+           (row rest (split-at list width)))
       (cons `(tr (td ,(week-number (car row) wkst)) ,@(map proc row))
             (tablify rest width
-                     proc: proc
-                     wkst: wkst)))))
+                     proc: proc)))))
 
 
 
@@ -543,7 +543,7 @@
                                  ;; start-date is part of
                                  (month-days (start-of-month start-date) week-start)))
                       (tablify (append last current next)
-                               7 proc: td wkst: week-start))))))
+                               7 proc: td))))))
 
 
 
