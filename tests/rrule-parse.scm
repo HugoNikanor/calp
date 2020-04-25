@@ -2,10 +2,10 @@
   parse-recurrence-rule)
  ((vcomponent recurrence) make-recur-rule))
 
-(test-equal (make-recur-rule (freq 'HOURLY) (wkst 'MO) (interval 1))
+(test-equal (make-recur-rule freq: 'HOURLY wkst: 'MO interval: 1)
   (parse-recurrence-rule "FREQ=HOURLY"))
 
-(test-equal (make-recur-rule (freq 'HOURLY) (count 3) (interval 1) (wkst 'MO))
+(test-equal (make-recur-rule freq: 'HOURLY count: 3 interval: 1 wkst: 'MO)
     (parse-recurrence-rule "FREQ=HOURLY;COUNT=3"))
 
 ;;; TODO write tests for these cases

@@ -23,13 +23,11 @@ END:VEVENT"
 
 (test-equal "Generate First"
   (stream->list
-   (stream-take
-    5 (stream-map (extract 'DTSTART)
-                  (generate-recurrence-set ev))))
+   5 (stream-map (extract 'DTSTART)
+                 (generate-recurrence-set ev)))
   (stream->list
-   (stream-take
-    5 (day-stream
-       (attr ev 'DTSTART)))))
+   5 (day-stream
+      (attr ev 'DTSTART))))
 
 ;; We run the exact same thing a secound time, since I had an error with
 ;; that during development.

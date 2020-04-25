@@ -1,7 +1,5 @@
-(((parameters) calendar-files)
- ((vcomponent load) load-calendars)
- )
+(((vcomponent load) load-calendars))
 
-(test-assert (load-calendars calendar-files: (calendar-files)))
+(test-assert (load-calendars ))
 
 
