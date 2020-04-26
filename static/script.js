@@ -135,7 +135,7 @@ function new_popup (event) {
     // if (event.target !== this) return;
 
     /* popup = this.children[0].children[0] */
-    popup = this.parentElement.getElementsByClassName("popup")[0];
+    popup = this.parentElement.parentElement.getElementsByClassName("popup")[0];
     popup.classList.toggle("show")
 
     /* x-axis fix */
@@ -204,6 +204,7 @@ window.onload = function () {
     days = document.getElementsByClassName("days")[0]
     for (let e of days.getElementsByClassName("body")) {
         e.onclick = new_popup;
+        e.parentElement.href = "#";
     }
 
     // days.scrollLeft == 0

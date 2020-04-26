@@ -179,31 +179,30 @@
         (inner x (right-subtree tree))))))
 
 (define* (make-block ev optional: (extra-attributes '()))
-  `(a (@ (href "#" ,(UID ev))
-         (class "hidelink"))
-      (div (@ ,@(assq-merge
-                 extra-attributes
-                 `((class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
-                                                       "unknown"))
-                     ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
-                        " tentative"))
-                   ;; TODO only if in debug mode?
-                   ,@(data-attributes ev))))
-
-           (div (@ (class "event-inner"))
-                ;; NOTE These popup's are far from good. Main problem being that
-                ;; the often render off-screen for events high up on the screen.
-                (div (@ (class "popup"))
-                     ,(event-debug-html ev))
-                (div (@ (class "body"))
-                     ,(when (attr ev 'RRULE)
-                        `(span (@ (class "repeating")) "↺"))
-                     ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
-                     ,(when (attr ev 'LOCATION)
-                        `(span (@ (class "location"))
-                               ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                            (attr ev 'LOCATION))))
-                     )))) )
+  `(div (@ ,@(assq-merge
+              extra-attributes
+              `((class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
+                                                    "unknown"))
+                  ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                     " tentative"))
+                ;; TODO only if in debug mode?
+                ,@(data-attributes ev))))
+        (div (@ (class "event-inner"))
+             ;; NOTE These popup's are far from good. Main problem being that
+             ;; the often render off-screen for events high up on the screen.
+             (div (@ (class "popup"))
+                  ,(event-debug-html ev))
+             (a (@ (href "#" ,(UID ev))
+                   (class "hidelink"))
+              (div (@ (class "body"))
+                   ,(when (attr ev 'RRULE)
+                      `(span (@ (class "repeating")) "↺"))
+                   ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
+                   ,(when (attr ev 'LOCATION)
+                      `(span (@ (class "location"))
+                             ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                          (attr ev 'LOCATION))))
+                   )))) )
 
 ;; Format single event for graphical display
 (define (create-block date ev)
