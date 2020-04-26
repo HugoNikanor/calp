@@ -113,6 +113,17 @@
             (tablify rest width
                      proc: proc)))))
 
+;; date, date, [sorted-stream events] → [list events]
+(define (events-between start-date end-date events)
+  (define (overlaps e)
+    (timespan-overlaps? start-date (date+ end-date (date day: 1))
+                        (attr e 'DTSTART) (attr e 'DTEND)))
+
+  (stream-filter overlaps
+                 (get-stream-interval
+                  overlaps
+                  (lambda (e) (not (date< end-date (as-date (attr e 'DTSTART)))))
+                  events)))
 
 
 
@@ -307,17 +318,6 @@
                               ,time ":00")))
                 (iota 12 0 2)))))
 
-;; date, date, [sorted-stream events] → [list events]
-(define (events-between start-date end-date events)
-  (define (overlaps e)
-    (timespan-overlaps? start-date (date+ end-date (date day: 1))
-                        (attr e 'DTSTART) (attr e 'DTEND)))
-
-  (stream-filter overlaps
-                 (get-stream-interval
-                  overlaps
-                  (lambda (e) (not (date< end-date (as-date (attr e 'DTSTART)))))
-                  events)))
 
 
 (define*-public (render-calendar key: events start-date end-date #:allow-other-keys)
