@@ -559,7 +559,7 @@ along with their colors.
          bars since the final position of the popup is calculated at runtime
        - Easier animation
    */
-    transform: scale(0%);
+    transform: scale(0);
     transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
     z-index: 100;
 
@@ -607,7 +607,7 @@ along with their colors.
 
 .popup.show {
     /* visibility: visible; */
-    transform: scale(100%);
+    transform: scale(1);
 }
 
 .event-inner .body {
