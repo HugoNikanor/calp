@@ -91,26 +91,32 @@ html, body {
 "Buttons" for changing between weekly and monthly layout
 */
 
-
 .change-view {
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;
 }
 
-.change-view a {
-    padding: 0.5em;
-    background-color: #3399ff;
-    text-decoration: none;
-    color: white;
-
-    box-shadow: 1ex 1ex gray;
-
+.change-view .btn {
     margin-top: 1ex;
     margin-bottom: 1ex;
 }
 
-.change-view a:active {
+.btn {
+    padding: 0.5em;
+    background-color: #3399ff;
+    color: white;
+
+    box-shadow: 1ex 1ex gray;
+
+    /* if a */
+    text-decoration: none;
+
+    /* if button */
+    border: none;
+}
+
+.btn:active {
     transform: translate(1ex, 1ex);
     box-shadow: none;
 }

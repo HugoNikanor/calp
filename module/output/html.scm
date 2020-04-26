@@ -649,7 +649,8 @@
                 ;; Small calendar and navigation
                 (nav (@ (class "calnav") (style "grid-area: nav"))
                      (div (@ (class "change-view"))
-                          (a (@ (href "/week/" ,(date->string
+                          (a (@ (class "btn")
+                                (href "/week/" ,(date->string
                                                  (if (= 1 (day start-date))
                                                      (start-of-week start-date (get-config 'week-start))
                                                      start-date)
@@ -658,7 +659,8 @@
                              "weekly")
 
 
-                          (a (@ (href "/month/" ,(date->string (set (day start-date) 1) "~1")
+                          (a (@ (class "btn")
+                                (href "/month/" ,(date->string (set (day start-date) 1) "~1")
                                       ".html"))
                              "monthly")))
 
