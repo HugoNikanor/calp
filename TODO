@@ -1,6 +1,9 @@
 Blandat
 =======
 
+Vecka 1 blir 53 ibland
+----------------------
+
 Properties
 ==========
 
@@ -40,6 +43,29 @@ Handle systems with bad `cal' programs
 
 HTML
 ====
+
+Popups i månadsvy
+-----------------
+
+Placering av popups
+-------------------
+
+Exportera ICS i helhet knapp
+----------------------------
+
+Exprotera ICS rullande?
+-----------------------
+
+Knappar vid tryck på övre och vänstra sidan
+------------------------------------------
+Eftersom knappen flyttar sig är inte musen över när man släpper, med följd av
+att inget event sker.
+
+Mycket små events
+-----------------
+
+Hyphenering
+-----------
 
 Icke-linjär tidsskala
 ---------------------
