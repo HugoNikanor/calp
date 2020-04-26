@@ -344,6 +344,32 @@
 
 ;;; Prodcedures for text output
 
+;; ev → sxml
+(define (format-recurrence-rule ev)
+ `(span (@ (class "rrule"))
+        "Upprepas "
+        ,((compose (@ (vcomponent recurrence display) format-recurrence-rule)
+                   (@ (vcomponent recurrence parse) parse-recurrence-rule))
+          (attr ev 'RRULE))
+        ,@(awhen (attr ev 'EXDATE)
+                 (list
+                  ", undantaget "
+                  (add-enumeration-punctuation
+                   (map (lambda (d) (if (date? d)
+                                   ;; TODO show year?
+                                   (date->string d "~e ~b")
+                                   ;; NOTE only show time when it's different than the start time?
+                                   ;; or possibly only when FREQ is hourly or lower.
+                                   (if (memv ((@ (vcomponent recurrence internal ) freq) ((@ (vcomponent recurrence parse)
+                                                                                          parse-recurrence-rule)
+                                                                                       (attr ev 'RRULE)))
+                                          '(HOURLY MINUTELY SECONDLY))
+                                       (datetime->string d "~e ~b ~k:~M")
+                                       (datetime->string d "~e ~b"))))
+                        it))))
+        "."))
+
+
 ;; For sidebar, just text
 (define (fmt-single-event ev)
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (attr ev 'X-HNH-FILENAME))
@@ -368,32 +394,10 @@
                                                          (warning "~a on formatting description, ~s" err args)
                                                          str))))
              ,(awhen (attr ev 'RRULE)
-                     `(span (@ (class "rrule"))
-                            "Upprepas "
-                            ,((compose (@ (vcomponent recurrence display) format-recurrence-rule)
-                                       (@ (vcomponent recurrence parse) parse-recurrence-rule))
-                              it)
-                            ,@(awhen (attr ev 'EXDATE)
-                                     (list
-                                      ", undantaget "
-                                      (add-enumeration-punctuation
-                                       (map (lambda (d) (if (date? d)
-                                                       ;; TODO show year?
-                                                       (date->string d "~e ~b")
-                                                       ;; NOTE only show time when it's different than the start time?
-                                                       ;; or possibly only when FREQ is hourly or lower.
-                                                       (if (memv ((@ (vcomponent recurrence internal ) freq) ((@ (vcomponent recurrence parse)
-                                                                          parse-recurrence-rule)
-                                                                       (attr ev 'RRULE)))
-                                                              '(HOURLY MINUTELY SECONDLY))
-                                                           (datetime->string d "~e ~b ~k:~M")
-                                                           (datetime->string d "~e ~b"))))
-                                            it))))
-                            "."))
+                     (format-recurrence-rule ev))
              ,(when (attr ev 'LAST-MODIFIED)
                 `(span (@ (class "last-modified")) "Senast ändrad "
-                       ,(datetime->string (attr ev 'LAST-MODIFIED) "~1 ~H:~M"))
-                )
+                       ,(datetime->string (attr ev 'LAST-MODIFIED) "~1 ~H:~M")))
              )))
 
 ;; Single event in side bar (text objects)
