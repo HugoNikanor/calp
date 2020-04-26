@@ -452,9 +452,10 @@
                 [(day-date . events)
                  `(div (@ (class "cal-cell"))
                        (div (@ (class "date-info "
-                                 ,(when (or (date< day-date start-date)
-                                            (date< end-date day-date))
-                                    "non-current")
+                                 ,(if (or (date< day-date start-date)
+                                          (date< end-date day-date))
+                                      "non-current"
+                                      "current")
                                  ))
                             (span (@ (class "day-number")) ,(date->string day-date "~e"))
                             ,(when (= 1 (day day-date))

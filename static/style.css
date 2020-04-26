@@ -308,23 +308,16 @@ along with their colors.
     font-family: arial;
 }
 
-.date-info.non-current {
-    /* TODO
-Find color between gray and lightgray
-*/
-    color: lightgray !important;
-}
-
 .date-info .day-number {
     font-size: 150%;
     padding: 2pt;
 }
 
-.date-info .month-name {
-    color: var(--gray);
+.date-info.current .day-number {
+    color: black;
 }
 
-.date-info .year-number {
+.date-info {
     color: var(--gray);
 }
 
