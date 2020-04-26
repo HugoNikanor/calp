@@ -151,8 +151,11 @@ function new_popup (event) {
     // if (event.target !== this) return;
 
     /* popup = this.children[0].children[0] */
-    popup = this.parentElement.parentElement.getElementsByClassName("popup")[0];
+    let ev = parents_until(this, {class: "event"})
+    popup = ev.getElementsByClassName("popup")[0];
     popup.classList.toggle("show")
+
+    return;
 
     /* x-axis fix */
 
@@ -218,7 +221,9 @@ window.onload = function () {
     // }
 
     days = document.getElementsByClassName("days")[0]
-    for (let e of days.getElementsByClassName("body")) {
+    for (let popup of document.getElementsByClassName("popup")) {
+        ev = parents_until(popup, {class: "event"})
+        e = ev.getElementsByClassName("body")[0]
         e.onclick = new_popup;
         e.parentElement.href = "#";
     }
