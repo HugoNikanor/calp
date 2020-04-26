@@ -128,8 +128,7 @@
 
 
 (define (event-debug-html event)
-  `(div (@ (class "eventlist"))
-        ,(fmt-single-event event))
+  (fmt-single-event event)
   #;
   `(table
     (tbody

@@ -138,22 +138,6 @@ The sidebar with all the events
     padding-left: 2px;
 }
 
-.eventlist {
-    white-space: pre-line;
-    font-size: 10pt;
-}
-
-.eventlist h3 {
-    font-size: 12pt;
-    border-bottom: 1px solid var(--gray);
-    margin-bottom: 0;
-    font-weight: 300;
-}
-
-.eventlist article.tentative {
-    border-left-style: dashed;
-}
-
 /* Text day
 ----------------------------------------
 Each event within the eventlist
@@ -491,6 +475,19 @@ along with their colors.
     font-size: 150%;
 }
 
+.eventtext {
+    white-space: pre-line;
+    font-size: 10pt;
+}
+
+.eventtext h3 {
+    font-size: 12pt;
+    border-bottom: 1px solid var(--gray);
+    margin-bottom: 0;
+    font-weight: 300;
+    margin-top: 0;
+}
+
 .eventtext .location {
     display: inline-block;
     vertical-align: text-top;
@@ -505,6 +502,11 @@ along with their colors.
     color: var(--gray);
     padding-right: 1em;
 }
+
+.eventlist .eventtext.tentative {
+    border-left-style: dashed;
+}
+
 
 /* */
 
@@ -579,20 +581,29 @@ along with their colors.
 
     background-color: #dedede;
     color: black;
-    border: 2px solid black;
+    border-top-style: solid;
+    border-bottom-style: solid;
+    border-right-style: solid;
+    border-color: black;
 
-    font-size: 8pt;
-    font-family: monospace;
+    /* font-size: 8pt; */
+    /* font-family: monospace; */
 
-    white-space: pre;
-    overflow-y: scroll;
+    /* white-space: pre; */
+    overflow-y: auto;
     max-width: 100ch;
     max-height: 60ch;
+    min-width: 40ch;
 }
 
-.event-inner .popup td {
-    white-space: pre-line;
+.event-inner .popup article {
+    border-left-style: solid;
+    border-left-width: 1em;
 }
+
+/* .event-inner .popup td { */
+/*     white-space: pre-line; */
+/* } */
 
 /* Arrow pointing at origin of popup
    Currently broken due to an overflow: scroll
@@ -610,14 +621,14 @@ along with their colors.
 /*     border-top-color: #555; */
 /* } */
 
-.popup th {
-    text-align: right;
-    vertical-align: top;
-}
+/* .popup th { */
+/*     text-align: right; */
+/*     vertical-align: top; */
+/* } */
 
-.popup th::after {
-    content: ": ";
-}
+/* .popup th::after { */
+/*     content: ": "; */
+/* } */
 
 .popup.show {
     /* visibility: visible; */
