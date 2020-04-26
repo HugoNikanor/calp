@@ -191,7 +191,9 @@
              ;; NOTE These popup's are far from good. Main problem being that
              ;; the often render off-screen for events high up on the screen.
              (div (@ (class "popup"))
-                  ,(event-debug-html ev))
+                  ,(event-debug-html ev)
+                  (button (@ (onclick "close_popup(this)")) "×")
+                  )
              (a (@ (href "#" ,(UID ev))
                    (class "hidelink"))
               (div (@ (class "body"))

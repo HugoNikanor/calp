@@ -12,6 +12,16 @@ function time_to_percent (time) {
     return hour_to_part(time.getHours() + (time.getMinutes() / 60)) + "%"
 }
 
+function parents_until (element, obj) {
+    if (element === null) {
+        return null;
+    } else if (element.id == obj.id || element.classList.contains(obj.class)) {
+        return element;
+    } else {
+        return parents_until (element.parentElement, obj);
+    }
+}
+
 let start_time = new Date();
 let end_time = new Date();
 
@@ -123,6 +133,12 @@ function min(a, b) {
 
 function max(a, b) {
     a > b ? a : b;
+}
+
+function close_popup (btn) {
+    o = { class: "popup" }
+    var popup = parents_until (btn, o);
+    popup.classList.toggle("show");
 }
 
 /*

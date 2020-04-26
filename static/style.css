@@ -607,6 +607,13 @@ along with their colors.
     border-left-width: 1em;
 }
 
+.popup button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: none;
+}
+
 /* .event-inner .popup td { */
 /*     white-space: pre-line; */
 /* } */
