@@ -127,6 +127,16 @@
 
 
 
+ 
+(define (popup ev)
+  `(div (@ (class "popup"))
+        (nav (@ (class "popup-control CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
+                                                              "unknown"))))
+             (button (@ (class "btn") (onclick "close_popup(this)")) "×")
+             (a (@ (class "btn") (href "/calendar/" ,(attr ev 'UID) ".ics"))
+                "📅"))
+        ,(fmt-single-event ev)))
+
 (define (event-debug-html event)
   (fmt-single-event event)
   #;
@@ -190,10 +200,7 @@
         (div (@ (class "event-inner"))
              ;; NOTE These popup's are far from good. Main problem being that
              ;; the often render off-screen for events high up on the screen.
-             (div (@ (class "popup"))
-                  ,(event-debug-html ev)
-                  (button (@ (onclick "close_popup(this)")) "×")
-                  )
+             ,(popup ev)
              (a (@ (href "#" ,(UID ev))
                    (class "hidelink"))
               (div (@ (class "body"))
@@ -396,9 +403,6 @@
              ,(when (attr ev 'LAST-MODIFIED)
                 `(span (@ (class "last-modified")) "Senast ändrad "
                        ,(datetime->string (attr ev 'LAST-MODIFIED) "~1 ~H:~M")))
-
-             (a (@ (href "/calendar/" ,(attr ev 'UID) ".ics"))
-                "📅")
 
              )))
 
