@@ -564,7 +564,9 @@ along with their colors.
 }
 
 .event-inner {
-    position: relative;
+    /* Makes the popup's "position: absolute" be relative the event.
+        unset, initial, and inherit all seem to work */
+    position: unset;
     width: 100%;
     height: 100%;
 }
@@ -574,7 +576,19 @@ along with their colors.
 */
 
 .event-inner .popup {
-    /* visibility: hidden; */
+    /* TODO & NOTE
+       If I understand it correctly this is absolute to the nearest offset parent.
+       since .event-inner has a position: unset the offset parent becomes
+       - event for week view, and
+       - body for month view.
+       This has the effect that top and left attributes become relative the offset
+       parent (even though without them the element is positioned relative to it's
+       direct event parent (except not in month view if the day is scrolled)).
+
+       I think it's something here which stops popups in the month view from going
+       of the edge of the screen. I just want the same thing to be true for the
+       week view, since it's REALY ugly when a popup makes the calendar wider.
+   */
     position: absolute;
     display: flex;
     /* A scale(0%) is chosen for hiding the element for the following reasons:
