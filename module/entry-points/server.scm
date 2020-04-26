@@ -92,11 +92,14 @@
 
    ;; TODO export all events in interval
    (GET "/calendar" (start end)
-        (ical-main calendar
-                   regular
-                   repeating
-                   (parse-iso-date start)
-                   (parse-iso-date end)))
+        (return '((content-type text/calendar))
+                (with-output-to-string
+                  (lambda ()
+                   (ical-main calendar
+                              regular
+                              repeating
+                              (parse-iso-date start)
+                              (parse-iso-date end))))))
 
    ;; TODO this returns "invalid" events, since the surrounding VCALENDAR is missing.
    (GET "/calendar/:uid.ics" (uid)
