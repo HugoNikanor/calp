@@ -11,6 +11,7 @@
   :use-module (srfi srfi-41 util)
   :use-module (datetime zic)
   :use-module (glob)
+  :use-module (vcomponent recurrence)
   )
 
 ;; Format value depending on key type.
@@ -181,38 +182,38 @@ CALSCALE:GREGORIAN\r
 (define (print-footer)
   (format #t "END:VCALENDAR\r\n"))
 
-;; list x list x list x time x time → 
-(define-public (ical-main calendars regular-events repeating-events start end)
+
+(define (get-tz-names events)
+  (lset-difference
+   equal? (lset-union
+           equal? '("dummy")
+           (filter-map
+            (lambda (vline) (and=> (prop vline 'TZID) car))
+            (filter-map (extract* 'DTSTART)
+                        events)))
+   '("dummy" "local")))
+
+(define-public (print-components-with-fake-parent events)
   (print-header)
 
-  (let ((tz-names
-         (lset-difference
-          equal? (lset-union
-                  equal? '("dummy")
-                  (concatenate
-                   (map (lambda (cal)
-                          (filter-map
-                           (lambda (vline)
-                             (and=> (prop vline 'TZID) car))
-                           (filter-map (extract* 'DTSTART)
-                                       (children cal))))
-                        calendars)))
-          '("dummy" "local"))))
-    (for-each
-     component->ical-string
-     (map (lambda (name) (zoneinfo->vtimezone *zoneinfo* name))
-          tz-names)))
-
-  ;; TODO add support for running without a range limiter, emiting all objects.
-  (for-each
-   component->ical-string
-   (filter-sorted (lambda (ev) ((in-date-range? start end)
-                           (as-date (attr ev 'DTSTART))))
-                  regular-events))
-
-  ;; TODO RECCURENCE-ID exceptions
-  ;; We just dump all repeating objects, since it's much cheaper to do it this way than
-  ;; to actually figure out which are applicable for the given date range.
-  (for-each component->ical-string repeating-events)
-
+  (let ((tz-names (get-tz-names events)))
+    (for-each component->ical-string
+              (map (lambda (name) (zoneinfo->vtimezone *zoneinfo* name))
+                   tz-names)))
+  (for-each component->ical-string events)
   (print-footer))
+
+
+;; TODO add support for running without a range limiter, emiting all objects.
+;; list x list x list x time x time → 
+(define-public (ical-main calendars regular-events repeating-events start end)
+
+  (print-components-with-fake-parent
+   (append (filter-sorted (lambda (ev) ((in-date-range? start end)
+                                   (as-date (attr ev 'DTSTART))))
+                          regular-events)
+           ;; TODO RECCURENCE-ID exceptions
+           ;; We just dump all repeating objects, since it's much cheaper to do
+           ;; it this way than to actually figure out which are applicable for
+           ;; the given date range.
+           repeating-events)))

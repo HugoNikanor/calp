@@ -91,7 +91,9 @@
                  (find (lambda (ev) (equal? uid (attr ev 'UID)))
                        repeating))
              (return '((content-type text/calendar))
-                     (with-output-to-string (lambda () ((@ (output ical) component->ical-string) it))))
+                     (with-output-to-string
+                       (lambda () ((@ (output ical) print-components-with-fake-parent)
+                              (list it)))))
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
 
