@@ -10,6 +10,7 @@
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (datetime zic)
+  :use-module (glob)
   )
 
 ;; Format value depending on key type.
@@ -87,6 +88,11 @@
            (else (display ch))))
        str))))
 
+(define (generate-uuid)
+  ((@ (rnrs io ports) call-with-port)
+   ((@ (ice-9 popen) open-input-pipe) "uuidgen")
+   (@ (ice-9 rdelim) read-line)))
+
 ;; Fold long lines to limit width.
 ;; Since this works in characters, but ics works in bytes
 ;; this will overshoot when faced with multi-byte characters.
@@ -101,7 +107,7 @@
                  (ical-line-fold (string-drop string wrap-len)))]
         [else string]))
 
-(define (component->ical-string component)
+(define-public (component->ical-string component)
   (format #t "BEGIN:~a\r\n" (type component))
   (hash-for-each
    ;; Special cases depending on key.
@@ -127,7 +133,40 @@
 
   ;; If we have alternatives, splice them in here.
   (cond [(attr component 'X-HNH-ALTERNATIVES)
-         => (lambda (alts) (map component->ical-string alts))]))
+         => (lambda (alts) (hash-map->list (lambda (_ comp) (component->ical-string comp))
+                                      alts))]))
+
+;; TODO place these somewhere better
+(define *prodid* "-//hugo//Calparse 0.9//EN")
+(define *zoneinfo* (apply read-zoneinfo
+        ;; TODO move this to config, and figure out
+        ;; how to best acquire/bundle zoneinfo.
+        (glob "~/down/tz/{africa,antartica,asia,australasia,europe,northamerica,southamerica,backward}")))
+
+;; TODO tzid prop on dtstart vs tz field in datetime object
+;; how do we keep these two in sync?
+(define (write-event-to-file event calendar-path)
+  (define cal (make-vcomponent 'VCALENDAR))
+
+  (set! (attr cal 'PRODID) *prodid*
+        (attr cal 'VERSION) "2.0"
+        (attr cal 'CALSCALE) "GREGORIAN")
+
+  (add-child! cal event)
+
+  (awhen (prop (attr* event 'DTSTART) 'TZID)
+         (add-child! cal (zoneinfo->vtimezone *zoneinfo* it)))
+
+  (unless (attr event 'UID)
+    (set! (attr event 'UID)
+      (generate-uuid)))
+
+  (with-output-to-file (glob (format #f "~a/~a.ics"
+                                     calendar-path
+                                     (attr event 'UID)))
+    (lambda () (component->ical-string cal))))
+
+
 
 (define (print-header)
   (format #t
@@ -146,12 +185,7 @@ CALSCALE:GREGORIAN\r
 (define-public (ical-main calendars regular-events repeating-events start end)
   (print-header)
 
-  (let ((zoneinfo
-         (apply read-zoneinfo
-                ;; TODO move this to config, and figure out
-                ;; how to best acquire/bundle zoneinfo.
-          ((@ (glob) glob) "~/down/tz/{africa,antartica,asia,australasia,europe,northamerica,southamerica,backward}")))
-        (tz-names
+  (let ((tz-names
          (lset-difference
           equal? (lset-union
                   equal? '("dummy")
@@ -166,7 +200,7 @@ CALSCALE:GREGORIAN\r
           '("dummy" "local"))))
     (for-each
      component->ical-string
-     (map (lambda (name) (zoneinfo->vtimezone zoneinfo name))
+     (map (lambda (name) (zoneinfo->vtimezone *zoneinfo* name))
           tz-names)))
 
   ;; TODO add support for running without a range limiter, emiting all objects.
