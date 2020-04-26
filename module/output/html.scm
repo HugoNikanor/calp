@@ -176,6 +176,32 @@
         (inner (+ x w) (left-subtree tree))
         (inner x (right-subtree tree))))))
 
+(define* (make-block ev optional: (extra-attributes '()))
+  `(a (@ (href "#" ,(UID ev))
+         (class "hidelink"))
+      (div (@ ,@(assq-merge
+                 extra-attributes
+                 `((class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
+                                                       "unknown"))
+                     ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                        " tentative"))
+                   ;; TODO only if in debug mode?
+                   ,@(data-attributes ev))))
+
+           (div (@ (class "event-inner"))
+                ;; NOTE These popup's are far from good. Main problem being that
+                ;; the often render off-screen for events high up on the screen.
+                (div (@ (class "popup"))
+                     ,(event-debug-html ev))
+                (div (@ (class "body"))
+                     ,(when (attr ev 'RRULE)
+                        `(span (@ (class "repeating")) "↺"))
+                     ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
+                     ,(when (attr ev 'LOCATION)
+                        `(span (@ (class "location"))
+                               ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                            (attr ev 'LOCATION))))
+                     )))) )
 
 ;; Format single event for graphical display
 (define (create-block date ev)
@@ -200,39 +226,16 @@
             ;; height
             (* 100/24 (time->decimal-hour (event-length/day date ev)))))
 
-  `(a (@ (href "#" ,(UID ev))
-         (class "hidelink"))
-      (div (@ (class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
-                                                  "unknown"))
-                ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
-                   " tentative")
-                ,(when (date<? (as-date (get-datetime (attr ev 'DTSTART))) date)
-                   " continued")
-                ;; TODO all day events usually have the day after as DTEND.
-                ;; So a whole day event the 6 june would have a DTEND of the
-                ;; 7 june.
-                ,(when (date<? date (as-date (get-datetime (attr ev 'DTEND))))
-                   " continuing"))
-              (style ,style)
-              ;; TODO only if in debug mode?
-              ,@(data-attributes ev))
-
-           (div (@ (class "event-inner"))
-                ;; NOTE These popup's are far from good. Main problem being that
-                ;; the often render off-screen for events high up on the screen.
-                (div (@ (class "popup"))
-                     ,(event-debug-html ev))
-                (div (@ (class "body"))
-                     ,(when (attr ev 'RRULE)
-                        `(span (@ (class "repeating")) "↺"))
-                     ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
-                     ,(when (attr ev 'LOCATION)
-                        `(span (@ (class "location"))
-                               ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                            (attr ev 'LOCATION))))
-                     ))))
-
-  )
+  (make-block
+   ev `((class
+          ,(when (date<? (as-date (get-datetime (attr ev 'DTSTART))) date)
+             " continued")
+          ;; TODO all day events usually have the day after as DTEND.
+          ;; So a whole day event the 6 june would have a DTEND of the
+          ;; 7 june.
+          ,(when (date<? date (as-date (get-datetime (attr ev 'DTEND))))
+             " continuing"))
+        (style ,style))))
 
 ;; date{,time}-difference works in days, and days are simply multiplied by 24 to get hours.
 ;; This means that a day is always assumed to be 24h, even when that's wrong. This might lead
@@ -265,24 +268,14 @@
                                           start-date)
                   total-length))))
 
-  `(a (@ (href "#" ,(UID ev))
-         (class "hidelink"))
-      (div (@ (class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME) "unknown"))
-                ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
-                   " tentative")
-                ,(when (date/-time< (attr ev 'DTSTART) start-date)
-                   " continued")
-                ,(when (date/-time< (date+ end-date (date day: 1)) (attr ev 'DTEND))
-                   " continuing"
-                   )
-                )
-              (style ,style)
-              ,@(data-attributes ev))
-           (div (@ (class "event-inner"))
-                (div (@ (class "popup"))
-                     ,(event-debug-html ev))
-                (div (@ (class "body"))
-                     ,((get-config 'summary-filter) ev (attr ev 'SUMMARY)))))))
+  (make-block
+   ev `((class
+          ,(when (date/-time< (attr ev 'DTSTART) start-date)
+             " continued")
+          ,(when (date/-time< (date+ end-date (date day: 1)) (attr ev 'DTEND))
+             " continuing"
+             ))
+        (style ,style))))
 
 
 ;; Lay out complete day (graphical)
@@ -422,12 +415,7 @@
 ;;; Table output
 
 (define (make-small-block event)
-  `(a (@ (href "#" ,(UID event))
-         (class "hidelink"))
-      (div (@ (class "inline-event CAL_"
-                ;; TODO centralize handling of unnamed calendars once again.
-                ,(html-attr (or (attr (parent event) 'NAME) "unnamed"))))
-           ,((get-config 'summary-filter) event (attr event 'SUMMARY)))))
+  (make-block event))
 
 ;; (stream event-group) -> sxml
 (define*-public (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)

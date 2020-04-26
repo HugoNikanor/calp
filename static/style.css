@@ -308,7 +308,7 @@ along with their colors.
     overflow-y: auto;
 }
 
-.inline-event {
+.cal-cell .event {
     font-size: 8pt;
     border-radius: 5px;
     padding: 2px;
@@ -392,7 +392,7 @@ along with their colors.
  * This makes the borders of the object be part of the size.
  * Making placing it on the correct line much simpler.
  */
-.clock, .event {
+.clock, .days .event {
     position: absolute;
     box-sizing: border-box;
     margin: 0;
@@ -438,12 +438,18 @@ along with their colors.
 }
 
 .event {
+    transition: 0.3s;
+    font-size: var(--event-font-size);
+}
+
+.days .event {
+    border: 1px solid black;
+}
+
+.events .event {
     width: 100%;
 
-    border: 2px solid black;
-    font-size: var(--event-font-size);
 
-    transition: 0.3s;
 }
 
 .events .event.continuing {
