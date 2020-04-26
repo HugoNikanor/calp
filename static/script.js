@@ -128,9 +128,14 @@ function max(a, b) {
 /*
 https://stackoverflow.com/questions/21064101/understanding-offsetwidth-clientwidth-scrollwidth-and-height-respectively
 */
-function new_popup () {
+function new_popup (event) {
 
-    popup = this.children[0].children[0]
+    console.log(event.target);
+    console.log(this);
+    // if (event.target !== this) return;
+
+    /* popup = this.children[0].children[0] */
+    popup = this.parentElement.getElementsByClassName("popup")[0];
     popup.classList.toggle("show")
 
     /* x-axis fix */
@@ -197,7 +202,7 @@ window.onload = function () {
     // }
 
     days = document.getElementsByClassName("days")[0]
-    for (let e of days.getElementsByClassName("event")) {
+    for (let e of days.getElementsByClassName("body")) {
         e.onclick = new_popup;
     }
 

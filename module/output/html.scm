@@ -128,6 +128,9 @@
 
 
 (define (event-debug-html event)
+  `(div (@ (class "eventlist"))
+        ,(fmt-single-event event))
+  #;
   `(table
     (tbody
      ,@(hash-map->list
@@ -364,18 +367,20 @@
 
 
 ;; For sidebar, just text
-(define (fmt-single-event ev)
+(define* (fmt-single-event ev
+                           optional: (attributes '())
+                           key: (fmt-header list))
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (attr ev 'X-HNH-FILENAME))
-  `(article (@ (id ,(UID ev))
-               (class "eventtext CAL_bg_"
-                 ,(html-attr (or (attr (parent ev) 'NAME) "unknown"))
-                 ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
-                    " tentative")))
-            (h3 (a (@ (href "#" ,(date-link (as-date (attr ev 'DTSTART))))
-                      (class "hidelink"))
-                   ,(when (attr ev 'RRULE)
-                      `(span (@ (class "repeating")) "↺"))
-                   ,(attr ev 'SUMMARY)))
+  `(article (@ ,@(assq-merge
+                  attributes
+                  `((class "eventtext CAL_bg_"
+                      ,(html-attr (or (attr (parent ev) 'NAME) "unknown"))
+                      ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                         " tentative")))))
+            (h3 ,(fmt-header
+                  (when (attr ev 'RRULE)
+                    `(span (@ (class "repeating")) "↺"))
+                  (attr ev 'SUMMARY)))
             (div
              ,(call-with-values (lambda () (fmt-time-span ev))
                 (match-lambda* [(start end) `(div ,start " — " ,end)]
@@ -401,15 +406,21 @@
                              `(a (@ (href "#" ,s)
                                     (class "hidelink")) ,s))))
               ,@(stream->list
-                 (stream-map fmt-single-event
-                             (stream-filter
-                              (lambda (ev)
-                                ;; If start was an earlier day
-                                ;; This removes all descriptions from
-                                ;; events for previous days,
-                                ;; solving duplicates.
-                                (date/-time<=? date (attr ev 'DTSTART)))
-                              events))))))
+                 (stream-map
+                  (lambda (ev) (fmt-single-event
+                           ev `((id ,(UID ev)))
+                           fmt-header: (lambda body
+                                         `(a (@ (href "#" ,(date-link (as-date (attr ev 'DTSTART))))
+                                                (class "hidelink"))
+                                             ,@body))))
+                  (stream-filter
+                   (lambda (ev)
+                     ;; If start was an earlier day
+                     ;; This removes all descriptions from
+                     ;; events for previous days,
+                     ;; solving duplicates.
+                     (date/-time<=? date (attr ev 'DTSTART)))
+                   events))))))
 
 
 ;;; Table output
