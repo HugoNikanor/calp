@@ -433,22 +433,25 @@
             ;; For all other days I'm only interested in the parts that change.
             (let* (((day-date . events) (stream-car event-groups)))
               `(div (@ (class "cal-cell"))
-                    (div (@ (class "date-info"))
-                         (span (@ (class "day-number")) ,(date->string day-date "~e"))
-                         (span (@ (class "month-name")) ,(date->string day-date "~b"))
-                         (span (@ (class "year-number")) ", " ,(date->string day-date "~Y")))
+                    (time (@ (class "date-info")
+                             (datetime ,(date->string day-date "~1")))
+                          (span (@ (class "day-number")) ,(date->string day-date "~e"))
+                          (span (@ (class "month-name")) ,(date->string day-date "~b"))
+                          (span (@ (class "year-number")) ", " ,(date->string day-date "~Y")))
                     ,@(stream->list (stream-map make-small-block events))))
             (stream->list
              (stream-map
               (match-lambda
                 [(day-date . events)
                  `(div (@ (class "cal-cell"))
-                       (div (@ (class "date-info "
+                       (time (@ (class "date-info "
                                  ,(if (or (date< day-date start-date)
                                           (date< end-date day-date))
                                       "non-current"
                                       "current")
-                                 ))
+                                 )
+                                (datetime ,(date->string day-date "~1"))
+                                )
                             (span (@ (class "day-number")) ,(date->string day-date "~e"))
                             ,(when (= 1 (day day-date))
                                `(span (@ (class "month-name")) ,(date->string day-date "~b")))
