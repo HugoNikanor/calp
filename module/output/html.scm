@@ -319,11 +319,6 @@
                   (lambda (e) (not (date< end-date (as-date (attr e 'DTSTART)))))
                   events)))
 
-;; date, date → [list date]
-(define (date-range start end)
-  (stream->list
-   (stream-take-while (lambda (d) (date<= d end))
-                      (day-stream start))))
 
 (define*-public (render-calendar key: events start-date end-date #:allow-other-keys)
   (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))

@@ -329,6 +329,13 @@
     (+ (time->decimal-hour ((@ (datetime) get-time%) dt))
        (* (1- date-diff) 24))))
 
+;; Returns a list of all dates from start to end.
+;; both inclusive
+;; date, date → [list date]
+(define-public (date-range start end)
+  (stream->list
+   (stream-take-while (lambda (d) (date<= d end))
+                      (day-stream start))))
 
 (define-config week-start sun
   "First day of week"
