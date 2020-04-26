@@ -396,6 +396,10 @@
              ,(when (attr ev 'LAST-MODIFIED)
                 `(span (@ (class "last-modified")) "Senast ändrad "
                        ,(datetime->string (attr ev 'LAST-MODIFIED) "~1 ~H:~M")))
+
+             (a (@ (href "/calendar/" ,(attr ev 'UID) ".ics"))
+                "📅")
+
              )))
 
 ;; Single event in side bar (text objects)

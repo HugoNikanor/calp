@@ -39,7 +39,7 @@
             (cddr (scandir dir))))))
 
 
-(define (make-make-routes calendar events)
+(define (make-make-routes calendar regular repeating events)
   (make-routes
 
    (GET "/week/:start-date.html" (start-date)
@@ -74,6 +74,26 @@
                                      pre-start: (start-of-week start-date)
                                      post-end: (end-of-week (end-of-month start-date))
                                      ))))))
+
+   ;; TODO export all events in interval
+   ;; (GET "/calendar" (start end)
+   ;;      (ical-main calendars
+   ;;                 regular
+   ;;                 repeating
+   ;;                 (parse-iso-date start)
+   ;;                 (parse-iso-date end)))
+
+   ;; TODO this returns "invalid" events, since the surrounding VCALENDAR is missing.
+   (GET "/calendar/:uid.ics" (uid)
+        ;; NOTE build an index.
+        (aif (or (find (lambda (ev) (equal? uid (attr ev 'UID)))
+                       regular)
+                 (find (lambda (ev) (equal? uid (attr ev 'UID)))
+                       repeating))
+             (return '((content-type text/calendar))
+                     (with-output-to-string (lambda () ((@ (output ical) component->ical-string) it))))
+             (return (build-response code: 404)
+                     (format #f "No component with UID=~a found." uid))))
 
    (GET "/static" ()
         (return
@@ -120,10 +140,12 @@
           [(and addr (string-contains addr ".")) AF_INET]
           [else AF_INET6]))
 
-  (define-values (c e)
-    (cond [(option-ref opts 'file #f) => (compose load-calendars list)]
-          [else (load-calendars)]))
+  (define-values (c regular repeating)
+    (cond [(option-ref opts 'file #f) => (compose load-calendars* list)]
+          [else (load-calendars*)]))
 
+  (define all-events
+    ((@ (vcomponent load) calculate-recurrence-set) regular repeating))
 
 
 
@@ -153,7 +175,7 @@
           addr port
           (getpid) (getcwd))
 
-  (run-server (make-make-routes c e)
+  (run-server (make-make-routes c regular repeating all-events)
               'http
               `(family: ,family
                         port: ,port

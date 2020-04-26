@@ -17,6 +17,13 @@
 
 (define-config calendar-files '() "" list?)
 
+(define-public (calculate-recurrence-set regular repeating)
+ (interleave-streams
+  ev-time<?
+  (cons (list->stream regular)
+        (map generate-recurrence-set repeating)
+        )))
+
 ;; Reads all calendar files from disk, generate recurence-sets for all repeating events,
 ;; and returns a list of calendars, and a stream of all events "ready" for display.
 (define* (load-calendars #:optional (calendar-files (get-config 'calendar-files)))
@@ -25,11 +32,7 @@
     (report-time! "Calendars loaded, interleaving and reccurring")
     (values
      calendars
-     (interleave-streams
-      ev-time<?
-      (cons (list->stream regular)
-            (map generate-recurrence-set repeating)
-            )))))
+     (calculate-recurrence-set regular repeating))))
 
 ;; Basic version, loads calendrs, sorts the events, and returns
 ;; regular and repeating events separated from each other.
