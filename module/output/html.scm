@@ -319,16 +319,6 @@
                   (lambda (e) (not (date< end-date (as-date (attr e 'DTSTART)))))
                   events)))
 
-;; Returns number of days in time interval.
-;; @example
-;; (days-between #2020-01-01 #2020-01-05)
-;; ⇒ 5
-;; @end example
-;; date, date → int
-(define (days-between start-date end-date)
-  ;; TODO be vary if date-difference changes again
-  (1+ (day (date-difference end-date start-date))))
-
 ;; date, date → [list date]
 (define (date-range start end)
   (stream->list
@@ -342,7 +332,7 @@
            (div (@ (class "days"))
                 ,@(time-marker-div)
                 (div (@ (class "longevents")
-                        (style "grid-column-end: span " ,(days-between start-date end-date)))
+                        (style "grid-column-end: span " ,(days-in-interval start-date end-date)))
                      ""                 ; prevent self-closing
                      ,@(lay-out-long-events start-date end-date long-events))
                 ,@(map (lambda (day-date)
