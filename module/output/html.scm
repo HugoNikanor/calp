@@ -126,6 +126,15 @@
           [_ (error "What are you doing‽")])
         (attributes event)))))
 
+(define (data-attributes event)
+  (hash-map->list
+   (match-lambda*
+     [(key vline)
+      (list (string->symbol (format #f "data-~a" key))
+            (format #f "~a" (value vline)))]
+     [_ (error "What are you doing‽")])
+   (attributes event)))
+
 
 
 ;;; Procedures for wide output
@@ -193,7 +202,10 @@
                 ;; 7 june.
                 ,(when (date<? date (as-date (get-datetime (attr ev 'DTEND))))
                    " continuing"))
-              (style ,style))
+              (style ,style)
+              ;; TODO only if in debug mode?
+              ,@(data-attributes ev))
+
            (div (@ (class "event-inner"))
                 ;; NOTE These popup's are far from good. Main problem being that
                 ;; the often render off-screen for events high up on the screen.
@@ -253,7 +265,8 @@
                    " continuing"
                    )
                 )
-              (style ,style))
+              (style ,style)
+              ,@(data-attributes ev))
            (div (@ (class "event-inner"))
                 (div (@ (class "popup"))
                      ,(event-debug-html ev))
