@@ -100,11 +100,19 @@ html, body {
 
 .change-view a {
     padding: 0.5em;
-    border: 1px solid black;
-    border-radius: 0.5em;
-    background-color: #ECECEC;
+    background-color: #3399ff;
     text-decoration: none;
-    color: black;
+    color: white;
+
+    box-shadow: 1ex 1ex gray;
+
+    margin-top: 1ex;
+    margin-bottom: 1ex;
+}
+
+.change-view a:active {
+    transform: translate(1ex, 1ex);
+    box-shadow: none;
 }
 
 /* Eventlist
