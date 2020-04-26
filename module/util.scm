@@ -12,7 +12,6 @@
                 catch-multiple
                 quote?
                 re-export-modules
-                use-modules*
                 -> ->> set set-> aif awhen
                 tree-map let-lazy let-env
                 case* define-many
@@ -404,14 +403,6 @@
             (cons item (loop (not flipflop) rem))
             (cons (car rem) (loop (not flipflop) (cdr rem)))
             ))))
-
-(define-macro (use-modules* . forms)
-  `(use-modules
-    ,@(concatenate
-       (map (lambda (form)
-              (map (lambda (sub) (list (car form) sub))
-                   (cadr form)))
-            forms))))
 
 
 

@@ -1,20 +1,35 @@
 (define-module (entry-points server)
-  :export (main)
   :use-module (util)
+
+  :use-module (srfi srfi-1)
+
+  :use-module (ice-9 match)
+  :use-module (ice-9 control)
+  :use-module (ice-9 rdelim)
+  :use-module (ice-9 curried-definitions)
+  :use-module (ice-9 ftw)
+  :use-module (ice-9 getopt-long)
+  :use-module (ice-9 iconv)
+  :use-module (ice-9 regex) #| regex here due to bad macros |#
+
+  :use-module (web server)
+  :use-module (web request)
+  :use-module (web response)
+  :use-module (web uri)
+
+  :use-module (sxml simple)
+
+  :use-module (server util)
+  :use-module (server macro)
+
   :use-module (vcomponent)
+  :use-module (datetime)
+  :use-module (datetime util)
+  :use-module (output html)
+  :use-module (output ical)
+
+  :export (main)
   )
-
-(use-modules* (web (server request response uri))
-              (output (html))
-              (server (util macro))
-              (sxml (simple))
-              (ice-9 (match control rdelim curried-definitions ftw
-                            getopt-long
-                            iconv regex #| regex here due to bad macros |#  ))
-              (srfi (srfi-1 srfi-88)))
-
-(use-modules (datetime)
-             (datetime util))
 
 (define (file-extension name)
   (car (last-pair (string-split name #\.))))
@@ -76,12 +91,12 @@
                                      ))))))
 
    ;; TODO export all events in interval
-   ;; (GET "/calendar" (start end)
-   ;;      (ical-main calendars
-   ;;                 regular
-   ;;                 repeating
-   ;;                 (parse-iso-date start)
-   ;;                 (parse-iso-date end)))
+   (GET "/calendar" (start end)
+        (ical-main calendar
+                   regular
+                   repeating
+                   (parse-iso-date start)
+                   (parse-iso-date end)))
 
    ;; TODO this returns "invalid" events, since the surrounding VCALENDAR is missing.
    (GET "/calendar/:uid.ics" (uid)
@@ -92,7 +107,7 @@
                        repeating))
              (return '((content-type text/calendar))
                      (with-output-to-string
-                       (lambda () ((@ (output ical) print-components-with-fake-parent)
+                       (lambda () (print-components-with-fake-parent
                               (list it)))))
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))

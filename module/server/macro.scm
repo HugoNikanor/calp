@@ -3,9 +3,8 @@
   :use-module (util)
   :use-module (ice-9 regex)
   :use-module (srfi srfi-1)
-  )
-
-(use-modules* (web (response uri)))
+  :use-module (web response)
+  :use-module (web uri))
 
 
 
