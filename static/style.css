@@ -6,6 +6,7 @@ html {
     --editmode: 1.0;
     --event-font-size: 8pt;
     --gray: #757575;
+    --btn-height: 0.5ex;
 }
 
 html, body {
@@ -107,7 +108,7 @@ html, body {
     background-color: #3399ff;
     color: white;
 
-    box-shadow: 1ex 1ex gray;
+    box-shadow: var(--btn-height) var(--btn-height) gray;
 
     /* if a */
     text-decoration: none;
@@ -117,7 +118,7 @@ html, body {
 }
 
 .btn:active {
-    transform: translate(1ex, 1ex);
+    transform: translate(var(--btn-height), var(--btn-height));
     box-shadow: none;
 }
 
