@@ -100,19 +100,6 @@
              (values (datetime->string s fmt-str)
                      (datetime->string e fmt-str))))]))
 
-
-
-
-;; Given a list, partitions it up into sublists of width length,
-;;; each starting with 'tr.
-(define* (tablify list width key: (proc identity))
-  (unless (null? list)
-    (let* ((wkst (week-day (car list)))
-           (row rest (split-at list width)))
-      (cons `(tr (td ,(week-number (car row) wkst)) ,@(map proc row))
-            (tablify rest width
-                     proc: proc)))))
-
 ;; date, date, [sorted-stream events] → [list events]
 (define (events-between start-date end-date events)
   (define (overlaps e)
@@ -520,49 +507,45 @@
                     (week-start (get-config 'week-start))
                     next-start
                     prev-start)
+
   (define (td date)
-    ;; TODO make entrire cell clickable
-    `(td (@ (class
-              ,(when (date< date start-date) "prev ")
-              ,(when (date< end-date date) "next "))
-            ;; TODO <time> tag here instead
-            (id ,(date->string date "td-~Y-~m-~d"))
-            )
-         (a (@ (href ,(cond
-                       ;; We are before our time interval
-                       [(date< date start-date)
-                        ;; TODO find a prettier way to generate links to previous and next time intervals
-                        ;; TODO also, it would do good with a bit of testing for off-by-one errors
-                        (date->string
+    `(a (@ ,@(cond
+              ;; We are before our time interval
+              [(date< date start-date)
+               ;; TODO find a prettier way to generate links to previous and next time intervals
+               ;; TODO also, it would do good with a bit of testing for off-by-one errors
+               `((class "prev")
+                 (href ,(date->string
                          (stream-find (lambda (d) (date<= d date (next-start d)))
                                       (stream-iterate prev-start start-date))
-                         "~Y-~m-~d.html")]
-                       ;; We are after our time interval
-                       [(date< end-date date)
-                        (date->string
+                         "~Y-~m-~d.html")
+                       "#" ,(date-link date)))]
+              ;; We are after our time interval
+              [(date< end-date date)
+               `((class "next")
+                 (href ,(date->string
                          (stream-find (lambda (d) (and (date<= d date)
                                                   (date< date (next-start d))))
                                       (stream-iterate next-start start-date))
-                         "~Y-~m-~d.html" )]
-                       ;; We are in our time interval
-                       [else ""])
-                     "#" ,(date-link date))
-               (class "hidelink"))
-            ,(day date))))
+                         "~Y-~m-~d.html")
+                       "#" ,(date-link date)))]
+              ;; We are in our time interval
+              [else `((href "#" ,(date-link date)))]))
+        (time (@ (datetime ,(date->string date "~Y-~m-~d"))) ,(day date))))
 
-  `(table (@ (class "small-calendar"))
-          (thead (tr
-                  (td "v.")
-                  ,@(map (lambda (d) `(td ,(string-titlecase (week-day-name d 2))))
-                            (weekday-list week-start))))
-
-          ((tbody ,@(let* ((last current next
-                                 ;; A calendar table is always exactly one month, therefore
-                                 ;; it's safe to say that we are interested in the month which
-                                 ;; start-date is part of
-                                 (month-days (start-of-month start-date) week-start)))
-                      (tablify (append last current next)
-                               7 proc: td))))))
+  (let* ((last-months current next (month-days (start-of-month start-date) week-start))
+         (events (append last-months current next)))
+    `(div (@ (class "small-calendar"))
+          (div (@ (class "column-head row-head")) "v.")
+          ,@(map (lambda (d) `(div (@ (class "column-head"))
+                              ,(string-titlecase (week-day-name d 2))))
+                 (weekday-list week-start))
+          ,@(let ((first (week-number (car events) week-start))
+                  (last (week-number (last events) week-start)))
+              (map (lambda (v) `(div (@ (class "row-head")) ,v))
+                   (iota (1+ (- last first)) first)))
+          ,@(map td events
+                 ))))
 
 
 
@@ -690,7 +673,6 @@
                                 ,(nav-link "«" (prev-start start-date))
 
                                 ;; calendar table
-                                ;; TODO
                                 (div ,(cal-table start-date: start-date end-date: end-date
                                                  next-start: next-start
                                                  prev-start: prev-start

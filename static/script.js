@@ -116,7 +116,8 @@ function update_current_time_bar () {
     if (current_cell) {
         current_cell.style.border = "";
     }
-    current_cell = document.getElementById("td-" + time_to_date(now))
+    current_cell = document.querySelector(
+        ".small-calendar time[datetime='" + time_to_date(now) + "']");
     current_cell.style.border = "1px solid black";
 }
 

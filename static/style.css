@@ -166,7 +166,6 @@ Each event within the eventlist
 /* Small calendar
 ----------------------------------------
 */
-
 .smallcal {
     display: flex;
     justify-content: center;
@@ -185,37 +184,57 @@ Each event within the eventlist
     font-size: 150%;
 }
 
-.smallcal .small-calendar {
-    margin-left: 1em;
-    margin-right: 1em;
-}
-
 .small-calendar {
+    display: grid;
+    grid-template-rows: auto;
+    /* grid-auto-rows: 2em; */
+    grid-template-columns: auto;
+    /* grid-auto-columns: 1fr; */
+
+    grid-auto-flow: dense;
+}
+
+.small-calendar > * {
+    /* border: 1px solid black; */
+    /* justify-content: center; /\* flow right *\/ */
+    text-align: center;
+}
+
+.small-calendar > *:not(.column-head) {
+    display: flex;
+    align-items: center; /* vertically center */
     text-align: right;
-    border-collapse: collapse;
 }
 
-.small-calendar thead {
-    border-bottom: 1px solid black;
+.small-calendar > * > time {
+    width: 100%;
+    text-align: right;
+    /* padding place in <time> instead on parent block element
+       to allow a border radius without making the link area
+       smaller
+   */
+    padding: 5px;
 }
 
-.small-calendar td:nth-child(1) {
+.small-calendar a {
+    color: initial;
+    text-decoration: none;
+    /* border: 1px solid; */
+}
+
+.small-calendar .row-head {
+    grid-column: 1;
     border-right: 1px solid black;
 }
 
-.small-calendar .prev,
-.small-calendar .next {
+.small-calendar .column-head {
+    grid-row: 1;
+    border-bottom: 1px solid black;
+}
+
+.small-calendar .next,
+.small-calendar .prev {
     color: var(--gray);
-}
-
-.small-calendar td {
-    padding: 5px;
-    box-sizing: border-box;
-}
-
-.small-calendar td a {
-    /* Makes link fill box */
-    display: block;
 }
 
 /* Sliders
