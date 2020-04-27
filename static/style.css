@@ -611,6 +611,8 @@ along with their colors.
 
 .event-inner .popup article {
     border: none;
+    /* makes the text in the popup scroll, but not the sidebar */
+    overflow-y: auto;
 }
 
 .popup .popup-control {
