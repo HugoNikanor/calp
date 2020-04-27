@@ -107,8 +107,10 @@
   `(div (@ (class "popup"))
         (nav (@ (class "popup-control CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
                                                               "unknown"))))
-             (button (@ (class "btn") (onclick "close_popup(this)")) "×")
-             (a (@ (class "btn") (href "/calendar/" ,(attr ev 'UID) ".ics"))
+             (button (@ (class "btn") (title "Stäng")
+                        (onclick "close_popup(this)")) "×")
+             (a (@ (class "btn") (title "Ladda ner")
+                   (href "/calendar/" ,(attr ev 'UID) ".ics"))
                 "📅"))
         ,(fmt-single-event ev)))
 
