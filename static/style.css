@@ -129,12 +129,10 @@ The sidebar with all the events
 
 .eventlist {
     min-height: 0;
-    overflow: scroll;
-}
-
-.eventlist {
-    overflow: scroll;
+    overflow: auto;
     border-top: 3px solid var(--gray);
+    /* mostly for long links */
+    word-break: break-word;
 }
 
 .eventlist article {
