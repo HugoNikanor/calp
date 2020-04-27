@@ -223,6 +223,10 @@ Each event within the eventlist
 .small-calendar .row-head {
     grid-column: 1;
     border-right: 1px solid black;
+
+    /* Sort of hack to get week numbers looking ok */
+    justify-content: right;
+    padding-right: 5px;
 }
 
 .small-calendar .column-head {
