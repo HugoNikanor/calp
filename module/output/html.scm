@@ -509,6 +509,10 @@
                        "#" ,(date-link date)))]
               ;; We are in our time interval
               [else `((href "#" ,(date-link date)))]))
+        ;; NOTE This time object is the correct place to show the existance
+        ;; of an event on a given day in this small calendar. For example
+        ;; making the text red for all holidays, or creating a yellow background
+        ;; for events from a specific source.
         (time (@ (datetime ,(date->string date "~Y-~m-~d"))) ,(day date))))
 
   (let* ((last-months current next (month-days (start-of-month start-date) week-start))
