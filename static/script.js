@@ -226,7 +226,10 @@ window.onload = function () {
         ev = parents_until(popup, {class: "event"})
         e = ev.getElementsByClassName("body")[0]
         e.onclick = new_popup;
-        e.parentElement.href = "#";
+        /* disable scroll to element in side list
+           if popups are available.
+        */
+        e.parentElement.removeAttribute("href");
     }
 
     // days.scrollLeft == 0
