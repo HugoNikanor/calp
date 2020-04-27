@@ -8,7 +8,6 @@
   #:export (group-stream get-groups-between))
 
 ;; TODO templetize this
-;; TODO this seems to behave weird if the first day of the week is empty (0 events).
 (define-stream (group-stream in-stream)
   (define (ein? day) (lambda (e) (event-contains? e day)))
 
@@ -37,10 +36,32 @@
                                tail)))))))
 
 (define (get-groups-between groups start-date end-date)
-  (filter-sorted-stream
-   (compose (in-date-range? start-date end-date)
-            car)
-   groups))
+
+  (define good-part
+    (filter-sorted-stream
+     (compose (in-date-range? start-date end-date)
+              car)
+     groups))
+
+  ;; NOTE slightly ugly hack. The first element in the return of group-stream shares
+  ;; it's date component with the lowest dtstart in the event set. This means that a
+  ;; group set might start after our start- (and end-!) date.
+  ;; To combat this I simple create a bunch of dummy groups below.
+
+  (cond [(stream-null? good-part)
+         (list->stream
+          (map (lambda (d) (cons d stream-null))
+               (date-range start-date end-date)))]
+        [(car (stream-car good-part))
+         (lambda (d) (date< start-date d))
+         => (lambda (d)
+              (stream-append
+               (list->stream
+                (map (lambda (d) (cons d stream-null))
+                     (date-range start-date
+                                 (date- d (date day: 1)))))
+               good-part))]
+        [else good-part]))
 
 
 (define-public (group->event-list group)
