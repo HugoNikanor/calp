@@ -100,18 +100,6 @@
              (values (datetime->string s fmt-str)
                      (datetime->string e fmt-str))))]))
 
-;; date, date, [sorted-stream events] → [list events]
-(define (events-between start-date end-date events)
-  (define (overlaps e)
-    (timespan-overlaps? start-date (date+ end-date (date day: 1))
-                        (attr e 'DTSTART) (attr e 'DTEND)))
-
-  (stream-filter overlaps
-                 (get-stream-interval
-                  overlaps
-                  (lambda (e) (not (date< end-date (as-date (attr e 'DTSTART)))))
-                  events)))
-
 
 
  

@@ -124,6 +124,19 @@ Event must have the DTSTART and DTEND attribute set."
                  (as-datetime final))
             #f))))
 
+;; date, date, [sorted-stream events] → [list events]
+(define-public (events-between start-date end-date events)
+  (define (overlaps e)
+    (timespan-overlaps? start-date (date+ end-date (date day: 1))
+                        (attr e 'DTSTART) (attr e 'DTEND)))
+
+  ((@ (srfi srfi-41) stream-filter)
+   overlaps
+   ((@ (srfi srfi-41 util) get-stream-interval)
+    overlaps
+    (lambda (e) (not (date< end-date (as-date (attr e 'DTSTART)))))
+    events)))
+
 
 
 
