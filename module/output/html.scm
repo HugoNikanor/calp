@@ -645,7 +645,7 @@
                              "monthly")))
 
                 (details (@ (open) (style "grid-area: cal"))
-                         (summary "Month overwiew")
+                         (summary "Month overview")
                          (div (@ (class "smallcall-head")) ,(string-titlecase (date->string start-date "~B ~Y")))
                          ;; NOTE it might be a good idea to put the navigation buttons
                          ;; earlier in the DOM-tree/tag order. At least Vimium's
