@@ -124,18 +124,6 @@
                 "📅"))
         ,(fmt-single-event ev)))
 
-(define (event-debug-html event)
-  (fmt-single-event event)
-  #;
-  `(table
-    (tbody
-     ,@(hash-map->list
-        (match-lambda*
-          [(key vline)
-           `(tr (th ,key) (td ,(format #f "~a" (value vline))))]
-          [_ (error "What are you doing‽")])
-        (attributes event)))))
-
 (define (data-attributes event)
   (hash-map->list
    (match-lambda*
