@@ -102,7 +102,7 @@
   (stdoff zone-entry-stdoff)                   ; <timespec>
   (rule zone-entry-rule)                       ; #f | symbol | <timespec>
   (format zone-entry-format)                   ; string
-  (until zone-entry-until))                    ; <datetime>
+  (until zone-entry-until))                    ; <datetime> | #f
 
 (export zone-entry? zone-entry-stdoff zone-entry-rule zone-entry-format zone-entry-until)
 

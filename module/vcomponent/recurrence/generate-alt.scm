@@ -292,6 +292,19 @@
                                       date-stream))]
           [else date-stream])))
 
+
+(define-public (final-event-occurence event)
+  (define rrule  (parse-recurrence-rule
+                  (attr event 'RRULE)
+                  (if (date? (attr event 'DTSTART))
+                      parse-ics-date parse-ics-datetime)))
+
+  (if (or (count rrule) (until rrule))
+      (let ((instances (rrule-instances event)))
+        (stream-ref instances (1- (stream-length instances))))
+      #f))
+
+
 (define (generate-recurrence-set base-event)
 
 
