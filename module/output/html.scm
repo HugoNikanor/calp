@@ -393,11 +393,15 @@
                 (match-lambda* [(start end) `(div ,start " — " ,end)]
                                [(start) `(div ,start)]))
              ,(when (and=> (attr ev 'LOCATION) (negate string-null?))
-                `(div (b "Plats: ") (div (@ (class "location")),(string-map (lambda (c) (if (char=? c #\,) #\newline c)) (attr ev 'LOCATION)))))
-             ,(and=> (attr ev 'DESCRIPTION) (lambda (str) (catch #t (lambda () ((get-config 'description-filter) ev str))
-                                                       (lambda (err . args)
-                                                         (warning "~a on formatting description, ~s" err args)
-                                                         str))))
+                `(div (b "Plats: ")
+                      (div (@ (class "location"))
+                           ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                        (attr ev 'LOCATION)))))
+             ,(and=> (attr ev 'DESCRIPTION)
+                     (lambda (str) (catch #t (lambda () ((get-config 'description-filter) ev str))
+                                (lambda (err . args)
+                                  (warning "~a on formatting description, ~s" err args)
+                                  str))))
              ,(awhen (attr ev 'RRULE)
                      (format-recurrence-rule ev))
              ,(when (attr ev 'LAST-MODIFIED)
@@ -517,9 +521,11 @@
                     next-start
                     prev-start)
   (define (td date)
+    ;; TODO make entrire cell clickable
     `(td (@ (class
               ,(when (date< date start-date) "prev ")
               ,(when (date< end-date date) "next "))
+            ;; TODO <time> tag here instead
             (id ,(date->string date "td-~Y-~m-~d"))
             )
          (a (@ (href ,(cond
@@ -676,64 +682,67 @@
                 (details (@ (open) (style "grid-area: cal"))
                          (summary "Month overwiew")
                          (div (@ (class "smallcall-head")) ,(string-titlecase (date->string start-date "~B ~Y")))
-                         (div (@ (class "smallcal"))
-                              ;; prev button
-                              ,(nav-link "«" (prev-start start-date))
+                         ;; NOTE it might be a good idea to put the navigation buttons
+                         ;; earlier in the DOM-tree/tag order. At least Vimium's
+                         ;; @key{[[} keybind sometimes finds parts of events instead.
+                           (div (@ (class "smallcal"))
+                                ;; prev button
+                                ,(nav-link "«" (prev-start start-date))
 
-                              ;; calendar table
-                              ;; TODO
-                              (div ,(cal-table start-date: start-date end-date: end-date
-                                               next-start: next-start
-                                               prev-start: prev-start
-                                               ))
+                                ;; calendar table
+                                ;; TODO
+                                (div ,(cal-table start-date: start-date end-date: end-date
+                                                 next-start: next-start
+                                                 prev-start: prev-start
+                                                 ))
 
-                              ;; next button
-                              ,(nav-link "»" (next-start start-date))))
+                                ;; next button
+                                ,(nav-link "»" (next-start start-date))))
 
 
-                (div (@ (style "grid-area: details"))
-                     ;; TODO only include these sliders in debug builds
-                     (details (@ (class "sliders"))
-                              (summary "Option sliders")
-                              (label "Event blankspace")
-                              ,(slider-input
-                                variable: "editmode"
-                                min: 0
-                                max: 1
-                                step: 0.01
-                                value: 1)
+                          (div (@ (style "grid-area: details"))
+                               ;; TODO only include these sliders in debug builds
+                               (details (@ (class "sliders"))
+                                        (summary "Option sliders")
+                                        (label "Event blankspace")
+                                        ,(slider-input
+                                          variable: "editmode"
+                                          min: 0
+                                          max: 1
+                                          step: 0.01
+                                          value: 1)
 
-                              (label "Fontsize")
-                              ,(slider-input
-                                unit: "pt"
-                                min: 1
-                                max: 20
-                                step: 1
-                                value: 8
-                                variable: "event-font-size"))
+                                        (label "Fontsize")
+                                        ,(slider-input
+                                          unit: "pt"
+                                          min: 1
+                                          max: 20
+                                          step: 1
+                                          value: 8
+                                          variable: "event-font-size"))
 
-                     ;; List of calendars
-                     (details (@ (class "calendarlist")
-                                 #; (style "grid-area: details")
-                                 )
-                              (summary "Calendar list")
-                              (ul ,@(map (lambda (calendar)
-                                           `(li (@ (class "CAL_bg_" ,(html-attr (attr calendar 'NAME))))
-                                                ,(attr calendar 'NAME)))
-                                         calendars))))
+                               ;; List of calendars
+                               (details (@ (class "calendarlist")
+                                           #; (style "grid-area: details")
+                                           )
+                                        (summary "Calendar list")
+                                        (ul ,@(map (lambda (calendar)
+                                                     `(li (@ (class "CAL_bg_" ,(html-attr (attr calendar 'NAME))))
+                                                          ,(attr calendar 'NAME)))
+                                                   calendars))))
 
-                ;; List of events
-                (div (@ (class "eventlist")
-                        (style "grid-area: events"))
-                     ;; Events which started before our start point, but "spill" into our time span.
-                     (section (@ (class "text-day"))
-                              (header (h2 "Tidigare"))
-                              ,@(stream->list
-                                 (stream-map fmt-single-event
-                                             (stream-take-while (compose (cut date/-time<? <> start-date)
-                                                                         (extract 'DTSTART))
-                                                                (cdr (stream-car evs))))))
-                     ,@(stream->list (stream-map fmt-day evs))))))))
+                          ;; List of events
+                          (div (@ (class "eventlist")
+                                  (style "grid-area: events"))
+                               ;; Events which started before our start point, but "spill" into our time span.
+                               (section (@ (class "text-day"))
+                                        (header (h2 "Tidigare"))
+                                        ,@(stream->list
+                                           (stream-map fmt-single-event
+                                                       (stream-take-while (compose (cut date/-time<? <> start-date)
+                                                                                   (extract 'DTSTART))
+                                                                          (cdr (stream-car evs))))))
+                               ,@(stream->list (stream-map fmt-day evs))))))))
 
 
 (define-public (html-chunked-main count calendars events start-date chunk-length)

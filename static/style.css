@@ -615,6 +615,11 @@ along with their colors.
     overflow-y: auto;
 }
 
+.event-inner .popup .location {
+    font-style: initial;
+    /* font-size: initial; */
+}
+
 .popup .popup-control {
     display: flex;
     flex-direction: column;

@@ -33,11 +33,11 @@
 ;; Load tests
 
 (define (read-multiple)
-(let loop ((done '()))
-  (let ((sexp (read)))
-    (if (eof-object? sexp)
-        (reverse done)
-        (loop (cons sexp done))))))
+  (let loop ((done '()))
+    (let ((sexp (read)))
+      (if (eof-object? sexp)
+          (reverse done)
+          (loop (cons sexp done))))))
 
 
 ;; TODO test-group fails if called before any test begin, since
