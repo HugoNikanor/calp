@@ -560,6 +560,7 @@ along with their colors.
 
 .event.generated {
     background-color: #55FF5550;
+    transition: none;
 }
 
 .clock-0  { top: calc(100%/24 *  0); }

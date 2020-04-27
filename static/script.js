@@ -211,11 +211,14 @@ window.onload = function () {
     // once a minute for now, could probably be slowed to every 10 minutes
     window.setInterval(update_current_time_bar, 1000 * 60)
 
-    // for (let c of document.getElementsByClassName("events")) {
-    //     c.onmousedown = onmousedownhandler;
-    //     c.onmouseup = onmouseuphandler;
-    //     c.onmousemove = onmousemovehandler;
-    // }
+    /* Is event creation active? */
+    if (false) {
+        for (let c of document.getElementsByClassName("events")) {
+            c.onmousedown = onmousedownhandler;
+            c.onmouseup = onmouseuphandler;
+            c.onmousemove = onmousemovehandler;
+        }
+    }
 
     // for (let e of document.getElementsByClassName("event-inner")) {
     //     e.onclick = toggle_event_pupup;
