@@ -6,6 +6,8 @@
   #:use-module (datetime zic)
   #:use-module (util)
 
+  :use-module (ice-9 curried-definitions)
+
   #:export (#;parse-datetime
             event-overlaps?
             overlapping?
@@ -108,16 +110,73 @@ Event must have the DTSTART and DTEND attribute set."
                   (datetime-difference (attr ev 'DTEND)
                                        (attr ev 'DTSTART)))))
 
+
+;; DTEND of the last instance of this event.
+;; event → (or datetime #f)
+(define (final-spanned-time event)
+  (if (not ((@ (vcomponent recurrence) repeating?) event))
+      (or (attr event 'DTEND) (attr event 'DTSTART))
+      (let ((final ((@ (vcomponent recurrence generate-alt) final-event-occurence)
+                    event)))
+        (if final
+            (aif (attr event 'DTEND)
+                 (datetime+ (as-datetime final) (as-datetime it))
+                 (as-datetime final))
+            #f))))
+
 
 
 
 
-(define-public (zoneinfo->vtimezone zoneinfo zone-name)
+;; Checks if the given zone-entry is relevant for this event
+;; by checking if zone-entry-until isn't before our DTSTART.
+(define ((relevant-zone-entry? event) zone-entry)
+  (aif (zone-entry-until zone-entry)
+       (datetime<? (as-datetime (attr event 'DTSTART)) it)
+       #t))
+
+(define ((relevant-zone-rule? event) rule)
+  (define start (attr event 'DTSTART))
+  ;; end := datetime | #f
+  (define end (final-spanned-time event))
+
+  (define start-y (year (as-date start)))
+
+  (if end
+      (let ((end-y (and end (year (as-date end)))))
+        (cond [(and (eq? 'minimum (rule-from rule))
+                    (eq? 'maximum (rule-to rule)))
+               #t]
+              [(eq? 'minimum (rule-from rule))
+               (< start-y (rule-to rule))]
+              [(eq? 'maximum (rule-to rule))
+               (< (rule-from rule) end-y)]
+              [(eq? 'only (rule-to rule))
+               (<= start-y (rule-from rule) end-y)]
+              [else
+               (timespan-overlaps? start end
+                                   (date year: (rule-from rule))
+                                   (date year: (1+ (rule-to rule))))]))
+      (cond [(and (eq? 'minimum (rule-from rule))
+                  (eq? 'maximum (rule-to rule)))
+             #t]
+            [(eq? 'minimum (rule-from rule))
+             (< start-y (rule-to rule))]
+            [(eq? 'maximum (rule-to rule))
+             #t]
+            [(eq? 'only (rule-to rule))
+             (<= start-y (rule-from rule))]
+            [else
+             (<= (rule-from rule) start-y (rule-to rule))])))
+
+;; event is for limiter
+(define-public (zoneinfo->vtimezone zoneinfo zone-name event)
   (define vtimezone (make-vcomponent 'VTIMEZONE))
   (define last-until (datetime date: #1000-01-01))
   (define last-offset (timespec-zero))
   (set! (attr vtimezone 'TZID) zone-name)
-  (for zone-entry in (get-zone zoneinfo zone-name)
+
+  (for zone-entry in (filter (relevant-zone-entry? event) (get-zone zoneinfo zone-name))
        (cond [(zone-entry-rule zone-entry) timespec?
               => (lambda (inline-rule)
                    (let ((component (make-vcomponent 'DAYLIGHT))
@@ -164,23 +223,13 @@ Event must have the DTSTART and DTEND attribute set."
                                    (set! (attr component 'RRULE) it))
 
                             (add-child! vtimezone component)))
-                        (drop-while
-                         ;; TODO
-                         ;; some of the rules might not apply to us since we only
-                         ;; started using that rule set later. It's also possible
-                         ;; that we stopped using a ruleset which continues existing.
-                         ;;
-                         ;; Both these cases should be filtered here.
-                         (const #f)
-                         #;
-                         (lambda (rule)
-                           (rule-from rule) ; 1970
-                           (rule-in rule)   ; 4 (apr)
-                           (rule-on rule)   ; 5 | (last sat)
-
-                           (rule-to rule)
-
-                           last-until)
+                        ;; some of the rules might not apply to us since we only
+                        ;; started using that rule set later. It's also possible
+                        ;; that we stopped using a ruleset which continues existing.
+                        ;;
+                        ;; Both these are filtered here.
+                        (filter
+                         (relevant-zone-rule? event)
                          (get-rule zoneinfo rule-name))))]
 
              [else                      ; no rule

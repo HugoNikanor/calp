@@ -194,13 +194,22 @@ CALSCALE:GREGORIAN\r
    '("dummy" "local")))
 
 (define-public (print-components-with-fake-parent events)
+
+  ;; The events are probably sorted before, but until I can guarantee
+  ;; that we sort them again here. We need them sorted from earliest
+  ;; and up to send the earliest to zoneinfo->vtimezone
+  (set! events (sort* events date/-time<=? (extract 'DTSTART)))
+
   (print-header)
 
   (let ((tz-names (get-tz-names events)))
     (for-each component->ical-string
-              (map (lambda (name) (zoneinfo->vtimezone *zoneinfo* name))
+              ;; TODO we realy should send the earliest event from each timezone here.
+              (map (lambda (name) (zoneinfo->vtimezone *zoneinfo* name (car events)))
                    tz-names)))
+
   (for-each component->ical-string events)
+
   (print-footer))
 
 
