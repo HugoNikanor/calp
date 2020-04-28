@@ -560,6 +560,7 @@
           ,@(let ((first (week-number (car events) week-start))
                   (last (week-number (last events) week-start)))
               (map (lambda (v) `(div (@ (class "row-head")) ,v))
+                   ;; TODO this fails around new-year
                    (iota (1+ (- last first)) first)))
           ,@(map td events
                  ))))
