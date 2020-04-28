@@ -1,4 +1,4 @@
- (define-module (output html)
+(define-module (output html)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
@@ -102,11 +102,11 @@
 
 
 
- 
+
 (define (popup ev)
   `(div (@ (class "popup"))
         (nav (@ (class "popup-control CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
-                                                              "unknown"))))
+                                                            "unknown"))))
              (button (@ (class "btn") (title "Stäng")
                         (onclick "close_popup(this)")) "×")
              (a (@ (class "btn") (title "Ladda ner")
@@ -158,7 +158,8 @@
               extra-attributes
               `((class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
                                                     "unknown"))
-                  ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                  ,(when (and (attr ev 'PARTSTAT)
+                              (string= "TENTATIVE" (attr ev 'PARTSTAT)))
                      " tentative"))
                 ;; TODO only if in debug mode?
                 ,@(data-attributes ev))))
@@ -168,23 +169,22 @@
              ,(popup ev)
              (a (@ (href "#" ,(UID ev))
                    (class "hidelink"))
-              (div (@ (class "body"))
-                   ,(when (attr ev 'RRULE)
-                      `(span (@ (class "repeating")) "↺"))
-                   ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
-                   ,(when (attr ev 'LOCATION)
-                      `(span (@ (class "location"))
-                             ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                          (attr ev 'LOCATION))))
-                   )))) )
+                (div (@ (class "body"))
+                     ,(when (attr ev 'RRULE)
+                        `(span (@ (class "repeating")) "↺"))
+                     ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
+                     ,(when (attr ev 'LOCATION)
+                        `(span (@ (class "location"))
+                               ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                            (attr ev 'LOCATION)))))))))
 
 ;; Format single event for graphical display
 (define (create-block date ev)
   ;; (define time (date->time-utc day))
   (define style
     ;; The calc's here is to enable an "edit-mode".
-    ;; Setting --editmode ≈ 0.8 gives some whitespace to the right of the events, alowing draging
-    ;; there for creating new events.
+    ;; Setting --editmode ≈ 0.8 gives some whitespace to the right
+    ;; of the events, alowing draging there for creating new events.
     ;; TODO only include var and calc when editing should be enabled.
     (format #f "left:calc(var(--editmode)*~,3f%);width:calc(var(--editmode)*~,3f%);top:~,3f%;height:~,3f%;"
 
@@ -212,10 +212,10 @@
              " continuing"))
         (style ,style))))
 
-;; date{,time}-difference works in days, and days are simply multiplied by 24 to get hours.
-;; This means that a day is always assumed to be 24h, even when that's wrong. This might lead
-;; to some weirdness when the timezon switches (DST), but it makes everything else behave MUCH
-;; better.
+;; date{,time}-difference works in days, and days are simply multiplied by 24 to
+;; get hours.  This means that a day is always assumed to be 24h, even when that's
+;; wrong. This might lead to some weirdness when the timezon switches (DST), but it
+;; makes everything else behave MUCH better.
 (define (create-top-block start-date end-date ev)
 
   (define total-length
@@ -232,15 +232,17 @@
             ;; left
             (* 100
                (let* ((dt (datetime date: start-date))
-                      (diff (datetime-difference (datetime-max dt (as-datetime (attr ev 'DTSTART)))
-                                                 dt)))
+                      (diff (datetime-difference
+                             (datetime-max dt (as-datetime (attr ev 'DTSTART)))
+                             dt)))
                  (/ (datetime->decimal-hour diff start-date) total-length)))
 
             ;; Set length of event, which makes end time
             ;; width
             (* 100
-               (/ (datetime->decimal-hour (as-datetime (event-length/clamped start-date end-date ev))
-                                          start-date)
+               (/ (datetime->decimal-hour
+                   (as-datetime (event-length/clamped start-date end-date ev))
+                   start-date)
                   total-length))))
 
   (make-block
@@ -248,8 +250,7 @@
           ,(when (date/-time< (attr ev 'DTSTART) start-date)
              " continued")
           ,(when (date/-time< (date+ end-date (date day: 1)) (attr ev 'DTEND))
-             " continuing"
-             ))
+             " continuing"))
         (style ,style))))
 
 
@@ -260,7 +261,8 @@
          (time-obj (datetime date: day-date))
          (short-events (stream->list events)))
 
-    (fix-event-widths! short-events event-length-key: (lambda (e) (event-length/day day-date e)))
+    (fix-event-widths! short-events event-length-key:
+                       (lambda (e) (event-length/day day-date e)))
 
     `(div (@ (class "events") (id ,(date-link day-date)))
           ,@(map (lambda (time)
@@ -275,6 +277,7 @@
   (map (lambda (e) (create-top-block start end e))
        events))
 
+
 (define (time-marker-div)
   ;; element to make rest of grid align correct.
   ;; Could be extended to contain something fun.
@@ -285,7 +288,6 @@
                         (span (@ (class "clocktext"))
                               ,time ":00")))
                 (iota 12 0 2)))))
-
 
 
 (define*-public (render-calendar key: events start-date end-date #:allow-other-keys)
@@ -300,8 +302,10 @@
                      ,@(lay-out-long-events start-date end-date long-events))
                 ,@(map (lambda (day-date)
                          `(div (@ (class "meta"))
-                               (span (@ (class "daydate")) ,(date->string day-date "~Y-~m-~d"))
-                               (span (@ (class "dayname")) ,(string-titlecase (date->string day-date "~a")))) )
+                               (span (@ (class "daydate"))
+                                     ,(date->string day-date "~Y-~m-~d"))
+                               (span (@ (class "dayname"))
+                                     ,(string-titlecase (date->string day-date "~a")))))
                        range)
                 ,@(stream->list
                    (stream-map
@@ -314,28 +318,30 @@
 
 ;; ev → sxml
 (define (format-recurrence-rule ev)
- `(span (@ (class "rrule"))
-        "Upprepas "
-        ,((compose (@ (vcomponent recurrence display) format-recurrence-rule)
-                   (@ (vcomponent recurrence parse) parse-recurrence-rule))
-          (attr ev 'RRULE))
-        ,@(awhen (attr ev 'EXDATE)
-                 (list
-                  ", undantaget "
-                  (add-enumeration-punctuation
-                   (map (lambda (d) (if (date? d)
-                                   ;; TODO show year?
-                                   (date->string d "~e ~b")
-                                   ;; NOTE only show time when it's different than the start time?
-                                   ;; or possibly only when FREQ is hourly or lower.
-                                   (if (memv ((@ (vcomponent recurrence internal ) freq) ((@ (vcomponent recurrence parse)
-                                                                                          parse-recurrence-rule)
-                                                                                       (attr ev 'RRULE)))
-                                          '(HOURLY MINUTELY SECONDLY))
-                                       (datetime->string d "~e ~b ~k:~M")
-                                       (datetime->string d "~e ~b"))))
-                        it))))
-        "."))
+  `(span (@ (class "rrule"))
+         "Upprepas "
+         ,((compose (@ (vcomponent recurrence display) format-recurrence-rule)
+                    (@ (vcomponent recurrence parse) parse-recurrence-rule))
+           (attr ev 'RRULE))
+         ,@(awhen (attr ev 'EXDATE)
+                  (list
+                   ", undantaget "
+                   (add-enumeration-punctuation
+                    (map (lambda (d)
+                           (if (date? d)
+                               ;; TODO show year?
+                               (date->string d "~e ~b")
+                               ;; NOTE only show time when it's different than the start time?
+                               ;; or possibly only when FREQ is hourly or lower.
+                               (if (memv ((@ (vcomponent recurrence internal) freq)
+                                       ((@ (vcomponent recurrence parse)
+                                           parse-recurrence-rule)
+                                        (attr ev 'RRULE)))
+                                      '(HOURLY MINUTELY SECONDLY))
+                                   (datetime->string d "~e ~b ~k:~M")
+                                   (datetime->string d "~e ~b"))))
+                         it))))
+         "."))
 
 
 ;; For sidebar, just text
@@ -347,7 +353,8 @@
                   attributes
                   `((class "eventtext CAL_bg_"
                       ,(html-attr (or (attr (parent ev) 'NAME) "unknown"))
-                      ,(when (and (attr ev 'PARTSTAT) (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                      ,(when (and (attr ev 'PARTSTAT)
+                                  (string= "TENTATIVE" (attr ev 'PARTSTAT)))
                          " tentative")))))
             (h3 ,(fmt-header
                   (when (attr ev 'RRULE)
@@ -386,10 +393,11 @@
                  (stream-map
                   (lambda (ev) (fmt-single-event
                            ev `((id ,(UID ev)))
-                           fmt-header: (lambda body
-                                         `(a (@ (href "#" ,(date-link (as-date (attr ev 'DTSTART))))
-                                                (class "hidelink"))
-                                             ,@body))))
+                           fmt-header:
+                           (lambda body
+                             `(a (@ (href "#" ,(date-link (as-date (attr ev 'DTSTART))))
+                                    (class "hidelink"))
+                                 ,@body))))
                   (stream-filter
                    (lambda (ev)
                      ;; If start was an earlier day
@@ -425,7 +433,8 @@
                              (datetime ,(date->string day-date "~1")))
                           (span (@ (class "day-number")) ,(date->string day-date "~e"))
                           (span (@ (class "month-name")) ,(date->string day-date "~b"))
-                          (span (@ (class "year-number")) ", " ,(date->string day-date "~Y")))
+                          (span (@ (class "year-number"))
+                                ", " ,(date->string day-date "~Y")))
                     ,@(stream->list (stream-map make-small-block events))))
             (stream->list
              (stream-map
@@ -433,21 +442,20 @@
                 [(day-date . events)
                  `(div (@ (class "cal-cell"))
                        (time (@ (class "date-info "
-                                 ,(if (or (date< day-date start-date)
-                                          (date< end-date day-date))
-                                      "non-current"
-                                      "current")
-                                 )
-                                (datetime ,(date->string day-date "~1"))
-                                )
-                            (span (@ (class "day-number")) ,(date->string day-date "~e"))
-                            ,(when (= 1 (day day-date))
-                               `(span (@ (class "month-name")) ,(date->string day-date "~b")))
-                            ,(when (= 1 (month day-date) (day day-date))
-                               `(span (@ (class "year-number"))
-                                      ", " ,(date->string day-date "~Y"))))
-                       ,@(stream->list
-                          (stream-map make-small-block events)))])
+                                  ,(if (or (date< day-date start-date)
+                                           (date< end-date day-date))
+                                       "non-current"
+                                       "current"))
+                                (datetime ,(date->string day-date "~1")))
+                             (span (@ (class "day-number"))
+                                   ,(date->string day-date "~e"))
+                             ,(when (= 1 (day day-date))
+                                `(span (@ (class "month-name"))
+                                       ,(date->string day-date "~b")))
+                             ,(when (= 1 (month day-date) (day day-date))
+                                `(span (@ (class "year-number"))
+                                       ", " ,(date->string day-date "~Y"))))
+                       ,@(stream->list (stream-map make-small-block events)))])
               (stream-cdr event-groups)))))))
 
 
@@ -479,12 +487,8 @@
 ;; @end example
 ;; date - a date in the month to display
 ;; week-start - which day the week begins on, see (datetime util)
-(define* (cal-table key:
-                    start-date
-                    end-date
-                    (week-start (get-config 'week-start))
-                    next-start
-                    prev-start)
+(define* (cal-table key: start-date end-date next-start prev-start
+                    (week-start (get-config 'week-start)))
 
   (define (td date)
     `(a (@ ,@(cond
@@ -515,7 +519,8 @@
         ;; for events from a specific source.
         (time (@ (datetime ,(date->string date "~Y-~m-~d"))) ,(day date))))
 
-  (let* ((last-months current next (month-days (start-of-month start-date) week-start))
+  (let* ((last-months current next
+                      (month-days (start-of-month start-date) week-start))
          (events (append last-months current next)))
     `(div (@ (class "small-calendar"))
           (div (@ (class "column-head row-head")) "v.")
@@ -544,14 +549,15 @@
 (define*-public (html-generate
                  key:
                  calendars events start-date end-date
-                 render-calendar          ; (bunch of kv args) → (list sxml)
-                 next-start               ; date → date
-                 prev-start               ; date → date
-                 ;; The pre and post dates are if we want to show some dates just outside our
-                 ;; actuall interval. Primarily for whole month views, which needs a bit on each side.
+                 render-calendar        ; (bunch of kv args) → (list sxml)
+                 next-start             ; date → date
+                 prev-start             ; date → date
+                 ;; The pre and post dates are if we want to show some dates just
+                 ;; outside our actuall interval. Primarily for whole month views,
+                 ;; which needs a bit on each side.
                  (pre-start start-date)
-                 (post-end end-date)
-                 )
+                 (post-end end-date))
+
   ;; TODO maybe don't do this again for every month
   (define evs (get-groups-between (group-stream events)
                                   start-date end-date))
@@ -630,83 +636,89 @@
                 (nav (@ (class "calnav") (style "grid-area: nav"))
                      (div (@ (class "change-view"))
                           (a (@ (class "btn")
-                                (href "/week/" ,(date->string
-                                                 (if (= 1 (day start-date))
-                                                     (start-of-week start-date (get-config 'week-start))
-                                                     start-date)
-                                                 "~1")
+                                (href "/week/"
+                                      ,(date->string
+                                        (if (= 1 (day start-date))
+                                            (start-of-week start-date (get-config 'week-start))
+                                            start-date)
+                                        "~1")
                                       ".html"))
                              "weekly")
 
 
                           (a (@ (class "btn")
-                                (href "/month/" ,(date->string (set (day start-date) 1) "~1")
+                                (href "/month/"
+                                      ,(date->string (set (day start-date) 1) "~1")
                                       ".html"))
                              "monthly")))
 
                 (details (@ (open) (style "grid-area: cal"))
                          (summary "Month overview")
-                         (div (@ (class "smallcall-head")) ,(string-titlecase (date->string start-date "~B ~Y")))
+                         (div (@ (class "smallcall-head"))
+                              ,(string-titlecase (date->string start-date "~B ~Y")))
                          ;; NOTE it might be a good idea to put the navigation buttons
                          ;; earlier in the DOM-tree/tag order. At least Vimium's
                          ;; @key{[[} keybind sometimes finds parts of events instead.
-                           (div (@ (class "smallcal"))
-                                ;; prev button
-                                ,(nav-link "«" (prev-start start-date))
+                         (div (@ (class "smallcal"))
+                              ;; prev button
+                              ,(nav-link "«" (prev-start start-date))
 
-                                ;; calendar table
-                                (div ,(cal-table start-date: start-date end-date: end-date
-                                                 next-start: next-start
-                                                 prev-start: prev-start
-                                                 ))
+                              ;; calendar table
+                              (div ,(cal-table start-date: start-date end-date: end-date
+                                               next-start: next-start
+                                               prev-start: prev-start
+                                               ))
 
-                                ;; next button
-                                ,(nav-link "»" (next-start start-date))))
+                              ;; next button
+                              ,(nav-link "»" (next-start start-date))))
 
 
-                          (div (@ (style "grid-area: details"))
-                               ;; TODO only include these sliders in debug builds
-                               (details (@ (class "sliders"))
-                                        (summary "Option sliders")
-                                        (label "Event blankspace")
-                                        ,(slider-input
-                                          variable: "editmode"
-                                          min: 0
-                                          max: 1
-                                          step: 0.01
-                                          value: 1)
+                (div (@ (style "grid-area: details"))
+                     ;; TODO only include these sliders in debug builds
+                     (details (@ (class "sliders"))
+                              (summary "Option sliders")
+                              (label "Event blankspace")
+                              ,(slider-input
+                                variable: "editmode"
+                                min: 0
+                                max: 1
+                                step: 0.01
+                                value: 1)
 
-                                        (label "Fontsize")
-                                        ,(slider-input
-                                          unit: "pt"
-                                          min: 1
-                                          max: 20
-                                          step: 1
-                                          value: 8
-                                          variable: "event-font-size"))
+                              (label "Fontsize")
+                              ,(slider-input
+                                unit: "pt"
+                                min: 1
+                                max: 20
+                                step: 1
+                                value: 8
+                                variable: "event-font-size"))
 
-                               ;; List of calendars
-                               (details (@ (class "calendarlist")
-                                           #; (style "grid-area: details")
-                                           )
-                                        (summary "Calendar list")
-                                        (ul ,@(map (lambda (calendar)
-                                                     `(li (@ (class "CAL_bg_" ,(html-attr (attr calendar 'NAME))))
-                                                          ,(attr calendar 'NAME)))
-                                                   calendars))))
+                     ;; List of calendars
+                     (details (@ (class "calendarlist"))
+                              (summary "Calendar list")
+                              (ul ,@(map
+                                     (lambda (calendar)
+                                       `(li (@ (class "CAL_bg_"
+                                                 ,(html-attr (attr calendar 'NAME))))
+                                            ,(attr calendar 'NAME)))
+                                     calendars))))
 
-                          ;; List of events
-                          (div (@ (class "eventlist")
-                                  (style "grid-area: events"))
-                               ;; Events which started before our start point, but "spill" into our time span.
-                               (section (@ (class "text-day"))
-                                        (header (h2 "Tidigare"))
-                                        ,@(stream->list
-                                           (stream-map fmt-single-event
-                                                       (stream-take-while (compose (cut date/-time<? <> start-date)
-                                                                                   (extract 'DTSTART))
-                                                                          (cdr (stream-car evs))))))
-                               ,@(stream->list (stream-map fmt-day evs))))))))
+                ;; List of events
+                (div (@ (class "eventlist")
+                        (style "grid-area: events"))
+                     ;; Events which started before our start point,
+                     ;; but "spill" into our time span.
+                     (section (@ (class "text-day"))
+                      (header (h2 "Tidigare"))
+                      ,@(stream->list
+                         (stream-map
+                          fmt-single-event
+                          (stream-take-while
+                           (compose (cut date/-time<? <> start-date)
+                                    (extract 'DTSTART))
+                           (cdr (stream-car evs))))))
+                     ,@(stream->list (stream-map fmt-day evs))))))))
 
 
 (define-public (html-chunked-main count calendars events start-date chunk-length)
