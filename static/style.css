@@ -414,7 +414,8 @@ along with their colors.
 .clock {
     color: var(--gray);
     border-top: 1px dotted var(--gray);
-        width: 100%;
+    width: 100%;
+    pointer-events: none;
 }
 
 .sideclock .clock {

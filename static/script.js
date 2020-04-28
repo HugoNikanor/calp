@@ -1,10 +1,6 @@
-
-function part_to_hour (f) {
-    return Math.floor(10 * 24 * f) / 10;
-}
-
-function hour_to_part (hour) {
-    return 100 * (hour / 24)
+function round_time (time, fraction) {
+    let scale = 1 / fraction;
+    return Math.round (time * scale) / scale;
 }
 
 function time_to_percent (time) {
@@ -22,61 +18,84 @@ function parents_until (element, obj) {
     }
 }
 
+function decimal_time_to_string (time) {
+    let hour = Math.floor(time);
+    var minute = String((time - Math.floor(time)) * 60).padStart(2, 0);
+    return "" + hour + ":" + minute;
+}
+
+/* start and end time for calendar page */
 let start_time = new Date();
 let end_time = new Date();
 
-var event_start_time = 0
-var start_fraq = 0
+/* dynamicly created event when dragging */
+let event;
 
-var parent
-var createdEvent = false
+function create_event_down (e) {
+    /* only allow start of dragging on background */
+    if (e.target != this) return;
+    /* only on left click */
+    if (e.buttons != 1) return;
 
-function onmousedownhandler (e) {
-    last = this
-    event = e
-    var comp = this
-    console.log(comp.clientHeight)
-    while (! comp.classList.contains("events")) {
-        comp = comp.parentElement
+    /* [0, 1) -- where are we in the container */
+    time = round_time(24 * (e.offsetY / this.clientHeight),
+                      .25)
+
+    event = document.createElement("div");
+    event.style.top = time * 100/24 + "%";
+    event.dataset.time1 = time;
+    event.dataset.time2 = time;
+
+    event.className = "event generated";
+    event.style.pointerEvents = "none";
+    event.style.width = "calc(100% * var(--editmode))";
+    event.innerText = "New Event";
+
+    /* Makes all current events transparent when dragging over them.
+       Without this weird stuff happens when moving over them
+    */
+    for (let e of this.children) {
+        e.style.pointerEvents = "none";
     }
-    console.log(e);
-    parent = comp
-    console.log(comp.clientHeight)
-    fraq = e.offsetY / comp.clientHeight
-    start_fraq = fraq
-    event_start_time = part_to_hour(fraq);
-    createdEvent = document.createElement("div");
-    createdEvent.className = "event generated";
-    createdEvent.style.pointerEvents = "none";
-    createdEvent.style.width = "100%";
-    createdEvent.style.top = fraq * 100 + "%";
-    createdEvent.innerText = "New Event";
+
+    this.appendChild(event);
 }
 
-function onmousemovehandler (e) {
-    if (createdEvent) {
-        fraq = e.offsetY / this.clientHeight
-        var diff = fraq - start_fraq;
-        if (! createdEvent.parentElement) {
-            for (let e of this.children) {
-                e.style.pointerEvents = "none";
-            }
-            this.appendChild(createdEvent);
+function create_event_move (e) {
+    if (! event) return;
+
+    time2 = event.dataset.time2 =
+        round_time(24 * (e.offsetY / event.parentElement.clientHeight),
+                   .25);
+    time1 = event.dataset.time1;
+    if (time2 > time1) {
+        event.style.bottom = (24 - time2) * 100/24 + "%";
+        event.style.top = time1 * 100/24 + "%";
+    } else {
+        event.style.top = time2 * 100/24 + "%";
+        event.style.bottom = (24 - time1) * 100/24 + "%";
+    }
+}
+
+function create_event_finisher (callback) {
+    return function create_event_up (e) {
+        if (! event) return;
+        let start = min(Number(event.dataset.time1), Number(event.dataset.time2));
+        let end = max(Number(event.dataset.time1), Number(event.dataset.time2));
+
+        /* Restore pointer events for all existing events.
+           Allow pointer events on our new event
+        */
+        for (let e of event.parentElement.children) {
+            e.style.pointerEvents = "";
         }
-        createdEvent.style.height = diff * 100 + "%";
+
+        let localevent = event;
+        event = null;
+
+        callback (event, start, end);
+
     }
-
-}
-
-function onmouseuphandler (e) {
-    var end_time = part_to_hour(e.offsetY / this.clientHeight);
-    console.log("Creating event " + event_start_time + " - " + end_time);
-    createdEvent = false;
-
-    for (let e of parent.children) {
-        e.style.pointerEvents = "initial";
-    }
-
 }
 
 function time_to_date (time) {
@@ -129,11 +148,11 @@ function toggle_event_pupup () {
 let days;
 
 function min(a, b) {
-    a < b ? a : b;
+    return a < b ? a : b;
 }
 
 function max(a, b) {
-    a > b ? a : b;
+    return a > b ? a : b;
 }
 
 function close_popup (btn) {
@@ -214,9 +233,15 @@ window.onload = function () {
     /* Is event creation active? */
     if (false) {
         for (let c of document.getElementsByClassName("events")) {
-            c.onmousedown = onmousedownhandler;
-            c.onmouseup = onmouseuphandler;
-            c.onmousemove = onmousemovehandler;
+            c.onmousedown = create_event_down;
+            c.onmousemove = create_event_move;
+            c.onmouseup = create_event_finisher(
+                function (event, start, end) {
+                    let startstr = decimal_time_to_string(start);
+                    let endstr = decimal_time_to_string(end);
+
+                    alert("Creating event " + startstr + " - " + endstr);
+                });
         }
     }
 
