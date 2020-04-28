@@ -102,16 +102,46 @@
 
 
 
+(define* (btn key: onclick href
+              allow-other-keys:
+              rest: args)
+  (when (and onclick href)
+    (error "Only give onclick or href."))
+
+  (when (not (or onclick href))
+    (error "One of onclick or href has to be given"))
+
+  (let ((body #f))
+    `(,(cond [onclick 'button]
+             [href 'a])
+      (@ (class "btn")
+         ,(cond [onclick `(onclick ,onclick)]
+                [href `(href ,href)])
+         ,@(let loop ((rem args))
+             (cond
+              [(null? rem) '()]
+              [(keyword? (car rem))
+               (cons* `(,(keyword->symbol (car rem))
+                        ,(cadr rem))
+                      (loop (cddr rem)))]
+              [else
+               (set! body (car rem))
+               (loop (cdr rem))])))
+      (div ,body))))
+
 
 (define (popup ev)
   `(div (@ (class "popup"))
         (nav (@ (class "popup-control CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
                                                             "unknown"))))
-             (button (@ (class "btn") (title "Stäng")
-                        (onclick "close_popup(this)")) "×")
-             (a (@ (class "btn") (title "Ladda ner")
-                   (href "/calendar/" ,(attr ev 'UID) ".ics"))
-                "📅"))
+             ,(btn "×"
+                   title: "Stäng"
+                   onclick: "close_popup(this)"
+                   )
+             ,(btn "📅"
+                   title: "Ladda ner"
+                   href: (string-append "/calendar/" (attr ev 'UID) ".ics")))
+
         ,(fmt-single-event ev)))
 
 (define (data-attributes event)
@@ -635,22 +665,15 @@
                 ;; Small calendar and navigation
                 (nav (@ (class "calnav") (style "grid-area: nav"))
                      (div (@ (class "change-view"))
-                          (a (@ (class "btn")
-                                (href "/week/"
-                                      ,(date->string
-                                        (if (= 1 (day start-date))
-                                            (start-of-week start-date (get-config 'week-start))
-                                            start-date)
-                                        "~1")
-                                      ".html"))
-                             "weekly")
+                          ,(btn href: (date->string
+                                       (if (= 1 (day start-date))
+                                           (start-of-week start-date (get-config 'week-start))
+                                           start-date)
+                                       "/week/~1.html")
+                                "weekly")
 
-
-                          (a (@ (class "btn")
-                                (href "/month/"
-                                      ,(date->string (set (day start-date) 1) "~1")
-                                      ".html"))
-                             "monthly")))
+                          ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
+                                "monthly")))
 
                 (details (@ (open) (style "grid-area: cal"))
                          (summary "Month overview")

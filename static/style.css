@@ -104,20 +104,33 @@ html, body {
 }
 
 .btn {
-    padding: 0.5em;
-    background-color: #3399ff;
-    color: white;
-
-    box-shadow: var(--btn-height) var(--btn-height) gray;
+    padding: 0;
 
     /* if a */
     text-decoration: none;
 
     /* if button */
     border: none;
+    background-color: inherit;
 }
 
-.btn:active {
+.btn > div {
+    padding: 0.5em;
+    background-color: #3399ff;
+    color: white;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    box-shadow: var(--btn-height) var(--btn-height) gray;
+}
+
+.btn:active > div {
     transform: translate(var(--btn-height), var(--btn-height));
     box-shadow: none;
 }
@@ -639,6 +652,10 @@ along with their colors.
 .popup .popup-control {
     display: flex;
     flex-direction: column;
+
+    /* not needed, but the icons aren't text
+       and should therefor not be copied */
+    user-select: none;
 }
 
 .popup-control .btn {
