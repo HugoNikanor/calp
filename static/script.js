@@ -245,14 +245,33 @@ window.onload = function () {
         }
     }
 
+    /*
     for (let popup of document.getElementsByClassName("popup")) {
         ev = parents_until(popup, {class: "event"})
         e = ev.getElementsByClassName("body")[0]
         e.onclick = new_popup;
         /* disable scroll to element in side list
            if popups are available.
-        */
+        * /
         e.parentElement.removeAttribute("href");
     }
+    */
+
 
 }
+
+$(document).ready(function() {
+    Tipped.setDefaultSkin('none');
+    Tipped.create(".event", {
+        /* no padding, I am the one who styles! */
+        padding: false,
+        /* Don't remove from DOM when hiding */
+        detach: false,
+
+        /* click element to toggle.
+           Elements with class "close-tooltip" also
+           acts as close buttons */
+        showOn: 'click',
+        hideOn: 'click',
+    });
+});

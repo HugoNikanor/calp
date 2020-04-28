@@ -593,7 +593,7 @@ along with their colors.
 ----------------------------------------
 */
 
-.event-inner .popup {
+.popup {
     /* TODO & NOTE
        If I understand it correctly this is absolute to the nearest offset parent.
        since .event-inner has a position: unset the offset parent becomes
@@ -607,16 +607,16 @@ along with their colors.
        of the edge of the screen. I just want the same thing to be true for the
        week view, since it's REALY ugly when a popup makes the calendar wider.
    */
-    position: absolute;
+    /* position: absolute; */
     display: flex;
     /* A scale(0%) is chosen for hiding the element for the following reasons:
        - visibility: hidden still reserves space, which causes unwanted scroll-
          bars since the final position of the popup is calculated at runtime
        - Easier animation
    */
-    transform: scale(0);
-    transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
-    z-index: 100;
+    /* transform: scale(0); */
+    /* transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1); */
+    /* z-index: 100; */
 
     background-color: #dedede;
     color: black;
@@ -625,16 +625,18 @@ along with their colors.
     max-width: 100ch;
     max-height: 60ch;
     min-width: 40ch;
+
+    /* display: none; */
 }
 
-.event-inner .popup article {
+.popup article {
     /* makes the text in the popup scroll, but not the sidebar */
     overflow-y: auto;
 
     padding: 1em;
 }
 
-.event-inner .popup .location {
+.popup .location {
     font-style: initial;
 }
 
@@ -659,10 +661,6 @@ along with their colors.
     font-size: 150%;
 }
 
-.popup.show {
-    transform: scale(1);
-}
-
 .event-inner .body {
     overflow: hidden;
     width: 100%;
@@ -675,6 +673,12 @@ along with their colors.
     background: blue;
     border-color: blue;
     left: -1em;
+}
+
+.popup-container {
+    /* min-width: 50ch; */
+    /* min-height: 50ch; */
+    display: none;
 }
 
 /* vim:expandtab:softtabstop=4:shiftwidth=4:
