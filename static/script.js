@@ -5,7 +5,7 @@ function round_time (time, fraction) {
 
 function time_to_percent (time) {
     // Decimal time
-    return hour_to_part(time.getHours() + (time.getMinutes() / 60)) + "%"
+    return (time.getHours() + (time.getMinutes() / 60)) * 100/24 + "%"
 }
 
 function parents_until (element, obj) {
