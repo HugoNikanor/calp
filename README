@@ -24,12 +24,17 @@ repports,  and other  stuff should  be sent  to <hugo@lysator.liu.se>.
 If you want to contribute  something yourself,  either see  TODO.* for
 things to do, or run `grep -RE 'TODO|NOTE'.
 
-Requirements
-------------
+Requirements & Dependencies
+---------------------------
 For  basic  functionallity  guile-2.2  or  greater  should  be  enough
 (tested to work with guile-3.0). You  do however  need to  supply your
 own calendar files. I recommend vdirsyncer  for fetching  local copies
 from all over the internet.
+
+For  popups  to  work  the  JS  library Tipped  is also  needed, which
+brings a transitive dependency on JQuery.
+- https://tippedjs.com
+- JQuery
 
 Building
 --------
@@ -42,4 +47,5 @@ doing). For building this README, run
 Techical Details
 ----------------
 - Internally all weeks start on sunday, which is repsenented as `0'.
+
 
