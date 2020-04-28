@@ -459,6 +459,7 @@ along with their colors.
 .event {
     transition: 0.3s;
     font-size: var(--event-font-size);
+    overflow: hidden;
 }
 
 .days .event {
@@ -467,7 +468,6 @@ along with their colors.
 
 .events .event {
     width: 100%;
-    overflow: hidden;
 }
 
 .events .event.continuing {
