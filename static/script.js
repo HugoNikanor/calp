@@ -145,8 +145,6 @@ function toggle_event_pupup () {
     this.getElementsByClassName("popup")[0].classList.toggle("show");
 }
 
-let days;
-
 function min(a, b) {
     return a < b ? a : b;
 }
@@ -165,6 +163,8 @@ function close_popup (btn) {
 https://stackoverflow.com/questions/21064101/understanding-offsetwidth-clientwidth-scrollwidth-and-height-respectively
 */
 function new_popup (event) {
+
+    let days = document.getElementsByClassName("days")[0]
 
     console.log(event.target);
     console.log(this);
@@ -245,11 +245,6 @@ window.onload = function () {
         }
     }
 
-    // for (let e of document.getElementsByClassName("event-inner")) {
-    //     e.onclick = toggle_event_pupup;
-    // }
-
-    days = document.getElementsByClassName("days")[0]
     for (let popup of document.getElementsByClassName("popup")) {
         ev = parents_until(popup, {class: "event"})
         e = ev.getElementsByClassName("body")[0]
@@ -259,9 +254,5 @@ window.onload = function () {
         */
         e.parentElement.removeAttribute("href");
     }
-
-    // days.scrollLeft == 0
-    // days.offsetWidth == viewable width
-    // days.offsetHeight == viewable height
 
 }
