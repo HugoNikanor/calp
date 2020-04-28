@@ -261,7 +261,7 @@ window.onload = function () {
 }
 
 $(document).ready(function() {
-    Tipped.setDefaultSkin('none');
+    Tipped.setDefaultSkin("purple");
     Tipped.create(".event", {
         /* no padding, I am the one who styles! */
         padding: false,
@@ -273,5 +273,15 @@ $(document).ready(function() {
            acts as close buttons */
         showOn: 'click',
         hideOn: 'click',
+
+        /* makes popups relative our scrolling days view */
+        container: '.days',
+
+        /* Ensures that the popups stay within the given area,
+           and don't strectch the container */
+        containment: {
+            selector: '.days',
+        },
+        behaviour: 'sticky',
     });
 });

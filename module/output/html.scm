@@ -189,29 +189,25 @@
 
   (define popup-id (symbol->string (gensym "popup")))
 
-  `((div (@ ,@(assq-merge
-               extra-attributes
-               `((class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
-                                                     "unknown"))
-                   ,(when (and (attr ev 'PARTSTAT)
-                               (string= "TENTATIVE" (attr ev 'PARTSTAT)))
-                      " tentative"))
-                 (data-tipped-options ,(format #f "inline: '~a'" popup-id))
-                 ;; TODO only if in debug mode?
-                 ,@(data-attributes ev))))
-         (div (@ (class "event-inner"))
-              ;; NOTE These popup's are far from good. Main problem being that
-              ;; the often render off-screen for events high up on the screen.
-              (a (@ (href "#" ,(UID ev))
-                    (class "hidelink"))
-                 (div (@ (class "body"))
-                      ,(when (attr ev 'RRULE)
-                         `(span (@ (class "repeating")) "↺"))
-                      ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
-                      ,(when (attr ev 'LOCATION)
-                         `(span (@ (class "location"))
-                                ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                             (attr ev 'LOCATION))))))))
+  `((a (@ (href "#" ,(UID ev))
+          (class "hidelink"))
+       (div (@ ,@(assq-merge
+                  extra-attributes
+                  `((class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
+                                                        "unknown"))
+                      ,(when (and (attr ev 'PARTSTAT)
+                                  (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                         " tentative"))
+                    (data-tipped-options ,(format #f "inline: '~a'" popup-id))
+                    ;; TODO only if in debug mode?
+                    ,@(data-attributes ev))))
+            ,(when (attr ev 'RRULE)
+               `(span (@ (class "repeating")) "↺"))
+            ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
+            ,(when (attr ev 'LOCATION)
+               `(span (@ (class "location"))
+                      ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                   (attr ev 'LOCATION))))))
     ,(popup ev popup-id)))
 
 ;; Format single event for graphical display
@@ -629,14 +625,12 @@
                     (content ,(date->string start-date "~s"))))
            (meta (@ (name end-time)
                     (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
+           ,(include-css "http://gandalf.adrift.space:8000/tipped/dist/css/tipped.css")
+
            ,(include-css "/static/style.css")
            ,(include-alt-css "/static/dark.css"  '(title "Dark"))
            ,(include-alt-css "/static/light.css" '(title "Light"))
 
-           ;; <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-           ;; <script type="text/javascript" src="tipped/dist/js/tipped.min.js"></script>
-           ;; <link rel="stylesheet" type="text/css" href="tipped/dist/css/tipped.css"/>
-           ,(include-css "http://gandalf.adrift.space:8000/tipped/dist/css/tipped.css")
            (script (@ (src "https://code.jquery.com/jquery-3.1.1.min.js")) "")
            (script (@ (src "http://gandalf.adrift.space:8000/tipped/dist/js/tipped.min.js")) "")
 
