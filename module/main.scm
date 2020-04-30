@@ -3,6 +3,7 @@
 (when (current-filename)
   (add-to-load-path (dirname (current-filename))))
 
+(set! (@ (global) basedir) (car %load-path))
 
 (use-modules (srfi srfi-1)
              (srfi srfi-41)
