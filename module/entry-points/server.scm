@@ -64,8 +64,8 @@
           (return '((content-type text/html))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: (getf app 'calendars)
-                                     events: (getf app 'event-set)
+                      (html-generate calendars: (getf 'calendars)
+                                     events: (getf 'event-set)
                                      start-date: start-date
                                      end-date: (date+ start-date (date day: 6))
                                      next-start: (lambda (d) (date+ d (date day: 7)))
@@ -79,8 +79,8 @@
           (return '((content-type text/html))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: (getf app 'calendars)
-                                     events: (getf app 'event-set)
+                      (html-generate calendars: (getf 'calendars)
+                                     events: (getf 'event-set)
                                      start-date: start-date
                                      end-date: (date- (month+ start-date)
                                                       (date day: 1))

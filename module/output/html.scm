@@ -748,8 +748,8 @@
 
 (define-method (html-chunked-main count start-date chunk-length)
 
-  (define calendars (getf app 'calendars))
-  (define events (getf app 'event-set))
+  (define calendars (getf 'calendars))
+  (define events (getf 'event-set))
 
   ;; TODO This still doesn't account for PWD, file existing but is of
   ;; wrong type, html directory existing but static symlink missing,
@@ -786,8 +786,8 @@
 
 (define-method (html-table-main count start-date)
 
-  (define calendars (getf app 'calendars))
-  (define events (getf app 'event-set))
+  (define calendars (getf 'calendars))
+  (define events (getf 'event-set))
 
   ;; TODO same file creation as in html-chunked-main
   (stream-for-each

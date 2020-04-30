@@ -5,12 +5,12 @@
   :use-module (datetime zic))
 
 (define-method (init-app)
-  (setf app 'zoneinfo
+  (setf 'zoneinfo
         (let* ((pipe
-               (-> (@ (global) basedir)
-                   dirname
-                   (string-append "/tzget")
-                   ((@ (ice-9 popen) open-input-pipe))))
+                (-> (@ (global) basedir)
+                    dirname
+                    (string-append "/tzget")
+                    ((@ (ice-9 popen) open-input-pipe))))
                (path (read-line pipe))
                (names (string-split (read-line pipe) #\space)))
           (read-zoneinfo

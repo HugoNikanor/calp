@@ -153,7 +153,7 @@
   (add-child! cal event)
 
   (awhen (prop (attr* event 'DTSTART) 'TZID)
-         (add-child! cal (zoneinfo->vtimezone (getf (current-app) 'zoneinfo) it)))
+         (add-child! cal (zoneinfo->vtimezone (getf 'zoneinfo) it)))
 
   (unless (attr event 'UID)
     (set! (attr event 'UID)
@@ -202,7 +202,7 @@ CALSCALE:GREGORIAN\r
   (let ((tz-names (get-tz-names events)))
     (for-each component->ical-string
               ;; TODO we realy should send the earliest event from each timezone here.
-              (map (lambda (name) (zoneinfo->vtimezone (getf (current-app) 'zoneinfo) name (car events)))
+              (map (lambda (name) (zoneinfo->vtimezone (getf 'zoneinfo) name (car events)))
                    tz-names)))
 
   (for-each component->ical-string events)
@@ -218,4 +218,4 @@ CALSCALE:GREGORIAN\r
            ;; We just dump all repeating objects, since it's much cheaper to do
            ;; it this way than to actually figure out which are applicable for
            ;; the given date range.
-           (getf (current-app) 'repeating-events))))
+           (getf 'repeating-events))))

@@ -28,17 +28,17 @@
 
 
 (define-method (init-app calendar-files)
-  (setf app 'calendars (load-calendars calendar-files))
+  (setf 'calendars (load-calendars calendar-files))
 
-  (setf app 'events
+  (setf 'events
         (concatenate
          ;; TODO does this drop events?
          (map (lambda (cal) (filter (lambda (o) (eq? 'VEVENT (type o)))
                                (children cal)))
-              (getf app 'calendars))))
+              (getf 'calendars))))
 
-  (setf app 'fixed-and-repeating-events
-        (let* ((repeating regular (partition repeating? (getf app 'events))))
+  (setf 'fixed-and-repeating-events
+        (let* ((repeating regular (partition repeating? (getf 'events))))
 
           ;; (report-time! "Sorting")
           ;; NOTE There might be instances where we don't care if the
@@ -48,22 +48,22 @@
            (sort*! regular   date/-time<? (extract 'DTSTART))
            (sort*! repeating date/-time<? (extract 'DTSTART)))))
 
-  (setf app 'fixed-events (car (getf app 'fixed-and-repeating-events)))
-  (setf app 'repeating-events (cadr (getf app 'fixed-and-repeating-events)))
+  (setf 'fixed-events (car (getf 'fixed-and-repeating-events)))
+  (setf 'repeating-events (cadr (getf 'fixed-and-repeating-events)))
 
-  (setf app 'event-set (calculate-recurrence-set
-                        (getf app 'fixed-events)
-                        (getf app 'repeating-events)))
+  (setf 'event-set (calculate-recurrence-set
+                    (getf 'fixed-events)
+                        (getf 'repeating-events)))
 
-  (setf app 'uid-map
+  (setf 'uid-map
         (let ((ht (make-hash-table)))
-          (for-each (lambda (event) (hash-set! ht (attr event 'UID) event)) (getf app 'events))
+          (for-each (lambda (event) (hash-set! ht (attr event 'UID) event)) (getf 'events))
           ht)))
 
 (define-method (fixed-events-in-range start end)
   (filter-sorted (lambda (ev) ((in-date-range? start end)
                           (as-date (attr ev 'DTSTART))))
-                 (getf app 'fixed-events)))
+                 (getf 'fixed-events)))
 
 (define-method (get-event-by-uid uid)
-  (hash-ref (getf app 'uid-map) uid))
+  (hash-ref (getf 'uid-map) uid))

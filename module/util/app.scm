@@ -26,18 +26,24 @@
             body ...))])))
 
 
-(define (getf app field)
+(define-method (getf field)
   (aif (hashq-ref (get-ht app) field)
        (force it)
        (error "No field" field)))
 
 (define-syntax setf%
   (syntax-rules ()
+    [(_ field value)
+     (setf% (current-app) field value)]
     [(_ app field value)
-     (hashq-set! (get-ht app) field (delay (begin value)))]))
+     (hashq-set! (get-ht app) field (delay value))]))
 
 (define-syntax setf
   (syntax-rules ()
+    ;; special case to use current appp)
+    [(_ key value)
+     (setf% key value)]
+
     [(_ app) app]
     [(_ app key value rest ...)
      (begin (setf% app key value)
