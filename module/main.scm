@@ -1,10 +1,8 @@
-#!/bin/bash
-# -*- mode: scheme; geiser-scheme-implementation: guile -*-
+;; -*- geiser-scheme-implementation: guile -*-
 
-. $(dirname $(dirname $(realpath $0)))/env
+(when (current-filename)
+  (add-to-load-path (dirname (current-filename))))
 
-exec guile -e main -s $0 "$@"
-!#
 
 (use-modules (srfi srfi-1)
              (srfi srfi-41)

@@ -14,7 +14,7 @@ For  basic usage,  create a  file ~/.config/calp/config.scm  which (at
 leasts)  calls  the  f`calendar-files'  with  a  list   of  files   or
 directories  containing  ics  file. (Both  single calendar  files, and
 vdir's are supported, see vdirsyncer and ikhal). Then run:
-	module/main.scm html --chunked --count 1
+	./main html --chunked --count 1
 Which should generate a single HTML-page for the current month.
 
 Contributing

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+here=$(dirname $(realpath $0))
+. $here/env
+
+exec guile -e main -s $here/module/main.scm "$@"
