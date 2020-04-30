@@ -29,7 +29,7 @@
 (define (getf app field)
   (aif (hashq-ref (get-ht app) field)
        (force it)
-       #f))
+       (error "No field" field)))
 
 (define-syntax setf%
   (syntax-rules ()

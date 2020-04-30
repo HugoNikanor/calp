@@ -59,7 +59,7 @@
      (primitive-load config-file)))
 
 
-  (current-app (make-app))
+  ;; (current-app (make-app))
 
   ((@ (vcomponent) init-app) (get-config 'calendar-files))
   ((@ (datetime app) init-app))
