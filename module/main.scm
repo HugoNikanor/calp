@@ -13,6 +13,7 @@
              (util)
              (util io)
              (util time)
+             (util app)
 
              ((entry-points html)      :prefix      html-)
              ((entry-points terminal)  :prefix  terminal-)
@@ -30,6 +31,7 @@
              (repl)
 
              )
+
 
 (define options
   '((statprof (value optional))
@@ -55,6 +57,12 @@
                              (getenv "HOME"))))
     (when (file-exists? config-file)
      (primitive-load config-file)))
+
+
+  (current-app (make-app))
+
+  ((@ (vcomponent) init-app) (get-config 'calendar-files))
+  ((@ (datetime app) init-app))
 
   (let ((ropt (ornull (option-ref opts '() '())
                       '("term"))))

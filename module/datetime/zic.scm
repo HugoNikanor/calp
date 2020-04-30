@@ -19,7 +19,7 @@
   :use-module (srfi srfi-9 gnu))
 
 
-(define-public (read-zoneinfo . ports-or-filenames)
+(define-public (read-zoneinfo ports-or-filenames)
   (parsed-zic->zoneinfo
    (concatenate
     (map (lambda (port-or-filename)
