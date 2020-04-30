@@ -101,7 +101,7 @@
                               (parse-iso-date start)
                               (parse-iso-date end))))))
 
-   ;; TODO this returns "invalid" events, since the surrounding VCALENDAR is missing.
+   ;; TODO this fails if there's a period in the uid.
    (GET "/calendar/:uid.ics" (uid)
         ;; NOTE build an index.
         (aif (or (find (lambda (ev) (equal? uid (attr ev 'UID)))
