@@ -1,0 +1,10 @@
+#!/bin/bash
+
+test -f v4.7.0.tar.gz || curl -sOL https://github.com/staaky/tipped/archive/v4.7.0.tar.gz
+test -d static/tipped-4.7.0/ || tar xf v4.7.0.tar.gz  -C static  tipped-4.7.0/dist/
+
+jquery="jquery-3.1.1.min.js"
+test -f "static/$jquery" || {
+	cd static
+	curl -sOL "https://code.jquery.com/$jquery"
+}
