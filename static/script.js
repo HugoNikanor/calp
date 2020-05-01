@@ -140,82 +140,12 @@ function update_current_time_bar () {
     current_cell.style.border = "1px solid black";
 }
 
-function toggle_event_pupup () {
-    console.log(this);
-    this.getElementsByClassName("popup")[0].classList.toggle("show");
-}
-
 function min(a, b) {
     return a < b ? a : b;
 }
 
 function max(a, b) {
     return a > b ? a : b;
-}
-
-function close_popup (btn) {
-    o = { class: "popup" }
-    var popup = parents_until (btn, o);
-    popup.classList.toggle("show");
-}
-
-/*
-https://stackoverflow.com/questions/21064101/understanding-offsetwidth-clientwidth-scrollwidth-and-height-respectively
-*/
-function new_popup (event) {
-
-    let days = document.getElementsByClassName("days")[0]
-
-    console.log(event.target);
-    console.log(this);
-    // if (event.target !== this) return;
-
-    /* popup = this.children[0].children[0] */
-    let ev = parents_until(this, {class: "event"})
-    popup = ev.getElementsByClassName("popup")[0];
-    popup.classList.toggle("show")
-
-    return;
-
-    /* x-axis fix */
-
-    /* Popup should neven be wider than viewport */
-    popup.style.width = min(popup.style.offsetWidth, days.clientWidth - 10) + "px"
-
-    /* find left edge of source element in viewport */
-    here_x = (this.offsetParent.offsetLeft + this.offsetLeft) - days.scrollLeft;
-    console.log(here_x)
-
-    /* Align popup with source */
-    popup.style.left = "0px"
-    /* move it if it would partially render outside */
-    if (here_x < 0) {
-        popup.style.left = "" + ((- here_x) + 10) + "px";
-    }
-    // overflow_x = (here_x + popup.offsetWidth) - days.offsetWidth
-    overflow_x = (here_x + popup.offsetWidth) - days.clientWidth
-    if (overflow_x > 0) {
-        /* NOTE
-           Setting the style.left field changes the offsetWidth
-           of the object.
-           TODO
-           Get the popup to actually be inside the viewport!
-           */
-        // console.log(overflow_x)
-        popup.style.left = "-" + (overflow_x + 10) + "px";
-    }
-
-    /* y-axis fix */
-    popup.style.height = min(popup.style.offsetHeight, days.offsetHeight)
-    popup.style.bottom = "calc(100% + 2em)";
-
-    here_y = this.offsetParent.offsetTop + this.offsetTop;
-
-    overflow_y = here_y - popup.offsetHeight;
-    if (overflow_y < 0) {
-        popup.style.bottom = "calc(100% - " + ((- overflow_y) + 10) + "px)";
-    }
-
 }
 
 function setVar(str, val) {
@@ -250,19 +180,6 @@ window.onload = function () {
                 });
         }
     }
-
-    /*
-    for (let popup of document.getElementsByClassName("popup")) {
-        ev = parents_until(popup, {class: "event"})
-        e = ev.getElementsByClassName("body")[0]
-        e.onclick = new_popup;
-        /* disable scroll to element in side list
-           if popups are available.
-        * /
-        e.parentElement.removeAttribute("href");
-    }
-    */
-
 
 	document.onkeydown = function (evt) {
 		evt = evt || window.event;

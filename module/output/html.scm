@@ -138,7 +138,7 @@
                                                                  "unknown"))))
                   ,(btn "×"
                         title: "Stäng"
-                        onclick: "close_popup(this)"
+                        onclick: ""
                         class: '("close-tooltip")
                         )
                   ,(btn "📅"
