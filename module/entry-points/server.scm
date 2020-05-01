@@ -1,6 +1,7 @@
 (define-module (entry-points server)
   :use-module (util)
   :use-module (util app)
+  :use-module (util config)
 
   :use-module (srfi srfi-1)
 
@@ -61,7 +62,9 @@
   (make-routes
 
    (GET "/week/:start-date.html" (start-date)
-        (let* ((start-date (parse-iso-date start-date)))
+        (let* ((start-date
+                (start-of-week (parse-iso-date start-date)
+                               (get-config 'week-start))))
 
           (return '((content-type text/html))
                   (with-output-to-string
@@ -88,6 +91,7 @@
                                                       (date day: 1))
                                      next-start: month+
                                      prev-start: month-
+                                     ;; internally rounds start-date to start of month
                                      render-calendar: render-calendar-table
                                      pre-start: (start-of-week start-date)
                                      post-end: (end-of-week (end-of-month start-date))
