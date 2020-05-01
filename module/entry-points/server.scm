@@ -38,20 +38,22 @@
   (with-output-to-string
     (lambda () (display "<!doctype html>\n") (sxml->xml sxml))))
 
+(define (// . args) (string-join args file-name-separator-string ))
+
 (define (directory-table dir)
   `(table
     (thead
      (tr (th "") (th "Name") (th "Perm")))
     (tbody
      ,@(map (lambda (k)
-              (let* ((stat (lstat k)))
+              (let* ((stat (lstat (// dir k))))
                 `(tr (td ,(case (stat:type stat)
                             [(directory) "📁"]
                             [(regular) "📰"]
                             [else "🙃"]))
-                     (td (a (@ (href "/" ,dir ,k)) ,k))
+                     (td (a (@ (href "/" ,dir "/" ,k)) ,k))
                      (td ,(number->string (stat:perms stat) 8)))))
-            (cddr (scandir dir))))))
+            (cdr (scandir dir))))))
 
 
 (define (make-make-routes calendar regular repeating events)
@@ -115,23 +117,23 @@
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
 
-   (GET "/static" ()
+   ;; NOTE this only handles files with extensions. Limited, but since this
+   ;; is mostly for development, and something like nginx should be used in
+   ;; production it isn't a huge problem.
+
+   (GET "/static/:*{.*}.:ext" (* ext)
+        (return
+         ;; TODO actually check mimetype
+         `((content-type ,(string->symbol (string-append "text/" ext))))
+         (call-with-input-file (string-append "static/" * "." ext)
+           read-string)))
+
+   (GET "/static/:*{.*}" (*)
         (return
          '((content-type text/html))
          (sxml->html-string
-          (directory-table "static/"))))
+          (directory-table (// "static" *)))))
 
-   (GET "/static/:filename.css" (filename)
-        (return
-         `((content-type text/css))
-         (call-with-input-file (string-append "static/" filename ".css")
-           read-string)))
-
-   (GET "/static/:filename.js" (filename)
-        (return
-         `((content-type text/javascript))
-         (call-with-input-file (string-append "static/" filename ".js")
-           read-string)))
 
    (GET "/count" ()
         ;; (sleep 1)
