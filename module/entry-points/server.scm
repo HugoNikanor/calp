@@ -102,7 +102,7 @@
                               (parse-iso-date end))))))
 
    ;; TODO this fails if there's a period in the uid.
-   (GET "/calendar/:uid.ics" (uid)
+   (GET "/calendar/:uid{.*}.ics" (uid)
         (aif (get-event-by-uid uid)
              (return '((content-type text/calendar))
                      (with-output-to-string
