@@ -7,6 +7,7 @@
   #:use-module (vcomponent group)
   #:use-module (vcomponent datetime)
   #:use-module (util)
+  #:use-module (util app)
   #:use-module (util exceptions)
   #:use-module (util config)
   #:use-module (util tree)
@@ -745,7 +746,11 @@
                      ,@(stream->list (stream-map fmt-day evs))))))))
 
 
-(define-public (html-chunked-main count calendars events start-date chunk-length)
+(define-method (html-chunked-main count start-date chunk-length)
+
+  (define calendars (getf 'calendars))
+  (define events (getf 'event-set))
+
   ;; TODO This still doesn't account for PWD, file existing but is of
   ;; wrong type, html directory existing but static symlink missing,
   ;; static being a different file type, and probably something else
@@ -778,7 +783,12 @@
                       (cdr ms))))))))
 
 
-(define-public (html-table-main count calendars events start-date)
+
+(define-method (html-table-main count start-date)
+
+  (define calendars (getf 'calendars))
+  (define events (getf 'event-set))
+
   ;; TODO same file creation as in html-chunked-main
   (stream-for-each
    (lambda (start-of-month)

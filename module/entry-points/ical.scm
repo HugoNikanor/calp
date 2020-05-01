@@ -22,11 +22,4 @@
                       ;; [else (normalize-date* (set (month start) = (+ 1)))]
                       [(date+ start (date month: 1))]
                       ))
-
-  ;; TODO this contains repeated events multiple times
-  (define-values (calendars regular repeating)
-    (cond [(option-ref opts 'file #f) => (compose load-calendars* list)]
-          [else (load-calendars*)]))
-
-  (ical-main calendars regular repeating start end)
- )
+  (ical-main start end))

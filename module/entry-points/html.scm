@@ -4,7 +4,7 @@
   :use-module (util)
   :use-module (util time)
   :use-module (util config)
-  :use-module (vcomponent)
+  ;; :use-module (vcomponent)
   :use-module (datetime)
   :use-module (datetime util)
   :use-module (ice-9 getopt-long)
@@ -30,26 +30,17 @@
 
   (define style (string->symbol (option-ref opts 'style "wide")))
 
-  (define-values (calendars events)
-    (cond [(option-ref opts 'file #f) => (compose load-calendars list)]
-          [else (load-calendars)]))
-
-
-  (report-time! "Calendars loaded")
-
   (case style
-    [(unchunked)
-     (html-generate calendars events start end render-calendar)]
     [(wide)                             ; previously `chunked'
-     (html-chunked-main count calendars events start (date month: 1))]
+     (html-chunked-main count start (date month: 1))]
     [(week)
      ;; TODO The small calendar is always centered on months, it might
      ;; be a good idea to instead center it on the current week, meaning
      ;; that the active row is always in the center
-     (html-chunked-main count calendars events
+     (html-chunked-main count
                         (start-of-week start (get-config 'week-start))
                         (date day: 7))]
     [(table)
-     (html-table-main count calendars events start)]
+     (html-table-main count start)]
     [else
      (error "Unknown html style: ~a" style)]))

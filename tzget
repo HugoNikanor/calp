@@ -1,0 +1,28 @@
+#!/bin/bash
+
+CACHE_DIR=${CACHE_DIR:-~/.cache/calp}
+RELEASE=2020a
+TZ_SRC="https://github.com/eggert/tz/archive/$RELEASE.tar.gz"
+
+mkdir -p $CACHE_DIR
+cd $CACHE_DIR
+
+test -f "$RELEASE.tar.gz" || curl -sOL $TZ_SRC
+test -d "tz-$RELEASE" || tar xzf "$RELEASE.tar.gz"
+cd "tz-$RELEASE"
+
+tzpath=$(pwd)
+
+size=$(stat -c "%s" Makefile)
+
+cat >> Makefile << EOF
+.PHONY: print-tdata
+print-tdata:
+	@echo \$(TDATA_TO_CHECK)
+EOF
+files=$(make print-tdata)
+
+truncate -cs $size Makefile
+
+echo $tzpath
+echo $files

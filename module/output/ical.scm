@@ -2,6 +2,7 @@
   :use-module (ice-9 format)
   :use-module (ice-9 match)
   :use-module (util)
+  :use-module (util app)
   :use-module (vcomponent)
   :use-module (vcomponent datetime)
   :use-module (srfi srfi-1)
@@ -139,10 +140,6 @@
 
 ;; TODO place these somewhere better
 (define *prodid* "-//hugo//Calparse 0.9//EN")
-(define *zoneinfo* (apply read-zoneinfo
-        ;; TODO move this to config, and figure out
-        ;; how to best acquire/bundle zoneinfo.
-        (glob "~/down/tz/{africa,antartica,asia,australasia,europe,northamerica,southamerica,backward}")))
 
 ;; TODO tzid prop on dtstart vs tz field in datetime object
 ;; how do we keep these two in sync?
@@ -156,7 +153,7 @@
   (add-child! cal event)
 
   (awhen (prop (attr* event 'DTSTART) 'TZID)
-         (add-child! cal (zoneinfo->vtimezone *zoneinfo* it)))
+         (add-child! cal (zoneinfo->vtimezone (getf 'zoneinfo) it)))
 
   (unless (attr event 'UID)
     (set! (attr event 'UID)
@@ -205,7 +202,7 @@ CALSCALE:GREGORIAN\r
   (let ((tz-names (get-tz-names events)))
     (for-each component->ical-string
               ;; TODO we realy should send the earliest event from each timezone here.
-              (map (lambda (name) (zoneinfo->vtimezone *zoneinfo* name (car events)))
+              (map (lambda (name) (zoneinfo->vtimezone (getf 'zoneinfo) name (car events)))
                    tz-names)))
 
   (for-each component->ical-string events)
@@ -214,15 +211,11 @@ CALSCALE:GREGORIAN\r
 
 
 ;; TODO add support for running without a range limiter, emiting all objects.
-;; list x list x list x time x time → 
-(define-public (ical-main calendars regular-events repeating-events start end)
-
+(define-public (ical-main start end)
   (print-components-with-fake-parent
-   (append (filter-sorted (lambda (ev) ((in-date-range? start end)
-                                   (as-date (attr ev 'DTSTART))))
-                          regular-events)
+   (append (fixed-events-in-range start end)
            ;; TODO RECCURENCE-ID exceptions
            ;; We just dump all repeating objects, since it's much cheaper to do
            ;; it this way than to actually figure out which are applicable for
            ;; the given date range.
-           repeating-events)))
+           (getf 'repeating-events))))

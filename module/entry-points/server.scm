@@ -1,5 +1,6 @@
 (define-module (entry-points server)
   :use-module (util)
+  :use-module (util app)
 
   :use-module (srfi srfi-1)
 
@@ -56,7 +57,7 @@
             (cdr (scandir dir))))))
 
 
-(define (make-make-routes calendar regular repeating events)
+(define-method (make-make-routes)
   (make-routes
 
    (GET "/week/:start-date.html" (start-date)
@@ -65,8 +66,8 @@
           (return '((content-type text/html))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: calendar
-                                     events: events
+                      (html-generate calendars: (getf 'calendars)
+                                     events: (getf 'event-set)
                                      start-date: start-date
                                      end-date: (date+ start-date (date day: 6))
                                      next-start: (lambda (d) (date+ d (date day: 7)))
@@ -80,8 +81,8 @@
           (return '((content-type text/html))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: calendar
-                                     events: events
+                      (html-generate calendars: (getf 'calendars)
+                                     events: (getf 'event-set)
                                      start-date: start-date
                                      end-date: (date- (month+ start-date)
                                                       (date day: 1))
@@ -97,19 +98,12 @@
         (return '((content-type text/calendar))
                 (with-output-to-string
                   (lambda ()
-                   (ical-main calendar
-                              regular
-                              repeating
-                              (parse-iso-date start)
+                   (ical-main (parse-iso-date start)
                               (parse-iso-date end))))))
 
    ;; TODO this fails if there's a period in the uid.
    (GET "/calendar/:uid.ics" (uid)
-        ;; NOTE build an index.
-        (aif (or (find (lambda (ev) (equal? uid (attr ev 'UID)))
-                       regular)
-                 (find (lambda (ev) (equal? uid (attr ev 'UID)))
-                       repeating))
+        (aif (get-event-by-uid uid)
              (return '((content-type text/calendar))
                      (with-output-to-string
                        (lambda () (print-components-with-fake-parent
@@ -162,15 +156,6 @@
           [(and addr (string-contains addr ".")) AF_INET]
           [else AF_INET6]))
 
-  (define-values (c regular repeating)
-    (cond [(option-ref opts 'file #f) => (compose load-calendars* list)]
-          [else (load-calendars*)]))
-
-  (define all-events
-    ((@ (vcomponent load) calculate-recurrence-set) regular repeating))
-
-
-
   ;; update address if it was left blank. A bit clumsy since
   ;; @var{addr} & @var{family} depend on each other.
   ;; placed after load-calendars to keep Guile 2.2 compability.
@@ -197,7 +182,7 @@
           addr port
           (getpid) (getcwd))
 
-  (run-server (make-make-routes c regular repeating all-events)
+  (run-server (make-make-routes)
               'http
               `(family: ,family
                         port: ,port
