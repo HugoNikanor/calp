@@ -1,5 +1,6 @@
 (define-module (entry-points server)
   :use-module (util)
+  :use-module (util app)
 
   :use-module (srfi srfi-1)
 
@@ -38,23 +39,25 @@
   (with-output-to-string
     (lambda () (display "<!doctype html>\n") (sxml->xml sxml))))
 
+(define (// . args) (string-join args file-name-separator-string ))
+
 (define (directory-table dir)
   `(table
     (thead
      (tr (th "") (th "Name") (th "Perm")))
     (tbody
      ,@(map (lambda (k)
-              (let* ((stat (lstat k)))
+              (let* ((stat (lstat (// dir k))))
                 `(tr (td ,(case (stat:type stat)
                             [(directory) "📁"]
                             [(regular) "📰"]
                             [else "🙃"]))
-                     (td (a (@ (href "/" ,dir ,k)) ,k))
+                     (td (a (@ (href "/" ,dir "/" ,k)) ,k))
                      (td ,(number->string (stat:perms stat) 8)))))
-            (cddr (scandir dir))))))
+            (cdr (scandir dir))))))
 
 
-(define (make-make-routes calendar regular repeating events)
+(define-method (make-make-routes)
   (make-routes
 
    (GET "/week/:start-date.html" (start-date)
@@ -63,8 +66,8 @@
           (return '((content-type text/html))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: calendar
-                                     events: events
+                      (html-generate calendars: (getf 'calendars)
+                                     events: (getf 'event-set)
                                      start-date: start-date
                                      end-date: (date+ start-date (date day: 6))
                                      next-start: (lambda (d) (date+ d (date day: 7)))
@@ -78,8 +81,8 @@
           (return '((content-type text/html))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: calendar
-                                     events: events
+                      (html-generate calendars: (getf 'calendars)
+                                     events: (getf 'event-set)
                                      start-date: start-date
                                      end-date: (date- (month+ start-date)
                                                       (date day: 1))
@@ -95,19 +98,12 @@
         (return '((content-type text/calendar))
                 (with-output-to-string
                   (lambda ()
-                   (ical-main calendar
-                              regular
-                              repeating
-                              (parse-iso-date start)
+                   (ical-main (parse-iso-date start)
                               (parse-iso-date end))))))
 
-   ;; TODO this returns "invalid" events, since the surrounding VCALENDAR is missing.
+   ;; TODO this fails if there's a period in the uid.
    (GET "/calendar/:uid.ics" (uid)
-        ;; NOTE build an index.
-        (aif (or (find (lambda (ev) (equal? uid (attr ev 'UID)))
-                       regular)
-                 (find (lambda (ev) (equal? uid (attr ev 'UID)))
-                       repeating))
+        (aif (get-event-by-uid uid)
              (return '((content-type text/calendar))
                      (with-output-to-string
                        (lambda () (print-components-with-fake-parent
@@ -115,23 +111,23 @@
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
 
-   (GET "/static" ()
+   ;; NOTE this only handles files with extensions. Limited, but since this
+   ;; is mostly for development, and something like nginx should be used in
+   ;; production it isn't a huge problem.
+
+   (GET "/static/:*{.*}.:ext" (* ext)
+        (return
+         ;; TODO actually check mimetype
+         `((content-type ,(string->symbol (string-append "text/" ext))))
+         (call-with-input-file (string-append "static/" * "." ext)
+           read-string)))
+
+   (GET "/static/:*{.*}" (*)
         (return
          '((content-type text/html))
          (sxml->html-string
-          (directory-table "static/"))))
+          (directory-table (// "static" *)))))
 
-   (GET "/static/:filename.css" (filename)
-        (return
-         `((content-type text/css))
-         (call-with-input-file (string-append "static/" filename ".css")
-           read-string)))
-
-   (GET "/static/:filename.js" (filename)
-        (return
-         `((content-type text/javascript))
-         (call-with-input-file (string-append "static/" filename ".js")
-           read-string)))
 
    (GET "/count" ()
         ;; (sleep 1)
@@ -160,15 +156,6 @@
           [(and addr (string-contains addr ".")) AF_INET]
           [else AF_INET6]))
 
-  (define-values (c regular repeating)
-    (cond [(option-ref opts 'file #f) => (compose load-calendars* list)]
-          [else (load-calendars*)]))
-
-  (define all-events
-    ((@ (vcomponent load) calculate-recurrence-set) regular repeating))
-
-
-
   ;; update address if it was left blank. A bit clumsy since
   ;; @var{addr} & @var{family} depend on each other.
   ;; placed after load-calendars to keep Guile 2.2 compability.
@@ -195,7 +182,7 @@
           addr port
           (getpid) (getcwd))
 
-  (run-server (make-make-routes c regular repeating all-events)
+  (run-server (make-make-routes)
               'http
               `(family: ,family
                         port: ,port

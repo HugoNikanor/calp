@@ -1,10 +1,9 @@
-#!/bin/bash
-# -*- mode: scheme; geiser-scheme-implementation: guile -*-
+;; -*- geiser-scheme-implementation: guile -*-
 
-. $(dirname $(dirname $(realpath $0)))/env
+(when (current-filename)
+  (add-to-load-path (dirname (current-filename))))
 
-exec guile -e main -s $0 "$@"
-!#
+(set! (@ (global) basedir) (car %load-path))
 
 (use-modules (srfi srfi-1)
              (srfi srfi-41)
@@ -14,6 +13,7 @@ exec guile -e main -s $0 "$@"
              (util)
              (util io)
              (util time)
+             (util app)
 
              ((entry-points html)      :prefix      html-)
              ((entry-points terminal)  :prefix  terminal-)
@@ -31,6 +31,7 @@ exec guile -e main -s $0 "$@"
              (repl)
 
              )
+
 
 (define options
   '((statprof (value optional))
@@ -56,6 +57,12 @@ exec guile -e main -s $0 "$@"
                              (getenv "HOME"))))
     (when (file-exists? config-file)
      (primitive-load config-file)))
+
+
+  ;; (current-app (make-app))
+
+  ((@ (vcomponent) init-app) (get-config 'calendar-files))
+  ((@ (datetime app) init-app))
 
   (let ((ropt (ornull (option-ref opts '() '())
                       '("term"))))

@@ -222,6 +222,12 @@ function setVar(str, val) {
 	document.documentElement.style.setProperty("--" + str, val);
 }
 
+function close_all_popups () {
+	for (let popup of document.getElementsByClassName("popup")) {
+		popup.classList.remove("show");
+	}
+}
+
 window.onload = function () {
     start_time.setTime(document.querySelector("meta[name='start-time']").content * 1000)
     end_time.setTime(document.querySelector("meta[name='end-time']").content * 1000)
@@ -257,6 +263,13 @@ window.onload = function () {
     }
     */
 
+
+	document.onkeydown = function (evt) {
+		evt = evt || window.event;
+		if (evt.key.startsWith("Esc")) {
+			close_all_popups();
+		}
+	}
 
 }
 

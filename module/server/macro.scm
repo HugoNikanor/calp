@@ -9,15 +9,28 @@
 
 
 (define-public (parse-endpoint-string str)
-  (let ((rx (make-regexp ":([^/.]+)")))
+  (let ((rx (make-regexp ":([^/.]+)(\\{([^}]+)\\})?([.])?")))
     (let loop ((str str)
                (string "")
                (tokens '()))
       (let ((m (regexp-exec rx str 0)))
         (if (not m)
+            ;; done
             (values (string-append string str) (reverse tokens))
+
             (loop (match:suffix m)
-                  (string-append string (match:prefix m) "([^/.]+)")
+                  (string-append string (match:prefix m)
+                                 (aif (match:substring m 3)
+                                      (string-append "(" it ")")
+                                      "([^/.]+)")
+                                 ;; period directly following matched variable.
+                                 ;; since many variables break on period, we often
+                                 ;; want to match a literal period directly after them.
+                                 ;; Ideally all periods outside of pattern should be
+                                 ;; matched literally, but that's harder to implement.
+                                 (regexp-quote
+                                  (aif (match:substring m 4)
+                                       "." "")))
                   (cons (string->symbol (match:substring m 1))
                         tokens)))))))
 

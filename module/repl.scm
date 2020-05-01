@@ -1,6 +1,6 @@
 (define-module (repl)
   :use-module (system repl server)
-  )
+  :use-module (ice-9 regex))
 
 (define-public (runtime-dir)
   (or (getenv "XDG_RUNTIME_DIR")

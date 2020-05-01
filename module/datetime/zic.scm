@@ -19,7 +19,7 @@
   :use-module (srfi srfi-9 gnu))
 
 
-(define-public (read-zoneinfo . ports-or-filenames)
+(define-public (read-zoneinfo ports-or-filenames)
   (parsed-zic->zoneinfo
    (concatenate
     (map (lambda (port-or-filename)
@@ -377,7 +377,8 @@
     ;; group rules and put in map
     (awhen (assoc-ref groups 'rule)
       (for-each (lambda (group)
-                  (hashq-set! rules (car group) (sort* (cadr group) < rule-from)))
+                  (hashq-set! rules (car group) (sort* (cadr group) (lambda (a b) (if (eq? 'minimum) #t (< a b)))
+                                                       rule-from)))
                 (group-by rule-name (car it))))
 
     ;; put zones in map

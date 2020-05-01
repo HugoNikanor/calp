@@ -5,7 +5,7 @@
 Calp is primarily a program for loading calendar files (.ics's) from drendering them in different formats. The goal is however to also support fancy filtering, an edit server, and more. The currently working frontends is the HTML-frontend, which have the two main modes of a month-by-month in "week" view, or a table of a single month, and the terminal frontend. The terminatend is mostly for debugging purposes, but it's quite usable still.
 
 For basic usage, create a file ~/.config/calp/config.scm which (at leasts) calls the f`calendar-files' with a list of files or directories containing ics file. (Both single calendar files, and vdir's are supported, see vdirsyncer and ikhal). Then run:
-	module/main.scm html --chunked --count 1
+	./main html --chunked --count 1
 Which should generate a single HTML-page for the current month.
 
 Contributing
