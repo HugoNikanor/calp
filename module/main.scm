@@ -14,6 +14,7 @@
              (util io)
              (util time)
              (util app)
+             (util config)
 
              ((entry-points html)      :prefix      html-)
              ((entry-points terminal)  :prefix  terminal-)
