@@ -626,14 +626,14 @@
                     (content ,(date->string start-date "~s"))))
            (meta (@ (name end-time)
                     (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
-           ,(include-css "http://gandalf.adrift.space:8000/tipped/dist/css/tipped.css")
+           ,(include-css "/static/tipped-4.7.0/dist/css/tipped.css")
 
            ,(include-css "/static/style.css")
            ,(include-alt-css "/static/dark.css"  '(title "Dark"))
            ,(include-alt-css "/static/light.css" '(title "Light"))
 
-           (script (@ (src "https://code.jquery.com/jquery-3.1.1.min.js")) "")
-           (script (@ (src "http://gandalf.adrift.space:8000/tipped/dist/js/tipped.min.js")) "")
+           (script (@ (src "/static/jquery-3.1.1.min.js")) "")
+           (script (@ (src "/static/tipped-4.7.0/dist/js/tipped.min.js")) "")
 
            (script (@ (src "/static/script.js")) "")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"

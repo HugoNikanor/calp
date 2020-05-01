@@ -16,9 +16,9 @@ Requirements & Dependencies
 ---------------------------
 For basic functionallity guile-2.2 or greater should be enough (tested to work with guile-3.0). You do however need to supply your own calendar files. I recommend vdirsyncer for fetching local copies from all over the internet.
 
-For popups to work the JS library Tipped is also needed, which brings a transitive dependency on JQuery.
-- https://tippedjs.com
-- JQuery
+For popups to work the JS library Tipped is also needed, which brings a transitive dependency on JQuery. The script `download-deps' fetches both into "good" places in the static sub-directory. Tipped [TIPPED] is used under Creative Commons BY 4.0 [CCBY], © staaky. JQuery is used in accordance to their license [JQUERY].
+
+The zoneinfo data [TZ] is in the public domain [TZLIC].
 
 Building
 --------
@@ -29,3 +29,12 @@ Techical Details
 ----------------
 - Internally all weeks start on sunday, which is repsenented as `0'.
 
+
+References
+----------
+
+[TIPPED] https://github.com/staaky/tipped
+[CCBY] https://creativecommons.org/licenses/by/4.0/
+[JQUERY] https://github.com/jquery/jquery/blob/master/LICENSE.txt
+[TZ] https://github.com/eggert/tz
+[TZLIC] https://github.com/eggert/tz/blob/master/LICENSE
