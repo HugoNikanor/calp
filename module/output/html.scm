@@ -107,17 +107,15 @@
               allow-other-keys:
               rest: args)
   (when (and onclick href)
-    (error "Only give onclick or href."))
-
-  (when (not (or onclick href))
-    (error "One of onclick or href has to be given"))
+    (error "Only give one of onclick, href and submit."))
 
   (let ((body #f))
-    `(,(cond [onclick 'button]
-             [href 'a])
+    `(,(cond [href 'a]
+             [else 'button])
       (@ (class ,(string-join (cons "btn" class) " "))
-         ,(cond [onclick `(onclick ,onclick)]
-                [href `(href ,href)])
+         ,@(cond [onclick `((onclick ,onclick))]
+                 [href `((href ,href))]
+                 [else '()])
          ,@(let loop ((rem args))
              (cond
               [(null? rem) '()]
