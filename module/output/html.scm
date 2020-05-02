@@ -761,14 +761,14 @@
                      ;; Events which started before our start point,
                      ;; but "spill" into our time span.
                      (section (@ (class "text-day"))
-                      (header (h2 "Tidigare"))
-                      ,@(stream->list
-                         (stream-map
-                          fmt-single-event
-                          (stream-take-while
-                           (compose (cut date/-time<? <> start-date)
-                                    (extract 'DTSTART))
-                           (cdr (stream-car evs))))))
+                              (header (h2 "Tidigare"))
+                              ,@(stream->list
+                                 (stream-map
+                                  fmt-single-event
+                                  (stream-take-while
+                                   (compose (cut date/-time<? <> start-date)
+                                            (extract 'DTSTART))
+                                   (cdr (stream-car evs))))))
                      ,@(stream->list (stream-map fmt-day evs))))))))
 
 
