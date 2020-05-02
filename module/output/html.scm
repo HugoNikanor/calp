@@ -679,10 +679,11 @@
                                            (start-of-week start-date (get-config 'week-start))
                                            start-date)
                                        "/week/~1.html")
-                                "weekly")
+                                "veckovy")
 
                           ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
-                                "monthly")))
+                                "månadsvy")
+
 
                 (details (@ (open) (style "grid-area: cal"))
                          (summary "Month overview")
