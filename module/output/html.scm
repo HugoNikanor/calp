@@ -684,6 +684,24 @@
                           ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
                                 "månadsvy")
 
+                          ,(btn id: "today-button"
+                                href: (string-append
+                                       "/today" (case intervaltype
+                                                  [(month) "/month"]
+                                                  [(week) "/week"]
+                                                  [else "/month"]))
+                                "idag"))
+
+                     (div (@ (class "jump-to"))
+                          (form (@ (action ,(case intervaltype
+                                              [(month) "/month"]
+                                              [(week) "/week"]
+                                              [else "/month"])))
+                                (input (@ (type date)
+                                          (name "start-date")
+                                          (value (date->string start-date "~1"))
+                                          ))
+                                ,(btn "➔"))))
 
                 (details (@ (open) (style "grid-area: cal"))
                          (summary "Month overview")

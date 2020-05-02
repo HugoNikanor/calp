@@ -138,6 +138,11 @@ function update_current_time_bar () {
     current_cell = document.querySelector(
         ".small-calendar time[datetime='" + time_to_date(now) + "']");
     current_cell.style.border = "1px solid black";
+
+    /* Update [today] button */
+
+    document.getElementById("today-button").href
+        = time_to_date(new Date) + ".html";
 }
 
 function min(a, b) {
@@ -181,13 +186,35 @@ window.onload = function () {
         }
     }
 
-	document.onkeydown = function (evt) {
-		evt = evt || window.event;
-		if (evt.key.startsWith("Esc")) {
-			close_all_popups();
-		}
+    document.onkeydown = function (evt) {
+	evt = evt || window.event;
+        if (! evt.key) return;
+	if (evt.key.startsWith("Esc")) {
+	    close_all_popups();
 	}
+    }
 
+
+    /* Replace backend-driven [today] link with frontend, with one that gets
+    correctly set in the frontend.
+    Similarly, update the go to specific date button into a link which updates
+    wheneven the date form updates.
+    */
+
+    let jumpto = document.getElementsByClassName("jump-to")[0];
+    let gotodatebtn = jumpto.getElementsByTagName("button")[0];
+    let golink = document.createElement("a");
+    golink.classList.add("btn");
+    let target_href = time_to_date(new Date) + ".html";
+    document.getElementById("today-button").href = target_href;
+    golink.href = target_href;
+    golink.innerHTML = gotodatebtn.innerHTML;
+    gotodatebtn.replaceWith(golink);
+
+    jumpto.getElementsByTagName("input")[0].onchange = function () {
+        let date = time_to_date(this.valueAsDate)
+        golink.href = date + ".html";
+    }
 }
 
 $(document).ready(function() {
