@@ -580,6 +580,7 @@
 
 (define*-public (html-generate
                  key:
+                 (intervaltype 'all)    ; 'week | 'month | 'all
                  calendars events start-date end-date
                  render-calendar        ; (bunch of kv args) → (list sxml)
                  next-start             ; date → date

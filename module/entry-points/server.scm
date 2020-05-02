@@ -76,6 +76,7 @@
                                      next-start: (lambda (d) (date+ d (date day: 7)))
                                      prev-start: (lambda (d) (date- d (date day: 7)))
                                      render-calendar: render-calendar
+                                     intervaltype: 'week
                                      ))))))
 
    (GET "/month/:start-date.html" (start-date)
@@ -95,6 +96,7 @@
                                      render-calendar: render-calendar-table
                                      pre-start: (start-of-week start-date)
                                      post-end: (end-of-week (end-of-month start-date))
+                                     intervaltype: 'month
                                      ))))))
 
    ;; TODO export all events in interval
