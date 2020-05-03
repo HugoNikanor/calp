@@ -105,30 +105,40 @@
 
 ;; given a date, returns the date the first week of that year starts on.
 ;; @example
-;; (week-1-start #2020-04-01 mon)
+;; (week-1-start #2020-01-01 mon)
 ;; ⇒ 2019-12-30
 ;; @end example
 (define*-public (week-1-start d optional: (wkst sun))
   (let* ((ystart (start-of-year d))
-         (day-index (- (week-day ystart)
-                       wkst)))
-    (if (> 0 day-index)
-        (date+ ystart (date day: (abs day-index)))
+         (day-index (modulo (- (week-day ystart) wkst) 7)))
+    (if (> day-index 3)
+        (date+ ystart (date day: (- 7 day-index)))
         (date- ystart (date day: day-index)))))
 
-;; TODO v. 1 sometimes is calculated wrong.
 ;; (week-number #2020-01-01 mon) ; => 1
-;; (week-number #2019-12-31 mon) ; => 53 ; should be 1
-(define*-public (week-number date optional: (wkst sun))
-  (let* ((week day (floor/ (days-in-interval (week-1-start date wkst) date)
-                           7)))
-    (if (zero? day)
-        week (1+ week))))
+;; (week-number #2019-12-31 mon) ; => 1
+(define*-public (week-number d optional: (wkst sun))
+  ;; Calculating week number for starts of week was much simpler.
+  ;; We can both skip the special cases for Jan 1, 2 & 3. It also
+  ;; solved some weird bug that was here before.
 
+  (let ((d (start-of-week d wkst)))
+   (cond
+    [(and (= 12 (month d))
+          (memv (day d) '(29 30 31))
+          (< (year d) (year (date+ (start-of-week d wkst)
+                                   (date day: 3)))))
+     1]
+
+    [else
+     (let* ((w1-start (week-1-start d wkst))
+            (week day (floor/ (days-in-interval w1-start d)
+                              7)))
+       (1+ week))])))
 
 (define*-public (date-starting-week week-number d optional: (wkst sun))
   (date+ (week-1-start d wkst)
-         (date day: (* week-number 7))))
+         (date day: (* (1- week-number) 7))))
 
 
 (define*-public (week-day-name week-day-number optional: truncate-to
