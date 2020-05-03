@@ -558,11 +558,13 @@
           ,@(map (lambda (d) `(div (@ (class "column-head"))
                               ,(string-titlecase (week-day-name d 2))))
                  (weekday-list week-start))
-          ,@(let ((first (week-number (car events) week-start))
-                  (last (week-number (last events) week-start)))
+          ,@(let ((first (start-of-week (car events) week-start))
+                  (last (start-of-week (last events) week-start)))
               (map (lambda (v) `(div (@ (class "row-head")) ,v))
-                   ;; TODO this fails around new-year
-                   (iota (1+ (- last first)) first)))
+                   (map (lambda (d) (week-number d week-start))
+                        (stream->list
+                         (stream-take-while (lambda (s) (date<= s last))
+                                            (week-stream first))))))
           ,@(map td events
                  ))))
 
