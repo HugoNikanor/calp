@@ -45,7 +45,10 @@
            ;; (assert
            ;;  (= (1- (match:count match-object))
            ;;     (length intersect)))
+
+           ;; Those parameters which were present in the template uri
            ((lambda ,intersect
+               ;; Those that only are in the query string
                (lambda* (,@(unless (null? diff) `(#:key ,@diff #:allow-other-keys))
                          #:rest rest)
                  ,@body))

@@ -686,21 +686,21 @@
 
                           ,(btn id: "today-button"
                                 href: (string-append
-                                       "/today" (case intervaltype
-                                                  [(month) "/month"]
-                                                  [(week) "/week"]
-                                                  [else "/month"]))
+                                       "/today?" (case intervaltype
+                                                    [(month) "view=month"]
+                                                    [(week) "view=week"]))
                                 "idag"))
 
                      (div (@ (class "jump-to"))
-                          (form (@ (action ,(case intervaltype
-                                              [(month) "/month"]
-                                              [(week) "/week"]
-                                              [else "/month"])))
+                          (form (@ (action "/today"))
+                                (input (@ (type hidden)
+                                          (name "view")
+                                          (value ,(case intervaltype
+                                                    [(month week) => symbol->string]
+                                                    [else "month"]))))
                                 (input (@ (type date)
-                                          (name "start-date")
-                                          (value (date->string start-date "~1"))
-                                          ))
+                                          (name "date")
+                                          (value (date->string start-date "~1"))))
                                 ,(btn "➔"))))
 
                 (details (@ (open) (style "grid-area: cal"))

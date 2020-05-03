@@ -18,6 +18,7 @@
   :use-module (web request)
   :use-module (web response)
   :use-module (web uri)
+  :use-module (web http)
 
   :use-module (sxml simple)
 
@@ -99,13 +100,32 @@
                                      intervaltype: 'month
                                      ))))))
 
+   ;; Get specific page by query string instead of by path.
+   ;; Useful for <form>'s, since they always submit in this form, but also
+   ;; useful when javascript is disabled, since a link to "today" needs some
+   ;; form of evaluation when clicked.
+   (GET "/today" (view date)
+        (define location
+          (parse-header 'location
+                        (format #f "/~a/~a.html"
+                                (or view "month")
+                                (date->string
+                                 (cond [date => parse-iso-date]
+                                       [else (current-date)])
+                                 "~1"))) )
+
+        (return (build-response
+                 code: 302
+                 headers: `((location . ,location)))
+                ""))
+
    ;; TODO export all events in interval
    (GET "/calendar" (start end)
         (return '((content-type text/calendar))
                 (with-output-to-string
                   (lambda ()
-                   (ical-main (parse-iso-date start)
-                              (parse-iso-date end))))))
+                    (ical-main (parse-iso-date start)
+                               (parse-iso-date end))))))
 
    ;; TODO this fails if there's a period in the uid.
    (GET "/calendar/:uid{.*}.ics" (uid)
@@ -139,9 +159,7 @@
         ;; (sleep 1)
         (return '((content-type text/plain))
                 (string-append (number->string state) "\n")
-                (1+ state)))
-
-   ))
+                (1+ state)))))
 
 (define options
   '((port (value #t) (single-char #\p))
