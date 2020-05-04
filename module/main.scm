@@ -15,6 +15,7 @@
              (util time)
              (util app)
              (util config)
+             (util options)
              ((util hooks) :select (shutdown-hook))
 
              ((entry-points html)      :prefix      html-)
@@ -36,9 +37,49 @@
 
 
 (define options
-  '((statprof (value optional))
-    (repl (value optional))
-    (help (single-char #\h))))
+  '((statprof (value display-style)
+              (description (*TOP* "Run the program within Guile's built in statical"
+                                  "profiler. Display style is one of "
+                                  (b "flat") " and " (b "tree") ".")))
+    (repl (value address)
+          (description
+           (*TOP* "Start a Guile repl which can be connected to, defaults to the unix socket "
+                  (i "/run/user/${UID}/calp-${PID}") ", but it can be bound to any unix or "
+                  "TCP socket. ((@ (util app) current-app)) should return the current app context."
+                  (br)
+                  (b "Should NOT be used in production.")))
+          )
+    (help (single-char #\h)
+          (description "Print this help"))))
+
+(define module-help
+  '(*TOP* (br)
+    (center (b "Calp")) (br) (br)
+    "Usage: " (b "calp") " [ " (i flags) " ] " (i mode) " [ " (i "mode flags") " ]" (br)
+    (p (b "html") " reads calendar files from disk, and writes them to static HTML files.")
+
+    (p (b "terminal") " loads the calendars, and startrs an interactive terminal interface.")
+
+    "[UNTESTED]" (br)
+    (p (b "import") "s an calendar object into the database.")
+
+    (p (b "text") " formats and justifies what it's given on standard input, "
+       "and writes it to standard output. Similar to this text.")
+
+    (p (b "info") " does something?")
+
+    (p (b "ical") " loads the calendar database, and imideately "
+       "reserializes it back into ICAL format. "
+       "Useful for merging calendars.")
+
+    (p (b "benchmark") " does something else?")
+
+    (p (b "server") " starts an HTTP server which dynamicly loads and displays event. The "
+       (i "/month/{date}.html") " & " (i "/week/{date}.html") " runs the same output code as "
+       (b "html") ". While the " (i "/calendar/{uid}.ics") " uses the same code as " (b "ical") ".")
+
+    (hr) (br)
+    (center (b "Flags")) (br)))
 
 (define (ornull a b)
   (if (null? a)
@@ -46,9 +87,16 @@
 
 
 (define (wrapped-main args)
-  (define opts (getopt-long args options #:stop-at-first-non-option #t))
+  (define opts (getopt-long args (getopt-opt options) #:stop-at-first-non-option #t))
   (define stprof (option-ref opts 'statprof #f))
   (define repl (option-ref opts 'repl #f))
+
+  (awhen (option-ref opts 'help #f)
+         (display (sxml->ansi-text module-help)
+                  (current-output-port))
+         (print-arg-help options)
+         (throw 'return)
+         )
 
   (when stprof (statprof-start))
 
