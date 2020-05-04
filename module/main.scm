@@ -56,6 +56,10 @@
   '(*TOP* (br)
     (center (b "Calp")) (br) (br)
     "Usage: " (b "calp") " [ " (i flags) " ] " (i mode) " [ " (i "mode flags") " ]" (br)
+
+    (hr)
+    (center (b "Modes")) (br) (br)
+
     (p (b "html") " reads calendar files from disk, and writes them to static HTML files.")
 
     (p (b "terminal") " loads the calendars, and startrs an interactive terminal interface.")
