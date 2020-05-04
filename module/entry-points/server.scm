@@ -222,9 +222,15 @@
           addr port
           (getpid) (getcwd))
 
-  (run-server (make-make-routes)
-              'http
-              `(family: ,family
-                        port: ,port
-                        host: ,addr)
-              0))
+  (catch 'system-error
+    (lambda ()
+     (run-server (make-make-routes)
+                 'http
+                 `(family: ,family
+                           port: ,port
+                           host: ,addr)
+                 0))
+    ;; probably address already in use
+    (lambda (err proc fmt args errno)
+      (format (current-error-port) "~a: ~?~%"
+              proc fmt args))))
