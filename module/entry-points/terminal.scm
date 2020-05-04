@@ -6,21 +6,25 @@
   :use-module (datetime)
   :use-module (datetime util)
   :use-module (vulgar)
+  :use-module (util options)
   )
 
 (define options
-  '((date (value #t) (single-char #\d))
-    (file (value #t) (single-char #\f))))
+  '((date (value #t) (single-char #\d)
+          (description "Which date to start on."))
+    (help (single-char #\t) (description "Print this help."))
+    ))
 
 (define (main args)
-  (define opts (getopt-long args options))
-  (define-values (calendars events)
-    (cond [(option-ref opts 'file #f) => (compose load-calendars list)]
-          [else (load-calendars)]))
+  (define opts (getopt-long args (getopt-opt options)))
+
+  (when (option-ref opts 'help #f)
+    (print-arg-help options)
+    (throw 'return))
 
   (let ((date (or (and=> (option-ref opts 'date #f) parse-freeform-date)
                   (current-date))))
     ;; (format (current-error-port) "len(events) = ~a~%" (stream-length events))
     (with-vulgar
-     (lambda () (main-loop date events))))
+     (lambda () (main-loop date))))
 )

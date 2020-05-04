@@ -8,6 +8,7 @@
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
   #:use-module (util)
+  #:use-module (util app)
   #:use-module (vulgar)
   #:use-module (vulgar info)
   #:use-module (vulgar color)
@@ -69,7 +70,10 @@
 (define (displayln a)
   (display a) (newline))
 
-(define (main-loop date event-stream)
+(define-method (main-loop date)
+
+  (define event-stream (getf 'event-set))
+
   (define cur-event 0)
 
   (define-values (height width) (get-terminal-size))
