@@ -11,9 +11,11 @@
     (file (value #t) (single-char #\f))
     ))
 
-(define (main opts)
- (for-each (lambda (l) (display l) (newline))
-           (flow-text
-            (with-input-from-port (open-input-port (option-ref opts 'file "-"))
-              (@ (ice-9 rdelim) read-string))
-            #:width (or (string->number (option-ref opts 'width "")) 70))))
+(define (main args)
+  (define opts (getopt-long args options))
+
+  (for-each (lambda (l) (display l) (newline))
+            (flow-text
+             (with-input-from-port (open-input-port (option-ref opts 'file "-"))
+               (@ (ice-9 rdelim) read-string))
+             #:width (or (string->number (option-ref opts 'width "")) 70))))
