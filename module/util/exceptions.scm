@@ -43,11 +43,12 @@
 (define-public warning-handler
   (make-parameter
    (lambda (fmt . args)
-     (format (current-error-port)
-             "WARNING: ~?~%" fmt args))))
+     (format #f "WARNING: ~?~%" fmt args))))
 
 
 ;; forwards return from warning-hander. By default returns an unspecified value,
 ;; but instances are free to provide a proper return value and use it.
 (define-public (warning fmt . args)
-  (apply (warning-handler) fmt (or args '())))
+  (display (apply (warning-handler) fmt (or args '()))
+           (current-error-port)))
+

@@ -374,6 +374,12 @@
                          it))))
          "."))
 
+(define (format-description ev str)
+  (catch #t (lambda () ((get-config 'description-filter) ev str))
+    (lambda (err . args)
+      (warning "~a on formatting description, ~s" err args)
+      str)))
+
 
 ;; For sidebar, just text
 (define* (fmt-single-event ev
@@ -401,10 +407,7 @@
                            ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                         (attr ev 'LOCATION)))))
              ,(and=> (attr ev 'DESCRIPTION)
-                     (lambda (str) (catch #t (lambda () ((get-config 'description-filter) ev str))
-                                (lambda (err . args)
-                                  (warning "~a on formatting description, ~s" err args)
-                                  str))))
+                     (lambda (str) (format-description ev str)))
              ,(awhen (attr ev 'RRULE)
                      (format-recurrence-rule ev))
              ,(when (attr ev 'LAST-MODIFIED)

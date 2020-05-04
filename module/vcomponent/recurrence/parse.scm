@@ -9,6 +9,7 @@
   #:use-module (srfi srfi-26)
   #:use-module (vcomponent recurrence internal)
   #:use-module (util)
+  #:use-module (util exceptions)
   #:use-module (ice-9 match))
 
 
@@ -52,10 +53,11 @@
        ,@(map (match-lambda
                 ((key guard '=> body ...)
                  `((,key) (if (not ,guard)
-                              (begin (warning (quote ,key)
-                                              (quote ,guard)
-                                              (list ,@guard)
-                                              )
+                              (begin (warning
+                                      "RRULE guard failed for key ~a~%    guard: ~a : ~s"
+                                      ,key ,guard (map (lambda (o) (if (procedure? o)
+                                                                  (procedure-name o)
+                                                                  o)) ,@guard))
                                      ,@else-clause)
                               (begin ,@body))))
                 ((key body ...)
@@ -63,13 +65,6 @@
                 (('else body ...)
                  `(else ,@body)))
               cases))))
-
-(define (warning key guard extra)
-  (display (format #f "Warning RRULE guard failed for key ~a~%    guard: ~a : ~s~%"
-                   key guard (map (lambda (o) (if (procedure? o)
-                                             (procedure-name o)
-                                             o)) extra))
-           (current-error-port)))
 
 
 ;; RFC 5545, Section 3.3.10. Recurrence Rule, states that the UNTIL value MUST have
