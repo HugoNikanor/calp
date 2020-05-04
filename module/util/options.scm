@@ -57,6 +57,8 @@
                         "\n\n")]
     [(b) (string-append (esc 'bold) (string-concatenate (map sxml->ansi-text body)) (esc))]
     [(i em) (string-append (esc 'italic) (string-concatenate (map sxml->ansi-text body)) (esc))]
+    ;; NOOP, but for future use.
+    [(code) (string-concatenate (map sxml->ansi-text body))]
     [(blockquote) (string-concatenate
                    (map (lambda (line) (sxml->ansi-text `(group (ws (@ (minwidth 4))) ,line (br))))
                         (flow-text
