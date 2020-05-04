@@ -2,6 +2,7 @@
   :use-module (util)
   :use-module (util app)
   :use-module (util config)
+  :use-module (util options)
 
   :use-module (srfi srfi-1)
 
@@ -162,15 +163,24 @@
                 (1+ state)))))
 
 (define options
-  '((port (value #t) (single-char #\p))
-    (addr (value #t))
+  '((port (value #t) (single-char #\p)
+          (description (*TOP* "Bind to TCP port, defaults to " (i 8080) ".")))
+    (addr (value #t)
+          (description (*TOP* "Address to use, defaults to " (i "0.0.0.0")
+                              " for IPv4, and " (i "::") " for IPv6."))
+          )
     ;; TODO numbers as single-char seems to not work.
-    (six (single-char #\6))
-    (four (single-char #\4))))
+    (six (single-char #\6)
+         (description "Use IPv6."))
+    (four (single-char #\4)
+          (description "Use IPv4."))
+    (help (single-char #\h)
+          (description "Print this help."))))
+
 
 (define-public (main args)
 
-  (define opts (getopt-long args options))
+  (define opts (getopt-long args (getopt-opt options)))
   (define port (string->number (option-ref opts 'port "8080")))
   (define addr (option-ref opts 'addr #f))
   (define family
@@ -179,6 +189,10 @@
           [(and addr (string-contains addr ":")) AF_INET6]
           [(and addr (string-contains addr ".")) AF_INET]
           [else AF_INET6]))
+
+  (when (option-ref opts 'help #f)
+    (print-arg-help options)
+    (throw 'return))
 
   ;; update address if it was left blank. A bit clumsy since
   ;; @var{addr} & @var{family} depend on each other.
