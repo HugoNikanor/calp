@@ -22,7 +22,6 @@
              ((entry-points terminal)  :prefix  terminal-)
              ((entry-points import)    :prefix    import-)
              ((entry-points text)      :prefix      text-)
-             ((entry-points info)      :prefix      info-)
              ((entry-points ical)      :prefix      ical-)
              ((entry-points benchmark) :prefix benchmark-)
 
@@ -70,13 +69,11 @@
     (p (b "text") " formats and justifies what it's given on standard input, "
        "and writes it to standard output. Similar to this text.")
 
-    (p (b "info") " does something?")
-
     (p (b "ical") " loads the calendar database, and imideately "
        "reserializes it back into ICAL format. "
        "Useful for merging calendars.")
 
-    (p (b "benchmark") " does something else?")
+    (p (b "benchmark") " does something?")
 
     (p (b "server") " starts an HTTP server which dynamicly loads and displays event. The "
        (i "/month/{date}.html") " & " (i "/week/{date}.html") " runs the same output code as "
@@ -125,7 +122,6 @@
        ((term)   terminal-main)
        ((import)   import-main)
        ((text)       text-main)
-       ((info)       info-main)
        ((ical)       ical-main)
        ((server)   server-main)
        ((benchmark) benchmark-main)
