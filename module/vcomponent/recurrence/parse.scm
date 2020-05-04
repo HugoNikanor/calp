@@ -55,9 +55,12 @@
                  `((,key) (if (not ,guard)
                               (begin (warning
                                       "RRULE guard failed for key ~a~%    guard: ~a : ~s"
-                                      ,key ,guard (map (lambda (o) (if (procedure? o)
-                                                                  (procedure-name o)
-                                                                  o)) ,@guard))
+                                      (quote ,key)
+                                      (quote ,guard)
+                                      (map (lambda (o) (if (procedure? o)
+                                                      (procedure-name o)
+                                                      o))
+                                           (list ,@guard)))
                                      ,@else-clause)
                               (begin ,@body))))
                 ((key body ...)
