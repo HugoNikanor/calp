@@ -355,8 +355,7 @@ row ~a	column ~a	ctx = ~a
                 ;; TODO Also make this grouping when reading in a whole
                 ;; icalendar-file (one with multiple events)
                 (case (length events)
-                  [(0) (format (current-error-port)
-                           "WARNING: No events in component~%~a~%"
+                  [(0) (warning "No events in component~%~a"
                            (attr item 'X-HNH-FILENAME))]
                   [(1)
                    (let ((child (car events)))

@@ -24,7 +24,6 @@
 
   (let ((date (or (and=> (option-ref opts 'date #f) parse-freeform-date)
                   (current-date))))
-    ;; (format (current-error-port) "len(events) = ~a~%" (stream-length events))
     (with-vulgar
      (lambda () (main-loop date))))
 )

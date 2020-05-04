@@ -67,10 +67,9 @@
       (lambda (err caller fmt args call-args)
         (define fallback-string
           (with-output-to-string (lambda () (display value))))
-        (format (current-error-port)
-                "WARNING: key = ~a, caller = ~s, call-args = ~s~%~k~%Falling back to ~s~%"
-                key caller call-args fmt args
-                fallback-string)
+        (warning "key = ~a, caller = ~s, call-args = ~s~%~k~%Falling back to ~s"
+                 key caller call-args fmt args
+                 fallback-string)
         fallback-string
         )))
 

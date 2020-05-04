@@ -7,6 +7,7 @@
   #:use-module (ice-9 match)
 
   #:use-module (util)
+  #:use-module (util exceptions)
   #:use-module (vcomponent base)
   #:use-module (vcomponent recurrence internal)
   #:use-module (vcomponent recurrence parse)
@@ -163,10 +164,8 @@
                ;; just mention the current part. Handle this
                stream-null))))
     (lambda (err . args)
-      (format (current-error-port)
-              "\x1b[0;31mError\x1b[m while parsing recurrence rule (ignoring and continuing)~%~a ~s~%~a~%~%"
-              err args
-              (attr event 'X-HNH-FILENAME))
+      (warning "while parsing recurrence rule ~%~a ~s~%~a"
+               err args (attr event 'X-HNH-FILENAME))
       (stream ; event
        )
       )))
