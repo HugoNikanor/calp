@@ -9,9 +9,21 @@
 (define-public (lines str) (string-split str #\newline))
 (define-public (unlines list) (string-join list "\n" 'infix))
 
+;; Alternative string-length whith counts ANSI escapes as 0-length.
+;; NOTE Some way to opt in and out of different features would be nice.
+(define (true-string-length word)
+  (let loop ((chars (string->list word)))
+    (if (null? chars)
+        0
+        (let ((char (car chars)))
+          (if (eqv? #\escape char)
+              (loop (cdr (memv #\m chars)))
+              (1+ (loop (cdr chars))))))))
+
+
 ;; (str) -> str
 (define* (justify-line-helper words #:key (width 70))
-  (let* ((phrase-length (string-length (string-concatenate/shared words)))
+  (let* ((phrase-length (true-string-length (string-concatenate/shared words)))
          (needed-spaces (- width phrase-length))
          (slots (1- (length words)))
          (space-list
@@ -26,6 +38,7 @@
             (let ((f #t)) (lambda _ (mod/r! f not)))))))
 
 
+
 ;; Splits and justifies the given line to @var{#:width}.
 ;; Returns a list of justified strings.
 ;; str -> (str)
@@ -34,7 +47,7 @@
     (let* ((head tail (span
                        (let ((w 0))
                          (lambda (word)    ; Take words until we are above the limit.
-                           (< (mod/r! w = (+ 1 (string-length word)))
+                           (< (mod/r! w = (+ 1 (true-string-length word)))
                               width)))
                        lst)))
       (cond ((null? tail) (list (unwords head))) ; Don't justify last line.
