@@ -15,6 +15,7 @@
              (util time)
              (util app)
              (util config)
+             ((util hooks) :select (shutdown-hook))
 
              ((entry-points html)      :prefix      html-)
              ((entry-points terminal)  :prefix  terminal-)
@@ -97,7 +98,10 @@
   (report-time! "Program start")
   ;; ((@ (util config) print-configuration-documentation))
   (with-throw-handler #t
-    (lambda () (wrapped-main args))
+    (lambda () (dynamic-wind (lambda () 'noop)
+                        (lambda () (wrapped-main args))
+                        (lambda () (run-hook shutdown-hook))
+                        ))
     (lambda (err . args)
       (define stack (make-stack #t))
       (format

@@ -1,6 +1,8 @@
 (define-module (repl)
   :use-module (system repl server)
-  :use-module (ice-9 regex))
+  :use-module (ice-9 regex)
+  :use-module ((util hooks) :select (shutdown-hook))
+  )
 
 (define-public (runtime-dir)
   (or (getenv "XDG_RUNTIME_DIR")
@@ -16,8 +18,11 @@
                ;; IPv6 is as of Gulie 2.2 not supported by make-tcp-server-socket.
                ;; This might be the same problem as I encountered in my html server.
                [else 'UNIX])
-     ;; TODO created unix sockets are newer cleaned up
      [(UNIX)
+      (add-hook! shutdown-hook (lambda () (catch 'system-error (lambda () (delete-file address))
+                                       (lambda (err proc fmt . args)
+                                         ;; TODO warn here
+                                         err))))
       (make-unix-domain-server-socket path: address)]
      [(IPv4) (apply (case-lambda
                       [() (error "Empty address?")]
