@@ -20,6 +20,11 @@ For popups to work the JS library Tipped is also needed, which brings a transiti
 
 The zoneinfo data [TZ] is in the public domain [TZLIC].
 
+Standards and specifications
+----------------------------
+- RFC 5545
+- Vdir Storage Format [VDIR]
+
 Building
 --------
 Since guile is primarily a scripting language no explicit compilation step is required. Just run module/main.scm and the appropriate modules will be compiled (guile will tell you what it's doing). For building this README, run
@@ -38,3 +43,4 @@ References
 [JQUERY] https://github.com/jquery/jquery/blob/master/LICENSE.txt
 [TZ] https://github.com/eggert/tz
 [TZLIC] https://github.com/eggert/tz/blob/master/LICENSE
+[VDIR] http://vdirsyncer.pimutils.org/en/latest/vdir.html
