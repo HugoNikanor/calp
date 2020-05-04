@@ -120,13 +120,15 @@
                  headers: `((location . ,location)))
                 ""))
 
-   ;; TODO export all events in interval
    (GET "/calendar" (start end)
         (return '((content-type text/calendar))
                 (with-output-to-string
                   (lambda ()
-                    (ical-main (parse-iso-date start)
-                               (parse-iso-date end))))))
+                    (if (or start end)
+                        (print-events-in-interval
+                         (aif start (parse-iso-date it) (current-date))
+                         (aif end (parse-iso-date it) (current-date)))
+                        (print-all-events))))))
 
    ;; TODO this fails if there's a period in the uid.
    (GET "/calendar/:uid{.*}.ics" (uid)

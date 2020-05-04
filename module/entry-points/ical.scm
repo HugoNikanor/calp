@@ -30,4 +30,4 @@
     (print-arg-help opt-spec)
     (throw 'return))
 
-  (ical-main start end))
+  (print-events-in-interval start end))

@@ -2,6 +2,7 @@
   :use-module (ice-9 format)
   :use-module (ice-9 match)
   :use-module (util)
+  :use-module (util exceptions)
   :use-module (util app)
   :use-module (vcomponent)
   :use-module (vcomponent datetime)
@@ -152,6 +153,7 @@
   (add-child! cal event)
 
   (awhen (prop (attr* event 'DTSTART) 'TZID)
+         ;; TODO this is broken
          (add-child! cal (zoneinfo->vtimezone (getf 'zoneinfo) it)))
 
   (unless (attr event 'UID)
@@ -209,8 +211,16 @@ CALSCALE:GREGORIAN\r
   (print-footer))
 
 
-;; TODO add support for running without a range limiter, emiting all objects.
-(define-public (ical-main start end)
+(define-method (print-all-events)
+  (print-components-with-fake-parent
+   (append (getf 'fixed-events)
+           ;; TODO RECCURENCE-ID exceptions
+           ;; We just dump all repeating objects, since it's much cheaper to do
+           ;; it this way than to actually figure out which are applicable for
+           ;; the given date range.
+           (getf 'repeating-events))))
+
+(define-method (print-events-in-interval start end)
   (print-components-with-fake-parent
    (append (fixed-events-in-range start end)
            ;; TODO RECCURENCE-ID exceptions
