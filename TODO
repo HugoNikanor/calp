@@ -20,15 +20,6 @@ Det är i princip trivialt att lägga till i "recurrence set", se
 kommentarer i relevant fil. Dock har jag aldrig sätt ett event
 faktiskt använda dem.
 
-Konfiguration
-=============
-
-Hantera saknad eller tom konfiguration
---------------------------------------
-
-Bättre felmedelanden vid saknad config
---------------------------------------
-
 Terminal
 ========
 
