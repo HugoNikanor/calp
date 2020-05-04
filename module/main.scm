@@ -99,24 +99,24 @@
   ;; ((@ (util config) print-configuration-documentation))
   (with-throw-handler #t
     (lambda () (dynamic-wind (lambda () 'noop)
-                        (lambda () (wrapped-main args))
+                        (lambda () (catch 'return (lambda () (wrapped-main args)) values))
                         (lambda () (run-hook shutdown-hook))
                         ))
     (lambda (err . args)
       (define stack (make-stack #t))
-      (format
-       (current-error-port)
-       "bindings = (~a)~%"
-       (with-output-to-string
-         (lambda ()
-           (let loop ((frame (stack-ref stack 0)))
-             (when frame
-               (format #t "~{~a~^ ~}" (map binding-name (frame-bindings frame)))
-               (let ((event (and=> (frame-lookup-binding frame 'event)
-                                   binding-ref)))
-                 (when event
-                   (format (current-error-port) "event = ~a~%" event)
-                   ((@ (vcomponent output) serialize-vcomponent)
-                    event (current-error-port))))
+      (with-output-to-port (current-error-port)
+        (lambda ()
+          (format #t "bindings = ")
+          (let loop ((frame (stack-ref stack 0)))
+            (when frame
+              (format #t "~{~a~^ ~}" (map binding-name (frame-bindings frame)))
+              (let ((event (and=> (frame-lookup-binding frame 'event)
+                                  binding-ref)))
+                (when event
+                  (format (current-error-port) "event = ~a~%" event)
+                  ((@ (vcomponent output) serialize-vcomponent)
+                   event (current-error-port))))
 
-               (loop (frame-previous frame))))))))))
+              (loop (frame-previous frame))))
+          (format #t "~%")
+          )))))
