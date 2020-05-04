@@ -186,6 +186,15 @@ window.onload = function () {
         }
     }
 
+    /* Popup script replaces need for anchors to events.
+       On mobile they also have the problem that they make
+       the whole page scroll there.
+    */
+    for (let el of document.getElementsByClassName("event")) {
+        el.parentElement.removeAttribute("href");
+
+    }
+
     document.onkeydown = function (evt) {
 	evt = evt || window.event;
         if (! evt.key) return;
