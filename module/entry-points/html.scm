@@ -4,6 +4,7 @@
   :use-module (util)
   :use-module (util time)
   :use-module (util config)
+  :use-module (util options)
   ;; :use-module (vcomponent)
   :use-module (datetime)
   :use-module (datetime util)
@@ -12,23 +13,45 @@
 
 
 (define opt-spec
-  `((from (value #t) (single-char #\F))
-    (to (value #t) (single-char #\T))
-    (file (value #t) (single-char #\f))
-    (count (value #t))
+  `((from (value #t) (single-char #\F)
+          (description "Start date of output.")
+          )
+    (count (value #t)
+           (description (*TOP* "How many pages should be rendered."
+                               "If --style=" (b "week") " and --from=" (b "2020-04-27")
+                               " then --count=" (b 4) " would render the four pages "
+                               "2020-04-27, 2020-05-04, 2020-05-11, and 2020-05-25. "
+                               "Defaults to 12 to give a whole year when --style=" (b "month") "."
+                               )))
+
     (style (value #t) (predicate ,(lambda (v) (memv (string->symbol v)
-                                            '(wide week unchunked table)))))))
+                                            '(wide week table))))
+           (description (*TOP* "How the body of the HTML page should be layed out. "
+                               (br) (b "week")
+                               " gives a horizontally scrolling page with 7 elements, "
+                               "where each has events graphically laid out hour by hour."
+                               (br) (b "month")
+                               " gives a month in overview as a table. Each block contains "
+                               "the events for the given day, in order of start time. They are "
+                               "however not graphically sized. "
+                               (br) (b "wide")
+                               " is the same as week, but gives a full month."))
+           )
+
+    (help (single-char #\h) (description "Print this help."))))
 
 (define (main args)
-  (define opts (getopt-long args opt-spec))
+  (define opts (getopt-long args (getopt-opt opt-spec)))
   (define start (cond [(option-ref opts 'from #f) => parse-freeform-date]
                       [else (start-of-month (current-date))]))
-  (define end (cond [(option-ref opts 'to  #f) => parse-freeform-date]
-                    [else (date+ start (date month: 1)) ]))
-
   (define count (string->number (option-ref opts 'count "12")))
 
   (define style (string->symbol (option-ref opts 'style "wide")))
+
+  (when (option-ref opts 'help #f)
+    (print-arg-help opt-spec)
+    (throw 'return)
+    )
 
   (case style
     [(wide)                             ; previously `chunked'
