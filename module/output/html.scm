@@ -690,7 +690,8 @@
                                 href: (string-append
                                        "/today?" (case intervaltype
                                                     [(month) "view=month"]
-                                                    [(week) "view=week"]))
+                                                    [(week) "view=week"]
+                                                    [else ""]))
                                 "idag"))
 
                      (div (@ (class "jump-to"))
