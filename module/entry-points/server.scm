@@ -171,7 +171,7 @@
 (define-public (main args)
 
   (define opts (getopt-long args options))
-  (define port (option-ref opts 'port 8080))
+  (define port (string->number (option-ref opts 'port "8080")))
   (define addr (option-ref opts 'addr #f))
   (define family
     (cond [(option-ref opts 'six  #f) AF_INET6]
