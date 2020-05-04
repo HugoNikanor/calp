@@ -44,20 +44,29 @@
                 [(invert) 7]
                 [else 4]))))
 
+(use-modules (texinfo string-utils))
+
+;; NOTE width is hard coded to 70 chars
 (define* (ontree tag body optional: (args '()))
   (case tag
     [(*TOP* group) (string-concatenate (map sxml->ansi-text body))]
+    [(center) (center-string (string-concatenate (map sxml->ansi-text body)) 70)]
+    [(p) (string-append (string-join (flow-text (string-concatenate (map sxml->ansi-text body))
+                                                width: 70)
+                                     "\n")
+                        "\n\n")]
     [(b) (string-append (esc 'bold) (string-concatenate (map sxml->ansi-text body)) (esc))]
     [(i em) (string-append (esc 'italic) (string-concatenate (map sxml->ansi-text body)) (esc))]
     [(blockquote) (string-concatenate
                    (map (lambda (line) (sxml->ansi-text `(group (ws (@ (minwidth 4))) ,line (br))))
                         (flow-text
                          (string-concatenate (map sxml->ansi-text body))
-                         width: 50)))]
+                         width: 66)))]
     [(ws) (make-string  (aif (assoc-ref args 'minwidth)
                              (car it) 1)
                         #\space)]
     [(br) "\n"]
+    [(hr) (string-append "     " (make-string 60 #\_) "     \n")]
     [else (string-append (esc 'invert) (string-concatenate (map sxml->ansi-text body)) (esc))]
     )
   )
@@ -78,7 +87,7 @@
     [any (leaf-callback any)]))
 
 
-(define (sxml->ansi-text tree)
+(define-public (sxml->ansi-text tree)
   ((parse-tree ontree onleaf) tree))
 
 (define-public (format-arg-help options)
