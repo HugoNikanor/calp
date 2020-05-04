@@ -63,6 +63,11 @@
 (define-method (make-make-routes)
   (make-routes
 
+   ;; Manual redirect to not reserve root.
+   (GET "/" ()
+        (return '((content-type text/html))
+                (sxml->html-string '(a (@ (href "/today")) "Gå till idag"))))
+
    (GET "/week/:start-date.html" (start-date)
         (let* ((start-date
                 (start-of-week (parse-iso-date start-date)
