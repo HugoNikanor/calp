@@ -30,7 +30,7 @@
                                (br) (b "week")
                                " gives a horizontally scrolling page with 7 elements, "
                                "where each has events graphically laid out hour by hour."
-                               (br) (b "month")
+                               (br) (b "table")
                                " gives a month in overview as a table. Each block contains "
                                "the events for the given day, in order of start time. They are "
                                "however not graphically sized. "
