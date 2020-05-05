@@ -8,9 +8,15 @@
 (define-public (getopt-opt options)
   (map (lambda (optline)
          (cons (car optline)
-               (lset-intersection (lambda (a b) (eqv? b (car a)))
-                                  (cdr optline)
-                                  '(single-char required? value predicate))))
+               (map (lambda (opt-field)
+                      (cons (car opt-field)
+                            (cond [(and (eq? 'value (car opt-field))
+                                        (symbol? (cadr opt-field)))
+                                   '(optional)]
+                                  [else (cdr opt-field)])))
+                    (lset-intersection (lambda (a b) (eqv? b (car a)))
+                                       (cdr optline)
+                                       '(single-char required? value predicate)))))
        options))
 
 
