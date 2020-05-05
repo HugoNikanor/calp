@@ -188,7 +188,7 @@
         [else (error "Object not a date, time, or datetime object ~a" date/-time)]))
 
 (define-public (as-time date/-time)
-  (cond [(datetime? date/-time) (get-time% (get-datetime date/-time))]
+  (cond [(datetime? date/-time) (get-time% date/-time)]
         [(date? date/-time) (time)]
         [(time? date/-time) date/-time]
         [else (error "Object not a date, time, or datetime object ~a" date/-time)]))
@@ -219,10 +219,8 @@
        (= (second a) (second b))))
 
 (define-public (datetime= a b)
-  (let ((a (get-datetime a))
-        (b (get-datetime b)))
-   (and (date= (get-date a) (get-date b))
-        (time= (get-time% a) (get-time% b)))))
+  (and (date= (get-date a) (get-date b))
+       (time= (get-time% a) (get-time% b))))
 
 (define-many define-public
   (date=?) date=
@@ -276,18 +274,14 @@
       (time< a b)))
 
 (define-public (datetime< a b)
-  (let ((a (get-datetime a))
-        (b (get-datetime b)))
-    (if (date= (get-date a) (get-date b))
-        (time< (get-time% a) (get-time% b))
-        (date< (get-date a) (get-date b)))))
+  (if (date= (get-date a) (get-date b))
+      (time< (get-time% a) (get-time% b))
+      (date< (get-date a) (get-date b))))
 
 (define-public (datetime<= a b)
-  (let ((a (get-datetime a))
-        (b (get-datetime b)))
-   (if (date= (get-date a) (get-date b))
-       (time<= (get-time% a) (get-time% b))
-       (date<= (get-date a) (get-date b)))))
+  (if (date= (get-date a) (get-date b))
+      (time<= (get-time% a) (get-time% b))
+      (date<= (get-date a) (get-date b))))
 
 (define-public (date/-time< a b)
   (datetime< (as-datetime a) (as-datetime b)))
@@ -560,15 +554,13 @@
 ;; NOTE that base is re-normalized, but change isn't. This is due to base
 ;; hopefully being a real date, but change just being a difference.
 (define-public (datetime+ base change)
-  (let (; (base (get-datetime base))
-        )
-   (let* ((time overflow (time+ (get-time% base) (get-time% change))))
-     (datetime date: (date+ (get-date base)
-                            (get-date change)
-                            (date day: overflow))
-               time: time
-               tz: (get-timezone base)
-               ))))
+  (let* ((time overflow (time+ (get-time% base) (get-time% change))))
+    (datetime date: (date+ (get-date base)
+                           (get-date change)
+                           (date day: overflow))
+              time: time
+              tz: (get-timezone base)
+              )))
 
 ;; (define (datetime->srfi-19-date date)
 ;;   ((@ (srfi srfi-19) make-date)
@@ -658,16 +650,14 @@
                            (day = (- 1)))))
 
 
-(define-public (datetime-difference end* start*)
+(define-public (datetime-difference end start)
   ;; NOTE Makes both start and end datetimes in the current local time.
-  (let ((end   (get-datetime end*))
-        (start (get-datetime start*)))
-   (let* ((fixed-time overflow (time- (get-time% end)
-                                      (get-time% start))))
-     (datetime date: (date-difference (date- (get-date end)
-                                             (date day: overflow))
-                                      (get-date start))
-               time: fixed-time))))
+  (let* ((fixed-time overflow (time- (get-time% end)
+                                     (get-time% start))))
+    (datetime date: (date-difference (date- (get-date end)
+                                            (date day: overflow))
+                                     (get-date start))
+              time: fixed-time)))
 
 
 

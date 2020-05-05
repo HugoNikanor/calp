@@ -118,10 +118,18 @@
        (let ((type (and=> (prop vline 'VALUE) car)))
          (if (or (and=> type (cut string=? <> "DATE-TIME"))
                  (string-contains (value vline) "T"))
-             (set! (value vline) (parse-ics-datetime (value vline) tz)
+             ;; TODO TODO TODO
+             ;; we move all parsed datetimes to local time here. This
+             ;; gives a MASSIVE performance boost over calling get-datetime
+             ;; in all procedures which want to guarantee local time for proper calculations.
+             ;; 20s vs 70s runtime on my laptop.
+             ;; We sohuld however save the original datetime in a file like X-HNH-DTSTART,
+             ;; since we don't want to lose that information.
+             (set! (value vline) (get-datetime (parse-ics-datetime (value vline) tz))
                    (prop vline 'VALUE) 'DATE-TIME)
              (set! (value vline) (parse-ics-date (value vline))
-                   (prop vline 'VALUE) 'DATE))))]))
+                   (prop vline 'VALUE) 'DATE)))
+       )]))
 
 ;; Reads a vcomponent from the given port.
 (define-public (parse-calendar port)

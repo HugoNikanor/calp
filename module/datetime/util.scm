@@ -157,9 +157,8 @@
         str)))
 
 (define*-public (datetime->string datetime optional: (fmt "~Y-~m-~dT~H:~M:~S") key: allow-unknown?)
-  (define dt (get-datetime datetime))
-  (define date (get-date dt))
-  (define time ((@ (datetime) get-time%) dt))
+  (define date (get-date datetime))
+  (define time ((@ (datetime) get-time%) datetime))
   (with-output-to-string
     (lambda ()
       (fold (lambda (token state)
