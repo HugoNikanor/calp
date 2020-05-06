@@ -66,4 +66,7 @@
     [(table)
      (html-table-main count start)]
     [else
-     (error "Unknown html style: ~a" style)]))
+     (error "Unknown html style: ~a" style)])
+
+  ((@ (util time) report-time!) "all done")
+  )

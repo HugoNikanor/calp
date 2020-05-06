@@ -783,6 +783,8 @@
   (define calendars (getf 'calendars))
   (define events (getf 'event-set))
 
+  ((@ (util time) report-time!) "html start")
+
   ;; TODO This still doesn't account for PWD, file existing but is of
   ;; wrong type, html directory existing but static symlink missing,
   ;; static being a different file type, and probably something else
