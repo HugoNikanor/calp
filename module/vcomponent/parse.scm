@@ -54,10 +54,6 @@
   ;; (set-param-table! ctx (make-hash-table))
   )
 
-(define-macro (with-vline-tz object . body)
-  `(let-env ((TZ (and=> (prop ,object 'TZID) car)))
-            ,@body))
-
 
 
 
