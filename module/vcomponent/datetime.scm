@@ -66,9 +66,9 @@ Event must have the DTSTART and DTEND attribute set."
                        (date-max start-date
                                  (attr e 'DTSTART)))
       (datetime-difference (datetime-min (datetime date: (date+ end-date (date day: 1)))
-                                         (get-datetime (attr e 'DTEND)))
+                                         (attr e 'DTEND))
                            (datetime-max (datetime date: start-date)
-                                         (get-datetime (attr e 'DTSTART))))))
+                                         (attr e 'DTSTART)))))
 
 ;; Returns the length of the part of @var{e} which is within the day
 ;; starting at the time @var{start-of-day}.
@@ -76,8 +76,8 @@ Event must have the DTSTART and DTEND attribute set."
 ;; to a datetime to allow for more explicit TZ handling?
 (define-public (event-length/day date e)
   ;; TODO date= > 2 elements
-  (let ((start (get-datetime (attr e 'DTSTART)))
-        (end (get-datetime (attr e 'DTEND))))
+  (let ((start (attr e 'DTSTART))
+        (end (attr e 'DTEND)))
     (cond [(and (date= (as-date start)
                        (as-date end))
                 (date= (as-date start)

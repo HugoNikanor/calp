@@ -145,12 +145,17 @@
 
              ,(fmt-single-event ev))))
 
+(define (->string a)
+  (format #f "~a" a))
+
 (define (data-attributes event)
   (hash-map->list
    (match-lambda*
+     [(key (vlines ...)) (list (string->symbol (format #f "data-~a" key))
+                               (string-join (map (compose ->string value) vlines) ","))]
      [(key vline)
       (list (string->symbol (format #f "data-~a" key))
-            (format #f "~a" (value vline)))]
+            (->string (value vline)))]
      [_ (error "What are you doing‽")])
    (attributes event)))
 
@@ -234,12 +239,12 @@
 
   (make-block
    ev `((class
-          ,(when (date<? (as-date (get-datetime (attr ev 'DTSTART))) date)
+          ,(when (date<? (as-date (attr ev 'DTSTART)) date)
              " continued")
           ;; TODO all day events usually have the day after as DTEND.
           ;; So a whole day event the 6 june would have a DTEND of the
           ;; 7 june.
-          ,(when (date<? date (as-date (get-datetime (attr ev 'DTEND))))
+          ,(when (date<? date (as-date (attr ev 'DTEND)))
              " continuing"))
         (style ,style))))
 
@@ -354,7 +359,7 @@
          ,((compose (@ (vcomponent recurrence display) format-recurrence-rule)
                     (@ (vcomponent recurrence parse) parse-recurrence-rule))
            (attr ev 'RRULE))
-         ,@(awhen (attr ev 'EXDATE)
+         ,@(awhen (attr* ev 'EXDATE)
                   (list
                    ", undantaget "
                    (add-enumeration-punctuation
@@ -371,7 +376,7 @@
                                       '(HOURLY MINUTELY SECONDLY))
                                    (datetime->string d "~e ~b ~k:~M")
                                    (datetime->string d "~e ~b"))))
-                         it))))
+                         (map value it)))))
          "."))
 
 (define (format-description ev str)
@@ -782,6 +787,8 @@
 
   (define calendars (getf 'calendars))
   (define events (getf 'event-set))
+
+  ((@ (util time) report-time!) "html start")
 
   ;; TODO This still doesn't account for PWD, file existing but is of
   ;; wrong type, html directory existing but static symlink missing,

@@ -2,7 +2,8 @@
   #:use-module (srfi srfi-1)
   #:use-module (util)
   #:export (throw-returnable
-            catch-multiple))
+            catch-multiple
+            assert))
 
 (define-syntax-rule (throw-returnable symb args ...)
   (call/cc (lambda (cont) (throw symb cont args ...))))
@@ -52,3 +53,21 @@
   (display (apply (warning-handler) fmt (or args '()))
            (current-error-port)))
 
+
+(define (prettify-tree tree)
+  (cond [(null? tree) '()]
+        [(pair? tree) (cons (prettify-tree (car tree))
+                            (prettify-tree (cdr tree)))]
+        [(list? tree) (map prettify-tree tree)]
+        [(and (procedure? tree)
+              (procedure-name tree))
+         => identity]
+        [else tree]))
+
+
+
+(define-macro (assert form)
+  `(unless ,form
+     (throw 'assertion-error "Assertion for ~a failed, ~a"
+            (quote ,form)
+            ((@@ (util exceptions) prettify-tree) ,(cons 'list form)))))

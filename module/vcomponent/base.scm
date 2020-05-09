@@ -11,8 +11,9 @@
 
 ;; The <vline> type is a bit to many times refered to as a attr ptr.
 (define-record-type <vline>
-  (make-vline% value parameters)
+  (make-vline% key value parameters)
   vline?
+  (key vline-key)
   (value get-vline-value set-vline-value!)
   (parameters get-vline-parameters)
   ;; TODO Add slot for optional source object, containing
@@ -21,8 +22,10 @@
   ;; - source string, before value parsing.
   )
 
-(define*-public (make-vline value #:optional (ht (make-hash-table)))
-  (make-vline% value ht))
+(export vline-key)
+
+(define*-public (make-vline key value #:optional (ht (make-hash-table)))
+  (make-vline% key value ht))
 
 (define-record-type <vcomponent>
   (make-vcomponent% type children parent attributes)
@@ -53,6 +56,7 @@
   (set-component-children! parent (cons child (children parent)))
   (set-component-parent! child parent))
 
+;; TODO this doesn't handle multi-valued items
 (define* (get-attribute-value component key #:optional default)
   (cond [(hashq-ref (get-component-attributes component)
                     key #f)
@@ -67,7 +71,7 @@
   (let ((ht (get-component-attributes component)))
    (cond [(hashq-ref ht key #f)
           => (lambda (vline) (set-vline-value! vline value))]
-         [else (hashq-set! ht key (make-vline value))])))
+         [else (hashq-set! ht key (make-vline key value))])))
 
 (define-public (set-vline! component key vline)
   (hashq-set! (get-component-attributes component)
@@ -81,9 +85,18 @@
    get-vline-value set-vline-value!))
 
 ;; vcomponent x (or str symb) → vline
-(define-public (attr* component attr)
+(define (get-attr* component attr)
   (hashq-ref (get-component-attributes component)
              (as-symb attr)))
+
+(define (set-attr*! component key value)
+  (hashq-set! (get-component-attributes component)
+              (as-symb key) value))
+
+(define-public attr*
+  (make-procedure-with-setter
+   get-attr*
+   set-attr*!))
 
 ;; vcomponent x (or str symb) → value
 (define (get-attr component key)
@@ -122,7 +135,8 @@
   (map car (hash-map->list cons (get-component-attributes component))))
 
 (define (copy-vline vline)
-  (make-vline (get-vline-value vline)
+  (make-vline (vline-key vline)
+              (get-vline-value vline)
               ;; TODO deep-copy on properties?
               (get-vline-parameters vline)))
 
@@ -132,7 +146,9 @@
                     (parent component)
                     ;; attributes
                     (alist->hashq-table
-                     (hash-map->list (lambda (key value) (cons key (copy-vline value)))
+                     (hash-map->list (lambda (key value) (cons key (if (list? value)
+                                                                  (map copy-vline value)
+                                                                  (copy-vline value))))
                                      (get-component-attributes component)))))
 
 (define-public (extract field)
