@@ -1,4 +1,4 @@
-(define-module (vcomponent parse new)
+(define-module (vcomponent parse component)
   :use-module (util)
   :use-module (util exceptions)
   :use-module ((ice-9 rdelim) :select (read-line))

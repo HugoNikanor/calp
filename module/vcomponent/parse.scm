@@ -11,7 +11,7 @@
   :use-module (util exceptions)
   :use-module (vcomponent base)
 
-  :use-module (vcomponent parse new)
+  :use-module (vcomponent parse component)
   :re-export (parse-calendar)
   )
 
