@@ -145,12 +145,17 @@
 
              ,(fmt-single-event ev))))
 
+(define (->string a)
+  (format #f "~a" a))
+
 (define (data-attributes event)
   (hash-map->list
    (match-lambda*
+     [(key (vlines ...)) (list (string->symbol (format #f "data-~a" key))
+                               (string-join (map (compose ->string value) vlines) ","))]
      [(key vline)
       (list (string->symbol (format #f "data-~a" key))
-            (format #f "~a" (value vline)))]
+            (->string (value vline)))]
      [_ (error "What are you doing‽")])
    (attributes event)))
 
@@ -354,7 +359,7 @@
          ,((compose (@ (vcomponent recurrence display) format-recurrence-rule)
                     (@ (vcomponent recurrence parse) parse-recurrence-rule))
            (attr ev 'RRULE))
-         ,@(awhen (attr ev 'EXDATE)
+         ,@(awhen (attr* ev 'EXDATE)
                   (list
                    ", undantaget "
                    (add-enumeration-punctuation
@@ -371,7 +376,7 @@
                                       '(HOURLY MINUTELY SECONDLY))
                                    (datetime->string d "~e ~b ~k:~M")
                                    (datetime->string d "~e ~b"))))
-                         it))))
+                         (map value it)))))
          "."))
 
 (define (format-description ev str)

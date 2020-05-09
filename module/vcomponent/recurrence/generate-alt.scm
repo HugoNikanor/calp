@@ -1,6 +1,7 @@
 (define-module (vcomponent recurrence generate-alt)
   :export (generate-recurrence-set)
   :use-module (util)
+  :use-module (util exceptions)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
@@ -278,7 +279,9 @@
 
   ;; 3.8.5.1 exdate are evaluated AFTER rrule (and rdate)
   (let ((date-stream (stream-remove
-                      (cut member <> (or (attr event 'EXDATE) '()))
+                      (aif (attr* event 'EXDATE)
+                           (cut member <> (map value it))
+                           (const #f))
                       (generate-posibilities rrule (attr event 'DTSTART))
                       ;; TODO ideally I should merge the limited recurrence set
                       ;; with the list of rdates here. However, I have never

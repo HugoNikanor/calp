@@ -3,9 +3,9 @@
  ((util) sort*))
 
 (define v (call-with-input-string
-              "BEGIN:VCOMPONENT
+              "BEGIN:DUMMY
 KEY;A=1;B=2:Some text
-END:VCOMPONENT"
+END:DUMMY"
               parse-calendar))
 
 (test-equal '("1") (prop (attr* v 'KEY) 'A))

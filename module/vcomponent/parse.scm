@@ -15,8 +15,6 @@
   :re-export (parse-calendar)
   )
 
-(use-modules ((rnrs base) #:select (assert)))
-
 
 
 
