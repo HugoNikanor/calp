@@ -3,10 +3,9 @@
   #:use-module (srfi srfi-88)           ; postfix keywords
   #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module ((sxml fold) #:select (fold-values))
-  #:use-module (srfi srfi-9 gnu)
+  #:use-module ((srfi srfi-9 gnu) #:select (set-fields))
   #:re-export (define*-public)
-  #:export (for define-quick-record
-                mod! sort* sort*!
+  #:export (for mod! sort* sort*!
                 mod/r! set/r!
                 find-min
                 catch-multiple
