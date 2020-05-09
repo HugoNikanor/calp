@@ -83,7 +83,11 @@
              (set! (value vline) (get-datetime (parse-ics-datetime (value vline) tz))
                    (prop vline 'VALUE) 'DATE-TIME)
              (set! (value vline) (parse-ics-date (value vline))
-                   (prop vline 'VALUE) 'DATE))))])
+                   (prop vline 'VALUE) 'DATE)))
+       ;; TOOD actually handle repeated keys
+       (when (eq? key 'EXDATE)
+         (set! (value vline) (list (value vline))))
+       )])
   vline)
 
 ;; (parse-itemline '("DTEND" "TZID=Europe/Stockholm" "VALUE=DATE-TIME" "20200407T130000"))
@@ -108,8 +112,24 @@
 
 
 (define (make-component type . children-and-attributes)
-  (let* ((children attributes (partition vcomponent? children-and-attributes)))
-    ((@@ (vcomponent base) make-vcomponent%) type children #f (alist->hashq-table attributes))))
+  (define component
+   (let* ((children attributes (partition vcomponent? children-and-attributes)))
+     ((@@ (vcomponent base) make-vcomponent%) type children #f (alist->hashq-table attributes))))
+
+  ;; TODO This is an ugly hack until the rest of the code is updated
+  ;; to work on events without an explicit DTEND attribute.
+  (when (and (eq? type 'VEVENT) (not (attr component 'DTEND)))
+    (set! (attr component 'DTEND)
+      (let ((start (attr component 'DTSTART)))
+        ;; p. 54, 3.6.1
+        ;; If DTSTART is a date then it's an all
+        ;; day event. If DTSTART instead is a
+        ;; datetime then the event has a length
+        ;; of 0?
+        (if (date? start)
+            (date+ start (date day: 1))
+            (datetime+ start (datetime time: (time hour: 1)))))))
+  component)
 
 ;; (list (key kv ... value)) → <vcomponent>
 (define (parse lst)
@@ -141,5 +161,4 @@
 
 
 
-;; DTEND when missing in VEVENT
 ;; Repeated keys ('(EXDATE ATTENDEE))
