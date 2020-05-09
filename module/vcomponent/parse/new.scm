@@ -1,5 +1,6 @@
 (define-module (vcomponent parse new)
   :use-module (util)
+  :use-module (util exceptions)
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module (vcomponent base)
   :use-module (datetime)
@@ -86,8 +87,21 @@
                    (prop vline 'VALUE) 'DATE)))
        ;; TOOD actually handle repeated keys
        (when (eq? key 'EXDATE)
-         (set! (value vline) (list (value vline))))
-       )])
+         (set! (value vline) (list (value vline)))))]
+
+    [else (set! (value vline)
+            (list->string
+             (let loop ((rem (string->list (value vline))))
+               (if (null? rem)
+                   '()
+                   (if (char=? #\\ (car rem))
+                       (case (cadr rem)
+                         [(#\n #\N) (cons #\newline (loop (cddr rem)))]
+                         [(#\; #\, #\\) => (lambda (c) (cons c (loop (cddr rem))))]
+                         [else => (lambda (c) (warning "Non-escapable character: ~a" c)
+                                     (loop (cddr rem)))])
+                       (cons (car rem) (loop (cdr rem)))))
+               ))) ])
   vline)
 
 ;; (parse-itemline '("DTEND" "TZID=Europe/Stockholm" "VALUE=DATE-TIME" "20200407T130000"))
