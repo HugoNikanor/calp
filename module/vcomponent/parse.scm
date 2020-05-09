@@ -11,7 +11,7 @@
   :use-module (util exceptions)
   :use-module (vcomponent base)
 
-  :use-module (vcomponent parse old)
+  :use-module (vcomponent parse new)
   :re-export (parse-calendar)
   )
 
@@ -38,6 +38,7 @@
 
                 (define-values (events other) (partition (lambda (e) (eq? 'VEVENT (type e)))
                                                          (children item)))
+
 
                 ;; (assert (eq? 'VCALENDAR (type calendar)))
                 (assert (eq? 'VCALENDAR (type item)))
@@ -88,15 +89,17 @@
                 ;; return
                 calendar)
               (make-vcomponent)
-              ((@ (ice-9 threads) par-map) (lambda (fname)
-                     (let ((fullname (/ path fname)))
-                       (let ((cal (call-with-input-file fullname
-                                    parse-calendar)))
-                         (set! (attr cal 'COLOR) color
-                               (attr cal 'NAME) name)
-                         cal)))
-                   (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
-                                             (string= "ics" (string-take-right s 3))))))))))
+              (map #; (@ (ice-9 threads) par-map)
+               (lambda (fname)
+                 (let ((fullname (/ path fname)))
+                   (let ((cal (call-with-input-file fullname
+                                parse-calendar)))
+                     (set! (attr cal 'COLOR) color
+                           (attr cal 'NAME) name
+                           (attr cal 'X-HNH-FILENAME) fullname)
+                     cal)))
+               (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
+                                         (string= "ics" (string-take-right s 3))))))))))
 
 ;; Parse a vdir or ics file at the given path.
 (define-public (parse-cal-path path)
