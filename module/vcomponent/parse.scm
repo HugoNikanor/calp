@@ -1,3 +1,9 @@
+;;; Commentary:
+;; Code for parsing vdir's and icalendar files.
+;; This module handles the finding of files, while
+;; (vcomponent parse component) handles reading data from icalendar files.
+;;; Code:
+
 (define-module (vcomponent parse)
   :use-module (rnrs bytevectors)
   :use-module (srfi srfi-1)
