@@ -20,6 +20,11 @@
          (let ((line (string-trim-right line)))
            (loop
             (if (char=? #\space (string-ref line 0))
+                ;; Line Wrapping
+                ;; TODO if the line is split inside a unicode character
+                ;; then this produces multiple broken unicode characters.
+                ;; It could be solved by checking the start of the new line,
+                ;; and the tail of the old line for broken char
                 (cons (string-append (car done)
                                      (string-drop line 1))
                       (cdr done))
