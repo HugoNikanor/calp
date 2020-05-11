@@ -180,6 +180,8 @@
                    ((#\e) (format #t "~2' d" (day date)))
                    ((#\1) (format #t "~4'0d-~2'0d-~2'0d"
                                   (year date) (month date) (day date)))
+                   ((#\3) (format #t "~2'0d:~2'0d:~2'0d"
+                                  (hour time) (minute time) (second time)))
                    ((#\A) (display (week-day-name (week-day date))))
                    ((#\a) (display (week-day-name (week-day date) 3)))
                    ((#\b) (display (locale-month-short (month date))))
