@@ -55,12 +55,9 @@
 
 
 (define (prettify-tree tree)
-  (cond [(null? tree) '()]
-        [(pair? tree) (cons (prettify-tree (car tree))
+  (cond [(pair? tree) (cons (prettify-tree (car tree))
                             (prettify-tree (cdr tree)))]
-        [(list? tree) (map prettify-tree tree)]
-        [(and (procedure? tree)
-              (procedure-name tree))
+        [(and (procedure? tree) (procedure-name tree))
          => identity]
         [else tree]))
 
