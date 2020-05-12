@@ -75,11 +75,12 @@
         (make-single-extender rr cc ...)] ...)]))
 
 ;; TODO compliacted fields
+;; rrule → (list extension-rule)
 (define (all-extenders rrule)
   (make-extenders
    rrule
    [YEARLY  || month weekno yearday monthday #| day |# hour minute second]
-   [MONTHLY || monthday #| day |# hour minute second]
+   [MONTHLY || monthday day hour minute second]
    [WEEKLY  || day hour minute second]
    [DAILY   || hour minute second]
    [HOURLY  || minute second]
@@ -105,10 +106,12 @@
 (define (branching-fold proc init collection)
   (if (null? collection)
       init
-      (let ((v (proc (car collection) init)))
-        (if (list? v)
-            (map (lambda (c) (branching-fold proc c (cdr collection))) v)
-            (branching-fold proc v (cdr collection))))))
+      (call-with-values
+          (lambda () (proc (car collection) init))
+        (case-lambda
+          [(value) (branching-fold proc value (cdr collection))]
+          [values (map (lambda (c) (branching-fold proc c (cdr collection)))
+                       values)]))))
 
 ;; TODO more special expands (p. 44)
 ;; (a := (date|datetime)), rrule, extension-rule → a
@@ -137,12 +140,13 @@
                    (byday rrule)
                    (not (or (byyearday rrule)
                             (bymonthday rrule))))
-              (map to-dt
-                   (concatenate
-                    (map (lambda (wday)
-                           (all-wday-in-month
-                            wday (set (month d) value)))
-                         (map cdr (byday rrule)))))
+              (values-map
+               to-dt
+               (concatenate
+                (map (lambda (wday)
+                       (all-wday-in-month
+                        wday (set (month d) value)))
+                     (map cdr (byday rrule)))))
 
               ;; else
               (to-dt (set (month d) value)))]
@@ -156,10 +160,29 @@
                              ;; TODO check that this actually is the correct calculation
                              (date day: (modulo (- value (wkst rrule))
                                                 7))))]
+
               [(MONTHLY)
-               ;; TODO
-               dt
-               ]
+               ;; if bymonthday is present byday turns into a limiter
+               (unless (bymonthday rrule)
+                 (let* ((instances (all-wday-in-month value d)))
+                   (catch 'out-of-range
+                     (lambda ()
+                      (cond [(eqv? #f offset)
+                             ;; every of that day in this month
+                             (values-map to-dt instances)]
+
+                            [(positive? offset)
+                             (to-dt (list-ref instances (1- offset)))]
+
+                            [(negative? offset)
+                             (to-dt (list-ref (reverse instances)
+                                              (1- (- offset))))]))
+
+                     (lambda (err proc fmt args  . rest)
+                       (warning "BYDAY out of range for MONTHLY.
+ Possibly stuck in infinite loop")
+                       dt))))]
+
               [(YEARLY)
                ;; TODO
                dt
