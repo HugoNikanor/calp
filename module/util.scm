@@ -462,6 +462,11 @@
         o
         (loop (proc o)))))
 
+(define-public (values-map proc . lists)
+  (apply values
+         (apply map proc lists)))
+
+
 
 
 (define-syntax let-env
