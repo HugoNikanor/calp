@@ -53,8 +53,8 @@
       (unless (zero? globret)
         (error "Globret errror ~a" globret))
       (let* ((globstr (parse-c-struct (bytevector->pointer bv) (list size_t '* size_t)))
-             ;; TODO the 'u64 requires that the system has 64 bit wide pointers...
-             (strvec (pointer->bytevector (cadr globstr) (car globstr) 0 'u64))
+             (strvec (pointer->bytevector (cadr globstr) (car globstr) 0
+					  (string->symbol (format #f "u~a" (* 8 (sizeof '*))))))
              (ret (map (compose pointer->string make-pointer)
                        (bytevector->uint-list strvec (native-endianness) (sizeof '*)))))
 
