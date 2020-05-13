@@ -353,6 +353,13 @@
   (lambda (x) (<= sun x sat)))
 
 
+;; TODO normalize if functions floor their arguments or not.
+;; The argument for flooring is that it allows us to only bother with
+;; the higher components we care about.
+;; The argument against would be if we want to start from the middle
+;; of a time span.
+
+
 ;; Returns the first instance of the given week-day in the given month.
 ;; @example
 ;; (find-first-week-day mon #2020-04-10)
@@ -371,3 +378,10 @@
    (stream-take-while
     (lambda (d) (= (month d) (month month-date)))
     (week-stream (find-first-week-day wday month-date)))))
+
+
+(define-public (all-wday-in-year wday year-date)
+  (stream->list
+   (stream-take-while
+    (lambda (d) (= (year d) (year year-date)))
+    (week-stream (find-first-week-day wday year-date)))))
