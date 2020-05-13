@@ -98,7 +98,7 @@
   (make-extenders
    rrule
    [YEARLY   ||  day #| setpos |#]
-   [MONTHLY  || month #| day |# #|setpos|#]
+   [MONTHLY  || month day #|setpos|#]
    [WEEKLY   || month #|setpos|#]
    [DAILY    || month monthday day #|setpos|#]
    [HOURLY   || month yearday monthday day hour #|setpos|#]

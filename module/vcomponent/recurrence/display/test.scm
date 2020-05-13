@@ -235,7 +235,6 @@ components are specified, the day is gotten from \"DTSTART\"."
   ;; => "varje torsdag i juni, juli & augusti, årligen"
 
   ;; NOTE This has some weird grammar in swedish
-  ;; TODO bunch of wrong days
   (vevent
    summary: "Every Friday the 13th, forever"
    dtstart: "19970902T090000"
@@ -243,21 +242,19 @@ components are specified, the day is gotten from \"DTSTART\"."
    rrule: "FREQ=MONTHLY;BYDAY=FR;BYMONTHDAY=13")
   ;; => "varje fredag den trettonde varje månad"
 
-  ;; TODO bunch of wrong days
   (vevent
    summary: "The first Saturday that follows the first Sunday of the month,forever"
    dtstart: "19970913T090000"
    rrule: "FREQ=MONTHLY;BYDAY=SA;BYMONTHDAY=7,8,9,10,11,12,13")
   ;; => "varje lördag den sjunde, åttonde, nionde, tionde, elfte, tolfte & trettonde varje månad"
 
-  ;; TODO
   (vevent
    summary:
    "Every 4 years, the first Tuesday after a Monday in November,
 forever (U.S. Presidential Election day)"
    dtstart: "19961105T090000"
    rrule: "FREQ=YEARLY;INTERVAL=4;BYMONTH=11;BYDAY=TU;BYMONTHDAY=2,3,4,5,6,7,8")
-  ;; => "varje tisdag  i novembervart fjärde år"
+  ;; TODO, bör vara `eller'
   ;; => "varje tisdag den andre, tredje, fjärde, femte, sjätte, sjunde & åttonde i november vart fjärde år"
 
   ;; TODO bysetpos
