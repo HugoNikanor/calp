@@ -462,9 +462,13 @@
         o
         (loop (proc o)))))
 
-(define-public (values-map proc . lists)
+;; (a → values a), list ... → values a
+(define-public (valued-map proc . lists)
   (apply values
-         (apply map proc lists)))
+   (apply append-map
+          (lambda args
+            (call-with-values (lambda () (apply proc args)) list))
+          lists)))
 
 
 
