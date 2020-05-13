@@ -16,16 +16,19 @@
 
 ;; Examples copied from RFC5545
 
-(define (run-test comp)
-  (format #t "~%> ~a~%" (attr comp 'SUMMARY))
-  (format #t "=> upprepas ~a.~%~{~a~^, ~}~%" (format-recurrence-rule
-                                      (attr comp 'RRULE))
-          (map (lambda (d) (datetime->string d "~1 ~3"))
-           (stream->list
-            ;; TODO this assumes a future version of rrule-instances
-            ;; which assumes a pre parsed recurrence rule.
-            10 ((@@ (vcomponent recurrence generate-alt) rrule-instances)
-                comp)))))
+(define run-test
+  (let ((count 0))
+   (lambda (comp)
+     (mod! count = (+ 1))
+     (format #t "~%~a > ~a~%" count (attr comp 'SUMMARY))
+     (format #t "=> upprepas ~a.~%~{~a~^, ~}~%" (format-recurrence-rule
+                                                 (attr comp 'RRULE))
+             (map (lambda (d) (datetime->string d "~a ~1 ~3"))
+                  (stream->list
+                   ;; TODO this assumes a future version of rrule-instances
+                   ;; which assumes a pre parsed recurrence rule.
+                   10 ((@@ (vcomponent recurrence generate-alt) rrule-instances)
+                       comp)))))))
 
 
 (define (vevent . rest)
