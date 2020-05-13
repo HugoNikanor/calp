@@ -103,17 +103,24 @@
    ;; [else]
    ))
 
+;; next, done
+;; (a, a → values a), a, (list a) → values a
 (define (branching-fold proc init collection)
   (if (null? collection)
       init
       (call-with-values
           (lambda () (proc (car collection) init))
-        (case-lambda
-          [(value) (branching-fold proc value (cdr collection))]
-          [values (map (lambda (c) (branching-fold proc c (cdr collection)))
-                       values)]))))
+        (lambda vv
+          (apply values
+                 (concatenate
+                  (map (lambda (v)
+                         (call-with-values
+                             (lambda () (branching-fold proc v (cdr collection)))
+                           list))
+                       vv)))))))
 
 ;; TODO more special expands (p. 44)
+;; TODO which of THESE can be negative
 ;; (a := (date|datetime)), rrule, extension-rule → a
 (define (update date-object rrule extension-rule)
   ;; Branching fold instead of regular fold since BYDAY
@@ -140,7 +147,7 @@
                    (byday rrule)
                    (not (or (byyearday rrule)
                             (bymonthday rrule))))
-              (values-map
+              (valued-map
                to-dt
                (concatenate
                 (map (lambda (wday)
@@ -163,35 +170,54 @@
 
               [(MONTHLY)
                ;; if bymonthday is present byday turns into a limiter
-               (unless (bymonthday rrule)
-                 (let* ((instances (all-wday-in-month value d)))
-                   (catch 'out-of-range
-                     (lambda ()
-                      (cond [(eqv? #f offset)
-                             ;; every of that day in this month
-                             (values-map to-dt instances)]
+               (if (bymonthday rrule)
+                   dt
+                   (let* ((instances (all-wday-in-month value d)))
+                     (catch 'out-of-range
+                       (lambda ()
+                         (cond [(eqv? #f offset)
+                                ;; every of that day in this month
+                                (valued-map to-dt instances)]
 
-                            [(positive? offset)
-                             (to-dt (list-ref instances (1- offset)))]
+                               [(positive? offset)
+                                (to-dt (list-ref instances (1- offset)))]
 
-                            [(negative? offset)
-                             (to-dt (list-ref (reverse instances)
-                                              (1- (- offset))))]))
+                               [(negative? offset)
+                                (to-dt (list-ref (reverse instances)
+                                                 (1- (- offset))))]))
 
-                     (lambda (err proc fmt args  . rest)
-                       (warning "BYDAY out of range for MONTHLY.
+                       (lambda (err proc fmt args  . rest)
+                         (warning "BYDAY out of range for MONTHLY.
  Possibly stuck in infinite loop")
-                       dt))))]
+                         dt))))]
 
+              ;; see Note 2, p. 44
               [(YEARLY)
-               ;; TODO
-               dt
+               (cond
+                ;; turns it into a limiter
+                [(or (byyearday rrule) (bymonthday rrule))
+                      dt]
+                ;; [(byweekno rrule) =>
+                ;;  ;; offset MUST be #f here (according to the spec)
+                ;;  ]
+                ;; [(bymonth rrule) =>]
+
+                [else
+                 (let ((instances (all-wday-in-year
+                                   value (start-of-year d))))
+                   (if (positive? offset)
+                       (list-ref instances (1- offset))
+                       (list-ref (reverse instances) (1- (- offset)))))])
                ]))
           ]
          [(BYWEEKNO)
           (to-dt (date-starting-week value d (wkst rrule)))]
-         [(BYYEARDAY) (to-dt (date+ (start-of-year d) (date day: value)))]
-         [(BYMONTHDAY) (to-dt (set (day d) value))]
+         [(BYYEARDAY) (to-dt (date+ (start-of-year d)
+                                    (date day: (1- value))))]
+         [(BYMONTHDAY)
+          (to-dt (set (day d)
+                      (if (positive? value)
+                          value (+ 1 value (days-in-month d)))))]
          [(BYHOUR) (to-dt (set (hour t) value))]
          [(BYMINUTE) (to-dt (set (minute t) value))]
          [(BYSECOND) (to-dt (set (second t) value))]
@@ -229,22 +255,27 @@
    ;; FREQ=MONTHLY => BYMONTHDAY=(day base-date)
    (if (null? (all-extenders rrule))
        (stream base-date)
-       ;; NOTE weird stream->list stuff since a regular
-       ;; interleave currently is unwritten.
-       (interleave-streams
-        (if (date? base-date) date< datetime<)
-        (map (lambda (ext)
-               (list->stream (let ((v (update base-date rrule ext)))
-                               (if (list? v) v (list v)))))
-             (all-extenders rrule))))
+       (list->stream
+        (sort*
+         (concatenate
+          (map (lambda (ext)
+                 (call-with-values (lambda () (update base-date rrule ext))
+                   list))
+               (all-extenders rrule)))
+         (if (date? base-date) date< datetime<))))
    (extend-recurrence-set
     rrule
     (if (date? base-date)
         (date+ base-date (get-date (make-date-increment rrule)))
-        (datetime+ base-date (make-date-increment rrule))))
-   ))
+        (datetime+ base-date (make-date-increment rrule))))))
 
 
+;; returns a function which takes a datetime and is true
+;; if the datetime is part of the reccurrence set, and
+;; false otherwise.
+;; 
+;; TODO how many of these can take negative numbers?
+;; 
 ;; limiters → (a → bool)
 (define (limiters->predicate limiters)
   (lambda (dt)
@@ -256,7 +287,10 @@
                 (d (if (date? dt) dt (get-date dt))))
            (and (case key
                   [(BYMONTH) (eqv? value (month d))]
-                  [(BYMONTHDAY) (eqv? value (day d))]
+                  [(BYMONTHDAY)
+                   (eqv? (day d)
+                         (if (positive? value)
+                             value (+ value 1 (days-in-month d))))]
                   [(BYYEARDAY) (eqv? value (year-day d))]
                   ;; TODO special cases?
                   [(BYDAY) (eqv? (cdr value) (week-day d))]
@@ -295,10 +329,12 @@
     rrule base-date)))
 
 (define-stream (rrule-instances event)
-  (define rrule  (parse-recurrence-rule
-                  (attr event 'RRULE)
-                  (if (date? (attr event 'DTSTART))
-                      parse-ics-date parse-ics-datetime)))
+  ;; (define rrule  (parse-recurrence-rule
+  ;;                 (attr event 'RRULE)
+  ;;                 (if (date? (attr event 'DTSTART))
+  ;;                     parse-ics-date parse-ics-datetime)))
+
+  (define rrule (attr event 'RRULE))
 
   ;; 3.8.5.1 exdate are evaluated AFTER rrule (and rdate)
   (let ((date-stream (stream-remove
