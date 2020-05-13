@@ -41,7 +41,10 @@
           (case symb
             [(DTSTART EXDATE) (parse-ics-datetime (cadr rem))]
             [(RRULE) (parse-recurrence-rule (cadr rem))]
-            [else (cadr rem)])))
+            [else (cadr rem)]))
+        ;; hack for multi valued fields
+        (when (eq? symb 'EXDATE)
+          (mod! (attr* v symb) list)))
       (loop (cddr rem))))
 
   v)
@@ -67,6 +70,7 @@
    rrule: "FREQ=DAILY;INTERVAL=2")
   ;; => "varannan dag"
 
+  ;; TODO missar ett stort antal dagar
   (vevent
    summary: "Every 10 days, 5 occurrences"
    dtstart: "19970902T090000"
@@ -74,12 +78,16 @@
   ;; => "var tionde dag, 5 gånger."
 
   ;; TODO sortera ordningen på dagar
-  ;; (vevent
-  ;;  summary: "Every day in January, for 3 years"
-  ;;  dtstart: "19980101T090000"
-  ;;  rrule: "FREQ=YEARLY;UNTIL=20000131T140000Z;BYMONTH=1;BYDAY=SU,MO,TU,WE,TH,FR,SA"
-  ;;  "FREQ=DAILY;UNTIL=20000131T140000Z;BYMONTH=1" )
+  (vevent
+   summary: "Every day in January, for 3 years (alt 1)"
+   dtstart: "19980101T090000"
+   rrule: "FREQ=YEARLY;UNTIL=20000131T140000Z;BYMONTH=1;BYDAY=SU,MO,TU,WE,TH,FR,SA")
   ;; => "varje lördag, fredag, torsdag, onsdag, tisdag, måndag & söndag januari varje år, till och med den 31 januari, 2000 kl. 14:00"
+
+  (vevent
+   summary: "Every day in January, for 3 years (alt 2)"
+   dtstart: "19980101T090000"
+   rrule: "FREQ=DAILY;UNTIL=20000131T140000Z;BYMONTH=1" )
   ;; => "dagligen, till och med den 31 januari, 2000 kl. 14:00"
 
   (vevent
@@ -100,12 +108,16 @@
    rrule: "FREQ=WEEKLY;INTERVAL=2;WKST=SU")
   ;; => "varannan vecka"
 
-  ;; (vevent
-  ;;  summary: "Weekly on Tuesday and Thursday for five weeks"
-  ;;  dtstart: "19970902T090000"
-  ;;  rrule: "FREQ=WEEKLY;UNTIL=19971007T000000Z;WKST=SU;BYDAY=TU,TH"
-  ;;  "FREQ=WEEKLY;COUNT=10;WKST=SU;BYDAY=TU,TH")
+  (vevent
+   summary: "Weekly on Tuesday and Thursday for five weeks (alt 1)"
+   dtstart: "19970902T090000"
+   rrule: "FREQ=WEEKLY;UNTIL=19971007T000000Z;WKST=SU;BYDAY=TU,TH")
   ;; => "varje tisdag & torsdag, till och med den 07 oktober, 1997 kl. 00:00"
+
+  (vevent
+   summary: "Weekly on Tuesday and Thursday for five weeks (alt 2)"
+   dtstart: "19970902T090000"
+   rrule: "FREQ=WEEKLY;COUNT=10;WKST=SU;BYDAY=TU,TH")
   ;; => "varje tisdag & torsdag, 10 gånger."
 
   (vevent
@@ -121,7 +133,7 @@
    rrule: "FREQ=WEEKLY;INTERVAL=2;COUNT=8;WKST=SU;BYDAY=TU,TH")
   ;; => "varannan tisdag & torsdag, 8 gånger."
 
-  (vevent
+  (vevent                               ; 10
    summary: "Monthly on the first Friday for 10 occurrences"
    dtstart: "19970905T090000"
    rrule: "FREQ=MONTHLY;COUNT=10;BYDAY=1FR")
@@ -220,6 +232,7 @@ components are specified, the day is gotten from \"DTSTART\"."
   ;; => "varje torsdag i juni, juli & augusti, årligen"
 
   ;; NOTE This has some weird grammar in swedish
+  ;; TODO bunch of wrong days
   (vevent
    summary: "Every Friday the 13th, forever"
    dtstart: "19970902T090000"
@@ -227,6 +240,7 @@ components are specified, the day is gotten from \"DTSTART\"."
    rrule: "FREQ=MONTHLY;BYDAY=FR;BYMONTHDAY=13")
   ;; => "varje fredag den trettonde varje månad"
 
+  ;; TODO bunch of wrong days
   (vevent
    summary: "The first Saturday that follows the first Sunday of the month,forever"
    dtstart: "19970913T090000"
@@ -274,14 +288,17 @@ Thursday, for the next 3 months"
    rrule: "FREQ=MINUTELY;INTERVAL=90;COUNT=4")
   ;; => "var nitionde minut, 4 gånger."
 
-  ;; (vevent
-  ;;  summary: "Every 20 minutes from 9:00 AM to 4:40 PM every day"
-  ;;  dtstart: "19970902T090000"
-  ;;  rrule: "FREQ=DAILY;BYHOUR=9,10,11,12,13,14,15,16;BYMINUTE=0,20,40"
-  ;;  "FREQ=MINUTELY;INTERVAL=20;BYHOUR=9,10,11,12,13,14,15,16")
-  ;; ;; => "dagligen kl. 09:00, 09:20, 09:40, 10:00, 10:20, 10:40, 11:00, 11:20, 11:40, 12:00, 12:20, 12:40, 13:00, 13:20, 13:40, 14:00, 14:20, 14:40, 15:00, 15:20, 15:40, 16:00, 16:20 & 16:40"
-  ;; ;; or
-  ;; ;; => "var 20e minut kl. 9, 10, 11, 12, 13, 14, 15 & 16"
+  (vevent
+   summary: "Every 20 minutes from 9:00 AM to 4:40 PM every day (alt 1)"
+   dtstart: "19970902T090000"
+   rrule: "FREQ=DAILY;BYHOUR=9,10,11,12,13,14,15,16;BYMINUTE=0,20,40")
+  ;; => "dagligen kl. 09:00, 09:20, 09:40, 10:00, 10:20, 10:40, 11:00, 11:20, 11:40, 12:00, 12:20, 12:40, 13:00, 13:20, 13:40, 14:00, 14:20, 14:40, 15:00, 15:20, 15:40, 16:00, 16:20 & 16:40"
+
+  (vevent
+   summary: "Every 20 minutes from 9:00 AM to 4:40 PM every day (alt 2)"
+   dtstart: "19970902T090000"
+   rrule: "FREQ=MINUTELY;INTERVAL=20;BYHOUR=9,10,11,12,13,14,15,16")
+  ;; => "var 20e minut kl. 9, 10, 11, 12, 13, 14, 15 & 16"
 
   (vevent
    summary: "An example where the days generated makes a difference because of WKST"
@@ -289,6 +306,7 @@ Thursday, for the next 3 months"
    rrule: "FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=MO")
   ;; => "varannan tisdag & söndag, 4 gånger."
 
+  ;; TODO this starts one to early (and by consequence ends one to early)
   (vevent
    summary: "changing only WKST from MO to SU, yields different results..."
    dtstart: "19970805T090000"

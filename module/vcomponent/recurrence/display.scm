@@ -110,7 +110,7 @@
               (map (lambda (pair)
                      (time->string
                       (time hour: (car pair)
-                            minute: (cdr pair))
+                            minute: (cadr pair))
                       "~H:~M"))
                    (cross-product (byhour rrule)
                                   (byminute rrule)))))]

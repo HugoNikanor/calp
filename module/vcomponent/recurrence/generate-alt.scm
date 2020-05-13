@@ -59,6 +59,10 @@
 ;;      expr
 ;;      ]))
 
+;; BYFIELD := 'BYHOUR | 'BYMINUTE | ...
+;; expansion-alternative := (list (cons BYFIELD int))
+;; extension-rule := (list expansion-alternative)
+
 (define-syntax make-single-extender
   (syntax-rules (||)
     [(_ rr field ...)
