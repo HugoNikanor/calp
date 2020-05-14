@@ -71,7 +71,6 @@
 
 
 
-;; TODO compliacted fields
 ;; rrule → (list extension-rule)
 (define (all-extenders rrule)
   (make-extenders
@@ -345,7 +344,12 @@
                       (aif (attr* event 'EXDATE)
                            (cut member <> (map value it))
                            (const #f))
-                      (generate-posibilities rrule (attr event 'DTSTART))
+                      ;; Some expanders can produce dates before our start time.
+                      ;; For example FREQ=WEEKLY;BYDAY=MO where DTSTART is
+                      ;; anything after monday. This filters these out.
+                      (stream-drop-while
+                       (lambda (d) (date/-time< d (attr event 'DTSTART)))
+                       (generate-posibilities rrule (attr event 'DTSTART)))
                       ;; TODO ideally I should merge the limited recurrence set
                       ;; with the list of rdates here. However, I have never
                       ;; sen an event with an RDATE attribute, so I wont worry

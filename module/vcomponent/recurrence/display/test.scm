@@ -20,7 +20,7 @@
   (let ((count 0))
    (lambda (comp)
      (mod! count = (+ 1))
-     (format #t "~%~a > ~a~%" count (attr comp 'SUMMARY))
+     (format #t "~%~a > \x1b[1m~a\x1b[m~%" count (attr comp 'SUMMARY))
      (format #t "=> upprepas ~a.~%~{~a~^, ~}~%" (format-recurrence-rule
                                                  (attr comp 'RRULE))
              (map (lambda (d) (datetime->string d "~a ~1 ~3"))
@@ -51,6 +51,8 @@
       (loop (cddr rem))))
 
   v)
+
+;; TODO bysetpos
 
 (map run-test
  (list
@@ -304,8 +306,6 @@ Thursday, for the next 3 months"
    rrule: "FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=MO")
   ;; => "varannan tisdag & söndag, 4 gånger."
 
-  ;; TODO this starts one to early (and by consequence ends one to early)
-  ;; first instance should be the 5th.
   (vevent
    summary: "changing only WKST from MO to SU, yields different results..."
    dtstart: "19970805T090000"
