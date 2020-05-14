@@ -73,14 +73,12 @@
    rrule: "FREQ=DAILY;INTERVAL=2")
   ;; => "varannan dag"
 
-  ;; TODO missar ett stort antal dagar
   (vevent
    summary: "Every 10 days, 5 occurrences"
    dtstart: "19970902T090000"
    rrule: "FREQ=DAILY;INTERVAL=10;COUNT=5")
   ;; => "var tionde dag, 5 gånger."
 
-  ;; TODO sortera ordningen på dagar
   (vevent
    summary: "Every day in January, for 3 years (alt 1)"
    dtstart: "19980101T090000"
@@ -307,6 +305,7 @@ Thursday, for the next 3 months"
   ;; => "varannan tisdag & söndag, 4 gånger."
 
   ;; TODO this starts one to early (and by consequence ends one to early)
+  ;; first instance should be the 5th.
   (vevent
    summary: "changing only WKST from MO to SU, yields different results..."
    dtstart: "19970805T090000"
@@ -318,4 +317,21 @@ Thursday, for the next 3 months"
    dtstart: "20070115T090000"
    rrule: "FREQ=MONTHLY;BYMONTHDAY=15,30;COUNT=5")
   ;; => "den 15 & 30 varje månad, 5 gånger."
+
+
+
+;;; End of examples from RFC, start of own examples
+
+
+  (vevent
+   summary: "Every Friday & Wednesday the 13th, forever"
+   dtstart: "19970902T090000"
+   exdate: "19970902T090000"
+   rrule: "FREQ=MONTHLY;BYDAY=FR,WE;BYMONTHDAY=13")
+
+(vevent
+   summary: "Monday & Wednesday of week number 20 (where the default start of the week is Monday), forever"
+   dtstart: "19970512T090000"
+   rrule: "FREQ=YEARLY;BYWEEKNO=20;BYDAY=MO,WE")
+
   ))

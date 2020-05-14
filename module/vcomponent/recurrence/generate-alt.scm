@@ -19,71 +19,57 @@
 
 
 
-(eval-when (expand)
- (define (stx->bystx syntax-fragment syntax-ctx str-transformer)
-   (->> syntax-fragment
-        syntax->datum
-        symbol->string
-        str-transformer
-        (string-append (str-transformer "by"))
-        string->symbol
-        (datum->syntax syntax-ctx))))
-
 ;; a → b → (a . b)
 (define ((con x) y)
   (cons x y))
 
-(define-syntax (by stx)
-  (syntax-case stx ()
-    [(_ type rr)
-     #`(and=> (#,(stx->bystx #'type stx string-downcase)
-               rr)
-              (cut map
-                (con (quote #,(stx->bystx #'type stx string-upcase)))
-                <>))]))
+(eval-when (expand compile eval)
+ (define (stx->bystx symbol str-transformer)
+   (->> symbol
+        symbol->string
+        str-transformer
+        (string-append (str-transformer "by"))
+        string->symbol))
+
+ (define (by-proc symbol)
+   (stx->bystx symbol string-downcase))
+
+ (define (by-symb symbol)
+   (stx->bystx symbol string-upcase))
+
+ (use-modules (ice-9 match))
+
+ (define (make-extender-or-limiter extender? rr cases)
+   `(case (freq ,rr)
+      ,@(map (match-lambda
+               [(key '|| cc ...)
+                `((,key)
+                  (filter
+                   identity
+                   (list
+                    ,@(map (lambda (field)
+                             `(and=> (,(by-proc field) ,rr)
+                                     ,(if extender?
+                                          `(cut map (con (quote ,(by-symb field)))
+                                                <>)
+                                          `(con (quote ,(by-symb field))))))
+                           cc))))])
+             cases)))
+
+ (define-macro (make-extenders rr . cases)
+   `(apply cross-product ,(make-extender-or-limiter #t rr cases)))
+
+ (define-macro (make-limiters rr . cases)
+   (make-extender-or-limiter #f rr cases)))
 
 
-;; (define-syntax (single-rule stx)
-;;   (syntax-case stx (when)
-;;     [(_ (when condition expr)
-;;         #`(when
-;;               #,(let-syntax ((and (syntax-rules ()
-;;                                     [(_ expr ...)
-;;                                      ]
-;;                                     ))
-;;                              (or (syntax-rules ()
-;;                                    )))
-;;                   #'condition)
-;;             expr))]
-;;     [(_ expr)
-;;      expr
-;;      ]))
-
-;; BYFIELD := 'BYHOUR | 'BYMINUTE | ...
-;; expansion-alternative := (list (cons BYFIELD int))
-;; extension-rule := (list expansion-alternative)
-
-(define-syntax make-single-extender
-  (syntax-rules (||)
-    [(_ rr field ...)
-     (apply cross-product
-            (filter identity
-                    (list
-                     (by field rr) ...)))]))
-
-(define-syntax make-extenders
-  (syntax-rules (||)
-    [(_ rr (key || cc ...) ...)
-     (case (freq rr)
-       [(key)
-        (make-single-extender rr cc ...)] ...)]))
 
 ;; TODO compliacted fields
 ;; rrule → (list extension-rule)
 (define (all-extenders rrule)
   (make-extenders
    rrule
-   [YEARLY  || month weekno yearday monthday #| day |# hour minute second]
+   [YEARLY  || month weekno yearday monthday day hour minute second]
    [MONTHLY || monthday day hour minute second]
    [WEEKLY  || day hour minute second]
    [DAILY   || hour minute second]
@@ -91,13 +77,10 @@
    [MINUTELY || second]
    [SECONDLY || #| null |#]))
 
-;; TODO this isn't nuted for limiting, only for extension
-;; TODO I think the fix would be to not do a cross-product,
-;; but rather have a list of fileds, each with a list of values
 (define (all-limiters rrule)
-  (make-extenders
+  (make-limiters
    rrule
-   [YEARLY   ||  day #| setpos |#]
+   [YEARLY   || day #| setpos |#]
    [MONTHLY  || month day #|setpos|#]
    [WEEKLY   || month #|setpos|#]
    [DAILY    || month monthday day #|setpos|#]
@@ -201,21 +184,34 @@
                 ;; turns it into a limiter
                 [(or (byyearday rrule) (bymonthday rrule))
                       dt]
-                ;; [(byweekno rrule) =>
-                ;;  ;; offset MUST be #f here (according to the spec)
-                ;;  ]
-                ;; [(bymonth rrule) =>]
+
+                ;; this leads to duplicates in the output
+                [(or (byweekno rrule) (bymonth rrule))
+                 ;; Handled under BYWEEKNO & BYMONTH respectively
+                 dt]
 
                 [else
                  (let ((instances (all-wday-in-year
                                    value (start-of-year d))))
-                   (if (positive? offset)
-                       (list-ref instances (1- offset))
-                       (list-ref (reverse instances) (1- (- offset)))))])
-               ]))
-          ]
+                   (to-dt
+                    (if (positive? offset)
+                        (list-ref instances (1- offset))
+                        (list-ref (reverse instances) (1- (- offset))))))])
+               ]))]
+
          [(BYWEEKNO)
-          (to-dt (date-starting-week value d (wkst rrule)))]
+          (let ((start-of-week (date-starting-week value d (wkst rrule))))
+            (if (and (eq? 'YEARLY (freq rrule))
+                     (byday rrule))
+                (stream->values
+                 (stream-map to-dt
+                  (stream-filter
+                   (lambda (d) (memv (week-day d) (map cdr (byday rrule))))
+                   (stream-take 7 (day-stream start-of-week)))))
+
+                ;; else
+                (to-dt start-of-week)))]
+
          [(BYYEARDAY) (to-dt (date+ (start-of-year d)
                                     (date day: (1- value))))]
          [(BYMONTHDAY)
@@ -273,6 +269,9 @@
         (date+ base-date (get-date (make-date-increment rrule)))
         (datetime+ base-date (make-date-increment rrule))))))
 
+(define ((month-mod d) value)
+  (if (positive? value)
+      value (+ value 1 (days-in-month d))))
 
 ;; returns a function which takes a datetime and is true
 ;; if the datetime is part of the reccurrence set, and
@@ -286,21 +285,18 @@
    (let loop ((remaining limiters))
      (if (null? remaining)
          #t
-         (let* (((key . value) (car remaining))
+         (let* (((key . values) (car remaining))
                 (t (as-time dt))
                 (d (if (date? dt) dt (get-date dt))))
            (and (case key
-                  [(BYMONTH) (eqv? value (month d))]
-                  [(BYMONTHDAY)
-                   (eqv? (day d)
-                         (if (positive? value)
-                             value (+ value 1 (days-in-month d))))]
-                  [(BYYEARDAY) (eqv? value (year-day d))]
+                  [(BYMONTH) (memv (month d) values)]
+                  [(BYMONTHDAY) (memv (day d) (map (month-mod d) values))]
+                  [(BYYEARDAY) (memv (year-day d) values)]
                   ;; TODO special cases?
-                  [(BYDAY) (eqv? (cdr value) (week-day d))]
-                  [(BYHOUR) (eqv? value (hour t))]
-                  [(BYMINUTE) (eqv? value (minute t))]
-                  [(BYSECOND) (eqv? value (second t))]
+                  [(BYDAY) (memv (week-day d) (map cdr values))]
+                  [(BYHOUR) (memv (hour t) values)]
+                  [(BYMINUTE) (memv (minute t) values)]
+                  [(BYSECOND) (memv (second t) values)]
                   ;; TODO
                   ;; [(BYSETPOS)]
                   [else
@@ -321,9 +317,7 @@
             (<= 1 (month d) 12)
             (<= 1 (day d) (days-in-month d)))))
    (stream-filter
-    ;; TODO fix limiter generation
-    ;; ===========================
-    (limiters->predicate (car (append (all-limiters rrule) '(()))))
+    (limiters->predicate (all-limiters rrule))
     date-stream)))
 
 (define-stream (generate-posibilities rrule base-date)
@@ -354,7 +348,8 @@
                       )))
     (cond [(count rrule) => (lambda (c) (stream-take c date-stream))]
           [(until rrule) => (lambda (end) (stream-take-while
-                                      (cut (if (date? (attr event 'DTSTART)) date<= datetime<=) <> end)
+                                      (cut (if (date? (attr event 'DTSTART))
+                                               date<= datetime<=) <> end)
                                       date-stream))]
           [else date-stream])))
 
