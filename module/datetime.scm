@@ -686,13 +686,14 @@
               time: (parse-ics-time timestr)
               tz: tz)))
 
-
+;; TODO rewrite this
 (define-public (current-date)
   (let ((d ((@ (srfi srfi-19) current-date))))
     (date year:  ((@ (srfi srfi-19) date-year) d)
           month: ((@ (srfi srfi-19) date-month) d)
           day:   ((@ (srfi srfi-19) date-day) d))))
 
+;; TODO this returns UTC time, but without a TZ component
 (define-public (current-datetime)
   (unix-time->datetime ((@ (guile) current-time))))
 

@@ -38,9 +38,12 @@
     [(_ app field value)
      (hashq-set! (get-ht app) field (delay value))]))
 
+;; TODO setting a field should invalidate the cache of all dependant
+;; fields. Among other things allowing a full calendar reload by running
+;; (setf 'calendars (load-calendars ...))
 (define-syntax setf
   (syntax-rules ()
-    ;; special case to use current appp)
+    ;; special case to use current app)
     [(_ key value)
      (setf% key value)]
 
