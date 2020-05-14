@@ -72,6 +72,9 @@
 (define-public (stream-remove pred stream)
   (stream-filter (negate pred) stream))
 
+(define-public (stream->values stream)
+  (apply values (stream->list stream)))
+
 ;; Evaluates @var{body} in a context where most list fundamentals are
 ;; replaced by stream alternatives.
 ;; commented defifinitions are items which could be included, but for
