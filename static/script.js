@@ -158,8 +158,8 @@ function setVar(str, val) {
 }
 
 function close_all_popups () {
-	for (let popup of document.getElementsByClassName("popup")) {
-		popup.classList.remove("show");
+	for (let popup of document.getElementsByClassName("tpd-tooltip")) {
+		popup.getElementsByClassName('close-tooltip')[0].click();
 	}
 }
 
