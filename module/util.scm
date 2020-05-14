@@ -14,7 +14,7 @@
                 -> ->> set set-> aif awhen
                 tree-map let-lazy let-env
                 case* define-many
-                and=>>
+                and=>> label
                 print-and-return
                 )
   #:replace (let* set! define-syntax
@@ -255,6 +255,23 @@
     [(_ def (symbols ...) value rest ...)
      (begin (def symbols value) ...
             (define-many def rest ...))]))
+
+;; Attach a label to a function, allowing it to call itself
+;; without actually giving it a name (can also be thought
+;; of as letrec-1).
+;; @example
+;; ((label fact
+;;   (match-lambda
+;;     [0 1]
+;;     [x (* x (fact (1- x)))]))
+;;  5)
+;; @end example
+(define-syntax label
+  (syntax-rules ()
+    [(_ self proc)
+     (letrec ((self proc))
+       proc)]))
+
 
 ;; This function borrowed from web-ics (calendar util)
 (define* (sort* items comperator #:optional (get identity))
