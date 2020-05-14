@@ -47,12 +47,19 @@
                   (filter
                    identity
                    (list
-                    ,@(map (lambda (field)
-                             `(and=> (,(by-proc field) ,rr)
-                                     ,(if extender?
-                                          `(cut map (con (quote ,(by-symb field)))
-                                                <>)
-                                          `(con (quote ,(by-symb field))))))
+                    ,@(map (label self
+                            (match-lambda
+                              [('unless pred field)
+                               `(let ((yearday (,(by-proc 'yearday) ,rr))
+                                      (monthday (,(by-proc 'monthday) ,rr)))
+                                  ,(if pred #f
+                                       (it field)))]
+                              [field
+                               `(and=> (,(by-proc field) ,rr)
+                                       ,(if extender?
+                                            `(cut map (con (quote ,(by-symb field)))
+                                                  <>)
+                                            `(con (quote ,(by-symb field)))))]))
                            cc))))])
              cases)))
 
@@ -69,8 +76,9 @@
 (define (all-extenders rrule)
   (make-extenders
    rrule
-   [YEARLY  || month weekno yearday monthday day hour minute second]
-   [MONTHLY || monthday day hour minute second]
+   [YEARLY  || month weekno yearday monthday (unless (or yearday monthday) day)
+               hour minute second]
+   [MONTHLY || monthday (unless monthday day) hour minute second]
    [WEEKLY  || day hour minute second]
    [DAILY   || hour minute second]
    [HOURLY  || minute second]
@@ -156,31 +164,29 @@
                                                 7))))]
 
               [(MONTHLY)
-               ;; if bymonthday is present byday turns into a limiter
-               (if (bymonthday rrule)
-                   dt
-                   (let* ((instances (all-wday-in-month value d)))
-                     (catch 'out-of-range
-                       (lambda ()
-                         (cond [(eqv? #f offset)
-                                ;; every of that day in this month
-                                (valued-map to-dt instances)]
+               (let* ((instances (all-wday-in-month value d)))
+                 (catch 'out-of-range
+                   (lambda ()
+                     (cond [(eqv? #f offset)
+                            ;; every of that day in this month
+                            (valued-map to-dt instances)]
 
-                               [(positive? offset)
-                                (to-dt (list-ref instances (1- offset)))]
+                           [(positive? offset)
+                            (to-dt (list-ref instances (1- offset)))]
 
-                               [(negative? offset)
-                                (to-dt (list-ref (reverse instances)
-                                                 (1- (- offset))))]))
+                           [(negative? offset)
+                            (to-dt (list-ref (reverse instances)
+                                             (1- (- offset))))]))
 
-                       (lambda (err proc fmt args  . rest)
-                         (warning "BYDAY out of range for MONTHLY.
+                   (lambda (err proc fmt args  . rest)
+                     (warning "BYDAY out of range for MONTHLY.
  Possibly stuck in infinite loop")
-                         dt))))]
+                     dt)))]
 
               ;; see Note 2, p. 44
               [(YEARLY)
                (cond
+
                 ;; turns it into a limiter
                 [(or (byyearday rrule) (bymonthday rrule))
                       dt]
