@@ -87,7 +87,7 @@
                                      ))))))
 
    (GET "/month/:start-date.html" (start-date)
-        (let* ((start-date (parse-iso-date start-date)))
+        (let* ((start-date (start-of-month (parse-iso-date start-date))))
 
           (return '((content-type text/html))
                   (with-output-to-string
