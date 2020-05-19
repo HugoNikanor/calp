@@ -208,19 +208,29 @@
 ;; 2020-02-00 + 0-0- (40 - 31)             ;
 ;; 2020-02-09
 
-(define-public (date= a b)
-  (and (= (year a) (year b))
-       (= (month a) (month b))
-       (= (day a) (day b))))
+(define-public (date= . args)
+  (reduce (lambda (a b)
+            (and (= (year a) (year b))
+                 (= (month a) (month b))
+                 (= (day a) (day b))
+                 ;; return object
+                 a))
+          #t args))
 
-(define-public (time= a b)
-  (and (= (hour a) (hour b))
-       (= (minute a) (minute b))
-       (= (second a) (second b))))
+(define-public (time= . args)
+  (reduce (lambda (a b)
+            (and (= (hour a) (hour b))
+                 (= (minute a) (minute b))
+                 (= (second a) (second b))
+                 a))
+          #t args))
 
-(define-public (datetime= a b)
-  (and (date= (get-date a) (get-date b))
-       (time= (get-time% a) (get-time% b))))
+(define-public (datetime= . args)
+  (reduce (lambda (a b)
+            (and (date= (get-date a) (get-date b))
+                 (time= (get-time% a) (get-time% b))
+                 a))
+          #t args))
 
 (define-many define-public
   (date=?) date=

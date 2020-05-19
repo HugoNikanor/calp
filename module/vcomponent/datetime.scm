@@ -75,22 +75,15 @@ Event must have the DTSTART and DTEND attribute set."
 ;; currently the secund argument is a date, but should possibly be changed
 ;; to a datetime to allow for more explicit TZ handling?
 (define-public (event-length/day date e)
-  ;; TODO date= > 2 elements
   (let ((start (attr e 'DTSTART))
         (end (attr e 'DTEND)))
-    (cond [(and (date= (as-date start)
-                       (as-date end))
-                (date= (as-date start)
-                       date))
-           (time- (as-time end)
-                  (as-time start))]
+    (cond [(date= date (as-date start) (as-date end))
+           (time- (as-time end) (as-time start))]
           ;; Starts today, end in future day
-          [(date= (as-date start)
-                  date)
+          [(date= date (as-date start))
            (time- #24:00:00 (as-time start))]
           ;; Ends today, start earlier day
-          [(date= (as-date end)
-                  date)
+          [(date= date (as-date end))
            (as-time end)]
           ;; start earlier date, end later date
           [else #24:00:00])))
