@@ -5,7 +5,7 @@
 
 (use-modules (vcomponent recurrence display)
              (vcomponent recurrence parse)
-             (vcomponent recurrence generate-alt)
+             (vcomponent recurrence generate)
              (vcomponent)
              (datetime)
              (datetime util)
@@ -25,7 +25,7 @@
                                                  (attr comp 'RRULE))
              (map (lambda (d) (datetime->string d "~a ~1 ~3"))
                   (stream->list
-                   10 ((@@ (vcomponent recurrence generate-alt) rrule-instances)
+                   10 ((@@ (vcomponent recurrence generate) rrule-instances)
                        comp)))))))
 
 

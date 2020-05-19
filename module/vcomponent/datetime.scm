@@ -109,7 +109,7 @@ Event must have the DTSTART and DTEND attribute set."
 (define (final-spanned-time event)
   (if (not ((@ (vcomponent recurrence) repeating?) event))
       (or (attr event 'DTEND) (attr event 'DTSTART))
-      (let ((final ((@ (vcomponent recurrence generate-alt) final-event-occurence)
+      (let ((final ((@ (vcomponent recurrence generate) final-event-occurence)
                     event)))
         (if final
             (aif (attr event 'DTEND)

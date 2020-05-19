@@ -1,4 +1,4 @@
-(define-module (vcomponent recurrence generate-alt)
+(define-module (vcomponent recurrence generate)
   :export (generate-recurrence-set)
   :use-module (util)
   :use-module (util exceptions)
