@@ -18,15 +18,6 @@
 (re-export-modules (vcomponent base))
 
 
-;; TODO rename function
-(define (calculate-recurrence-set regular repeating)
-  (interleave-streams
-   ev-time<?
-   (cons (list->stream regular)
-         (map (@ (vcomponent recurrence) generate-recurrence-set) repeating)
-         )))
-
-
 (define-method (init-app calendar-files)
   (setf 'calendars (load-calendars calendar-files))
 
@@ -51,9 +42,11 @@
   (setf 'fixed-events (car (getf 'fixed-and-repeating-events)))
   (setf 'repeating-events (cadr (getf 'fixed-and-repeating-events)))
 
-  (setf 'event-set (calculate-recurrence-set
-                    (getf 'fixed-events)
-                        (getf 'repeating-events)))
+  (setf 'event-set
+        (interleave-streams
+         ev-time<?
+         (cons (list->stream (getf 'fixed-events))
+               (map generate-recurrence-set (getf 'repeating-events)))))
 
   (setf 'uid-map
         (let ((ht (make-hash-table)))
