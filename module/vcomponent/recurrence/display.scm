@@ -1,3 +1,10 @@
+;;; Commentary:
+;; Pretty print a recurrence rule (in Swedish). Is currently missing a
+;; number of ;; edge cases, and even more concerning limited events.
+;; NOTE It would be preferable if this could share as much logic as possible
+;; with the "real" generator.
+;;; Code:
+
 (define-module (vcomponent recurrence display)
   :use-module (vcomponent recurrence internal)
   :use-module (util)
@@ -35,10 +42,11 @@
             )
           groups))))
 
-(define (format-bymonth-day lst)
+(define* (format-bymonth-day lst optional: (final-delim "&"))
   (list "den "
         (add-enumeration-punctuation
-         (map number->string-ordinal lst))))
+         (map number->string-ordinal lst)
+         final-delim)))
 
 
 (define-public  (format-recurrence-rule rrule)
@@ -48,7 +56,7 @@
      (case (freq rrule)
        [(YEARLY)
         (list (awhen (byday rrule) (list " " (format-byday-list it)))
-              (awhen (bymonthday rrule) (list " " (format-bymonth-day it)))
+              (awhen (bymonthday rrule) (list " " (format-bymonth-day it "eller")))
               (awhen (byyearday rrule)
                      (list " dag " (add-enumeration-punctuation it)))
               (awhen (bymonth rrule)
