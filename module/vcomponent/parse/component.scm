@@ -149,7 +149,7 @@
                             (define key (vline-key vline))
 
                             ;; Which types are allowed to be given multiple times
-                            (if (memv (vline-key vline) '(EXDATE ATTENDEE))
+                            (if (memv key '(EXDATE ATTENDEE))
                                 (aif (attr* (car stack) key)
                                      (set! (attr* (car stack) key) (cons vline it))
                                      (set! (attr* (car stack) key) (list vline)))
