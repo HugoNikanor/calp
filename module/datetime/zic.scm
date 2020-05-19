@@ -119,13 +119,6 @@
   (name link-name)                      ; string
   (target link-target))                 ; string
 
-(define-immutable-record-type <leap-second>  ; "UNUSED"
-  (make-leap-second when correction r/s)
-  leap-second?
-  (when leap-second-when)
-  (correction leap-second-correction)
-  (r/s leap-second-r/s))
-
 (define-immutable-record-type <zoneinfo>  ; EXPORTED
   (make-zoneinfo rules zones)
   zoneinfo?
@@ -329,36 +322,12 @@
                           (loop (cons (make-link name target)
                                       done) #f))]
 
-                       ;; Leap and Exprires mostly ignored
-
-                       [(Leap)
-                        (let* (((year month day time correction r/s) args))
-                          (loop (cons
-                                 (make-leap-second
-                                  (datetime
-                                   date: (date year: (string->number year)
-                                               month: (month-name->number month)
-                                               day: (string->number day))
-                                   time: (parse-iso-time time))
-                                  correction
-                                  (cond
-                                   [(string-prefix? r/s "Stationary") 'stationary]
-                                   [(string-prefix? r/s "Rolling") 'rolling]
-                                   [else (error "Invalid r/s" r/s)]))
-                                 done) #f))]
-
-                       [(Expires)
-                        (let* (((year month day time) args))
-                          ;; TODO class here
-                          (loop
-                           (cons (datetime
-                                  date: (date year: (string->number year)
-                                              month: (month-name->number month)
-                                              day: (string->number day))
-                                  time: (parse-iso-time time))
-                                 done) #f))]
                        [else
-                        (error "Something")]
+                        ;; NOTE an earlier version of the code the parsers for those.
+                        ;; They were removed since they were unused, uneeded, and was
+                        ;; technical dept.
+                        (error "Invalid key ~a. Note that leap seconds and
+expries rules aren't yet implemented." type)]
                        ))]))))))
 
 
