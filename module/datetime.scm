@@ -97,6 +97,7 @@
 
 
 
+
 ;; NOTE there isn't any stable way to craft the tm objects.
 ;; I could call mktime on some date, and replace the fields
 ;; with the set-tm:*, but that is worse that breaking the API.
@@ -134,6 +135,7 @@
 ;; TODO prodedure to change TZ for datetime object
 
 
+
 ;; datetime → datetime
 ;; Takes a datetime in any timezone, and renormalize it to local time
 ;; (as defined by TZ). This means that given UTC 10:00 new years day
@@ -148,14 +150,6 @@
                    [else (mktime v (tz dt))])))))
       (tm->datetime tm))))
 
-;; Deprecated
-;; datetime → time
-;; Returns the local time from a date. Meaning that if the given datetime has
-;; timezone info it's discarded and a local timestamp produced.
-;; It's deprecated since the local time of a datetime can be in another date
-;; than the original. which is fun...
-;; (define-public (get-time dt)
-;;   (get-time% (get-datetime dt)))
 
 
 ;;; UTIL
@@ -179,6 +173,7 @@
 (define-public (days-in-year date)
   (if (leap-year? (year date))
       366 365))
+
 
 
 (define-public (as-date date/-time)
@@ -322,32 +317,6 @@
 
 ;;; OPERATIONS
 
-;; Base and change inverted to better work with fold in the exported date+
-#;
-(define (date+% change base)
-
-  ;; while (day base) > (days-in-month base)
-  ;;     month++; days -= (days-in-month base)
-  (define days-fixed
-    (let loop ((target (set (day base) = (+ (day change)))))
-      (if (> (day target) (days-in-month target))
-          (loop (set-> target
-                       (month = (+ 1))
-                       (day = (- (days-in-month target)))))
-          target)))
-
-  ;; while (month base) > 12
-  ;;     year++; month -= 12
-  (define months-fixed
-    (let loop ((target (set (month days-fixed) = (+ (month change)))))
-      (if (> (month target) 12)
-          (loop (set-> target
-                       (year = (+ 1))
-                       (month = (- 12))))
-          target)))
-
-  (set (year months-fixed) = (+ (year change))))
-
 (define-public (date-zero? date)
   (= 0 (year date) (month date) (day date)))
 
@@ -383,7 +352,6 @@
     (if (date-zero? change*)
         (values days-fixed change*)
      (let loop ((target days-fixed) (change change*))
-       ;; (format (current-error-port) "2 ~s : ~s~%" target change)
        (if (< 12 (+ (month change) (month target)))
            ;; if we overflow into the next year
            (loop (set-> target
@@ -497,8 +465,6 @@
 
   (define hour-almost-fixed (set (hour minute-fixed) = (+ (hour change))))
 
-  ;; (format #t "~s ~s ~s~%" second-fixed minute-fixed hour-almost-fixed)
-
   (if (<= 24 (hour hour-almost-fixed))
       (let* ((div remainder (floor/ (hour hour-almost-fixed) 24)))
         (values (set (hour hour-almost-fixed) remainder) div))
@@ -571,32 +537,6 @@
               time: time
               tz: (get-timezone base)
               )))
-
-;; (define (datetime->srfi-19-date date)
-;;   ((@ (srfi srfi-19) make-date)
-;;     0
-;;     (second (get-time date))
-;;     (minute (get-time date))
-;;     (hour (get-time date))
-;;     (day (get-date date))
-;;     (month (get-date date))
-;;     (year (get-date date))
-;;     0                                   ; TODO TZ
-;;     ))
-
-;; (define (srfi-19-date->datetime o)
-;;   (let ((y ((@ (srfi srfi-19) date-year)   o)))
-;;     ;; TODO find better way to translate from 1970 to 0, since this WILL
-;;     ;; cause problems sooner or later.
-;;    (datetime year:   (if (= 1970 y) 0 y)
-;;              month:  (let ((m ((@ (srfi srfi-19) date-month) o)))
-;;                        (if (and (= 1970 y) (= 1 m)) 0 m))
-;;              day:    (let ((d ((@ (srfi srfi-19) date-day) o)))
-;;                        (if (and (= 1970 y) (= 1 d)) 0 d))
-;;              hour:   ((@ (srfi srfi-19) date-hour)   o)
-;;              minute: ((@ (srfi srfi-19) date-minute) o)
-;;              second: ((@ (srfi srfi-19) date-second) o)
-;;              )))
 
 ;;; the *-difference procedures takes two actual datetimes.
 ;;; date- instead takes a date and a delta (but NOT an actual date).
@@ -696,17 +636,12 @@
               time: (parse-ics-time timestr)
               tz: tz)))
 
-;; TODO rewrite this
-(define-public (current-date)
-  (let ((d ((@ (srfi srfi-19) current-date))))
-    (date year:  ((@ (srfi srfi-19) date-year) d)
-          month: ((@ (srfi srfi-19) date-month) d)
-          day:   ((@ (srfi srfi-19) date-day) d))))
-
 ;; TODO this returns UTC time, but without a TZ component
 (define-public (current-datetime)
   (unix-time->datetime ((@ (guile) current-time))))
 
+(define-public (current-date)
+  (get-date (current-datetime)))
 
 
 

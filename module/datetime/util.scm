@@ -171,6 +171,7 @@
                    ((#\M) (format #t "~2'0d" (minute time)))
                    ((#\S) (format #t "~2'0d" (second time)))
                    ;; TODO
+                   ;; +02:00, get from zoneinfo database
                    ;; ((#\z) (when (utc? time) (display "Z")))
                    ((#\Y) (format #t "~4'0d" (year date)))
                    ((#\m) (format #t "~2'0d" (month date)))
@@ -314,7 +315,8 @@
                          (* 12 (year diff)))
                       (month-stream start-date)))))))
 
-;; also known as Julian day.
+;; Day from start of the year, so 1 feb would be day 32.
+;; Also known as Julian day.
 (define-public (year-day date)
   (days-in-interval (start-of-year date) date))
 
