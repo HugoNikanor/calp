@@ -2,6 +2,7 @@
   :use-module (system repl server)
   :use-module (ice-9 regex)
   :use-module ((util hooks) :select (shutdown-hook))
+  :use-module (util exceptions)
   )
 
 (define-public (runtime-dir)
@@ -21,7 +22,7 @@
      [(UNIX)
       (add-hook! shutdown-hook (lambda () (catch 'system-error (lambda () (delete-file address))
                                        (lambda (err proc fmt . args)
-                                         ;; TODO warn here
+                                         (warning "Failed to unlink ~a" address args)
                                          err))))
       (make-unix-domain-server-socket path: address)]
      [(IPv4) (apply (case-lambda
