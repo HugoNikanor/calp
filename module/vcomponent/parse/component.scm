@@ -111,18 +111,29 @@
 
                  ;; TODO This is an ugly hack until the rest of the code is updated
                  ;; to work on events without an explicit DTEND attribute.
-                 (when (and (eq? (type (car stack)) 'VEVENT)
-                            (not (attr (car stack) 'DTEND)))
-                   (set! (attr (car stack) 'DTEND)
-                     (let ((start (attr (car stack) 'DTSTART)))
-                       ;; p. 54, 3.6.1
-                       ;; If DTSTART is a date then it's an all
-                       ;; day event. If DTSTART instead is a
-                       ;; datetime then the event has a length
-                       ;; of 0?
-                       (if (date? start)
-                           (date+ start (date day: 1))
-                           (datetime+ start (datetime time: (time hour: 1)))))))
+                 (when (eq? (type (car stack)) 'VEVENT)
+                   (when (not (attr (car stack) 'DTEND))
+                     (set! (attr (car stack) 'DTEND)
+                       (let ((start (attr (car stack) 'DTSTART)))
+                         ;; p. 54, 3.6.1
+                         ;; If DTSTART is a date then it's an all
+                         ;; day event. If DTSTART instead is a
+                         ;; datetime then the event has a length
+                         ;; of 0?
+                         (if (date? start)
+                             (date+ start (date day: 1))
+                             (datetime+ start (datetime time: (time hour: 1)))))))
+
+                   ;; This isn't part of the field values since we "need"
+                   ;; the type of DTSTART for UNTIL to work.
+                   ;; This could however be side steped by auto detecting
+                   ;; @type{date}s vs @type{datetime}s in @function{parse-recurrence-rule}.
+                   (when (attr (car stack) 'RRULE)
+                     (set! (attr (car stack) 'RRULE)
+                       ((@ (vcomponent recurrence) parse-recurrence-rule)
+                        (attr (car stack) 'RRULE)
+                        (if (date? (attr (car stack) 'DTSTART))
+                            parse-ics-date parse-ics-datetime)))))
 
                  (loop (cdr lst)
                        (if (null? (cdr stack))

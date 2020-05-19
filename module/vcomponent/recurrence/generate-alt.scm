@@ -332,11 +332,6 @@
     rrule base-date)))
 
 (define-stream (rrule-instances event)
-  ;; (define rrule  (parse-recurrence-rule
-  ;;                 (attr event 'RRULE)
-  ;;                 (if (date? (attr event 'DTSTART))
-  ;;                     parse-ics-date parse-ics-datetime)))
-
   (define rrule (attr event 'RRULE))
 
   ;; 3.8.5.1 exdate are evaluated AFTER rrule (and rdate)

@@ -25,8 +25,6 @@
                                                  (attr comp 'RRULE))
              (map (lambda (d) (datetime->string d "~a ~1 ~3"))
                   (stream->list
-                   ;; TODO this assumes a future version of rrule-instances
-                   ;; which assumes a pre parsed recurrence rule.
                    10 ((@@ (vcomponent recurrence generate-alt) rrule-instances)
                        comp)))))))
 

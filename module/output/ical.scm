@@ -54,13 +54,8 @@
                      (modulo s 60))
              ))
           [(RRULE)
-           ;; NOTE
-           ;; generated events are created with recur-rule objects.
-           ;; parsed objects keep their string representation.
-           ;; TODO normalize this.
-           (if ((@ (vcomponent recurrence internal) recur-rule?) value)
-               ((@ (vcomponent recurrence internal) recur-rule->rrule-string) value)
-               value)]
+           ((@ (vcomponent recurrence internal)
+               recur-rule->rrule-string) value)]
 
           (else
            (escape-chars value)
