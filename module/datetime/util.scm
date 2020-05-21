@@ -101,14 +101,18 @@
   )
 
 
-;; TODO parameter for default week start?
+(define-config week-start sun
+  "First day of week"
+  (lambda (x) (<= sun x sat)))
+
+(define-public week-start (make-parameter sun))
 
 ;; given a date, returns the date the first week of that year starts on.
 ;; @example
 ;; (week-1-start #2020-01-01 mon)
 ;; ⇒ 2019-12-30
 ;; @end example
-(define*-public (week-1-start d optional: (wkst sun))
+(define*-public (week-1-start d optional: (wkst (week-start)))
   (let* ((ystart (start-of-year d))
          (day-index (modulo (- (week-day ystart) wkst) 7)))
     (if (> day-index 3)
@@ -117,7 +121,7 @@
 
 ;; (week-number #2020-01-01 mon) ; => 1
 ;; (week-number #2019-12-31 mon) ; => 1
-(define*-public (week-number d optional: (wkst sun))
+(define*-public (week-number d optional: (wkst (week-start)))
   ;; Calculating week number for starts of week was much simpler.
   ;; We can both skip the special cases for Jan 1, 2 & 3. It also
   ;; solved some weird bug that was here before.
@@ -136,7 +140,7 @@
                               7)))
        (1+ week))])))
 
-(define*-public (date-starting-week week-number d optional: (wkst sun))
+(define*-public (date-starting-week week-number d optional: (wkst (week-start)))
   (date+ (week-1-start d wkst)
          (date day: (* (1- week-number) 7))))
 
@@ -261,14 +265,14 @@
 
 ;; returns the date the week containing d started.
 ;; (start-of-week #2020-04-02 sun) ; => 2020-03-29
-(define*-public (start-of-week d optional: (week-start mon))
+(define*-public (start-of-week d optional: (week-start (week-start)))
   (date- d (date day: (modulo (- (week-day d)
                                  week-start)
                               7))))
 
 ;; (end-of-week #2020-04-01 mon)
 ;; => 2020-04-05
-(define*-public (end-of-week d optional: (week-start mon))
+(define*-public (end-of-week d optional: (week-start (week-start)))
   (date+ (start-of-week d week-start)
          (date day: 6)))
 
@@ -292,7 +296,7 @@
 ;; => (2020-03-01 ... 2020-03-31)
 ;; => (2020-04-01 ... 2020-04-05)
 ;; TODO Currently givining a non-start-of-month date for @var{date} is an error.
-(define-public (month-days date week-start)
+(define*-public (month-days date optional: (week-start (week-start)))
   (let* ((month-len (days-in-month date))
          (prev-month-len (days-in-month (month- date)))
          (month-start (modulo (- (week-day date) week-start) 7)))
@@ -350,9 +354,6 @@
    (stream-take-while (lambda (d) (date<= d end))
                       (day-stream start))))
 
-(define-config week-start sun
-  "First day of week"
-  (lambda (x) (<= sun x sat)))
 
 
 ;; TODO normalize if functions floor their arguments or not.
