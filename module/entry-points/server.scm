@@ -101,8 +101,8 @@
                                      prev-start: month-
                                      ;; internally rounds start-date to start of month
                                      render-calendar: render-calendar-table
-                                     pre-start: (start-of-week start-date)
-                                     post-end: (end-of-week (end-of-month start-date))
+                                     pre-start: (start-of-week start-date (get-config 'week-start))
+                                     post-end: (end-of-week (end-of-month start-date) (get-config 'week-start))
                                      intervaltype: 'month
                                      ))))))
 

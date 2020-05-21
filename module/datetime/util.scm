@@ -105,6 +105,9 @@
   "First day of week"
   (lambda (x) (<= sun x sat)))
 
+;; TODO setting the @var{week-start} parameter from the @var{week-start}
+;; config ought to be done. But a post-set method first needs to be
+;; introduced in define-config.
 (define-public week-start (make-parameter sun))
 
 ;; given a date, returns the date the first week of that year starts on.
