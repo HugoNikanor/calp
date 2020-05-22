@@ -145,15 +145,17 @@
               (get-vline-parameters vline)))
 
 (define-public (copy-vcomponent component)
-  (make-vcomponent% (type component)
-                    (children component)
-                    (parent component)
-                    ;; attributes
-                    (alist->hashq-table
-                     (hash-map->list (lambda (key value) (cons key (if (list? value)
-                                                                  (map copy-vline value)
-                                                                  (copy-vline value))))
-                                     (get-component-attributes component)))))
+  (make-vcomponent%
+   (type component)
+   (children component)
+   (parent component)
+   ;; attributes
+   (alist->hashq-table
+    (hash-map->list (lambda (key value)
+                      (cons key (if (list? value)
+                                    (map copy-vline value)
+                                    (copy-vline value))))
+                    (get-component-attributes component)))))
 
 (define-public (extract field)
   (lambda (e) (attr e field)))
