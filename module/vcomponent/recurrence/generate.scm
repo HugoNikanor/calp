@@ -1,5 +1,4 @@
 (define-module (vcomponent recurrence generate)
-  :export (generate-recurrence-set)
   :use-module (util)
   :use-module (util exceptions)
   :use-module (srfi srfi-1)
@@ -94,7 +93,6 @@
    [HOURLY   || month yearday monthday day hour #|setpos|#]
    [MINUTELY || month yearday monthday day hour minute #|setpos|#]
    [SECONDLY || month yearday monthday day hour minute second #|setpos|#]
-   ;; [else]
    ))
 
 ;; next, done
@@ -113,8 +111,6 @@
                            list))
                        vv)))))))
 
-;; TODO more special expands (p. 44)
-;; TODO which of THESE can be negative
 ;; (a := (date|datetime)), rrule, extension-rule → a
 (define (update date-object rrule extension-rule)
   ;; Branching fold instead of regular fold since BYDAY
@@ -129,12 +125,10 @@
             (t (as-time dt))
             (to-dt (lambda (o)
                      (if (date? dt)
-                         (cond [(date? o) o]
-                               [(time? o) d]
-                               [else (error "faoeuhtnsaoeu htnaoeu" )])
-                         (cond [(date? o) (datetime date: o time: t tz: (get-timezone dt))]
-                               [(time? o) (datetime date: d time: o tz: (get-timezone dt))]
-                               [else (error "faoeuhtnsaoeu htnaoeu" )])))))
+                         (if (date? o) o d)
+                         (if (date? o)
+                             (datetime date: o time: t tz: (get-timezone dt))
+                             (datetime date: d time: o tz: (get-timezone dt)))))))
        (case key
          [(BYMONTH)
           (if (and (eq? 'YEARLY (freq rrule))
@@ -158,7 +152,6 @@
               [(WEEKLY)
                ;; set day to that day in the week which d lies within
                (to-dt (date+ (start-of-week d (wkst rrule))
-                             ;; TODO check that this actually is the correct calculation
                              (date day: (modulo (- value (wkst rrule))
                                                 7))))]
 
@@ -248,8 +241,7 @@
 ;; The initial DTSTART SHOULD be synchronized with the RRULE.
 ;; An unsynchronized DTSTART/RRULE results in an undefined recurrence set.
 
-;; TODO ought to be [rrule, a → (stream a)] where a := (date | datetime)
-;; rrule, date → (stream datetime)
+;; rrule, (a := date|datetime) → (stream a)
 (define-stream (extend-recurrence-set rrule base-date)
   (stream-append
    ;; If no BY-rules are present just add the base-date to the set.
@@ -281,8 +273,6 @@
 ;; returns a function which takes a datetime and is true
 ;; if the datetime is part of the reccurrence set, and
 ;; false otherwise.
-;; 
-;; TODO how many of these can take negative numbers?
 ;; 
 ;; limiters → (a → bool)
 (define (limiters->predicate limiters)
@@ -358,6 +348,8 @@
                                       date-stream))]
           [else date-stream])))
 
+(export rrule-instances)
+
 
 (define-public (final-event-occurence event)
   (define rrule (attr event 'RRULE))
@@ -368,7 +360,7 @@
       #f))
 
 
-(define (generate-recurrence-set base-event)
+(define-public (generate-recurrence-set base-event)
 
 
   (define duration

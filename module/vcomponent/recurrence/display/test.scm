@@ -25,8 +25,7 @@
                                                  (attr comp 'RRULE))
              (map (lambda (d) (datetime->string d "~a ~1 ~3"))
                   (stream->list
-                   10 ((@@ (vcomponent recurrence generate) rrule-instances)
-                       comp)))))))
+                   10 (rrule-instances comp)))))))
 
 
 (define (vevent . rest)
