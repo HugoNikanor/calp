@@ -75,7 +75,6 @@
 
 
 
-;; TODO for some cases the final delim should be `or' instead of `and'
 ;; TODO more options for infix strings
 (define*-public (add-enumeration-punctuation
                  list optional: (final-delim "&"))

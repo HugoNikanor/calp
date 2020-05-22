@@ -146,15 +146,12 @@
          => (lambda (alts) (hash-map->list (lambda (_ comp) (component->ical-string comp))
                                       alts))]))
 
-;; TODO place these somewhere better
-(define *prodid* "-//hugo//Calparse 0.9//EN")
-
 ;; TODO tzid prop on dtstart vs tz field in datetime object
 ;; how do we keep these two in sync?
 (define (write-event-to-file event calendar-path)
   (define cal (make-vcomponent 'VCALENDAR))
 
-  (set! (attr cal 'PRODID) *prodid*
+  (set! (attr cal 'PRODID) (@ (global) *prodid*)
         (attr cal 'VERSION) "2.0"
         (attr cal 'CALSCALE) "GREGORIAN")
 
@@ -178,10 +175,10 @@
 (define (print-header)
   (format #t
 "BEGIN:VCALENDAR\r
-PRODID:-//hugo//Calparse 0.5//EN\r
+PRODID:~a\r
 VERSION:2.0\r
 CALSCALE:GREGORIAN\r
-"
+" (@ (global) *prodid*)
 ))
 
 

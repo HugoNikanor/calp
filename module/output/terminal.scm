@@ -45,7 +45,6 @@
            ((@ (texinfo string-utils) center-string)
             (date->string (attr ev 'DTSTART))
             19))
-                                        ; TODO show truncated string
        " │ "
        (if (= i cur-event) "\x1b[7m" "")
        (color-escape (attr (parent ev) 'COLOR))
