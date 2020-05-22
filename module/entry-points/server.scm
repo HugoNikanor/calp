@@ -148,9 +148,15 @@
    ;; production it isn't a huge problem.
 
    (GET "/static/:*{.*}.:ext" (* ext)
+
+        ;; Actually parsing /etc/mime.types would be better.
+        (define mime
+          (case (string->symbol ext)
+            [(js) "javascript"]
+            [else ext]))
+
         (return
-         ;; TODO actually check mimetype
-         `((content-type ,(string->symbol (string-append "text/" ext))))
+         `((content-type ,(string->symbol (string-append "text/" mime))))
          (call-with-input-file (string-append "static/" * "." ext)
            read-string)))
 
