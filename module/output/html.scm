@@ -32,6 +32,7 @@
   ""
   procedure?)
 
+(define debug (make-parameter #f))
 
 (define* (slider-input key: variable
                        (min 0)
@@ -203,8 +204,7 @@
                                   (string= "TENTATIVE" (attr ev 'PARTSTAT)))
                          " tentative"))
                     (data-tipped-options ,(format #f "inline: '~a'" popup-id))
-                    ;; TODO only if in debug mode?
-                    ,@(data-attributes ev))))
+                    ,@(when (debug) (data-attributes ev)))))
             ,(when (attr ev 'RRULE)
                `(span (@ (class "repeating")) "↺"))
             ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
@@ -729,25 +729,25 @@
 
 
                 (div (@ (style "grid-area: details"))
-                     ;; TODO only include these sliders in debug builds
-                     (details (@ (class "sliders"))
-                              (summary "Option sliders")
-                              (label "Event blankspace")
-                              ,(slider-input
-                                variable: "editmode"
-                                min: 0
-                                max: 1
-                                step: 0.01
-                                value: 1)
+                     ,(when (debug)
+                        `(details (@ (class "sliders"))
+                                  (summary "Option sliders")
+                                  (label "Event blankspace")
+                                  ,(slider-input
+                                    variable: "editmode"
+                                    min: 0
+                                    max: 1
+                                    step: 0.01
+                                    value: 1)
 
-                              (label "Fontsize")
-                              ,(slider-input
-                                unit: "pt"
-                                min: 1
-                                max: 20
-                                step: 1
-                                value: 8
-                                variable: "event-font-size"))
+                                  (label "Fontsize")
+                                  ,(slider-input
+                                    unit: "pt"
+                                    min: 1
+                                    max: 20
+                                    step: 1
+                                    value: 8
+                                    variable: "event-font-size")))
 
                      ;; List of calendars
                      (details (@ (class "calendarlist"))
