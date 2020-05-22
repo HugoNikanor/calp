@@ -207,7 +207,8 @@ CALSCALE:GREGORIAN\r
 
   (let ((tz-names (get-tz-names events)))
     (for-each component->ical-string
-              ;; TODO we realy should send the earliest event from each timezone here.
+              ;; TODO we realy should send the earliest event from each timezone here,
+              ;; instead of just the first.
               (map (lambda (name) (zoneinfo->vtimezone (getf 'zoneinfo) name (car events)))
                    tz-names)))
 

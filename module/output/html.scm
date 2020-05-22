@@ -241,9 +241,6 @@
    ev `((class
           ,(when (date<? (as-date (attr ev 'DTSTART)) date)
              " continued")
-          ;; TODO all day events usually have the day after as DTEND.
-          ;; So a whole day event the 6 june would have a DTEND of the
-          ;; 7 june.
           ,(when (date<? date (as-date (attr ev 'DTEND)))
              " continuing"))
         (style ,style))))
@@ -531,7 +528,6 @@
               ;; We are before our time interval
               [(date< date start-date)
                ;; TODO find a prettier way to generate links to previous and next time intervals
-               ;; TODO also, it would do good with a bit of testing for off-by-one errors
                `((class "prev")
                  (href ,(date->string
                          (stream-find (lambda (d) (date<= d date (next-start d)))
