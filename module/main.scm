@@ -161,9 +161,7 @@
               (let ((event (and=> (frame-lookup-binding frame 'event)
                                   binding-ref)))
                 (when event
-                  (format (current-error-port) "event = ~a~%" event)
-                  ((@ (vcomponent output) serialize-vcomponent)
-                   event (current-error-port))))
+                  (format (current-error-port) "event = ~a~%" event)))
 
               (loop (frame-previous frame))))
           (format #t "~%")

@@ -75,15 +75,16 @@
       (handle-value (value vline))))
 
 (define (escape-chars str)
-  (with-output-to-string
-    (lambda ()
-      (string-for-each
-       (lambda (ch)
-         (case ch
-           ((#\, #\; #\\) => (lambda (c) (display "\\") (display c)))
-           ((#\newline) (display "\\n"))
-           (else (display ch))))
-       str))))
+  (define (escape char)
+    (string #\\ char))
+  (string-concatenate
+   (map (lambda (c)
+          (case c
+            ((#\newline) "\\n")
+            ((#\, #\; #\\) => escape)
+            (else => string)))
+        (string->list str))))
+
 
 (define (generate-uuid)
   ((@ (rnrs io ports) call-with-port)

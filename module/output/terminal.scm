@@ -13,7 +13,6 @@
   #:use-module (vulgar info)
   #:use-module (vulgar color)
   #:use-module (vulgar components)
-  #:use-module (vcomponent output)
   #:use-module (vcomponent group)
 
   #:use-module (vcomponent)
