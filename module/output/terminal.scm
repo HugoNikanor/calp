@@ -145,26 +145,6 @@
                          (mod! cur-event 1+)))
             ((#\k #\K) (unless (= cur-event 0)
                          (mod! cur-event 1-)))
-            ((#\E) (serialize-vcomponent (list-ref events cur-event)
-                                         (open-output-file "/tmp/event.ics")))
-            ((#\e)
-             (let ((fname (tmpnam)))
-               (with-output-to-file fname
-                 (lambda () (serialize-vcomponent (list-ref events cur-event))))
-               (open-in-editor fname)
-               (let ((ev (parse-cal-path fname)))
-                 (serialize-vcomponent ev (current-error-port))
-
-                 ;; TODO remove child
-
-                 (add-child! (parent (list-ref events cur-event)) ev)
-                 (format (current-error-port) "Children: ~a~%start: ~a~%" (children ev)
-                         (attr ev 'DTSTART))
-                 (set! (attr ev 'X-HNH-DIRTY) #t)
-                 (set! event-stream (stream-insert ev-time<? ev event-stream))
-                 (set! grouped-stream (group-stream event-stream))
-                 )))
-
             ((#\g) (set! cur-event 0))
             ((#\G) (set! cur-event (1- (length events)))))
 
