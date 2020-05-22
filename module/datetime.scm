@@ -205,7 +205,8 @@
 
 (define-public (date= . args)
   (reduce (lambda (a b)
-            (and (= (year a) (year b))
+            (and b ; did a previous iteration return false?
+                 (= (year a) (year b))
                  (= (month a) (month b))
                  (= (day a) (day b))
                  ;; return object
@@ -214,7 +215,8 @@
 
 (define-public (time= . args)
   (reduce (lambda (a b)
-            (and (= (hour a) (hour b))
+            (and b
+                 (= (hour a) (hour b))
                  (= (minute a) (minute b))
                  (= (second a) (second b))
                  a))
