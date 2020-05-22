@@ -99,7 +99,6 @@
                                                       (date day: 1))
                                      next-start: month+
                                      prev-start: month-
-                                     ;; internally rounds start-date to start of month
                                      render-calendar: render-calendar-table
                                      pre-start: (start-of-week start-date (get-config 'week-start))
                                      post-end: (end-of-week (end-of-month start-date) (get-config 'week-start))
@@ -135,7 +134,6 @@
                          (aif end (parse-iso-date it) (current-date)))
                         (print-all-events))))))
 
-   ;; TODO this fails if there's a period in the uid.
    (GET "/calendar/:uid{.*}.ics" (uid)
         (aif (get-event-by-uid uid)
              (return '((content-type text/calendar))

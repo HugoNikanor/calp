@@ -106,6 +106,8 @@
 
 (define-public (component->ical-string component)
   (format #t "BEGIN:~a\r\n" (type component))
+  ;; TODO this leaks internal information,
+  ;; write a better API for vcomponent.
   (hash-for-each
    ;; Special cases depending on key.
    ;; Value formatting is handled in @code{value-format}.
