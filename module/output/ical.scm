@@ -116,6 +116,16 @@
      ;; Remove from output
      [('X-HNH-FILENAME _) 'noop]
 
+     [(key (vlines ...))
+      (for vline in vlines
+           (display
+            (ical-line-fold
+             ;; Expected output: key;p1=v;p3=10:value
+             (format #f "~a~:{;~a=~@{~a~^,~}~}:~a"
+                     key (properties vline)
+                     (value-format key vline))))
+           (display "\r\n"))]
+
      [(key vline)
       (display
        (ical-line-fold

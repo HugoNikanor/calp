@@ -100,8 +100,12 @@
 
 ;; vcomponent x (or str symb) → value
 (define (get-attr component key)
-  (get-attribute-value component (as-symb key) #f))
+  (let ((attrs (get-attr* component key)))
+    (cond [(not attrs) #f]
+          [(list? attrs) (concatenate (map value attrs))]
+          [else (value attrs)])))
 
+;; TODO do something sensible here
 (define (set-attr! component key value)
   (set-attribute! component (as-symb key) value))
 
