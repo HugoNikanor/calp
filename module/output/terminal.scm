@@ -145,8 +145,6 @@
                          (mod! cur-event 1+)))
             ((#\k #\K) (unless (= cur-event 0)
                          (mod! cur-event 1-)))
-            ((#\p) (print-vcomponent (list-ref events cur-event)
-                                     (current-error-port)))
             ((#\E) (serialize-vcomponent (list-ref events cur-event)
                                          (open-output-file "/tmp/event.ics")))
             ((#\e)

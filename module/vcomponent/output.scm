@@ -7,27 +7,7 @@
   #:use-module (datetime util)
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 format)
-  #:export (print-vcomponent
-            serialize-vcomponent))
-
-;;; TODO this is broken,2020-03-22
-(define* (print-vcomponent comp #:optional (port #t) #:key (descend? #t) (depth 0))
-  (let ((kvs (map (lambda (key) (cons key (attr* comp key)))
-                  (attributes comp))))
-    (format port "~a <~a> :: ~:a~%"
-            (make-string depth #\:)
-            (type comp) comp)
-    (for kv in kvs
-         (let* (((key . at) kv))
-           (format port "~a ~15@a~{;~a=~{~a~^,~}~}: ~a~%"
-                   (make-string depth #\:)
-                   key
-                   (concatenate (hash-map->list list (cdr at)))
-                   (value at))))
-    (if descend?
-     (for-each (lambda (e) (print-vcomponent e port #:descend? #t #:depth (1+ depth)))
-               (children comp)))))
-
+  #:export (serialize-vcomponent))
 
 
 ;;; TODO
