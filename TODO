@@ -6,31 +6,8 @@ XDG_CONFIG_HOME
 Liknande för cache, genererade filer, med mera
 Både när programmet körs som användare och som systemtjänst.
 
-
-Properties
-==========
-
-Object utan DTEND
------------------
-Standarden säger att events där DTSTART är ett datum (utan tid) och
-DTEND saknas ska tolkas som heldagsevent. Event med DTSTART vilket är
-datumtid ska tolkas som momentana. För tillfället sätter jag en DTEND
-på +1h.
-
-Object med DURATION istället för DTEND
---------------------------------------
-
-ICAL RDATE
-----------
-Det är i princip trivialt att lägga till i "recurrence set", se
-kommentarer i relevant fil. Dock har jag aldrig sätt ett event
-faktiskt använda dem.
-
 Terminal
 ========
-
-Terminal interface on small terminal.
--------------------------------------
 
 Handle systems with bad `cal' programs
 --------------------------------------
