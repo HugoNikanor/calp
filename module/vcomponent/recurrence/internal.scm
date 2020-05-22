@@ -66,15 +66,7 @@
        (display "#<<recur-rule>" port)
        (for field in (record-type-fields <recur-rule>)
             (awhen (get field)
-                   (display " " port)
-                   (display field port)
-                   (display "=" port)
-                   (display
-                    (case field
-                      ;; TODO check over date/time/datetime here
-                      ;; ((until) ((@ (datetime util) time->string) it))
-                      (else it))
-                    port)))
+                   (format port " ~a=~a" field it)))
        (display ">" port)))))
 
 
