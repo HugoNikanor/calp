@@ -79,7 +79,7 @@
   datetime?
   (date get-date)
   (time get-time%)
-  (tz tz) ; #f, 'UTC, 'Z
+  (tz tz) ; #f, "UTC", "Europe/Stockholm", ...
   )
 
 (export get-date)
@@ -131,8 +131,6 @@
 
 (define-public (unix-time->datetime n)
   (tm->datetime (gmtime n)))
-
-;; TODO prodedure to change TZ for datetime object
 
 
 
@@ -196,12 +194,6 @@
 
 
 ;;; EQUIALENCE
-
-;; 2020-01-10 + 0-0-30 = 2020-02-09
-;; 10 + 30 = 40                            ; day + day
-;; 40 > 31                                 ; target days > days in month
-;; 2020-02-00 + 0-0- (40 - 31)             ;
-;; 2020-02-09
 
 (define-public (date= . args)
   (reduce (lambda (a b)
@@ -334,7 +326,6 @@
 
   (define-values (days-fixed change*)
     (let loop ((target base) (change change))
-      ;; (format (current-error-port) "1 ~s : ~s~%" target change)
       (if (>= (days-in-month target) (+ (day change) (day target)))
           ;; No date overflow, just add the change
           (values (set-> target (day = (+ (day change))))
@@ -573,9 +564,7 @@
       (if (> (month a) (month b))
           (loop (set-> b
                        (year = (- 1))
-                       (month 11)
-                       #; (day 30)
-                       )
+                       (month 11))
                 (set (month a) = (- (1+ (month b)))))
           ;; elif (> (month b) (month a))
           (values (set (month b) = (- (month a)))
@@ -638,7 +627,7 @@
               time: (parse-ics-time timestr)
               tz: tz)))
 
-;; TODO this returns UTC time, but without a TZ component
+;; TODO this returns UTC time, but without a TZ component, see tm->datetime
 (define-public (current-datetime)
   (unix-time->datetime ((@ (guile) current-time))))
 
@@ -675,8 +664,7 @@
     `(datetime date: ,(parse-date% date)
                time: ,(parse-time% time)
                tz: ,(and (string= "Z" (string-take-right str 1))
-                         ;; TODO shouldn't this be "UTC"?
-                         'Z))))
+                         "UTC"))))
 
 (define (date-reader chr port)
   (unread-char chr port)
