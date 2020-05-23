@@ -1,6 +1,7 @@
 (define-module (vcomponent)
   :use-module (util)
   :use-module (util app)
+  :use-module (util config)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
@@ -8,14 +9,18 @@
   :use-module (datetime util)
   :use-module (vcomponent base)
   :use-module (vcomponent parse)
-  :use-module (vcomponent load)
   :use-module ((vcomponent recurrence) :select (generate-recurrence-set repeating?))
   :use-module ((vcomponent datetime) :select (ev-time<?))
   :re-export (make-vcomponent
-              parse-cal-path parse-calendar
-              load-calendars load-calendars*))
+              parse-cal-path parse-calendar))
 
 (re-export-modules (vcomponent base))
+
+(define-config calendar-files '() ""
+  pre: list?)
+
+(define-public (load-calendars calendar-files)
+  (map parse-cal-path calendar-files))
 
 
 (define-method (init-app calendar-files)

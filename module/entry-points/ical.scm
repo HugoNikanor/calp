@@ -3,7 +3,6 @@
   :use-module (util)
   :use-module (util options)
   :use-module (output ical)
-  :use-module ((vcomponent) :select (load-calendars*))
   :use-module (ice-9 getopt-long)
   :use-module (datetime)
   :use-module (datetime util)
