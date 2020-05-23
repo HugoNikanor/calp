@@ -53,6 +53,11 @@
   (display (apply (warning-handler) fmt (or args '()))
            (current-error-port)))
 
+(define-public (fatal fmt . args)
+  (display (format #f "FATAL: ~?~%" fmt (or args '()))
+           (current-error-port))
+  (raise 2)
+  )
 
 (define (prettify-tree tree)
   (cond [(pair? tree) (cons (prettify-tree (car tree))
