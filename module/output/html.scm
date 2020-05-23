@@ -398,8 +398,8 @@
                   (attr ev 'SUMMARY)))
             (div
              ,(call-with-values (lambda () (fmt-time-span ev))
-                (match-lambda* [(start end) `(div ,start " — " ,end)]
-                               [(start) `(div ,start)]))
+                (case-lambda [(start) `(div ,start)]
+                             [(start end) `(div ,start " — " ,end)]))
              ,(when (and=> (attr ev 'LOCATION) (negate string-null?))
                 `(div (b "Plats: ")
                       (div (@ (class "location"))
