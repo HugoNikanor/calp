@@ -35,5 +35,3 @@
          (lambda () body ...)
          (lambda () (restore-values! htable component (quote (key ...))))))]))  ; Out guard
 
-;;; TODO test that restore works, at all
-;;; Test that non-local exit and return works
