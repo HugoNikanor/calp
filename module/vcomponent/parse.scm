@@ -127,29 +127,5 @@
       (or (attr cal "X-WR-CALNAME")
           (string-append "[" (basename path) "]"))))
 
-  cal
+  cal)
 
-  )
-
-
-
-;; DEPRECATED
-;; find all ics files in a tree, and does something with them
-(define-public (read-tree path)
-  (define list '())
-  (ftw path
-       (lambda (filename statinfo flag)
-         (case flag
-           [(regular)
-            (case (stat:type statinfo)
-              [(regular)
-               (when (and (not (string= "." (string-take filename 1)))
-                          (string= "ics" (string-take-right filename 3)))
-                 (set! list (cons filename list)))
-               #t]
-              [else #t])]
-           [(directory) #t]
-           [else #f])))
-  ((@ (ice-9 threads) n-par-map) 12
-   (lambda (fname) (call-with-input-file fname parse-calendar))
-   list))
