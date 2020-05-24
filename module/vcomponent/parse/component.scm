@@ -135,7 +135,8 @@
                        (for vline in vlines
                             (define key (vline-key vline))
 
-                            ;; Which types are allowed to be given multiple times
+                            ;; See RFC 5545 p.53 for list of all repeating types
+                            ;; (for vcomponent)
                             (if (memv key '(EXDATE ATTENDEE))
                                 (aif (attr* (car stack) key)
                                      (set! (attr* (car stack) key) (cons vline it))
