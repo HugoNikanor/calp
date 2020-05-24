@@ -75,6 +75,17 @@
 (define-public (stream->values stream)
   (apply values (stream->list stream)))
 
+;; Returns two values. A steam of all the elements in stream
+;; which satisfiy @var{pred}, and a stream of those elements
+;; that don't. @var{pred} is called once per value in the
+;; input stream.
+(define-public (stream-partition pred stream)
+  (let ((strm (stream-zip (stream-map pred stream)
+                          stream)))
+    (values
+     (stream-map cadr (stream-filter car strm))
+     (stream-map cadr (stream-remove car strm)))))
+
 ;; Evaluates @var{body} in a context where most list fundamentals are
 ;; replaced by stream alternatives.
 ;; commented defifinitions are items which could be included, but for
