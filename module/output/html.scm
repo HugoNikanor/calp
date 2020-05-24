@@ -97,10 +97,12 @@
         [else ; guaranteed datetime
          (let ((s (attr ev 'DTSTART))
                (e (attr ev 'DTEND)))
-           (let ((fmt-str (if (date= (get-date s) (get-date e))
-                              "~H:~M" "~Y-~m-~d ~H:~M")))
-             (values (datetime->string s fmt-str)
-                     (datetime->string e fmt-str))))]))
+           (if e
+               (let ((fmt-str (if (date= (get-date s) (get-date e))
+                                  "~H:~M" "~Y-~m-~d ~H:~M")))
+                 (values (datetime->string s fmt-str)
+                         (datetime->string e fmt-str)))
+               (datetime->string s "~Y-~m-~d ~H:~M")))]))
 
 
 
@@ -241,7 +243,7 @@
    ev `((class
           ,(when (date<? (as-date (attr ev 'DTSTART)) date)
              " continued")
-          ,(when (date<? date (as-date (attr ev 'DTEND)))
+          ,(when (and (attr ev 'DTEND) (date<? date (as-date (attr ev 'DTEND))))
              " continuing"))
         (style ,style))))
 
@@ -282,7 +284,8 @@
    ev `((class
           ,(when (date/-time< (attr ev 'DTSTART) start-date)
              " continued")
-          ,(when (date/-time< (date+ end-date (date day: 1)) (attr ev 'DTEND))
+          ,(when (and (attr ev 'DTEND)
+                      (date/-time< (date+ end-date (date day: 1)) (attr ev 'DTEND)))
              " continuing"))
         (style ,style))))
 
@@ -292,7 +295,8 @@
 (define (lay-out-day day)
   (let* (((day-date . events) day)
          (time-obj (datetime date: day-date))
-         (short-events (stream->list events)))
+         (zero-length-events short-events
+                             (partition event-zero-length? (stream->list events))))
 
     (fix-event-widths! short-events event-length-key:
                        (lambda (e) (event-length/day day-date e)))
@@ -301,6 +305,8 @@
           ,@(map (lambda (time)
                    `(div (@ (class "clock clock-" ,time)) ""))
                  (iota 12 0 2))
+          (div (@ (class "zero-width-events"))
+               ,(map make-block zero-length-events))
           ,@(map (lambda (e) (create-block day-date e)) short-events))))
 
 

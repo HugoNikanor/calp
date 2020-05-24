@@ -499,6 +499,15 @@ along with their colors.
     width: 100%;
 }
 
+.zero-width-events .event {
+    width: initial;
+    padding: 0.5em;
+    margin: 0.2em;
+    border-radius: 1ex;
+    position: relative;
+    float: left;
+}
+
 .events .event.continuing {
     border-bottom: none;
     background-image: linear-gradient(to top, #0007 0%,#FFF0 2em);

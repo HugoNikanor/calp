@@ -26,7 +26,11 @@
                  ;; of tommorow, and finishes with the rest when it finds the first
                  ;; object which begins tomorow (after midnight, exclusize).
                  (filter-sorted-stream*
-                  (lambda (e) (date/-time<? tomorow (attr e 'DTEND)))
+                  (lambda (e) (date/-time<? tomorow
+                                       (or (attr e 'DTEND)
+                                           (if (date? (attr e 'DTSTART))
+                                               (date+ (attr e 'DTSTART) (date day: 1))
+                                               (attr e 'DTSTART)))))
                   (lambda (e) (date/-time<=? tomorow (attr e 'DTSTART)))
                   stream)))
 

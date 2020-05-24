@@ -29,20 +29,30 @@
   "Returns if the event overlaps the timespan.
 Event must have the DTSTART and DTEND attribute set."
   (timespan-overlaps? (attr event 'DTSTART)
-                      (attr event 'DTEND)
+                      (or (attr event 'DTEND) (attr event 'DTSTART))
                       begin end))
 
 (define (overlapping? event-a event-b)
   (timespan-overlaps? (attr event-a 'DTSTART)
-                      (attr event-a 'DTEND)
+                      (or (attr event-a 'DTEND)
+                          (if (date? (attr event-a 'DTSTART))
+                              (date+ (attr event-a 'DTSTART) (date day: 1))
+                              (attr event-a 'DTSTART)))
                       (attr event-b 'DTSTART)
-                      (attr event-b 'DTEND)))
+                      (or (attr event-b 'DTEND)
+                          (if (date? (attr event-b 'DTSTART))
+                              (date+ (attr event-b 'DTSTART) (date day: 1))
+                              (attr event-b 'DTSTART)))))
 
 (define (event-contains? ev date/-time)
   "Does event overlap the date that contains time."
   (let* ((start (as-date date/-time))
          (end (add-day start)))
     (event-overlaps? ev start end)))
+
+(define-public (event-zero-length? ev)
+  (and (datetime? (attr ev 'DTSTART))
+       (not (attr ev 'DTEND))))
 
 (define-public (ev-time<? a b)
   (date/-time<? (attr a 'DTSTART)
@@ -51,42 +61,49 @@ Event must have the DTSTART and DTEND attribute set."
 ;; Returns length of the event @var{e}, as a time-duration object.
 (define-public (event-length e)
   (if (not (attr e 'DTEND))
-      (datetime date:
-                (if (date? (attr e 'DTSTART))
-                    #24:00:00
-                    #01:00:00))
+      (if (date? (attr e 'DTSTART))
+          (date day: 1)
+          (datetime))
       ((if (date? (attr e 'DTSTART))
            date-difference datetime-difference)
        (attr e 'DTEND) (attr e 'DTSTART))))
 
 (define-public (event-length/clamped start-date end-date e)
-  (if (date? (attr e 'DTSTART))
-      (date-difference (date-min (date+ end-date (date day: 1))
-                                 (attr e 'DTEND))
-                       (date-max start-date
-                                 (attr e 'DTSTART)))
-      (datetime-difference (datetime-min (datetime date: (date+ end-date (date day: 1)))
-                                         (attr e 'DTEND))
-                           (datetime-max (datetime date: start-date)
-                                         (attr e 'DTSTART)))))
+  (let ((end (or (attr e 'DTEND)
+                 (if (date? (attr e 'DTSTART))
+                     (date+ (attr e 'DTSTART) (date day: 1))
+                     (attr e 'DTSTART)))))
+    (if (date? (attr e 'DTSTART))
+        (date-difference (date-min (date+ end-date (date day: 1))
+                                   end)
+                         (date-max start-date
+                                   (attr e 'DTSTART)))
+        (datetime-difference (datetime-min (datetime date: (date+ end-date (date day: 1)))
+                                           end)
+                             (datetime-max (datetime date: start-date)
+                                           (attr e 'DTSTART))))))
 
 ;; Returns the length of the part of @var{e} which is within the day
 ;; starting at the time @var{start-of-day}.
 ;; currently the secund argument is a date, but should possibly be changed
 ;; to a datetime to allow for more explicit TZ handling?
 (define-public (event-length/day date e)
-  (let ((start (attr e 'DTSTART))
-        (end (attr e 'DTEND)))
-    (cond [(date= date (as-date start) (as-date end))
-           (time- (as-time end) (as-time start))]
-          ;; Starts today, end in future day
-          [(date= date (as-date start))
-           (time- #24:00:00 (as-time start))]
-          ;; Ends today, start earlier day
-          [(date= date (as-date end))
-           (as-time end)]
-          ;; start earlier date, end later date
-          [else #24:00:00])))
+  (if (not (attr e 'DTEND))
+      (if (date? (attr e 'DTSTART))
+          #24:00:00
+          (time))
+      (let ((start (attr e 'DTSTART))
+            (end (attr e 'DTEND)))
+        (cond [(date= date (as-date start) (as-date end))
+               (time- (as-time end) (as-time start))]
+              ;; Starts today, end in future day
+              [(date= date (as-date start))
+               (time- #24:00:00 (as-time start))]
+              ;; Ends today, start earlier day
+              [(date= date (as-date end))
+               (as-time end)]
+              ;; start earlier date, end later date
+              [else #24:00:00]))))
 
 
 ;; 22:00 - 03:00
@@ -98,10 +115,12 @@ Event must have the DTSTART and DTEND attribute set."
 ;; For practical purposes, an event being long means that it shouldn't be rendered as a part
 ;; of a regular day.
 (define-public (long-event? ev)
-  (or (date? (attr ev 'DTSTART))
-      (datetime<= (datetime date: (date day: 1))
-                  (datetime-difference (attr ev 'DTEND)
-                                       (attr ev 'DTSTART)))))
+  (if (date? (attr ev 'DTSTART))
+      #t
+      (aif (attr ev 'DTEND)
+           (datetime<= (datetime date: (date day: 1))
+                       (datetime-difference it (attr ev 'DTSTART)))
+           #f)))
 
 
 ;; DTEND of the last instance of this event.
@@ -121,7 +140,8 @@ Event must have the DTSTART and DTEND attribute set."
 (define-public (events-between start-date end-date events)
   (define (overlaps e)
     (timespan-overlaps? start-date (date+ end-date (date day: 1))
-                        (attr e 'DTSTART) (attr e 'DTEND)))
+                        (attr e 'DTSTART) (or (attr e 'DTEND)
+                                              (attr e 'DTSTART))))
 
   ((@ (srfi srfi-41) stream-filter)
    overlaps

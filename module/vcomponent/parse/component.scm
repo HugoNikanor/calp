@@ -109,20 +109,7 @@
                  (loop (cdr lst) (cons (make-vcomponent (string->symbol (cadr head))) stack))]
                 [(string=? "END" (car head))
 
-                 ;; TODO This is an ugly hack until the rest of the code is updated
-                 ;; to work on events without an explicit DTEND attribute.
                  (when (eq? (type (car stack)) 'VEVENT)
-                   (when (not (attr (car stack) 'DTEND))
-                     (set! (attr (car stack) 'DTEND)
-                       (let ((start (attr (car stack) 'DTSTART)))
-                         ;; p. 54, 3.6.1
-                         ;; If DTSTART is a date then it's an all
-                         ;; day event. If DTSTART instead is a
-                         ;; datetime then the event has a length
-                         ;; of 0?
-                         (if (date? start)
-                             (date+ start (date day: 1))
-                             (datetime+ start (datetime time: (time hour: 1)))))))
 
                    ;; This isn't part of the field values since we "need"
                    ;; the type of DTSTART for UNTIL to work.
