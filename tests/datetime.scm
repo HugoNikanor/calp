@@ -9,6 +9,7 @@
   leap-year?
   )
  ((ice-9 format) format)
+ ((util) let*)
  )
 
 (test-equal "empty time"
@@ -91,9 +92,18 @@
          (date day: 5)))
 
 
-(test-equal "time- self"
-  #00:00:00
-  (time- #10:20:30 #10:20:30))
+(let* ((diff overflow (time- #10:20:30 #10:20:30)))
+  (test-equal "time- self" #00:00:00 diff)
+  (test-equal "time- self overflow" 0 overflow))
+
+(let* ((diff overflow (time- #10:00:00 #10:00:01)))
+  (test-equal "time- overflow 1s" #23:59:59 diff)
+  (test-equal "time- overflow 1s overflow" 1 overflow))
+
+
+(let* ((diff overflow (time- #10:00:00 (time hour: (+ 48 4)))))
+  (test-equal "time- overflow multiple" #06:00:00 diff)
+  (test-equal "time- overflow multiple overflow" 2 overflow))
 
 (test-equal "datetime-difference self"
   #0000-00-00T00:00:00

@@ -473,8 +473,6 @@
                       base rest)))
       (values time sum))))
 
-;; hour is number of days we overflow (negative)
-;; (time- #03:00:00 #07:00:00) ; => 20:00:00 => 1
 ;; time, Δtime → time, hour
 (define (time-% base change)
 
@@ -498,15 +496,24 @@
           (values (set (minute target) = (- (minute change)))
                   (set (minute change) 0)))))
 
+  (if (>= (hour minute-fixed) (hour change**))
+      (values (set (hour minute-fixed) = (- (hour change**))) 0)
+      (let ((diff (- (hour minute-fixed)
+                     (hour change**))))
+        (values (set (hour minute-fixed) (modulo diff 24))
+                (abs (floor (/ diff 24)))))))
 
-  (if (>= (hour minute-fixed) (hour change))
-      (values (set (hour minute-fixed) = (- (hour change)))
-              0)
-      ;; TODO overflow more than one day
-      (let ((diff (- (hour change) (hour minute-fixed))))
-        (values (set (hour minute-fixed) (- 24 diff))
-                1))))
-
+;; Goes backwards from base, returning the two values:
+;; the new time, and the number of days back we went.
+;; Note that neither time+ or time- can return a time
+;; component greater than 24h, but nothing is stoping
+;; a user from creating them manually.
+;; @lisp
+;; (time- #10:00:00 #09:00:00) ; => 01:00:00 => 0
+;; (time- #03:00:00 #07:00:00) ; => 20:00:00 => 1
+;; (time- #10:00:00 (time hour: 48)) ; => 10:00:00 => 2
+;; (time- #10:00:00 (time hour: (+ 48 4))) ; => 06:00:00 => 2
+;; @end lisp
 (define-public (time- base . rest)
   (let ((sum 0))
     (let ((time (fold (lambda (next done)
@@ -576,6 +583,7 @@
 
 
 
+;; NOTE, this is only properly defined when b is greater than a.
 (define-public (date-difference b a)
   (when (or (negative? (month b))
             (negative? (day   b))
@@ -591,6 +599,7 @@
                            (day = (- 1)))))
 
 
+;; NOTE, this is only properly defined when end is greater than start.
 (define-public (datetime-difference end start)
   ;; NOTE Makes both start and end datetimes in the current local time.
   (let* ((fixed-time overflow (time- (get-time% end)
