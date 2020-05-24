@@ -46,12 +46,16 @@
    (lambda (fmt . args)
      (format #f "WARNING: ~?~%" fmt args))))
 
+(define-public warnings-are-errors
+  (make-parameter #f))
 
 ;; forwards return from warning-hander. By default returns an unspecified value,
 ;; but instances are free to provide a proper return value and use it.
 (define-public (warning fmt . args)
   (display (apply (warning-handler) fmt (or args '()))
-           (current-error-port)))
+           (current-error-port))
+  (when (warnings-are-errors)
+    (throw 'warning fmt args)))
 
 (define-public (fatal fmt . args)
   (display (format #f "FATAL: ~?~%" fmt (or args '()))
