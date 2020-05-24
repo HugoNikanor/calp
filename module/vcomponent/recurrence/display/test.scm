@@ -49,8 +49,6 @@
 
   v)
 
-;; TODO bysetpos
-
 (map run-test
  (list
   (vevent
@@ -252,8 +250,6 @@ forever (U.S. Presidential Election day)"
    dtstart: "19961105T090000"
    rrule: "FREQ=YEARLY;INTERVAL=4;BYMONTH=11;BYDAY=TU;BYMONTHDAY=2,3,4,5,6,7,8")
   ;; => "varje tisdag den andre, tredje, fjärde, femte, sjätte, sjunde & åttonde i november vart fjärde år"
-
-  ;; TODO bysetpos
 
   (vevent
    summary: "The third instance into the month of one of Tuesday, Wednesday, or

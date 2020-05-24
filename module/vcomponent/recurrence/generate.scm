@@ -292,7 +292,6 @@
                   [(BYHOUR) (memv (hour t) values)]
                   [(BYMINUTE) (memv (minute t) values)]
                   [(BYSECOND) (memv (second t) values)]
-                  ;; TODO
                   ;; [(BYSETPOS)]
                   [else
                    (error "Unknown by-limiter")])
@@ -300,7 +299,6 @@
 
 
 (define-stream (limit-recurrence-set rrule date-stream)
-  ;; TODO BYSETPOS
   (stream-filter
    ;; filter inlavid datetimes (feb 30, times droped due to zone-shift, ...)
    (lambda (dt)
