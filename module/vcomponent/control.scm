@@ -22,8 +22,6 @@
                          (set! (attr component key) val))))
               keys)))
 
-;;; TODO with-added-attributes
-
 (define-syntax with-replaced-attrs
   (syntax-rules ()
     [(_ (component (key val) ...)

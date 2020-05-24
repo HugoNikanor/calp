@@ -175,9 +175,6 @@
                    ((#\k) (format #t "~2' d" (hour time)))
                    ((#\M) (format #t "~2'0d" (minute time)))
                    ((#\S) (format #t "~2'0d" (second time)))
-                   ;; TODO
-                   ;; +02:00, get from zoneinfo database
-                   ;; ((#\z) (when (utc? time) (display "Z")))
                    ((#\Y) (format #t "~4'0d" (year date)))
                    ((#\m) (format #t "~2'0d" (month date)))
                    ((#\d) (format #t "~2'0d" (day date)))
@@ -284,11 +281,13 @@
 ;; 16 17 18 19 20 21 22
 ;; 23 24 25 26 27 28 29
 ;; 30 31
+;; @lisp
 ;; (month-days #2020-03-01 mon)
-;; => (2020-02-24 ... 2020-02-29)
-;; => (2020-03-01 ... 2020-03-31)
-;; => (2020-04-01 ... 2020-04-05)
-;; TODO Currently givining a non-start-of-month date for @var{date} is an error.
+;; ; ⇒ (2020-02-24 ... 2020-02-29)
+;; ; ⇒ (2020-03-01 ... 2020-03-31)
+;; ; ⇒ (2020-04-01 ... 2020-04-05)
+;; @end lisp
+;; Ignores day component of @var{date}.
 (define*-public (month-days date optional: (week-start (week-start)))
   (let* ((month-len (days-in-month date))
          (prev-month-len (days-in-month (month- date)))

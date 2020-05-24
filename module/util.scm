@@ -58,21 +58,19 @@
      (begin f ...))]))
 
 
-(define-syntax aif
-  (lambda (stx)
-    (syntax-case stx ()
-      [(_ condition true-clause false-clause)
-       (with-syntax ((it (datum->syntax stx 'it)))
-         #'(let ((it condition))
-             (if it true-clause false-clause)))])))
+(define-syntax (aif stx)
+  (syntax-case stx ()
+    [(_ condition true-clause false-clause)
+     (with-syntax ((it (datum->syntax stx 'it)))
+       #'(let ((it condition))
+           (if it true-clause false-clause)))]))
 
-(define-syntax awhen
-  (lambda (stx)
-    (syntax-case stx ()
-      [(_ condition body ...)
-       (with-syntax ((it (datum->syntax stx 'it)))
-         #'(let ((it condition))
-             (when it body ...)))])))
+(define-syntax (awhen stx)
+  (syntax-case stx ()
+    [(_ condition body ...)
+     (with-syntax ((it (datum->syntax stx 'it)))
+       #'(let ((it condition))
+           (when it body ...)))]))
 
 #;
 (define-macro (awhen pred . body)
@@ -280,7 +278,7 @@
                 (comperator (get a)
                             (get b)))))
 
-;; Sorts the list @var{items}. @em{May} destroy the input list in the process
+;; Sorts the list @var{items}. @emph{May} destroy the input list in the process
 (define* (sort*! items comperator #:optional (get identity))
   "A sort function more in line with how python's sorted works"
   (sort! items (lambda (a b)

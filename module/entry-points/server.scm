@@ -113,7 +113,7 @@
         (define location
           (parse-header 'location
                         (format #f "/~a/~a.html"
-                                (or view "month")
+                                (or view "week")
                                 (date->string
                                  (cond [date => parse-iso-date]
                                        [else (current-date)])
