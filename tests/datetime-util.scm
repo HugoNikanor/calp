@@ -1,5 +1,5 @@
-(((datetime) date time)
- ((datetime util) month-stream in-date-range?)
+(((datetime) date time datetime)
+ ((datetime util) month-stream in-date-range? timespan-overlaps?)
  ((srfi srfi-41) stream->list stream-take
   ))
 
@@ -24,3 +24,63 @@
   (not ((in-date-range? #2020-01-01 #2020-02-29)
         #2018-02-02)))
 
+
+
+
+(test-assert "A"
+    (timespan-overlaps? #2020-01-01 #2020-01-10
+                        #2020-01-05 #2020-01-15))
+
+(test-assert "A, shared start"
+    (timespan-overlaps? #2020-01-01 #2020-01-10
+                        #2020-01-01 #2020-01-15))
+
+(test-assert "A, tangential"
+  (not (timespan-overlaps? #2020-01-01T00:00:00 #2020-01-10T00:00:00
+                           #2020-01-10T00:00:00 #2020-01-30T00:00:00)))
+
+
+
+(test-assert "s1 instant"
+  (timespan-overlaps? #2020-01-15T10:00:00 #2020-01-15T10:00:00
+                      #2020-01-10T00:00:00 #2020-01-30T00:00:00))
+
+(test-assert "s2 instant"
+  (timespan-overlaps? #2020-01-10T00:00:00 #2020-01-30T00:00:00
+                      #2020-01-15T10:00:00 #2020-01-15T10:00:00))
+
+(test-assert "s1 instant, shared start with s2"
+  (timespan-overlaps? #2020-01-15T10:00:00 #2020-01-15T10:00:00
+                      #2020-01-15T10:00:00 #2020-01-30T00:00:00))
+
+
+(test-assert "s1 instant, shared end with s2"
+  (not (timespan-overlaps? #2020-01-15T10:00:00 #2020-01-15T10:00:00
+                           #2020-01-10T00:00:00 #2020-01-15T10:00:00)))
+
+(test-assert "s2 instant, shared start with s1"
+  (timespan-overlaps? #2020-01-15T10:00:00 #2020-01-30T00:00:00
+                      #2020-01-15T10:00:00 #2020-01-15T10:00:00))
+
+
+(test-assert "s2 instant, shared end with s1"
+  (not (timespan-overlaps? #2020-01-10T00:00:00 #2020-01-15T10:00:00
+                           #2020-01-15T10:00:00 #2020-01-15T10:00:00)))
+
+
+(test-assert "both instant"
+  (not (timespan-overlaps? #2020-01-15T10:00:00 #2020-01-15T10:00:00
+                           #2020-01-15T10:00:00 #2020-01-15T10:00:00)))
+
+(test-assert "tangential whole day"
+    (not (timespan-overlaps? #2020-01-01 #2020-01-02
+                             #2020-01-02 #2020-01-03)))
+
+(test-assert "B"
+  (timespan-overlaps? #2020-01-05 #2020-01-15
+                      #2020-01-01 #2020-01-10))
+
+
+(test-assert "E"
+  (timespan-overlaps? #2020-01-01 #2020-01-10
+                      #2020-01-01 #2020-01-10))

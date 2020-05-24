@@ -211,6 +211,9 @@
 ;; |  ||s2| : |s1||  | : |  ||  | : |  ||  | : |  ||  | :
 ;;     |  | : |  |     : |  ||  | : |  ||  | : |  ||  | :     |s2|
 ;;     |  | : |  |     : |  |     :     |  | :          :     |  |
+;;
+;; Infinitely short ---+|s2| : |s1|+--- : two instants don't overlap
+;; events, overlap   s1      :      s2  :
 ;; @end verbatim
 ;; 
 ;; E is covered by both case A and B.
@@ -226,11 +229,11 @@
         (date/-time<? s2-begin s1-end))
 
    ;; C
-   (and (date/-time<? s1-begin s2-begin)
+   (and (date/-time<=? s1-begin s2-begin)
         (date/-time<? s2-end s1-end))
 
    ;; D
-   (and (date/-time<? s2-begin s1-begin)
+   (and (date/-time<=? s2-begin s1-begin)
         (date/-time<? s1-end s2-end))))
 
 (define-public (add-day d)
