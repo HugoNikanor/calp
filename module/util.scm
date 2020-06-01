@@ -369,6 +369,14 @@
                     (resolve-interface '(mod ...)))
        ...))))
 
+;; Merges two association lists, comparing with eq.
+;; The cdrs in all pairs in both lists should be lists,
+;; If a key is present in both then the contents of b is
+;; put @emph{before} the contents in a.
+;; @example
+;; (assq-merge '((k 1)) '((k 2)))
+;; => ((k 2 1))
+;; @end example
 (define-public (assq-merge a b)
   (fold (lambda (entry alist)
           (let* (((k . v) entry)
