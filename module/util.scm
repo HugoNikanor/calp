@@ -384,6 +384,11 @@
             (assq-set! alist k (append v (or o '())))))
         (copy-tree a) b))
 
+(define*-public (assq-limit alist optional: (number 1))
+  (map (lambda (pair)
+         (take-to pair (1+ number)))
+       alist))
+
 (define-public (group-by proc lst)
   (let ((h (make-hash-table)))
     (for value in lst
