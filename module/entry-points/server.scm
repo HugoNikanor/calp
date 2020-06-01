@@ -175,10 +175,10 @@
 
 (define options
   '((port (value #t) (single-char #\p)
-          (description (*TOP* "Bind to TCP port, defaults to " (i 8080) ".")))
+          (description "Bind to TCP port, defaults to " (i 8080) "."))
     (addr (value #t)
-          (description (*TOP* "Address to use, defaults to " (i "0.0.0.0")
-                              " for IPv4, and " (i "::") " for IPv6."))
+          (description "Address to use, defaults to " (i "0.0.0.0")
+                       " for IPv4, and " (i "::") " for IPv6.")
           )
     ;; TODO numbers as single-char seems to not work.
     (six (single-char #\6)

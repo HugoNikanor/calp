@@ -38,16 +38,16 @@
 
 (define options
   '((statprof (value display-style)
-              (description (*TOP* "Run the program within Guile's built in statical "
-                                  "profiler. Display style is one of "
-                                  (b "flat") " or " (b "tree") ".")))
+              (description "Run the program within Guile's built in statical "
+                           "profiler. Display style is one of "
+                           (b "flat") " or " (b "tree") "."))
     (repl (value address)
           (description
-           (*TOP* "Start a Guile repl which can be connected to, defaults to the unix socket "
-                  (i "/run/user/${UID}/calp-${PID}") ", but it can be bound to any unix or "
-                  "TCP socket. ((@ (util app) current-app)) should return the current app context."
-                  (br)
-                  (b "Should NOT be used in production."))))
+           "Start a Guile repl which can be connected to, defaults to the unix socket "
+           (i "/run/user/${UID}/calp-${PID}") ", but it can be bound to any unix or "
+           "TCP socket. ((@ (util app) current-app)) should return the current app context."
+           (br)
+           (b "Should NOT be used in production.")))
 
     ;; Techical note:
     ;; Guile's getopt doesn't support repeating keys. Thereby the small jank,
@@ -55,13 +55,12 @@
     (option (single-char #\o)
             (value #t)
             (description
-             (*TOP*
-              "Set configuration options, on the form "
-              (i "key") "=" (i "value")
-              " as if they were set in the config file. These options have "
-              "priority over those from the file. "
-              "Can " (i "not") " be given with an equal after --option."
-              (br) "Can be given multiple times.")))
+             "Set configuration options, on the form "
+             (i "key") "=" (i "value")
+             " as if they were set in the config file. These options have "
+             "priority over those from the file. "
+             "Can " (i "not") " be given with an equal after --option."
+             (br) "Can be given multiple times."))
 
     (help (single-char #\h)
           (description "Print this help"))))

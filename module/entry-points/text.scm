@@ -11,7 +11,7 @@
   '((width (value #t) (single-char #\w)
            (description "Width of written text, defaults to 70 chars."))
     (file (value #t) (single-char #\f)
-          (description (*TOP* "Read from " (i "file") " instead of standard input.")))
+          (description "Read from " (i "file") " instead of standard input."))
     (help (single-char #\h)
           (description "Prints this help."))))
 

@@ -17,25 +17,25 @@
           (description "Start date of output.")
           )
     (count (value #t)
-           (description (*TOP* "How many pages should be rendered."
-                               "If --style=" (b "week") " and --from=" (b "2020-04-27")
-                               " then --count=" (b 4) " would render the four pages "
-                               "2020-04-27, 2020-05-04, 2020-05-11, and 2020-05-25. "
-                               "Defaults to 12 to give a whole year when --style=" (b "month") "."
-                               )))
+           (description "How many pages should be rendered."
+                        "If --style=" (b "week") " and --from=" (b "2020-04-27")
+                        " then --count=" (b 4) " would render the four pages "
+                        "2020-04-27, 2020-05-04, 2020-05-11, and 2020-05-25. "
+                        "Defaults to 12 to give a whole year when --style=" (b "month") "."
+                        ))
 
     (style (value #t) (predicate ,(lambda (v) (memv (string->symbol v)
                                             '(wide week table))))
-           (description (*TOP* "How the body of the HTML page should be layed out. "
-                               (br) (b "week")
-                               " gives a horizontally scrolling page with 7 elements, "
-                               "where each has events graphically laid out hour by hour."
-                               (br) (b "table")
-                               " gives a month in overview as a table. Each block contains "
-                               "the events for the given day, in order of start time. They are "
-                               "however not graphically sized. "
-                               (br) (b "wide")
-                               " is the same as week, but gives a full month."))
+           (description "How the body of the HTML page should be layed out. "
+                        (br) (b "week")
+                        " gives a horizontally scrolling page with 7 elements, "
+                        "where each has events graphically laid out hour by hour."
+                        (br) (b "table")
+                        " gives a month in overview as a table. Each block contains "
+                        "the events for the given day, in order of start time. They are "
+                        "however not graphically sized. "
+                        (br) (b "wide")
+                        " is the same as week, but gives a full month.")
            )
 
     (help (single-char #\h) (description "Print this help."))))

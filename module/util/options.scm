@@ -38,7 +38,7 @@
                          ,@valuefmt))
               (br)
               ,@(awhen (assoc-ref args 'description)
-                       `((blockquote ,(car it))
+                       `((blockquote ,@it)
                          (br)))))))
 
 (define (esc . effect)
