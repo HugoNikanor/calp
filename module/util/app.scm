@@ -15,7 +15,8 @@
 (define current-app (make-parameter (make-app)))
 
 (define-syntax (define-method stx)
-  (with-syntax ((app (datum->syntax stx 'app)))
+  (with-syntax ((app (datum->syntax stx 'app))
+                (current-app (datum->syntax stx 'current-app)))
    (syntax-case stx ()
      [(_ (name args ...) body ...)
 
@@ -23,7 +24,8 @@
                               #'(args ...))))
         #`(define*-public (name #,@pre #,@(if (null? post) '(key:) post)
                          (app (current-app)))
-            body ...))])))
+            (parameterize ((current-app app))
+              body ...)))])))
 
 
 (define-method (getf field)
