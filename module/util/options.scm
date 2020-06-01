@@ -26,9 +26,9 @@
   (let ((name (car option-line))
         (args (cdr option-line)))
     (let ((valuefmt (case (and=> (assoc-ref args 'value) car)
-                      [(#t) '("=" (i value))]
+                      [(#t) '(" " (i value))]
                       [(#f) '()]
-                      [else => (lambda (s) `("[=" (i ,s) "]"))])))
+                      [else => (lambda (s) `(" [" (i ,s) "]"))])))
       `(*TOP* (b "--" ,name) ,@valuefmt
               ,@(awhen (assoc-ref args 'single-char)
                        `("," (ws)

@@ -60,7 +60,7 @@
                              (car it) 1)
                         #\space)]
     [(br) "\n"]
-    [(hr) (string-append "     " (make-string 60 #\_) "     \n")]
+    [(hr) (string-append "     " (make-string 60 #\─) "     \n")]
     [(dl)
      (let* ((dts dds (partition (lambda (x) (eq? 'dt (car x))) body)))
        (let* ((dts* (map sxml->ansi-text dts))
@@ -86,8 +86,9 @@
     [(scheme)
      (string-concatenate
       (map (lambda (form)
-             (with-output-to-string
-               (lambda () (pretty-print form width: (aif (assoc-ref args 'width) (car it) 70)))))
+             (string-trim-both
+              (with-output-to-string
+                (lambda () (pretty-print form width: (aif (assoc-ref args 'width) (car it) 70))))))
            body))]
 
     [else (string-append (esc 'bold) "??"
