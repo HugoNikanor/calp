@@ -1,6 +1,7 @@
 (define-module (util options)
   :use-module (util)
   :use-module (ice-9 match)
+  :use-module (ice-9 pretty-print)
   :use-module (srfi srfi-1)
   :use-module ((output text) :select (flow-text)))
 
@@ -52,15 +53,39 @@
 
 (use-modules (texinfo string-utils))
 
+(define (add-attributes args)
+  (match-lambda
+    [(name ('@ tagargs ...) body ...)
+     `(,name (@ ,@(assq-limit (assq-merge tagargs args)))
+             ,@body)]
+    [(name body ...)
+     `(,name (@ ,@args) ,@body)]
+    [nonlist nonlist]))
+
+(define* (true-string-pad str len optional: (chr #\space))
+  (let ((strlen ((@@ (output text) true-string-length) str)))
+    (if (> strlen len)
+        str
+        (string-append (make-string (- len strlen) chr) str))))
+
+(define (get-attr args key default)
+  (aif (assoc-ref args key)
+       (car it) default))
+
 ;; NOTE width is hard coded to 70 chars
 (define* (ontree tag body optional: (args '()))
   (case tag
-    [(*TOP* group) (string-concatenate (map sxml->ansi-text body))]
-    [(center) (center-string (string-concatenate (map sxml->ansi-text body)) 70)]
+    [(*TOP* group block) (string-concatenate
+                          (map (compose sxml->ansi-text (add-attributes args))
+                               body))]
+    [(header) (sxml->ansi-text `(group (center (@ ,@args) (b ,@body)) (br)))]
+    [(center) (center-string (string-concatenate (map sxml->ansi-text body))
+                             (get-attr args 'width 70))]
     [(p) (string-append (string-join (flow-text (string-concatenate (map sxml->ansi-text body))
-                                                width: 70)
+                                                width: (get-attr args 'width 70))
                                      "\n")
-                        "\n\n")]
+                        (if (assoc-ref args 'inline) "" "\n\n")
+                        )]
     [(b) (string-append (esc 'bold) (string-concatenate (map sxml->ansi-text body)) (esc))]
     [(i em) (string-append (esc 'italic) (string-concatenate (map sxml->ansi-text body)) (esc))]
     ;; NOOP, but for future use.
@@ -75,7 +100,40 @@
                         #\space)]
     [(br) "\n"]
     [(hr) (string-append "     " (make-string 60 #\_) "     \n")]
-    [else (string-append (esc 'invert) (string-concatenate (map sxml->ansi-text body)) (esc))]
+    [(dl)
+     (let* ((dts dds (partition (lambda (x) (eq? 'dt (car x))) body)))
+       (let* ((dts* (map sxml->ansi-text dts))
+              (m (if (null? dts*) 0 (apply max (map (@@ (output text) true-string-length) dts*)))))
+         (string-concatenate
+          (map (lambda (dt dd)
+                 (let ((dds (string-split dd #\newline)))
+                   (string-concatenate
+                    (map (lambda (left right)
+                           (string-append (true-string-pad left m) " │ " right "\n"))
+                         (cons dt (map (const "") (iota (1- (length dds)))))
+                         dds))))
+               dts*
+               (map (compose sxml->ansi-text (add-attributes `((width ,(- 70 m 5)))))
+                    dds)))))]
+    [(dt) (string-concatenate (map (compose sxml->ansi-text (add-attributes args))
+                                   body))]
+    [(dd)
+     (string-concatenate
+      (map (compose sxml->ansi-text (add-attributes args))
+           body))]
+
+    [(scheme)
+     (string-concatenate
+      (map (lambda (form)
+             (with-output-to-string
+               (lambda () (pretty-print form width: (aif (assoc-ref args 'width) (car it) 70)))))
+           body))]
+
+    [else (string-append (esc 'bold) "??"
+                         "`"
+                         (esc 'invert)
+                         (string-concatenate (map sxml->ansi-text body))
+                         (esc) "'")]
     )
   )
 
@@ -84,9 +142,8 @@
 
 (define (parse-tree tree-callback leaf-callback)
   (match-lambda
-    [(tag ('@ (key value) ...) body ...)
-     (tree-callback tag body
-                    (zip key value) )]
+    [(tag ('@ args ...) body ...)
+     (tree-callback tag body args)]
     [(tag body ...)
      (tree-callback tag body)
      ]
