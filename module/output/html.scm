@@ -34,6 +34,10 @@
 
 (define debug (make-parameter #f))
 
+(define-config debug #f
+  "Places the generated thingy in debug mode"
+  post: debug)
+
 (define* (slider-input key: variable
                        (min 0)
                        (max 10)
