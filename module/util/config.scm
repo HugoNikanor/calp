@@ -8,10 +8,12 @@
 ;;; Code:
 
 (define-module (util config)
+  :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-26)
   :use-module (ice-9 match)
   :use-module (ice-9 format)
+  :use-module (ice-9 curried-definitions)
   :use-module (util)
   :use-module (util exceptions)
                )
@@ -76,20 +78,27 @@
        (cadr it)
        default))
 
+(define-public ((ensure predicate) value)
+  (if (not (predicate value))
+      #f value))
+
 (define-public (set-config! key value)
   (cond [(hashq-ref config-values key)
          => (lambda (conf)
-              (aif (not ((config-attribute conf #:pre (const #t))
-                         value))
+              (aif (or (not value)
+                       ((config-attribute conf #:pre identity)
+                        value))
+                   (begin
+                     (set-value! conf it)
+                     ((config-attribute conf #:post identity) it))
+
                    (scm-error 'config-error 'define-config
                               "Config [~a]: ~a doesn't sattisfy predicate ~s~%\"~a\"~%"
                               (list (quote ,name)
                                     value
                                     (get-documentation conf))
                               (list value))
-                   (begin
-                     (set-value! conf value)
-                     ((config-attribute conf #:post identity) value))))]
+                   ))]
         [else (hashq-set! config-values key (make-unconfig value))]))
 
 ;; unique symbol here since #f is a valid configuration value.

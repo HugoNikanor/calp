@@ -16,8 +16,12 @@
 
 (re-export-modules (vcomponent base))
 
-(define-config calendar-files '() ""
-  pre: list?)
+(define-config calendar-files '()
+  "Which files to parse. Takes a list of paths or a single string which will be globbed."
+  pre: (lambda (v)
+         (cond [(list? v) v]
+               [(string? v) ((@ (glob) glob) v)]
+               [else #f])))
 
 (define-public (load-calendars calendar-files)
   (map parse-cal-path calendar-files))

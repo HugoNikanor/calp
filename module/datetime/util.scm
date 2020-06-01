@@ -105,7 +105,7 @@
 
 (define-config week-start sun
   "First day of week"
-  pre: (lambda (x) (<= sun x sat))
+  pre: (ensure (lambda (x) (<= sun x sat)))
   post: week-start)
 
 ;; given a date, returns the date the first week of that year starts on.

@@ -26,11 +26,11 @@
 
 (define-config summary-filter (lambda (_ a) a)
   ""
-  pre: procedure?)
+  pre: (ensure procedure?))
 
 (define-config description-filter (lambda (_ a) a)
   ""
-  pre: procedure?)
+  pre: (ensure procedure?))
 
 (define debug (make-parameter #f))
 
