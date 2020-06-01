@@ -41,7 +41,6 @@
 
 (use-modules (text markup))
 
-
 (define-public (format-arg-help options)
   (sxml->ansi-text (cons '*TOP* (map sxml->ansi-text (map fmt-help options)))))
 

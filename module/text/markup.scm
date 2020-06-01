@@ -18,7 +18,9 @@
                 [(invert) 7]
                 [else 4]))))
 
+;; tag := (tag-name [(@ attributes ...)] body ...)
 
+;; alist → tag → tag
 (define (add-attributes args)
   (match-lambda
     [(name ('@ tagargs ...) body ...)
@@ -33,7 +35,8 @@
   (aif (assoc-ref args key)
        (car it) default))
 
-;; NOTE width is hard coded to 70 chars
+;; NOTE Some tags can be given a `width' attribute. This is however not yet
+;; fully supported.
 (define* (ontree tag body optional: (args '()))
   (case tag
     [(*TOP* group block) (string-concatenate
