@@ -1,6 +1,5 @@
 (define-module (output terminal)
   #:use-module (output general)
-  #:use-module (output text)
   #:use-module (srfi srfi-1)
   #:use-module (datetime)
   #:use-module (datetime util)

@@ -1,6 +1,6 @@
 (define-module (entry-points text)
   :export (main)
-  :use-module (output text)
+  :use-module (text flow)
   :use-module (ice-9 getopt-long)
   :use-module (util io)
   :use-module (util options)

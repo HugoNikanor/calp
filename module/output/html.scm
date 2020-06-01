@@ -17,8 +17,7 @@
   #:use-module (output general)
   #:use-module (ice-9 curried-definitions)
   #:use-module (ice-9 match)
-  #:use-module (output text)
-
+  #:use-module (text util)
 
   #:use-module (git)
   ;; #:use-module (module config all)

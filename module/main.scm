@@ -27,6 +27,8 @@
 
              ((entry-points server)   :prefix   server-)
 
+             (text markup)
+
              (ice-9 getopt-long)
              (ice-9 regex)
 
