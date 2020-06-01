@@ -114,15 +114,58 @@
         (get-value v)
         v)))
 
+;; (format-procedure (lambda (x y) ...)) => λx, y
+;; (define (f x) ...)
+;; (format-procedure f) => f(x)
+(define (format-procedure proc)
+  ((aif (procedure-name proc)
+        (lambda (s) (string-append (symbol->string it) "(" s ")"))
+        (lambda (s) (string-append "λ" s)))
+   (let ((args ((@ (ice-9 session) procedure-arguments)
+                proc)))
+     (string-join
+      (remove null?
+              (list
+               (awhen ((ensure (negate null?))
+                       (assoc-ref args 'required))
+                      (format #f "~{~a~^, ~}" it))
+               (awhen ((ensure (negate null?))
+                       (assoc-ref args 'optional))
+                      (format #f "[~{~a~^, ~}]" it))
+               (awhen ((ensure (negate null?))
+                       (assoc-ref args 'keyword))
+                      (format #f "key: ~{~a~^, ~}"
+                              (map keyword->symbol
+                                   (map car it))))
+               (awhen ((ensure (negate null?))
+                       (assoc-ref args 'rest))
+                      (format #f "~a ..." it))))
+      ", "))))
 
-(define-public (print-configuration-documentation)
+(export format-procedure)
+
+(define-public (get-configuration-documentation)
   (define groups
     (group-by (match-lambda [(__ v)
                              (if (config? v)
                                  (get-source-module v)
                                  #f)])
               (hash-map->list list config-values )) )
-  (for (module values) in groups
-       (format #t "~%~a~%" (module-name module))
-       (for (key value) in values
-            (format #t "  ~20,a | ~a~%" key (get-documentation value)))))
+
+
+  `(*TOP*
+    (header "Configuration variables")
+    (dl
+     ,@(concatenate
+        (for (module values) in groups
+             `((dt "") (dd (header ,(format #f "~a" (module-name module))))
+               ,@(concatenate
+                  (for (key value) in values
+                       `((dt ,key)
+                         (dd (p (@ (inline)) ,(get-documentation value)))
+                         (dt "V:")
+                         (dd ,(let ((v (get-value value)))
+                                (if (procedure? v)
+                                    (format-procedure v)
+                                    `(scheme ,v)))
+                             (br)))))))))))

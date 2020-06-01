@@ -37,17 +37,16 @@
 
 (define options
   '((statprof (value display-style)
-              (description (*TOP* "Run the program within Guile's built in statical"
+              (description (*TOP* "Run the program within Guile's built in statical "
                                   "profiler. Display style is one of "
-                                  (b "flat") " and " (b "tree") ".")))
+                                  (b "flat") " or " (b "tree") ".")))
     (repl (value address)
           (description
            (*TOP* "Start a Guile repl which can be connected to, defaults to the unix socket "
                   (i "/run/user/${UID}/calp-${PID}") ", but it can be bound to any unix or "
                   "TCP socket. ((@ (util app) current-app)) should return the current app context."
                   (br)
-                  (b "Should NOT be used in production.")))
-          )
+                  (b "Should NOT be used in production."))))
     (help (single-char #\h)
           (description "Print this help"))))
 
@@ -92,13 +91,6 @@
   (define stprof (option-ref opts 'statprof #f))
   (define repl (option-ref opts 'repl #f))
 
-  (awhen (option-ref opts 'help #f)
-         (display (sxml->ansi-text module-help)
-                  (current-output-port))
-         (print-arg-help options)
-         (throw 'return)
-         )
-
   (when stprof (statprof-start))
 
   (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a" (runtime-dir) (getpid)))]
@@ -110,6 +102,16 @@
      (primitive-load config-file)))
 
 
+  ;; help printing moved below some other stuff to allow
+  ;; print-configuration-and-return to show bound values.
+  (awhen (option-ref opts 'help #f)
+         (display (sxml->ansi-text module-help)
+                  (current-output-port))
+         (print-arg-help options)
+         (display (sxml->ansi-text (get-configuration-documentation))
+                  (current-output-port))
+         (throw 'return)
+         )
   ;; (current-app (make-app))
 
   ((@ (vcomponent) init-app) (get-config 'calendar-files))
