@@ -28,6 +28,7 @@
              ((entry-points server)   :prefix   server-)
 
              (ice-9 getopt-long)
+             (ice-9 regex)
 
              (statprof)
              (repl)
@@ -47,6 +48,21 @@
                   "TCP socket. ((@ (util app) current-app)) should return the current app context."
                   (br)
                   (b "Should NOT be used in production."))))
+
+    ;; Techical note:
+    ;; Guile's getopt doesn't support repeating keys. Thereby the small jank,
+    ;; and my regex hack below.
+    (option (single-char #\o)
+            (value #t)
+            (description
+             (*TOP*
+              "Set configuration options, on the form "
+              (i "key") "=" (i "value")
+              " as if they were set in the config file. These options have "
+              "priority over those from the file. "
+              "Can " (i "not") " be given with an equal after --option."
+              (br) "Can be given multiple times.")))
+
     (help (single-char #\h)
           (description "Print this help"))))
 
@@ -101,6 +117,15 @@
     (when (file-exists? config-file)
      (primitive-load config-file)))
 
+  (map (lambda (pair)
+         (let* (((key value) (string-split (cadr pair) #\=)))
+           (set-config! (string->symbol key)
+                        (primitive-eval (call-with-input-string value read)))))
+       (filter (lambda (p)
+                 ;; should match `--option', as well as a single flag with any
+                 ;; number of othter options, as long as the last one is `o'.
+                 (string-match "^-(-option|[^-]*o)$" (car p)))
+               (zip args (cdr args))))
 
   ;; help printing moved below some other stuff to allow
   ;; print-configuration-and-return to show bound values.
