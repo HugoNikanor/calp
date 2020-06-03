@@ -17,6 +17,9 @@
   #:use-module (vcomponent)
   #:use-module (vcomponent datetime)
 
+  #:use-module (text util)
+  #:use-module (text flow)
+
   #:use-module (ice-9 format)
 
   #:export (main-loop))
