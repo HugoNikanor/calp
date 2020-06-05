@@ -62,7 +62,7 @@
              (let ((datetime (parse-ics-datetime value tz)))
                (hashq-set! params 'VALUE 'DATE-TIME)
                (values (make-vline key (get-datetime datetime) params)
-                       (make-vline (symbol-append 'X-ORIGINAL- key) datetime params)))
+                       (make-vline (symbol-append 'X-HNH-ORIGINAL- key) datetime params)))
              (begin (hashq-set! params 'VALUE 'DATE)
                     (make-vline key (parse-ics-date value) params)))))]
 

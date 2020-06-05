@@ -316,6 +316,10 @@
   (if (> i (length lst))
       lst (take lst i)))
 
+(define-public (string-take-to str i)
+  (if (> i (string-length str))
+      str (string-take str i)))
+
 (define-public (as-string s)
   (if (symbol? s) (symbol->string s) s))
 

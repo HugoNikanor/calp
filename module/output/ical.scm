@@ -97,6 +97,11 @@
                  (ical-line-fold (string-drop string wrap-len)))]
         [else string]))
 
+(define* (internal-field? symbol optional: (prefix "X-HNH-"))
+  (string=? prefix
+            (string-take-to (symbol->string symbol)
+                            (string-length prefix))))
+
 (define-public (component->ical-string component)
   (format #t "BEGIN:~a\r\n" (type component))
   ;; TODO this leaks internal information,
@@ -105,11 +110,8 @@
    ;; Special cases depending on key.
    ;; Value formatting is handled in @code{value-format}.
    (match-lambda*
-     ;; Handled below
-     [('X-HNH-ALTERNATIVES _) 'noop]
 
-     ;; Remove from output
-     [('X-HNH-FILENAME _) 'noop]
+     [(? (compose internal-field? car)) 'noop]
 
      [(key (vlines ...))
       (for vline in vlines
