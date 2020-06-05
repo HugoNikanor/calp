@@ -1,6 +1,7 @@
 (define-module (util exceptions)
   #:use-module (srfi srfi-1)
   #:use-module (util)
+  #:use-module (util config)
   #:export (throw-returnable
             catch-multiple
             assert))
@@ -48,6 +49,10 @@
 
 (define-public warnings-are-errors
   (make-parameter #f))
+
+(define-config warnings-are-errors #f
+  "Crash on warnings."
+  post: warnings-are-errors)
 
 ;; forwards return from warning-hander. By default returns an unspecified value,
 ;; but instances are free to provide a proper return value and use it.
