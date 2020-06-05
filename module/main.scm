@@ -121,6 +121,8 @@
     (when (file-exists? config-file)
      (primitive-load config-file)))
 
+  ;; TODO this doesn't stop at first non-option, meaning that -o flags
+  ;; from sub-commands might be parsed.
   (map (lambda (pair)
          (let* (((key value) (string-split (cadr pair) #\=)))
            (set-config! (string->symbol key)
