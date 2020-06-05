@@ -45,14 +45,6 @@
                (when (not (zero? (second (timespec-time value))))
                  (display (time->string (timespec-time value) "~S")))))]
 
-          ((DURATION X-HNH-DURATION)
-           #; (time->string value "~H~M~S")
-           (let ((s (second value)))
-             (format #f "~a~a~a"
-                     (floor/ s 3600)
-                     (floor/ (modulo s 3600) 60)
-                     (modulo s 60))
-             ))
           [(RRULE)
            ((@ (vcomponent recurrence internal)
                recur-rule->rrule-string) value)]
