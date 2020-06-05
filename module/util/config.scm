@@ -92,12 +92,11 @@
                      (set-value! conf it)
                      ((config-attribute conf #:post identity) it))
 
-                   (scm-error 'config-error 'define-config
-                              "Config [~a]: ~a doesn't sattisfy predicate ~s~%\"~a\"~%"
-                              (list (quote ,name)
-                                    value
-                                    (get-documentation conf))
-                              (list value))
+                   (throw 'config-error 'set-config!
+                          "~a->~a = ~s is invalid,~%Field doc is \"~a\""
+                          (module-name (get-source-module conf))
+                          key value
+                          (get-documentation conf))
                    ))]
         [else (hashq-set! config-values key (make-unconfig value))]))
 

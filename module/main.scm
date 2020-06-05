@@ -169,29 +169,29 @@
                                  (string->symbol stprof)))))
 
 
-(use-modules (system vm frame))
+(define logport (make-parameter (open-file "/tmp/calp.xml" "a")))
 
 (define (main args)
+
+  (when (zero? (ftell (logport)))
+    (format (logport) "<?xml version=\"1.0\" encoding=\"UTF-8\"?>~%"))
+
+  (format (logport) "<run><start>~a</start>~%"
+          ((@ (datetime util) datetime->string)
+           ((@ (datetime) current-datetime))))
   (report-time! "Program start")
   ;; ((@ (util config) print-configuration-documentation))
-  (with-throw-handler #t
-    (lambda () (dynamic-wind (lambda () 'noop)
-                        (lambda () (catch 'return (lambda () (wrapped-main args)) values))
-                        (lambda () (run-hook shutdown-hook))
-                        ))
-    (lambda (err . args)
-      (define stack (make-stack #t))
-      (with-output-to-port (current-error-port)
-        (lambda ()
-          (format #t "bindings = ")
-          (let loop ((frame (stack-ref stack 0)))
-            (when frame
-              (format #t "~{~a~^ ~}" (map binding-name (frame-bindings frame)))
-              (let ((event (and=> (frame-lookup-binding frame 'event)
-                                  binding-ref)))
-                (when event
-                  (format (current-error-port) "event = ~a~%" event)))
-
-              (loop (frame-previous frame))))
-          (format #t "~%")
-          )))))
+  (let ((stack #f))
+    (catch #t
+      (lambda () (dynamic-wind (lambda () 'noop)
+                          (lambda () (catch 'return (lambda () (wrapped-main args)) values))
+                          (lambda () (run-hook shutdown-hook))
+                          ))
+      (lambda (err raiser fmt . args)
+        (format #t "Calp has crashed with [~a],
+~?~%See ~a for full backtrace~%"
+                err fmt args (port-filename (logport)))
+        (format (logport) "<trace>~%<![CDATA[~%")
+        (display-backtrace stack (logport))
+        (format (logport) "]]></trace></run>~%"))
+      (lambda _ (set! stack (make-stack #t))))))
