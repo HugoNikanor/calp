@@ -51,6 +51,8 @@
            (br)
            (b "Should NOT be used in production.")))
 
+    ;; TODO --config flag for loading alternate configuration file.
+
     ;; Techical note:
     ;; Guile's getopt doesn't support repeating keys. Thereby the small jank,
     ;; and my regex hack below.
@@ -122,10 +124,13 @@
   (map (lambda (pair)
          (let* (((key value) (string-split (cadr pair) #\=)))
            (set-config! (string->symbol key)
-                        (primitive-eval (call-with-input-string value read)))))
+                        (let ((form (call-with-input-string value read)))
+                          (if (list? form)
+                              (primitive-eval form)
+                              form)))))
        (filter (lambda (p)
                  ;; should match `--option', as well as a single flag with any
-                 ;; number of othter options, as long as the last one is `o'.
+                 ;; number of other options, as long as the last one is `o'.
                  (string-match "^-(-option|[^-]*o)$" (car p)))
                (zip args (cdr args))))
 
