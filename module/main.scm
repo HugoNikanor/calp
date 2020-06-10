@@ -51,7 +51,9 @@
            (br)
            (b "Should NOT be used in production.")))
 
-    ;; TODO --config flag for loading alternate configuration file.
+    (config (value #t)
+            (description
+             "Path to alterantive configuration file to load instead of the default one. "))
 
     ;; Techical note:
     ;; Guile's getopt doesn't support repeating keys. Thereby the small jank,
@@ -110,16 +112,24 @@
   (define opts (getopt-long args (getopt-opt options) #:stop-at-first-non-option #t))
   (define stprof (option-ref opts 'statprof #f))
   (define repl (option-ref opts 'repl #f))
+  (define altconfig (option-ref opts 'config #f))
 
   (when stprof (statprof-start))
 
   (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a" (runtime-dir) (getpid)))]
         [repl => repl-start])
 
-  (let ((config-file (format #f "~a/.config/calp/config.scm"
-                             (getenv "HOME"))))
-    (when (file-exists? config-file)
-     (primitive-load config-file)))
+  (if altconfig
+      (begin
+        (if (file-exists? altconfig)
+            (primitive-load altconfig)
+            (throw 'option-error "Configuration file ~a missing" altconfig)))
+      ;; if not altconfig, then regular config
+      (let ((config-file (format #f "~a/.config/calp/config.scm"
+                                 (getenv "HOME"))))
+        (when (file-exists? config-file)
+          (primitive-load config-file))))
+
 
   ;; TODO this doesn't stop at first non-option, meaning that -o flags
   ;; from sub-commands might be parsed.
