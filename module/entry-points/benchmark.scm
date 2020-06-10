@@ -12,7 +12,7 @@
   `((field (value #t)
            (description
             "Which field from the current app to force. Most heavy fields are defined in "
-            (i "(vcomponent)") "."))
+            (i "(vcomponent)") ". Required."))
     (enable-output (single-char #\o)
                    (description
                     "Output is be default supressed, since many fields contain way to much data "
