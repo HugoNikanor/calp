@@ -773,6 +773,16 @@
                      ,@(stream->list (stream-map fmt-day evs))))))))
 
 
+;; file existing but is of wrong type,
+(define (create-files)
+  (let* ((dir (dirname (or (@ (global) basedir) ".")))
+         (html (string-append dir "/html"))
+         (link (string-append html "/static")))
+    (unless (file-exists? html)
+      (mkdir html))
+    (unless (file-exists? link)
+      (symlink "../static" link))))
+
 (define-method (html-chunked-main count start-date chunk-length)
 
   (define calendars (getf 'calendars))
@@ -780,20 +790,16 @@
 
   ((@ (util time) report-time!) "html start")
 
-  ;; TODO This still doesn't account for PWD, file existing but is of
-  ;; wrong type, html directory existing but static symlink missing,
-  ;; static being a different file type, and probably something else
-  ;; i'm missing.
-  (unless (file-exists? "./html")
-    (mkdir "./html")
-    (symlink "../static" "./html/static"))
+  (create-files)
 
   ;; NOTE Something here isn't thread safe.
   ;; TODO make it thread safe
   (stream-for-each
    (match-lambda
      [(start-date end-date)
-      (let ((fname (format #f "./html/~a.html" (date->string start-date "~1"))))
+      (let ((fname (format #f "~a/html/~a.html"
+                           (dirname (or (@ (global) basedir) "."))
+                           (date->string start-date "~1"))))
         (format (current-error-port) "Writing to [~a]~%" fname)
         (with-output-to-file fname
           (lambda () (html-generate calendars: calendars
@@ -818,10 +824,13 @@
   (define calendars (getf 'calendars))
   (define events (getf 'event-set))
 
-  ;; TODO same file creation as in html-chunked-main
+  (create-files)
+
   (stream-for-each
    (lambda (start-of-month)
-     (let ((fname (format #f "./html/~a.html" (date->string start-of-month "~1"))))
+     (let ((fname (format #f "~a/html/~a.html"
+                          (dirname (or (@ (global) basedir) "."))
+                          (date->string start-of-month "~1"))))
        (format (current-error-port) "Writing to [~a]~%" fname)
        (let* ((before current after (month-days start-of-month (get-config 'week-start))))
          (with-output-to-file fname
