@@ -194,11 +194,14 @@
                           (lambda () (catch 'return (lambda () (wrapped-main args)) values))
                           (lambda () (run-hook shutdown-hook))
                           ))
-      (lambda (err raiser fmt . args)
-        (format #t "Calp has crashed with [~a],
+      (case-lambda
+        ((err raiser fmt . args)
+         (format #t "Calp has crashed with [~a],
 ~?~%See ~a for full backtrace~%"
-                err fmt args (port-filename (logport)))
-        (format (logport) "<trace>~%<![CDATA[~%")
-        (display-backtrace stack (logport))
-        (format (logport) "]]></trace></run>~%"))
+                 err fmt args (port-filename (logport)))
+         (format (logport) "<trace>~%<![CDATA[~%")
+         (display-backtrace stack (logport))
+         (format (logport) "]]></trace></run>~%"))
+        ((err . args)
+         (format #t "Calp has crashed with [~a]~%~a~%" err args)))
       (lambda _ (set! stack (make-stack #t))))))
