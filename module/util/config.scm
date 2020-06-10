@@ -15,8 +15,7 @@
   :use-module (ice-9 format)
   :use-module (ice-9 curried-definitions)
   :use-module (util)
-  :use-module (util exceptions)
-               )
+  :export (define-config))
 
 (define-once config-values (make-hash-table))
 
@@ -70,8 +69,6 @@
               (lambda (err _ fmt args __)
                 ((@ (util exceptions) fatal) "~a ~a" fmt args)))])))
 
-
-(export define-config)
 
 (define* (config-attribute config attr optional: default)
   (aif (memv attr (config-attributes config))
