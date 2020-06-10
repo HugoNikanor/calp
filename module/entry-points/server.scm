@@ -180,11 +180,9 @@
           (description "Address to use, defaults to " (i "0.0.0.0")
                        " for IPv4, and " (i "::") " for IPv6.")
           )
-    ;; TODO numbers as single-char seems to not work.
-    (six (single-char #\6)
-         (description "Use IPv6."))
-    (four (single-char #\4)
-          (description "Use IPv4."))
+    ;; numbers as single-char doesn't work.
+    (six (description "Use IPv6."))
+    (four (description "Use IPv4."))
     (help (single-char #\h)
           (description "Print this help."))))
 
@@ -223,9 +221,6 @@
        (setsockopt sock SOL_SOCKET SO_REUSEADDR 1)
        (bind sock family addr port)
        sock)))
-
-
-  ;; TODO possibly test inet-pton here on address?
 
   (format #t "Starting server on ~a:~a~%I'm ~a, runing from ~a~%"
           addr port
