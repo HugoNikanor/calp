@@ -287,7 +287,6 @@
                   [(BYMONTH) (memv (month d) values)]
                   [(BYMONTHDAY) (memv (day d) (map (month-mod d) values))]
                   [(BYYEARDAY) (memv (year-day d) values)]
-                  ;; TODO special cases?
                   [(BYDAY) (memv (week-day d) (map cdr values))]
                   [(BYHOUR) (memv (hour t) values)]
                   [(BYMINUTE) (memv (minute t) values)]

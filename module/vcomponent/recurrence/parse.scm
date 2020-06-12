@@ -85,7 +85,8 @@
          (num  (string->number val))
          (nums (map string->number (string-split val #\,))))
 
-        ;; TODO I think it's an error to give BYHOUR and under for dates which aren't datetimes
+        ;; It's an error to give BYHOUR and smaller for pure dates.
+        ;; 3.3.10. p 41
         (quick-case (string->symbol key)
           (UNTIL (set (until o) date))
 

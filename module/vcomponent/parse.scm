@@ -59,8 +59,6 @@
                 ;; NOTE These events also share UID, but are diferentiated
                 ;; by RECURRENCE-ID. As far as I can tell this goes against
                 ;; the standard. Section 3.8.4.4.
-                ;; TODO Also make this grouping when reading in a whole
-                ;; icalendar-file (one with multiple events)
                 (case (length events)
                   [(0) (warning "No events in component~%~a"
                            (attr item 'X-HNH-FILENAME))]
