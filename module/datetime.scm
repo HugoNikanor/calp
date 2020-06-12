@@ -45,7 +45,7 @@
            (not (integer? (month r)))
            (not (integer? (day r))))
        (format p "BAD~s-~s-~s" (year r) (month r) (day r))
-       (format p "~4'0d-~2'0d-~2'0d"
+       (format p "#~4'0d-~2'0d-~2'0d"
                (year r) (month r) (day r)))))
 
 (define*-public (date key: (year 0) (month 0) (day 0))
@@ -66,7 +66,7 @@
            (not (integer? (second r))))
        (format p "BAD~s:~s:~s"
                (hour r) (minute r) (second r))
-       (format p "~2'0d:~2'0d:~2'0d"
+       (format p "#~2'0d:~2'0d:~2'0d"
                (hour r) (minute r) (second r)))))
 
 (define*-public (time key: (hour 0) (minute 0) (second 0))
@@ -81,6 +81,15 @@
   (time get-time%)
   (tz tz) ; #f, "UTC", "Europe/Stockholm", ...
   )
+
+(set-record-type-printer!
+ <datetime>
+ (lambda (r p)
+   (write `(datetime date: ,(get-date r)
+                     time: ,(get-time% r)
+                     ,@(awhen (tz r)
+                              `(tz: ,it)))
+          p)))
 
 (export get-date)
 (define-public (get-timezone datetime)

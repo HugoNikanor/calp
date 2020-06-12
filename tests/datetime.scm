@@ -40,7 +40,7 @@
             (year d) (month d) (day d))))
 
 (test-equal "Date print"
-  "2020-01-01"
+  "#2020-01-01"
   (format #f "~a" (date year: 2020 month: 1 day: 1)))
 
 (test-equal "Syntax date="
