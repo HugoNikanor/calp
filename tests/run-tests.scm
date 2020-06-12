@@ -61,6 +61,7 @@
                 (eval-in-sandbox
                  `(begin ,@(read-multiple))
                  #:time-limit 60          ; larger than should be needed
+                 #:allocation-limit #e10e8
                  #:module (make-sandbox-module
                            (append modules
                                    '(((srfi srfi-64) test-assert test-equal test-error)
