@@ -36,7 +36,10 @@
                            (cadr group)
                            )))]
               [else
-               (list (number->string-ordinal (car group)) " "
+               (list (number->string-ordinal
+                      (car group)
+                      a-form?: #t)
+                     " "
                      (add-enumeration-punctuation
                       (map (lambda (d) (list (week-day-name (cdr d)) "en"))
                            (cadr group))))])
@@ -50,7 +53,7 @@
          final-delim)))
 
 
-(define-public  (format-recurrence-rule rrule)
+(define-public (format-recurrence-rule rrule)
   (string-trim
    (string-flatten
     (list

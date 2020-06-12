@@ -88,13 +88,15 @@
          (string-append "det stora talet "
                         (number->string n))]))
 
-(define-public (number->string-ordinal n)
+(define*-public (number->string-ordinal
+                 n key: a-form?)
+  (define a-string (if a-form? "a" "e"))
   (cond [(>= -3 n) (format #f "~a sista" (number->string-ordinal (- n)))]
         [(= -2 n) "näst sista"]
         [(= -1 n) "sista"]
         [(= 0 n) "nollte"]              ;
-        [(= 1 n) "förste"]
-        [(= 2 n) "andre"]
+        [(= 1 n) (format #f "först~a" a-string)]
+        [(= 2 n) (format #f "andr~a" a-string)]
         [(= 3 n) "tredje"]
         [(= 4 n) "fjärde"]
         [(= 5 n) "femte"]
@@ -115,7 +117,9 @@
         [(<= 20 n 29) (format #f "tjugo~a"
                              (if (= 20 n)
                                  "nde"
-                                 (number->string-ordinal (- n 20))))]
+                                 (number->string-ordinal
+                                  (- n 20)
+                                  a-form?: a-form?)))]
         [(<= 30 n 99)
          (let* ((big small (floor/ n 10)))
            (format #f "~atio~a"
@@ -125,7 +129,8 @@
                      [else (number->string-cardinal big)])
                    (if (zero? (modulo small 10))
                        "nde"
-                       (number->string-ordinal small))))]
+                       (number->string-ordinal
+                        small a-form?: a-form?))))]
         [(= n 100) "hundrade"]
         [(= n 1000) "tusende"]
         [else
@@ -133,7 +138,8 @@
            (string-append (number->string-cardinal (* big 100))
                           (if (zero? small)
                               "de"
-                              (number->string-ordinal small))))]))
+                              (number->string-ordinal
+                               small a-form?: a-form?))))]))
 
 ;; (each-string 1) ; => "varje"
 ;; (each-string 2) ; => "varannan"
