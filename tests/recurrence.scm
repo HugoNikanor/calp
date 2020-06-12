@@ -190,7 +190,9 @@
                 (datetime #:date #1997-12-20 #:time #09:00:00)
                 (datetime #:date #1997-12-21 #:time #09:00:00)
                 (datetime #:date #1997-12-22 #:time #09:00:00)
-                (datetime #:date #1997-12-23 #:time #09:00:00)))
+                (datetime #:date #1997-12-23 #:time #09:00:00)
+                ;; December 24 SHOULD be missing.
+                ))
 
 
   (vevent
@@ -556,7 +558,6 @@
                 (datetime #:date #1997-12-12 #:time #09:00:00)
                 (datetime #:date #1997-12-22 #:time #09:00:00)))
 
-  ;; TOOD tittta närmare vad de egentligen vill ha här
   (vevent
    summary: "Every other week on Tuesday and Thursday, for 8 occurrences"
    dtstart: "19970902T090000"
@@ -571,21 +572,21 @@
                 (datetime #:date #1997-10-14 #:time #09:00:00)
                 (datetime #:date #1997-10-16 #:time #09:00:00)))
 
-  (vevent                               ; 10
+  (vevent
    summary: "Monthly on the first Friday for 10 occurrences"
    dtstart: "19970905T090000"
    rrule: "FREQ=MONTHLY;COUNT=10;BYDAY=1FR"
    x-summary: "första fredagen varje månad, totalt 10 gånger"
    x-set: (list (datetime #:date #1997-09-05 #:time #09:00:00)
+                (datetime #:date #1997-10-03 #:time #09:00:00)
+                (datetime #:date #1997-11-07 #:time #09:00:00)
                 (datetime #:date #1997-12-05 #:time #09:00:00)
-                (datetime #:date #1998-06-05 #:time #09:00:00)
-                (datetime #:date #1999-02-05 #:time #09:00:00)
-                (datetime #:date #1999-03-05 #:time #09:00:00)
-                (datetime #:date #1999-11-05 #:time #09:00:00)
-                (datetime #:date #2000-05-05 #:time #09:00:00)
-                (datetime #:date #2001-01-05 #:time #09:00:00)
-                (datetime #:date #2001-10-05 #:time #09:00:00)
-                (datetime #:date #2002-04-05 #:time #09:00:00)))
+                (datetime #:date #1998-01-02 #:time #09:00:00)
+                (datetime #:date #1998-02-06 #:time #09:00:00)
+                (datetime #:date #1998-03-06 #:time #09:00:00)
+                (datetime #:date #1998-04-03 #:time #09:00:00)
+                (datetime #:date #1998-05-01 #:time #09:00:00)
+                (datetime #:date #1998-06-05 #:time #09:00:00)))
 
   (vevent
    summary: "Monthly on the first Friday until December 24, 1997"
@@ -593,6 +594,8 @@
    rrule: "FREQ=MONTHLY;UNTIL=19971224T000000Z;BYDAY=1FR"
    x-summary: "första fredagen varje månad, till och med den 24 december, 1997 kl.  0:00"
    x-set: (list (datetime #:date #1997-09-05 #:time #09:00:00)
+                (datetime #:date #1997-10-03 #:time #09:00:00)
+                (datetime #:date #1997-11-07 #:time #09:00:00)
                 (datetime #:date #1997-12-05 #:time #09:00:00)))
 
   (vevent
@@ -601,15 +604,15 @@
    rrule: "FREQ=MONTHLY;INTERVAL=2;COUNT=10;BYDAY=1SU,-1SU"
    x-summary: "första söndagen samt sista söndagen varannan månad, totalt 10 gånger"
    x-set: (list (datetime #:date #1997-09-07 #:time #09:00:00)
-                (datetime #:date #1999-03-07 #:time #09:00:00)
-                (datetime #:date #1999-11-07 #:time #09:00:00)
-                (datetime #:date #2000-05-07 #:time #09:00:00)
-                (datetime #:date #2001-01-07 #:time #09:00:00)
-                (datetime #:date #2002-07-07 #:time #09:00:00)
-                (datetime #:date #2003-09-07 #:time #09:00:00)
-                (datetime #:date #2004-03-07 #:time #09:00:00)
-                (datetime #:date #2004-11-07 #:time #09:00:00)
-                (datetime #:date #2006-05-07 #:time #09:00:00)))
+                (datetime #:date #1997-09-28 #:time #09:00:00)
+                (datetime #:date #1997-11-02 #:time #09:00:00)
+                (datetime #:date #1997-11-30 #:time #09:00:00)
+                (datetime #:date #1998-01-04 #:time #09:00:00)
+                (datetime #:date #1998-01-25 #:time #09:00:00)
+                (datetime #:date #1998-03-01 #:time #09:00:00)
+                (datetime #:date #1998-03-29 #:time #09:00:00)
+                (datetime #:date #1998-05-03 #:time #09:00:00)
+                (datetime #:date #1998-05-31 #:time #09:00:00)))
 
   (vevent
    summary: "Monthly on the second-to-last Monday of the month for 6 months"
@@ -617,12 +620,11 @@
    rrule: "FREQ=MONTHLY;COUNT=6;BYDAY=-2MO"
    x-summary: "näst sista måndagen varje månad, totalt 6 gånger"
    x-set: (list (datetime #:date #1997-09-22 #:time #09:00:00)
+                (datetime #:date #1997-10-20 #:time #09:00:00)
+                (datetime #:date #1997-11-17 #:time #09:00:00)
                 (datetime #:date #1997-12-22 #:time #09:00:00)
-                (datetime #:date #1998-06-22 #:time #09:00:00)
-                (datetime #:date #1999-02-22 #:time #09:00:00)
-                (datetime #:date #1999-03-22 #:time #09:00:00)
-                (datetime #:date #1999-11-22 #:time #09:00:00))
-   )
+                (datetime #:date #1998-01-19 #:time #09:00:00)
+                (datetime #:date #1998-02-16 #:time #09:00:00)))
 
   (vevent
    summary: "Monthly on the third-to-the-last day of the month, forever"
@@ -699,30 +701,19 @@
                 (datetime #:date #1999-03-13 #:time #09:00:00)))
 
   (vevent
-   summary: "Every Tuesday, every other month"
+   summary: "Every Tuesday, every other month NOTE SHOULD WILL FAIL DUE TO FEW EXAMPLES"
    dtstart: "19970902T090000"
    rrule: "FREQ=MONTHLY;INTERVAL=2;BYDAY=TU"
    x-summary: "varje tisdag varannan månad"
    x-set: (list (datetime #:date #1997-09-02 #:time #09:00:00)
-                (datetime #:date #1999-03-02 #:time #09:00:00)
-                (datetime #:date #1999-11-02 #:time #09:00:00)
-                (datetime #:date #2000-05-02 #:time #09:00:00)
-                (datetime #:date #2001-01-02 #:time #09:00:00)
-                (datetime #:date #2002-07-02 #:time #09:00:00)
-                (datetime #:date #2003-09-02 #:time #09:00:00)
-                (datetime #:date #2004-03-02 #:time #09:00:00)
-                (datetime #:date #2004-11-02 #:time #09:00:00)
-                (datetime #:date #2006-05-02 #:time #09:00:00)
-                (datetime #:date #2007-01-02 #:time #09:00:00)
-                (datetime #:date #2008-09-02 #:time #09:00:00)
-                (datetime #:date #2010-03-02 #:time #09:00:00)
-                (datetime #:date #2010-11-02 #:time #09:00:00)
-                (datetime #:date #2013-07-02 #:time #09:00:00)
-                (datetime #:date #2014-09-02 #:time #09:00:00)
-                (datetime #:date #2017-05-02 #:time #09:00:00)
-                (datetime #:date #2018-01-02 #:time #09:00:00)
-                (datetime #:date #2019-07-02 #:time #09:00:00)
-                (datetime #:date #2021-03-02 #:time #09:00:00)))
+                (datetime #:date #1997-09-09 #:time #09:00:00)
+                (datetime #:date #1997-09-16 #:time #09:00:00)
+                (datetime #:date #1997-09-23 #:time #09:00:00)
+                (datetime #:date #1997-09-30 #:time #09:00:00)
+                (datetime #:date #1997-11-04 #:time #09:00:00)
+                (datetime #:date #1997-11-11 #:time #09:00:00)
+                (datetime #:date #1997-11-18 #:time #09:00:00)
+                (datetime #:date #1997-11-25 #:time #09:00:00)))
 
   (vevent
    summary: "Yearly in June and July for 10 occurrences:
@@ -775,30 +766,13 @@ onents are specified, the day is gotten from \"DTSTART\""
                 (datetime #:date #2006-01-01 #:time #09:00:00)))
 
   (vevent
-   summary: "Every 20th Monday of the year, forever"
+   summary: "Every 20th Monday of the year, forever NOTE WILL FAIL DUE TO FEW EXAMPLES"
    dtstart: "19970519T090000"
    rrule: "FREQ=YEARLY;BYDAY=20MO"
    x-summary: "tjugonde måndagen, årligen"
    x-set: (list (datetime #:date #1997-05-19 #:time #09:00:00)
-                (datetime #:date #2003-05-19 #:time #09:00:00)
-                (datetime #:date #2008-05-19 #:time #09:00:00)
-                (datetime #:date #2014-05-19 #:time #09:00:00)
-                (datetime #:date #2025-05-19 #:time #09:00:00)
-                (datetime #:date #2031-05-19 #:time #09:00:00)
-                (datetime #:date #2036-05-19 #:time #09:00:00)
-                (datetime #:date #2042-05-19 #:time #09:00:00)
-                (datetime #:date #2053-05-19 #:time #09:00:00)
-                (datetime #:date #2059-05-19 #:time #09:00:00)
-                (datetime #:date #2064-05-19 #:time #09:00:00)
-                (datetime #:date #2070-05-19 #:time #09:00:00)
-                (datetime #:date #2081-05-19 #:time #09:00:00)
-                (datetime #:date #2087-05-19 #:time #09:00:00)
-                (datetime #:date #2092-05-19 #:time #09:00:00)
-                (datetime #:date #2098-05-19 #:time #09:00:00)
-                (datetime #:date #2109-05-19 #:time #09:00:00)
-                (datetime #:date #2115-05-19 #:time #09:00:00)
-                (datetime #:date #2120-05-19 #:time #09:00:00)
-                (datetime #:date #2126-05-19 #:time #09:00:00)))
+                (datetime #:date #1998-05-18 #:time #09:00:00)
+                (datetime #:date #1999-05-17 #:time #09:00:00)))
 
   (vevent
    summary: "Monday of week number 20 (where the default start of the week is Monday), forever"
@@ -878,7 +852,6 @@ onents are specified, the day is gotten from \"DTSTART\""
                 (datetime #:date #1998-07-09 #:time #09:00:00)
                 (datetime #:date #1998-07-16 #:time #09:00:00)))
 
-  ;; NOTE This has some weird grammar in swedish
   (vevent
    summary: "Every Friday the 13th, forever"
    dtstart: "19970902T090000"
@@ -907,7 +880,7 @@ onents are specified, the day is gotten from \"DTSTART\""
                 (datetime #:date #2009-03-13 #:time #09:00:00)))
 
   (vevent
-   summary: "The first Saturday that follows the first Sunday of the month,forever"
+   summary: "The first Saturday that follows the first Sunday of the month, forever"
    dtstart: "19970913T090000"
    rrule: "FREQ=MONTHLY;BYDAY=SA;BYMONTHDAY=7,8,9,10,11,12,13"
    x-summary: "varje lördag den sjunde, åttonde, nionde, tionde, elfte, tolfte & trettonde varje månad"
@@ -967,34 +940,19 @@ sday, for the next 3 months"
    rrule: "FREQ=MONTHLY;COUNT=3;BYDAY=TU,WE,TH;BYSETPOS=3"
    x-summary: "NOT YET IMPLEMENTED"
    x-set: (list (datetime #:date #1997-09-04 #:time #09:00:00)
-                (datetime #:date #1997-11-04 #:time #09:00:00)
-                (datetime #:date #1997-12-04 #:time #09:00:00)))
+                (datetime #:date #1997-10-07 #:time #09:00:00)
+                (datetime #:date #1997-11-06 #:time #09:00:00)))
 
   (vevent
-   summary: "The second-to-last weekday of the month"
+   summary: "The second-to-last weekday of the month NOTE WILL FAIL DUE TO FEW EXAMPLES"
    dtstart: "19970929T090000"
    rrule: "FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-2"
    x-summary: "NOT YET IMPLEMENTED"
    x-set: (list (datetime #:date #1997-09-29 #:time #09:00:00)
-                (datetime #:date #1997-10-29 #:time #09:00:00)
-                (datetime #:date #1997-12-29 #:time #09:00:00)
-                (datetime #:date #1998-01-29 #:time #09:00:00)
-                (datetime #:date #1998-04-01 #:time #09:00:00)
-                (datetime #:date #1998-05-01 #:time #09:00:00)
-                (datetime #:date #1998-06-01 #:time #09:00:00)
-                (datetime #:date #1998-07-01 #:time #09:00:00)
-                (datetime #:date #1998-09-01 #:time #09:00:00)
-                (datetime #:date #1998-10-01 #:time #09:00:00)
-                (datetime #:date #1998-12-01 #:time #09:00:00)
-                (datetime #:date #1999-01-01 #:time #09:00:00)
-                (datetime #:date #1999-02-01 #:time #09:00:00)
-                (datetime #:date #1999-03-01 #:time #09:00:00)
-                (datetime #:date #1999-04-01 #:time #09:00:00)
-                (datetime #:date #1999-06-01 #:time #09:00:00)
-                (datetime #:date #1999-07-01 #:time #09:00:00)
-                (datetime #:date #1999-09-01 #:time #09:00:00)
-                (datetime #:date #1999-10-01 #:time #09:00:00)
-                (datetime #:date #1999-11-01 #:time #09:00:00)))
+                (datetime #:date #1997-10-30 #:time #09:00:00)
+                (datetime #:date #1997-11-27 #:time #09:00:00)
+                (datetime #:date #1997-12-30 #:time #09:00:00)
+                (datetime #:date #1998-01-29 #:time #09:00:00)))
 
   (vevent
    summary: "Every 3 hours from 9:00 AM to 5:00 PM on a specific day"
