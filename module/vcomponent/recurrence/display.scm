@@ -77,7 +77,7 @@
        [(MONTHLY)
         (list
          (awhen (byday rrule) (list (format-byday-list it)))
-         (awhen (bymonthday rrule) (format-bymonth-day it)))]
+         (awhen (bymonthday rrule) (cons " " (format-bymonth-day it))))]
        [else '()])
 
      ;; TODO my parser adds an implicit interval to every object
