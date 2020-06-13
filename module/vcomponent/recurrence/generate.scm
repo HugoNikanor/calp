@@ -50,7 +50,10 @@
                             (match-lambda
                               [('unless pred field)
                                `(let ((yearday (,(by-proc 'yearday) ,rr))
-                                      (monthday (,(by-proc 'monthday) ,rr)))
+                                      (monthday (,(by-proc 'monthday) ,rr))
+                                      (weekno (,(by-proc 'weekno) ,rr))
+                                      (month (,(by-proc 'month) ,rr))
+                                      )
                                   (if ,pred #f
                                       ,(self field)))]
                               [field
@@ -75,7 +78,15 @@
   (make-extenders
    rrule
    [YEARLY  || month weekno yearday monthday
-               (unless (or yearday monthday) day)
+
+            ;; see Note 2, p. 44
+            (unless (or yearday monthday
+                        ;; weekno and month are still expanders. They however
+                        ;; cause day to be omited here to prevent datetimes
+                        ;; from being generated from both directions.
+                        ;; They are instead handled under BYWEEKNO & BYMONTH
+                        ;; respectively.
+                        weekno month) day)
                hour minute second]
    [MONTHLY || monthday (unless monthday day) hour minute second]
    [WEEKLY  || day hour minute second]
@@ -178,26 +189,13 @@
  Possibly stuck in infinite loop")
                      dt)))]
 
-              ;; see Note 2, p. 44
               [(YEARLY)
-               (cond
-
-                ;; turns it into a limiter
-                [(or (byyearday rrule) (bymonthday rrule))
-                 dt]
-
-                ;; TODO this leads to duplicates in the output
-                [(or (byweekno rrule) (bymonth rrule))
-                 ;; Handled under BYWEEKNO & BYMONTH respectively
-                 dt]
-
-                [else
-                 (let ((instances (all-wday-in-year
-                                   value (start-of-year d))))
-                   (to-dt
-                    (if (positive? offset)
-                        (list-ref instances (1- offset))
-                        (list-ref (reverse instances) (1- (- offset))))))])
+               (let ((instances (all-wday-in-year
+                                 value (start-of-year d))))
+                 (to-dt
+                  (if (positive? offset)
+                      (list-ref instances (1- offset))
+                      (list-ref (reverse instances) (1- (- offset))))))
                ]))]
 
          [(BYWEEKNO)
