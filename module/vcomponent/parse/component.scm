@@ -137,7 +137,14 @@
 
                             ;; See RFC 5545 p.53 for list of all repeating types
                             ;; (for vcomponent)
-                            (if (memv key '(EXDATE ATTENDEE))
+                            ;; TODO split on comman (,) here?
+                            (if (memv key '(ATTACH ATTENDEE CATEGORIES
+                                                COMMENT CONTACT EXDATE
+                                                REQUEST-STATUS RELATED-TO
+                                                RESOURCES RDATE
+                                                ;; x-prop
+                                                ;; iana-prop
+                                                ))
                                 (aif (attr* (car stack) key)
                                      (set! (attr* (car stack) key) (cons vline it))
                                      (set! (attr* (car stack) key) (list vline)))
