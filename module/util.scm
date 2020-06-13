@@ -4,7 +4,7 @@
   #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module ((sxml fold) #:select (fold-values))
   #:use-module ((srfi srfi-9 gnu) #:select (set-fields))
-  #:re-export (define*-public)
+  #:re-export (define*-public fold-values)
   #:export (for mod! sort* sort*!
                 mod/r! set/r!
                 find-min
