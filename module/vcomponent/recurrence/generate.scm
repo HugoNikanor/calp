@@ -51,8 +51,8 @@
                               [('unless pred field)
                                `(let ((yearday (,(by-proc 'yearday) ,rr))
                                       (monthday (,(by-proc 'monthday) ,rr)))
-                                  ,(if pred #f
-                                       (it field)))]
+                                  (if ,pred #f
+                                      ,(self field)))]
                               [field
                                `(and=> (,(by-proc field) ,rr)
                                        ,(if extender?
@@ -74,7 +74,8 @@
 (define (all-extenders rrule)
   (make-extenders
    rrule
-   [YEARLY  || month weekno yearday monthday (unless (or yearday monthday) day)
+   [YEARLY  || month weekno yearday monthday
+               (unless (or yearday monthday) day)
                hour minute second]
    [MONTHLY || monthday (unless monthday day) hour minute second]
    [WEEKLY  || day hour minute second]

@@ -701,7 +701,7 @@
                 (datetime #:date #1999-03-13 #:time #09:00:00)))
 
   (vevent
-   summary: "Every Tuesday, every other month NOTE SHOULD WILL FAIL DUE TO FEW EXAMPLES"
+   summary: "Every Tuesday, every other month"
    dtstart: "19970902T090000"
    rrule: "FREQ=MONTHLY;INTERVAL=2;BYDAY=TU"
    x-summary: "varje tisdag varannan månad"
@@ -713,7 +713,18 @@
                 (datetime #:date #1997-11-04 #:time #09:00:00)
                 (datetime #:date #1997-11-11 #:time #09:00:00)
                 (datetime #:date #1997-11-18 #:time #09:00:00)
-                (datetime #:date #1997-11-25 #:time #09:00:00)))
+                (datetime #:date #1997-11-25 #:time #09:00:00)
+                (datetime #:date #1998-01-06 #:time #09:00:00)
+                (datetime #:date #1998-01-13 #:time #09:00:00)
+                (datetime #:date #1998-01-20 #:time #09:00:00)
+                (datetime #:date #1998-01-27 #:time #09:00:00)
+                (datetime #:date #1998-03-03 #:time #09:00:00)
+                (datetime #:date #1998-03-10 #:time #09:00:00)
+                (datetime #:date #1998-03-17 #:time #09:00:00)
+                (datetime #:date #1998-03-24 #:time #09:00:00)
+                (datetime #:date #1998-03-31 #:time #09:00:00)
+                (datetime #:date #1998-05-05 #:time #09:00:00)
+                (datetime #:date #1998-05-12 #:time #09:00:00)))
 
   (vevent
    summary: "Yearly in June and July for 10 occurrences:
@@ -766,13 +777,30 @@ onents are specified, the day is gotten from \"DTSTART\""
                 (datetime #:date #2006-01-01 #:time #09:00:00)))
 
   (vevent
-   summary: "Every 20th Monday of the year, forever NOTE WILL FAIL DUE TO FEW EXAMPLES"
+   summary: "Every 20th Monday of the year, forever"
    dtstart: "19970519T090000"
    rrule: "FREQ=YEARLY;BYDAY=20MO"
    x-summary: "tjugonde måndagen, årligen"
    x-set: (list (datetime #:date #1997-05-19 #:time #09:00:00)
                 (datetime #:date #1998-05-18 #:time #09:00:00)
-                (datetime #:date #1999-05-17 #:time #09:00:00)))
+                (datetime #:date #1999-05-17 #:time #09:00:00)
+                (datetime #:date #2000-05-15 #:time #09:00:00)
+                (datetime #:date #2001-05-14 #:time #09:00:00)
+                (datetime #:date #2002-05-20 #:time #09:00:00)
+                (datetime #:date #2003-05-19 #:time #09:00:00)
+                (datetime #:date #2004-05-17 #:time #09:00:00)
+                (datetime #:date #2005-05-16 #:time #09:00:00)
+                (datetime #:date #2006-05-15 #:time #09:00:00)
+                (datetime #:date #2007-05-14 #:time #09:00:00)
+                (datetime #:date #2008-05-19 #:time #09:00:00)
+                (datetime #:date #2009-05-18 #:time #09:00:00)
+                (datetime #:date #2010-05-17 #:time #09:00:00)
+                (datetime #:date #2011-05-16 #:time #09:00:00)
+                (datetime #:date #2012-05-14 #:time #09:00:00)
+                (datetime #:date #2013-05-20 #:time #09:00:00)
+                (datetime #:date #2014-05-19 #:time #09:00:00)
+                (datetime #:date #2015-05-18 #:time #09:00:00)
+                (datetime #:date #2016-05-16 #:time #09:00:00)))
 
   (vevent
    summary: "Monday of week number 20 (where the default start of the week is Monday), forever"
