@@ -351,25 +351,28 @@
 
 
 
-;; TODO normalize if functions floor their arguments or not.
-;; The argument for flooring is that it allows us to only bother with
-;; the higher components we care about.
-;; The argument against would be if we want to start from the middle
-;; of a time span.
-
-
-;; Returns the first instance of the given week-day in the given month.
+;; Returns the first instance of the given week-day after @var{d}.
 ;; @example
+;; (find-first-week-day mon #2020-04-01)
+;; => #2020-04-06
 ;; (find-first-week-day mon #2020-04-10)
-;; => 2020-04-06
+;; => #2020-04-13
+;; (find-first-week-day mon #2020-04-30)
+;; => #2020-05-04
 ;; @end example
-(define-public (find-first-week-day wday month-date)
-  (let* ((mstart (start-of-month month-date))
-         (start-day (week-day mstart))
+(define-public (find-first-week-day wday d)
+  (let* ((start-day (week-day d))
          (diff (- wday start-day)))
-    (date+ mstart (date day: (modulo diff 7)))))
+    (date+ d (date day: (modulo diff 7)))))
 
-;; returns instances of the given week-day in month.
+;; returns instances of the given week-day in month between
+;; month-date and end of month.
+;; @example
+;; (all-wday-in-month mon #2020-06-01)
+;; => (#2020-06-01 #2020-06-08 #2020-06-15 #2020-06-22 #2020-06-29)
+;; (all-wday-in-month mon #2020-06-10)
+;; => (#2020-06-15 #2020-06-22 #2020-06-29)
+;; @end example
 ;; week-day, date → (list date)
 (define-public (all-wday-in-month wday month-date)
   (stream->list

@@ -152,7 +152,7 @@
                (concatenate
                 (map (lambda (wday)
                        (all-wday-in-month
-                        wday (set (month d) value)))
+                        wday (start-of-month (set (month d) value))))
                      (map cdr (byday rrule)))))
 
               ;; else
@@ -168,9 +168,7 @@
                                                 7))))]
 
               [(MONTHLY)
-               ;; TODO should there be a (start-of-month d)
-               ;; istead of juts d
-               (let* ((instances (all-wday-in-month value d)))
+               (let* ((instances (all-wday-in-month value (start-of-month d))))
                  (catch 'out-of-range
                    (lambda ()
                      (cond [(eqv? #f offset)
@@ -312,11 +310,11 @@
     (limiters->predicate (all-limiters rrule))
     date-stream)))
 
-(define-stream (generate-posibilities rrule base-date)
+(define-stream (generate-posibilities rrule start-date)
   (limit-recurrence-set
    rrule
    (extend-recurrence-set
-    rrule base-date)))
+    rrule start-date)))
 
 (define-stream (rrule-instances event)
   (define rrule (attr event 'RRULE))
