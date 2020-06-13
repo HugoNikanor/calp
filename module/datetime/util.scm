@@ -249,7 +249,8 @@
 ;; Returns a list of the seven week days, with @var{week-start}
 ;; as the beginning of the week.
 ;; @example
-;; '(SÖ MÅ TI ON TO FR LÖ)
+;; (weekday-list sun)
+;; => (0 1 2 3 4 5 6)
 ;; @end example
 (define-public (weekday-list week-start)
   (take (drop (apply circular-list (iota 7))
