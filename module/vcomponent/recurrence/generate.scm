@@ -22,7 +22,7 @@
 (define ((con x) y)
   (cons x y))
 
-(eval-when (expand compile eval)
+(eval-when (expand load compile eval)
  (define (stx->bystx symbol str-transformer)
    (->> symbol
         symbol->string
@@ -157,6 +157,8 @@
                                                 7))))]
 
               [(MONTHLY)
+               ;; TODO should there be a (start-of-month d)
+               ;; istead of juts d
                (let* ((instances (all-wday-in-month value d)))
                  (catch 'out-of-range
                    (lambda ()
@@ -182,9 +184,9 @@
 
                 ;; turns it into a limiter
                 [(or (byyearday rrule) (bymonthday rrule))
-                      dt]
+                 dt]
 
-                ;; this leads to duplicates in the output
+                ;; TODO this leads to duplicates in the output
                 [(or (byweekno rrule) (bymonth rrule))
                  ;; Handled under BYWEEKNO & BYMONTH respectively
                  dt]
@@ -229,7 +231,6 @@
   (case (freq rr)
     [(YEARLY)   (datetime date: (date year: (interval rr)))]
     [(MONTHLY)  (datetime date: (date month: (interval rr)))]
-    ;; please say that a week has always seven days...
     [(WEEKLY)   (datetime date: (date day: (* 7 (interval rr))))]
     [(DAILY)    (datetime date: (date day: (interval rr)))]
     [(HOURLY)   (datetime time: (time hour: (interval rr)))]
