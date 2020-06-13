@@ -38,6 +38,10 @@
   date?
   (year year) (month month) (day day))
 
+;;; NOTE all these printers would benefit from using datetime->string,
+;;; that however is currently in the (datetime util) module, which leads
+;;; to a dependency cycle.
+
 (set-record-type-printer!
  <date>
  (lambda (r p)
@@ -85,11 +89,19 @@
 (set-record-type-printer!
  <datetime>
  (lambda (r p)
-   (write `(datetime date: ,(get-date r)
-                     time: ,(get-time% r)
-                     ,@(awhen (tz r)
-                              `(tz: ,it)))
-          p)))
+   (if (tz r)
+       (write `(datetime date: ,(get-date r)
+                         time: ,(get-time% r)
+                         tz: ,(tz r))
+              p)
+       (display
+        (string-append
+         (with-output-to-string (lambda () (write (get-date r))))
+         "T"
+         (string-drop
+          (with-output-to-string (lambda () (write (get-time% r))))
+          1))
+        p))))
 
 (export get-date)
 (define-public (get-timezone datetime)
