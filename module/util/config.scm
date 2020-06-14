@@ -35,6 +35,9 @@
 
 
 ;; similar to emacs defcustom
+;; NOTE that it's valid to set a value (or default value) to #f
+;; but that any #:pre procedure can only return #f to indicate
+;; failure.
 (define-macro (define-config name default-value documentation . rest)
   (let ((make-config '(@@ (util config) make-config))
         (config-values '(@@ (util config) config-values))
@@ -82,19 +85,21 @@
 (define-public (set-config! key value)
   (cond [(hashq-ref config-values key)
          => (lambda (conf)
-              (aif (or (not value)
-                       ((config-attribute conf #:pre identity)
-                        value))
-                   (begin
-                     (set-value! conf it)
-                     ((config-attribute conf #:post identity) it))
-
-                   (throw 'config-error 'set-config!
-                          "~a->~a = ~s is invalid,~%Field doc is \"~a\""
-                          (module-name (get-source-module conf))
-                          key value
-                          (get-documentation conf))
-                   ))]
+              (cond [(not value)
+                     (set-value! conf #f)
+                     ((config-attribute conf #:post identity) #f)]
+                    [((config-attribute conf #:pre identity)
+                      value)
+                     => (lambda (it)
+                          (set-value! conf it)
+                          ((config-attribute conf #:post identity) it))]
+                    [else
+                     (throw 'config-error 'set-config!
+                            "~a->~a = ~s is invalid,~%Field doc is \"~a\""
+                            (module-name (get-source-module conf))
+                            key value
+                            (get-documentation conf))])
+              )]
         [else (hashq-set! config-values key (make-unconfig value))]))
 
 ;; unique symbol here since #f is a valid configuration value.
