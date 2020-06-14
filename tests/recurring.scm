@@ -10,7 +10,7 @@
 (define ev
   (call-with-input-string
       "BEGIN:VEVENT
-DTSTART:20190302
+DTSTART;VALUE=DATE:20190302
 RRULE:FREQ=DAILY
 END:VEVENT"
     parse-calendar))

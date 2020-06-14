@@ -75,7 +75,10 @@
              (str '())
              (done '()))
     (if (null? rem)
-        (cons (list->string str) done)
+        (let ((final (reverse-list->string str)))
+         (if (null? done)
+             final
+             (cons final done)))
         (case (car rem)
           [(#\\)
            (case (cadr rem)
@@ -110,10 +113,10 @@
 (define (parse-utc-offset props value)
   (make-utc-offset
    (string->symbol (substring value 0 1))
-   (number->string (substring value 1 3))
-   (number->string (substring value 3 5))
+   (string->number (substring value 1 3))
+   (string->number (substring value 3 5))
    (if (= 7 (string-length value))
-       (number->string (substring value 5 7))
+       (string->number (substring value 5 7))
        0)))
 
 (define type-parsers (make-hash-table))

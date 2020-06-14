@@ -79,7 +79,12 @@
      (let* (((key val) kv))
        (let-lazy
         ((symb (string->symbol val))
-         (date (datetime-parser val))
+         ;; TODO this is an ugly hack.
+         ;; But sending in datetime-parser instead
+         ;; leads to dependency problems in vcomponent.
+         (date (catch 'parse-error
+                 (lambda () (parse-ics-datetime val))
+                 (lambda _ (parse-ics-date val))))
          (day (rfc->datetime-weekday (string->symbol val)))
          (days (map parse-day-spec (string-split val #\,)))
          (num  (string->number val))

@@ -5,6 +5,7 @@
   :use-module (vcomponent base)
   :use-module (datetime)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-26)
   :use-module (vcomponent parse types)
  )
@@ -12,37 +13,59 @@
 (define-public (parse-calendar port)
   (parse (map tokenize (read-file port))))
 
+(define-immutable-record-type <line>
+  (make-line string file line)
+  line?
+  (string get-string)
+  (file get-file)
+  (line get-line))
+
 ;; port → (list string)
 (define (read-file port)
- (let loop ((done '()))
-   (let ((line (read-line port)))
-     (if (eof-object? line)
-         (reverse! done)
-         (let ((line (string-trim-right line)))
-           (loop
-            (if (char=? #\space (string-ref line 0))
-                ;; Line Wrapping
-                ;; TODO if the line is split inside a unicode character
-                ;; then this produces multiple broken unicode characters.
-                ;; It could be solved by checking the start of the new line,
-                ;; and the tail of the old line for broken char
-                (cons (string-append (car done)
-                                     (string-drop line 1))
-                      (cdr done))
-                (cons line done))))))))
+  (define fname (port-filename port))
+  (let loop ((line-number 1) (done '()))
+    (let ((line (read-line port)))
+      (if (eof-object? line)
+          (reverse! done)
+          (let ((line (string-trim-right line)))
+            (loop
+             (1+ line-number)
+             (if (char=? #\space (string-ref line 0))
+                 ;; Line Wrapping
+                 ;; TODO if the line is split inside a unicode character
+                 ;; then this produces multiple broken unicode characters.
+                 ;; It could be solved by checking the start of the new line,
+                 ;; and the tail of the old line for broken char
+                 (cons (make-line (string-append (get-string (car done))
+                                                 (string-drop line 1))
+                                  fname
+                                  (get-line (car done)))
+                       (cdr done))
+                 (cons (make-line line fname line-number)
+                       done))))))))
 
-;; (list string) → (list (key kv ... value))
-(define (tokenize line)
+(define-immutable-record-type <tokens>
+  (make-tokens metadata data)
+  tokens?
+  (metadata get-metadata) ; <line>
+  (data get-data) ; (key kv ... value)
+  )
+
+;; (list <line>) → (list (key kv ... value))
+(define (tokenize line-obj)
+  (define line (get-string line-obj))
   (define colon-idx (string-index line #\:))
   (define semi-idxs
     (let loop ((idx 0))
       (aif (string-index line #\; idx colon-idx)
            (cons it (loop (1+ it)))
            (list colon-idx (string-length line)))))
-  (map (lambda (start end)
-         (substring line (1+ start) end))
-       (cons -1 semi-idxs)
-       semi-idxs))
+  (make-tokens
+   line-obj
+   (map (lambda (start end)
+          (substring line (1+ start) end))
+        (cons -1 semi-idxs)
+        semi-idxs)))
 
 (define (x-property? symb)
   (string=? "X-" (string-take (symbol->string symb) 2)))
@@ -68,25 +91,29 @@
       (let ((vv (parser params value)))
         (when (list? vv)
           (error ""))
-        (let ((v (symbol->string vv)))
+        (let ((v (string->symbol vv)))
           (unless (memv v enum)
-            (warning ""))
+            (warning "~a ∉ { ~{~a~^, ~} }"
+                     v enum))
           v)))))
 
 ;; params could be made optional, with an empty hashtable as default
 (define (build-vline key value params)
   (let ((parser
          (cond
-          [(hashq-ref params 'TYPE) => get-parser]
+          [(and=> (hashq-ref params 'VALUE) string->symbol) => get-parser]
 
           [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID  RDATE
-                              CREATED DTSTAMP LAST-MODIFIED))
+                              CREATED DTSTAMP LAST-MODIFIED
+                              ;; only on VALARM
+                              ACKNOWLEDGED
+                              ))
            (get-parser 'DATE-TIME)]
 
           [(memv key '(EXDATE))
            (list-parser 'DATE-TIME)]
 
-          [(memv key '(DURATION))
+          [(memv key '(TRIGGER DURATION))
            (get-parser 'DURATION)]
 
           [(memv key '(FREEBUSY))
@@ -98,7 +125,7 @@
            (lambda (params value)
              (let ((v ((get-parser 'TEXT) params value)))
                (when (list? v)
-                 (warning "List in non-list field"))
+                 (warning "List in non-list field: ~s" v))
                v))]
 
           ;; TEXT, but allow a list
@@ -108,7 +135,7 @@
           [(memv key '(VERSION))
            (lambda (params value)
              (let ((v ((get-parser 'TEXT) params value)))
-               (unless (string=? "2.0" v)
+               (unless (and (string? v) (string=? "2.0" v))
                  (warning "File of unsuported version. Proceed with caution"))))]
 
           [(memv key '(TRANSP))
@@ -117,11 +144,22 @@
           [(memv key '(CLASS))
            (enum-parser '(PUBLIC PRIVATE CONFIDENTIAL) #t)]
 
+          [(memv key '(PARTSTAT))
+           (enum-parser '(NEEDS-ACTION
+                          ACCEPTED DECLINED
+                          TENTATIVE DELEGATED
+                          IN-PROCESS)
+                        #t)]
+
           ;; TODO
           [(memv key '(REQUEST-STATUS))]
 
           [(memv key '(ACTION))
-           (enum-parser '(AUDIO DISPLAY EMAIL) #t)]
+           (enum-parser '(AUDIO DISPLAY EMAIL
+                                NONE    ; I don't know where NONE is from
+                                        ; but it appears to be prevelant.
+                                )
+                        #t)]
 
           [(memv key '(TZOFFSETFROM TZOFFSETTO))
            (get-parser 'UTC-OFFSET)]
@@ -140,7 +178,6 @@
                      ((get-parser 'FLOAT) params right))))]
 
           [(memv key '(RRULE))
-           ;; TODO date/datetime
            (get-parser 'RECUR)]
 
           [(memv key '(ORGANIZER ATTENDEE))
@@ -171,57 +208,93 @@
           (loop (cdr rem))))))
 
 
-;; (list (key kv ... value)) → <vcomponent>
+;; (list <tokens>) → <vcomponent>
 (define (parse lst)
   (let loop ((lst lst)
              (stack '()))
     (if (null? lst)
         stack
-        (let ((head (car lst)))
-          (cond [(string=? "BEGIN" (car head))
-                 (loop (cdr lst) (cons (make-vcomponent (string->symbol (cadr head))) stack))]
-                [(string=? "END" (car head))
+        (let* ((head* (car lst))
+               (head (get-data head*)))
+          (catch 'parse-error
+            (lambda ()
+             (parameterize
+                 ((warning-handler
+                   (lambda (fmt . args)
+                     (let ((linedata (get-metadata head*)))
+                       (format
+                        #f "WARNING parse error around ~a
+  ~?
+  line ~a ~a~%"
+                        (get-string linedata)
+                        fmt args
+                        (get-line linedata)
+                        (get-file linedata)
+                        )))))
+               (cond [(string=? "BEGIN" (car head))
+                      (loop (cdr lst)
+                            (cons (make-vcomponent (string->symbol (cadr head)))
+                                  stack))]
+                     [(string=? "END" (car head))
 
-                 (when (eq? (type (car stack)) 'VEVENT)
+                      (when (eq? (type (car stack)) 'VEVENT)
 
-                   ;; This isn't part of the field values since we "need"
-                   ;; the type of DTSTART for UNTIL to work.
-                   ;; This could however be side steped by auto detecting
-                   ;; @type{date}s vs @type{datetime}s in @function{parse-recurrence-rule}.
-                   (when (attr (car stack) 'RRULE)
-                     (set! (attr (car stack) 'RRULE)
-                       ((@ (vcomponent recurrence) parse-recurrence-rule)
-                        (attr (car stack) 'RRULE)
-                        (if (date? (attr (car stack) 'DTSTART))
-                            parse-ics-date parse-ics-datetime)))))
+                        ;; This isn't part of the field values since we "need"
+                        ;; the type of DTSTART for UNTIL to work.
+                        ;; This could however be side steped by auto detecting
+                        ;; @type{date}s vs @type{datetime}s in @function{parse-recurrence-rule}.
+                        #t
+                        #;
+                        (when (attr (car stack) 'RRULE) ; ;
+                        (set! (attr (car stack) 'RRULE) ; ;
+                        ((@ (vcomponent recurrence) parse-recurrence-rule) ; ;
+                        (attr (car stack) 'RRULE) ; ;
+                        (if (date? (attr (car stack) 'DTSTART)) ; ;
+                        parse-ics-date parse-ics-datetime)))))
 
-                 (loop (cdr lst)
-                       (if (null? (cdr stack))
-                           ;; return
-                           (car stack)
-                           (begin (add-child! (cadr stack) (car stack))
-                                  (cdr stack))))]
-                [else
-                 (let* ((key value params (parse-itemline head)))
-                   (call-with-values (lambda () (build-vline key value params))
-                     (lambda vlines
-                       (for vline in vlines
-                            (define key (vline-key vline))
+                      (loop (cdr lst)
+                            (if (null? (cdr stack))
+                                ;; return
+                                (car stack)
+                                (begin (add-child! (cadr stack) (car stack))
+                                       (cdr stack))))]
+                     [else
+                      (let* ((key value params (parse-itemline head)))
+                        (call-with-values (lambda () (build-vline key value params))
+                          (lambda vlines
+                            (for vline in vlines
+                                 (define key (vline-key vline))
 
-                            ;; See RFC 5545 p.53 for list of all repeating types
-                            ;; (for vcomponent)
-                            ;; TODO split on comman (,) here?
-                            (if (memv key '(ATTACH ATTENDEE CATEGORIES
-                                                COMMENT CONTACT EXDATE
-                                                REQUEST-STATUS RELATED-TO
-                                                RESOURCES RDATE
-                                                ;; x-prop
-                                                ;; iana-prop
-                                                ))
-                                (aif (attr* (car stack) key)
-                                     (set! (attr* (car stack) key) (cons vline it))
-                                     (set! (attr* (car stack) key) (list vline)))
-                                ;; else
-                                (set! (attr* (car stack) key) vline))))))
+                                 ;; See RFC 5545 p.53 for list of all repeating types
+                                 ;; (for vcomponent)
+                                 ;; TODO split on comman (,) here?
+                                 (if (memv key '(ATTACH ATTENDEE CATEGORIES
+                                                     COMMENT CONTACT EXDATE
+                                                     REQUEST-STATUS RELATED-TO
+                                                     RESOURCES RDATE
+                                                     ;; x-prop
+                                                     ;; iana-prop
+                                                     ))
+                                     (aif (attr* (car stack) key)
+                                          (set! (attr* (car stack) key) (cons vline it))
+                                          (set! (attr* (car stack) key) (list vline)))
+                                     ;; else
+                                     (set! (attr* (car stack) key) vline))))))
 
-                 (loop (cdr lst) stack)])))))
+                      (loop (cdr lst) stack)])))
+            (lambda (err fmt . args)
+              (let ((linedata (get-metadata head*)))
+                (display (format
+                          #f "ERROR parse error around ~a
+  ~?
+  line ~a ~a
+  Defaulting to string~%"
+                          (get-string linedata)
+                          fmt args
+                          (get-line linedata)
+                          (get-file linedata))
+                         (current-error-port))
+                (let* ((key value params (parse-itemline head)))
+                  (set! (attr* (car stack) key)
+                    (make-vline key value params))
+                  (loop (cdr lst) stack)))))))))

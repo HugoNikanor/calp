@@ -27,8 +27,8 @@
 
 (define-peg-pattern time-pattern body
   (and (ignore "T")
-       (and (capture (and number "H"))
-            (? (and (capture (and number "M"))
+       (and (? (capture (and number "H")))
+            (? (and (? (capture (and number "M")))
                     (? (capture (and number "S"))))))))
 
 (define-peg-pattern dur-pattern body
@@ -42,7 +42,7 @@
 (define (parse-duration str)
   (let ((m (match-pattern dur-pattern str)))
     (unless m
-      (error "~a doesn't appar to be a duration" str))
+      (throw 'parse-error "~a doesn't appar to be a duration" str))
 
     (unless (= (peg:end m) (string-length str))
       (warning "Garbage at end of duration"))
@@ -63,13 +63,16 @@
                              [(S) `(second: ,n)]
                              [else (error "Invalid key")]))]
                         [#\T '()])
-                      (cadr (member "P" tree))))))
+                      (cdr (member "P" tree))))))
       (apply duration
              (cons* sign: sign
                     (let loop ((rem lst))
                       (if (null? rem)
                           '()
-                          (if (eqv? hour: (car rem))
+                          ;; NOTE a potentially prettier way would be
+                          ;; to capture the T above, and use that as
+                          ;; the delimiter for the time.
+                          (if (memv (car rem) '(hour: minute: second:))
                               (list time: (apply time rem))
                               (cons* (car rem) (cadr rem)
                                      (loop (cddr rem)))))))))))
