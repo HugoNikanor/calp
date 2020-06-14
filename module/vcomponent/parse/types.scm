@@ -4,6 +4,7 @@
   :use-module (util base64)
   :use-module (rnrs io ports)
   :use-module (datetime)
+  :use-module (srfi srfi-9 gnu)
   )
 
 ;; BINARY
@@ -65,12 +66,27 @@
 
 ;; RECUR
 (define (parse-recur props value)
-  (parse-recurrence-rule value))
+  ((@ (vcomponent recurrence parse) parse-recurrence-rule) value))
 
 ;; TEXT
-;; TODO quoted strings and escaped chars
+;; TODO quoted strings
 (define (parse-text props value)
-  value)
+  (let loop ((rem (string->list value))
+             (str '())
+             (done '()))
+    (if (null? rem)
+        (cons (list->string str) done)
+        (case (car rem)
+          [(#\\)
+           (case (cadr rem)
+             [(#\n #\N) (loop (cddr rem) (cons #\newline str) done)]
+             [(#\; #\, #\\) => (lambda (c) (loop (cddr rem) (cons c str) done))]
+             [else => (lambda (c) (warning "Non-escapable character: ~a" c)
+                         (loop (cddr rem) str done))])]
+          [(#\,)
+           (loop (cdr rem) '() (cons (reverse-list->string str) done))]
+          [else
+           (loop (cdr rem) (cons (car rem) str) done)]))))
 
 
 ;; TIME
@@ -99,3 +115,23 @@
    (if (= 7 (string-length value))
        (number->string (substring value 5 7))
        0)))
+
+(define type-parsers (make-hash-table))
+(hashq-set! type-parsers 'BINARY parse-binary)
+(hashq-set! type-parsers 'BOOLEAN parse-boolean)
+(hashq-set! type-parsers 'CAL-ADDRESS parse-uri)
+(hashq-set! type-parsers 'DATE parse-date)
+(hashq-set! type-parsers 'DATE-TIME parse-datetime)
+(hashq-set! type-parsers 'DURATION parse-duration)
+(hashq-set! type-parsers 'FLOAT parse-float)
+(hashq-set! type-parsers 'INTEGER parse-integer)
+(hashq-set! type-parsers 'PERIOD parse-period)
+(hashq-set! type-parsers 'RECUR parse-recur)
+(hashq-set! type-parsers 'TEXT parse-text)
+(hashq-set! type-parsers 'TIME parse-time)
+(hashq-set! type-parsers 'URI parse-uri)
+(hashq-set! type-parsers 'UTC-OFFSET parse-utc-offset)
+
+(define-public (get-parser type)
+  (or (hashq-ref type-parsers type #f)
+      (error "No parser for type" type)))

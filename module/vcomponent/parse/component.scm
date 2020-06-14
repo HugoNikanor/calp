@@ -6,6 +6,7 @@
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
+  :use-module (vcomponent parse types)
  )
 
 (define-public (parse-calendar port)
@@ -43,43 +44,115 @@
        (cons -1 semi-idxs)
        semi-idxs))
 
+(define (x-property? symb)
+  (string=? "X-" (string-take (symbol->string symb) 2)))
+
+#;
+'(ATTACH ATTENDEE CATEGORIES
+         COMMENT CONTACT EXDATE
+         REQUEST-STATUS RELATED-TO
+         RESOURCES RDATE
+         ;; x-prop
+         ;; iana-prop
+         )
+
+(define (list-parser symbol)
+  (let ((parser (get-parser symbol)))
+    (lambda (params value)
+      (map (lambda (v) (parser params v))
+           (string-split value #\,)))))
+
+(define* (enum-parser enum optional: allow-other)
+  (let ((parser (get-parser 'TEXT)))
+    (lambda (params value)
+      (let ((vv (parser params value)))
+        (when (list? vv)
+          (error ""))
+        (let ((v (symbol->string vv)))
+          (unless (memv v enum)
+            (warning ""))
+          v)))))
+
 ;; params could be made optional, with an empty hashtable as default
 (define (build-vline key value params)
-  (case key
-    [(DTSTART DTEND RECURRENCE-ID LAST-MODIFIED DTSTAMP EXDATE)
+  (let ((parser
+         (cond
+          [(hashq-ref params 'TYPE) => get-parser]
 
-     ;; '("Africa/Ceuta" "Europe/Stockholm" "local")
-     (let ((tz (or (hashq-ref params 'TZID)
-                   (and (string= "Z" (string-take-right value 1)) "UTC"))))
+          [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID  RDATE
+                              CREATED DTSTAMP LAST-MODIFIED))
+           (get-parser 'DATE-TIME)]
 
-       (let ((type (hashq-ref params 'VALUE)))
-         (if (or (and=> type (cut string=? <> "DATE-TIME"))
-                 (string-index value #\T))
-             ;; we move all parsed datetimes to local time here. This
-             ;; gives a MASSIVE performance boost over calling get-datetime
-             ;; in all procedures which want to guarantee local time for proper calculations.
-             ;; 20s vs 70s runtime on my laptop.
-             (let ((datetime (parse-ics-datetime value tz)))
-               (hashq-set! params 'VALUE 'DATE-TIME)
-               (values (make-vline key (get-datetime datetime) params)
-                       (make-vline (symbol-append 'X-HNH-ORIGINAL- key) datetime params)))
-             (begin (hashq-set! params 'VALUE 'DATE)
-                    (make-vline key (parse-ics-date value) params)))))]
+          [(memv key '(EXDATE))
+           (list-parser 'DATE-TIME)]
 
-    [else
-     (make-vline key
-                 (list->string
-                  (let loop ((rem (string->list value)))
-                    (if (null? rem)
-                        '()
-                        (if (char=? #\\ (car rem))
-                            (case (cadr rem)
-                              [(#\n #\N) (cons #\newline (loop (cddr rem)))]
-                              [(#\; #\, #\\) => (lambda (c) (cons c (loop (cddr rem))))]
-                              [else => (lambda (c) (warning "Non-escapable character: ~a" c)
-                                          (loop (cddr rem)))])
-                            (cons (car rem) (loop (cdr rem)))))))
-                 params)]))
+          [(memv key '(DURATION))
+           (get-parser 'DURATION)]
+
+          [(memv key '(FREEBUSY))
+           (list-parser 'PERIOD)]
+
+          [(memv key '(CALSCALE METHOD PRODID  COMMENT DESCRIPTION
+                             LOCATION STATUS SUMMARY TZID TZNAME
+                             CONTACT RELATED-TO UID))
+           (lambda (params value)
+             (let ((v ((get-parser 'TEXT) params value)))
+               (when (list? v)
+                 (warning "List in non-list field"))
+               v))]
+
+          ;; TEXT, but allow a list
+          [(memv key '(CATEGORIES RESOURCES))
+           (get-parser 'TEXT)]
+
+          [(memv key '(VERSION))
+           (lambda (params value)
+             (let ((v ((get-parser 'TEXT) params value)))
+               (unless (string=? "2.0" v)
+                 (warning "File of unsuported version. Proceed with caution"))))]
+
+          [(memv key '(TRANSP))
+           (enum-parser '(OPAQUE TRANSPARENT))]
+
+          [(memv key '(CLASS))
+           (enum-parser '(PUBLIC PRIVATE CONFIDENTIAL) #t)]
+
+          ;; TODO
+          [(memv key '(REQUEST-STATUS))]
+
+          [(memv key '(ACTION))
+           (enum-parser '(AUDIO DISPLAY EMAIL) #t)]
+
+          [(memv key '(TZOFFSETFROM TZOFFSETTO))
+           (get-parser 'UTC-OFFSET)]
+
+          [(memv key '(ATTACH TZURL URL))
+           (get-parser 'URI)]
+
+          [(memv key '(PERCENT-COMPLETE PRIORITY REPEAT SEQUENCE))
+           (get-parser 'INTEGER)]
+
+          [(memv key '(GEO))
+           ;; two semicolon sepparated floats
+           (lambda (params value)
+             (let* (((left right) (string-split value #\;)))
+               (cons ((get-parser 'FLOAT) params left)
+                     ((get-parser 'FLOAT) params right))))]
+
+          [(memv key '(RRULE))
+           ;; TODO date/datetime
+           (get-parser 'RECUR)]
+
+          [(memv key '(ORGANIZER ATTENDEE))
+           (get-parser 'CAL-ADDRESS)]
+
+          [(x-property? key)
+           (get-parser 'TEXT)]
+
+          [else
+           (warning "Unknown key ~a" key)
+           (get-parser 'TEXT)])))
+    (make-vline key (parser params value) params)))
 
 ;; (parse-itemline '("DTEND"  "20200407T130000"))
 ;; => DTEND
