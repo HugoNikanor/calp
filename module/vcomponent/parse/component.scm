@@ -20,6 +20,12 @@
   (file get-file)
   (line get-line))
 
+(define-immutable-record-type <geographical-position>
+  (make-geo latitude longitude)
+  geo-pos?
+  (latitude geo-latitude)
+  (longitude geo-longitude))
+
 ;; port → (list string)
 (define (read-file port)
   (define fname (port-filename port))
@@ -174,8 +180,8 @@
            ;; two semicolon sepparated floats
            (lambda (params value)
              (let* (((left right) (string-split value #\;)))
-               (cons ((get-parser 'FLOAT) params left)
-                     ((get-parser 'FLOAT) params right))))]
+               (make-geo ((get-parser 'FLOAT) params left)
+                         ((get-parser 'FLOAT) params right))))]
 
           [(memv key '(RRULE))
            (get-parser 'RECUR)]
@@ -189,7 +195,17 @@
           [else
            (warning "Unknown key ~a" key)
            (get-parser 'TEXT)])))
-    (make-vline key (parser params value) params)))
+
+    ;; If we produced a list create multiple VLINES from it.
+    ;; NOTE that the created vlines share parameter tables.
+    ;; TODO possibly allow vlines to reference each other, to
+    ;; indicate that all these vlines are the same.
+    (let ((parsed (parser params value)))
+      (if (list? parsed)
+          (apply values
+                 (map (lambda (p) (make-vline key p params))
+                      parsed))
+       (make-vline key parsed params)))))
 
 ;; (parse-itemline '("DTEND"  "20200407T130000"))
 ;; => DTEND
@@ -267,7 +283,6 @@
 
                                  ;; See RFC 5545 p.53 for list of all repeating types
                                  ;; (for vcomponent)
-                                 ;; TODO split on comman (,) here?
                                  (if (memv key '(ATTACH ATTENDEE CATEGORIES
                                                      COMMENT CONTACT EXDATE
                                                      REQUEST-STATUS RELATED-TO

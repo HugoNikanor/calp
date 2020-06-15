@@ -206,7 +206,7 @@
                   `((class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
                                                         "unknown"))
                       ,(when (and (attr ev 'PARTSTAT)
-                                  (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                                  (eq? 'TENTATIVE (attr ev 'PARTSTAT)))
                          " tentative"))
                     (data-tipped-options ,(format #f "inline: '~a'" popup-id))
                     ,@(when (debug) (data-attributes ev)))))
@@ -399,7 +399,7 @@
                   `((class "eventtext CAL_bg_"
                       ,(html-attr (or (attr (parent ev) 'NAME) "unknown"))
                       ,(when (and (attr ev 'PARTSTAT)
-                                  (string= "TENTATIVE" (attr ev 'PARTSTAT)))
+                                  (eq? 'TENTATIVE (attr ev 'PARTSTAT)))
                          " tentative")))))
             (h3 ,(fmt-header
                   (when (attr ev 'RRULE)
