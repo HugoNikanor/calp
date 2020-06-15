@@ -26,7 +26,7 @@
   (latitude geo-latitude)
   (longitude geo-longitude))
 
-;; port → (list string)
+;; port → (list <line>)
 (define (read-file port)
   (define fname (port-filename port))
   (let loop ((line-number 1) (done '()))
@@ -57,7 +57,7 @@
   (data get-data) ; (key kv ... value)
   )
 
-;; (list <line>) → (list (key kv ... value))
+;; (list <line>) → (list <tokens>)
 (define (tokenize line-obj)
   (define line (get-string line-obj))
   (define colon-idx (string-index line #\:))
