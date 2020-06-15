@@ -259,22 +259,6 @@
                             (cons (make-vcomponent (string->symbol (cadr head)))
                                   stack))]
                      [(string=? "END" (car head))
-
-                      (when (eq? (type (car stack)) 'VEVENT)
-
-                        ;; This isn't part of the field values since we "need"
-                        ;; the type of DTSTART for UNTIL to work.
-                        ;; This could however be side steped by auto detecting
-                        ;; @type{date}s vs @type{datetime}s in @function{parse-recurrence-rule}.
-                        #t
-                        #;
-                        (when (attr (car stack) 'RRULE) ; ;
-                        (set! (attr (car stack) 'RRULE) ; ;
-                        ((@ (vcomponent recurrence) parse-recurrence-rule) ; ;
-                        (attr (car stack) 'RRULE) ; ;
-                        (if (date? (attr (car stack) 'DTSTART)) ; ;
-                        parse-ics-date parse-ics-datetime)))))
-
                       (loop (cdr lst)
                             (if (null? (cdr stack))
                                 ;; return
