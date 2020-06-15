@@ -96,7 +96,7 @@
     (lambda (params value)
       (let ((vv (parser params value)))
         (when (list? vv)
-          (error ""))
+          (throw 'parse-error "List in enum field"))
         (let ((v (string->symbol vv)))
           (unless (memv v enum)
             (warning "~a ∉ { ~{~a~^, ~} }"
@@ -157,8 +157,8 @@
                           IN-PROCESS)
                         #t)]
 
-          ;; TODO
-          [(memv key '(REQUEST-STATUS))]
+          [(memv key '(REQUEST-STATUS))
+           (throw 'parse-error "TODO Implement REQUEST-STATUS")]
 
           [(memv key '(ACTION))
            (enum-parser '(AUDIO DISPLAY EMAIL
