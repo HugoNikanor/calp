@@ -8,7 +8,6 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
-  :use-module (ice-9 match)
 
   :use-module (util)
   )
@@ -83,13 +82,13 @@
   datetime?
   (date get-date)
   (time get-time%)
-  (tz tz) ; #f, "UTC", "Europe/Stockholm", ...
+  (tz tz) ; #f for localtime, "UTC", "Europe/Stockholm", ...
   )
 
 (set-record-type-printer!
  <datetime>
  (lambda (r p)
-   (if (tz r)
+   (if (and (tz r) (not (string=? "UTC" (tz r))))
        (write `(datetime date: ,(get-date r)
                          time: ,(get-time% r)
                          tz: ,(tz r))
@@ -100,7 +99,9 @@
          "T"
          (string-drop
           (with-output-to-string (lambda () (write (get-time% r))))
-          1))
+          1)
+         ;; only possible case, others handled in top `if'.
+         (if (tz r) "Z" ""))
         p))))
 
 (export get-date)
@@ -122,7 +123,6 @@
 ;; NOTE there isn't any stable way to craft the tm objects.
 ;; I could call mktime on some date, and replace the fields
 ;; with the set-tm:*, but that is worse that breaking the API.
-;; TODO TZ!
 (define (datetime->tm datetime)
   (let ((t (get-time% datetime))
         (d (get-date  datetime)))
@@ -135,29 +135,39 @@
             0 0                ; wday & yday (ignored)
             -1                 ; DST unknown
             0                  ; UTC offset (ignored)
-            #f                 ; TZ name
+            (tz datetime)      ; TZ name
             )))
 
-;; TODO TZ
 (define (tm->datetime tm)
   (datetime year:   (+ 1900 (tm:year tm))
             month:  (1+ (tm:mon  tm))
             day:    (tm:mday tm)
             hour:   (tm:hour tm)
             minute: (tm:min  tm)
-            second: (tm:sec  tm)))
+            second: (tm:sec  tm)
+            tz:     (tm:zone tm)))
+
+(define (vector-last v)
+  (vector-ref v (1- (vector-length v))))
 
 (define-public (datetime->unix-time dt)
-  (car (mktime (datetime->tm dt))))
+  (let ((tm (datetime->tm dt)))
+    (car (if (tz dt)
+             (mktime tm (vector-last tm))
+             (mktime tm)))))
 
 (define-public (unix-time->datetime n)
-  (tm->datetime (gmtime n)))
+  ;; tm->datetime returns GMT here (as hinted by the
+  ;; name @var{gmtime}). Blindly change it to UTC.
+  (set (tz (tm->datetime (gmtime n)))
+       "UTC"))
 
 
 
 ;; datetime → datetime
 ;; Takes a datetime in any timezone, and renormalize it to local time
-;; (as defined by TZ). This means that given UTC 10:00 new years day
+;; (as defined by the environment variable TZ).
+;; This means that given UTC 10:00 new years day
 ;; would return 11:00 new years day if ran in sweden.
 (define-public (get-datetime dt)
   (let ((v (datetime->tm dt)))
@@ -167,7 +177,8 @@
              (cond [(not (tz dt)) (mktime v)]
                    [(string=? "local" (tz dt)) (mktime v)]
                    [else (mktime v (tz dt))])))))
-      (tm->datetime tm))))
+      ;; strip tz-name, to conform with my local time.
+      (set (tz (tm->datetime tm)) #f))))
 
 
 
@@ -259,7 +270,7 @@
         (< ay by))))
 
 (define-public date<
-  (match-lambda*
+  (case-lambda
     [() #t]
     [(_) #t]
     [(first second . rest)
@@ -271,7 +282,7 @@
       (date< a b)))
 
 (define-public date<=
-  (match-lambda*
+  (case-lambda
     [() #t]
     [(_) #t]
     [(first second . rest)
@@ -360,7 +371,8 @@
                     (set-> target
                            (month = (+ 1))
                            (day 1)))
-                (set-> change (day = (- (1+ (- (days-in-month target) (day target))))))))))
+                (set-> change
+                       (day = (- (1+ (- (days-in-month target) (day target))))))))))
 
   (define-values (month-fixed change**)
     (if (date-zero? change*)
@@ -548,8 +560,6 @@
 ;;; DATETIME
 
 
-;; NOTE that base is re-normalized, but change isn't. This is due to base
-;; hopefully being a real date, but change just being a difference.
 (define-public (datetime+ base change)
   (let* ((time overflow (time+ (get-time% base) (get-time% change))))
     (datetime date: (date+ (get-date base)
@@ -655,9 +665,10 @@
   (let* (((datestr timestr) (string-split str #\T)))
     (datetime date: (parse-ics-date datestr)
               time: (parse-ics-time timestr)
-              tz: tz)))
+              tz: (if (char=? #\Z (string-ref str (1- (string-length str))))
+                      "UTC" tz))))
 
-;; TODO this returns UTC time, but without a TZ component, see tm->datetime
+;; this returns UTC time, with a TZ component set to "UTC"
 (define-public (current-datetime)
   (unix-time->datetime ((@ (guile) current-time))))
 
