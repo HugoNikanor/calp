@@ -126,7 +126,7 @@
            (list-parser 'PERIOD)]
 
           [(memv key '(CALSCALE METHOD PRODID  COMMENT DESCRIPTION
-                             LOCATION STATUS SUMMARY TZID TZNAME
+                             LOCATION SUMMARY TZID TZNAME
                              CONTACT RELATED-TO UID))
            (lambda (params value)
              (let ((v ((get-parser 'TEXT) params value)))
@@ -155,6 +155,13 @@
                           ACCEPTED DECLINED
                           TENTATIVE DELEGATED
                           IN-PROCESS)
+                        #t)]
+
+          [(memv key '(STATUS))
+           (enum-parser '(TENTATIVE
+                          CONFIRMED CANCELLED
+                          NEEDS-ACTION COMPLETED IN-PROCESS
+                          DRAFT FINAL CANCELED)
                         #t)]
 
           [(memv key '(REQUEST-STATUS))
