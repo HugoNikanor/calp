@@ -31,7 +31,9 @@
 
 ;; DATE-TIME
 (define (parse-datetime props value)
-  (parse-ics-datetime value (hashq-ref props 'TZID #f)))
+  (get-datetime
+   (parse-ics-datetime
+    value (hashq-ref props 'TZID #f))))
 
 ;; DURATION
 (define (parse-duration props value)
