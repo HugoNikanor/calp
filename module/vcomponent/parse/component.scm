@@ -281,6 +281,9 @@
                             (for vline in vlines
                                  (define key (vline-key vline))
 
+                                 (set! (vline-source vline)
+                                   (get-metadata head*))
+
                                  ;; See RFC 5545 p.53 for list of all repeating types
                                  ;; (for vcomponent)
                                  (if (memv key '(ATTACH ATTENDEE CATEGORIES

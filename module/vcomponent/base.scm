@@ -16,13 +16,14 @@
   (key vline-key)
   (value get-vline-value set-vline-value!)
   (parameters get-vline-parameters)
-  ;; TODO Add slot for optional source object, containing
-  ;; - file of origin
-  ;; - position in that file
-  ;; - source string, before value parsing.
+  (source get-source set-source!)
   )
 
 (export vline-key)
+
+(define-public vline-source
+  (make-procedure-with-setter
+   get-source set-source!))
 
 (define*-public (make-vline key value #:optional (ht (make-hash-table)))
   (make-vline% key value ht))
