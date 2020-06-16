@@ -79,10 +79,7 @@
              (str '())
              (done '()))
     (if (null? rem)
-        (let ((final (reverse-list->string str)))
-         (if (null? done)
-             final
-             (cons final done)))
+        (cons (reverse-list->string str) done)
         (case (car rem)
           [(#\\)
            (case (cadr rem)

@@ -92,7 +92,7 @@
            (string-split value #\,)))))
 
 (define* (enum-parser enum optional: allow-other)
-  (let ((parser (get-parser 'TEXT)))
+  (let ((parser (compose car (get-parser 'TEXT))))
     (lambda (params value)
       (let ((vv (parser params value)))
         (when (list? vv)
@@ -130,9 +130,9 @@
                              CONTACT RELATED-TO UID))
            (lambda (params value)
              (let ((v ((get-parser 'TEXT) params value)))
-               (when (list? v)
+               (unless (= 1 (length v))
                  (warning "List in non-list field: ~s" v))
-               v))]
+               (car v)))]
 
           ;; TEXT, but allow a list
           [(memv key '(CATEGORIES RESOURCES))
@@ -140,7 +140,7 @@
 
           [(memv key '(VERSION))
            (lambda (params value)
-             (let ((v ((get-parser 'TEXT) params value)))
+             (let ((v (car ((get-parser 'TEXT) params value))))
                (unless (and (string? v) (string=? "2.0" v))
                  (warning "File of unsuported version. Proceed with caution"))))]
 
@@ -197,11 +197,11 @@
            (get-parser 'CAL-ADDRESS)]
 
           [(x-property? key)
-           (get-parser 'TEXT)]
+           (compose car (get-parser 'TEXT))]
 
           [else
            (warning "Unknown key ~a" key)
-           (get-parser 'TEXT)])))
+           (compose car (get-parser 'TEXT))])))
 
     ;; If we produced a list create multiple VLINES from it.
     ;; NOTE that the created vlines share parameter tables.
