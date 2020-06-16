@@ -103,7 +103,7 @@
 (define (get-attr component key)
   (let ((attrs (get-attr* component key)))
     (cond [(not attrs) #f]
-          [(list? attrs) (concatenate (map value attrs))]
+          [(list? attrs) (map value attrs)]
           [else (value attrs)])))
 
 ;; TODO do something sensible here
