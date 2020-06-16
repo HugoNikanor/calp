@@ -75,7 +75,7 @@
 (define-public (stream->values stream)
   (apply values (stream->list stream)))
 
-;; Returns two values. A steam of all the elements in stream
+;; Returns two values. A stream of all the elements in stream
 ;; which satisfiy @var{pred}, and a stream of those elements
 ;; that don't. @var{pred} is called once per value in the
 ;; input stream.
