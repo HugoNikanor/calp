@@ -69,3 +69,41 @@
 
 (define-method (get-event-by-uid uid)
   (hash-ref (getf 'uid-map) uid))
+
+
+
+
+(use-modules (output ical)
+             (ice-9 popen)
+             ((ice-9 rdelim) :select (read-line))
+             ((rnrs io ports) :select (call-with-port))
+             )
+
+
+(define (uuidgen)
+  (call-with-port (open-input-pipe "uuidgen")
+                  read-line))
+
+(define (filepath calendar uid)
+  (string-append (attr calendar 'X-HNH-DIRECTORY)
+                 file-name-separator-string
+                 uid ".ics"))
+
+
+(define-public (calendar-import calendar event)
+  (case (attr calendar 'X-HNH-SOURCETYPE)
+    [(file)
+     (error "Importing into direct calendar files not supported")]
+    [(vdir)
+     (aif (attr event 'UID)
+          (with-output-to-file (filepath calendar it)
+            (lambda () (print-components-with-fake-parent (list event))))
+          (let ((uuid (uuidgen)))
+            (set! (attr event 'UID) uuid)
+            ;; TODO this should caputure attributes from the calendar
+            (with-output-to-file (filepath calendar uuid)
+              (lambda ()
+                (print-components-with-fake-parent (list event))))))]
+    [else
+     (error "Source of calendar unknown, aborting.")
+     ]))

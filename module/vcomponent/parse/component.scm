@@ -109,7 +109,7 @@
          (cond
           [(and=> (hashq-ref params 'VALUE) string->symbol) => get-parser]
 
-          [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID  RDATE
+          [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID RDATE
                               CREATED DTSTAMP LAST-MODIFIED
                               ;; only on VALARM
                               ACKNOWLEDGED
@@ -142,7 +142,10 @@
            (lambda (params value)
              (let ((v (car ((get-parser 'TEXT) params value))))
                (unless (and (string? v) (string=? "2.0" v))
-                 (warning "File of unsuported version. Proceed with caution"))))]
+                 #f
+                 ;; (warning "File of unsuported version. Proceed with caution")
+                 )
+               v))]
 
           [(memv key '(TRANSP))
            (enum-parser '(OPAQUE TRANSPARENT))]

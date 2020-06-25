@@ -105,17 +105,19 @@
 
 ;; Parse a vdir or ics file at the given path.
 (define-public (parse-cal-path path)
+  ;; TODO check (access? path R_OK) ?
   (define st (stat path))
   (define cal
     (case (stat:type st)
       [(regular)
        (let ((comp (call-with-input-file path parse-calendar)))
-         (set! (attr comp 'X-HNH-SOURCETYPE) "file")
+         (set! (attr comp 'X-HNH-SOURCETYPE) 'file)
          comp) ]
       [(directory)
        (report-time! "Parsing ~a" path)
        (let ((comp (parse-vdir path)))
-         (set! (attr comp 'X-HNH-SOURCETYPE) "vdir")
+         (set! (attr comp 'X-HNH-SOURCETYPE) 'vdir
+               (attr comp 'X-HNH-DIRECTORY) path)
          comp)]
       [(block-special char-special fifo socket unknown symlink)
        => (lambda (t) (error "Can't parse file of type " t))]))
