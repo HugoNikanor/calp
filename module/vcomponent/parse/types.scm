@@ -102,23 +102,21 @@
 (define (parse-uri props value)
   value)
 
-(define-immutable-record-type <utc-offset>
-  (make-utc-offset pm hour minute second)
-  utc-offset?
-  (pm offset-pm)
-  (hour offset-hour)
-  (minute offset-minute)
-  (second offset-second))
+(use-modules (datetime timespec))
 
 ;; UTC-OFFSET
 (define (parse-utc-offset props value)
-  (make-utc-offset
+  (make-timespec
+   (time
+    hour: (string->number (substring value 1 3))
+    minute: (string->number (substring value 3 5))
+    second: (if (= 7 (string-length value))
+                (string->number (substring value 5 7))
+                0))
+   ;; sign
    (string->symbol (substring value 0 1))
-   (string->number (substring value 1 3))
-   (string->number (substring value 3 5))
-   (if (= 7 (string-length value))
-       (string->number (substring value 5 7))
-       0)))
+   #\z))
+
 
 (define type-parsers (make-hash-table))
 (hashq-set! type-parsers 'BINARY parse-binary)

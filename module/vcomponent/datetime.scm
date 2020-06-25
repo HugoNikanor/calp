@@ -2,6 +2,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (vcomponent base)
   #:use-module (datetime)
+  #:use-module (datetime timespec)
   #:use-module (datetime util)
   #:use-module (datetime zic)
   #:use-module (util)
