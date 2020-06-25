@@ -151,20 +151,6 @@
 
              ,(fmt-single-event ev))))
 
-(define (->string a)
-  (format #f "~a" a))
-
-(define (data-attributes event)
-  (hash-map->list
-   (match-lambda*
-     [(key (vlines ...)) (list (string->symbol (format #f "data-~a" key))
-                               (string-join (map (compose ->string value) vlines) ","))]
-     [(key vline)
-      (list (string->symbol (format #f "data-~a" key))
-            (->string (value vline)))]
-     [_ (error "What are you doing‽")])
-   (attributes event)))
-
 
 
 ;;; Procedures for wide output
@@ -208,8 +194,10 @@
                       ,(when (and (attr ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (attr ev 'PARTSTAT)))
                          " tentative"))
-                    (data-tipped-options ,(format #f "inline: '~a'" popup-id))
-                    ,@(when (debug) (data-attributes ev)))))
+                    (data-tipped-options ,(format #f "inline: '~a'" popup-id)))))
+            ,(when (debug)
+               `(script (@ (type "application/calendar+xml"))
+                        ,((@ (output xcal) vcomponent->sxml) ev)))
             ,(when (attr ev 'RRULE)
                `(span (@ (class "repeating")) "↺"))
             ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
