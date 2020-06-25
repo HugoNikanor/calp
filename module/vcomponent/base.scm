@@ -2,6 +2,7 @@
   :use-module (util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
+  :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-17)
   :use-module (ice-9 hash-table)
   :use-module ((ice-9 optargs) :select (define*-public))
@@ -20,6 +21,14 @@
   )
 
 (export vline-key)
+
+(set-record-type-printer!
+ <vline>
+ (lambda (v p)
+   (format p "#<<vline> key: ~s value: ~s parameters: ~s>"
+           (vline-key v)
+           (get-vline-value v)
+           (hash-map->list list (get-vline-parameters v)))))
 
 (define-public vline-source
   (make-procedure-with-setter
@@ -130,6 +139,7 @@
 
 ;; Returns the properties of attribute as an assoc list.
 ;; @code{(map car <>)} leads to available properties.
+;; TODO shouldn't this be called parameters?
 (define-public (properties attrptr)
   (hash-map->list list (get-vline-parameters attrptr)))
 
