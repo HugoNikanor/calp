@@ -15,11 +15,9 @@
   :use-module (glob)
   :use-module (vcomponent recurrence)
   :use-module (output types)
+  :use-module (output common)
   )
 
-;; TODO this is also defined @ (vcomponent parse component)
-(define (x-property? symb)
-  (string=? "X-" (string-take (symbol->string symb) 2)))
 
 ;; Format value depending on key type.
 ;; Should NOT emit the key.
@@ -94,10 +92,6 @@
                fallback-string)
       fallback-string)))
 
-(define (generate-uuid)
-  ((@ (rnrs io ports) call-with-port)
-   ((@ (ice-9 popen) open-input-pipe) "uuidgen")
-   (@ (ice-9 rdelim) read-line)))
 
 ;; Fold long lines to limit width.
 ;; Since this works in characters, but ics works in bytes
@@ -113,13 +107,7 @@
                  (ical-line-fold (string-drop string wrap-len)))]
         [else string]))
 
-(define* (internal-field? symbol optional: (prefix "X-HNH-"))
-  (string=? prefix
-            (string-take-to (symbol->string symbol)
-                            (string-length prefix))))
 
-(define (->string a)
-  (with-output-to-string (lambda () (display a))))
 
 (define (vline->string vline)
   (define key (vline-key vline))
@@ -206,15 +194,6 @@ CALSCALE:GREGORIAN\r
   (format #t "END:VCALENDAR\r\n"))
 
 
-(define (get-tz-names events)
-  (lset-difference
-   equal? (lset-union
-           equal? '("dummy")
-           (filter-map
-            (lambda (vline) (and=> (prop vline 'TZID) car))
-            (filter-map (extract* 'DTSTART)
-                        events)))
-   '("dummy" "local")))
 
 (define-public (print-components-with-fake-parent events)
 
