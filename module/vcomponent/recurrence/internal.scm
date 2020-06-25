@@ -82,35 +82,53 @@
              (datetime)
              (srfi srfi-1))
 
-(define-public (recur-rule->rrule-string rrule)
+(define (field->string field value)
+  (case field
+    [(wkst)
+     (string-upcase
+      (week-day-name value 2
+                     locale: (make-locale (list LC_TIME) "C")))]
+    [(byday)
+     (string-join (map byday->string value) ",")]
+    [(freq count interval)
+     (format #f "~a" value)]
+    [(until)
+     (if (date? value)
+         (date->string value "~Y~m~d")
+         (datetime->string value "~Y~m~dT~H~M~S~Z"))]
+    [else (format #f "~{~a~^,~}" value)]))
+
+(define (map-fields proc rrule)
   (define (get f)
     ((record-accessor <recur-rule> f) rrule))
+  (filter-map
+   (lambda (field)
+     (if (not (get field))
+         #f (proc field (get field))))
+   (record-type-fields <recur-rule>)))
+
+(define-public (recur-rule->rrule-string rrule)
   (string-join
-   (filter-map
-    (lambda (field)
-      (if (not (get field))
-          #f
-          (string-append
-           (string-upcase (symbol->string field))
-           "="
-           (case field
-             [(wkst)
-              (string-upcase
-               (week-day-name (get field) 2
-                              locale: (make-locale (list LC_TIME) "C")))]
-             [(byday)
-              (string-join (map byday->string (get field)) ",")]
-             [(freq count interval)
-              (format #f "~a" (get field))]
-             [(until)
-              (let ((o (get field)))
-                (if (date? o)
-                    (date->string o "~Y~m~d")
-                    (datetime->string o "~Y~m~dT~H~M~S~Z")
-                    ))]
-             [else (format #f "~{~a~^,~}" (get field))]))))
-    (record-type-fields <recur-rule>))
+   (map-fields
+    (lambda (field value)
+      (string-append
+       (string-upcase (symbol->string field))
+       "=" (field->string field value)))
+    rrule)
    ";"))
+
+(define (downcase-symbol symb)
+  (-> symb
+      symbol->string
+      string-downcase
+      string->symbol))
+
+(define-public (recur-rule->rrule-sxml rrule)
+  (map-fields
+   (lambda (field value)
+    `(,(downcase-symbol field)
+      ,(field->string filed value)))
+   rrule))
 
 
 
