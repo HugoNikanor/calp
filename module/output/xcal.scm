@@ -16,7 +16,8 @@
 
   (define writer
    (cond
-    [(and=> (prop vline 'VALUE) string->symbol) => get-writer]
+    [(and=> (prop vline 'VALUE) (compose string->symbol car))
+     => get-writer]
     [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID
                         CREATED DTSTAMP LAST-MODIFIED
                         ACKNOWLEDGED EXDATE))

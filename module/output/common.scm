@@ -5,6 +5,8 @@
 
 (define-module (output common)
   :use-module (util)
+  :use-module (srfi srfi-1)
+  :use-module (vcomponent)
   )
 
 ;; TODO this is also defined @ (vcomponent parse component)
@@ -12,7 +14,7 @@
   (string=? "X-" (string-take (symbol->string symb) 2)))
 
 ;; TODO this is also defined twice
-(define (generate-uuid)
+(define-public (generate-uuid)
   ((@ (rnrs io ports) call-with-port)
    ((@ (ice-9 popen) open-input-pipe) "uuidgen")
    (@ (ice-9 rdelim) read-line)))

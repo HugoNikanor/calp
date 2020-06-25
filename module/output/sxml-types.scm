@@ -3,26 +3,28 @@
   :use-module (output types)
   :use-module (datetime)
   :use-module (datetime util)
+  :use-module (output common)
   )
 
 (define (write-boolean _ v)
   `(boolean ,(if v "true" "false")))
 
-(define (write-date _ value)
+(define (write-date _ v)
   `(date ,(date->string v "~Y-~m-~d")))
 
 (define (write-datetime p v)
   ;; TODO TZID?
-  (datetime->string
-   (hashq-ref p 'X-HNH-ORIGINAL v)
-   ;; TODO ~z?
-   "~Y-~m-~dT~H:~M:~S~Z"))
+  `(date-time
+    ,(datetime->string
+      (hashq-ref p 'X-HNH-ORIGINAL v)
+      ;; TODO ~z?
+      "~Y-~m-~dT~H:~M:~S~Z")))
 
 (define (write-time _ v)
-  (time->string v "~H:~M:S"))
+  `(time ,(time->string v "~H:~M:S")))
 
 (define (write-recur _ v)
-  `(recur ,@(recur-rule->rrule-sxml v)))
+  `(recur ,@((@@ (vcomponent recurrence internal) recur-rule->rrule-sxml) v)))
 
 ;; sepparate since this text shouldn't be escaped
 (define (write-text _ v)
@@ -39,7 +41,7 @@
      (hashq-set! sxml-writers simple-type
                  (lambda (p v)
                    `(,(downcase-symbol simple-type)
-                     ,((get-writer simple-type) p v)))))
+                     ,(((@ (output types) get-writer) simple-type) p v)))))
 
 (hashq-set! sxml-writers 'BOOLEAN write-boolean)
 (hashq-set! sxml-writers 'DATE write-date)

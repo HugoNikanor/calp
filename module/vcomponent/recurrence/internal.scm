@@ -127,7 +127,7 @@
   (map-fields
    (lambda (field value)
     `(,(downcase-symbol field)
-      ,(field->string filed value)))
+      ,(field->string field value)))
    rrule))
 
 

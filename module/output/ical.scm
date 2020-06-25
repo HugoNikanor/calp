@@ -14,6 +14,7 @@
   :use-module (datetime zic)
   :use-module (glob)
   :use-module (vcomponent recurrence)
+  :use-module (vcomponent geo)
   :use-module (output types)
   :use-module (output common)
   )
