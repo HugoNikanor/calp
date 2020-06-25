@@ -138,6 +138,8 @@
              (set! date (remove-day date)
                    cur-event 0))
             ((#\t)
+             ;; TODO this should be local time
+             ;; currently it's UTC (maybe?)
              (set! date (current-date)
                    cur-event 0))
             ((#\j #\J) (unless (= cur-event (1- (length events)))
