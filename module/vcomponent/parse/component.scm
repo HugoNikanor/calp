@@ -8,6 +8,7 @@
   :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-26)
   :use-module (vcomponent parse types)
+  :use-module (vcomponent geo)
  )
 
 (define-public (parse-calendar port)
@@ -20,11 +21,6 @@
   (file get-file)
   (line get-line))
 
-(define-immutable-record-type <geographical-position>
-  (make-geo latitude longitude)
-  geo-pos?
-  (latitude geo-latitude)
-  (longitude geo-longitude))
 
 ;; port → (list <line>)
 (define (read-file port)

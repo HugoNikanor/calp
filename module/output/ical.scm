@@ -65,7 +65,11 @@
       (get-writer 'INTEGER)]
 
      [(memv key '(GEO))
-      (error "Fuck you")]
+      (lambda (_ v)
+        (define fl (get-writer 'FLOAT))
+        (format #f "~a:~a"
+                (fl (geo-latitude v))
+                (fl (geo-longitude v))))]
 
      [(memv key '(RRULE))
       (get-writer 'RECUR)]
