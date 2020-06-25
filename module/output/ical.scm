@@ -14,69 +14,85 @@
   :use-module (datetime zic)
   :use-module (glob)
   :use-module (vcomponent recurrence)
+  :use-module (output types)
   )
+
+;; TODO this is also defined @ (vcomponent parse component)
+(define (x-property? symb)
+  (string=? "X-" (string-take (symbol->string symb) 2)))
 
 ;; Format value depending on key type.
 ;; Should NOT emit the key.
 (define (value-format key vline)
-  (define (handle-value value)
-    (catch #t #; 'wrong-type-arg
-      (lambda ()
-        (case key
-          ((DTSTART DTEND RECURRENCE-ID DTSTAMP
-                    LAST-MODIFIED EXDATE)
-           (with-output-to-string
-             (lambda ()
-               (case (and=> (prop vline 'VALUE) car)
-                 [(DATE) (display (date->string (as-date value)
-                                                "~Y~m~d"))]
-                 [else              ; (DATE-TIME)
-                  (display (datetime->string value "~Y~m~dT~H~M~S"))
-                  (let ((tz (and=> (prop vline 'TZID) car)))
-                    (when (and tz (string= tz "UTC"))
-                      (display #\Z)))]))))
 
-          [(TZOFFSETFROM TZOFFSETTO)
-           (with-output-to-string
-             (lambda ()
-               (display (if (time-zero? (timespec-time value))
-                            '+ (timespec-sign value)))
-               (display (time->string (timespec-time value) "~H~M"))
-               (when (not (zero? (second (timespec-time value))))
-                 (display (time->string (timespec-time value) "~S")))))]
+  (define writer
+    ;; fields which can hold lists need not be considered here,
+    ;; since they are split into multiple vlines when we parse them.
+    (cond
+     [(and=> (prop vline 'VALUE) string->symbol) => get-writer]
+     [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID
+                         CREATED DTSTAMP LAST-MODIFIED
+                         ACKNOWLEDGED EXDATE))
+      (get-writer 'DATE-TIME)]
 
-          [(RRULE)
-           ((@ (vcomponent recurrence internal)
-               recur-rule->rrule-string) value)]
+     [(memv key '(TRIGGER DURATION))
+      (get-writer 'DURATION)]
 
-          (else
-           (escape-chars value)
-           )))
-      (lambda (err caller fmt args call-args)
-        (define fallback-string
-          (with-output-to-string (lambda () (display value))))
-        (warning "key = ~a, caller = ~s, call-args = ~s~%~k~%Falling back to ~s"
-                 key caller call-args fmt args
-                 fallback-string)
-        fallback-string
-        )))
+     [(memv key '(FREEBUSY))
+      (get-writer 'PERIOD)]
 
-  (if (list? (value vline))
-      (format #f "~{~a~^,~}"
-              (map handle-value (value vline)))
-      (handle-value (value vline))))
+     [(memv key '(CALSCALE METHOD PRODID COMMENT DESCRIPTION
+                        LOCATION SUMMARY TZID TZNAME
+                        CONTACT RELATED-TO UID
 
-(define (escape-chars str)
-  (define (escape char)
-    (string #\\ char))
-  (string-concatenate
-   (map (lambda (c)
-          (case c
-            ((#\newline) "\\n")
-            ((#\, #\; #\\) => escape)
-            (else => string)))
-        (string->list str))))
+                        CATEGORIES RESOURCES
 
+                        VERSION))
+      (get-writer 'TEXT)]
+
+     [(memv key '(TRANSP
+               CLASS
+               PARTSTAT
+               STATUS
+               ACTION))
+      (lambda (p v) ((get-writer 'TEXT) p (symbol->string v)))]
+
+     [(memv key '(TZOFFSETFROM TZOFFSETTO))
+      (get-writer 'UTC-OFFSET)]
+
+     [(memv key '(ATTACH TZURL URL))
+      (get-writer 'URI)]
+
+     [(memv key '(PERCENT-COMPLETE PRIORITY REPEAT SEQUENCE))
+      (get-writer 'INTEGER)]
+
+     [(memv key '(GEO))
+      (error "Fuck you")]
+
+     [(memv key '(RRULE))
+      (get-writer 'RECUR)]
+
+     [(memv key '(ORGANIZER ATTENDEE))
+      (get-writer 'CAL-ADDRESS)]
+
+     [(x-property? key)
+      (get-writer 'TEXT)]
+
+     [else
+      (warning "Unknown key ~a" key)
+      (get-writer 'TEXT)]))
+
+  (catch #t #; 'wrong-type-arg
+    (lambda ()
+      (writer ((@@ (vcomponent base) get-vline-parameters) vline)
+              (value vline)))
+    (lambda (err caller fmt args call-args)
+      (define fallback-string
+        (with-output-to-string (lambda () (display value))))
+      (warning "key = ~a, caller = ~s, call-args = ~s~%~k~%Falling back to ~s"
+               key caller call-args fmt args
+               fallback-string)
+      fallback-string)))
 
 (define (generate-uuid)
   ((@ (rnrs io ports) call-with-port)
@@ -102,6 +118,26 @@
             (string-take-to (symbol->string symbol)
                             (string-length prefix))))
 
+(define (->string a)
+  (with-output-to-string (lambda () (display a))))
+
+(define (vline->string vline)
+  (define key (vline-key vline))
+  (ical-line-fold
+   ;; Expected output: key;p1=v;p3=10:value
+   (string-append
+    (symbol->string key)
+    (string-concatenate
+     (map (match-lambda
+            [(? (compose internal-field? car)) ""]
+            [(key values ...)
+             (string-append
+              ";" (symbol->string key)
+              (string-join (map (compose (get-writer 'TEXT) ->string) values)
+                           "," 'infix))])
+          (properties vline)))
+    ":" (value-format key vline))))
+
 (define-public (component->ical-string component)
   (format #t "BEGIN:~a\r\n" (type component))
   ;; TODO this leaks internal information,
@@ -115,21 +151,11 @@
 
      [(key (vlines ...))
       (for vline in vlines
-           (display
-            (ical-line-fold
-             ;; Expected output: key;p1=v;p3=10:value
-             (format #f "~a~:{;~a=~@{~a~^,~}~}:~a"
-                     key (properties vline)
-                     (value-format key vline))))
+           (display (vline->string vline))
            (display "\r\n"))]
 
      [(key vline)
-      (display
-       (ical-line-fold
-        ;; Expected output: key;p1=v;p3=10:value
-        (format #f "~a~:{;~a=~@{~a~^,~}~}:~a"
-                key (properties vline)
-                (value-format key vline))))
+      (display (vline->string vline))
       (display "\r\n")])
    (attributes component))
   (for-each component->ical-string (children component))
