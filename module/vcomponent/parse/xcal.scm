@@ -106,7 +106,7 @@
     [else data]))
 
 (define-public (sxcal->vcomponent sxcal)
-  (define type (car sxcal))
+  (define type (symbol-upcase (car sxcal)))
   (define component (make-vcomponent type))
 
   (awhen (assoc-ref sxcal 'properties)
