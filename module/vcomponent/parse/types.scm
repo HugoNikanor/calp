@@ -2,7 +2,6 @@
   :use-module (util)
   :use-module (util exceptions)
   :use-module (util base64)
-  :use-module (rnrs io ports)
   :use-module (datetime)
   :use-module (srfi srfi-9 gnu)
   )
@@ -13,8 +12,8 @@
   (unless (string=? "BASE64" (hashq-ref props 'ENCODING))
     (warning "Binary field not marked ENCODING=BASE64"))
 
-  (base64->bytevector
-   (string->bytevector value (make-transcoder (latin-1-codec)))))
+  ;; TODO whitespace in binary?
+  (base64-string->bytevector value))
 
 ;; BOOLEAN
 (define (parse-boolean props value)

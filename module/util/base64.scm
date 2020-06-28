@@ -132,11 +132,23 @@
 
     ret))
 
+;; string -> bv
+(define-public (base64-string->bytevector string)
+  (base64->bytevector
+   (string->bytevector string (make-transcoder (latin-1-codec)))))
+
+;; bv -> string
+(define-public (bytevector->base64-string bv)
+  (bytevector->string (bytevector->base64 bv)
+                      (make-transcoder (latin-1-codec))))
+
+;; string -> string
 (define*-public (base64encode string optional: (transcoder (native-transcoder)))
   (bytevector->string
    (bytevector->base64 (string->bytevector string transcoder))
    (make-transcoder (latin-1-codec))))
 
+;; string -> string
 (define*-public (base64decode string optional: (transcoder (native-transcoder)))
   (bytevector->string
    (base64->bytevector

@@ -4,13 +4,11 @@
   :use-module (util exceptions)
   :use-module (util base64)
   :use-module (datetime)
-  :use-module (datetime util)
-  :use-module (rnrs io ports))
+  :use-module (datetime util))
 
 
 (define (write-binary _ value)
-  (bytevector->string (bytevector->base64 value)
-                      (make-transcoder (latin-1-codec))))
+  (bytevector->base64-string value))
 
 (define (write-boolean _ value)
   (if value "TRUE" "FALSE"))
