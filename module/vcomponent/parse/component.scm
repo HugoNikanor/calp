@@ -1,3 +1,5 @@
+;;; TODO rename to (vcomponent parse ical)? To work nices alongside
+;;; (vcomponent parse xcal)
 (define-module (vcomponent parse component)
   :use-module (util)
   :use-module (util exceptions)
@@ -11,6 +13,7 @@
   :use-module (vcomponent geo)
  )
 
+;; TODO rename to parse-vcomponent, or parse-ical (?).
 (define-public (parse-calendar port)
   (parse (map tokenize (read-file port))))
 
@@ -222,6 +225,7 @@
         (values key (car rem) parameters )
         (let* ((kv (car rem))
                (idx (string-index kv #\=)))
+          ;; TODO lists in parameters
           (hashq-set! parameters (string->symbol (substring kv 0 idx))
                       (substring kv (1+ idx)))
           (loop (cdr rem))))))
