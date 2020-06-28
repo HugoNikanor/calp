@@ -7,7 +7,6 @@
   #:re-export (define*-public fold-values)
   #:export (for mod! sort* sort*!
                 mod/r! set/r!
-                find-min
                 catch-multiple
                 quote?
                 re-export-modules
@@ -285,16 +284,17 @@
                  (comperator (get a)
                              (get b)))))
 
-;; Finds the smallest element in @var{items}, compared with @var{<} after
-;; applying @var{foo}. Returns 2 values. The smallest item in @var{items},
+;; Given {items, <} finds the most extreme value.
+;; Returns 2 values. The extremest item in @var{items},
 ;; and the other items in some order.
-(define (find-min < ac items)
+;; Ord b => (list a) [, (b, b -> bool), (a -> b)] -> a, (list a)
+(define*-public (find-extreme items optional: (< <) (access identity))
   (if (null? items)
       ;; Vad fan retunerar man här?
       (values #f '())
       (fold-values
        (lambda (c min other)
-         (if (< (ac c) (ac min))
+         (if (< (access c) (access min))
              ;; Current stream head is smaller that previous min
              (values c (cons min other))
              ;; Previous min is still smallest
@@ -302,6 +302,12 @@
        (cdr items)
        ;; seeds:
        (car items) '())))
+
+(define*-public (find-min list optional: (access identity))
+  (find-extreme list < access))
+
+(define*-public (find-max list optional: (access identity))
+  (find-extreme list > access))
 
 (define-public (filter-sorted proc list)
   (take-while
