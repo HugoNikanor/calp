@@ -105,6 +105,43 @@
                                      intervaltype: 'month
                                      ))))))
 
+   (POST "/insert" (cal data)
+
+         (unless (and cal data)
+           (return (build-response code: 400)
+                   "Both 'cal' and 'data' required\r\n"))
+
+
+         ;; NOTE that this leaks which calendar exists,
+         ;; but you can only query for existance.
+         ;; also, the default output gives everything.
+         (let ((calendar
+                (find (lambda (c) (string=? cal (attr c 'NAME)))
+                      (getf 'calendars))))
+
+           (unless calendar
+             (return (build-response code: 400)
+                     (format #f "No calendar with name [~a]\r\n" cal)))
+
+           (let ((event
+                   ((@ (vcomponent parse xcal) sxcal->vcomponent)
+                    ;; TODO different forms?
+                    (cadr ; removes *TOP*
+                     (catch 'parser-error
+                       (lambda () (xml->sxml data))
+                       (lambda (err port . args)
+                         (return (build-response code: 400)
+                                 (format #f "XML parse error ~{~a~}\r\n" args))))))))
+
+             (unless (eq? 'VEVENT (type event))
+               (return (build-response code: 400)
+                       "Object not a VEVENT\r\n"))
+
+             (calendar-import calendar event)
+
+             (return '((content-type text/plain))
+                     "Event inserted\r\n"))))
+
    ;; Get specific page by query string instead of by path.
    ;; Useful for <form>'s, since they always submit in this form, but also
    ;; useful when javascript is disabled, since a link to "today" needs some
