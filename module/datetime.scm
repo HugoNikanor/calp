@@ -707,6 +707,15 @@
                tz: ,(and (string= "Z" (string-take-right str 1))
                          "UTC"))))
 
+(define-public (parse-iso-datetime str)
+  (let* (((date time) (string-split str #\T)))
+    (when (string= "Z" (string-take-right str 1))
+      (set! time (string-drop-right time 1)))
+    (datetime date: (parse-iso-date date)
+              time: (parse-iso-time time)
+              tz: (and (string= "Z" (string-take-right str 1))
+                       "UTC"))))
+
 (define (date-reader chr port)
   (unread-char chr port)
   (let ((line (symbol->string (read port))))
