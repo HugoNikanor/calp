@@ -84,26 +84,30 @@
   (call-with-port (open-input-pipe "uuidgen")
                   read-line))
 
-(define (filepath calendar uid)
-  (string-append (attr calendar 'X-HNH-DIRECTORY)
-                 file-name-separator-string
-                 uid ".ics"))
 
+(define / file-name-separator-string)
 
 (define-public (calendar-import calendar event)
   (case (attr calendar 'X-HNH-SOURCETYPE)
     [(file)
      (error "Importing into direct calendar files not supported")]
+
     [(vdir)
-     (aif (attr event 'UID)
-          (with-output-to-file (filepath calendar it)
-            (lambda () (print-components-with-fake-parent (list event))))
-          (let ((uuid (uuidgen)))
-            (set! (attr event 'UID) uuid)
-            ;; TODO this should caputure attributes from the calendar
-            (with-output-to-file (filepath calendar uuid)
-              (lambda ()
-                (print-components-with-fake-parent (list event))))))]
+     (let* ((uid (or (attr event 'UID) (uuidgen)))
+            ;; copy to enusre writable string
+            (tmpfile (string-copy (string-append (attr calendar 'X-HNH-DIRECTORY)
+                                                 / ".calp-" uid "XXXXXX")))
+            (port (mkstemp! tmpfile)))
+       (set! (attr event 'UID) uid)
+       (with-output-to-port port
+         (lambda () (print-components-with-fake-parent (list event))))
+       ;; does close flush?
+       (force-output port)
+       (close-port port)
+       (rename-file tmpfile (string-append (attr calendar 'X-HNH-DIRECTORY)
+                                           / uid ".ics"))
+       uid)]
+
     [else
      (error "Source of calendar unknown, aborting.")
      ]))
