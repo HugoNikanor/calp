@@ -87,7 +87,7 @@
       (map (lambda (v) (parser params v))
            (string-split value #\,)))))
 
-(define* (enum-parser enum optional: allow-other)
+(define* (enum-parser enum optional: (allow-other #t))
   (let ((parser (compose car (get-parser 'TEXT))))
     (lambda (params value)
       (let ((vv (parser params value)))
@@ -144,24 +144,22 @@
                v))]
 
           [(memv key '(TRANSP))
-           (enum-parser '(OPAQUE TRANSPARENT))]
+           (enum-parser '(OPAQUE TRANSPARENT) #f)]
 
           [(memv key '(CLASS))
-           (enum-parser '(PUBLIC PRIVATE CONFIDENTIAL) #t)]
+           (enum-parser '(PUBLIC PRIVATE CONFIDENTIAL))]
 
           [(memv key '(PARTSTAT))
            (enum-parser '(NEEDS-ACTION
                           ACCEPTED DECLINED
                           TENTATIVE DELEGATED
-                          IN-PROCESS)
-                        #t)]
+                          IN-PROCESS))]
 
           [(memv key '(STATUS))
            (enum-parser '(TENTATIVE
                           CONFIRMED CANCELLED
                           NEEDS-ACTION COMPLETED IN-PROCESS
-                          DRAFT FINAL CANCELED)
-                        #t)]
+                          DRAFT FINAL CANCELED))]
 
           [(memv key '(REQUEST-STATUS))
            (throw 'parse-error "TODO Implement REQUEST-STATUS")]
@@ -170,8 +168,7 @@
            (enum-parser '(AUDIO DISPLAY EMAIL
                                 NONE    ; I don't know where NONE is from
                                         ; but it appears to be prevelant.
-                                )
-                        #t)]
+                                ))]
 
           [(memv key '(TZOFFSETFROM TZOFFSETTO))
            (get-parser 'UTC-OFFSET)]
