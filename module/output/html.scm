@@ -197,7 +197,7 @@
                     (data-tipped-options ,(format #f "inline: '~a'" popup-id)))))
             ,(when (debug)
                `(script (@ (type "application/calendar+xml"))
-                        ,((@ (output xcal) vcomponent->sxml) ev)))
+                        ,((@ (output xcal) vcomponent->sxcal) ev)))
             ,(when (attr ev 'RRULE)
                `(span (@ (class "repeating")) "↺"))
             ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))

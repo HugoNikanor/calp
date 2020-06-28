@@ -8,6 +8,7 @@
   :use-module (output common)
   :use-module (datetime)
   :use-module (datetime util)
+  :use-module (srfi srfi-1)
   )
 
 
@@ -75,35 +76,60 @@
 
   (writer ((@@ (vcomponent base) get-vline-parameters) vline) (value vline)))
 
-(define-public (vcomponent->sxml component)
-  `(,(downcase-symbol (type component))
-    (properties
-     ,@(hash-map->list
-        (match-lambda*
-          [(? (compose internal-field? car)) '()]
+(define (property->value-tag tag . values)
+  (if (or (eq? tag 'VALUE)
+          (internal-field? tag))
+      #f
+      `(,(downcase-symbol tag)
+        ,@(map (lambda (v)
+                 ;; TODO parameter types!!!! (rfc6321 3.5.)
+                 `(text ,(->string v)))
+               values))))
 
-          ;; TODO parameters
+;; ((key value ...) ...) -> `(parameters , ... )
+(define (parameters-tag properties)
+  (define outprops (filter-map
+                    (lambda (x) (apply property->value-tag x))
+                    properties))
 
-          [(key (vlines ...))
-           `(,(downcase-symbol key)
-             #;
-             ,(unless (null? (properties vline))
-                `(parameters
-                  ,@(map vline->value-tag (properties vline))))
-             ,@(for vline in vlines
-                    (vline->value-tag vline)))]
+  (unless (null? outprops)
+    `(parameters ,@outprops)))
 
-          [(key vline)
-           `(,(downcase-symbol key)
-             #;
-             ,(unless (null? (properties vline))
-                `(parameters
-                  ,@(map vline->value-tag (properties vline))))
-             ,(vline->value-tag vline))])
-        (attributes component)))
-    (components ,@(map vcomponent->sxml (children component)))))
+(define-public (vcomponent->sxcal component)
+
+  (define tagsymb (downcase-symbol (type component)))
+
+
+  (remove null?
+   `(,tagsymb
+     ;; TODO only have <properties> when it's non-empty.
+     ;; This becomes MUCH easier once attributes stop returning
+     ;; a hash-map...
+     (properties
+      ,@(filter
+         identity
+         (hash-map->list
+          (match-lambda*
+            [(? (compose internal-field? car)) #f]
+
+            [(key (vlines ...))
+             (remove null?
+                     `(,(downcase-symbol key)
+                       ,(parameters-tag (reduce assq-merge
+                                                '() (map properties vlines)))
+                       ,@(for vline in vlines
+                              (vline->value-tag vline))))]
+
+            [(key vline)
+             (remove null?
+                     `(,(downcase-symbol key)
+                       ,(parameters-tag (properties vline))
+                       ,(vline->value-tag vline)))])
+          (attributes component))))
+     ,(unless (null? (children component))
+        `(components ,@(map vcomponent->sxcal (children component)))))))
 
 (define-public (main calendar)
   `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
           (icalendar (@ (xmlns "urn:ietf:params:xml:ns:icalendar-2.0"))
-                     ,(vcomponent->sxml calendar))))
+                     ,(vcomponent->sxcal calendar))))
