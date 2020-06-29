@@ -30,7 +30,7 @@
   (let* ((calendars (getf 'calendars))
          (calendar
           (and cal-name
-               (find (lambda (c) (string=? cal-name (attr c 'NAME)))
+               (find (lambda (c) (string=? cal-name (prop c 'NAME)))
                      (getf 'calendars)))))
 
     (unless calendar
@@ -41,7 +41,7 @@
 
       (format #t "About to the following ~a events into ~a~%~{~a~^~%~}~%"
               (length (children new-events))
-              (attr calendar 'NAME)
+              (prop calendar 'NAME)
               (map (extract 'SUMMARY) (children new-events)))
 
       (format #t "Continue? [Y/n] ")

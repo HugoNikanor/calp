@@ -284,11 +284,11 @@
                                                      ;; x-prop
                                                      ;; iana-prop
                                                      ))
-                                     (aif (attr* (car stack) key)
-                                          (set! (attr* (car stack) key) (cons vline it))
-                                          (set! (attr* (car stack) key) (list vline)))
+                                     (aif (prop* (car stack) key)
+                                          (set! (prop* (car stack) key) (cons vline it))
+                                          (set! (prop* (car stack) key) (list vline)))
                                      ;; else
-                                     (set! (attr* (car stack) key) vline))))))
+                                     (set! (prop* (car stack) key) vline))))))
 
                       (loop (cdr lst) stack)])))
             (lambda (err fmt . args)
@@ -304,6 +304,6 @@
                           (get-file linedata))
                          (current-error-port))
                 (let* ((key value params (parse-itemline head)))
-                  (set! (attr* (car stack) key)
+                  (set! (prop* (car stack) key)
                     (make-vline key value params))
                   (loop (cdr lst) stack)))))))))

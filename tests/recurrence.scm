@@ -9,7 +9,7 @@
  ((vcomponent recurrence generate) generate-recurrence-set)
  ((vcomponent recurrence display) format-recurrence-rule)
  ((vcomponent recurrence internal) count until)
- ((vcomponent base) make-vcomponent attr attr* extract)
+ ((vcomponent base) make-vcomponent prop prop* extract)
  ((datetime) parse-ics-datetime datetime time date)
  ((util) -> mod!)
  ((guile) set!)
@@ -20,18 +20,18 @@
 
 (define (run-test comp)
 
-  (test-equal (string-append "RSET: " (attr comp 'SUMMARY))
-    (attr comp 'X-SET)
+  (test-equal (string-append "RSET: " (prop comp 'SUMMARY))
+    (prop comp 'X-SET)
     (let ((r (generate-recurrence-set comp)))
       (map (extract 'DTSTART)
-           (if (or (until (attr comp 'RRULE))
-                   (count (attr comp 'RRULE)))
+           (if (or (until (prop comp 'RRULE))
+                   (count (prop comp 'RRULE)))
                (stream->list r)
                (stream->list 20 r)))))
 
-  (test-equal (string-append "STR: " (attr comp 'SUMMARY))
-    (attr comp 'X-SUMMARY)
-    (format-recurrence-rule (attr comp 'RRULE))))
+  (test-equal (string-append "STR: " (prop comp 'SUMMARY))
+    (prop comp 'X-SUMMARY)
+    (format-recurrence-rule (prop comp 'RRULE))))
 
 
 (define (vevent . rest)
@@ -43,14 +43,14 @@
                       keyword->string
                       string-upcase
                       string->symbol)))
-        (set! (attr v symb)
+        (set! (prop v symb)
           (case symb
             [(DTSTART EXDATE) (parse-ics-datetime (cadr rem))]
             [(RRULE) (parse-recurrence-rule (cadr rem))]
             [else (cadr rem)]))
         ;; hack for multi valued fields
         (when (eq? symb 'EXDATE)
-          (mod! (attr* v symb) list)))
+          (mod! (prop* v symb) list)))
       (loop (cddr rem))))
 
   v)

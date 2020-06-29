@@ -26,7 +26,7 @@
 
 ;; All VTIMEZONE's seem to be in "local" time in relation to
 ;; themselves. Therefore, a simple comparison should work,
-;; and then the TZOFFSETTO attribute can be subtd.
+;; and then the TZOFFSETTO properties can be subtd.
 (define (parse-vdir path)
   (let ((/ (lambda args (string-join args file-name-separator-string 'infix))))
     (let ((color
@@ -48,8 +48,8 @@
                 (assert (eq? 'VCALENDAR (type item)))
 
                 (for child in (children item)
-                     (set! (attr child 'X-HNH-FILENAME)
-                       (attr (parent child) 'X-HNH-FILENAME)))
+                     (set! (prop child 'X-HNH-FILENAME)
+                       (prop (parent child) 'X-HNH-FILENAME)))
 
                 ;; NOTE The vdir standard says that each file should contain
                 ;; EXACTLY one event. It can however contain multiple VEVENT
@@ -61,7 +61,7 @@
                 ;; the standard. Section 3.8.4.4.
                 (case (length events)
                   [(0) (warning "No events in component~%~a"
-                           (attr item 'X-HNH-FILENAME))]
+                           (prop item 'X-HNH-FILENAME))]
                   [(1)
                    (let ((child (car events)))
                     (assert (memv (type child) '(VTIMEZONE VEVENT)))
@@ -78,7 +78,7 @@
                                       events))
                           (rest (delete head events eq?)))
 
-                     (set! (attr head 'X-HNH-ALTERNATIVES)
+                     (set! (prop head 'X-HNH-ALTERNATIVES)
                        (alist->hash-table
                         (map cons
                              (map (extract 'RECURRENCE-ID) rest)
@@ -96,9 +96,9 @@
                  (let ((fullname (/ path fname)))
                    (let ((cal (call-with-input-file fullname
                                 parse-calendar)))
-                     (set! (attr cal 'COLOR) color
-                           (attr cal 'NAME) name
-                           (attr cal 'X-HNH-FILENAME) fullname)
+                     (set! (prop cal 'COLOR) color
+                           (prop cal 'NAME) name
+                           (prop cal 'X-HNH-FILENAME) fullname)
                      cal)))
                (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
                                          (string= "ics" (string-take-right s 3))))))))))
@@ -111,20 +111,20 @@
     (case (stat:type st)
       [(regular)
        (let ((comp (call-with-input-file path parse-calendar)))
-         (set! (attr comp 'X-HNH-SOURCETYPE) 'file)
+         (set! (prop comp 'X-HNH-SOURCETYPE) 'file)
          comp) ]
       [(directory)
        (report-time! "Parsing ~a" path)
        (let ((comp (parse-vdir path)))
-         (set! (attr comp 'X-HNH-SOURCETYPE) 'vdir
-               (attr comp 'X-HNH-DIRECTORY) path)
+         (set! (prop comp 'X-HNH-SOURCETYPE) 'vdir
+               (prop comp 'X-HNH-DIRECTORY) path)
          comp)]
       [(block-special char-special fifo socket unknown symlink)
        => (lambda (t) (error "Can't parse file of type " t))]))
 
-  (unless (attr cal "NAME")
-    (set! (attr cal "NAME")
-      (or (attr cal "X-WR-CALNAME")
+  (unless (prop cal "NAME")
+    (set! (prop cal "NAME")
+      (or (prop cal "X-WR-CALNAME")
           (string-append "[" (basename path) "]"))))
 
   cal)

@@ -41,26 +41,26 @@
    (lambda (ev i)
      (display
       (string-append
-       (if (datetime? (attr ev 'DTSTART))
-           (datetime->string (attr ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
+       (if (datetime? (prop ev 'DTSTART))
+           (datetime->string (prop ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
            ((@ (texinfo string-utils) center-string)
-            (date->string (attr ev 'DTSTART))
+            (date->string (prop ev 'DTSTART))
             19))
        " │ "
        (if (= i cur-event) "\x1b[7m" "")
-       (color-escape (attr (parent ev) 'COLOR))
+       (color-escape (prop (parent ev) 'COLOR))
        ;; Summary filter is a hook for the user
-       (let ((dirty (attr ev 'X-HNH-DIRTY)))
+       (let ((dirty (prop ev 'X-HNH-DIRTY)))
          (string-append
           (if dirty "* " "")
           ;; TODO reintroduce summary-filter
-          (trim-to-width (attr ev 'SUMMARY) (- summary-width
+          (trim-to-width (prop ev 'SUMMARY) (- summary-width
                                                (if dirty 2 0)))))
        STR-RESET
        " │ "
-       (if (attr ev 'LOCATION) "" "\x1b[1;30m")
+       (if (prop ev 'LOCATION) "" "\x1b[1;30m")
        (trim-to-width
-        (or (attr ev 'LOCATION) "INGEN LOKAL") location-width)
+        (or (prop ev 'LOCATION) "INGEN LOKAL") location-width)
        STR-RESET
        "\n")))
    events
@@ -108,22 +108,22 @@
         (unless (null? events)
           (let ((ev (list-ref events cur-event)))
             (format #t "~a~%~%  ~a~%~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
-                    (attr ev 'X-HNH-FILENAME)
-                    (attr ev 'SUMMARY)
-                    (or (and=> (attr ev 'LOCATION)
+                    (prop ev 'X-HNH-FILENAME)
+                    (prop ev 'SUMMARY)
+                    (or (and=> (prop ev 'LOCATION)
                                (cut string-append "\x1b[1mPlats:\x1b[m " <> "\n")) "")
                     ;; NOTE RFC 5545 says that DTSTART and DTEND MUST
                     ;; have the same type. However we believe that is
                     ;; another story.
-                    (let ((start (attr ev 'DTSTART)))
+                    (let ((start (prop ev 'DTSTART)))
                       (if (datetime? start)
-                          (datetime->string (attr ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
+                          (datetime->string (prop ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
                           (date->string start)))
-                    (let ((end (attr ev 'DTEND)))
+                    (let ((end (prop ev 'DTEND)))
                       (if (datetime? end)
-                          (datetime->string (attr ev 'DTEND) "~Y-~m-~d ~H:~M:~S")
+                          (datetime->string (prop ev 'DTEND) "~Y-~m-~d ~H:~M:~S")
                           (date->string end)))
-                    (unlines (take-to (flow-text (or (attr ev 'DESCRIPTION) "")
+                    (unlines (take-to (flow-text (or (prop ev 'DESCRIPTION) "")
                                                  #:width (min 70 width))
                                       (- height 8 5 (length events) 5))))))
 

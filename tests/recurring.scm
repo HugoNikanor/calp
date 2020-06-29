@@ -1,6 +1,6 @@
 (((srfi srfi-41) stream-take stream-map stream->list stream-car)
  ((datetime util) day-stream)
- ((vcomponent base) extract attr)
+ ((vcomponent base) extract prop)
 
  ((vcomponent) parse-calendar)
  ((vcomponent recurrence) generate-recurrence-set))
@@ -27,7 +27,7 @@ END:VEVENT"
                  (generate-recurrence-set ev)))
   (stream->list
    5 (day-stream
-      (attr ev 'DTSTART))))
+      (prop ev 'DTSTART))))
 
 ;; We run the exact same thing a secound time, since I had an error with
 ;; that during development.
@@ -40,7 +40,7 @@ END:VEVENT"
   (stream->list
    (stream-take
     5 (day-stream
-       (attr ev 'DTSTART)))))
+       (prop ev 'DTSTART)))))
 
 
 (define ev

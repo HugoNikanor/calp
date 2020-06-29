@@ -61,7 +61,7 @@
 
 (set-config! 'description-filter
  (lambda (ev str)
-   (cond [(member (attr (parent ev) 'NAME)
+   (cond [(member (prop (parent ev) 'NAME)
                   '("D-sektionens officiella kalender" "LiTHe kod"))
           (parse-html (regexp-substitute/global
                         #f "<br>" str

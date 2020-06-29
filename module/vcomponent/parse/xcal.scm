@@ -125,7 +125,7 @@
                  (let ((params (handle-parameters parameters))
                        (tag* (symbol-upcase tag)))
                    (for (type value) in (zip type value)
-                        (set! (attr* component tag*)
+                        (set! (prop* component tag*)
                           (make-vline tag*
                                       (handle-tag
                                        tag (handle-value type params value))
@@ -135,7 +135,7 @@
                  (for (type value) in (zip type value)
                       (let ((params (make-hash-table))
                             (tag* (symbol-upcase tag)))
-                        (set! (attr* component tag*)
+                        (set! (prop* component tag*)
                           (make-vline tag*
                                       (handle-tag
                                        tag (handle-value type params value))

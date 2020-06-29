@@ -1,7 +1,7 @@
 (define-module (vcomponent control)
   #:use-module (util)
   #:use-module (vcomponent)
-  #:export (with-replaced-attrs))
+  #:export (with-replaced-properties))
 
 
 (eval-when (expand load)                ; No idea why I must have load here.
@@ -10,19 +10,19 @@
   (define (set-temp-values! table component kvs)
     (for-each (lambda (kv)
                 (let* (((key val) kv))
-                  (when (attr component key)
-                    (set! (href table key) (attr component key))
-                    (set! (attr component key) val))))
+                  (when (prop component key)
+                    (set! (href table key) (prop component key))
+                    (set! (prop component key) val))))
               kvs))
 
   (define (restore-values! table component keys)
     (for-each (lambda (key)
                 (and=> (href table key)
                        (lambda (val)
-                         (set! (attr component key) val))))
+                         (set! (prop component key) val))))
               keys)))
 
-(define-syntax with-replaced-attrs
+(define-syntax with-replaced-properties
   (syntax-rules ()
     [(_ (component (key val) ...)
         body ...)

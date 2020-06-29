@@ -118,7 +118,7 @@
          ;; but you can only query for existance.
          ;; also, the default output gives everything.
          (let ((calendar
-                (find (lambda (c) (string=? cal (attr c 'NAME)))
+                (find (lambda (c) (string=? cal (prop c 'NAME)))
                       (getf 'calendars))))
 
            (unless calendar
@@ -147,7 +147,7 @@
                            (format #f "~?~%" fmt args)))))
 
              (format (current-error-port)
-                     "Event inserted ~a~%" (attr event 'UID))
+                     "Event inserted ~a~%" (prop event 'UID))
 
              (return '((content-type text/plain))
                      "Event inserted\r\n"))))

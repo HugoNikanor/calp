@@ -1,6 +1,6 @@
-(((vcomponent control) with-replaced-attrs)
+(((vcomponent control) with-replaced-properties)
  ((vcomponent) parse-calendar)
- ((vcomponent base) attr))
+ ((vcomponent base) prop))
 
 
 
@@ -11,15 +11,15 @@ END:DUMMY"
              parse-calendar))
 
 ;; Test that temoraries are set and restored
-(test-equal "value" (attr ev 'KEY))
-(with-replaced-attrs (ev (KEY "other"))
-                     (test-equal "other" (attr ev 'KEY)))
-(test-equal "value" (attr ev 'KEY))
+(test-equal "value" (prop ev 'KEY))
+(with-replaced-properties (ev (KEY "other"))
+                          (test-equal "other" (prop ev 'KEY)))
+(test-equal "value" (prop ev 'KEY))
 
 ;; Test that they are restored on non-local exit
 (catch #t
   (lambda ()
-   (with-replaced-attrs (ev (KEY "other"))
-                        (throw 'any)))
+   (with-replaced-properties (ev (KEY "other"))
+                             (throw 'any)))
   (lambda _
-    (test-equal "value" (attr ev 'KEY))))
+    (test-equal "value" (prop ev 'KEY))))

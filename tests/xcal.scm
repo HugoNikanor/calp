@@ -3,7 +3,7 @@
  ((output xcal) vcomponent->sxcal)
  ((util) ->)
  ((vcomponent base)
-  parameters attr* children)
+  parameters prop* children)
  )
 
 ;;; Some different types, same parameters
@@ -41,5 +41,5 @@ END:VCALENDAR"
 
 (test-equal "xcal parameters"
   '((X-TEST-PARAM "10"))
-  (parameters (attr* (car (children twice-converted))
+  (parameters (prop* (car (children twice-converted))
                      'STATUS)))

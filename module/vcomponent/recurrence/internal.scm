@@ -2,7 +2,7 @@
   #:export (repeating? format-recur-rule make-recur-rule)
 
   #:use-module (srfi srfi-88)           ; better keywords
-  #:use-module ((vcomponent base) :select (attr))
+  #:use-module ((vcomponent base) :select (prop))
   #:use-module (datetime util)
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-9 gnu)
@@ -13,8 +13,8 @@
 ;; but that property alone don't create a recuring event.
 (define (repeating? ev)
   "Does this event repeat?"
-  (or (attr ev 'RRULE)
-      (attr ev 'RDATE)))
+  (or (prop ev 'RRULE)
+      (prop ev 'RDATE)))
 
 ;; weekday := [0, 7)
 

@@ -1,4 +1,4 @@
-(((vcomponent base) attr)
+(((vcomponent base) prop)
  ((vcomponent) parse-calendar))
 
 (define ev (call-with-input-string
@@ -7,6 +7,6 @@ KEY:value
 END:DUMMY"
              parse-calendar))
 
-(test-assert (eq? #f (attr ev 'MISSING)))
-(test-assert (attr ev 'KEY))
-(test-equal "value" (attr ev 'KEY))
+(test-assert (eq? #f (prop ev 'MISSING)))
+(test-assert (prop ev 'KEY))
+(test-equal "value" (prop ev 'KEY))

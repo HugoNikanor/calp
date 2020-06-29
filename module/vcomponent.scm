@@ -59,12 +59,12 @@
 
   (setf 'uid-map
         (let ((ht (make-hash-table)))
-          (for-each (lambda (event) (hash-set! ht (attr event 'UID) event)) (getf 'events))
+          (for-each (lambda (event) (hash-set! ht (prop event 'UID) event)) (getf 'events))
           ht)))
 
 (define-method (fixed-events-in-range start end)
   (filter-sorted (lambda (ev) ((in-date-range? start end)
-                          (as-date (attr ev 'DTSTART))))
+                          (as-date (prop ev 'DTSTART))))
                  (getf 'fixed-events)))
 
 (define-method (get-event-by-uid uid)
@@ -88,23 +88,23 @@
 (define / file-name-separator-string)
 
 (define-public (calendar-import calendar event)
-  (case (attr calendar 'X-HNH-SOURCETYPE)
+  (case (prop calendar 'X-HNH-SOURCETYPE)
     [(file)
      (error "Importing into direct calendar files not supported")]
 
     [(vdir)
-     (let* ((uid (or (attr event 'UID) (uuidgen)))
+     (let* ((uid (or (prop event 'UID) (uuidgen)))
             ;; copy to enusre writable string
-            (tmpfile (string-copy (string-append (attr calendar 'X-HNH-DIRECTORY)
+            (tmpfile (string-copy (string-append (prop calendar 'X-HNH-DIRECTORY)
                                                  / ".calp-" uid "XXXXXX")))
             (port (mkstemp! tmpfile)))
-       (set! (attr event 'UID) uid)
+       (set! (prop event 'UID) uid)
        (with-output-to-port port
          (lambda () (print-components-with-fake-parent (list event))))
        ;; does close flush?
        (force-output port)
        (close-port port)
-       (rename-file tmpfile (string-append (attr calendar 'X-HNH-DIRECTORY)
+       (rename-file tmpfile (string-append (prop calendar 'X-HNH-DIRECTORY)
                                            / uid ".ics"))
        uid)]
 

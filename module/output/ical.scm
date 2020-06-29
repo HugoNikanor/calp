@@ -155,7 +155,7 @@
   (format #t "END:~a\r\n" (type component))
 
   ;; If we have alternatives, splice them in here.
-  (cond [(attr component 'X-HNH-ALTERNATIVES)
+  (cond [(prop component 'X-HNH-ALTERNATIVES)
          => (lambda (alts) (hash-map->list (lambda (_ comp) (component->ical-string comp))
                                       alts))]))
 
@@ -164,23 +164,23 @@
 (define (write-event-to-file event calendar-path)
   (define cal (make-vcomponent 'VCALENDAR))
 
-  (set! (attr cal 'PRODID) (@ (global) *prodid*)
-        (attr cal 'VERSION) "2.0"
-        (attr cal 'CALSCALE) "GREGORIAN")
+  (set! (prop cal 'PRODID) (@ (global) *prodid*)
+        (prop cal 'VERSION) "2.0"
+        (prop cal 'CALSCALE) "GREGORIAN")
 
   (add-child! cal event)
 
-  (awhen (param (attr* event 'DTSTART) 'TZID)
+  (awhen (param (prop* event 'DTSTART) 'TZID)
          ;; TODO this is broken
          (add-child! cal (zoneinfo->vtimezone (getf 'zoneinfo) it)))
 
-  (unless (attr event 'UID)
-    (set! (attr event 'UID)
+  (unless (prop event 'UID)
+    (set! (prop event 'UID)
       (generate-uuid)))
 
   (with-output-to-file (glob (format #f "~a/~a.ics"
                                      calendar-path
-                                     (attr event 'UID)))
+                                     (prop event 'UID)))
     (lambda () (component->ical-string cal))))
 
 

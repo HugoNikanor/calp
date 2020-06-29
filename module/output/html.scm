@@ -76,8 +76,8 @@
 ;; TODO currently not guaranteed to be unique
 (define (UID ev)
   (string-append
-   (datetime->string (as-datetime (attr ev 'DTSTART)) "~Y~m~d~H~M~S")
-   (html-attr (attr ev 'UID))))
+   (datetime->string (as-datetime (prop ev 'DTSTART)) "~Y~m~d~H~M~S")
+   (html-attr (prop ev 'UID))))
 
 ;; Retuns an HTML-safe version of @var{str}.
 (define (html-attr str)
@@ -87,9 +87,9 @@
 ;; Takes an event, and returns a pretty string for the time interval
 ;; the event occupies.
 (define (fmt-time-span ev)
-  (cond [(attr ev 'DTSTART) date?
+  (cond [(prop ev 'DTSTART) date?
          => (lambda (s)
-              (cond [(attr ev 'DTEND)
+              (cond [(prop ev 'DTEND)
                      => (lambda (e)
                           (if (date= e (date+ s (date day: 1)))
                               (date->string s)  ; start = end, only return one value
@@ -98,8 +98,8 @@
                     ;; no end value, just return start
                     [else (date->string s)]))]
         [else ; guaranteed datetime
-         (let ((s (attr ev 'DTSTART))
-               (e (attr ev 'DTEND)))
+         (let ((s (prop ev 'DTSTART))
+               (e (prop ev 'DTEND)))
            (if e
                (let ((fmt-str (if (date= (get-date s) (get-date e))
                                   "~H:~M" "~Y-~m-~d ~H:~M")))
@@ -138,7 +138,7 @@
 (define (popup ev id)
   `(div (@ (class "popup-container") (id ,id))
         (div (@ (class "popup"))
-             (nav (@ (class "popup-control CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
+             (nav (@ (class "popup-control CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
                                                                  "unknown"))))
                   ,(btn "×"
                         title: "Stäng"
@@ -147,7 +147,7 @@
                         )
                   ,(btn "📅"
                         title: "Ladda ner"
-                        href: (string-append "/calendar/" (attr ev 'UID) ".ics")))
+                        href: (string-append "/calendar/" (prop ev 'UID) ".ics")))
 
              ,(fmt-single-event ev))))
 
@@ -189,22 +189,22 @@
           (class "hidelink"))
        (div (@ ,@(assq-merge
                   extra-attributes
-                  `((class "event CAL_" ,(html-attr (or (attr (parent ev) 'NAME)
+                  `((class "event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
                                                         "unknown"))
-                      ,(when (and (attr ev 'PARTSTAT)
-                                  (eq? 'TENTATIVE (attr ev 'PARTSTAT)))
+                      ,(when (and (prop ev 'PARTSTAT)
+                                  (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative"))
                     (data-tipped-options ,(format #f "inline: '~a'" popup-id)))))
             ,(when (debug)
                `(script (@ (type "application/calendar+xml"))
                         ,((@ (output xcal) vcomponent->sxcal) ev)))
-            ,(when (attr ev 'RRULE)
+            ,(when (prop ev 'RRULE)
                `(span (@ (class "repeating")) "↺"))
-            ,((get-config 'summary-filter) ev (attr ev 'SUMMARY))
-            ,(when (attr ev 'LOCATION)
+            ,((get-config 'summary-filter) ev (prop ev 'SUMMARY))
+            ,(when (prop ev 'LOCATION)
                `(span (@ (class "location"))
                       ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                   (attr ev 'LOCATION))))))
+                                   (prop ev 'LOCATION))))))
     ,(popup ev popup-id)))
 
 ;; Format single event for graphical display
@@ -221,10 +221,10 @@
             (* 100 (width ev))          ; width
 
             ;; top
-            (if (date= date (as-date (attr ev 'DTSTART)))
+            (if (date= date (as-date (prop ev 'DTSTART)))
                 (* 100/24
                    (time->decimal-hour
-                    (as-time (attr ev 'DTSTART))))
+                    (as-time (prop ev 'DTSTART))))
                 0)
 
             ;; height
@@ -232,9 +232,9 @@
 
   (make-block
    ev `((class
-          ,(when (date<? (as-date (attr ev 'DTSTART)) date)
+          ,(when (date<? (as-date (prop ev 'DTSTART)) date)
              " continued")
-          ,(when (and (attr ev 'DTEND) (date<? date (as-date (attr ev 'DTEND))))
+          ,(when (and (prop ev 'DTEND) (date<? date (as-date (prop ev 'DTEND))))
              " continuing"))
         (style ,style))))
 
@@ -259,7 +259,7 @@
             (* 100
                (let* ((dt (datetime date: start-date))
                       (diff (datetime-difference
-                             (datetime-max dt (as-datetime (attr ev 'DTSTART)))
+                             (datetime-max dt (as-datetime (prop ev 'DTSTART)))
                              dt)))
                  (/ (datetime->decimal-hour diff start-date) total-length)))
 
@@ -273,10 +273,10 @@
 
   (make-block
    ev `((class
-          ,(when (date/-time< (attr ev 'DTSTART) start-date)
+          ,(when (date/-time< (prop ev 'DTSTART) start-date)
              " continued")
-          ,(when (and (attr ev 'DTEND)
-                      (date/-time< (date+ end-date (date day: 1)) (attr ev 'DTEND)))
+          ,(when (and (prop ev 'DTEND)
+                      (date/-time< (date+ end-date (date day: 1)) (prop ev 'DTEND)))
              " continuing"))
         (style ,style))))
 
@@ -351,8 +351,8 @@
   `(span (@ (class "rrule"))
          "Upprepas "
          ,((@ (vcomponent recurrence display) format-recurrence-rule)
-            (attr ev 'RRULE))
-         ,@(awhen (attr* ev 'EXDATE)
+            (prop ev 'RRULE))
+         ,@(awhen (prop* ev 'EXDATE)
                   (list
                    ", undantaget "
                    (add-enumeration-punctuation
@@ -363,7 +363,7 @@
                                ;; NOTE only show time when it's different than the start time?
                                ;; or possibly only when FREQ is hourly or lower.
                                (if (memv ((@ (vcomponent recurrence internal) freq)
-                                       (attr ev 'RRULE))
+                                       (prop ev 'RRULE))
                                       '(HOURLY MINUTELY SECONDLY))
                                    (datetime->string d "~e ~b ~k:~M")
                                    (datetime->string d "~e ~b"))))
@@ -381,34 +381,34 @@
 (define* (fmt-single-event ev
                            optional: (attributes '())
                            key: (fmt-header list))
-  ;; (format (current-error-port) "fmt-single-event: ~a~%" (attr ev 'X-HNH-FILENAME))
+  ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
   `(article (@ ,@(assq-merge
                   attributes
                   `((class "eventtext CAL_bg_"
-                      ,(html-attr (or (attr (parent ev) 'NAME) "unknown"))
-                      ,(when (and (attr ev 'PARTSTAT)
-                                  (eq? 'TENTATIVE (attr ev 'PARTSTAT)))
+                      ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))
+                      ,(when (and (prop ev 'PARTSTAT)
+                                  (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative")))))
             (h3 ,(fmt-header
-                  (when (attr ev 'RRULE)
+                  (when (prop ev 'RRULE)
                     `(span (@ (class "repeating")) "↺"))
-                  (attr ev 'SUMMARY)))
+                  (prop ev 'SUMMARY)))
             (div
              ,(call-with-values (lambda () (fmt-time-span ev))
                 (case-lambda [(start) `(div ,start)]
                              [(start end) `(div ,start " — " ,end)]))
-             ,(when (and=> (attr ev 'LOCATION) (negate string-null?))
+             ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
                 `(div (b "Plats: ")
                       (div (@ (class "location"))
                            ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                        (attr ev 'LOCATION)))))
-             ,(and=> (attr ev 'DESCRIPTION)
+                                        (prop ev 'LOCATION)))))
+             ,(and=> (prop ev 'DESCRIPTION)
                      (lambda (str) (format-description ev str)))
-             ,(awhen (attr ev 'RRULE)
+             ,(awhen (prop ev 'RRULE)
                      (format-recurrence-rule ev))
-             ,(when (attr ev 'LAST-MODIFIED)
+             ,(when (prop ev 'LAST-MODIFIED)
                 `(span (@ (class "last-modified")) "Senast ändrad "
-                       ,(datetime->string (attr ev 'LAST-MODIFIED) "~1 ~H:~M")))
+                       ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M")))
 
              )))
 
@@ -425,7 +425,7 @@
                            ev `((id ,(UID ev)))
                            fmt-header:
                            (lambda body
-                             `(a (@ (href "#" ,(date-link (as-date (attr ev 'DTSTART))))
+                             `(a (@ (href "#" ,(date-link (as-date (prop ev 'DTSTART))))
                                     (class "hidelink"))
                                  ,@body))))
                   (stream-filter
@@ -434,7 +434,7 @@
                      ;; This removes all descriptions from
                      ;; events for previous days,
                      ;; solving duplicates.
-                     (date/-time<=? date (attr ev 'DTSTART)))
+                     (date/-time<=? date (prop ev 'DTSTART)))
                    events))))))
 
 
@@ -625,9 +625,9 @@
            (script (@ (src "/static/script.js")) "")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
                            (map (lambda (c)
-                                  (let* ((name (html-attr (attr c 'NAME)))
-                                         (bg-color (attr c 'COLOR))
-                                         (fg-color (and=> (attr c 'COLOR)
+                                  (let* ((name (html-attr (prop c 'NAME)))
+                                         (bg-color (prop c 'COLOR))
+                                         (fg-color (and=> (prop c 'COLOR)
                                                           calculate-fg-color)))
                                     (list name (or bg-color 'white) (or fg-color 'black)
                                           name (or bg-color 'black))))
@@ -740,8 +740,8 @@
                               (ul ,@(map
                                      (lambda (calendar)
                                        `(li (@ (class "CAL_bg_"
-                                                 ,(html-attr (attr calendar 'NAME))))
-                                            ,(attr calendar 'NAME)))
+                                                 ,(html-attr (prop calendar 'NAME))))
+                                            ,(prop calendar 'NAME)))
                                      calendars))))
 
                 ;; List of events

@@ -22,7 +22,6 @@
 ;;; </vcomponent>
 ;;;
 
-;; The <vline> type is a bit to many times refered to as a attr ptr.
 (define-record-type <vline>
   (make-vline% key value parameters)
   vline?
@@ -106,38 +105,35 @@
   (make-procedure-with-setter
    get-vline-value set-vline-value!))
 
-;;; TODO all these set-attr should be set-prop, but
-;;; set-prop is already used by what should be set-param.
-
 ;; vcomponent x (or str symb) → vline
-(define (get-attr* component attr)
+(define (get-prop* component prop)
   (hashq-ref (get-component-properties component)
-             (as-symb attr)))
+             (as-symb prop)))
 
-(define (set-attr*! component key value)
+(define (set-prop*! component key value)
   (hashq-set! (get-component-properties component)
               (as-symb key) value))
 
-(define-public attr*
+(define-public prop*
   (make-procedure-with-setter
-   get-attr*
-   set-attr*!))
+   get-prop*
+   set-prop*!))
 
 ;; vcomponent x (or str symb) → value
-(define (get-attr component key)
-  (let ((attrs (get-attr* component key)))
-    (cond [(not attrs) #f]
-          [(list? attrs) (map value attrs)]
-          [else (value attrs)])))
+(define (get-prop component key)
+  (let ((props (get-prop* component key)))
+    (cond [(not props) #f]
+          [(list? props) (map value props)]
+          [else (value props)])))
 
 ;; TODO do something sensible here
-(define (set-attr! component key value)
+(define (set-prop! component key value)
   (set-property! component (as-symb key) value))
 
-(define-public attr
+(define-public prop
   (make-procedure-with-setter
-   get-attr
-   set-attr!))
+   get-prop
+   set-prop!))
 
 
 (define-public param
@@ -152,11 +148,11 @@
      (hashq-set! (get-vline-parameters vline)
                  (as-symb parameter-key) val))))
 
-;; Returns the properties of attribute as an assoc list.
+;; Returns the parameters of a property as an assoc list.
 ;; @code{(map car <>)} leads to available properties.
 ;; TODO shouldn't this be called parameters?
-(define-public (parameters attrptr)
-  (hash-map->list list (get-vline-parameters attrptr)))
+(define-public (parameters vline)
+  (hash-map->list list (get-vline-parameters vline)))
 
 (define-public (properties component)
   (get-component-properties component))
@@ -184,10 +180,10 @@
                     (get-component-properties component)))))
 
 (define-public (extract field)
-  (lambda (e) (attr e field)))
+  (lambda (e) (prop e field)))
 
 (define-public (extract* field)
-  (lambda (e) (attr* e field)))
+  (lambda (e) (prop* e field)))
 
 (define-public (key=? k1 k2)
   (eq? (as-symb k1)

@@ -13,7 +13,7 @@
 
   (if (stream-null? in-stream)
       stream-null
-      (let loop ((days (day-stream (as-date (attr (stream-car in-stream) 'DTSTART))))
+      (let loop ((days (day-stream (as-date (prop (stream-car in-stream) 'DTSTART))))
                  (stream in-stream))
         (let* ((day (stream-car days))
                (tomorow (stream-car (stream-cdr days))))
@@ -27,11 +27,11 @@
                  ;; object which begins tomorow (after midnight, exclusize).
                  (filter-sorted-stream*
                   (lambda (e) (date/-time<? tomorow
-                                       (or (attr e 'DTEND)
-                                           (if (date? (attr e 'DTSTART))
-                                               (date+ (attr e 'DTSTART) (date day: 1))
-                                               (attr e 'DTSTART)))))
-                  (lambda (e) (date/-time<=? tomorow (attr e 'DTSTART)))
+                                       (or (prop e 'DTEND)
+                                           (if (date? (prop e 'DTSTART))
+                                               (date+ (prop e 'DTSTART) (date day: 1))
+                                               (prop e 'DTSTART)))))
+                  (lambda (e) (date/-time<=? tomorow (prop e 'DTSTART)))
                   stream)))
 
 
