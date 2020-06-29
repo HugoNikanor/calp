@@ -17,7 +17,7 @@
     ;; If all streams where empty, end the output stream
     (if (null? streams)
         stream-null
-        (let* ((min other (find-min streams stream-car))
+        (let* ((min other (find-extreme streams < stream-car))
                (m ms (stream-car+cdr min)))
           (stream-cons m (interleave-streams < (cons ms other)))))))
 

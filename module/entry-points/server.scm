@@ -3,6 +3,7 @@
   :use-module (util app)
   :use-module (util config)
   :use-module (util options)
+  :use-module (util exceptions)
 
   :use-module (srfi srfi-1)
 
@@ -105,6 +106,7 @@
                                      intervaltype: 'month
                                      ))))))
 
+   ;; TODO this fails when dtstart is <date>.
    (POST "/insert" (cal data)
 
          (unless (and cal data)
@@ -137,7 +139,12 @@
                (return (build-response code: 400)
                        "Object not a VEVENT\r\n"))
 
-             (calendar-import calendar event)
+             (parameterize ((warnings-are-errors #t))
+               (catch 'warning
+                 (lambda () (calendar-import calendar event))
+                 (lambda (err fmt args)
+                   (return (build-response code: 400)
+                           (format #f "~?~%" fmt args)))))
 
              (return '((content-type text/plain))
                      "Event inserted\r\n"))))
