@@ -20,8 +20,17 @@ function parents_until (element, obj) {
 
 function decimal_time_to_string (time) {
     let hour = Math.floor(time);
+    if (hour < 10) {
+        hour = '0' + hour;
+    }
     var minute = String((time - Math.floor(time)) * 60).padStart(2, 0);
     return "" + hour + ":" + minute;
+}
+
+let gensym_counter = 0;
+function gensym (prefix) {
+    gensym_counter++;
+    return prefix + gensym_counter;
 }
 
 /* start and end time for calendar page */
@@ -34,6 +43,7 @@ let event;
 function create_event_down (e) {
     /* only allow start of dragging on background */
     if (e.target != this) return;
+
     /* only on left click */
     if (e.buttons != 1) return;
 
@@ -50,6 +60,8 @@ function create_event_down (e) {
     event.style.pointerEvents = "none";
     event.style.width = "calc(100% * var(--editmode))";
     event.innerText = "New Event";
+
+    event.dataset.date = this.id;
 
     /* Makes all current events transparent when dragging over them.
        Without this weird stuff happens when moving over them
@@ -93,7 +105,7 @@ function create_event_finisher (callback) {
         let localevent = event;
         event = null;
 
-        callback (event, start, end);
+        callback (localevent, start, end);
 
     }
 }
@@ -163,6 +175,52 @@ function close_all_popups () {
 	}
 }
 
+function sxml_to_xml(doc, tree) {
+
+    if (typeof(tree) == 'string') return tree;
+
+    let [tag, ...body] = tree;
+    let node = doc.createElement(tag);
+    for (const child of body) {
+        node.append(sxml_to_xml(doc, child));
+    }
+    return node;
+}
+
+// FormData
+async function create_event (date, fd) {
+
+    let tree = ['vevent',
+                ['properties',
+                 ['dtstart', ['date-time', date + "T" + fd.get("dtstart") + ":00"]],
+                 ['dtend', ['date-time', date + "T" + fd.get("dtend") + ":00"]],
+                 ['summary', ['text', fd.get("summary")]]]]
+
+    if (fd.get("description")) {
+        tree.push(['description', ['text', fd.get("description")]])
+    }
+
+    let xmldoc = document.implementation.createDocument("", "", null)
+    xml = sxml_to_xml(xmldoc, tree).outerHTML;
+
+    console.log(xml);
+
+
+    let data = new URLSearchParams();
+    data.append("cal", "Calendar");
+    data.append("data", xml);
+
+    let response = await fetch ( '/insert', {
+        method: 'POST',
+        body: data
+    });
+
+    console.log(response);
+
+    let body = await response.text();
+    console.log(body);
+}
+
 window.onload = function () {
     start_time.setTime(document.querySelector("meta[name='start-time']").content * 1000)
     end_time.setTime(document.querySelector("meta[name='end-time']").content * 1000)
@@ -172,7 +230,7 @@ window.onload = function () {
     window.setInterval(update_current_time_bar, 1000 * 60)
 
     /* Is event creation active? */
-    if (false) {
+    if (true) {
         for (let c of document.getElementsByClassName("events")) {
             c.onmousedown = create_event_down;
             c.onmousemove = create_event_move;
@@ -181,7 +239,34 @@ window.onload = function () {
                     let startstr = decimal_time_to_string(start);
                     let endstr = decimal_time_to_string(end);
 
+                    let popupElement = document
+                        .getElementById("popup-template")
+                        .content
+                        .cloneNode(true)
+                        .firstChild ;
+                    let id = gensym("popup-generated-");
+                    popupElement.id = id
+                    document.getElementsByClassName("root")[0].appendChild(popupElement);
+
+                    popupElement.querySelector('input[name="dtstart"]').value = startstr;
+                    popupElement.querySelector('input[name="dtend"]').value = endstr;
+
+                    let form = popupElement.querySelector("form")
+                    form.addEventListener("submit", function (ev) {
+                        ev.preventDefault();
+                        create_event(event.dataset.date, new FormData(form));
+                    });
+
+                    event.dataset.tippedOptions = "inline: '" + id + "'";
+                    Tipped.create(event, tipped_args);
+                    event.click();
+
+                    /*
+                    console.log(event);
+
                     alert("Creating event " + startstr + " - " + endstr);
+                    */
+                    popupElement.querySelector('input[name="summary"]').focus();
                 });
         }
     }
@@ -224,30 +309,47 @@ window.onload = function () {
         let date = time_to_date(this.valueAsDate)
         golink.href = date + ".html";
     }
+
+    /* ---------------------------------------- */
+
+    /*
+    var el = getElementSomehow();
+
+    let parser = new DOMParser();
+    let xml = parser.parseFromString(
+        el.getElementsByTagName("script")[0].innerText,
+        "text/xml");
+    xml.querySelector("summary text").innerHTML = "Pastahack";
+    let serializer = new XMLSerializer();
+    serializer.serializeToString(xml);
+    */
+}
+
+
+let tipped_args = {
+    /* no padding, I am the one who styles! */
+    padding: false,
+    /* Don't remove from DOM when hiding */
+    detach: false,
+
+    /* click element to toggle.
+       Elements with class "close-tooltip" also
+       acts as close buttons */
+    showOn: 'click',
+    hideOn: 'click',
+
+    /* makes popups relative our scrolling days view */
+    container: '.days',
+
+    /* Ensures that the popups stay within the given area,
+       and don't strectch the container */
+    containment: {
+        selector: '.days',
+    },
+    behaviour: 'sticky',
 }
 
 $(document).ready(function() {
     Tipped.setDefaultSkin("purple");
-    Tipped.create(".event", {
-        /* no padding, I am the one who styles! */
-        padding: false,
-        /* Don't remove from DOM when hiding */
-        detach: false,
-
-        /* click element to toggle.
-           Elements with class "close-tooltip" also
-           acts as close buttons */
-        showOn: 'click',
-        hideOn: 'click',
-
-        /* makes popups relative our scrolling days view */
-        container: '.days',
-
-        /* Ensures that the popups stay within the given area,
-           and don't strectch the container */
-        containment: {
-            selector: '.days',
-        },
-        behaviour: 'sticky',
-    });
+    Tipped.create(".event", tipped_args);
 });

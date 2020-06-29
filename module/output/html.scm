@@ -758,7 +758,24 @@
                                    (compose (cut date/-time<? <> start-date)
                                             (extract 'DTSTART))
                                    (cdr (stream-car evs))))))
-                     ,@(stream->list (stream-map fmt-day evs))))))))
+                     ,@(stream->list (stream-map fmt-day evs))))
+           (template (@ (id "popup-template"))
+            (div (@ (class "popup-container"))
+                 (div (@ (class "popup"))
+                      (nav (@ (class "popup-control CAL_Calendar"))
+                           (button (@ (title "Stäng") (onclick "") (class "btn close-tooltip")) (div "×")))
+                      (form
+                       (article (@ (class "eventtext CAL_bg_Calendar"))
+                                (h3 (input (@ (type "text")
+                                              (name "summary")
+                                              (placeholder "Summary")
+                                              (required))))
+                                (div (div (input (@ (type "time") (name "dtstart") (required)))
+                                          " — "
+                                          (input (@ (type "time") (name "dtend") (required))))
+                                     (textarea (@ (name "description")
+                                                  (placeholder "Description")) "")
+                                     (input (@ (type "submit")))))))))))))
 
 
 ;; file existing but is of wrong type,

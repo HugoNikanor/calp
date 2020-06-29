@@ -146,6 +146,9 @@
                    (return (build-response code: 400)
                            (format #f "~?~%" fmt args)))))
 
+             (format (current-error-port)
+                     "Event inserted ~a~%" (attr event 'UID))
+
              (return '((content-type text/plain))
                      "Event inserted\r\n"))))
 
