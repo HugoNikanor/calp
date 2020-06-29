@@ -9,7 +9,7 @@
 
   (define maxlen (find-max (hash-map->list
                             (lambda (a _) (string-length (symbol->string a)))
-                            (attributes vcomponent))))
+                            (properties vcomponent))))
 
   (format #t "~aBEGIN ~a~%" ii (type vcomponent))
 
@@ -20,12 +20,12 @@
                            (trim-to-width
                                    (format #f "~a" (value vline))
                                    (- 80 indent maxlen)))
-                   (awhen (properties vline)
+                   (awhen (parameters vline)
                           (display " ;")
                           (for (key value) in it
                                (format #t " ~a=~a" key value)))
                    (newline))
-                 (attributes vcomponent))
+                 (properties vcomponent))
 
   (for child in (children vcomponent)
        (describe child (+ indent 2)))

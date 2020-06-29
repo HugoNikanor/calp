@@ -32,7 +32,7 @@
    equal? (lset-union
            equal? '("dummy")
            (filter-map
-            (lambda (vline) (and=> (prop vline 'TZID) car))
+            (lambda (vline) (and=> (param vline 'TZID) car))
             (filter-map (extract* 'DTSTART)
                         events)))
    '("dummy" "local")))

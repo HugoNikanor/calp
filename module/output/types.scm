@@ -16,12 +16,12 @@
 (define (write-date _ value)
   (date->string value "~Y~m~d"))
 
-(define (write-datetime prop value)
-  (datetime->string (hashq-ref prop 'X-HNH-ORIGINAL value)
+(define (write-datetime param value)
+  (datetime->string (hashq-ref param 'X-HNH-ORIGINAL value)
                     ;; TODO ~Z ?
                     "~Y~m~dT~H~M~S~Z"
                     #;
-                    (let ((tz (and=> (prop vline 'TZID) car)))
+                    (let ((tz (and=> (param vline 'TZID) car)))
                     (when (and tz (string= tz "UTC"))
                       (display #\Z)))))
 

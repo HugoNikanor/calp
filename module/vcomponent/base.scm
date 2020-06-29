@@ -10,6 +10,18 @@
 
 
 
+;;; <vcomponent>
+;;;   <properties>
+;;;     <dtstart>
+;;;       <parameters>
+;;;         <tzid><text>Europe/Stockholm</text></tzid>
+;;;       </parameters>
+;;;       2020-01-01T13:37:50
+;;;     </dtstart>
+;;;   </properties>
+;;; </vcomponent>
+;;;
+
 ;; The <vline> type is a bit to many times refered to as a attr ptr.
 (define-record-type <vline>
   (make-vline% key value parameters)
@@ -38,12 +50,12 @@
   (make-vline% key value ht))
 
 (define-record-type <vcomponent>
-  (make-vcomponent% type children parent attributes)
+  (make-vcomponent% type children parent properties)
   vcomponent?
   (type type)
   (children children set-component-children!)
   (parent get-component-parent set-component-parent!)
-  (attributes get-component-attributes))
+  (properties get-component-properties))
 (export vcomponent? children type)
 
 ((@ (srfi srfi-9 gnu) set-record-type-printer!)
@@ -67,24 +79,24 @@
   (set-component-parent! child parent))
 
 ;; TODO this doesn't handle multi-valued items
-(define* (get-attribute-value component key #:optional default)
-  (cond [(hashq-ref (get-component-attributes component)
+(define* (get-property-value component key #:optional default)
+  (cond [(hashq-ref (get-component-properties component)
                     key #f)
          => get-vline-value]
         [else default]))
 
-(define (get-attribute component key)
-  (hashq-ref (get-component-attributes component)
+(define (get-property component key)
+  (hashq-ref (get-component-properties component)
              key))
 
-(define (set-attribute! component key value)
-  (let ((ht (get-component-attributes component)))
+(define (set-property! component key value)
+  (let ((ht (get-component-properties component)))
    (cond [(hashq-ref ht key #f)
           => (lambda (vline) (set-vline-value! vline value))]
          [else (hashq-set! ht key (make-vline key value))])))
 
 (define-public (set-vline! component key vline)
-  (hashq-set! (get-component-attributes component)
+  (hashq-set! (get-component-properties component)
               key vline))
 
 
@@ -94,13 +106,16 @@
   (make-procedure-with-setter
    get-vline-value set-vline-value!))
 
+;;; TODO all these set-attr should be set-prop, but
+;;; set-prop is already used by what should be set-param.
+
 ;; vcomponent x (or str symb) → vline
 (define (get-attr* component attr)
-  (hashq-ref (get-component-attributes component)
+  (hashq-ref (get-component-properties component)
              (as-symb attr)))
 
 (define (set-attr*! component key value)
-  (hashq-set! (get-component-attributes component)
+  (hashq-set! (get-component-properties component)
               (as-symb key) value))
 
 (define-public attr*
@@ -117,7 +132,7 @@
 
 ;; TODO do something sensible here
 (define (set-attr! component key value)
-  (set-attribute! component (as-symb key) value))
+  (set-property! component (as-symb key) value))
 
 (define-public attr
   (make-procedure-with-setter
@@ -125,34 +140,34 @@
    set-attr!))
 
 
-(define-public prop
+(define-public param
   (make-procedure-with-setter
-   (lambda (attr-obj prop-key)
+   (lambda (vline parameter-key)
      ;; TODO `list' is a hack since a bit to much code depends
      ;; on prop always returning a list of values.
-     (and=> (hashq-ref (get-vline-parameters attr-obj)
-                       (as-symb prop-key))
+     (and=> (hashq-ref (get-vline-parameters vline)
+                       (as-symb parameter-key))
             list))
-   (lambda (attr-obj prop-key val)
-     (hashq-set! (get-vline-parameters attr-obj)
-                 (as-symb prop-key) val))))
+   (lambda (vline parameter-key val)
+     (hashq-set! (get-vline-parameters vline)
+                 (as-symb parameter-key) val))))
 
 ;; Returns the properties of attribute as an assoc list.
 ;; @code{(map car <>)} leads to available properties.
 ;; TODO shouldn't this be called parameters?
-(define-public (properties attrptr)
+(define-public (parameters attrptr)
   (hash-map->list list (get-vline-parameters attrptr)))
 
-(define-public (attributes component)
-  (get-component-attributes component))
+(define-public (properties component)
+  (get-component-properties component))
 
-(define-public (attribute-keys component)
-  (map car (hash-map->list cons (get-component-attributes component))))
+(define-public (property-keys component)
+  (map car (hash-map->list cons (get-component-properties component))))
 
 (define (copy-vline vline)
   (make-vline (vline-key vline)
               (get-vline-value vline)
-              ;; TODO deep-copy on properties?
+              ;; TODO deep-copy on parameters?
               (get-vline-parameters vline)))
 
 (define-public (copy-vcomponent component)
@@ -160,13 +175,13 @@
    (type component)
    (children component)
    (parent component)
-   ;; attributes
+   ;; properties
    (alist->hashq-table
     (hash-map->list (lambda (key value)
                       (cons key (if (list? value)
                                     (map copy-vline value)
                                     (copy-vline value))))
-                    (get-component-attributes component)))))
+                    (get-component-properties component)))))
 
 (define-public (extract field)
   (lambda (e) (attr e field)))

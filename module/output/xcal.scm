@@ -17,7 +17,7 @@
 
   (define writer
    (cond
-    [(and=> (prop vline 'VALUE) (compose string->symbol car))
+    [(and=> (param vline 'VALUE) (compose string->symbol car))
      => get-writer]
     [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID
                         CREATED DTSTAMP LAST-MODIFIED
@@ -87,13 +87,13 @@
                values))))
 
 ;; ((key value ...) ...) -> `(parameters , ... )
-(define (parameters-tag properties)
-  (define outprops (filter-map
-                    (lambda (x) (apply property->value-tag x))
-                    properties))
+(define (parameters-tag parameters)
+  (define outparams (filter-map
+                     (lambda (x) (apply property->value-tag x))
+                     parameters))
 
-  (unless (null? outprops)
-    `(parameters ,@outprops)))
+  (unless (null? outparams)
+    `(parameters ,@outparams)))
 
 (define-public (vcomponent->sxcal component)
 
@@ -103,7 +103,7 @@
   (remove null?
    `(,tagsymb
      ;; TODO only have <properties> when it's non-empty.
-     ;; This becomes MUCH easier once attributes stop returning
+     ;; This becomes MUCH easier once properties stop returning
      ;; a hash-map...
      (properties
       ,@(filter
@@ -116,16 +116,16 @@
              (remove null?
                      `(,(downcase-symbol key)
                        ,(parameters-tag (reduce assq-merge
-                                                '() (map properties vlines)))
+                                                '() (map parameters vlines)))
                        ,@(for vline in vlines
                               (vline->value-tag vline))))]
 
             [(key vline)
              (remove null?
                      `(,(downcase-symbol key)
-                       ,(parameters-tag (properties vline))
+                       ,(parameters-tag (parameters vline))
                        ,(vline->value-tag vline)))])
-          (attributes component))))
+          (properties component))))
      ,(unless (null? (children component))
         `(components ,@(map vcomponent->sxcal (children component)))))))
 

@@ -3,7 +3,7 @@
  ((output xcal) vcomponent->sxcal)
  ((util) ->)
  ((vcomponent base)
-  properties attr* children)
+  parameters attr* children)
  )
 
 ;;; Some different types, same parameters
@@ -33,13 +33,13 @@ END:VCALENDAR"
       vcomponent->sxcal
       sxcal->vcomponent))
 
-;;; NOTE both these tests may fail since neither attributes nor properties are ordered sorted.
+;;; NOTE both these tests may fail since neither properties nor parameters are ordered sorted.
 
 (test-equal "c->x & c->x->c->x"
   (vcomponent->sxcal ev)
   (vcomponent->sxcal twice-converted))
 
-(test-equal "xcal properties"
+(test-equal "xcal parameters"
   '((X-TEST-PARAM "10"))
-  (properties (attr* (car (children twice-converted))
+  (parameters (attr* (car (children twice-converted))
                      'STATUS)))

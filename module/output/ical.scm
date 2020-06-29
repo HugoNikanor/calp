@@ -28,7 +28,7 @@
     ;; fields which can hold lists need not be considered here,
     ;; since they are split into multiple vlines when we parse them.
     (cond
-     [(and=> (prop vline 'VALUE) string->symbol) => get-writer]
+     [(and=> (param vline 'VALUE) string->symbol) => get-writer]
      [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID
                          CREATED DTSTAMP LAST-MODIFIED
                          ACKNOWLEDGED EXDATE))
@@ -128,7 +128,7 @@
               ";" (symbol->string key)
               (string-join (map (compose (get-writer 'TEXT) ->string) values)
                            "," 'infix))])
-          (properties vline)))
+          (parameters vline)))
     ":" (value-format key vline))))
 
 (define-public (component->ical-string component)
@@ -150,7 +150,7 @@
      [(key vline)
       (display (vline->string vline))
       (display "\r\n")])
-   (attributes component))
+   (properties component))
   (for-each component->ical-string (children component))
   (format #t "END:~a\r\n" (type component))
 
@@ -159,7 +159,7 @@
          => (lambda (alts) (hash-map->list (lambda (_ comp) (component->ical-string comp))
                                       alts))]))
 
-;; TODO tzid prop on dtstart vs tz field in datetime object
+;; TODO tzid param on dtstart vs tz field in datetime object
 ;; how do we keep these two in sync?
 (define (write-event-to-file event calendar-path)
   (define cal (make-vcomponent 'VCALENDAR))
@@ -170,7 +170,7 @@
 
   (add-child! cal event)
 
-  (awhen (prop (attr* event 'DTSTART) 'TZID)
+  (awhen (param (attr* event 'DTSTART) 'TZID)
          ;; TODO this is broken
          (add-child! cal (zoneinfo->vtimezone (getf 'zoneinfo) it)))
 

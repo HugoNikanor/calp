@@ -1,4 +1,6 @@
-(((vcomponent base) prop attr* properties)
+;;; TODO rename this file to param.scm
+
+(((vcomponent base) param attr* parameters)
  ((vcomponent parse) parse-calendar)
  ((util) sort*))
 
@@ -8,10 +10,10 @@ KEY;A=1;B=2:Some text
 END:DUMMY"
               parse-calendar))
 
-(test-equal '("1") (prop (attr* v 'KEY) 'A))
-(test-equal '("2") (prop (attr* v 'KEY) 'B))
-(test-equal #f (prop (attr* v 'KEY) 'C))
+(test-equal '("1") (param (attr* v 'KEY) 'A))
+(test-equal '("2") (param (attr* v 'KEY) 'B))
+(test-equal #f (param (attr* v 'KEY) 'C))
 
-(test-equal '(A B) (sort* (map car (properties (attr* v 'KEY)))
+(test-equal '(A B) (sort* (map car (parameters (attr* v 'KEY)))
                           string<?
                           symbol->string))
