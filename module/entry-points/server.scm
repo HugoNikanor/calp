@@ -141,7 +141,7 @@
 
              (parameterize ((warnings-are-errors #t))
                (catch 'warning
-                 (lambda () (calendar-import calendar event))
+                 (lambda () (add-event calendar event))
                  (lambda (err fmt args)
                    (return (build-response code: 400)
                            (format #f "~?~%" fmt args)))))

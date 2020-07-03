@@ -49,7 +49,9 @@
       (let loop ((c #\space))
         (case c
           [(#\n #\N) (throw 'return)]
-          [(#\y #\Y) (map (lambda (e) (calendar-import calendar e))
+          [(#\y #\Y) (map (lambda (e)
+                            (add-event calendar e)
+                            (save-event e))
                           (children new-events))]
           [else
            (let ((line (read-line)))

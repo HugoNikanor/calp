@@ -37,19 +37,10 @@
                                (children cal)))
               (getf 'calendars))))
 
-  (setf 'fixed-and-repeating-events
-        (let* ((repeating regular (partition repeating? (getf 'events))))
+  (let* ((repeating regular (partition repeating? (getf 'events))))
+    (setf 'fixed-events     (sort*! regular   date/-time<? (extract 'DTSTART)))
+    (setf 'repeating-events (sort*! repeating date/-time<? (extract 'DTSTART))))
 
-          ;; (report-time! "Sorting")
-          ;; NOTE There might be instances where we don't care if the
-          ;; collection if sorted, but for the time beieng it's much
-          ;; easier to always sort it.
-          (list
-           (sort*! regular   date/-time<? (extract 'DTSTART))
-           (sort*! repeating date/-time<? (extract 'DTSTART)))))
-
-  (setf 'fixed-events (car (getf 'fixed-and-repeating-events)))
-  (setf 'repeating-events (cadr (getf 'fixed-and-repeating-events)))
 
   (setf 'event-set
         (interleave-streams
@@ -85,9 +76,43 @@
                   read-line))
 
 
+(define-public (add-event calendar event)
+
+  (add-child! calendar event)
+
+  (getf 'uid-map)
+
+  (unless (prop event 'UID)
+    (set! (prop event 'UID) (uuidgen)))
+
+  (let ((events (getf 'events)))
+   (setf 'events (cons event events)))
+
+  (if (repeating? event)
+      (let ((repeating (getf 'repeating-events)))
+        (setf 'repeating-events (insert-ordered repeating ev-time<?)))
+      (let ((regular (getf 'fixed-events)))
+        (setf 'fixed-events (insert-ordered event regular ev-time<?))))
+
+  (let ((event-set (getf 'event-set)))
+    (setf 'event-set
+          (interleave-streams
+           ev-time<?
+           (list (if (repeating? event)
+                     (generate-recurrence-set event)
+                     (stream event))
+                 event-set))))
+
+  (hash-set! (getf 'uid-map) (prop event 'UID)
+             event)
+
+  (prop event 'UID))
+
+
 (define / file-name-separator-string)
 
-(define-public (calendar-import calendar event)
+(define-public (save-event event)
+  (define calendar (parent event))
   (case (prop calendar 'X-HNH-SOURCETYPE)
     [(file)
      (error "Importing into direct calendar files not supported")]
