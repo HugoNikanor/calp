@@ -439,6 +439,19 @@
             (cons (car rem) (loop (not flipflop) (cdr rem)))
             ))))
 
+;; @example
+;; (insert-ordered 5 (iota 10))
+;; ⇒ (0 1 2 3 4 5 5 6 7 8 9)
+;; @end example
+(define*-public (insert-ordered item collection optional: (< <))
+  (cond [(null? collection)
+         (list item)]
+        [(< item (car collection))
+         (cons item collection)]
+        [else
+         (cons (car collection)
+               (insert-ordered item (cdr collection) <))]))
+
 
 
 (define-syntax ->
