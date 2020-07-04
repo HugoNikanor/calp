@@ -44,22 +44,17 @@
   date?
   (year year) (month month) (day day))
 
-;;; NOTE all these printers would benefit from using datetime->string,
-;;; that however is currently in the (datetime util) module, which leads
-;;; to a dependency cycle.
+(define*-public (date key: (year 0) (month 0) (day 0))
+  (make-date year month day))
 
 (set-record-type-printer!
  <date>
  (lambda (r p)
-   (if (or (not (integer? (year r)))
-           (not (integer? (month r)))
-           (not (integer? (day r))))
-       (format p "BAD~s-~s-~s" (year r) (month r) (day r))
-       (format p "#~4'0d-~2'0d-~2'0d"
-               (year r) (month r) (day r)))))
+   (catch 'misc-error
+     (lambda () (display (date->string r "#~Y-~m-~d") p))
+     (lambda (err _ fmt args . rest)
+       (format p "BAD~s-~s-~s" (year r) (month r) (day r))))))
 
-(define*-public (date key: (year 0) (month 0) (day 0))
-  (make-date year month day))
 
 ;;; TIME
 
@@ -68,19 +63,18 @@
   time?
   (hour hour) (minute minute) (second second))
 
+(define*-public (time key: (hour 0) (minute 0) (second 0))
+  (make-time hour minute second))
+
 (set-record-type-printer!
  <time>
  (lambda (r p)
-   (if (or (not (integer? (hour r)))
-           (not (integer? (minute r)))
-           (not (integer? (second r))))
+   (catch 'misc-error
+     (lambda () (display (time->string r "#~H:~M:~S") p))
+     (lambda (err _ fmt args  rest)
        (format p "BAD~s:~s:~s"
-               (hour r) (minute r) (second r))
-       (format p "#~2'0d:~2'0d:~2'0d"
-               (hour r) (minute r) (second r)))))
+               (hour r) (minute r) (second r))))))
 
-(define*-public (time key: (hour 0) (minute 0) (second 0))
-  (make-time hour minute second))
 
 ;;; DATETIME
 
@@ -92,28 +86,11 @@
   (tz tz) ; #f for localtime, "UTC", "Europe/Stockholm", ...
   )
 
-(set-record-type-printer!
- <datetime>
- (lambda (r p)
-   (if (and (tz r) (not (string=? "UTC" (tz r))))
-       (write `(datetime date: ,(get-date r)
-                         time: ,(get-time% r)
-                         tz: ,(tz r))
-              p)
-       (display
-        (string-append
-         (with-output-to-string (lambda () (write (get-date r))))
-         "T"
-         (string-drop
-          (with-output-to-string (lambda () (write (get-time% r))))
-          1)
-         ;; only possible case, others handled in top `if'.
-         (if (tz r) "Z" ""))
-        p))))
-
 (export get-date)
+
 (define-public (get-timezone datetime)
   (tz datetime))
+
 
 (define*-public (datetime
                  key: date time
@@ -123,6 +100,13 @@
   (make-datetime (or date (make-date year month day))
                  (or time (make-time hour minute second))
                  tz))
+
+(set-record-type-printer!
+ <datetime>
+ (lambda (r p)
+   (if (and (tz r) (not (string=? "UTC" (tz r))))
+       (write (datetime->sexp r) p)
+       (display (datetime->string r "#~1T~3~Z") p))))
 
 
 
@@ -154,8 +138,6 @@
             second: (tm:sec  tm)
             tz:     (tm:zone tm)))
 
-(define (vector-last v)
-  (vector-ref v (1- (vector-length v))))
 
 (define-public (datetime->unix-time dt)
   (let ((tm (datetime->tm dt)))
@@ -647,33 +629,7 @@
                                      (get-date start))
               time: fixed-time)))
 
-
 
-
-;;; Parsers for vcomponent usage
-
-;; substring to number, local here
-(define (s->n str from to)
-  (string->number (substring/read-only str from to)))
-
-(define-public (parse-ics-date str)
-  (date year:  (s->n str 0 4)
-        month: (s->n str 4 6)
-        day:   (s->n str 6 8)))
-
-(define-public (parse-ics-time str)
-  (time hour:   (s->n str 0 2)
-        minute: (s->n str 2 4)
-        second: (s->n str 4 6)))
-
-(define*-public (parse-ics-datetime str optional: tz)
-  (unless (string-any #\T str)
-    (throw 'parse-error "String ~a doesn't look like a valid datetime" str))
-  (let* (((datestr timestr) (string-split str #\T)))
-    (datetime date: (parse-ics-date datestr)
-              time: (parse-ics-time timestr)
-              tz: (if (char=? #\Z (string-ref str (1- (string-length str))))
-                      "UTC" tz))))
 
 ;; this returns UTC time, with a TZ component set to "UTC"
 (define-public (current-datetime)
@@ -683,56 +639,137 @@
   (get-date (current-datetime)))
 
 
+
 
-;; Reader extensions
 
-(define (parse-date% str)
+(define-public (parse-freeform-date str)
   (let* (((year month day) (map string->number (string-split str #\-))))
-    `(date year: ,year month: ,month day: ,day)))
+    (date year: year month: month day: day)
+    ))
+
+(define*-public (string->datetime str optional: (fmt "~Y-~m-~dT~H:~M:~S~Z"))
+  (let loop ((str (string->list str))
+             (fmt (string->list fmt))
+             (dt (datetime)))
+
+    (define time (get-time% dt))
+    (define date (get-date dt))
+    (define (as-dt dt)
+      (cond [(date? dt) (datetime date: dt time: time)]
+            [(time? dt) (datetime date: date time: dt)]
+            [else dt]))
+
+    (cond [(null? str)
+           ;; (warning  "Premature end of string")
+           dt]
+          [(null? fmt)
+           ;; (warning "Unsparsed characters at end of string")
+           dt]
+          [(eq? #\~ (car fmt))
+           (case (cadr fmt)
+             [(#\~) (if (eq? #\~ (car str))
+                        (loop (cdr str)
+                              (cddr fmt)
+                              dt)
+                        (error "Non-match"))]
+             [(#\Z)
+              (if (eq? #\Z (car str))
+                  (loop (cdr str)
+                        (cdr fmt)
+                        (set (tz dt) "UTC"))
+                  (loop str
+                        (cdr fmt)
+                        dt))]
+             [(#\H #\M #\S #\m #\d)
+              (let* ((pre post (split-at str 2))
+                     (num (-> pre list->string string->number)))
+                (loop
+                 post
+                 (cddr fmt)
+                 (as-dt
+                  (case (cadr fmt)
+                    [(#\H) (set (hour time)   num)]
+                    [(#\M) (set (minute time) num)]
+                    [(#\S) (set (second time) num)]
+                    [(#\m) (set (month date)  num)]
+                    [(#\d) (set (day date)    num)]))))]
+
+             [(#\Y)
+              (let* ((pre post (split-at str 4))
+                     (num (-> pre list->string string->number)))
+                (loop
+                 post
+                 (cddr fmt)
+                 (as-dt (set (year date) num))))]
+
+             [else
+              (error "Unimplemented or incorrect parse token")])]
+          [else
+           (if (eq? (car str) (car fmt))
+               (loop (cdr str)
+                     (cdr fmt)
+                     dt)
+               (error (format #f "Mismatched symbol, expected ~a got ~a"
+                              (car fmt) (car str))))])))
+
+(define*-public (string->time str optional: (fmt "~H:~M:~S"))
+  (get-time% (string->datetime str fmt)))
+
+(define*-public (string->date str optional: (fmt "~Y-~m-~d"))
+  (get-date (string->datetime str fmt)))
+
+
+
+(define-public (parse-ics-date str)
+  (string->date str "~Y~m~d"))
+
+(define-public (parse-ics-time str)
+  (string->time str "~H~M~S"))
+
+(define*-public (parse-ics-datetime str optional: zone)
+  (let ((dt (string->datetime str "~Y~m~dT~H~M~S~Z")))
+    (if (tz dt)
+        dt
+        (set (tz dt) zone))))
 
 (define-public (parse-iso-date str)
-  (let* (((year month day) (map string->number (string-split str #\-))))
-    (date year: year month: month day: day)))
-
-(define (parse-time% timestr)
-  (let* (((hour minute second) (string-split timestr #\:)))
-    (let ((hour (string->number hour))
-          (minute (string->number minute))
-          (second (string->number second)))
-      `(time hour: ,hour minute: ,minute second: ,second))))
+  (string->date str))
 
 (define-public (parse-iso-time str)
-  (let* (((hour minute second) (map string->number (string-split str #\:))))
-    (time hour: hour minute: minute second: second)))
-
-(define (parse-datetime% str)
-  (let* (((date time) (string-split str #\T)))
-    (when (string= "Z" (string-take-right str 1))
-      (set! time (string-drop-right time 1)))
-    `(datetime date: ,(parse-date% date)
-               time: ,(parse-time% time)
-               tz: ,(and (string= "Z" (string-take-right str 1))
-                         "UTC"))))
+  (string->time str))
 
 (define-public (parse-iso-datetime str)
-  (let* (((date time) (string-split str #\T)))
-    (when (string= "Z" (string-take-right str 1))
-      (set! time (string-drop-right time 1)))
-    (datetime date: (parse-iso-date date)
-              time: (parse-iso-time time)
-              tz: (and (string= "Z" (string-take-right str 1))
-                       "UTC"))))
+  (string->datetime str))
+
+(define (date->sexp d)
+  `(date year: ,(year d)
+         month: ,(month d)
+         day: ,(day d)))
+
+(define (time->sexp t)
+  `(time hour: ,(hour t)
+         minute: ,(minute t)
+         second: ,(second t)))
+
+(define (datetime->sexp dt)
+  `(datetime date: ,(get-date dt)
+             time: ,(get-time% dt)
+             tz: ,(tz dt)))
 
 (define (date-reader chr port)
   (unread-char chr port)
   (let ((line (symbol->string (read port))))
-    (cond [(string-contains line "T") (parse-datetime% line)]
-          [(string-contains line ":") (parse-time% line)]
-          [(string-contains line "-") (parse-date% line)])))
+    (cond [(string-contains line "T")
+           (-> line string->datetime datetime->sexp)]
+          [(string-contains line ":")
+           (-> line string->time time->sexp)]
+          [(string-contains line "-")
+           (-> line string->date date->sexp)])))
 
 (read-hash-extend #\0 date-reader)
 (read-hash-extend #\1 date-reader)
 (read-hash-extend #\2 date-reader)
+
 
 
 
@@ -747,11 +784,6 @@
   (set-> date
          (day 1)
          (month 1)))
-
-(define-public (parse-freeform-date str)
-  (let* (((year month day) (map string->number (string-split str #\-))))
-    (date year: year month: month day: day)
-    ))
 
 (define-public (date-stream date-increment start-day)
   (stream-iterate (lambda (d) (date+ d date-increment))
@@ -867,7 +899,9 @@
                               7)))
        (1+ week))])))
 
-(define*-public (date-starting-week week-number d optional: (wkst (week-start)))
+(define*-public (date-starting-week
+                 week-number d
+                 optional: (wkst (week-start)))
   (date+ (week-1-start d wkst)
          (date day: (* (1- week-number) 7))))
 
@@ -878,18 +912,23 @@
   ;; NOTE this allows days larger than 7 (sunday if counting from monday).
   (let ((str (catch 'out-of-range
                (lambda () (locale-day (1+ (modulo week-day-number 7)) locale))
-               (lambda (oor str num) (scm-error 'out-of-range 'week-day-name
-                                           "~a == (~a % 7) + 1"
-                                           (list num week-day-number) (list week-day-number))))))
+               (lambda (oor str num)
+                 (scm-error 'out-of-range 'week-day-name
+                            "~a == (~a % 7) + 1"
+                            (list num week-day-number)
+                            (list week-day-number))))))
     ;; I also know about the @var{locale-day-short} method, but I need
     ;; strings of length 2.
     (if truncate-to
         (string-take str truncate-to)
         str)))
 
-(define*-public (datetime->string datetime optional: (fmt "~Y-~m-~dT~H:~M:~S") key: allow-unknown?)
+(define*-public (datetime->string
+                 datetime
+                 optional: (fmt "~Y-~m-~dT~H:~M:~S")
+                 key: allow-unknown?)
   (define date (get-date datetime))
-  (define time ((@ (datetime) get-time%) datetime))
+  (define time (get-time% datetime))
   (with-output-to-string
     (lambda ()
       (fold (lambda (token state)
@@ -923,11 +962,17 @@
             #f
             (string->list fmt)))))
 
-(define*-public (date->string date optional: (fmt "~Y-~m-~d") key: allow-unknown?)
-  (datetime->string (datetime date: date) fmt allow-unknown?: allow-unknown?))
+(define*-public (date->string date
+                              optional: (fmt "~Y-~m-~d")
+                              key: allow-unknown?)
+  (datetime->string (datetime date: date)
+                    fmt allow-unknown?: allow-unknown?))
 
-(define*-public (time->string time optional: (fmt "~H:~M:~S") key: allow-unknown?)
-  (datetime->string (datetime time: time) fmt allow-unknown?: allow-unknown?))
+(define*-public (time->string time
+                              optional: (fmt "~H:~M:~S")
+                              key: allow-unknown?)
+  (datetime->string (datetime time: time)
+                    fmt allow-unknown?: allow-unknown?))
 
 
 ;; @verbatim
@@ -1065,7 +1110,7 @@
                     (not (zero? (year (get-date dt)))))
                 (error "Multi-month intervals only supported when start-date is given" dt)]
                [else (day (get-date dt))])))
-    (+ (time->decimal-hour ((@ (datetime) get-time%) dt))
+    (+ (time->decimal-hour (get-time% dt))
        (* (1- date-diff) 24))))
 
 ;; Returns a list of all dates from start to end.

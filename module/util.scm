@@ -519,6 +519,11 @@
             (call-with-values (lambda () (apply proc args)) list))
           lists)))
 
+
+
+(define-public (vector-last v)
+  (vector-ref v (1- (vector-length v))))
+
 
 
 
