@@ -7,7 +7,6 @@
   :use-module (util)
   :use-module (util exceptions)
   :use-module (datetime)
-  :use-module (datetime util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9 gnu)
   )

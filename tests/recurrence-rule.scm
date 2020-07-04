@@ -1,7 +1,7 @@
 (((vcomponent recurrence parse) parse-recurrence-rule)
  ((vcomponent recurrence internal)
   make-recur-rule weekdays intervals)
- ((datetime util) mon))
+ ((datetime) mon))
 
 
 (test-equal

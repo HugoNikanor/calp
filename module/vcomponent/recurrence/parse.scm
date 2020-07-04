@@ -5,7 +5,6 @@
 
   #:use-module (srfi srfi-1)
   #:use-module (datetime)
-  #:use-module (datetime util)
   #:use-module (srfi srfi-26)
   #:use-module (vcomponent recurrence internal)
   #:use-module (util)

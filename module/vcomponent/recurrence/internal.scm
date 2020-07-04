@@ -3,7 +3,6 @@
 
   #:use-module (srfi srfi-88)           ; better keywords
   #:use-module ((vcomponent base) :select (prop))
-  #:use-module (datetime util)
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-9 gnu)
   #:use-module (util)

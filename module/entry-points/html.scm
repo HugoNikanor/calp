@@ -7,7 +7,6 @@
   :use-module (util options)
   ;; :use-module (vcomponent)
   :use-module (datetime)
-  :use-module (datetime util)
   :use-module (ice-9 getopt-long)
   )
 

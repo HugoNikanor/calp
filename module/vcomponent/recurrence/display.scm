@@ -10,8 +10,11 @@
   :use-module (vcomponent recurrence internal)
   :use-module (text util)
   :use-module (text numbers)
-  :use-module ((datetime) :select (time))
-  :use-module (datetime util)
+  :use-module ((datetime) :select (time time->string
+                                        datetime->string
+                                        week-day-name
+                                        locale-month
+                                        ))
   )
 
 

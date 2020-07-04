@@ -1,7 +1,7 @@
 (((vcomponent recurrence parse)
   parse-recurrence-rule)
  ((vcomponent recurrence) make-recur-rule)
- ((datetime util) mon)
+ ((datetime) mon)
  ((util exceptions) warnings-are-errors warning-handler)
  )
 

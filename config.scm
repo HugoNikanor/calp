@@ -11,6 +11,8 @@
              (glob)
 
              (util config)
+
+             (datetime)
              )
 
 (set-config! 'calendar-files (glob "~/.local/var/cal/*"))
@@ -68,4 +70,4 @@
                         'pre "<br/>" 'post))]
          [else (parse-links str)])))
 
-(set-config! 'week-start (@ (datetime util) mon))
+(set-config! 'week-start mon)

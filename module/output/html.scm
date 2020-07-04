@@ -13,7 +13,6 @@
   #:use-module (util tree)
   #:duplicates (last)
   #:use-module (datetime)
-  #:use-module (datetime util)
   #:use-module (output general)
   #:use-module (ice-9 curried-definitions)
   #:use-module (ice-9 match)

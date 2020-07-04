@@ -10,7 +10,8 @@
  ((vcomponent recurrence display) format-recurrence-rule)
  ((vcomponent recurrence internal) count until)
  ((vcomponent base) make-vcomponent prop prop* extract)
- ((datetime) parse-ics-datetime datetime time date)
+ ((datetime) parse-ics-datetime datetime time date
+  datetime->string)
  ((util) -> mod!)
  ((guile) set!)
  ((srfi srfi-41) stream->list)

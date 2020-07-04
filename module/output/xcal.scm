@@ -7,7 +7,6 @@
   :use-module (ice-9 match)
   :use-module (output common)
   :use-module (datetime)
-  :use-module (datetime util)
   :use-module (srfi srfi-1)
   )
 

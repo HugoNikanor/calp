@@ -6,7 +6,6 @@
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (datetime)
-  :use-module (datetime util)
   :use-module (vcomponent base)
   :use-module (vcomponent parse)
   :use-module ((vcomponent recurrence) :select (generate-recurrence-set repeating?))

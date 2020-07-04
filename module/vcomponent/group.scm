@@ -2,7 +2,6 @@
   #:use-module (vcomponent)
   #:use-module (vcomponent datetime)
   #:use-module (datetime)
-  #:use-module (datetime util)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
   #:export (group-stream get-groups-between))

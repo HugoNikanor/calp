@@ -194,7 +194,7 @@
     (format (logport) "<?xml version=\"1.0\" encoding=\"UTF-8\"?>~%"))
 
   (format (logport) "<run><start>~a</start>~%"
-          ((@ (datetime util) datetime->string)
+          ((@ (datetime) datetime->string)
            ((@ (datetime) current-datetime))))
   (report-time! "Program start")
   ;; ((@ (util config) print-configuration-documentation))

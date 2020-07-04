@@ -1,5 +1,5 @@
 (((srfi srfi-41) stream-take stream-map stream->list stream-car)
- ((datetime util) day-stream)
+ ((datetime) day-stream)
  ((vcomponent base) extract prop)
 
  ((vcomponent) parse-calendar)

@@ -132,7 +132,7 @@
 
 (define-once lib (dynamic-link))
 
-(define-foreign (tcsetattr int *) → int
+(define-foreign (tcsetattr int int *) → int
   (dynamic-func "tcsetattr" lib))
 
 (define* (tcsetattr! termios  #:optional

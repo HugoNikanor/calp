@@ -1,5 +1,5 @@
-(((datetime) date time datetime)
- ((datetime util) month-stream in-date-range? timespan-overlaps?)
+(((datetime) date time datetime
+  month-stream in-date-range? timespan-overlaps?)
  ((srfi srfi-41) stream->list stream-take
   ))
 

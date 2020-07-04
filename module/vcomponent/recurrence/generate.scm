@@ -10,7 +10,6 @@
   :use-module (vcomponent recurrence parse)
 
   :use-module (datetime)
-  :use-module (datetime util)
   :use-module (ice-9 curried-definitions) )
 
 

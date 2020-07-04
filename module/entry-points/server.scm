@@ -29,7 +29,6 @@
 
   :use-module (vcomponent)
   :use-module (datetime)
-  :use-module (datetime util)
   :use-module (output html)
   :use-module (output ical)
 

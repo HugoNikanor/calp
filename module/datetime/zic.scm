@@ -12,7 +12,6 @@
   :use-module (util)
   :use-module (util exceptions)
   :use-module (datetime)
-  :use-module (datetime util)
   :use-module (datetime timespec)
   :use-module (ice-9 rdelim)
   :use-module (srfi srfi-1)

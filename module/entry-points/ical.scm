@@ -5,7 +5,6 @@
   :use-module (output ical)
   :use-module (ice-9 getopt-long)
   :use-module (datetime)
-  :use-module (datetime util)
   )
 
 (define opt-spec

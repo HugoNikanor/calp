@@ -8,7 +8,6 @@
   :use-module (vcomponent datetime)
   :use-module (srfi srfi-1)
   :use-module (datetime)
-  :use-module (datetime util)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (datetime zic)

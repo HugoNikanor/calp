@@ -2,7 +2,6 @@
   #:use-module (output general)
   #:use-module (srfi srfi-1)
   #:use-module (datetime)
-  #:use-module (datetime util)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)

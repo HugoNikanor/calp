@@ -3,8 +3,7 @@
   :use-module (util)
   :use-module (util exceptions)
   :use-module (util base64)
-  :use-module (datetime)
-  :use-module (datetime util))
+  :use-module (datetime))
 
 
 (define (write-binary _ value)

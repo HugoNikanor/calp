@@ -2,7 +2,6 @@
   :use-module (util)
   :use-module (output types)
   :use-module (datetime)
-  :use-module (datetime util)
   :use-module (output common)
   )
 
