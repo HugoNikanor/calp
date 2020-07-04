@@ -27,32 +27,6 @@
 
 
 
-;; Create the @code{#$} reader macro for creating C bindings.
-;; For example
-;; @example
-;; #$ tcgetattr : int, * → int
-;; @end example
-;; would create a binding to a C function called tcgetattr, with the type
-;; int, * → int, and bind it to a scheme procedure of the same name.
-;; 
-;; Currently only links to the library stored in the variable lib, when called.
-(eval-when (compile expand)
- (read-hash-extend
-  #\$ (lambda (c port)
-        (let* ((name (string-trim-both (read-delimited ":" port)))
-               (input (read-delimited "→" port))
-               (out (string->symbol (string-trim-both (read-line port)))))
-          `(define ,(string->symbol name)
-             (pointer->procedure
-              ,out (dynamic-func ,name lib)
-              (list
-               ,@(map (lambda (symb)  (if (eq? symb '*) (quote '*) symb))
-                      (map (compose string->symbol string-trim-both)
-                           (string-split input #\,))))))))))
-
-
-
-
 (define (empty-values struct-type)
   (cond ((null? struct-type) '())
         ((list? struct-type)
@@ -137,19 +111,45 @@
 
 
 
+(define-syntax pointer-quote
+  (syntax-rules (*)
+    [(_ *) (quote *)]
+    [(_ a) a]))
+
+(define-syntax define-foreign
+  (syntax-rules (-> →)
+    [(_ (name intype ...) -> outtype body ...)
+     (define name
+       (pointer->procedure
+        outtype (begin body ...)
+        (list (pointer-quote intype) ...)))]
+    [(_ (name intype ...) → outtype body ...)
+     (define-foreign (name intype ...) -> outtype body ...)]
+    [(_ (name intype ...) body ...)
+     (define-foreign (name intype ...) -> void body ...)]))
+
+
+
 (define-once lib (dynamic-link))
 
-#$ tcsetattr : int, int, * → int
+(define-foreign (tcsetattr int *) → int
+  (dynamic-func "tcsetattr" lib))
+
 (define* (tcsetattr! termios  #:optional
                      (port (current-input-port))
                      (when TCSANOW))
   (with-ptr termios (lambda (ptr) (tcsetattr (port->fdes port) when ptr))))
 
 
-#$ tcgetattr : int, * → int
+(define-foreign (tcgetattr int *) → int
+  (dynamic-func "tcgetattr" lib))
+
 (define* (tcgetattr! termios #:optional (port (current-input-port)))
   (with-ptr termios (lambda (ptr) (tcgetattr (port->fdes port) ptr))))
 
-#$ cfmakeraw : * → int
+
+(define-foreign (cfmakeraw *)
+  (dynamic-func "cfmakeraw" lib))
+
 (define* (cfmakeraw! termios)
   (with-ptr termios cfmakeraw))
