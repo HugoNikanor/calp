@@ -91,7 +91,7 @@ Event must have the DTSTART and DTEND protperty set."
 (define-public (event-length/day date e)
   (if (not (prop e 'DTEND))
       (if (date? (prop e 'DTSTART))
-          #24:00:00
+          (time hour: 24)
           (time))
       (let ((start (prop e 'DTSTART))
             (end (prop e 'DTEND)))
@@ -99,12 +99,12 @@ Event must have the DTSTART and DTEND protperty set."
                (time- (as-time end) (as-time start))]
               ;; Starts today, end in future day
               [(date= date (as-date start))
-               (time- #24:00:00 (as-time start))]
+               (time- (time hour: 24) (as-time start))]
               ;; Ends today, start earlier day
               [(date= date (as-date end))
                (as-time end)]
               ;; start earlier date, end later date
-              [else #24:00:00]))))
+              [else (time hour: 24)]))))
 
 
 ;; 22:00 - 03:00
@@ -199,7 +199,7 @@ Event must have the DTSTART and DTEND protperty set."
 ;; event is for limiter
 (define-public (zoneinfo->vtimezone zoneinfo zone-name event)
   (define vtimezone (make-vcomponent 'VTIMEZONE))
-  (define last-until (datetime date: #1000-01-01))
+  (define last-until (datetime date: (date month: 1 day: 1)))
   (define last-offset (timespec-zero))
   (set! (prop vtimezone 'TZID) zone-name)
 
