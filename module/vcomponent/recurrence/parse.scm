@@ -78,12 +78,14 @@
      (let* (((key val) kv))
        (let-lazy
         ((symb (string->symbol val))
-         ;; TODO this is an ugly hack.
-         ;; But sending in datetime-parser instead
-         ;; leads to dependency problems in vcomponent.
-         (date (catch 'parse-error
-                 (lambda () (parse-ics-datetime val))
-                 (lambda _ (parse-ics-date val))))
+         ;; NOTE until MUST have the same value type as DTSTART
+         ;; on the object. Idealy we would save that type and
+         ;; check it here. That however is impractical since we
+         ;; might encounter the RRULE field before the DTSTART
+         ;; field.
+         (date (if (= 8 (string-length val))
+                 (parse-ics-date val)
+                 (parse-ics-datetime val)))
          (day (rfc->datetime-weekday (string->symbol val)))
          (days (map parse-day-spec (string-split val #\,)))
          (num  (string->number val))
