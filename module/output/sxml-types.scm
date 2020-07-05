@@ -12,11 +12,12 @@
   `(date ,(date->string v "~Y-~m-~d")))
 
 (define (write-datetime p v)
-  ;; TODO TZID?
   `(date-time
     ,(datetime->string
       (hashq-ref p 'X-HNH-ORIGINAL v)
-      ;; TODO ~z?
+      ;; 'Z' should be included for UTC,
+      ;; other timezones MUST be specified
+      ;; in the TZID parameter.
       "~Y-~m-~dT~H:~M:~S~Z")))
 
 (define (write-time _ v)
