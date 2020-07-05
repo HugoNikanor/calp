@@ -13,18 +13,22 @@
 
   (format #t "~aBEGIN ~a~%" ii (type vcomponent))
 
-  (hash-for-each (lambda (key vline)
-                   (format #t "~a~a = ~a"
-                           iii
-                           (trim-to-width (symbol->string key) maxlen)
-                           (trim-to-width
-                                   (format #f "~a" (value vline))
-                                   (- 80 indent maxlen)))
-                   (awhen (parameters vline)
-                          (display " ;")
-                          (for (key value) in it
-                               (format #t " ~a=~a" key value)))
-                   (newline))
+  (hash-for-each (lambda (key values)
+                   (define (out vline)
+                    (format #t "~a~a = ~a"
+                            iii
+                            (trim-to-width (symbol->string key) maxlen)
+                            (trim-to-width
+                             (format #f "~a" (value vline))
+                             (- 80 indent maxlen)))
+                    (awhen (parameters vline)
+                           (display " ;")
+                           (for (key value) in it
+                                (format #t " ~a=~a" key value)))
+                    (newline))
+                   (if (list? values)
+                       (for-each out values)
+                       (out values)))
                  (properties vcomponent))
 
   (for child in (children vcomponent)
