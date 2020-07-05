@@ -71,9 +71,10 @@
 (define (date-link date)
   (date->string date "~Y-~m-~d"))
 
-;; Generate an UID for an event
-;; TODO currently not guaranteed to be unique
-(define (UID ev)
+;; Generate an html id for an event.
+;; NOTE Not unique if two instances of the same event are placed at the exact
+;; same start time. Same event with different start times works fine.
+(define (html-id ev)
   (string-append
    (datetime->string (as-datetime (prop ev 'DTSTART)) "~Y~m~d~H~M~S")
    (html-attr (prop ev 'UID))))
@@ -184,7 +185,7 @@
 
   (define popup-id (symbol->string (gensym "popup")))
 
-  `((a (@ (href "#" ,(UID ev))
+  `((a (@ (href "#" ,(html-id ev))
           (class "hidelink"))
        (div (@ ,@(assq-merge
                   extra-attributes
@@ -421,7 +422,7 @@
               ,@(stream->list
                  (stream-map
                   (lambda (ev) (fmt-single-event
-                           ev `((id ,(UID ev)))
+                           ev `((id ,(html-id ev)))
                            fmt-header:
                            (lambda body
                              `(a (@ (href "#" ,(date-link (as-date (prop ev 'DTSTART))))
@@ -578,7 +579,7 @@
                  (pre-start start-date)
                  (post-end end-date))
 
-  ;; TODO maybe don't do this again for every month
+  ;; NOTE maybe don't do this again for every month
   (define evs (get-groups-between (group-stream events)
                                   start-date end-date))
 
@@ -797,7 +798,6 @@
   (create-files)
 
   ;; NOTE Something here isn't thread safe.
-  ;; TODO make it thread safe
   (stream-for-each
    (match-lambda
      [(start-date end-date)
