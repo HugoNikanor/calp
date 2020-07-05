@@ -31,10 +31,17 @@
   pre: (ensure procedure?))
 
 (define debug (make-parameter #f))
-
 (define-config debug #f
   "Places the generated thingy in debug mode"
   post: debug)
+
+
+;;; NOTE edit mode should preferably depend on login-status of the user
+;;; but this works for the time being.
+(define edit-mode (make-parameter #t))
+(define-config edit-mode #t
+  "Makes the document editable"
+  post: edit-mode)
 
 (define* (slider-input key: variable
                        (min 0)
@@ -214,8 +221,9 @@
     ;; The calc's here is to enable an "edit-mode".
     ;; Setting --editmode ≈ 0.8 gives some whitespace to the right
     ;; of the events, alowing draging there for creating new events.
-    ;; TODO only include var and calc when editing should be enabled.
-    (format #f "left:calc(var(--editmode)*~,3f%);width:calc(var(--editmode)*~,3f%);top:~,3f%;height:~,3f%;"
+    (format #f (if (edit-mode)
+                   "left:calc(var(--editmode)*~,3f%);width:calc(var(--editmode)*~,3f%);top:~,3f%;height:~,3f%;"
+                   "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;")
 
             (* 100 (x-pos ev))          ; left
             (* 100 (width ev))          ; width
@@ -714,25 +722,29 @@
 
 
                 (div (@ (style "grid-area: details"))
-                     ,(when (debug)
+                     ,(when (or (debug) (edit-mode))
                         `(details (@ (class "sliders"))
                                   (summary "Option sliders")
-                                  (label "Event blankspace")
-                                  ,(slider-input
-                                    variable: "editmode"
-                                    min: 0
-                                    max: 1
-                                    step: 0.01
-                                    value: 1)
 
-                                  (label "Fontsize")
-                                  ,(slider-input
-                                    unit: "pt"
-                                    min: 1
-                                    max: 20
-                                    step: 1
-                                    value: 8
-                                    variable: "event-font-size")))
+
+                                  ,@(when (edit-mode)
+                                      `((label "Event blankspace")
+                                        ,(slider-input
+                                          variable: "editmode"
+                                          min: 0
+                                          max: 1
+                                          step: 0.01
+                                          value: 1)))
+
+                                  ,@(when (debug)
+                                      `((label "Fontsize")
+                                        ,(slider-input
+                                          unit: "pt"
+                                          min: 1
+                                          max: 20
+                                          step: 1
+                                          value: 8
+                                          variable: "event-font-size")))))
 
                      ;; List of calendars
                      (details (@ (class "calendarlist"))
