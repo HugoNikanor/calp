@@ -12,7 +12,9 @@
   (unless (string=? "BASE64" (hashq-ref props 'ENCODING))
     (warning "Binary field not marked ENCODING=BASE64"))
 
-  ;; TODO whitespace in binary?
+  ;; For icalendar no extra whitespace is allowed in a
+  ;; binary field (except for line wrapping). This differs
+  ;; from xcal.
   (base64-string->bytevector value))
 
 ;; BOOLEAN

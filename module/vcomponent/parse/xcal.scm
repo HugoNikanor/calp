@@ -16,8 +16,9 @@
   (case type
 
     [(binary)
-     ;; TODO rfc6321 allows whitespace in binary?
-     (base64-string->bytevector (car value))]
+     ;; rfc6321 allows whitespace in binary
+     (base64-string->bytevector
+      (string-delete char-set:whitespace (car value)))]
 
     [(boolean) (string=? "true" (car value))]
 
