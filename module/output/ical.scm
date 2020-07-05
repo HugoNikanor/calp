@@ -175,7 +175,7 @@
 
   (unless (prop event 'UID)
     (set! (prop event 'UID)
-      (generate-uuid)))
+      (uuidgen)))
 
   (with-output-to-file (glob (format #f "~a/~a.ics"
                                      calendar-path

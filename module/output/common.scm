@@ -9,15 +9,6 @@
   :use-module (vcomponent)
   )
 
-;; TODO this is also defined @ (vcomponent parse component)
-(define-public (x-property? symb)
-  (string=? "X-" (string-take (symbol->string symb) 2)))
-
-;; TODO this is also defined twice
-(define-public (generate-uuid)
-  ((@ (rnrs io ports) call-with-port)
-   ((@ (ice-9 popen) open-input-pipe) "uuidgen")
-   (@ (ice-9 rdelim) read-line)))
 
 (define*-public (internal-field? symbol optional: (prefix "X-HNH-"))
   (string=? prefix

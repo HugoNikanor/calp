@@ -72,8 +72,6 @@
         (cons -1 semi-idxs)
         semi-idxs)))
 
-(define (x-property? symb)
-  (string=? "X-" (string-take (symbol->string symb) 2)))
 
 #;
 '(ATTACH ATTENDEE CATEGORIES

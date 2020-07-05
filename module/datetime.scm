@@ -864,7 +864,7 @@
 ;;; OPERATIONS
 
 
-;; TODO +1 month is weird for late days in a month.
+;; NOTE +1 month is weird for late days in a month.
 ;; is the last of january +1 month the last of february,
 ;; or a few days into march? It's at least not the 31 of
 ;; February, as the code is currently written.

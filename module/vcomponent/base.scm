@@ -188,3 +188,6 @@
 (define-public (key=? k1 k2)
   (eq? (as-symb k1)
        (as-symb k2)))
+
+(define-public (x-property? symb)
+  (string=? "X-" (string-take (symbol->string symb) 2)))

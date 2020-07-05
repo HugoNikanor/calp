@@ -63,17 +63,8 @@
 
 
 
-(use-modules (output ical)
-             (ice-9 popen)
-             ((ice-9 rdelim) :select (read-line))
-             ((rnrs io ports) :select (call-with-port))
-             )
-
-
-(define (uuidgen)
-  (call-with-port (open-input-pipe "uuidgen")
-                  read-line))
-
+;;; TODO vcomponent should NOT depend on output
+(use-modules (output ical))
 
 (define-public (add-event calendar event)
 
