@@ -1,7 +1,7 @@
 ;;; Commentary:
 ;; Code for parsing vdir's and icalendar files.
 ;; This module handles the finding of files, while
-;; (vcomponent parse component) handles reading data from icalendar files.
+;; (vcomponent parse ical) handles reading data from icalendar files.
 ;;; Code:
 
 (define-module (vcomponent parse)
@@ -17,7 +17,7 @@
   :use-module (util exceptions)
   :use-module (vcomponent base)
 
-  :use-module (vcomponent parse component)
+  :use-module (vcomponent parse ical)
   :re-export (parse-calendar)
   )
 

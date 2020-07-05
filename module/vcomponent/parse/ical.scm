@@ -1,6 +1,4 @@
-;;; TODO rename to (vcomponent parse ical)? To work nices alongside
-;;; (vcomponent parse xcal)
-(define-module (vcomponent parse component)
+(define-module (vcomponent parse ical)
   :use-module (util)
   :use-module (util exceptions)
   :use-module ((ice-9 rdelim) :select (read-line))
