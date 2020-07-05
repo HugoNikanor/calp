@@ -190,7 +190,7 @@
 
 (define (main args)
 
-  (when (zero? (ftell (logport)))
+  (when (zero? (stat:size (stat (logport))))
     (format (logport) "<?xml version=\"1.0\" encoding=\"UTF-8\"?>~%"))
 
   (format (logport) "<run><start>~a</start>~%"
