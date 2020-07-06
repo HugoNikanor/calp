@@ -40,41 +40,55 @@ let end_time = new Date();
 /* dynamicly created event when dragging */
 let event;
 
+let event_start = { x: NaN, y: NaN };
+
 function create_event_down (e) {
-    /* only allow start of dragging on background */
-    if (e.target != this) return;
-
-    /* only on left click */
-    if (e.buttons != 1) return;
-
-    /* [0, 1) -- where are we in the container */
-    time = round_time(24 * (e.offsetY / this.clientHeight),
-                      .25)
-
-    event = document.createElement("div");
-    event.style.top = time * 100/24 + "%";
-    event.dataset.time1 = time;
-    event.dataset.time2 = time;
-
-    event.className = "event generated";
-    event.style.pointerEvents = "none";
-    event.style.width = "calc(100% * var(--editmode))";
-    event.innerText = "New Event";
-
-    event.dataset.date = this.id;
-
-    /* Makes all current events transparent when dragging over them.
-       Without this weird stuff happens when moving over them
-    */
-    for (let e of this.children) {
-        e.style.pointerEvents = "none";
-    }
-
-    this.appendChild(event);
+    event_start.x = e.clientX;
+    event_start.y = e.clientY;
 }
 
 function create_event_move (e) {
-    if (! event) return;
+
+    if (e.buttons != 1) return;
+
+    /* Create event when we start moving the mouse. */
+    if (! event) {
+        /* Small deadzone so tiny click and drags aren't registered */
+        if (abs(event_start.x - e.clientX) < 10
+            && abs(event_start.y - e.clientY) < 5)
+        { return; }
+
+        /* only allow start of dragging on background */
+        if (e.target != this) return;
+
+        /* only on left click */
+        if (e.buttons != 1) return;
+
+        /* [0, 1) -- where are we in the container */
+        time = round_time(24 * (e.offsetY / this.clientHeight),
+                          .25)
+
+        event = document.createElement("div");
+        event.style.top = time * 100/24 + "%";
+        event.dataset.time1 = time;
+        event.dataset.time2 = time;
+
+        event.className = "event generated";
+        event.style.pointerEvents = "none";
+        event.style.width = "calc(100% * var(--editmode))";
+        event.innerText = "New Event";
+
+        event.dataset.date = this.id;
+
+        /* Makes all current events transparent when dragging over them.
+           Without this weird stuff happens when moving over them
+        */
+        for (let e of this.children) {
+            e.style.pointerEvents = "none";
+        }
+
+        this.appendChild(event);
+    }
 
     time2 = event.dataset.time2 =
         round_time(24 * (e.offsetY / event.parentElement.clientHeight),
@@ -163,6 +177,10 @@ function min(a, b) {
 
 function max(a, b) {
     return a > b ? a : b;
+}
+
+function abs(n) {
+    return n < 0 ? - n : n;
 }
 
 function setVar(str, val) {
