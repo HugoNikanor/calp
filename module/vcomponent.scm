@@ -100,6 +100,29 @@
   (prop event 'UID))
 
 
+(define-public (remove-event event)
+
+  (let ((events (getf 'events)))
+    (setf 'events (delete event events)))
+
+  (if (repeating? event)
+      (let ((repeating (getf 'repeating-events)))
+        (setf 'repeating-events (delete event repeating)))
+      (let ((regular (getf 'fixed-events)))
+        (setf 'fixed-events (delete event regular))))
+
+  (let ((event-set (getf 'event-set)))
+    (setf 'event-set
+          (stream-remove
+           (lambda (ev)
+             (equal? (prop ev 'UID)
+                     (prop event 'UID)))
+           event-set)))
+
+  (hash-set! (getf 'uid-map) (prop event 'UID)
+             #f))
+
+
 (define / file-name-separator-string)
 
 (define-public (save-event event)
