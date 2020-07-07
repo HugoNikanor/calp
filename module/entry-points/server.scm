@@ -180,6 +180,22 @@
                          (aif end (parse-iso-date it) (current-date)))
                         (print-all-events))))))
 
+   (GET "/calendar/:uid{.*}.xcs" (uid)
+        (aif (get-event-by-uid uid)
+             (return '((content-type application/calendar+xml))
+                     ;; TODO sxml->xml takes a port, would be better
+                     ;; to give it the return port imidiately.
+                     (with-output-to-string
+                       ;; TODO this is just the vevent part.
+                       ;; A surounding vcalendar is required, as well as
+                       ;; a doctype.
+                       ;; Look into changing how events carry around their
+                       ;; parent information, possibly splitting "source parent"
+                       ;; and "program parent" into different fields.
+                       (lambda () (sxml->xml ((@ (output xcal) vcomponent->sxcal) it)))))
+             (return (build-response code: 404)
+                     (format #f "No component with UID=~a found." uid))))
+
    (GET "/calendar/:uid{.*}.ics" (uid)
         (aif (get-event-by-uid uid)
              (return '((content-type text/calendar))
