@@ -722,10 +722,14 @@ along with their colors.
     position: absolute;
     top: 0;
     left: 0;
-    background-color: orange;
+    background-color: #dedede;
     right: 0;
     bottom: 0;
     overflow: auto;
+
+    min-width: 100%;
+    min-height: 100%;
+    resize: both;
 }
 
 .tpd-content-wrapper {
@@ -744,10 +748,15 @@ along with their colors.
 	z-index: 1;
 }
 
-script[type="application/calendar+xml"] {
+script[type="application/calendar+xml"], .xcal {
     display: block;
     font-family: monospace;
     font-size: xx-small;
+    padding-left: 1ch;
+}
+
+.html-tag {
+    color: rgb(136, 18, 128);
 }
 
 /* vim:expandtab:softtabstop=4:shiftwidth=4:

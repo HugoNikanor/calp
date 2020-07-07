@@ -1,3 +1,40 @@
+/* ------- XML Formatting --------------------------- */
+
+function start_tag(str) {
+    return "<span class='html-tag'>&lt;" + str + "&gt;</span>";
+}
+
+function end_tag(str) {
+    return "<span class='html-tag'>&lt;" + str + "/&gt;</span>";
+}
+
+function istring(indent) {
+    return "".padStart(indent);
+}
+
+function pretty_print_xml(xml, indent=0) {
+    /* pretty_print_xml(xml.documentElement) */
+
+    let tag = xml.tagName;
+
+
+    if (xml.childElementCount == 0) {
+        return istring(indent)
+            + start_tag(tag)
+            + "<b>" + xml.textContent + "</b>"
+            + end_tag(tag);
+    } else {
+        let str = istring(indent) + start_tag(tag) + "<br/>";
+        for (let child of xml.children) {
+            str += pretty_print_xml(child, indent + 1) + "<br/>";
+        }
+        str += istring(indent) + end_tag(tag);
+        return str;
+    }
+}
+
+/* -------------------------------------------------- */
+
 function round_time (time, fraction) {
     let scale = 1 / fraction;
     return Math.round (time * scale) / scale;
@@ -331,16 +368,26 @@ window.onload = function () {
     /* ---------------------------------------- */
 
     /*
-    var el = getElementSomehow();
-
-    let parser = new DOMParser();
-    let xml = parser.parseFromString(
-        el.getElementsByTagName("script")[0].innerText,
-        "text/xml");
     xml.querySelector("summary text").innerHTML = "Pastahack";
     let serializer = new XMLSerializer();
     serializer.serializeToString(xml);
     */
+
+    /* Pretty prints the xcal contents in each popup.
+       Done here since guile produces compact xml.
+
+       element.innerText should still be valid xcal xml.
+    */
+
+    let parser = new DOMParser();
+    for (let el of document.querySelectorAll("[type='application/calendar+xml']")) {
+        let xml = parser.parseFromString(el.innerText, "text/xml");
+        el.outerHTML = "<pre class='xcal'>"
+            + pretty_print_xml(xml.documentElement, 0)
+            + "</pre>";
+
+
+    }
 }
 
 
@@ -371,3 +418,4 @@ $(document).ready(function() {
     Tipped.setDefaultSkin("purple");
     Tipped.create(".event", tipped_args);
 });
+
