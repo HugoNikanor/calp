@@ -5,6 +5,10 @@ function start_tag(str) {
 }
 
 function end_tag(str) {
+    return "<span class='html-tag'>&lt;/" + str + "&gt;</span>";
+}
+
+function self_tag(str) {
     return "<span class='html-tag'>&lt;" + str + "/&gt;</span>";
 }
 
@@ -19,10 +23,14 @@ function pretty_print_xml(xml, indent=0) {
 
 
     if (xml.childElementCount == 0) {
-        return istring(indent)
-            + start_tag(tag)
-            + "<b>" + xml.textContent + "</b>"
-            + end_tag(tag);
+        if (xml.textContent) {
+            return istring(indent)
+                + start_tag(tag)
+                + "<b>" + xml.textContent + "</b>"
+                + end_tag(tag);
+        } else {
+            return istring(indent) + self_tag(tag);
+        }
     } else {
         let str = istring(indent) + start_tag(tag) + "<br/>";
         for (let child of xml.children) {
