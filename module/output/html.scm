@@ -142,6 +142,18 @@
       (div ,body))))
 
 
+(define (tabset elements)
+  (define tabgroup (symbol->string (gensym "tabgroup")))
+
+  `(div (@ (class "tabgroup"))
+        ,@(for (i (key body)) in (enumerate elements)
+               (define id (symbol->string (gensym "tab")))
+               `(div (@ (class "tab"))
+                     (input (@ (type "radio") (id ,id) (name ,tabgroup)
+                               ,@(when (zero? i) '((checked)))))
+                     (label (@ (for ,id) (style "top: " ,(* 6 i) "ex")) ,key)
+                     (div (@ (class "content")) ,body)))))
+
 (define (popup ev id)
   `(div (@ (class "popup-container") (id ,id))
         (div (@ (class "popup"))
@@ -156,7 +168,11 @@
                         title: "Ladda ner"
                         href: (string-append "/calendar/" (prop ev 'UID) ".ics")))
 
-             ,(fmt-single-event ev))))
+             ,(tabset
+               `(("📅" ,(fmt-single-event ev))
+                 ;; TODO only on debug/edit?
+                 ("</>" (script (@ (type "application/calendar+xml"))
+                                 ,((@ (output xcal) vcomponent->sxcal) ev))))))))
 
 
 
@@ -202,9 +218,6 @@
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative"))
                     (data-tipped-options ,(format #f "inline: '~a'" popup-id)))))
-            ,(when (debug)
-               `(script (@ (type "application/calendar+xml"))
-                        ,((@ (output xcal) vcomponent->sxcal) ev)))
             ,(when (prop ev 'RRULE)
                `(span (@ (class "repeating")) "↺"))
             ,((get-config 'summary-filter) ev (prop ev 'SUMMARY))
