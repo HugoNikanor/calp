@@ -46,7 +46,7 @@
   ((@ (vcomponent recurrence internal)
       recur-rule->rrule-string) value))
 
-(define (escape-chars str)
+(define-public (escape-chars str)
   (define (escape char)
     (string #\\ char))
   (string-concatenate

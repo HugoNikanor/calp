@@ -27,7 +27,8 @@
     ;; fields which can hold lists need not be considered here,
     ;; since they are split into multiple vlines when we parse them.
     (cond
-     [(and=> (param vline 'VALUE) string->symbol) => get-writer]
+     ;; TODO parameters return? One or many‽
+     [(and=> (param vline 'VALUE) (compose string->symbol car)) => get-writer]
      [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID
                          CREATED DTSTAMP LAST-MODIFIED
                          ACKNOWLEDGED EXDATE))
@@ -125,7 +126,7 @@
             [(key values ...)
              (string-append
               ";" (symbol->string key)
-              (string-join (map (compose (get-writer 'TEXT) ->string) values)
+              (string-join (map (compose escape-chars ->string) values)
                            "," 'infix))])
           (parameters vline)))
     ":" (value-format key vline))))
