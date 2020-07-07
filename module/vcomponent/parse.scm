@@ -5,7 +5,6 @@
 ;;; Code:
 
 (define-module (vcomponent parse)
-  :use-module (rnrs bytevectors)
   :use-module (srfi srfi-1)
 
   :use-module ((ice-9 hash-table) :select (alist->hash-table))
