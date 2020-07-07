@@ -185,33 +185,8 @@
                                  'flat
                                  (string->symbol stprof)))))
 
-
-(define logport (make-parameter (open-file "/tmp/calp.xml" "a")))
-
 (define (main args)
-
-  (when (zero? (stat:size (stat (logport))))
-    (format (logport) "<?xml version=\"1.0\" encoding=\"UTF-8\"?>~%"))
-
-  (format (logport) "<run><start>~a</start>~%"
-          ((@ (datetime) datetime->string)
-           ((@ (datetime) current-datetime))))
   (report-time! "Program start")
-  ;; ((@ (util config) print-configuration-documentation))
-  (let ((stack #f))
-    (catch #t
-      (lambda () (dynamic-wind (lambda () 'noop)
-                          (lambda () (catch 'return (lambda () (wrapped-main args)) values))
-                          (lambda () (run-hook shutdown-hook))
-                          ))
-      (case-lambda
-        ((err raiser fmt . args)
-         (format #t "Calp has crashed with [~a],
-~?~%See ~a for full backtrace~%"
-                 err fmt args (port-filename (logport)))
-         (format (logport) "<trace>~%<![CDATA[~%")
-         (display-backtrace stack (logport))
-         (format (logport) "]]></trace></run>~%"))
-        ((err . args)
-         (format #t "Calp has crashed with [~a]~%~a~%" err args)))
-      (lambda _ (set! stack (make-stack #t))))))
+  (dynamic-wind (lambda () 'noop)
+                (lambda () (catch 'return (lambda () (wrapped-main args)) values))
+                (lambda () (run-hook shutdown-hook))))
