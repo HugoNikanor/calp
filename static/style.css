@@ -636,7 +636,7 @@ along with their colors.
     background-color: #dedede;
     color: black;
 
-    overflow-y: auto;
+    /* overflow-y: auto; */
     max-width: 60ch;
     max-height: 60ch;
     min-width: 40ch;
@@ -684,6 +684,70 @@ along with their colors.
     background: blue;
     border-color: blue;
     left: -1em;
+}
+
+/* Tabs
+----------------------------------------
+*/
+
+.tabgroup {
+    position: relative;
+    width: 100%;
+}
+
+.tab label {
+    position: absolute;
+
+    left: 100%;
+    top: 0;
+    display: block;
+
+    max-height: 5ex;
+    min-height: 5ex;
+    min-width: 5ex;
+    max-width: 5ex;
+
+    border: 1px solid #ccc;
+    border-radius: 0 5px 5px 0;
+    background-color: #aeaeae;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tab [type=radio] { display: none; }
+
+.tab .content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: orange;
+    right: 0;
+    bottom: 0;
+    overflow: auto;
+}
+
+.tpd-content-wrapper {
+    overflow: visible;
+}
+
+
+.tab [type=radio]:checked ~ label {
+    z-index: 1;
+    /* to align all tab */
+    border-left: 3px solid transparent;
+    background-color: #dedede;
+}
+
+.tab [type=radio]:checked ~ label ~ .content {
+	z-index: 1;
+}
+
+script[type="application/calendar+xml"] {
+    display: block;
+    font-family: monospace;
+    font-size: xx-small;
 }
 
 /* vim:expandtab:softtabstop=4:shiftwidth=4:
