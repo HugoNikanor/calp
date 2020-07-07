@@ -66,21 +66,22 @@
 ;;; TODO vcomponent should NOT depend on output
 (use-modules (output ical))
 
+;;; TODO what should happen when an event with that UID already exists
+;;; in the calendar? Fail? Overwrite? Currently it adds a second element
+;;; with the same UID, which is BAD.
 (define-public (add-event calendar event)
 
   (add-child! calendar event)
-
-  (getf 'uid-map)
 
   (unless (prop event 'UID)
     (set! (prop event 'UID) (uuidgen)))
 
   (let ((events (getf 'events)))
-   (setf 'events (cons event events)))
+    (setf 'events (cons event events)))
 
   (if (repeating? event)
       (let ((repeating (getf 'repeating-events)))
-        (setf 'repeating-events (insert-ordered repeating ev-time<?)))
+        (setf 'repeating-events (insert-ordered event repeating ev-time<?)))
       (let ((regular (getf 'fixed-events)))
         (setf 'fixed-events (insert-ordered event regular ev-time<?))))
 
