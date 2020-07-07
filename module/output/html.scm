@@ -132,6 +132,8 @@
          ,@(let loop ((rem args))
              (cond
               [(null? rem) '()]
+              [(memv (car rem) '(onclick: href: class:))
+               (loop (cddr rem))]
               [(keyword? (car rem))
                (cons* `(,(keyword->symbol (car rem))
                         ,(cadr rem))
@@ -710,7 +712,7 @@
                                                     [else "month"]))))
                                 (input (@ (type date)
                                           (name "date")
-                                          (value (date->string start-date "~1"))))
+                                          (value ,(date->string start-date "~1"))))
                                 ,(btn "➔"))))
 
                 (details (@ (open) (style "grid-area: cal"))
