@@ -627,10 +627,10 @@
            ,(include-alt-css "/static/dark.css"  '(title "Dark"))
            ,(include-alt-css "/static/light.css" '(title "Light"))
 
-           (script (@ (src "/static/jquery-3.1.1.min.js")) "")
-           (script (@ (src "/static/tipped-4.7.0/dist/js/tipped.min.js")) "")
+           (script (@ (defer) (src "/static/jquery-3.1.1.min.js")) "")
+           (script (@ (defer) (src "/static/tipped-4.7.0/dist/js/tipped.min.js")) "")
 
-           (script (@ (src "/static/script.js")) "")
+           (script (@ (defer) (src "/static/script.js")) "")
            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
                            (map (lambda (c)
                                   (let* ((name (html-attr (prop c 'NAME)))
