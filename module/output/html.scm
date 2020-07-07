@@ -171,10 +171,10 @@
                         href: (string-append "/calendar/" (prop ev 'UID) ".ics")))
 
              ,(tabset
-               `(("📅" ,(fmt-single-event ev))
-                 ;; TODO only on debug/edit?
-                 ("</>" (script (@ (type "application/calendar+xml"))
-                                 ,((@ (output xcal) vcomponent->sxcal) ev))))))))
+               (cons* `("📅" ,(fmt-single-event ev))
+                      (when (edit-mode)
+                        `(("</>" (script (@ (type "application/calendar+xml"))
+                                         ,((@ (output xcal) vcomponent->sxcal) ev))))))))))
 
 
 
