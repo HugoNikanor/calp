@@ -165,16 +165,18 @@
                         title: "Stäng"
                         onclick: ""
                         class: '("close-tooltip")
-                        )
-                  ,(btn "📅"
-                        title: "Ladda ner"
-                        href: (string-append "/calendar/" (prop ev 'UID) ".ics")))
+                        ))
 
              ,(tabset
-               (cons* `("📅" ,(fmt-single-event ev))
-                      (when (edit-mode)
-                        `(("</>" (script (@ (type "application/calendar+xml"))
-                                         ,((@ (output xcal) vcomponent->sxcal) ev))))))))))
+               (append
+                `(("📅" ,(fmt-single-event ev))
+                  ("⤓" (article (@ (style "font-family:sans"))
+                                (p "Ladda ner")
+                                (ul (li (a (@ (href ,(string-append "/calendar/" (prop ev 'UID) ".ics"))) "som iCal"))
+                                    (li (a (@ (href ,(string-append "/calendar/" (prop ev 'UID) ".xcs"))) "som xCal"))))))
+                (when (edit-mode)
+                  `(("</>" (script (@ (type "application/calendar+xml"))
+                                   ,((@ (output xcal) vcomponent->sxcal) ev))))))))))
 
 
 

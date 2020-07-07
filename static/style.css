@@ -640,6 +640,7 @@ along with their colors.
     max-width: 60ch;
     max-height: 60ch;
     min-width: 40ch;
+    min-height: 20ch;
 }
 
 .popup article {
