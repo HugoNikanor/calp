@@ -131,6 +131,8 @@
 
           ;; TEXT, but allow a list
           [(memv key '(CATEGORIES RESOURCES))
+           ;; TODO An empty value should lead to an empty set
+           ;; currently it seems to lead to '("")
            (get-parser 'TEXT)]
 
           [(memv key '(VERSION))
