@@ -175,7 +175,8 @@
                                 (ul (li (a (@ (href ,(string-append "/calendar/" (prop ev 'UID) ".ics"))) "som iCal"))
                                     (li (a (@ (href ,(string-append "/calendar/" (prop ev 'UID) ".xcs"))) "som xCal"))))))
                 (when (edit-mode)
-                  `(("</>" (script (@ (type "application/calendar+xml"))
+                  `(("</>" (script (@ (class "xcal")
+                                      (type "application/calendar+xml"))
                                    ,((@ (output xcal) vcomponent->sxcal) ev))))))))))
 
 
