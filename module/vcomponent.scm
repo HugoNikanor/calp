@@ -66,6 +66,11 @@
 ;;; TODO vcomponent should NOT depend on output
 (use-modules (output ical))
 
+;;; TODO both add- and remove-event sometimes crash with
+;;;;; Warning: Unwind-only `stack-overflow' exception; skipping pre-unwind handler.
+;;; I belive this is due to how getf and setf work.
+
+
 ;;; TODO what should happen when an event with that UID already exists
 ;;; in the calendar? Fail? Overwrite? Currently it adds a second element
 ;;; with the same UID, which is BAD.
