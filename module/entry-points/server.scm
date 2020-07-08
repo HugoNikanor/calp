@@ -105,6 +105,18 @@
                                      intervaltype: 'month
                                      ))))))
 
+
+   (POST "/remove" (uid)
+         (unless uid
+           (return (build-response code: 400)
+                   "uid required"))
+
+         (aif (get-event-by-uid uid)
+              (begin (remove-event it)
+                     (return (build-response code: 204) ""))
+              (return (build-response code: 400)
+                      (format #f "No event with UID '~a'" uid))))
+
    ;; TODO this fails when dtstart is <date>.
    (POST "/insert" (cal data)
 
