@@ -63,9 +63,6 @@
 
 
 
-;;; TODO vcomponent should NOT depend on output
-(use-modules (output ical))
-
 ;;; TODO both add- and remove-event sometimes crash with
 ;;;;; Warning: Unwind-only `stack-overflow' exception; skipping pre-unwind handler.
 ;;; I belive this is due to how getf and setf work.
@@ -128,30 +125,3 @@
              #f))
 
 
-(define / file-name-separator-string)
-
-(define-public (save-event event)
-  (define calendar (parent event))
-  (case (prop calendar 'X-HNH-SOURCETYPE)
-    [(file)
-     (error "Importing into direct calendar files not supported")]
-
-    [(vdir)
-     (let* ((uid (or (prop event 'UID) (uuidgen)))
-            ;; copy to enusre writable string
-            (tmpfile (string-copy (string-append (prop calendar 'X-HNH-DIRECTORY)
-                                                 / ".calp-" uid "XXXXXX")))
-            (port (mkstemp! tmpfile)))
-       (set! (prop event 'UID) uid)
-       (with-output-to-port port
-         (lambda () (print-components-with-fake-parent (list event))))
-       ;; does close flush?
-       (force-output port)
-       (close-port port)
-       (rename-file tmpfile (string-append (prop calendar 'X-HNH-DIRECTORY)
-                                           / uid ".ics"))
-       uid)]
-
-    [else
-     (error "Source of calendar unknown, aborting.")
-     ]))
