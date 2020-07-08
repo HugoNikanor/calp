@@ -164,8 +164,13 @@
                   ,(btn "×"
                         title: "Stäng"
                         onclick: ""
-                        class: '("close-tooltip")
-                        ))
+                        class: '("close-tooltip"))
+                  ,(btn "🗑"
+                        title: "Ta bort"
+                        ;; Apparently an id gets recieved
+                        ;; as the whole object in js.
+                        onclick: (format #f "remove_event(~a)"
+                                         id)))
 
              ,(tabset
                (append

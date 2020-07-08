@@ -169,6 +169,31 @@ function create_event_finisher (callback) {
     }
 }
 
+// for debugging
+let last_xml;
+
+async function remove_event (element) {
+    console.log(element);
+    let xmltext = element.getElementsByClassName("xcal")[0].innerText;
+    let parser = new DOMParser();
+    let xml = parser.parseFromString(xmltext, "text/xml");
+
+    // for debugging
+    last_xml = xml;
+
+    let uid = xml.querySelector("uid").textContent.trim()
+
+    let data = new URLSearchParams();
+    data.append('uid', uid);
+
+    let response = await fetch ( '/remove', {
+        method: 'POST',
+        body: data
+    });
+
+    console.log(response);
+}
+
 function time_to_date (time) {
     return [ time.getFullYear(),
              String(time.getMonth() + 1).padStart(2, '0'),
