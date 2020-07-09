@@ -312,16 +312,20 @@
    (call-with-output-string (cut display obj <>))
    port))
 
-(define (attribute-value->html value port)
+(define (attribute-value->html values port)
   "Write the HTML escaped form of VALUE to PORT."
-  (if (string? value)
-      (string->escaped-html value port)
-      (object->escaped-html value port)))
+  (for-each
+   (lambda (value)
+     (cond
+      [(string? value) (string->escaped-html value port)]
+      [(null? value) *unspecified*]
+      [else (object->escaped-html value port)]))
+   values))
 
-(define (attribute->html attr value port)
-  "Write ATTR and VALUE to PORT."
+(define (attribute->html attr values port)
+  "Write ATTR and VALUES to PORT."
   (format port "~a=\"" attr)
-  (attribute-value->html value port)
+  (attribute-value->html values port)
   (display #\" port))
 
 (define (element->html tag attrs body port)
@@ -329,9 +333,9 @@
 ist ATTRS and the child nodes in BODY."
   (format port "<~a" tag)
   (for-each (match-lambda
-              ((attr value)
+              ((attr . values)
                (display #\space port)
-               (attribute->html attr value port)))
+               (attribute->html attr values port)))
             attrs)
   (if (and (null? body) (void-element? tag))
       (display " />" port)
@@ -343,6 +347,9 @@ ist ATTRS and the child nodes in BODY."
 (define (doctype->html doctype port)
   (format port "<!DOCTYPE ~a>" doctype))
 
+(define (pi->html type body port)
+  (format port "<?~a ~a?>" type body))
+
 (define* (sxml->html tree #:optional (port (current-output-port)))
   "Write the serialized HTML form of TREE to PORT."
   (match tree
@@ -350,8 +357,13 @@ ist ATTRS and the child nodes in BODY."
     (('doctype type)
      (doctype->html type port))
     ;; Unescaped, raw HTML output
-    (('raw html)
-     (display html port))
+    (('raw html-fragments ...)
+     (for-each (cut display <> port)
+               html-fragments))
+    (('*PI* type body)
+     (pi->html type body port))
+    (('*TOP* nodes ...)
+     (for-each (cut sxml->html <> port) nodes))
     (((? symbol? tag) ('@ attrs ...) body ...)
      (element->html tag attrs body port))
     (((? symbol? tag) body ...)
@@ -361,4 +373,5 @@ ist ATTRS and the child nodes in BODY."
     ((? string? text)
      (string->escaped-html text port))
     ;; Render arbitrary Scheme objects, too.
+    (#f *unspecified*)
     (obj (object->escaped-html obj port))))
