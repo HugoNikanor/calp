@@ -128,7 +128,6 @@
      ,(unless (null? (children component))
         `(components ,@(map vcomponent->sxcal (children component)))))))
 
-(define-public (main calendar)
-  `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
-          (icalendar (@ (xmlns "urn:ietf:params:xml:ns:icalendar-2.0"))
-                     ,(vcomponent->sxcal calendar))))
+(define-public (ns-wrap sxml)
+  `(icalendar (@ (xmlns "urn:ietf:params:xml:ns:icalendar-2.0"))
+              ,sxml))
