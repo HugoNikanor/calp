@@ -157,7 +157,8 @@
                      (div (@ (class "content")) ,body)))))
 
 (define (popup ev id)
-  `(div (@ (class "popup-container") (id ,id))
+  `(div (@ (class "popup-container") (id ,id)
+           (onclick "event.stopPropagation()"))
         (div (@ (class "popup"))
              (nav (@ (class "popup-control CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
                                                                  "unknown"))))
@@ -229,15 +230,15 @@
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative"))
-                    (data-tipped-options ,(format #f "inline: '~a'" popup-id)))))
+                    (onclick "toggle_child_popup(this)"))))
             ,(when (prop ev 'RRULE)
                `(span (@ (class "repeating")) "↺"))
             ,((get-config 'summary-filter) ev (prop ev 'SUMMARY))
             ,(when (prop ev 'LOCATION)
                `(span (@ (class "location"))
                       ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                   (prop ev 'LOCATION))))))
-    ,(popup ev popup-id)))
+                                   (prop ev 'LOCATION))))
+            ,(popup ev popup-id)))))
 
 ;; Format single event for graphical display
 (define (create-block date ev)
@@ -648,14 +649,10 @@
                      (content ,(date->string start-date "~s"))))
             (meta (@ (name end-time)
                      (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
-            ,(include-css "/static/tipped-4.7.0/dist/css/tipped.css")
 
             ,(include-css "/static/style.css")
             ,(include-alt-css "/static/dark.css"  '(title "Dark"))
             ,(include-alt-css "/static/light.css" '(title "Light"))
-
-            (script (@ (defer) (src "/static/jquery-3.1.1.min.js")))
-            (script (@ (defer) (src "/static/tipped-4.7.0/dist/js/tipped.min.js")))
 
             (script (@ (defer) (src "/static/script.js")))
             (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"

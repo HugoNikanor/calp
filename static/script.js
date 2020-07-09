@@ -406,49 +406,9 @@ window.onload = function () {
     serializer.serializeToString(xml);
     */
 
-    /* Pretty prints the xcal contents in each popup.
-       Done here since guile produces compact xml.
-
-       element.innerText should still be valid xcal xml.
-    */
-
-    let parser = new DOMParser();
-    for (let el of document.querySelectorAll("[type='application/calendar+xml']")) {
-        let xml = parser.parseFromString(el.innerText, "text/xml");
-        el.outerHTML = "<pre class='xcal'>"
-            + pretty_print_xml(xml.documentElement, 0)
-            + "</pre>";
-
-
-    }
 }
 
-
-let tipped_args = {
-    /* no padding, I am the one who styles! */
-    padding: false,
-    /* Don't remove from DOM when hiding */
-    detach: false,
-
-    /* click element to toggle.
-       Elements with class "close-tooltip" also
-       acts as close buttons */
-    showOn: 'click',
-    hideOn: 'click',
-
-    /* makes popups relative our scrolling days view */
-    container: '.days',
-
-    /* Ensures that the popups stay within the given area,
-       and don't strectch the container */
-    containment: {
-        selector: '.days',
-    },
-    behaviour: 'sticky',
+function toggle_child_popup(el) {
+    let popup = el.getElementsByClassName("popup-container")[0];
+    popup.classList.toggle("visible");
 }
-
-$(document).ready(function() {
-    Tipped.setDefaultSkin("purple");
-    Tipped.create(".event", tipped_args);
-});
-

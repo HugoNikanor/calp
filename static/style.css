@@ -488,7 +488,7 @@ along with their colors.
 .event {
     transition: 0.3s;
     font-size: var(--event-font-size);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .days .event {
@@ -628,8 +628,13 @@ along with their colors.
 
 .popup-container {
     display: none;
+    position: absolute;
+    z-index: 10;
 }
 
+.popup-container.visible {
+    display: block;
+}
 
 .popup {
     display: flex;
@@ -675,10 +680,6 @@ along with their colors.
     justify-content: center;
 
     font-size: 150%;
-}
-
-.tpd-tooltip a, .tpd-tooltip a:hover {
-    color: blue;
 }
 
 #bar {
@@ -733,10 +734,6 @@ along with their colors.
     min-width: 100%;
     min-height: 100%;
     resize: both;
-}
-
-.tpd-content-wrapper {
-    overflow: visible;
 }
 
 
