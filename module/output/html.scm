@@ -180,9 +180,11 @@
                             (ul (li (a (@ (href ,(string-append "/calendar/" (prop ev 'UID) ".ics"))) "som iCal"))
                                 (li (a (@ (href ,(string-append "/calendar/" (prop ev 'UID) ".xcs"))) "som xCal"))))))
                 (when (edit-mode)
-                  `(("</>" (script (@ (class "xcal")
-                                      (type "application/calendar+xml"))
-                                   ,((@ (output xcal) vcomponent->sxcal) ev))))))))))
+                  `(("</>"
+                     (div (@ (class "xcal"))
+                          ,((@ (output xcal) ns-wrap)
+                            ((@ (output xcal) vcomponent->sxcal)
+                             ev)))))))))))
 
 
 
@@ -325,7 +327,7 @@
 
     `(div (@ (class "events") (id ,(date-link day-date)))
           ,@(map (lambda (time)
-                   `(div (@ (class "clock clock-" ,time)) ""))
+                   `(div (@ (class "clock clock-" ,time))))
                  (iota 12 0 2))
           (div (@ (class "zero-width-events"))
                ,(map make-block zero-length-events))
@@ -342,7 +344,7 @@
 (define (time-marker-div)
   ;; element to make rest of grid align correct.
   ;; Could be extended to contain something fun.
-  `((div (@ (style "grid-row: 1 / span 2")) "")
+  `((div (@ (style "grid-row: 1 / span 2")))
     (div (@ (class "sideclock"))
          ,@(map (lambda (time)
                   `(div (@ (class "clock clock-" ,time))
@@ -359,7 +361,6 @@
                 ,@(time-marker-div)
                 (div (@ (class "longevents")
                         (style "grid-column-end: span " ,(days-in-interval start-date end-date)))
-                     ""                 ; prevent self-closing
                      ,@(lay-out-long-events start-date end-date long-events))
                 ,@(map (lambda (day-date)
                          `(div (@ (class "meta"))
@@ -626,191 +627,194 @@
   (unless prev-start
     (error 'html-generate "Prev-start needs to be a procedure"))
 
-  (display "<!doctype HTML>\n")
+  ;; (display "<!doctype HTML>\n")
   ((@ (sxml simple) sxml->xml)
-   `(html (@ (lang sv))
-          (head
-           (title "Calendar")
-           (meta (@ (charset "utf-8")))
-           ;; (meta (@ (http-equiv "Content-Type") (content "application/xhtml+xml")))
-           (meta (@ (name viewport)
-                    (content "width=device-width, initial-scale=0.5")))
-           (meta (@ (name description)
-                    (content "Calendar for the dates between " ,(date->string start-date)
-                             " and " ,(date->string end-date))))
-           ;; NOTE this is only for the time actually part of this calendar.
-           ;; overflowing times from pre-start and post-end is currently ignored here.
-           (meta (@ (name start-time)
-                    (content ,(date->string start-date "~s"))))
-           (meta (@ (name end-time)
-                    (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
-           ,(include-css "/static/tipped-4.7.0/dist/css/tipped.css")
+   `(*TOP*
+     (*PI* xml "version=\"1.0\" encoding=\"UTF-8\"")
+     ;; "<!doctype html>"
+     (html (@ (xmlns "http://www.w3.org/1999/xhtml") (lang sv))
+           (head
+            (title "Calendar")
+            (meta (@ (charset "utf-8")))
+            ;; (meta (@ (http-equiv "Content-Type") (content "application/xhtml+xml")))
+            (meta (@ (name viewport)
+                     (content "width=device-width, initial-scale=0.5")))
+            (meta (@ (name description)
+                     (content "Calendar for the dates between " ,(date->string start-date)
+                              " and " ,(date->string end-date))))
+            ;; NOTE this is only for the time actually part of this calendar.
+            ;; overflowing times from pre-start and post-end is currently ignored here.
+            (meta (@ (name start-time)
+                     (content ,(date->string start-date "~s"))))
+            (meta (@ (name end-time)
+                     (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
+            ,(include-css "/static/tipped-4.7.0/dist/css/tipped.css")
 
-           ,(include-css "/static/style.css")
-           ,(include-alt-css "/static/dark.css"  '(title "Dark"))
-           ,(include-alt-css "/static/light.css" '(title "Light"))
+            ,(include-css "/static/style.css")
+            ,(include-alt-css "/static/dark.css"  '(title "Dark"))
+            ,(include-alt-css "/static/light.css" '(title "Light"))
 
-           (script (@ (defer) (src "/static/jquery-3.1.1.min.js")) "")
-           (script (@ (defer) (src "/static/tipped-4.7.0/dist/js/tipped.min.js")) "")
+            (script (@ (defer) (src "/static/jquery-3.1.1.min.js")))
+            (script (@ (defer) (src "/static/tipped-4.7.0/dist/js/tipped.min.js")))
 
-           (script (@ (defer) (src "/static/script.js")) "")
-           (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
-                           (map (lambda (c)
-                                  (let* ((name (html-attr (prop c 'NAME)))
-                                         (bg-color (prop c 'COLOR))
-                                         (fg-color (and=> (prop c 'COLOR)
-                                                          calculate-fg-color)))
-                                    (list name (or bg-color 'white) (or fg-color 'black)
-                                          name (or bg-color 'black))))
-                                calendars))))
+            (script (@ (defer) (src "/static/script.js")))
+            (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
+                            (map (lambda (c)
+                                   (let* ((name (html-attr (prop c 'NAME)))
+                                          (bg-color (prop c 'COLOR))
+                                          (fg-color (and=> (prop c 'COLOR)
+                                                           calculate-fg-color)))
+                                     (list name (or bg-color 'white) (or fg-color 'black)
+                                           name (or bg-color 'black))))
+                                 calendars))))
 
-          (body
-           (div (@ (class "root"))
-                (main
-                 ;; Actuall calendar
-                 (@ (style "grid-area: main"))
-                 ,@(render-calendar calendars: calendars
-                                    events: events
-                                    start-date: start-date
-                                    end-date: end-date
-                                    pre-start: pre-start
-                                    post-end: post-end
-                                    next-start: next-start
-                                    prev-start: prev-start
-                                    ))
+           (body
+            (div (@ (class "root"))
+                 (main
+                  ;; Actuall calendar
+                  (@ (style "grid-area: main"))
+                  ,@(render-calendar calendars: calendars
+                                     events: events
+                                     start-date: start-date
+                                     end-date: end-date
+                                     pre-start: pre-start
+                                     post-end: post-end
+                                     next-start: next-start
+                                     prev-start: prev-start
+                                     ))
 
-                ;; Page footer
-                (footer
-                 (@ (style "grid-area: footer"))
-                 (span "Page generated " ,(date->string (current-date)))
-                 (span (a (@ (href ,(repo-url) "/calparse"))
-                          "Source Code"))
-                 ,(let* ((long-hash short-hash (get-git-version))
-                         (url (format #f "~a/calparse/commit/?id=~a"
-                                      (repo-url) long-hash)))
-                    `(span "Version " (a (@ (href ,url)) ,short-hash))))
+                 ;; Page footer
+                 (footer
+                  (@ (style "grid-area: footer"))
+                  (span "Page generated " ,(date->string (current-date)))
+                  (span (a (@ (href ,(repo-url) "/calparse"))
+                           "Source Code"))
+                  ,(let* ((long-hash short-hash (get-git-version))
+                          (url (format #f "~a/calparse/commit/?id=~a"
+                                       (repo-url) long-hash)))
+                     `(span "Version " (a (@ (href ,url)) ,short-hash))))
 
-                ;; Small calendar and navigation
-                (nav (@ (class "calnav") (style "grid-area: nav"))
-                     (div (@ (class "change-view"))
-                          ,(btn href: (date->string
-                                       (if (= 1 (day start-date))
-                                           (start-of-week start-date (get-config 'week-start))
-                                           start-date)
-                                       "/week/~1.html")
-                                "veckovy")
+                 ;; Small calendar and navigation
+                 (nav (@ (class "calnav") (style "grid-area: nav"))
+                      (div (@ (class "change-view"))
+                           ,(btn href: (date->string
+                                        (if (= 1 (day start-date))
+                                            (start-of-week start-date (get-config 'week-start))
+                                            start-date)
+                                        "/week/~1.html")
+                                 "veckovy")
 
-                          ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
-                                "månadsvy")
+                           ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
+                                 "månadsvy")
 
-                          ,(btn id: "today-button"
-                                href: (string-append
-                                       "/today?" (case intervaltype
+                           ,(btn id: "today-button"
+                                 href: (string-append
+                                        "/today?" (case intervaltype
                                                     [(month) "view=month"]
                                                     [(week) "view=week"]
                                                     [else ""]))
-                                "idag"))
+                                 "idag"))
 
-                     (div (@ (class "jump-to"))
-                          (form (@ (action "/today"))
-                                (input (@ (type hidden)
-                                          (name "view")
-                                          (value ,(case intervaltype
-                                                    [(month week) => symbol->string]
-                                                    [else "month"]))))
-                                (input (@ (type date)
-                                          (name "date")
-                                          (value ,(date->string start-date "~1"))))
-                                ,(btn "➔"))))
+                      (div (@ (class "jump-to"))
+                           (form (@ (action "/today"))
+                                 (input (@ (type hidden)
+                                           (name "view")
+                                           (value ,(case intervaltype
+                                                     [(month week) => symbol->string]
+                                                     [else "month"]))))
+                                 (input (@ (type date)
+                                           (name "date")
+                                           (value ,(date->string start-date "~1"))))
+                                 ,(btn "➔"))))
 
-                (details (@ (open) (style "grid-area: cal"))
-                         (summary "Month overview")
-                         (div (@ (class "smallcall-head"))
-                              ,(string-titlecase (date->string start-date "~B ~Y")))
-                         ;; NOTE it might be a good idea to put the navigation buttons
-                         ;; earlier in the DOM-tree/tag order. At least Vimium's
-                         ;; @key{[[} keybind sometimes finds parts of events instead.
-                         (div (@ (class "smallcal"))
-                              ;; prev button
-                              ,(nav-link "«" (prev-start start-date))
+                 (details (@ (open) (style "grid-area: cal"))
+                          (summary "Month overview")
+                          (div (@ (class "smallcall-head"))
+                               ,(string-titlecase (date->string start-date "~B ~Y")))
+                          ;; NOTE it might be a good idea to put the navigation buttons
+                          ;; earlier in the DOM-tree/tag order. At least Vimium's
+                          ;; @key{[[} keybind sometimes finds parts of events instead.
+                          (div (@ (class "smallcal"))
+                               ;; prev button
+                               ,(nav-link "«" (prev-start start-date))
 
-                              ;; calendar table
-                              (div ,(cal-table start-date: start-date end-date: end-date
-                                               next-start: next-start
-                                               prev-start: prev-start
-                                               ))
+                               ;; calendar table
+                               (div ,(cal-table start-date: start-date end-date: end-date
+                                                next-start: next-start
+                                                prev-start: prev-start
+                                                ))
 
-                              ;; next button
-                              ,(nav-link "»" (next-start start-date))))
-
-
-                (div (@ (style "grid-area: details"))
-                     ,(when (or (debug) (edit-mode))
-                        `(details (@ (class "sliders"))
-                                  (summary "Option sliders")
+                               ;; next button
+                               ,(nav-link "»" (next-start start-date))))
 
 
-                                  ,@(when (edit-mode)
-                                      `((label "Event blankspace")
-                                        ,(slider-input
-                                          variable: "editmode"
-                                          min: 0
-                                          max: 1
-                                          step: 0.01
-                                          value: 1)))
+                 (div (@ (style "grid-area: details"))
+                      ,(when (or (debug) (edit-mode))
+                         `(details (@ (class "sliders"))
+                                   (summary "Option sliders")
 
-                                  ,@(when (debug)
-                                      `((label "Fontsize")
-                                        ,(slider-input
-                                          unit: "pt"
-                                          min: 1
-                                          max: 20
-                                          step: 1
-                                          value: 8
-                                          variable: "event-font-size")))))
 
-                     ;; List of calendars
-                     (details (@ (class "calendarlist"))
-                              (summary "Calendar list")
-                              (ul ,@(map
-                                     (lambda (calendar)
-                                       `(li (@ (class "CAL_bg_"
-                                                 ,(html-attr (prop calendar 'NAME))))
-                                            ,(prop calendar 'NAME)))
-                                     calendars))))
+                                   ,@(when (edit-mode)
+                                       `((label "Event blankspace")
+                                         ,(slider-input
+                                           variable: "editmode"
+                                           min: 0
+                                           max: 1
+                                           step: 0.01
+                                           value: 1)))
 
-                ;; List of events
-                (div (@ (class "eventlist")
-                        (style "grid-area: events"))
-                     ;; Events which started before our start point,
-                     ;; but "spill" into our time span.
-                     (section (@ (class "text-day"))
-                              (header (h2 "Tidigare"))
-                              ,@(stream->list
-                                 (stream-map
-                                  fmt-single-event
-                                  (stream-take-while
-                                   (compose (cut date/-time<? <> start-date)
-                                            (extract 'DTSTART))
-                                   (cdr (stream-car evs))))))
-                     ,@(stream->list (stream-map fmt-day evs))))
-           (template (@ (id "popup-template"))
-            (div (@ (class "popup-container"))
-                 (div (@ (class "popup"))
-                      (nav (@ (class "popup-control CAL_Calendar"))
-                           (button (@ (title "Stäng") (onclick "") (class "btn close-tooltip")) (div "×")))
-                      (form
-                       (article (@ (class "eventtext CAL_bg_Calendar"))
-                                (h3 (input (@ (type "text")
-                                              (name "summary")
-                                              (placeholder "Summary")
-                                              (required))))
-                                (div (div (input (@ (type "time") (name "dtstart") (required)))
-                                          " — "
-                                          (input (@ (type "time") (name "dtend") (required))))
-                                     (textarea (@ (name "description")
-                                                  (placeholder "Description")) "")
-                                     (input (@ (type "submit")))))))))))))
+                                   ,@(when (debug)
+                                       `((label "Fontsize")
+                                         ,(slider-input
+                                           unit: "pt"
+                                           min: 1
+                                           max: 20
+                                           step: 1
+                                           value: 8
+                                           variable: "event-font-size")))))
+
+                      ;; List of calendars
+                      (details (@ (class "calendarlist"))
+                               (summary "Calendar list")
+                               (ul ,@(map
+                                      (lambda (calendar)
+                                        `(li (@ (class "CAL_bg_"
+                                                  ,(html-attr (prop calendar 'NAME))))
+                                             ,(prop calendar 'NAME)))
+                                      calendars))))
+
+                 ;; List of events
+                 (div (@ (class "eventlist")
+                         (style "grid-area: events"))
+                      ;; Events which started before our start point,
+                      ;; but "spill" into our time span.
+                      (section (@ (class "text-day"))
+                               (header (h2 "Tidigare"))
+                               ,@(stream->list
+                                  (stream-map
+                                   fmt-single-event
+                                   (stream-take-while
+                                    (compose (cut date/-time<? <> start-date)
+                                             (extract 'DTSTART))
+                                    (cdr (stream-car evs))))))
+                      ,@(stream->list (stream-map fmt-day evs))))
+            (template (@ (id "popup-template"))
+                      (div (@ (class "popup-container"))
+                           (div (@ (class "popup"))
+                                (nav (@ (class "popup-control CAL_Calendar"))
+                                     (button (@ (title "Stäng") (onclick "") (class "btn close-tooltip")) (div "×")))
+                                (form
+                                 (article (@ (class "eventtext CAL_bg_Calendar"))
+                                          (h3 (input (@ (type "text")
+                                                        (name "summary")
+                                                        (placeholder "Summary")
+                                                        (required))))
+                                          (div (div (input (@ (type "time") (name "dtstart") (required)))
+                                                    " — "
+                                                    (input (@ (type "time") (name "dtend") (required))))
+                                               (textarea (@ (name "description")
+                                                            (placeholder "Description")))
+                                               (input (@ (type "submit"))))))))))))))
 
 
 ;; file existing but is of wrong type,

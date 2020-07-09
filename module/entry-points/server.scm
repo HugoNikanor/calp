@@ -68,12 +68,14 @@
         (return '((content-type text/html))
                 (sxml->html-string '(a (@ (href "/today")) "Gå till idag"))))
 
-   (GET "/week/:start-date.html" (start-date)
+   (GET "/week/:start-date.:ext" (start-date ext)
         (let* ((start-date
                 (start-of-week (parse-iso-date start-date)
                                (get-config 'week-start))))
 
-          (return '((content-type text/html))
+          (return `((content-type ,(if (string=? ext "xml")
+                                       'application/xhtml+xml
+                                       'text/html)))
                   (with-output-to-string
                     (lambda ()
                       (html-generate calendars: (getf 'calendars)
