@@ -643,7 +643,9 @@ along with their colors.
     min-height: 20ch;
 }
 
-.popup article {
+.popup article,
+.popup div
+{
     /* makes the text in the popup scroll, but not the sidebar */
     overflow-y: auto;
     padding: 1em;
