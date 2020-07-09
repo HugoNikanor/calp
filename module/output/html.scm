@@ -182,10 +182,9 @@
                                 (li (a (@ (href ,(string-append "/calendar/" (prop ev 'UID) ".xcs"))) "som xCal"))))))
                 (when (edit-mode)
                   `(("</>"
-                     (div (@ (class "xcal"))
-                          ,((@ (output xcal) ns-wrap)
-                            ((@ (output xcal) vcomponent->sxcal)
-                             ev)))))))))))
+                     ,((@ (output xcal) ns-wrap)
+                       ((@ (output xcal) vcomponent->sxcal)
+                        ev))))))))))
 
 
 

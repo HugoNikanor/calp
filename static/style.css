@@ -648,9 +648,7 @@ along with their colors.
     min-height: 20ch;
 }
 
-.popup article,
-.popup div
-{
+.popup article {
     /* makes the text in the popup scroll, but not the sidebar */
     overflow-y: auto;
     padding: 1em;
@@ -697,6 +695,7 @@ along with their colors.
 .tabgroup {
     position: relative;
     width: 100%;
+    resize: both;
 }
 
 .tab label {
@@ -733,9 +732,7 @@ along with their colors.
 
     min-width: 100%;
     min-height: 100%;
-    resize: both;
 }
-
 
 .tab [type=radio]:checked ~ label {
     z-index: 1;
@@ -748,16 +745,125 @@ along with their colors.
 	z-index: 1;
 }
 
-script[type="application/calendar+xml"], .xcal {
-    display: block;
+/* Below is for styling embedded xcalendar components in the xhtml
+   document. I can't find anything about if this is allowed
+   according to any standard, but it seems to work.
+   Firefox doesn't want to admit it, and shows nothing in the
+   inspector, but the document renders fine.
+   Vivaldi works fine in the inspector.
+ */
+
+icalendar {
+    display: inline-block;
+    padding-left: 1ch;
     font-family: monospace;
     font-size: xx-small;
     padding-left: 1ch;
 }
 
-.html-tag {
-    color: rgb(136, 18, 128);
+icalendar properties > * {
+    display: block;
 }
+
+icalendar properties * {
+    padding-right: 1ch;
+}
+
+icalendar parameters {
+    color: gray;
+}
+
+/* All icalendar properties  */
+icalendar calscale::before { content: "calscale: "; }
+icalendar method::before { content: "method: "; }
+icalendar prodid::before { content: "prodid: "; }
+icalendar version::before { content: "version: "; }
+icalendar attach::before { content: "attach: "; }
+icalendar categories::before { content: "categories: "; }
+icalendar class::before { content: "class: "; }
+icalendar comment::before { content: "comment: "; }
+icalendar description::before { content: "description: "; }
+icalendar geo::before { content: "geo: "; }
+icalendar location::before { content: "location: "; }
+icalendar percent-complete::before { content: "percent-complete: "; }
+icalendar priority::before { content: "priority: "; }
+icalendar resources::before { content: "resources: "; }
+icalendar status::before { content: "status: "; }
+icalendar summary::before { content: "summary: "; }
+icalendar completed::before { content: "completed: "; }
+icalendar dtend::before { content: "dtend: "; }
+icalendar due::before { content: "due: "; }
+icalendar dtstart::before { content: "dtstart: "; }
+icalendar duration::before { content: "duration: "; }
+icalendar freebusy::before { content: "freebusy: "; }
+icalendar transp::before { content: "transp: "; }
+icalendar tzid::before { content: "tzid: "; }
+icalendar tzname::before { content: "tzname: "; }
+icalendar tzoffsetfrom::before { content: "tzoffsetfrom: "; }
+icalendar tzoffsetto::before { content: "tzoffsetto: "; }
+icalendar tzurl::before { content: "tzurl: "; }
+icalendar attendee::before { content: "attendee: "; }
+icalendar contact::before { content: "contact: "; }
+icalendar organizer::before { content: "organizer: "; }
+icalendar recurrence-id::before { content: "recurrence-id: "; }
+icalendar related-to::before { content: "related-to: "; }
+icalendar url::before { content: "url: "; }
+icalendar uid::before { content: "uid: "; }
+icalendar exdate::before { content: "exdate: "; }
+icalendar rdate::before { content: "rdate: "; }
+icalendar rrule::before { content: "rrule: "; }
+icalendar action::before { content: "action: "; }
+icalendar repeat::before { content: "repeat: "; }
+icalendar trigger::before { content: "trigger: "; }
+icalendar created::before { content: "created: "; }
+icalendar dtstamp::before { content: "dtstamp: "; }
+icalendar last-modified::before { content: "last-modified: "; }
+icalendar sequence::before { content: "sequence: "; }
+icalendar request-status::before { content: "request-status: "; }
+
+/* icalendar parameters */
+icalendar parameters altrep::before { content: "altrep:"; }
+icalendar parameters cn::before { content: "cn:"; }
+icalendar parameters cutype::before { content: "cutype:"; }
+icalendar parameters delegated-from::before { content: "delegated-from:"; }
+icalendar parameters delegated-to::before { content: "delegated-to:"; }
+icalendar parameters dir::before { content: "dir:"; }
+icalendar parameters encoding::before { content: "encoding:"; }
+icalendar parameters fmttype::before { content: "fmttype:"; }
+icalendar parameters fbtype::before { content: "fbtype:"; }
+icalendar parameters language::before { content: "language:"; }
+icalendar parameters member::before { content: "member:"; }
+icalendar parameters partstat::before { content: "partstat:"; }
+icalendar parameters range::before { content: "range:"; }
+icalendar parameters related::before { content: "related:"; }
+icalendar parameters reltype::before { content: "reltype:"; }
+icalendar parameters role::before { content: "role:"; }
+icalendar parameters rsvp::before { content: "rsvp:"; }
+icalendar parameters sent-by::before { content: "sent-by:"; }
+icalendar parameters tzid::before { content: "tzid:"; }
+
+/* special fields inside some properties */
+icalendar period start { content: "start:"; }
+icalendar period end { content: "end:"; }
+icalendar period duration { content: "duration:" }
+icalendar recur freq  { content: "freq:"; }
+icalendar recur until { content: "until:"; }
+icalendar recur count { content: "count:"; }
+icalendar recur bymonth    { content: "bymonth"; }
+icalendar recur byweekno   { content: "byweekno"; }
+icalendar recur byyearday  { content: "byyearday"; }
+icalendar recur bymonthday { content: "bymonthday"; }
+icalendar recur byday      { content: "byday"; }
+icalendar recur byhour     { content: "byhour"; }
+icalendar recur byminute   { content: "byminute"; }
+icalendar recur bysecond   { content: "bysecond"; }
+icalendar recur bysetpos   { content: "bysetpos"; }
+
+/* types */
+icalendar date-time, icalendar date, icalendar until {color: purple;}
+icalendar text { color: green; }
+icalendar integer { color: blue; }
+icalendar unknown { color: red; }
 
 /* vim:expandtab:softtabstop=4:shiftwidth=4:
  */
