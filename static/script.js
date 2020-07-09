@@ -285,7 +285,7 @@ async function create_event (date, fd) {
                  ['summary', ['text', fd.get("summary")]]]]
 
     if (fd.get("description")) {
-        tree.push(['description', ['text', fd.get("description")]])
+        tree[1].push(['description', ['text', fd.get("description")]])
     }
 
     let xmldoc = document.implementation.createDocument("", "", null)
