@@ -164,14 +164,13 @@
                                                                  "unknown"))))
                   ,(btn "×"
                         title: "Stäng"
-                        onclick: ""
+                        onclick: (format #f "close_popup(~a)" id)
                         class: '("close-tooltip"))
                   ,(btn "🗑"
                         title: "Ta bort"
                         ;; Apparently an id gets recieved
                         ;; as the whole object in js.
-                        onclick: (format #f "remove_event(~a)"
-                                         id)))
+                        onclick: (format #f "remove_event(~a)" id)))
 
              ,(tabset
                (append

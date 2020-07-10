@@ -258,9 +258,9 @@ function setVar(str, val) {
 }
 
 function close_all_popups () {
-	for (let popup of document.getElementsByClassName("tpd-tooltip")) {
-		popup.getElementsByClassName('close-tooltip')[0].click();
-	}
+    for (let popup of document.querySelectorAll(".popup-container.visible")) {
+        close_popup(popup);
+    }
 }
 
 function sxml_to_xml(doc, tree) {
@@ -406,6 +406,10 @@ window.onload = function () {
     serializer.serializeToString(xml);
     */
 
+}
+
+function close_popup(popup) {
+    popup.classList.remove("visible");
 }
 
 function toggle_child_popup(el) {
