@@ -346,14 +346,11 @@ window.onload = function () {
                 lst.push([s, f]);
             }
             for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
-                switch (field) {
-                case 'dtstart':
-                    if (s.tagName === 'date') {
-                        lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%d")]);
-                    } else {
-                        lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%S")]);
-                    }
-                    break;
+                switch (s.tagName) {
+                case 'date':
+                    lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%d")]); break;
+                case 'date-time':
+                    lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%S")]); break;
                 default:
                     lst.push([s, (s, v) => s.innerHTML = v]);
                 }
