@@ -439,7 +439,7 @@ along with their colors.
  * This makes the borders of the object be part of the size.
  * Making placing it on the correct line much simpler.
  */
-.clock, .days .event {
+.clock, .days .event, .eventlike {
     position: absolute;
     box-sizing: border-box;
     margin: 0;

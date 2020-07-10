@@ -185,7 +185,7 @@ function update_current_time_bar () {
             bar_object.parentNode.removeChild(bar_object)
         } else {
             bar_object = document.createElement("div")
-            bar_object.className = "event current-time"
+            bar_object.className = "eventlike current-time"
             bar_object.id = "bar"
         }
 
