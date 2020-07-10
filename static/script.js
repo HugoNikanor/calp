@@ -346,7 +346,17 @@ window.onload = function () {
                 lst.push([s, f]);
             }
             for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
-                lst.push([s, (s, v) => s.innerHTML = v]);
+                switch (field) {
+                case 'dtstart':
+                    if (s.tagName === 'date') {
+                        lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%d")]);
+                    } else {
+                        lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%S")]);
+                    }
+                    break;
+                default:
+                    lst.push([s, (s, v) => s.innerHTML = v]);
+                }
                 el.properties["_value_" + field] = s.innerHTML;
             }
 
@@ -436,6 +446,9 @@ function format_date(date, str) {
     for (var i = 0; i < str.length; i++) {
         if (fmtmode) {
             switch (str[i]) {
+            case 'Y': outstr += (date.getFullYear() + "").padStart(4, "0"); break;
+            case 'm': outstr += (date.getMonth() + 1 + "").padStart(2, "0"); break;
+            case 'd': outstr += (date.getDate() + "").padStart(2, "0"); break;
             case 'H': outstr += (date.getHours() + "").padStart(2, "0"); break;
             case 'M': outstr += (date.getMinutes() + "").padStart(2, "0"); break;
             case 'S': outstr += (date.getSeconds() + "").padStart(2, "0"); break;
