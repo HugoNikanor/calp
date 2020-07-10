@@ -427,8 +427,18 @@
                   `(span (@ (class "summary")) ,(prop ev 'SUMMARY))))
             (div
              ,(call-with-values (lambda () (fmt-time-span ev))
-                (case-lambda [(start) `(div ,start)]
-                             [(start end) `(div ,start " — " ,end)]))
+                (case-lambda [(start) `(div (span (@ (class "dtstart")
+                                                     (data-fmt "%H:%M"))
+                                                  ,start))]
+                             [(start end) `(div (span (@ (class "dtstart")
+                                                         ;; TODO same format string
+                                                         ;; as fmt-time-span used
+                                                         (data-fmt "%H:%M"))
+                                                      ,start)
+                                                " — "
+                                                (span (@ (class "dtend")
+                                                         (data-fmt "%H:%M"))
+                                                      ,end))]))
              ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
                 `(div (b "Plats: ")
                       (div (@ (class "location"))

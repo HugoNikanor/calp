@@ -332,10 +332,11 @@ window.onload = function () {
 
             lst = el.properties["_slot_" + field] = []
             for (let s of el.getElementsByClassName(field)) {
-                lst.push(s);
+                let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
+                lst.push([s, f]);
             }
             for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
-                lst.push(s);
+                lst.push([s, (s, v) => s.innerHTML = v]);
                 el.properties["_value_" + field] = s.innerHTML;
             }
 
@@ -347,12 +348,18 @@ window.onload = function () {
                     },
                     set: function (value) {
                         this["_value_" + field] = value;
-                        for (let slot of el.properties["_slot_" + field]) {
-                            slot.innerHTML = value;
+                        for (let [slot,updater] of el.properties["_slot_" + field]) {
+                            updater(slot, value);
                         }
                     }
                 });
         }
+
+        el.properties.dtstart = new Date(el.properties.dtstart);
+
+        el.properties["_slot_dtstart"].push(
+            [el.style, (s, v) => s.top = time_to_percent(v)]);
+
     }
 
     document.onkeydown = function (evt) {
@@ -411,3 +418,26 @@ function toggle_child_popup(el) {
     let popup = el.getElementsByClassName("popup-container")[0];
     toggle_popup(popup);
 }
+
+
+function format_date(date, str) {
+    let fmtmode = false;
+    let outstr = "";
+    for (var i = 0; i < str.length; i++) {
+        if (fmtmode) {
+            switch (str[i]) {
+            case 'H': outstr += (date.getHours() + "").padStart(2, "0"); break;
+            case 'M': outstr += (date.getMinutes() + "").padStart(2, "0"); break;
+            case 'S': outstr += (date.getSeconds() + "").padStart(2, "0"); break;
+            }
+            fmtmode = false;
+        } else if (str[i] == '%') {
+            fmtmode = true;
+        } else {
+            outstr += str[i];
+        }
+    }
+    return outstr;
+}
+Object.prototype.format = function () { return this; } /* any number of arguments */
+Date.prototype.format = function (str) { return format_date (this, str); }
