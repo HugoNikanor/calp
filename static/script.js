@@ -44,14 +44,22 @@ let event;
 
 let event_start = { x: NaN, y: NaN };
 
+let down_on_event = false;
+
 function create_event_down (e) {
+    /* Only trigger event creation stuff on actuall events background,
+       NOT on its children */
+    down_on_event = false;
+    if (! e.target.classList.contains("events")) return;
+    down_on_event = true;
+
     event_start.x = e.clientX;
     event_start.y = e.clientY;
 }
 
 function create_event_move (e) {
 
-    if (e.buttons != 1) return;
+    if (e.buttons != 1 || ! down_on_event) return;
 
     /* Create event when we start moving the mouse. */
     if (! event) {
@@ -67,6 +75,7 @@ function create_event_move (e) {
         if (e.buttons != 1) return;
 
         /* [0, 1) -- where are we in the container */
+        /* Ronud to force steps of quarters */
         time = round_time(24 * (e.offsetY / this.clientHeight),
                           .25)
 
@@ -106,6 +115,7 @@ function create_event_move (e) {
 }
 
 function create_event_finisher (callback) {
+    down_on_event = false; // reset
     return function create_event_up (e) {
         if (! event) return;
         let start = min(Number(event.dataset.time1), Number(event.dataset.time2));
