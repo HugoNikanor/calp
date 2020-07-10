@@ -231,7 +231,8 @@
                     (onclick "toggle_child_popup(this)"))))
             ,(when (prop ev 'RRULE)
                `(span (@ (class "repeating")) "↺"))
-            ,((get-config 'summary-filter) ev (prop ev 'SUMMARY))
+            (span (@ (class "summary"))
+                  ,((get-config 'summary-filter) ev (prop ev 'SUMMARY)))
             ,(when (prop ev 'LOCATION)
                `(span (@ (class "location"))
                       ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
@@ -423,7 +424,7 @@
             (h3 ,(fmt-header
                   (when (prop ev 'RRULE)
                     `(span (@ (class "repeating")) "↺"))
-                  (prop ev 'SUMMARY)))
+                  `(span (@ (class "summary")) ,(prop ev 'SUMMARY))))
             (div
              ,(call-with-values (lambda () (fmt-time-span ev))
                 (case-lambda [(start) `(div ,start)]

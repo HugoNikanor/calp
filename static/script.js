@@ -345,9 +345,8 @@ window.onload = function () {
                         create_event(event.dataset.date, new FormData(form));
                     });
 
-                    event.dataset.tippedOptions = "inline: '" + id + "'";
-                    Tipped.create(event, tipped_args);
-                    event.click();
+                    open_popup(popupElement);
+
 
                     /*
                     console.log(event);
@@ -359,13 +358,44 @@ window.onload = function () {
         }
     }
 
-    /* Popup script replaces need for anchors to events.
-       On mobile they also have the problem that they make
-       the whole page scroll there.
-    */
     for (let el of document.getElementsByClassName("event")) {
+        /* Popup script replaces need for anchors to events.
+           On mobile they also have the problem that they make
+           the whole page scroll there.
+        */
         el.parentElement.removeAttribute("href");
 
+        /* Bind all vcomponent properties into javascript. */
+        el.properties = {}
+        let children = el.getElementsByTagName("properties")[0].children;
+
+        for (let child of children) {
+            let field = child.tagName;
+
+
+            lst = el.properties["_slot_" + field] = []
+            for (let s of el.getElementsByClassName(field)) {
+                lst.push(s);
+            }
+            for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
+                lst.push(s);
+                el.properties["_value_" + field] = s.innerHTML;
+            }
+
+            Object.defineProperty(
+                el.properties, field,
+                {
+                    get: function () {
+                        return this["_value_" + field];
+                    },
+                    set: function (value) {
+                        this["_value_" + field] = value;
+                        for (let slot of el.properties["_slot_" + field]) {
+                            slot.innerHTML = value;
+                        }
+                    }
+                });
+        }
     }
 
     document.onkeydown = function (evt) {
@@ -412,7 +442,15 @@ function close_popup(popup) {
     popup.classList.remove("visible");
 }
 
+function open_popup(popup) {
+    popup.classList.add("visible");
+}
+
+function toggle_popup(popup) {
+    popup.classList.toggle("visible");
+}
+
 function toggle_child_popup(el) {
     let popup = el.getElementsByClassName("popup-container")[0];
-    popup.classList.toggle("visible");
+    toggle_popup(popup);
 }
