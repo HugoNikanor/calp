@@ -347,6 +347,7 @@ window.onload = function () {
             }
             for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
                 switch (s.tagName) {
+                    // TODO TZ?
                 case 'date':
                     lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%d")]); break;
                 case 'date-time':
