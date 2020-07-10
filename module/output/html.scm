@@ -807,7 +807,9 @@
             (template (@ (id "popup-template"))
                       (div (@ (class "popup-container"))
                            (div (@ (class "popup"))
+                                ;; TODO have dummy calendar for events under creation
                                 (nav (@ (class "popup-control CAL_Calendar"))
+                                     ;; TODO why isn't this using the @var{btn} procedure.
                                      (button (@ (title "Stäng") (onclick "") (class "btn close-tooltip")) (div "×")))
                                 (form
                                  (article (@ (class "eventtext CAL_bg_Calendar"))
