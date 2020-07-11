@@ -20,15 +20,6 @@ function parents_until (element, obj) {
     }
 }
 
-function decimal_time_to_string (time) {
-    let hour = Math.floor(time);
-    if (hour < 10) {
-        hour = '0' + hour;
-    }
-    let minute = String((time - Math.floor(time)) * 60).padStart(2, 0);
-    return "" + hour + ":" + minute;
-}
-
 function decimal_time_to_date (time) {
     let hour = Math.floor(time);
     let minute = (time - hour) * 60;
