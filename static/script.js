@@ -351,6 +351,9 @@ function toggle_child_popup(el) {
     toggle_popup(popup);
 }
 
+function datepad(thing, width=2) {
+    return (thing + "").padStart(width, "0");
+}
 
 function format_date(date, str) {
     let fmtmode = false;
@@ -358,12 +361,12 @@ function format_date(date, str) {
     for (var i = 0; i < str.length; i++) {
         if (fmtmode) {
             switch (str[i]) {
-            case 'Y': outstr += (date.getFullYear() + "").padStart(4, "0"); break;
-            case 'm': outstr += (date.getMonth() + 1 + "").padStart(2, "0"); break;
-            case 'd': outstr += (date.getDate() + "").padStart(2, "0"); break;
-            case 'H': outstr += (date.getHours() + "").padStart(2, "0"); break;
-            case 'M': outstr += (date.getMinutes() + "").padStart(2, "0"); break;
-            case 'S': outstr += (date.getSeconds() + "").padStart(2, "0"); break;
+            case 'Y': outstr += datepad(date.getFullYear(), 4); break;
+            case 'm': outstr += datepad(date.getMonth() + 1);   break;
+            case 'd': outstr += datepad(date.getDate());        break;
+            case 'H': outstr += datepad(date.getHours());       break;
+            case 'M': outstr += datepad(date.getMinutes());     break;
+            case 'S': outstr += datepad(date.getSeconds());     break;
             }
             fmtmode = false;
         } else if (str[i] == '%') {
