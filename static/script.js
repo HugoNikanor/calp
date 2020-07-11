@@ -163,12 +163,6 @@ async function remove_event (element) {
     console.log(response);
 }
 
-function time_to_date (time) {
-    return [ time.getFullYear(),
-             String(time.getMonth() + 1).padStart(2, '0'),
-             String(time.getDate()).padStart(2, '0') ].join("-");
-}
-
 var bar_object = false
 var current_cell = false
 
@@ -180,7 +174,7 @@ function update_current_time_bar () {
     if (! (start_time <= now.getTime() && now.getTime() < end_time))
         return;
 
-    var event_area = document.getElementById(time_to_date(now))
+    var event_area = document.getElementById(now.format("%Y-%m-%d"))
 
     if (event_area) {
         if (bar_object) {
@@ -201,13 +195,13 @@ function update_current_time_bar () {
         current_cell.style.border = "";
     }
     current_cell = document.querySelector(
-        ".small-calendar time[datetime='" + time_to_date(now) + "']");
+        ".small-calendar time[datetime='" + now.format("%Y-%m-%d") + "']");
     current_cell.style.border = "1px solid black";
 
     /* Update [today] button */
 
     document.getElementById("today-button").href
-        = time_to_date(new Date) + ".html";
+        = (new Date).format("%Y-%m-%d") + ".html";
 }
 
 function setVar(str, val) {
@@ -319,14 +313,14 @@ window.onload = function () {
     let gotodatebtn = jumpto.getElementsByTagName("button")[0];
     let golink = document.createElement("a");
     golink.classList.add("btn");
-    let target_href = time_to_date(new Date) + ".html";
+    let target_href = (new Date).format("%Y-%m-%d") + ".html";
     document.getElementById("today-button").href = target_href;
     golink.href = target_href;
     golink.innerHTML = gotodatebtn.innerHTML;
     gotodatebtn.replaceWith(golink);
 
     jumpto.getElementsByTagName("input")[0].onchange = function () {
-        let date = time_to_date(this.valueAsDate)
+        let date = this.valueAsDate.format("%Y-%m-%d");
         golink.href = date + ".html";
     }
 
