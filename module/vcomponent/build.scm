@@ -14,9 +14,9 @@
   :use-module (srfi srfi-26)
   :use-module ((srfi srfi-88) :select (keyword->string)))
 
-(define-public (vevent . body)    (apply vcomponent 'VEVENT    body))
+(define-public (vevent    . body) (apply vcomponent 'VEVENT    body))
 (define-public (vcalendar . body) (apply vcomponent 'VCALENDAR body))
-(define-public (valarm . body)    (apply vcomponent 'VALARM    body))
+(define-public (valarm    . body) (apply vcomponent 'VALARM    body))
 
 (define-public (vcomponent tag . rest)
   (define v (make-vcomponent tag))
