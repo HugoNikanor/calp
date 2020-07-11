@@ -25,8 +25,14 @@ function decimal_time_to_string (time) {
     if (hour < 10) {
         hour = '0' + hour;
     }
-    var minute = String((time - Math.floor(time)) * 60).padStart(2, 0);
+    let minute = String((time - Math.floor(time)) * 60).padStart(2, 0);
     return "" + hour + ":" + minute;
+}
+
+function decimal_time_to_date (time) {
+    let hour = Math.floor(time);
+    let minute = (time - hour) * 60;
+    return new Date(0,0,0,hour,minute,0);
 }
 
 let gensym_counter = 0;
