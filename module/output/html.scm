@@ -230,14 +230,18 @@
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative"))
                     (onclick "toggle_child_popup(this)"))))
-            ,(when (prop ev 'RRULE)
-               `(span (@ (class "repeating")) "↺"))
-            (span (@ (class "summary"))
-                  ,((get-config 'summary-filter) ev (prop ev 'SUMMARY)))
-            ,(when (prop ev 'LOCATION)
-               `(span (@ (class "location"))
-                      ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                   (prop ev 'LOCATION))))
+            ;; Inner div to prevent overflow. Previously "overflow: none"
+            ;; was set on the surounding div, but the popup /needs/ to
+            ;; overflow.
+            (div (@ (class "event-body"))
+             ,(when (prop ev 'RRULE)
+                `(span (@ (class "repeating")) "↺"))
+             (span (@ (class "summary"))
+                   ,((get-config 'summary-filter) ev (prop ev 'SUMMARY)))
+             ,(when (prop ev 'LOCATION)
+                `(span (@ (class "location"))
+                       ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                    (prop ev 'LOCATION)))))
             ,(popup ev popup-id)))))
 
 ;; Format single event for graphical display
@@ -822,6 +826,7 @@
                                       `((class " generated ")
                                         (style " width: calc(100% * var(--editmode)) ")))))))))))
 
+
 
 ;; file existing but is of wrong type,
 (define (create-files)
