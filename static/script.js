@@ -5,9 +5,9 @@ function round_time (time, fraction) {
     return Math.round (time * scale) / scale;
 }
 
-function time_to_percent (time) {
+function date_to_percent (date) {
     // Decimal time
-    return (time.getHours() + (time.getMinutes() / 60)) * 100/24 + "%"
+    return (date.getHours() + (date.getMinutes() / 60)) * 100/24;
 }
 
 function parents_until (element, obj) {
@@ -189,7 +189,7 @@ function update_current_time_bar () {
             bar_object.id = "bar"
         }
 
-        bar_object.style.top = time_to_percent(now)
+        bar_object.style.top = date_to_percent(now) + "%";
         event_area.append(bar_object)
     }
 
