@@ -745,6 +745,19 @@ along with their colors.
 	z-index: 1;
 }
 
+/* Other
+----------------------------------------
+*/
+
+.template {
+    display: none;
+}
+
+
+/* Icalendar
+----------------------------------------
+*/
+
 /* Below is for styling embedded xcalendar components in the xhtml
    document. I can't find anything about if this is allowed
    according to any standard, but it seems to work.

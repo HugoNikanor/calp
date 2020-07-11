@@ -85,15 +85,15 @@ function create_event_move (e) {
         time = round_time(24 * (e.offsetY / this.clientHeight),
                           .25)
 
-        event = document.createElement("div");
+
+        event = document.getElementById("event-template").firstChild.cloneNode(true);
+        bind_properties(event);
+
         event.style.top = time * 100/24 + "%";
         event.dataset.time1 = time;
         event.dataset.time2 = time;
 
-        event.className = "event generated";
         event.style.pointerEvents = "none";
-        event.style.width = "calc(100% * var(--editmode))";
-        event.innerText = "New Event";
 
         event.dataset.date = this.id;
 
@@ -111,21 +111,17 @@ function create_event_move (e) {
         round_time(24 * (e.offsetY / event.parentElement.clientHeight),
                    .25);
     time1 = event.dataset.time1;
-    if (time2 > time1) {
-        event.style.bottom = (24 - time2) * 100/24 + "%";
-        event.style.top = time1 * 100/24 + "%";
-    } else {
-        event.style.top = time2 * 100/24 + "%";
-        event.style.bottom = (24 - time1) * 100/24 + "%";
-    }
+
+    event.properties.dtstart =
+        decimal_time_to_date(min(Number(time1), Number(time2)));
+    event.properties.dtend =
+        decimal_time_to_date(max(Number(time1), Number(time2)));
 }
 
 function create_event_finisher (callback) {
     down_on_event = false; // reset
     return function create_event_up (e) {
         if (! event) return;
-        let start = min(Number(event.dataset.time1), Number(event.dataset.time2));
-        let end = max(Number(event.dataset.time1), Number(event.dataset.time2));
 
         /* Restore pointer events for all existing events.
            Allow pointer events on our new event
@@ -137,7 +133,7 @@ function create_event_finisher (callback) {
         let localevent = event;
         event = null;
 
-        callback (localevent, start, end);
+        callback (localevent);
 
     }
 }
@@ -296,37 +292,10 @@ window.onload = function () {
             c.onmousedown = create_event_down;
             c.onmousemove = create_event_move;
             c.onmouseup = create_event_finisher(
-                function (event, start, end) {
-                    let startstr = decimal_time_to_string(start);
-                    let endstr = decimal_time_to_string(end);
-
-                    let popupElement = document
-                        .getElementById("popup-template")
-                        .content
-                        .cloneNode(true)
-                        .firstChild ;
-                    let id = gensym("popup-generated-");
-                    popupElement.id = id
-                    document.getElementsByClassName("root")[0].appendChild(popupElement);
-
-                    popupElement.querySelector('input[name="dtstart"]').value = startstr;
-                    popupElement.querySelector('input[name="dtend"]').value = endstr;
-
-                    let form = popupElement.querySelector("form")
-                    form.addEventListener("submit", function (ev) {
-                        ev.preventDefault();
-                        create_event(event.dataset.date, new FormData(form));
-                    });
-
+                function (event) {
+                    let popupElement = event.querySelector(".popup-container");
+                    /* TODO ensure input elements */
                     open_popup(popupElement);
-
-
-                    /*
-                    console.log(event);
-
-                    alert("Creating event " + startstr + " - " + endstr);
-                    */
-                    popupElement.querySelector('input[name="summary"]').focus();
                 });
         }
     }

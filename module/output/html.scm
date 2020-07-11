@@ -6,6 +6,7 @@
   #:use-module (vcomponent)
   #:use-module (vcomponent group)
   #:use-module (vcomponent datetime)
+  #:use-module (vcomponent build)
   #:use-module (util)
   #:use-module (util app)
   #:use-module (util exceptions)
@@ -804,25 +805,22 @@
                                              (extract 'DTSTART))
                                     (cdr (stream-car evs))))))
                       ,@(stream->list (stream-map fmt-day evs))))
-            (template (@ (id "popup-template"))
-                      (div (@ (class "popup-container"))
-                           (div (@ (class "popup"))
-                                ;; TODO have dummy calendar for events under creation
-                                (nav (@ (class "popup-control CAL_Calendar"))
-                                     ;; TODO why isn't this using the @var{btn} procedure.
-                                     (button (@ (title "Stäng") (onclick "") (class "btn close-tooltip")) (div "×")))
-                                (form
-                                 (article (@ (class "eventtext CAL_bg_Calendar"))
-                                          (h3 (input (@ (type "text")
-                                                        (name "summary")
-                                                        (placeholder "Summary")
-                                                        (required))))
-                                          (div (div (input (@ (type "time") (name "dtstart") (required)))
-                                                    " — "
-                                                    (input (@ (type "time") (name "dtend") (required))))
-                                               (textarea (@ (name "description")
-                                                            (placeholder "Description")))
-                                               (input (@ (type "submit"))))))))))))))
+
+            ;; This would idealy be a <template> element, but there is some
+            ;; form of special case with those in xhtml, but I can't find
+            ;; the documentation for it.
+            (div (@ (class "template") (id "event-template"))
+                      ,(let ((cal (vcalendar
+                                   name: "Generated"
+                                   children: (list (vevent
+                                                    uid: (uuidgen)
+                                                    dtstart: (datetime)
+                                                    dtend: (datetime)
+                                                    summary: "New Event")))))
+                         (caddar ; strip <a> tag
+                          (make-block (car (children cal))
+                                      `((class " generated ")
+                                        (style " width: calc(100% * var(--editmode)) ")))))))))))
 
 
 ;; file existing but is of wrong type,
