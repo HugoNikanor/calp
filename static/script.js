@@ -70,8 +70,8 @@ function create_event_move (e) {
     /* Create event when we start moving the mouse. */
     if (! event) {
         /* Small deadzone so tiny click and drags aren't registered */
-        if (abs(event_start.x - e.clientX) < 10
-            && abs(event_start.y - e.clientY) < 5)
+        if (Math.abs(event_start.x - e.clientX) < 10
+            && Math.abs(event_start.y - e.clientY) < 5)
         { return; }
 
         /* only allow start of dragging on background */
@@ -113,9 +113,9 @@ function create_event_move (e) {
     time1 = event.dataset.time1;
 
     event.properties.dtstart =
-        decimal_time_to_date(min(Number(time1), Number(time2)));
+        decimal_time_to_date(Math.min(Number(time1), Number(time2)));
     event.properties.dtend =
-        decimal_time_to_date(max(Number(time1), Number(time2)));
+        decimal_time_to_date(Math.max(Number(time1), Number(time2)));
 }
 
 function create_event_finisher (callback) {
@@ -208,18 +208,6 @@ function update_current_time_bar () {
 
     document.getElementById("today-button").href
         = time_to_date(new Date) + ".html";
-}
-
-function min(a, b) {
-    return a < b ? a : b;
-}
-
-function max(a, b) {
-    return a > b ? a : b;
-}
-
-function abs(n) {
-    return n < 0 ? - n : n;
 }
 
 function setVar(str, val) {
