@@ -333,50 +333,7 @@ window.onload = function () {
         el.parentElement.removeAttribute("href");
 
         /* Bind all vcomponent properties into javascript. */
-        el.properties = {}
-        let children = el.getElementsByTagName("properties")[0].children;
-
-        for (let child of children) {
-            let field = child.tagName;
-
-
-            lst = el.properties["_slot_" + field] = []
-            for (let s of el.getElementsByClassName(field)) {
-                let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
-                lst.push([s, f]);
-            }
-            for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
-                switch (s.tagName) {
-                    // TODO TZ?
-                case 'date':
-                    lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%d")]); break;
-                case 'date-time':
-                    lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%S")]); break;
-                default:
-                    lst.push([s, (s, v) => s.innerHTML = v]);
-                }
-                el.properties["_value_" + field] = s.innerHTML;
-            }
-
-            Object.defineProperty(
-                el.properties, field,
-                {
-                    get: function () {
-                        return this["_value_" + field];
-                    },
-                    set: function (value) {
-                        this["_value_" + field] = value;
-                        for (let [slot,updater] of el.properties["_slot_" + field]) {
-                            updater(slot, value);
-                        }
-                    }
-                });
-        }
-
-        el.properties.dtstart = new Date(el.properties.dtstart);
-
-        el.properties["_slot_dtstart"].push(
-            [el.style, (s, v) => s.top = time_to_percent(v)]);
+        bind_properties(el);
 
     }
 
@@ -462,3 +419,60 @@ function format_date(date, str) {
 }
 Object.prototype.format = function () { return this; } /* any number of arguments */
 Date.prototype.format = function (str) { return format_date (this, str); }
+
+
+function bind_properties (el) {
+    el.properties = {}
+    let children = el.getElementsByTagName("properties")[0].children;
+
+    for (let child of children) {
+        let field = child.tagName;
+
+
+        lst = el.properties["_slot_" + field] = []
+        for (let s of el.getElementsByClassName(field)) {
+            let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
+            lst.push([s, f]);
+        }
+        for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
+            switch (s.tagName) {
+                // TODO TZ?
+            case 'date':
+                lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%d")]); break;
+            case 'date-time':
+                lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%S")]); break;
+            default:
+                lst.push([s, (s, v) => s.innerHTML = v]);
+            }
+            /* TODO the icalendar data is only here when we have edit mode entabled.
+               Either always include it, or find the default value some other way */
+            el.properties["_value_" + field] = s.innerHTML;
+        }
+
+        Object.defineProperty(
+            el.properties, field,
+            {
+                get: function () {
+                    return this["_value_" + field];
+                },
+                set: function (value) {
+                    this["_value_" + field] = value;
+                    for (let [slot,updater] of el.properties["_slot_" + field]) {
+                        updater(slot, value);
+                    }
+                }
+            });
+    }
+
+    if (el.properties.dtstart) {
+        el.properties.dtstart = new Date(el.properties.dtstart);
+        el.properties["_slot_dtstart"].push(
+            [el.style, (s, v) => s.top = date_to_percent(v) + "%"]);
+    }
+
+    if (el.properties.dtend) {
+        el.properties.dtend = new Date(el.properties.dtstart);
+        el.properties["_slot_dtend"].push(
+            [el.style, (s, v) => s.bottom = (100 - date_to_percent(v)) + "%"]);
+    }
+}
