@@ -20,10 +20,17 @@ function parents_until (element, obj) {
     }
 }
 
-function decimal_time_to_date (time) {
+function decimal_time_to_date (time, date) {
     let hour = Math.floor(time);
     let minute = (time - hour) * 60;
-    return new Date(0,0,0,hour,minute,0);
+    if (date) {
+        return new Date(date.getFullYear(),
+                        date.getMonth(),
+                        date.getDate(),
+                        hour, minute, 0);
+    } else {
+        return new Date(0,0,0,hour,minute,0);
+    }
 }
 
 let gensym_counter = 0;
@@ -103,10 +110,13 @@ function create_event_move (e) {
                    .25);
     time1 = event.dataset.time1;
 
+    let date = new Date(event.dataset.date)
     event.properties.dtstart =
-        decimal_time_to_date(Math.min(Number(time1), Number(time2)));
+        decimal_time_to_date(Math.min(Number(time1), Number(time2)),
+                             date);
     event.properties.dtend =
-        decimal_time_to_date(Math.max(Number(time1), Number(time2)));
+        decimal_time_to_date(Math.max(Number(time1), Number(time2)),
+                             date);
 }
 
 function create_event_finisher (callback) {
