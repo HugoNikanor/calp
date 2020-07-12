@@ -491,6 +491,10 @@ along with their colors.
     overflow: visible;
 }
 
+.event input {
+    white-space: initial;
+}
+
 .event-body {
     padding: 0;
     margin: 0;

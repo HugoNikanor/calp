@@ -99,6 +99,36 @@ function create_event_move (e) {
 
         event.style.pointerEvents = "none";
 
+        /* ---------------------------------------- */
+
+        function replace_with_time_input(fieldname, event) {
+            let field = event.getElementsByClassName(fieldname)[0];
+
+            let input = document.createElement("input");
+            input.type = "time";
+            input.required = true;
+
+            input.onchange = function (e) {
+                // TODO capture date somewhere around here
+                let [hour, minute] = this.value.split(":").map(Number);
+                event.properties[fieldname] = new Date(0,0,0,hour,minute,0);
+            }
+            idx = event.properties["_slot_" + fieldname]
+                .findIndex(e => e[0] === field);
+            event.properties["_slot_" + fieldname].deleteIndex(idx);
+            event.properties["_slot_" + fieldname].push(
+                [input, (s, v) => s.value = v.format("%H:%M")])
+            field.replaceWith(input);
+
+        }
+
+        /* TODO dtstart < dtend */
+        replace_with_time_input("dtstart", event);
+        replace_with_time_input("dtend", event);
+
+        /* ---------------------------------------- */
+
+
         event.dataset.date = this.id;
 
         /* Makes all current events transparent when dragging over them.
