@@ -493,6 +493,8 @@ along with their colors.
 
 .event input {
     white-space: initial;
+    border: 1px solid gray;
+    max-width: 100%;
 }
 
 .event-body {

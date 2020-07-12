@@ -1,7 +1,9 @@
-Array.prototype.deleteIndex = function(idx) {
-    if (idx != -1) {
-        this.splice(idx, 1);
+function makeElement (name, attr={}) {
+    let element = document.createElement(name);
+    for (let [key, value] of Object.entries(attr)) {
+        element[key] = value;
     }
+    return element;
 }
 
 /* -------------------------------------------------- */
@@ -91,30 +93,7 @@ function create_event_move (e) {
 
         /* ---------------------------------------- */
 
-        function replace_with_time_input(fieldname, event) {
-            let field = event.getElementsByClassName(fieldname)[0];
-
-            let input = document.createElement("input");
-            input.type = "time";
-            input.required = true;
-
-            input.onchange = function (e) {
-                // TODO capture date somewhere around here
-                let [hour, minute] = this.value.split(":").map(Number);
-                event.properties[fieldname] = new Date(0,0,0,hour,minute,0);
-            }
-            idx = event.properties["_slot_" + fieldname]
-                .findIndex(e => e[0] === field);
-            event.properties["_slot_" + fieldname].deleteIndex(idx);
-            event.properties["_slot_" + fieldname].push(
-                [input, (s, v) => s.value = v.format("%H:%M")])
-            field.replaceWith(input);
-
-        }
-
-        /* TODO dtstart < dtend */
-        replace_with_time_input("dtstart", event);
-        replace_with_time_input("dtend", event);
+        place_in_edit_mode(event);
 
         /* ---------------------------------------- */
 
@@ -207,9 +186,10 @@ function update_current_time_bar () {
         if (bar_object) {
             bar_object.parentNode.removeChild(bar_object)
         } else {
-            bar_object = document.createElement("div")
-            bar_object.className = "eventlike current-time"
-            bar_object.id = "bar"
+            bar_object = makeElement ('div', {
+                id: 'bar',
+                className: 'eventlike current-time',
+            });
         }
 
         bar_object.style.top = date_to_percent(now) + "%";
@@ -287,6 +267,70 @@ async function create_event (date, fd) {
     console.log(body);
 }
 
+function place_in_edit_mode (event) {
+    function replace_with_time_input(fieldname, event) {
+        let field = event.getElementsByClassName(fieldname)[0];
+
+        let input = makeElement ('input', {
+            type: "time",
+            required: true,
+
+            onchange: function (e) {
+                let [hour, minute] = this.value.split(":").map(Number);
+                /* retain the year, month, and day information */
+                let d = new Date(event.properties[fieldname]);
+                d.setHours(hour);
+                d.setMinutes(minute);
+                event.properties[fieldname] = d;
+            }
+        });
+        let slot = event.properties["_slot_" + fieldname]
+        idx = slot.findIndex(e => e[0] === field);
+        slot.splice(idx, 1, [input, (s, v) => s.value = v.format("%H:%M")])
+        field.replaceWith(input);
+
+    }
+
+    /* TODO ensure dtstart < dtend */
+    replace_with_time_input("dtstart", event);
+    replace_with_time_input("dtend", event);
+
+    /* ---------------------------------------- */
+
+    let summary = event.getElementsByClassName("summary")[1];
+    let input = makeElement('input', {
+        name: "dtstart",
+        placeholder: summary.innerText,
+        required: true,
+    });
+
+    input.oninput = function () {
+        event.properties["summary"] = this.value;
+    }
+
+    let slot = event.properties["_slot_summary"]
+    idx = slot.findIndex(e => e[0] === summary);
+    slot.splice(idx, 1, [input, (s, v) => s.value = v])
+
+    summary.replaceWith(input);
+
+    /* ---------------------------------------- */
+
+    let submit = makeElement( 'input', {
+        type: 'submit',
+        value: 'Skapa event',
+    });
+
+    let article = event.getElementsByTagName("article")[0];
+    article.appendChild(submit);
+
+
+    let wrappingForm = makeElement('form');
+    article.replaceWith(wrappingForm);
+    wrappingForm.appendChild(article);
+
+}
+
 window.onload = function () {
     start_time.setTime(document.querySelector("meta[name='start-time']").content * 1000)
     end_time.setTime(document.querySelector("meta[name='end-time']").content * 1000)
@@ -305,6 +349,9 @@ window.onload = function () {
                     let popupElement = event.querySelector(".popup-container");
                     /* TODO ensure input elements */
                     open_popup(popupElement);
+
+                    popupElement.querySelector("input[name='dtstart']").focus();
+
                 });
         }
     }
@@ -338,12 +385,13 @@ window.onload = function () {
 
     let jumpto = document.getElementsByClassName("jump-to")[0];
     let gotodatebtn = jumpto.getElementsByTagName("button")[0];
-    let golink = document.createElement("a");
-    golink.classList.add("btn");
     let target_href = (new Date).format("%Y-%m-%d") + ".html";
+    let golink = makeElement('a', {
+        className: 'btn',
+        href: target_href,
+        innerHTML: gotodatebtn.innerHTML,
+    });
     document.getElementById("today-button").href = target_href;
-    golink.href = target_href;
-    golink.innerHTML = gotodatebtn.innerHTML;
     gotodatebtn.replaceWith(golink);
 
     jumpto.getElementsByTagName("input")[0].onchange = function () {
