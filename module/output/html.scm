@@ -161,8 +161,9 @@
   `(div (@ (class "popup-container") (id ,id)
            (onclick "event.stopPropagation()"))
         (div (@ (class "popup"))
-             (nav (@ (class "popup-control CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
-                                                                 "unknown"))))
+             (nav (@ (class "popup-control CAL_"
+                       ,(html-attr (or (prop (parent ev) 'NAME)
+                                       "unknown"))))
                   ,(btn "×"
                         title: "Stäng"
                         onclick: (format #f "close_popup(~a)" id)
@@ -178,8 +179,10 @@
                 `(("📅" ,(fmt-single-event ev))
                   ("⤓" (div (@ (style "font-family:sans"))
                             (p "Ladda ner")
-                            (ul (li (a (@ (href ,(string-append "/calendar/" (prop ev 'UID) ".ics"))) "som iCal"))
-                                (li (a (@ (href ,(string-append "/calendar/" (prop ev 'UID) ".xcs"))) "som xCal"))))))
+                            (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
+                                       "som iCal"))
+                                (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
+                                       "som xCal"))))))
                 (when (edit-mode)
                   `(("</>"
                      ,((@ (output xcal) ns-wrap)
