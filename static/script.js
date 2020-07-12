@@ -468,7 +468,7 @@ function bind_properties (el) {
     }
 
     if (el.properties.dtend) {
-        el.properties.dtend = new Date(el.properties.dtstart);
+        el.properties.dtend = new Date(el.properties.dtend);
         el.properties["_slot_dtend"].push(
             [el.style, (s, v) => s.bottom = (100 - date_to_percent(v)) + "%"]);
     }
