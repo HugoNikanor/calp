@@ -315,7 +315,6 @@ window.onload = function () {
             c.onmouseup = create_event_finisher(
                 function (event) {
                     let popupElement = event.querySelector(".popup-container");
-                    /* TODO ensure input elements */
                     open_popup(popupElement);
 
                     popupElement.querySelector("input[name='dtstart']").focus();
@@ -326,6 +325,7 @@ window.onload = function () {
 
     for (let nav of document.getElementsByClassName("popup-control")) {
         nav.onmousedown = function (e) {
+            /* Ignore mousedown on children */
             if (e.target != nav) return;
             nav.style.cursor = "grabbing";
             nav.dataset.grabbed = "true";

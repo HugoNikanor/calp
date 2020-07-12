@@ -219,9 +219,8 @@
         (inner (+ x w) (left-subtree tree))
         (inner x (right-subtree tree))))))
 
-(define* (make-block ev optional: (extra-attributes '()))
-
-  (define popup-id (symbol->string (gensym "popup")))
+(define* (make-block ev optional: (extra-attributes '())
+                     key: (popup-id (symbol->string (gensym "popup"))))
 
   `((a (@ (href "#" ,(html-id ev))
           (class "hidelink"))
@@ -730,6 +729,11 @@
                                  "idag"))
 
                       (div (@ (class "jump-to"))
+                           ;; Firefox's accessability complain about each date
+                           ;; component, meaning that it's broken. This label
+                           ;; is for the whole input, which can be enabled
+                           ;; if wanted.
+                           ;; (label (@ (for "date")) "Hoppa till")
                            (form (@ (action "/today"))
                                  (input (@ (type hidden)
                                            (name "view")
@@ -827,7 +831,7 @@
                          (caddar ; strip <a> tag
                           (make-block (car (children cal))
                                       `((class " generated ")
-                                        (style " width: calc(100% * var(--editmode)) ")))))))))))
+                                        (style "width:calc(100%*var(--editmode));")))))))))))
 
 
 
