@@ -16,16 +16,6 @@ function date_to_percent (date) {
     return (date.getHours() + (date.getMinutes() / 60)) * 100/24;
 }
 
-function parents_until (element, obj) {
-    if (element === null) {
-        return null;
-    } else if (element.id == obj.id || element.classList.contains(obj.class)) {
-        return element;
-    } else {
-        return parents_until (element.parentElement, obj);
-    }
-}
-
 function decimal_time_to_date (time, date) {
     let hour = Math.floor(time);
     let minute = (time - hour) * 60;
