@@ -644,6 +644,9 @@ along with their colors.
     display: none;
     position: absolute;
     z-index: 10;
+
+    left: 10px;
+    top: -50px;
 }
 
 .popup-container.visible {
@@ -680,6 +683,8 @@ along with their colors.
     /* not needed, but the icons aren't text
        and should therefor not be copied */
     user-select: none;
+
+    cursor: grab;
 }
 
 .popup-control .btn {

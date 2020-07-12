@@ -324,6 +324,28 @@ window.onload = function () {
         }
     }
 
+    for (let nav of document.getElementsByClassName("popup-control")) {
+        nav.onmousedown = function (e) {
+            if (e.target != nav) return;
+            nav.style.cursor = "grabbing";
+            nav.dataset.grabbed = "true";
+            nav.dataset.grabPoint = e.layerX + ";" + e.layerY;
+        }
+        nav.onmousemove = function (e) {
+            if (nav.dataset.grabbed) {
+                let [x, y] = nav.dataset.grabPoint.split(";").map(Number);
+                let popup = nav.closest(".popup-container");
+
+                popup.style.left = popup.offsetLeft + (e.layerX - x) + "px";
+                popup.style.top = popup.offsetTop + (e.layerY - y) + "px";
+            }
+        }
+        nav.onmouseup = function () {
+            nav.dataset.grabbed = "";
+            nav.style.cursor = "";
+        }
+    }
+
     for (let el of document.getElementsByClassName("event")) {
         /* Popup script replaces need for anchors to events.
            On mobile they also have the problem that they make
