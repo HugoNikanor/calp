@@ -329,21 +329,24 @@ window.onload = function () {
             if (e.target != nav) return;
             nav.style.cursor = "grabbing";
             nav.dataset.grabbed = "true";
-            nav.dataset.grabPoint = e.layerX + ";" + e.layerY;
+            nav.dataset.grabPoint = e.clientX + ";" + e.clientY;
+            let popup = nav.closest(".popup-container");
+            nav.dataset.startPoint = popup.offsetLeft + ";" + popup.offsetTop;
         }
-        nav.onmousemove = function (e) {
+        window.addEventListener('mousemove', function (e) {
             if (nav.dataset.grabbed) {
                 let [x, y] = nav.dataset.grabPoint.split(";").map(Number);
+                let [startX, startY] = nav.dataset.startPoint.split(";").map(Number);
                 let popup = nav.closest(".popup-container");
 
-                popup.style.left = popup.offsetLeft + (e.layerX - x) + "px";
-                popup.style.top = popup.offsetTop + (e.layerY - y) + "px";
+                popup.style.left = startX + (e.clientX - x) + "px";
+                popup.style.top = startY + (e.clientY - y) + "px";
             }
-        }
-        nav.onmouseup = function () {
+        });
+        window.addEventListener('mouseup', function () {
             nav.dataset.grabbed = "";
             nav.style.cursor = "";
-        }
+        });
     }
 
     for (let el of document.getElementsByClassName("event")) {
