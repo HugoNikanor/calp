@@ -1,3 +1,9 @@
+Array.prototype.deleteIndex = function(idx) {
+    if (idx != -1) {
+        this.splice(idx, 1);
+    }
+}
+
 /* -------------------------------------------------- */
 
 function round_time (time, fraction) {
