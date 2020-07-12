@@ -23,6 +23,8 @@
   :use-module (web http)
 
   :use-module (sxml simple)
+  :use-module (sxml xpath)
+  :use-module (sxml namespace)
 
   :use-module (server util)
   :use-module (server macro)
@@ -136,15 +138,31 @@
              (return (build-response code: 400)
                      (format #f "No calendar with name [~a]\r\n" cal)))
 
+           ;; Expected form of data (but in XML) is:
+           ;; @example
+           ;; (*TOP*
+           ;;  (*PI* ...)
+           ;;  (icalendar (@ (xmlns "..."))
+           ;;   (vcalendar
+           ;;    (vevent ...))))
+           ;; @end example
+           ;; However, *PI* will probably be omited, and currently events
+           ;; are sent without the vcalendar part. Earlier versions
+           ;; Also omitted the icalendar part. And I'm not sure if the
+           ;; *TOP* node is a required part of the sxml.
+
            (let ((event
                    ((@ (vcomponent parse xcal) sxcal->vcomponent)
-                    ;; TODO different forms?
-                    (cadr ; removes *TOP*
-                     (catch 'parser-error
-                       (lambda () (xml->sxml data))
-                       (lambda (err port . args)
-                         (return (build-response code: 400)
-                                 (format #f "XML parse error ~{~a~}\r\n" args))))))))
+                    (catch 'parser-error
+                      (lambda ()
+                        (move-to-namespace
+                         ;; TODO Multiple event components
+                         (car ((sxpath '(// IC:vevent))
+                               (xml->sxml data namespaces: '((IC . "urn:ietf:params:xml:ns:icalendar-2.0")))))
+                         #f))
+                      (lambda (err port . args)
+                        (return (build-response code: 400)
+                                (format #f "XML parse error ~{~a~}\r\n" args)))))))
 
              (unless (eq? 'VEVENT (type event))
                (return (build-response code: 400)

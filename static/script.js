@@ -221,36 +221,11 @@ function close_all_popups () {
     }
 }
 
-function sxml_to_xml(doc, tree) {
+async function create_event (event) {
 
-    if (typeof(tree) == 'string') return tree;
-
-    let [tag, ...body] = tree;
-    let node = doc.createElement(tag);
-    for (const child of body) {
-        node.append(sxml_to_xml(doc, child));
-    }
-    return node;
-}
-
-// FormData
-async function create_event (date, fd) {
-
-    let tree = ['vevent',
-                ['properties',
-                 ['dtstart', ['date-time', date + "T" + fd.get("dtstart") + ":00"]],
-                 ['dtend', ['date-time', date + "T" + fd.get("dtend") + ":00"]],
-                 ['summary', ['text', fd.get("summary")]]]]
-
-    if (fd.get("description")) {
-        tree[1].push(['description', ['text', fd.get("description")]])
-    }
-
-    let xmldoc = document.implementation.createDocument("", "", null)
-    xml = sxml_to_xml(xmldoc, tree).outerHTML;
+    let xml = event.getElementsByTagName("icalendar")[0].outerHTML
 
     console.log(xml);
-
 
     let data = new URLSearchParams();
     data.append("cal", "Calendar");
@@ -325,7 +300,11 @@ function place_in_edit_mode (event) {
     article.appendChild(submit);
 
 
-    let wrappingForm = makeElement('form');
+    let wrappingForm = makeElement('form', {
+        onsubmit: function (e) {
+            create_event(event);
+            return false;
+        }});
     article.replaceWith(wrappingForm);
     wrappingForm.appendChild(article);
 
