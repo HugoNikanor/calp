@@ -12,11 +12,32 @@
 (define (string-last string)
   (string-ref string (1- (string-length string))))
 
-;; sxml, (U symbol string #f) → sxml
-;; NOTE possibly allow namespace to be a map between namespaces
-(define-public (move-to-namespace sxml namespace)
 
-  (define nssymb
+;; Change the namespace for all tags in a given SXML tree.
+;; Takes either a fix namespace everything is moved to, or
+;; an assoc list which maps input namespaces to output namespaces.
+;; A namespace is a symbol, string, or #f for no namespace.
+;; keys in the assoc list can't be strings.
+;; @example
+;; (move-to-namespace '(test) '((#f . NEW)))
+;; => (NEW:test)
+;; (move-to-namespace '(a:a (b:b)) '((a . b) (b . a)))
+;; => (b:a (a:b))
+;; (move-to-namespace '(a:a (b:b)) #f)
+;; => (a (b))
+;; (move-to-namespace '(a:a (b:b)) 'c)
+;; => (c:a (c:b))
+;; @end example
+;; sxml, (U symbol string #f (alist (U #f symbol) (U symbol string #f))) → sxml
+(define-public (move-to-namespace sxml namespace-map)
+
+  (define (nssymb key)
+    (define namespace
+      (if (list? namespace-map)
+          (or (assoc-ref namespace-map key)
+              (error "No mapping for namespace" key))
+          namespace-map))
+
     (cond
      [(not namespace) '#{}#]
      [(symbol? namespace)
@@ -30,8 +51,8 @@
   (define (ns tag)
     (call-with-values (lambda () (symbol-split tag))
       (case-lambda
-        [(ns tag) (symbol-append nssymb tag)]
-        [(tag) (symbol-append nssymb tag)])))
+        [(ns tag) (symbol-append (nssymb ns) tag)]
+        [(tag) (symbol-append (nssymb #f) tag)])))
 
   (pre-post-order
    sxml
