@@ -249,26 +249,27 @@
 ;; Format single event for graphical display
 (define (create-block date ev)
   ;; (define time (date->time-utc day))
+
+  (define left  (* 100 (x-pos ev)))
+  (define width* (* 100 (width ev)))
+  (define top (if (date= date (as-date (prop ev 'DTSTART)))
+                  (* 100/24
+                     (time->decimal-hour
+                      (as-time (prop ev 'DTSTART))))
+                  0))
+  (define height (* 100/24 (time->decimal-hour (event-length/day date ev))))
+
+
   (define style
     ;; The calc's here is to enable an "edit-mode".
     ;; Setting --editmode ≈ 0.8 gives some whitespace to the right
     ;; of the events, alowing draging there for creating new events.
-    (format #f (if (edit-mode)
-                   "left:calc(var(--editmode)*~,3f%);width:calc(var(--editmode)*~,3f%);top:~,3f%;height:~,3f%;"
-                   "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;")
+    (if (edit-mode)
+        (format #f "left:calc(var(--editmode)*~,3f%);width:calc(var(--editmode)*~,3f%);top:~,3f%;height:~,3f%;"
 
-            (* 100 (x-pos ev))          ; left
-            (* 100 (width ev))          ; width
-
-            ;; top
-            (if (date= date (as-date (prop ev 'DTSTART)))
-                (* 100/24
-                   (time->decimal-hour
-                    (as-time (prop ev 'DTSTART))))
-                0)
-
-            ;; height
-            (* 100/24 (time->decimal-hour (event-length/day date ev)))))
+                left width* top height)
+        (format #f "left:~,3f%;width:~,3f%;top:~,3f%;height:~,3f%;"
+                left width* top height)))
 
   (make-block
    ev `((class
@@ -287,29 +288,30 @@
   (define total-length
     (* 24 (days-in-interval start-date end-date)))
 
+  (define top (* 100 (x-pos ev)))
+  (define height (* 100 (width ev)))
+  (define left ; start time
+    (* 100
+       (let* ((dt (datetime date: start-date))
+              (diff (datetime-difference
+                     (datetime-max dt (as-datetime (prop ev 'DTSTART)))
+                     dt)))
+         (/ (datetime->decimal-hour diff start-date) total-length))))
+
+  ;; Set length of event, which makes end time
+  (define width*
+    (* 100
+       (/ (datetime->decimal-hour
+           (as-datetime (event-length/clamped start-date end-date ev))
+           start-date)
+          total-length)))
+
   (define style
-    (format #f "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"
-
-            ;; Prevent collisions
-            (* 100 (x-pos ev))          ; top
-            (* 100 (width ev))          ; height
-
-            ;; Set start time
-            ;; left
-            (* 100
-               (let* ((dt (datetime date: start-date))
-                      (diff (datetime-difference
-                             (datetime-max dt (as-datetime (prop ev 'DTSTART)))
-                             dt)))
-                 (/ (datetime->decimal-hour diff start-date) total-length)))
-
-            ;; Set length of event, which makes end time
-            ;; width
-            (* 100
-               (/ (datetime->decimal-hour
-                   (as-datetime (event-length/clamped start-date end-date ev))
-                   start-date)
-                  total-length))))
+    (if (edit-mode)
+        (format #f "top:calc(var(--editmode)*~,3f%);height:calc(var(--editmode)*~,3f%);left:~,3f%;width:~,3f%;"
+                top height left width*)
+        (format #f "top:~,3f%;height:~,3f%;left:~,3f%;width:~,3f%;"
+                top height left width*)))
 
   (make-block
    ev `((class
