@@ -1,3 +1,5 @@
+'use strict';
+
 function makeElement (name, attr={}) {
     let element = document.createElement(name);
     for (let [key, value] of Object.entries(attr)) {
@@ -471,7 +473,7 @@ function bind_properties (el) {
         let field = child.tagName;
 
 
-        lst = el.properties["_slot_" + field] = []
+        let lst = el.properties["_slot_" + field] = []
         for (let s of el.getElementsByClassName(field)) {
             let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
             lst.push([s, f]);
