@@ -833,7 +833,11 @@
                          (caddar ; strip <a> tag
                           (make-block (car (children cal))
                                       `((class " generated ")
-                                        (style "width:calc(100%*var(--editmode));")))))))))))
+                                        ;; TODO currently without this the event is always
+                                        ;; full width. Adding this however completely breaks
+                                        ;; creation of long events.
+                                        ;; (style "width:calc(100%*var(--editmode));")
+                                        ))))))))))
 
 
 
