@@ -6,8 +6,8 @@
 
 (define-module (output vdir)
   :use-module (util)
-  :use-modules (output ical)
-  :use-modules (vcomponent)
+  :use-module (output ical)
+  :use-module (vcomponent)
   )
 
 (define / file-name-separator-string)
