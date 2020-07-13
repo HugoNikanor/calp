@@ -3,4 +3,6 @@
 here=$(dirname $(realpath $0))
 . $here/env
 
-exec guile -e main -s $here/module/main.scm "$@"
+GUILE=${GUILE:-guile}
+
+exec $GUILE -e main -s $here/module/main.scm "$@"
