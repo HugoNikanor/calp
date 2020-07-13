@@ -663,8 +663,9 @@
             (meta (@ (name viewport)
                      (content "width=device-width, initial-scale=0.5")))
             (meta (@ (name description)
-                     (content "Calendar for the dates between " ,(date->string start-date)
-                              " and " ,(date->string end-date))))
+                     (content "Calendar for the dates between "
+                              ,(date->string start-date) " and "
+                              ,(date->string end-date))))
             ;; NOTE this is only for the time actually part of this calendar.
             ;; overflowing times from pre-start and post-end is currently ignored here.
             (meta (@ (name start-time)
