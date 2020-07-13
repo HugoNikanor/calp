@@ -41,107 +41,120 @@ function gensym (prefix) {
 let start_time = new Date();
 let end_time = new Date();
 
-/* dynamicly created event when dragging */
-let event;
+class EventCreator {
 
-let event_start = { x: NaN, y: NaN };
-
-let down_on_event = false;
-
-function create_event_down (e) {
-    /* Only trigger event creation stuff on actuall events background,
-       NOT on its children */
-    down_on_event = false;
-    if (! e.target.classList.contains("events")) return;
-    down_on_event = true;
-
-    event_start.x = e.clientX;
-    event_start.y = e.clientY;
-}
-
-function create_event_move (e) {
-
-    if (e.buttons != 1 || ! down_on_event) return;
-
-    /* Create event when we start moving the mouse. */
-    if (! event) {
-        /* Small deadzone so tiny click and drags aren't registered */
-        if (Math.abs(event_start.x - e.clientX) < 10
-            && Math.abs(event_start.y - e.clientY) < 5)
-        { return; }
-
-        /* only allow start of dragging on background */
-        if (e.target != this) return;
-
-        /* only on left click */
-        if (e.buttons != 1) return;
-
-        /* [0, 1) -- where are we in the container */
-        /* Ronud to force steps of quarters */
-        time = round_time(24 * (e.offsetY / this.clientHeight),
-                          .25)
-
-
-        event = document.getElementById("event-template").firstChild.cloneNode(true);
-        bind_properties(event);
-
-        event.style.top = time * 100/24 + "%";
-        event.dataset.time1 = time;
-        event.dataset.time2 = time;
-
-        event.style.pointerEvents = "none";
-
-        /* ---------------------------------------- */
-
-        place_in_edit_mode(event);
-
-        /* ---------------------------------------- */
-
-
-        event.dataset.date = this.id;
-
-        /* Makes all current events transparent when dragging over them.
-           Without this weird stuff happens when moving over them
-        */
-        for (let e of this.children) {
-            e.style.pointerEvents = "none";
-        }
-
-        this.appendChild(event);
+    /* dynamicly created event when dragging */
+    constructor() {
+        this.event = false;
+        this.event_start = { x: NaN, y: NaN };
+        this.down_on_event = false;
     }
 
-    time2 = event.dataset.time2 =
-        round_time(24 * (e.offsetY / event.parentElement.clientHeight),
-                   .25);
-    time1 = event.dataset.time1;
+    create_event_down () {
+        let that = this;
+        return function (e) {
+            /* Only trigger event creation stuff on actuall events background,
+               NOT on its children */
+            that.down_on_event = false;
+            if (! e.target.classList.contains("events")) return;
+            that.down_on_event = true;
 
-    let date = new Date(event.dataset.date)
-    event.properties.dtstart =
-        decimal_time_to_date(Math.min(Number(time1), Number(time2)),
-                             date);
-    event.properties.dtend =
-        decimal_time_to_date(Math.max(Number(time1), Number(time2)),
-                             date);
-}
-
-function create_event_finisher (callback) {
-    down_on_event = false; // reset
-    return function create_event_up (e) {
-        if (! event) return;
-
-        /* Restore pointer events for all existing events.
-           Allow pointer events on our new event
-        */
-        for (let e of event.parentElement.children) {
-            e.style.pointerEvents = "";
+            that.event_start.x = e.clientX;
+            that.event_start.y = e.clientY;
         }
-
-        let localevent = event;
-        event = null;
-
-        callback (localevent);
-
     }
+
+    create_event_move() {
+        let that = this;
+        return function (e) {
+            if (e.buttons != 1 || ! that.down_on_event) return;
+
+            /* Create event when we start moving the mouse. */
+            if (! that.event) {
+                /* Small deadzone so tiny click and drags aren't registered */
+                if (Math.abs(that.event_start.x - e.clientX) < 10
+                    && Math.abs(that.event_start.y - e.clientY) < 5)
+                { return; }
+
+                /* only allow start of dragging on background */
+                if (e.target != this) return;
+
+                /* only on left click */
+                if (e.buttons != 1) return;
+
+                /* [0, 1) -- where are we in the container */
+                /* Ronud to force steps of quarters */
+                let time = round_time(24 * (e.offsetY / this.clientHeight),
+                                      .25)
+
+
+                let event
+                    = that.event
+                    = document.getElementById("event-template")
+                      .firstChild.cloneNode(true);
+                bind_properties(event);
+
+                event.style.top = time * 100/24 + "%";
+                event.dataset.time1 = time;
+                event.dataset.time2 = time;
+
+                event.style.pointerEvents = "none";
+
+                /* ---------------------------------------- */
+
+                place_in_edit_mode(event);
+
+                /* ---------------------------------------- */
+
+
+                event.dataset.date = this.id;
+
+                /* Makes all current events transparent when dragging over them.
+                   Without this weird stuff happens when moving over them
+                */
+                for (let e of this.children) {
+                    e.style.pointerEvents = "none";
+                }
+
+                this.appendChild(event);
+            }
+
+            let time2 = that.event.dataset.time2 =
+                round_time(24 * (e.offsetY / that.event.parentElement.clientHeight),
+                           .25);
+            let time1 = that.event.dataset.time1;
+
+            let date = new Date(that.event.dataset.date)
+            that.event.properties.dtstart =
+                decimal_time_to_date(Math.min(Number(time1), Number(time2)),
+                                     date);
+            that.event.properties.dtend =
+                decimal_time_to_date(Math.max(Number(time1), Number(time2)),
+                                     date);
+        }
+    }
+
+    create_event_finisher (callback) {
+        this.down_on_event = false; // reset
+        let that = this;
+        return function create_event_up (e) {
+            if (! that.event) return;
+
+            /* Restore pointer events for all existing events.
+               Allow pointer events on our new event
+            */
+            for (let e of that.event.parentElement.children) {
+                e.style.pointerEvents = "";
+            }
+
+            let localevent = that.event;
+            that.event = null;
+
+            callback (localevent);
+
+        }
+    }
+
 }
 
 async function remove_event (element) {
@@ -309,10 +322,11 @@ window.onload = function () {
 
     /* Is event creation active? */
     if (true) {
+        let eventCreator = new EventCreator;
         for (let c of document.getElementsByClassName("events")) {
-            c.onmousedown = create_event_down;
-            c.onmousemove = create_event_move;
-            c.onmouseup = create_event_finisher(
+            c.onmousedown = eventCreator.create_event_down();
+            c.onmousemove = eventCreator.create_event_move();
+            c.onmouseup = eventCreator.create_event_finisher(
                 function (event) {
                     let popupElement = event.querySelector(".popup-container");
                     open_popup(popupElement);
