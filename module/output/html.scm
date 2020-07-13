@@ -334,7 +334,9 @@
     (fix-event-widths! short-events event-length-key:
                        (lambda (e) (event-length/day day-date e)))
 
-    `(div (@ (class "events") (id ,(date-link day-date)))
+    `(div (@ (class "events event-container") (id ,(date-link day-date))
+             (data-start ,(date->string day-date) "T00:00Z")
+             (data-end ,(date->string (add-day day-date)) "T00:00Z"))
           ,@(map (lambda (time)
                    `(div (@ (class "clock clock-" ,time))))
                  (iota 12 0 2))
@@ -368,7 +370,9 @@
     `((div (@ (class "calendar"))
            (div (@ (class "days"))
                 ,@(time-marker-div)
-                (div (@ (class "longevents")
+                (div (@ (class "longevents event-container")
+                        (data-start ,(date->string start-date) "T00:00Z")
+                        (data-end ,(date->string (add-day end-date)) "T00:00Z")
                         (style "grid-column-end: span " ,(days-in-interval start-date end-date)))
                      ,@(lay-out-long-events start-date end-date long-events))
                 ,@(map (lambda (day-date)

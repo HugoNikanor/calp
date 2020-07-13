@@ -20,19 +20,6 @@ function date_to_percent (date) {
     return (date.getHours() + (date.getMinutes() / 60)) * 100/24;
 }
 
-function decimal_time_to_date (time, date) {
-    let hour = Math.floor(time);
-    let minute = (time - hour) * 60;
-    if (date) {
-        return new Date(date.getFullYear(),
-                        date.getMonth(),
-                        date.getDate(),
-                        hour, minute, 0);
-    } else {
-        return new Date(0,0,0,hour,minute,0);
-    }
-}
-
 /* if only there was such a thing as a let to wrap around my lambda... */
 const gensym = (counter => (prefix="gensym") => prefix + ++counter)(0)
 
@@ -49,14 +36,13 @@ class EventCreator {
         this.down_on_event = false;
     }
 
-    create_event_down () {
+    create_event_down (intended_target) {
         let that = this;
         return function (e) {
             /* Only trigger event creation stuff on actuall events background,
                NOT on its children */
             that.down_on_event = false;
-            if (! e.target.classList.contains("events")) return;
-            // if (! e.target.classList.contains("longevents")) return;
+            if (e.target != intended_target) return;
             that.down_on_event = true;
 
             that.event_start.x = e.clientX;
@@ -64,7 +50,15 @@ class EventCreator {
         }
     }
 
-    create_event_move() {
+    /*
+      round_to: what start and end times should round to when dragging, in fractions
+      of the width of the containing container.
+
+      TODO limit this to only continue when on the intended event_container.
+
+      (event → [0, 1)), 𝐑, bool → event → ()
+     */
+    create_event_move(pos_in, round_to=1, wide_element=false) {
         let that = this;
         return function (e) {
             if (e.buttons != 1 || ! that.down_on_event) return;
@@ -82,23 +76,16 @@ class EventCreator {
                 /* only on left click */
                 if (e.buttons != 1) return;
 
-
                 let event
                     = that.event
                     = document.getElementById("event-template")
                       .firstChild.cloneNode(true);
-                bind_properties(event);
+                bind_properties(event, wide_element);
 
                 /* [0, 1) -- where are we in the container */
                 /* Ronud to force steps of quarters */
-                let time = round_time(24 * (e.offsetY / this.clientHeight),
-                                      .25);
-                /*
-                  time = round_time((e.offsetX / this.clientWidth),
-                  1/(7*(24/8)));
-                */
+                let time = round_time(pos_in(this, e), round_to);
 
-                event.style.top = time * 100/24 + "%";
                 event.dataset.time1 = time;
                 event.dataset.time2 = time;
 
@@ -110,9 +97,6 @@ class EventCreator {
 
                 /* ---------------------------------------- */
 
-
-                event.dataset.date = this.id;
-
                 /* Makes all current events transparent when dragging over them.
                    Without this weird stuff happens when moving over them
                 */
@@ -123,43 +107,40 @@ class EventCreator {
                 this.appendChild(event);
             }
 
+            let time1 = Number(that.event.dataset.time1);
             let time2 = that.event.dataset.time2 =
-                round_time(24 * (e.offsetY / that.event.parentElement.clientHeight),
-                           .25);
-            let time1 = that.event.dataset.time1;
+                round_time(pos_in(that.event.parentElement, e),
+                           round_to);
 
-            let date = new Date(that.event.dataset.date)
-            that.event.properties.dtstart =
-                decimal_time_to_date(Math.min(Number(time1), Number(time2)),
-                                     date);
-            that.event.properties.dtend =
-                decimal_time_to_date(Math.max(Number(time1), Number(time2)),
-                                     date);
+            /* ---------------------------------------- */
 
+            let event_container = that.event.closest(".event-container");
 
-            /*
-    time2 = event.dataset.time2 =
-        round_time((e.offsetX / event.parentElement.clientWidth),
-                   1/(7*(24/8)));
-        // round_time(24 * (e.offsetX / event.parentElement.clientWidth),
-        //            .25);
-    time1 = Number(event.dataset.time1);
+            /* These two are in UTC */
+            let container_start = new Date(event_container.dataset.start);
+            let container_end = new Date(event_container.dataset.end);
 
-    // let date = new Date(event.dataset.date)
-    let d1 = new Date(start_time.getTime() + (end_time-start_time) * Math.min(time1,time2));
-    let d2 = new Date(start_time.getTime() + (end_time-start_time) * Math.max(time1,time2));
-    event.properties.dtstart = d1;
-        // decimal_time_to_date(Math.min(Number(time1), Number(time2)),
-        //                      date);
-    event.properties.dtend = d2;
-        // decimal_time_to_date(Math.max(Number(time1), Number(time2)),
-        //                      date);
-        */
+            /* ---------------------------------------- */
+
+            /* ms */
+            let duration = container_end - container_start;
+
+            let start_in_duration = duration * Math.min(time1,time2);
+            let end_in_duration   = duration * Math.max(time1,time2);
+
+            /* Notice that these are converted to UTC, since the intervals are given
+               in utc, and I only really care about local time (which a specific local
+               timezone doesn't give me)
+            */
+            let d1 = new Date(container_start.getTime() + start_in_duration).untc();
+            let d2 = new Date(container_start.getTime() + end_in_duration).untc();
+
+            that.event.properties.dtstart = d1;
+            that.event.properties.dtend = d2;
         }
     }
 
     create_event_finisher (callback) {
-        this.down_on_event = false; // reset
         let that = this;
         return function create_event_up (e) {
             if (! that.event) return;
@@ -347,8 +328,30 @@ window.onload = function () {
     if (true) {
         let eventCreator = new EventCreator;
         for (let c of document.getElementsByClassName("events")) {
-            c.onmousedown = eventCreator.create_event_down();
-            c.onmousemove = eventCreator.create_event_move();
+            c.onmousedown = eventCreator.create_event_down(c);
+            c.onmousemove = eventCreator.create_event_move(
+                (c,e) => e.offsetY / c.clientHeight,
+                /* every quarter, every hour */
+                1/(24*4), false
+            );
+            c.onmouseup = eventCreator.create_event_finisher(
+                function (event) {
+                    let popupElement = event.querySelector(".popup-container");
+                    open_popup(popupElement);
+
+                    popupElement.querySelector("input[name='dtstart']").focus();
+
+                });
+        }
+
+        for (let c of document.getElementsByClassName("longevents")) {
+            c.onmousedown = eventCreator.create_event_down(c);
+            c.onmousemove = eventCreator.create_event_move(
+                (c,e) => e.offsetX / c.clientWidth,
+                /* every day, NOTE should be changed to check
+                   interval of longevents */
+                1/7, true
+            );
             c.onmouseup = eventCreator.create_event_finisher(
                 function (event) {
                     let popupElement = event.querySelector(".popup-container");
@@ -397,7 +400,7 @@ window.onload = function () {
         if (el.closest(".longevents")) {
             bind_properties(el, true);
         } else {
-            bind_properties(el);
+            bind_properties(el, false);
         }
 
     }
@@ -489,8 +492,19 @@ function format_date(date, str) {
 Object.prototype.format = function () { return this; } /* any number of arguments */
 Date.prototype.format = function (str) { return format_date (this, str); }
 
+/*
+  As far as I can tell Date objects lack timezone information, and just
+  use the local time (while internally storing everything in seconds since
+  the epoch). This subtracts the local offset from the time, giving a time object
+  where the human components hopefully are in UTC (even though the object still
+  reports it being in local time).
+*/
+Date.prototype.untc = function () {
+    return new Date(this.getTime() + this.getTimezoneOffset() * 60 * 1000);
+}
 
-function bind_properties (el, wide_event=true) {
+
+function bind_properties (el, wide_event=false) {
     el.properties = {}
     let children = el.getElementsByTagName("properties")[0].children;
 
@@ -505,11 +519,10 @@ function bind_properties (el, wide_event=true) {
         }
         for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
             switch (s.tagName) {
-                // TODO TZ?
             case 'date':
                 lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%d")]); break;
             case 'date-time':
-                lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%S")]); break;
+                lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%SZ")]); break;
             default:
                 lst.push([s, (s, v) => s.innerHTML = v]);
             }
