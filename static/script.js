@@ -285,7 +285,7 @@ function place_in_edit_mode (event) {
             }
         });
         let slot = event.properties["_slot_" + fieldname]
-        idx = slot.findIndex(e => e[0] === field);
+        let idx = slot.findIndex(e => e[0] === field);
         slot.splice(idx, 1, [input, (s, v) => s.value = v.format("%H:%M")])
         field.replaceWith(input);
 
@@ -309,7 +309,7 @@ function place_in_edit_mode (event) {
     }
 
     let slot = event.properties["_slot_summary"]
-    idx = slot.findIndex(e => e[0] === summary);
+    let idx = slot.findIndex(e => e[0] === summary);
     slot.splice(idx, 1, [input, (s, v) => s.value = v])
 
     summary.replaceWith(input);
@@ -411,10 +411,10 @@ window.onload = function () {
     }
 
 
-    /* Replace backend-driven [today] link with frontend, with one that gets
-    correctly set in the frontend.
-    Similarly, update the go to specific date button into a link which updates
-    wheneven the date form updates.
+    /* Replace backend-driven [today] link with frontend, with one that
+       gets correctly set in the frontend. Similarly, update the go to
+       specific date button into a link which updates wheneven the date
+       form updates.
     */
 
     let jumpto = document.getElementsByClassName("jump-to")[0];
@@ -550,7 +550,7 @@ function bind_properties (el, wide_event=true) {
              // TODO right and bottom only works if used from the start. However,
              // events from the backend instead use top/left and width/height.
              // Normalize so all use the same, or find a way to convert between.
-             ? (s, v) => s.right = 100*(1 - (v-start_time)/(end_time-start_time)) + "%"
+             ? (s, v) => s.right = 100 * (1 - (v-start_time)/(end_time-start_time)) + "%"
              : (s, v) => s.bottom = (100 - date_to_percent(v)) + "%"]);
     }
 }
