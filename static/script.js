@@ -33,11 +33,12 @@ function decimal_time_to_date (time, date) {
     }
 }
 
-let gensym_counter = 0;
-function gensym (prefix) {
-    gensym_counter++;
-    return prefix + gensym_counter;
-}
+/* if only there was such a thing as a let to wrap around my lambda... */
+let gensym = (function(counter) {
+    return function gensym (prefix="gensym") {
+        return prefix + ++counter;
+    }
+})(0);
 
 /* start and end time for calendar page */
 let start_time = new Date();
