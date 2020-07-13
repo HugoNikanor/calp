@@ -52,7 +52,7 @@ function create_event_down (e) {
     /* Only trigger event creation stuff on actuall events background,
        NOT on its children */
     down_on_event = false;
-    if (! e.target.classList.contains("events")) return;
+    if (! e.target.classList.contains("longevents")) return;
     down_on_event = true;
 
     event_start.x = e.clientX;
@@ -78,14 +78,17 @@ function create_event_move (e) {
 
         /* [0, 1) -- where are we in the container */
         /* Ronud to force steps of quarters */
-        time = round_time(24 * (e.offsetY / this.clientHeight),
-                          .25)
+        // time = round_time(24 * (e.offsetX / this.clientWidth),
+        //                   .25)
+        time = round_time((e.offsetX / this.clientWidth),
+                          1/(7*(24/8)));
 
 
         event = document.getElementById("event-template").firstChild.cloneNode(true);
-        bind_properties(event);
+        bind_properties(event, true);
 
-        event.style.top = time * 100/24 + "%";
+        // event.style.left = time * 100/24 + "%";
+        event.style.left = (time * 100) + "%";
         event.dataset.time1 = time;
         event.dataset.time2 = time;
 
@@ -111,17 +114,21 @@ function create_event_move (e) {
     }
 
     time2 = event.dataset.time2 =
-        round_time(24 * (e.offsetY / event.parentElement.clientHeight),
-                   .25);
-    time1 = event.dataset.time1;
+        round_time((e.offsetX / event.parentElement.clientWidth),
+                   1/(7*(24/8)));
+        // round_time(24 * (e.offsetX / event.parentElement.clientWidth),
+        //            .25);
+    time1 = Number(event.dataset.time1);
 
-    let date = new Date(event.dataset.date)
-    event.properties.dtstart =
-        decimal_time_to_date(Math.min(Number(time1), Number(time2)),
-                             date);
-    event.properties.dtend =
-        decimal_time_to_date(Math.max(Number(time1), Number(time2)),
-                             date);
+    // let date = new Date(event.dataset.date)
+    let d1 = new Date(start_time.getTime() + (end_time-start_time) * Math.min(time1,time2));
+    let d2 = new Date(start_time.getTime() + (end_time-start_time) * Math.max(time1,time2));
+    event.properties.dtstart = d1;
+        // decimal_time_to_date(Math.min(Number(time1), Number(time2)),
+        //                      date);
+    event.properties.dtend = d2;
+        // decimal_time_to_date(Math.max(Number(time1), Number(time2)),
+        //                      date);
 }
 
 function create_event_finisher (callback) {
@@ -309,7 +316,7 @@ window.onload = function () {
 
     /* Is event creation active? */
     if (true) {
-        for (let c of document.getElementsByClassName("events")) {
+        for (let c of document.getElementsByClassName("longevents")) {
             c.onmousedown = create_event_down;
             c.onmousemove = create_event_move;
             c.onmouseup = create_event_finisher(
@@ -357,7 +364,11 @@ window.onload = function () {
         el.parentElement.removeAttribute("href");
 
         /* Bind all vcomponent properties into javascript. */
-        bind_properties(el);
+        if (el.closest(".longevents")) {
+            bind_properties(el, true);
+        } else {
+            bind_properties(el);
+        }
 
     }
 
@@ -449,7 +460,7 @@ Object.prototype.format = function () { return this; } /* any number of argument
 Date.prototype.format = function (str) { return format_date (this, str); }
 
 
-function bind_properties (el) {
+function bind_properties (el, wide_event=true) {
     el.properties = {}
     let children = el.getElementsByTagName("properties")[0].children;
 
@@ -495,12 +506,21 @@ function bind_properties (el) {
     if (el.properties.dtstart) {
         el.properties.dtstart = new Date(el.properties.dtstart);
         el.properties["_slot_dtstart"].push(
-            [el.style, (s, v) => s.top = date_to_percent(v) + "%"]);
+            [el.style,
+             wide_event
+             ? (s, v) => s.left = 100 * (v - start_time)/(end_time - start_time) + "%"
+             : (s, v) => s.top = date_to_percent(v) + "%"]);
     }
 
     if (el.properties.dtend) {
         el.properties.dtend = new Date(el.properties.dtend);
         el.properties["_slot_dtend"].push(
-            [el.style, (s, v) => s.bottom = (100 - date_to_percent(v)) + "%"]);
+            [el.style,
+             wide_event
+             // TODO right and bottom only works if used from the start. However,
+             // events from the backend instead use top/left and width/height.
+             // Normalize so all use the same, or find a way to convert between.
+             ? (s, v) => s.right = 100*(1 - (v-start_time)/(end_time-start_time)) + "%"
+             : (s, v) => s.bottom = (100 - date_to_percent(v)) + "%"]);
     }
 }
