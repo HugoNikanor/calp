@@ -88,6 +88,8 @@
   (hashq-ref (get-component-properties component)
              key))
 
+;;; TODO key=DTSTART, (date? value) => #t
+;;; KRÄVER att (props vline 'VALUE) <- "DATE"
 (define (set-property! component key value)
   (let ((ht (get-component-properties component)))
    (cond [(hashq-ref ht key #f)
