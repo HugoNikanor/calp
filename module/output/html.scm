@@ -737,7 +737,7 @@
                                                     [else ""]))
                                  "idag"))
 
-                      (div (@ (class "jump-to"))
+                      (div (@ (id "jump-to"))
                            ;; Firefox's accessability complain about each date
                            ;; component, meaning that it's broken. This label
                            ;; is for the whole input, which can be enabled

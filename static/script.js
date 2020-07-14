@@ -493,8 +493,7 @@ window.onload = function () {
        form updates.
     */
 
-    let jumpto = document.getElementsByClassName("jump-to")[0];
-    let gotodatebtn = jumpto.getElementsByTagName("button")[0];
+    let gotodatebtn = document.querySelector("#jump-to .btn");
     let target_href = (new Date).format("%Y-%m-%d") + ".html";
     let golink = makeElement('a', {
         className: 'btn',
@@ -504,8 +503,9 @@ window.onload = function () {
     document.getElementById("today-button").href = target_href;
     gotodatebtn.replaceWith(golink);
 
-    jumpto.getElementsByTagName("input")[0].onchange = function () {
+    document.querySelector("#jump-to input[name='date']").onchange = function () {
         let date = this.valueAsDate.format("%Y-%m-%d");
+        console.log(date);
         golink.href = date + ".html";
     }
 
