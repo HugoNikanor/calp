@@ -328,6 +328,8 @@ function place_in_edit_mode (event) {
             required: true,
 
             onchange: function (e) {
+                /* Only update datetime when the input is filled out */
+                if (! this.value) return;
                 let [hour, minute] = this.value.split(":").map(Number);
                 /* retain the year, month, and day information */
                 let d = copyDate(event.properties[fieldname]);
