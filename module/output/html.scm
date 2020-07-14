@@ -170,6 +170,7 @@
                         class: '("close-tooltip"))
                   ,(btn "🗑"
                         title: "Ta bort"
+                        ;; TODO this only seems to work in firefox. Do it propertly.
                         ;; Apparently an id gets recieved
                         ;; as the whole object in js.
                         onclick: (format #f "remove_event(~a)" id)))
