@@ -1,5 +1,68 @@
 'use strict';
 
+/* ----- Date Extensions ---------------------------- */
+
+/*
+  Extensions to Javascript's Date to allow representing times
+  with different timezones. Currently only UTC and local time
+  are supported, but more should be able to be added.
+
+  NOTE that only the raw `get' (and NOT the `getUTC') methods
+  should be used on these objects, and that the reported timezone
+  is quite often wrong.
+ */
+
+function parseDate(str) {
+    let year, month, day, hour=false, minute, second=0, utc;
+
+    let end = str.length - 1;
+    if (str[end] == 'Z') {
+        utc = true;
+        str = str.substring(0, end);
+    };
+
+    switch (str.length) {
+    case '2020-01-01T13:37:00'.length:
+        second = str.substr(17,2);
+    case '2020-01-01T13:37'.length:
+        hour = str.substr(11,2);
+        minute = str.substr(14,2);
+    case '2020-01-01'.length:
+        year = str.substr(0,4);
+        month = str.substr(5,2) - 1;
+        day = str.substr(8,2);
+        break;
+    default:
+        throw 'Bad argument';
+    }
+
+    let date;
+    if (hour) {
+        date = new Date(year, month, day, hour, minute, second);
+        date.utc = utc;
+        date.dateonly = false;
+    } else {
+        date = new Date(year, month, day);
+        date.dateonly = true;
+    }
+    return date;
+}
+
+function copyDate(date) {
+    let d = new Date(date);
+    d.utc = date.utc;
+    d.dateonly = date.dateonly;
+    return d;
+}
+
+function to_local(date) {
+    if (! date.utc) return date;
+
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000);
+}
+
+/* -------------------------------------------------- */
+
 function makeElement (name, attr={}) {
     let element = document.createElement(name);
     for (let [key, value] of Object.entries(attr)) {
