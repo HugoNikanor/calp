@@ -566,10 +566,18 @@ function format_date(date, str) {
 Object.prototype.format = function () { return this; } /* any number of arguments */
 Date.prototype.format = function (str) { return format_date (this, str); }
 
+
 /*
-*/
+  Properties are icalendar properties.
 
+  p['name'] to get and set value (also updates any connected slots)
 
+  p['_value_name'] for raw value
+  p['_slot_name'] for connected slots, Vector of pairs, where the
+                  car should be a reference to the slot, and the
+                  cdr a procedure which takes a slot and a value
+                  and binds the value to the slot.
+ */
 function bind_properties (el, wide_event=false) {
     el.properties = {}
     let children = el.getElementsByTagName("properties")[0].children;
