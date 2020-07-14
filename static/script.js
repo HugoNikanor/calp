@@ -154,8 +154,6 @@ class EventCreator {
                 event.dataset.time1 = time;
                 event.dataset.time2 = time;
 
-                event.style.pointerEvents = "none";
-
                 /* ---------------------------------------- */
 
                 this.appendChild(event);
@@ -170,6 +168,8 @@ class EventCreator {
 
                 /* Makes all current events transparent when dragging over them.
                    Without this weird stuff happens when moving over them
+
+                   This includes ourselves.
                 */
                 for (let e of this.children) {
                     e.style.pointerEvents = "none";
