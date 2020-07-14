@@ -221,9 +221,10 @@
         (inner x (right-subtree tree))))))
 
 (define* (make-block ev optional: (extra-attributes '())
-                     key: (popup-id (symbol->string (gensym "popup"))))
+                     key: element-id
+                     (popup-id (symbol->string (gensym "popup"))))
 
-  `((a (@ (href "#" ,(html-id ev))
+  `((a (@ (href "#" ,(or element-id (html-id ev)))
           (class "hidelink"))
        (div (@ ,@(assq-merge
                   extra-attributes
@@ -835,7 +836,10 @@
                       ,(let ((cal (vcalendar
                                    name: "Generated"
                                    children: (list (vevent
-                                                    uid: (uuidgen)
+                                                    ;; The event template SHOULD lack
+                                                    ;; a UID, to stop potential problems
+                                                    ;; with conflicts when multiple it's
+                                                    ;; cloned mulitple times.
                                                     dtstart: (datetime)
                                                     dtend: (datetime)
                                                     summary: "New Event")))))
@@ -846,7 +850,8 @@
                                         ;; full width. Adding this however completely breaks
                                         ;; creation of long events.
                                         ;; (style "width:calc(100%*var(--editmode));")
-                                        ))))))))))
+                                        )
+                                      element-id: "GENERATED")))))))))
 
 
 

@@ -170,6 +170,12 @@
                (return (build-response code: 400)
                        "Object not a VEVENT\r\n"))
 
+             ;; NOTE add-event uses the given UID if one is given,
+             ;; but generates its own if not. It might be a good idea
+             ;; to require that UID is unset here, and force users
+             ;; to use a /update endpoint to change events. This to prevent
+             ;; accidental overwriting.
+
              (parameterize ((warnings-are-errors #t))
                (catch 'warning
                  (lambda () (add-event calendar event))
