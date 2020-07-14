@@ -71,15 +71,18 @@ function makeElement (name, attr={}) {
     return element;
 }
 
-/* -------------------------------------------------- */
-
 function round_time (time, fraction) {
     let scale = 1 / fraction;
     return Math.round (time * scale) / scale;
 }
 
+/* only used by the bar.
+   Events use the start and end time of their container, but since the bar
+   is moving between containers that is clumsy.
+   Just doing (new Date()/(86400*1000)) would be nice, but there's no good
+   way to get the time in the current day.
+ */
 function date_to_percent (date) {
-    // Decimal time
     return (date.getHours() + (date.getMinutes() / 60)) * 100/24;
 }
 
@@ -143,7 +146,6 @@ class EventCreator {
                     = that.event
                     = document.getElementById("event-template")
                       .firstChild.cloneNode(true);
-                bind_properties(event, wide_element);
 
                 /* [0, 1) -- where are we in the container */
                 /* Ronud to force steps of quarters */
@@ -156,6 +158,12 @@ class EventCreator {
 
                 /* ---------------------------------------- */
 
+                this.appendChild(event);
+
+                /* requires that event is child of an '.event-container'. */
+                bind_properties(event, wide_element);
+
+                /* requires that dtstart and dtend properties are initialized */
                 place_in_edit_mode(event);
 
                 /* ---------------------------------------- */
@@ -167,7 +175,6 @@ class EventCreator {
                     e.style.pointerEvents = "none";
                 }
 
-                this.appendChild(event);
             }
 
             let time1 = Number(that.event.dataset.time1);
@@ -180,8 +187,8 @@ class EventCreator {
             let event_container = that.event.closest(".event-container");
 
             /* These two are in UTC */
-            let container_start = new Date(event_container.dataset.start);
-            let container_end = new Date(event_container.dataset.end);
+            let container_start = parseDate(event_container.dataset.start);
+            let container_end = parseDate(event_container.dataset.end);
 
             /* ---------------------------------------- */
 
@@ -195,8 +202,9 @@ class EventCreator {
                in utc, and I only really care about local time (which a specific local
                timezone doesn't give me)
             */
-            let d1 = new Date(container_start.getTime() + start_in_duration).untc();
-            let d2 = new Date(container_start.getTime() + end_in_duration).untc();
+            /* TODO Should these inherit UTC from container_*? */
+            let d1 = new Date(container_start.getTime() + start_in_duration)
+            let d2 = new Date(container_start.getTime() + end_in_duration)
 
             that.event.properties.dtstart = d1;
             that.event.properties.dtend = d2;
@@ -322,7 +330,7 @@ function place_in_edit_mode (event) {
             onchange: function (e) {
                 let [hour, minute] = this.value.split(":").map(Number);
                 /* retain the year, month, and day information */
-                let d = new Date(event.properties[fieldname]);
+                let d = copyDate(event.properties[fieldname]);
                 d.setHours(hour);
                 d.setMinutes(minute);
                 event.properties[fieldname] = d;
@@ -536,12 +544,15 @@ function format_date(date, str) {
     for (var i = 0; i < str.length; i++) {
         if (fmtmode) {
             switch (str[i]) {
+                /* Moves the date into local time. */
+            case 'L': date = to_local(date); break;
             case 'Y': outstr += datepad(date.getFullYear(), 4); break;
             case 'm': outstr += datepad(date.getMonth() + 1);   break;
             case 'd': outstr += datepad(date.getDate());        break;
             case 'H': outstr += datepad(date.getHours());       break;
             case 'M': outstr += datepad(date.getMinutes());     break;
             case 'S': outstr += datepad(date.getSeconds());     break;
+            case 'Z': if (date.utc) outstr += 'Z'; break;
             }
             fmtmode = false;
         } else if (str[i] == '%') {
@@ -556,15 +567,7 @@ Object.prototype.format = function () { return this; } /* any number of argument
 Date.prototype.format = function (str) { return format_date (this, str); }
 
 /*
-  As far as I can tell Date objects lack timezone information, and just
-  use the local time (while internally storing everything in seconds since
-  the epoch). This subtracts the local offset from the time, giving a time object
-  where the human components hopefully are in UTC (even though the object still
-  reports it being in local time).
 */
-Date.prototype.untc = function () {
-    return new Date(this.getTime() + this.getTimezoneOffset() * 60 * 1000);
-}
 
 
 function bind_properties (el, wide_event=false) {
@@ -585,7 +588,7 @@ function bind_properties (el, wide_event=false) {
             case 'date':
                 lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%d")]); break;
             case 'date-time':
-                lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%SZ")]); break;
+                lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%S%Z")]); break;
             default:
                 lst.push([s, (s, v) => s.innerHTML = v]);
             }
@@ -609,24 +612,25 @@ function bind_properties (el, wide_event=false) {
             });
     }
 
+    let container = el.closest(".event-container");
+    let start = parseDate(container.dataset.start);
+    let end = parseDate(container.dataset.end);
+
     if (el.properties.dtstart) {
-        el.properties.dtstart = new Date(el.properties.dtstart);
+        el.properties.dtstart = parseDate(el.properties.dtstart);
         el.properties["_slot_dtstart"].push(
-            [el.style,
-             wide_event
-             ? (s, v) => s.left = 100 * (v - start_time)/(end_time - start_time) + "%"
-             : (s, v) => s.top = date_to_percent(v) + "%"]);
+            [el.style, (s, v) =>
+             s[wide_event?'left':'top'] = 100 * (to_local(v) - start)/(end - start) + "%"]);
     }
 
+
     if (el.properties.dtend) {
-        el.properties.dtend = new Date(el.properties.dtend);
+        el.properties.dtend = parseDate(el.properties.dtend);
         el.properties["_slot_dtend"].push(
+            // TODO right and bottom only works if used from the start. However,
+            // events from the backend instead use top/left and width/height.
+            // Normalize so all use the same, or find a way to convert between.
             [el.style,
-             wide_event
-             // TODO right and bottom only works if used from the start. However,
-             // events from the backend instead use top/left and width/height.
-             // Normalize so all use the same, or find a way to convert between.
-             ? (s, v) => s.right = 100 * (1 - (v-start_time)/(end_time-start_time)) + "%"
-             : (s, v) => s.bottom = (100 - date_to_percent(v)) + "%"]);
+             (s, v) => s[wide_event?'right':'bottom'] = 100 * (1 - (to_local(v)-start)/(end-start)) + "%"]);
     }
 }

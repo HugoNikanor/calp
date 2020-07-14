@@ -335,8 +335,8 @@
                        (lambda (e) (event-length/day day-date e)))
 
     `(div (@ (class "events event-container") (id ,(date-link day-date))
-             (data-start ,(date->string day-date) "T00:00Z")
-             (data-end ,(date->string (add-day day-date)) "T00:00Z"))
+             (data-start ,(date->string day-date))
+             (data-end ,(date->string (add-day day-date)) ))
           ,@(map (lambda (time)
                    `(div (@ (class "clock clock-" ,time))))
                  (iota 12 0 2))
@@ -371,8 +371,8 @@
            (div (@ (class "days"))
                 ,@(time-marker-div)
                 (div (@ (class "longevents event-container")
-                        (data-start ,(date->string start-date) "T00:00Z")
-                        (data-end ,(date->string (add-day end-date)) "T00:00Z")
+                        (data-start ,(date->string start-date) )
+                        (data-end ,(date->string (add-day end-date)) )
                         (style "grid-column-end: span " ,(days-in-interval start-date end-date)))
                      ,@(lay-out-long-events start-date end-date long-events))
                 ,@(map (lambda (day-date)
@@ -441,16 +441,16 @@
             (div
              ,(call-with-values (lambda () (fmt-time-span ev))
                 (case-lambda [(start) `(div (span (@ (class "dtstart")
-                                                     (data-fmt "%H:%M"))
+                                                     (data-fmt "%L%H:%M"))
                                                   ,start))]
                              [(start end) `(div (span (@ (class "dtstart")
                                                          ;; TODO same format string
                                                          ;; as fmt-time-span used
-                                                         (data-fmt "%H:%M"))
+                                                         (data-fmt "%L%H:%M"))
                                                       ,start)
                                                 " — "
                                                 (span (@ (class "dtend")
-                                                         (data-fmt "%H:%M"))
+                                                         (data-fmt "%L%H:%M"))
                                                       ,end))]))
              ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
                 `(div (b "Plats: ")
@@ -827,7 +827,10 @@
             ;; This would idealy be a <template> element, but there is some
             ;; form of special case with those in xhtml, but I can't find
             ;; the documentation for it.
-            (div (@ (class "template") (id "event-template"))
+            (div (@ (class "template event-container") (id "event-template")
+                    ;; Only needed to create a duration.
+                    (data-start "2020-01-01")
+                    (data-end "2020-01-02"))
                       ,(let ((cal (vcalendar
                                    name: "Generated"
                                    children: (list (vevent
