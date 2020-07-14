@@ -621,6 +621,14 @@ along with their colors.
     transition: none;
 }
 
+.longevents .event.generated {
+    bottom: 0;
+    height: calc(100% * var(--editmode));
+}
+.events .event.generated {
+    width: calc(100% * var(--editmode));
+}
+
 .clock-0  { top: calc(100%/24 *  0); }
 .clock-2  { top: calc(100%/24 *  2); }
 .clock-4  { top: calc(100%/24 *  4); }
