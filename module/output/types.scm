@@ -16,13 +16,11 @@
   (date->string value "~Y~m~d"))
 
 (define (write-datetime param value)
+  ;; NOTE We really should output TZID from param here, but
+  ;; we first need to change so these writers can output
+  ;; parameters.
   (datetime->string (hashq-ref param 'X-HNH-ORIGINAL value)
-                    ;; TODO ~Z ?
-                    "~Y~m~dT~H~M~S~Z"
-                    #;
-                    (let ((tz (and=> (param vline 'TZID) car)))
-                    (when (and tz (string= tz "UTC"))
-                      (display #\Z)))))
+                    "~Y~m~dT~H~M~S~Z"))
 
 ;; TODO
 (define (write-duration _ value)
