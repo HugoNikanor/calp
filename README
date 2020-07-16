@@ -1,6 +1,6 @@
 			CALP
 		    Hugo Hörnquist
-		     2020-03-10
+		     2020-07-17
 
 Calp is primarily a program for loading  calendar files  (.ics's) from
 drendering  them in  different formats.  The goal  is however  to also
@@ -10,19 +10,18 @@ modes  of a  month-by-month in  "week" view,  or a  table of  a single
 month,  and  the  terminal  frontend.  The  terminatend is  mostly for
 debugging purposes, but it's quite usable still.
 
-For  basic usage,  create a  file ~/.config/calp/config.scm  which (at
-leasts)  calls  the  f`calendar-files'  with  a  list   of  files   or
-directories  containing  ics  file. (Both  single calendar  files, and
-vdir's are supported, see vdirsyncer and ikhal). Then run:
-	./main html --chunked --count 1
-Which should generate a single HTML-page for the current month.
+Configuration  is  set  in  ~/.config/calp/config.scm.  Set  at  least
+calendar-files with something like:
+	(set-config! 'calendar-files (glob "~/calendars/*")).
+Both single calendar files, and vdir's  are supported,  see vdirsyncer
+and ikhal. Then run
+	./main --help
+to see how to start the different modes.
 
 Contributing
 ------------
-Contributions are more  than welcome.  Patches, feature  requests, bug
-repports,  and other  stuff should  be sent  to <hugo@lysator.liu.se>.
-If you want to contribute  something yourself,  either see  TODO.* for
-things to do, or run `grep -RE 'TODO|NOTE'.
+Easiest  is  to  open  issues  at https://github.com/HugoNikanor/calp.
+But patches and the like can also be mailed to <hugo@lysator.liu.se>
 
 Requirements & Dependencies
 ---------------------------
@@ -31,17 +30,12 @@ For  basic  functionallity  guile-2.2  or  greater  should  be  enough
 own calendar files. I recommend vdirsyncer  for fetching  local copies
 from all over the internet.
 
-For  popups  to  work  the  JS  library Tipped  is also  needed, which
-brings a transitive dependency on  JQuery. The  script `download-deps'
-fetches both into "good"  places in  the static  sub-directory. Tipped
-[TIPPED]  is  used  under Creative  Commons BY  4.0 [CCBY],  © staaky.
-JQuery is used in accordance to their license [JQUERY].
-
 The zoneinfo data [TZ] is in the public domain [TZLIC].
 
 Standards and specifications
 ----------------------------
-- RFC 5545
+- RFC 5545 (iCalendar)
+- RFC 6321 (xCal)
 - Vdir Storage Format [VDIR]
 
 Building
@@ -50,7 +44,7 @@ Since   guile   is  primarily   a  scripting   language  no   explicit
 compilation  step  is  required.  Just  run  module/main.scm  and  the
 appropriate modules will be compiled  (guile will  tell you  what it's
 doing). For building this README, run
-	module/main.scm text < README.in > README
+	./main text < README.in | sed "s/2020-07-17/`date -I`/" > README
 
 Techical Details
 ----------------
@@ -60,9 +54,6 @@ Techical Details
 References
 ----------
 
-[TIPPED] https://github.com/staaky/tipped
-[CCBY] https://creativecommons.org/licenses/by/4.0/
-[JQUERY] https://github.com/jquery/jquery/blob/master/LICENSE.txt
 [TZ] https://github.com/eggert/tz
 [TZLIC] https://github.com/eggert/tz/blob/master/LICENSE
 [VDIR] http://vdirsyncer.pimutils.org/en/latest/vdir.html
