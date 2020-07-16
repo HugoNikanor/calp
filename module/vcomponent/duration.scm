@@ -62,8 +62,12 @@
                              [(M) `(minute: ,n)]
                              [(S) `(second: ,n)]
                              [else (error "Invalid key")]))]
-                        [#\T '()])
-                      (cdr (member "P" tree))))))
+                        [a
+                         (error "~a not on form ((number <num>) type)" a)])
+                      (context-flatten (lambda (x) (and (pair? (car x))
+                                                   (eq? 'number (caar x))))
+                      (cdr (member "P" tree)))
+                      ))))
       (apply duration
              (cons* sign: sign
                     (let loop ((rem lst))
