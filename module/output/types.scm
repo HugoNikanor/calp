@@ -22,11 +22,8 @@
   (datetime->string (hashq-ref param 'X-HNH-ORIGINAL value)
                     "~Y~m~dT~H~M~S~Z"))
 
-;; TODO
 (define (write-duration _ value)
-  (warning "DURATION writer not yet implemented")
-  (with-output-to-string
-    (lambda () (write value))))
+  ((@ (vcomponent duration) format-duration)) value)
 
 (define (write-float _ value)
   (number->string value))

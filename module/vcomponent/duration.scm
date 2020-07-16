@@ -23,6 +23,28 @@
     (error "Can't give week together with day or time"))
   (make-duration sign week day time))
 
+
+(define-public (format-duration duration)
+  (with-output-to-string
+    (lambda ()
+      (unless (eq? '+ (duration-sign duration))
+        (display (duration-sign duration)))
+      (display "P")
+      (aif (duration-week duration)
+           (format #t "~aW" it)
+           (begin
+             (awhen (duration-day duration) (format #t "~aD" it))
+             (awhen (duration-time duration)
+                    (display "T")
+                    ;; if any non-zero,
+                    (unless (= 0 (hour it) (minute it) (second it))
+                      (format #t "~aH" (hour it))
+                      (unless (= 0 (minute it) (second it))
+                        (format #t "~aM" (minute it))
+                        (unless (= 0 (second it))
+                          (format #t "~aS" (second it)))))))))))
+
+
 (define-peg-pattern number all (+ (range #\0 #\9)))
 
 (define-peg-pattern time-pattern body
