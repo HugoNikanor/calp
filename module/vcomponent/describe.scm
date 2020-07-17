@@ -22,10 +22,10 @@
                           (trim-to-width
                            (format #f "~a" (value vline))
                            (- 80 indent maxlen)))
-                  (awhen (parameters vline)
-                         (display " ;")
-                         (for (key value) in it
-                              (format #t " ~a=~a" key value)))
+                  (unless (null? (parameters vline))
+                    (display " ;")
+                    (for (key value) in (parameters vline)
+                         (format #t " ~a=~a" key value)))
                   (newline))
                 (if (list? values)
                     (for-each out values)
