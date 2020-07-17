@@ -151,8 +151,7 @@
                  (as-symb parameter-key) val))))
 
 ;; Returns the parameters of a property as an assoc list.
-;; @code{(map car <>)} leads to available properties.
-;; TODO shouldn't this be called parameters?
+;; @code{(map car <>)} leads to available parameters.
 (define-public (parameters vline)
   (hash-map->list list (get-vline-parameters vline)))
 
