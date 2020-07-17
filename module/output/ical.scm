@@ -133,21 +133,19 @@
 
 (define-public (component->ical-string component)
   (format #t "BEGIN:~a\r\n" (type component))
-  ;; TODO this leaks internal information,
-  ;; write a better API for vcomponent.
-  (hash-for-each
+  (for-each
    ;; Special cases depending on key.
    ;; Value formatting is handled in @code{value-format}.
-   (match-lambda*
+   (match-lambda
 
      [(? (compose internal-field? car)) 'noop]
 
-     [(key (vlines ...))
+     [(key vlines ...)
       (for vline in vlines
            (display (vline->string vline))
            (display "\r\n"))]
 
-     [(key vline)
+     [(key . vline)
       (display (vline->string vline))
       (display "\r\n")])
    (properties component))

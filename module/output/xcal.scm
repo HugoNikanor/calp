@@ -101,30 +101,28 @@
 
   (remove null?
    `(,tagsymb
-     ;; TODO only have <properties> when it's non-empty.
-     ;; This becomes MUCH easier once properties stop returning
-     ;; a hash-map...
-     (properties
-      ,@(filter
-         identity
-         (hash-map->list
-          (match-lambda*
-            [(? (compose internal-field? car)) #f]
+     ;; only have <properties> when it's non-empty.
+     ,(let ((props
+             (filter-map
+              (match-lambda
+                [(? (compose internal-field? car)) #f]
 
-            [(key (vlines ...))
-             (remove null?
-                     `(,(downcase-symbol key)
-                       ,(parameters-tag (reduce assq-merge
-                                                '() (map parameters vlines)))
-                       ,@(for vline in vlines
-                              (vline->value-tag vline))))]
+                [(key vlines ...)
+                 (remove null?
+                         `(,(downcase-symbol key)
+                           ,(parameters-tag (reduce assq-merge
+                                                    '() (map parameters vlines)))
+                           ,@(for vline in vlines
+                                  (vline->value-tag vline))))]
 
-            [(key vline)
-             (remove null?
-                     `(,(downcase-symbol key)
-                       ,(parameters-tag (parameters vline))
-                       ,(vline->value-tag vline)))])
-          (properties component))))
+                [(key . vline)
+                 (remove null?
+                         `(,(downcase-symbol key)
+                           ,(parameters-tag (parameters vline))
+                           ,(vline->value-tag vline)))])
+              (properties component))))
+        (unless (null? props)
+          `(properties ,@props)))
      ,(unless (null? (children component))
         `(components ,@(map vcomponent->sxcal (children component)))))))
 

@@ -156,10 +156,10 @@
   (hash-map->list list (get-vline-parameters vline)))
 
 (define-public (properties component)
-  (get-component-properties component))
+  (hash-map->list cons (get-component-properties component)))
 
 (define-public (property-keys component)
-  (map car (hash-map->list cons (get-component-properties component))))
+  (map car (get-component-properties component)))
 
 (define (copy-vline vline)
   (make-vline (vline-key vline)
