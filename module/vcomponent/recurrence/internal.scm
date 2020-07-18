@@ -125,8 +125,14 @@
 (define-public (recur-rule->rrule-sxml rrule)
   (map-fields
    (lambda (field value)
-    `(,(downcase-symbol field)
-      ,(field->string field value)))
+     (if (string-ci=? "UNTIL" (symbol->string field))
+         `(until
+           ,(if (date? value)
+                (date->string value "~Y-~m-~d")
+                (datetime->string
+                 value "~Y-~m-~dT~H:~M:~S~Z")))
+         `(,(downcase-symbol field)
+           ,(field->string field value))))
    rrule))
 
 
