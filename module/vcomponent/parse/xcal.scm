@@ -72,7 +72,7 @@
   (for param in parameters
        (match param
          [(ptag (ptype pvalue ...) ...)
-          ;; TOOD parameter type (rfc6321 3.5.)
+          ;; TODO parameter type (rfc6321 3.5.)
           ;; TODO multi-valued parameters!!!
           (hashq-set! ht (symbol-upcase ptag) (car (concatenate pvalue)))]))
   ht)
