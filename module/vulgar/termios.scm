@@ -94,12 +94,15 @@
 
 
 
-;; TODO this should possibly use unwind guards
-(define (with-ptr termios proc)
-  (let ((ptr (as-ptr termios)))
-    (let ((ret (proc ptr)))
-      (set-ptr! termios ptr)
-      ret)))
+;; Calls procedure with current termios pointer, and restore
+;; current pointer afterwards. Allows stuff like turning off echo
+;; mode without breaking the calling terminal.
+(define (with-termios termios proc)
+  (let ((og-ptr #f))
+   (dynamic-wind
+     (lambda () (set! og-ptr (as-ptr termios)))
+     (lambda () (proc (as-ptr termios)))
+     (lambda () (set-ptr! termios og-ptr)))))
 
 
 
@@ -130,18 +133,18 @@
 (define* (tcsetattr! termios  #:optional
                      (port (current-input-port))
                      (when TCSANOW))
-  (with-ptr termios (lambda (ptr) (tcsetattr (port->fdes port) when ptr))))
+  (with-termios termios (lambda (ptr) (tcsetattr (port->fdes port) when ptr))))
 
 
 (define-foreign (tcgetattr int *) → int
   (dynamic-func "tcgetattr" lib))
 
 (define* (tcgetattr! termios #:optional (port (current-input-port)))
-  (with-ptr termios (lambda (ptr) (tcgetattr (port->fdes port) ptr))))
+  (with-termios termios (lambda (ptr) (tcgetattr (port->fdes port) ptr))))
 
 
 (define-foreign (cfmakeraw *)
   (dynamic-func "cfmakeraw" lib))
 
 (define* (cfmakeraw! termios)
-  (with-ptr termios cfmakeraw))
+  (with-termios termios cfmakeraw))
