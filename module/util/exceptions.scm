@@ -2,6 +2,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (util)
   #:use-module (util config)
+  #:use-module (ice-9 format)
   #:export (throw-returnable
             catch-multiple
             assert))
