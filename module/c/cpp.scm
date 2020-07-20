@@ -114,7 +114,10 @@
          (string-append "cpp -dM " header-file))
         read-lines)))
 
-(define-macro (include# header-file)
+(define-macro (include# header-file . args)
+
+  (define define-form (if (null? args) 'define (car args)))
+
   (define lines (remove (compose private-c-symbol? car)
                         (tokenize-header-file header-file)))
 
@@ -131,7 +134,7 @@
   (define graph (add-node graph* (cons '_POSIX_VDISABLE #f) '()))
 
   `(begin
-     ,@(map (lambda (pair) `(define ,(car pair) ,(cdr pair)))
+     ,@(map (lambda (pair) `(,define-form ,(car pair) ,(cdr pair)))
             (resolve-dependency-graph graph))))
 
 

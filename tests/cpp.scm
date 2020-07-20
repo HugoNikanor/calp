@@ -1,3 +1,6 @@
+(((c lex) lex)
+ ((c parse) parse-lexeme-tree))
+
 (define run (compose parse-lexeme-tree lex))
 
 (test-equal

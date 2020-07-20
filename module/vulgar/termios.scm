@@ -7,6 +7,7 @@
   :use-module (ice-9 format)
   :use-module (ice-9 rdelim)
   :use-module (srfi srfi-9)             ; records
+  :use-module (c cpp)
   :use-module (util)
   :export (make-termios
            copy-termios
@@ -14,16 +15,7 @@
 
 
 
-;;; Constants, TODO, auto parse these from
-;; /usr/include/bits/termios.h
-
-(define-public ECHO	0000010)
-(define-public ICANON	0000002)
-
-;; @var{when} values
-(define-public TCSANOW   0)
-(define-public TCSADRAIN 1)
-(define-public TCSAFLUSH 2)
+(include# "/usr/include/termios.h" define-public)
 
 
 
