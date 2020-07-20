@@ -65,13 +65,36 @@
   ((record-modifier <termios> 'list) t v)
   ((record-modifier <termios> 'ptr) t (make-c-struct struct-termios v)))
 
-;; TODO {i,o}speed should be looked up in a table.
+(define (resolve-baud-speed n)
+  (case* n
+         ((B0) 0)
+         ((B50) 50)
+         ((B75) 75)
+         ((B110) 110)
+         ((B134) 134)
+         ((B150) 150)
+         ((B200) 200)
+         ((B300) 300)
+         ((B600) 600)
+         ((B1200) 1200)
+         ((B1800) 1800)
+         ((B2400) 2400)
+         ((B4800) 4800)
+         ((B9600) 9600)
+         ((B19200) 19200)
+         ((B38400) 38400)
+         ((B57600) 57600)
+         ((B115200) 115200)
+         ((B230400) 230400)))
+
 ;; TODO bit fields should display what their fields mean
 ((@ (srfi srfi-9 gnu) set-record-type-printer!)
  <termios>
  (lambda (t p)
    (format p "#<termios iflag=~b oflag=~b cflag=~b lflag=~b line=~d ispeed=~d ospeed=~d cc=~s>"
-           (iflag t) (oflag t) (cflag t) (lflag t) (line t) (ispeed t) (ospeed t)
+           (iflag t) (oflag t) (cflag t) (lflag t) (line t)
+           (resolve-baud-speed (ispeed t))
+           (resolve-baud-speed (ospeed t))
            (map integer->char (filter (negate zero?) (cc t))))))
 
 
