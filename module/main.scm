@@ -131,7 +131,7 @@
           (primitive-load config-file))))
 
 
-  ;; TODO this doesn't stop at first non-option, meaning that -o flags
+  ;; NOTE this doesn't stop at first non-option, meaning that -o flags
   ;; from sub-commands might be parsed.
   (map (lambda (pair)
          (let* (((key value) (string-split (cadr pair) #\=)))
