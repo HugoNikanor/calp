@@ -11,7 +11,7 @@
                 quote?
                 re-export-modules
                 -> ->> set set-> aif awhen
-                tree-map let-lazy let-env
+                let-lazy let-env
                 case* define-many
                 and=>> label
                 print-and-return
