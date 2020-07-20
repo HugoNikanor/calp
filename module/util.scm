@@ -406,6 +406,24 @@
            (hash-set! h key (cons value (hash-ref h key '())))))
     (hash-map->list list h)))
 
+;; (group-by '(0 1 2 3 4 2 5 6) 2)
+;; ⇒ ((0 1) (3 4) (5 6))
+(define-public (split-by list item)
+  (let loop ((done '())
+             (current '())
+             (rem list))
+    (cond [(null? rem)
+           (reverse (cons (reverse current) done))]
+          [(eqv? item (car rem))
+           (loop (cons (reverse current) done)
+                 '()
+                 (cdr rem))]
+          [else
+           (loop done
+                 (cons (car rem) current)
+                 (cdr rem))])))
+
+
 ;; Returns the cross product between l1 and l2.
 ;; each element is a cons cell.
 (define (cross-product% l1 l2)
