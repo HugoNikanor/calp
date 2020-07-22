@@ -8,7 +8,9 @@
   :use-module (util)
   :use-module (output ical)
   :use-module (vcomponent)
+  :use-module ((util io) :select (with-atomic-output-to-file))
   )
+
 
 (define / file-name-separator-string)
 
@@ -19,19 +21,11 @@
      (error "Importing into direct calendar files not supported")]
 
     [(vdir)
-     (let* ((uid (or (prop event 'UID) (uuidgen)))
-            ;; copy to enusre writable string
-            (tmpfile (string-copy (string-append (prop calendar 'X-HNH-DIRECTORY)
-                                                 / ".calp-" uid "XXXXXX")))
-            (port (mkstemp! tmpfile)))
+     (let* ((uid (or (prop event 'UID) (uuidgen))))
        (set! (prop event 'UID) uid)
-       (with-output-to-port port
-         (lambda () (print-components-with-fake-parent (list event))))
-       ;; does close flush?
-       (force-output port)
-       (close-port port)
-       (rename-file tmpfile (string-append (prop calendar 'X-HNH-DIRECTORY)
-                                           / uid ".ics"))
+       (with-atomic-output-to-file
+        (string-append (prop calendar 'X-HNH-DIRECTORY) / uid ".ics")
+        (lambda () (print-components-with-fake-parent (list event))))
        uid)]
 
     [else
