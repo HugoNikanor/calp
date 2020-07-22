@@ -1,6 +1,5 @@
 ;;; Module for termios interaction from Guile,
 ;;; Since that for some reason isn't built in.
-;; /usr/include/bits/termios.h
 
 (define-module (vulgar termios)
   :use-module (system foreign)
