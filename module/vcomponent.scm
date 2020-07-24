@@ -32,8 +32,10 @@
   (setf 'events
         (concatenate
          ;; TODO does this drop events?
-         (map (lambda (cal) (filter (lambda (o) (eq? 'VEVENT (type o)))
-                               (children cal)))
+         (map (lambda (cal) (remove
+                        (extract 'X-HNH-REMOVED)
+                        (filter (lambda (o) (eq? 'VEVENT (type o)))
+                                (children cal))))
               (getf 'calendars))))
 
   (let* ((repeating regular (partition repeating? (getf 'events))))

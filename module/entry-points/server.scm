@@ -113,8 +113,17 @@
                    "uid required"))
 
          (aif (get-event-by-uid uid)
-              (begin (remove-event it)
-                     (return (build-response code: 204) ""))
+              (begin
+                ;; It's hard to properly remove a file. I also want a way to undo accidental
+                ;; deletions. Therefore I simply save the X-HNH-REMOVED flag to the file, and
+                ;; then simple don't use those events when loading.
+                (set! (prop it 'X-HNH-REMOVED) #t)
+                (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
+                (unless ((@ (output vdir) save-event) it)
+                  (return (build-response code: 500)
+                          "Saving event to disk failed."))
+                (remove-event it)
+                (return (build-response code: 204) ""))
               (return (build-response code: 400)
                       (format #f "No event with UID '~a'" uid))))
 
