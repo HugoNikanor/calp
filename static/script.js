@@ -1,5 +1,7 @@
 'use strict';
 
+let parser = new DOMParser();
+
 /* ----- Date Extensions ---------------------------- */
 
 /*
@@ -314,9 +316,39 @@ async function create_event (event) {
     });
 
     console.log(response);
+    if (response.status < 200 || response.status >= 300) {
+        alert(`HTTP error ${response.status}\n${response.statusText}`)
+    }
 
     let body = await response.text();
     console.log(body);
+
+    /* servere is assumed to return an XML document on the form
+       <properties>
+       **xcal property** ...
+       </properties>
+       parse that, and update our own vevent with the data.
+    */
+
+    let properties = parser
+        .parseFromString(body, 'text/xml')
+        .children[0];
+
+    let child;
+    while ((child = properties.firstChild)) {
+        let target = event.querySelector(
+            "vevent properties " + child.tagName);
+        if (target) {
+            target.replaceWith(child);
+        } else {
+            event.querySelector("vevent properties")
+                .appendChild(child);
+        }
+    }
+
+    event.classList.remove("generated");
+    event.classList.add("CAL_Calendar");
+    toggle_child_popup(event);
 }
 
 function place_in_edit_mode (event) {
