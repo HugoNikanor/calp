@@ -77,17 +77,6 @@
   (set-component-children! parent (cons child (children parent)))
   (set-component-parent! child parent))
 
-;; TODO this doesn't handle multi-valued items
-(define* (get-property-value component key #:optional default)
-  (cond [(hashq-ref (get-component-properties component)
-                    key #f)
-         => get-vline-value]
-        [else default]))
-
-(define (get-property component key)
-  (hashq-ref (get-component-properties component)
-             key))
-
 ;;; TODO key=DTSTART, (date? value) => #t
 ;;; KRÄVER att (props vline 'VALUE) <- "DATE"
 (define (set-property! component key value)

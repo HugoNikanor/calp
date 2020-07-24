@@ -83,11 +83,6 @@
        (* (or safe-letter
               base-10-digit))))
 
-;; No further subparsing can be done.
-;; NOTE that strings are generally also in this category.
-(define-peg-pattern atom all
-  (or base-8 base-10 base-16 number char variable))
-
 (define-peg-pattern prefix-operator all
   (or "!" "~" "*" "&" "++" "--" "+" "-"))
 

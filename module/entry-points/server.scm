@@ -37,9 +37,6 @@
   :export (main)
   )
 
-(define (file-extension name)
-  (car (last-pair (string-split name #\.))))
-
 (define (sxml->html-string sxml)
   (with-output-to-string
     (lambda () (display "<!doctype html>\n") (sxml->xml sxml))))
