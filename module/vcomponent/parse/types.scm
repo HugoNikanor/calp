@@ -35,7 +35,7 @@
   (define parsed
     (parse-ics-datetime
      value (hashq-ref props 'TZID #f)))
-  (hashq-set! props 'X-HNH-ORIGINAL parsed)
+  (hashq-set! props '-X-HNH-ORIGINAL parsed)
   (get-datetime parsed))
 
 ;; DURATION

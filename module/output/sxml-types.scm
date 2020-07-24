@@ -14,7 +14,7 @@
 (define (write-datetime p v)
   `(date-time
     ,(datetime->string
-      (hashq-ref p 'X-HNH-ORIGINAL v)
+      (hashq-ref p '-X-HNH-ORIGINAL v)
       ;; 'Z' should be included for UTC,
       ;; other timezones MUST be specified
       ;; in the TZID parameter.

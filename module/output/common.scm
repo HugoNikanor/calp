@@ -10,7 +10,7 @@
   )
 
 
-(define*-public (internal-field? symbol optional: (prefix "X-HNH-"))
+(define*-public (internal-field? symbol optional: (prefix "-"))
   (string=? prefix
             (string-take-to (symbol->string symbol)
                             (string-length prefix))))

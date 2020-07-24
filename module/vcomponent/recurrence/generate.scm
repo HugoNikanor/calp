@@ -369,7 +369,7 @@
   (define rrule-stream (rrule-instances base-event))
 
   (stream-map
-   (aif (prop base-event 'X-HNH-ALTERNATIVES)
+   (aif (prop base-event '-X-HNH-ALTERNATIVES)
         (lambda (dt)
           (aif (hash-ref it dt)
                it ; RECURRENCE-ID objects come with their own DTEND

@@ -47,8 +47,8 @@
                 (assert (eq? 'VCALENDAR (type item)))
 
                 (for child in (children item)
-                     (set! (prop child 'X-HNH-FILENAME)
-                       (prop (parent child) 'X-HNH-FILENAME)))
+                     (set! (prop child '-X-HNH-FILENAME)
+                       (prop (parent child) '-X-HNH-FILENAME)))
 
                 ;; NOTE The vdir standard says that each file should contain
                 ;; EXACTLY one event. It can however contain multiple VEVENT
@@ -60,7 +60,7 @@
                 ;; the standard. Section 3.8.4.4.
                 (case (length events)
                   [(0) (warning "No events in component~%~a"
-                           (prop item 'X-HNH-FILENAME))]
+                           (prop item '-X-HNH-FILENAME))]
                   [(1)
                    (let ((child (car events)))
                     (assert (memv (type child) '(VTIMEZONE VEVENT)))
@@ -77,7 +77,7 @@
                                       events))
                           (rest (delete head events eq?)))
 
-                     (set! (prop head 'X-HNH-ALTERNATIVES)
+                     (set! (prop head '-X-HNH-ALTERNATIVES)
                        (alist->hash-table
                         (map cons
                              (map (extract 'RECURRENCE-ID) rest)
@@ -97,7 +97,7 @@
                                 parse-calendar)))
                      (set! (prop cal 'COLOR) color
                            (prop cal 'NAME) name
-                           (prop cal 'X-HNH-FILENAME) fullname)
+                           (prop cal '-X-HNH-FILENAME) fullname)
                      cal)))
                (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
                                          (string= "ics" (string-take-right s 3))))))))))
@@ -110,13 +110,13 @@
     (case (stat:type st)
       [(regular)
        (let ((comp (call-with-input-file path parse-calendar)))
-         (set! (prop comp 'X-HNH-SOURCETYPE) 'file)
+         (set! (prop comp '-X-HNH-SOURCETYPE) 'file)
          comp) ]
       [(directory)
        (report-time! "Parsing ~a" path)
        (let ((comp (parse-vdir path)))
-         (set! (prop comp 'X-HNH-SOURCETYPE) 'vdir
-               (prop comp 'X-HNH-DIRECTORY) path)
+         (set! (prop comp '-X-HNH-SOURCETYPE) 'vdir
+               (prop comp '-X-HNH-DIRECTORY) path)
          comp)]
       [(block-special char-special fifo socket unknown symlink)
        => (lambda (t) (error "Can't parse file of type " t))]))

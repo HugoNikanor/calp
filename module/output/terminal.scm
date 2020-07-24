@@ -49,7 +49,7 @@
        (if (= i cur-event) "\x1b[7m" "")
        (color-escape (prop (parent ev) 'COLOR))
        ;; Summary filter is a hook for the user
-       (let ((dirty (prop ev 'X-HNH-DIRTY)))
+       (let ((dirty (prop ev '-X-HNH-DIRTY)))
          (string-append
           (if dirty "* " "")
           ;; TODO reintroduce summary-filter
@@ -107,7 +107,7 @@
         (unless (null? events)
           (let ((ev (list-ref events cur-event)))
             (format #t "~a~%~%  ~a~%~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
-                    (prop ev 'X-HNH-FILENAME)
+                    (prop ev '-X-HNH-FILENAME)
                     (prop ev 'SUMMARY)
                     (or (and=> (prop ev 'LOCATION)
                                (cut string-append "\x1b[1mPlats:\x1b[m " <> "\n")) "")

@@ -16,7 +16,7 @@
 
 (define-public (save-event event)
   (define calendar (parent event))
-  (case (prop calendar 'X-HNH-SOURCETYPE)
+  (case (prop calendar '-X-HNH-SOURCETYPE)
     [(file)
      (error "Importing into direct calendar files not supported")]
 
@@ -24,7 +24,7 @@
      (let* ((uid (or (prop event 'UID) (uuidgen))))
        (set! (prop event 'UID) uid)
        (with-atomic-output-to-file
-        (string-append (prop calendar 'X-HNH-DIRECTORY) / uid ".ics")
+        (string-append (prop calendar '-X-HNH-DIRECTORY) / uid ".ics")
         (lambda () (print-components-with-fake-parent (list event))))
        uid)]
 
