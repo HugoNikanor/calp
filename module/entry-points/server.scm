@@ -180,11 +180,19 @@
                    (return (build-response code: 400)
                            (format #f "~?~%" fmt args)))))
 
+             ;; NOTE Posibly defer save to a later point.
+             ;; That would allow better asyncronous preformance.
+             ((@ (output vdir) save-event) event)
+
              (format (current-error-port)
                      "Event inserted ~a~%" (prop event 'UID))
 
-             (return '((content-type text/plain))
-                     "Event inserted\r\n"))))
+             (return '((content-type application/xml))
+                     (with-output-to-string
+                       (lambda ()
+                        (sxml->xml
+                         `(properties
+                           (uid (text ,(prop event 'UID)))))))))))
 
    ;; Get specific page by query string instead of by path.
    ;; Useful for <form>'s, since they always submit in this form, but also
