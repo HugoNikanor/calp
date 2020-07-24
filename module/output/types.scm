@@ -23,7 +23,7 @@
                     "~Y~m~dT~H~M~S~Z"))
 
 (define (write-duration _ value)
-  ((@ (vcomponent duration) format-duration)) value)
+  ((@ (vcomponent duration) format-duration) value))
 
 (define (write-float _ value)
   (number->string value))
