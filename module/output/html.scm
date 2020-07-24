@@ -166,14 +166,11 @@
                                        "unknown"))))
                   ,(btn "×"
                         title: "Stäng"
-                        onclick: (format #f "close_popup(~a)" id)
+                        onclick: (format #f "close_popup(document.getElementById('~a'))" id)
                         class: '("close-tooltip"))
                   ,(btn "🗑"
                         title: "Ta bort"
-                        ;; TODO this only seems to work in firefox. Do it propertly.
-                        ;; Apparently an id gets recieved
-                        ;; as the whole object in js.
-                        onclick: (format #f "remove_event(~a)" id)))
+                        onclick: (format #f "remove_event(document.getElementById('~a'))" id)))
 
              ,(tabset
                (append
