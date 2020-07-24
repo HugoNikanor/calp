@@ -182,7 +182,9 @@
 
              ;; NOTE Posibly defer save to a later point.
              ;; That would allow better asyncronous preformance.
-             ((@ (output vdir) save-event) event)
+             (unless ((@ (output vdir) save-event) event)
+               (return (build-response code: 500)
+                       "Saving event to disk failed."))
 
              (format (current-error-port)
                      "Event inserted ~a~%" (prop event 'UID))
