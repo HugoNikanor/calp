@@ -7,7 +7,7 @@ SCM_FILES = $(shell find module/ -type f -name \*.scm)
 GO_FILES = $(SCM_FILES:%=obj/%.go)
 
 GUILE_C_FLAGS = -Lmodule \
-				-Wunused-variable -Wunused-toplevel \
+				-Wunused-toplevel \
 				-Wshadowed-toplevel -Wunbound-variable \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
