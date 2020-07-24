@@ -318,6 +318,7 @@ async function create_event (event) {
     console.log(response);
     if (response.status < 200 || response.status >= 300) {
         alert(`HTTP error ${response.status}\n${response.statusText}`)
+        return;
     }
 
     let body = await response.text();
