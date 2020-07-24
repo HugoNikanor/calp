@@ -125,7 +125,7 @@
             [(? (compose internal-field? car)) ""]
             [(key values ...)
              (string-append
-              ";" (symbol->string key)
+              ";" (symbol->string key) "="
               (string-join (map (compose escape-chars ->string) values)
                            "," 'infix))])
           (parameters vline)))
