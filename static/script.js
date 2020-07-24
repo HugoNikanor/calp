@@ -246,6 +246,13 @@ async function remove_event (element) {
     });
 
     console.log(response);
+    if (response.status < 200 || response.status >= 300) {
+        alert(`Error removing event ${response.status}\n${response.statusText}`)
+    }
+
+    toggle_child_popup(element);
+    element.style.background = "black !important";
+    element.style.color = "black !important";
 }
 
 var bar_object = false
