@@ -7,7 +7,7 @@
   :use-module (ice-9 rdelim)
   :use-module (vcomponent)
   :use-module (srfi srfi-1)
-  )
+  :use-module (output vdir))
 
 (define options
   '((calendar (value #t) (single-char #\c)

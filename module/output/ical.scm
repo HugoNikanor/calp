@@ -158,6 +158,7 @@
                                       alts))]))
 
 ;; TODO tzid param on dtstart vs tz field in datetime object
+;; TODO remove this, replace with methods from (output vdir)
 ;; how do we keep these two in sync?
 (define (write-event-to-file event calendar-path)
   (define cal (make-vcomponent 'VCALENDAR))
