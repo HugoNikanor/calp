@@ -28,19 +28,19 @@
     (error "Line dosen't match" header-line)))
 
 
+(define-public (do-funcall function arguments)
+  (if (list? arguments)
+      (apply function arguments)
+      (function arguments)))
+
 (define symb-map
   `((,(symbol #\|) . logior)
-    (funcall . (@@ ,(module-name (current-module)) do-funcall))
+    (funcall . (@ (c cpp) do-funcall))
     (&& . and)
     (& . logand)
     (== . =)
     (!= . (negate =))
     ))
-
-(define (do-funcall function arguments)
-  (if (list? arguments)
-      (apply function arguments)
-      (function arguments)))
 
 (define-public (replace-symbols tree dict)
   (if (not (list? tree))
