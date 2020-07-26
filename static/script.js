@@ -151,6 +151,7 @@ class EventCreator {
 
                 /* [0, 1) -- where are we in the container */
                 /* Ronud to force steps of quarters */
+                /* TODO possibly have floor_time instead */
                 let time = round_time(pos_in(this, e), round_to);
 
                 event.dataset.time1 = time;
@@ -246,13 +247,14 @@ async function remove_event (element) {
     });
 
     console.log(response);
-    if (response.status < 200 || response.status >= 300) {
-        alert(`Error removing event ${response.status}\n${response.statusText}`)
-    }
-
     toggle_child_popup(element);
-    element.style.background = "black !important";
-    element.style.color = "black !important";
+
+    if (response.status < 200 || response.status >= 300) {
+        let body = await response.text();
+        alert(`HTTP error ${response.status}\n${body}`)
+    } else {
+        element.remove();
+    }
 }
 
 var bar_object = false
