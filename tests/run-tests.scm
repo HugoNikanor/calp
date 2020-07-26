@@ -14,6 +14,7 @@
 
 (use-modules (ice-9 ftw)
              (ice-9 sandbox)
+             (ice-9 getopt-long)
              (srfi srfi-64)             ; test suite
              (srfi srfi-88)             ; suffix keywords
              ((util) :select (for awhen))
@@ -40,14 +41,25 @@
           (loop (cons sexp done))))))
 
 
+(define options
+  '((skip (value #t))
+    (only (value #t))))
+
+(define opts (getopt-long (command-line) options))
+(define to-skip (call-with-input-string (option-ref opts 'skip "")
+                  read))
+(define only (option-ref opts 'only #f))
+
+(when only (set! files (list only)))
+
+(when (list? to-skip)
+ (for skip in to-skip
+      (test-skip skip)))
+
 ;; TODO test-group fails if called before any test begin, since
 ;; (test-runner-current) needs to be a test-runner (dead or not),
 ;; but is initially bound to #f.
 (test-begin "tests")
-
-(awhen (member "--skip" (command-line))
-       (for skip in (cdr it)
-            (test-skip skip)))
 
 (for fname in files
      (format (current-error-port) "Running test ~a~%" fname)
@@ -70,7 +82,7 @@
                                      )
                                    all-pure-bindings)))))))
         (lambda args (format (current-error-port)
-                        "Test really crashed: ~a~%" args) ))))
+                        "Test unexpectedly crashed: ~a~%" args) ))))
 (test-end "tests")
 
 
