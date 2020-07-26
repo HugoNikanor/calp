@@ -79,12 +79,6 @@
 
 
 
-(define-public upstring->symbol (compose string->symbol string-upcase))
-
-(define-public symbol-upcase (compose string->symbol string-upcase symbol->string))
-
-(define-public symbol-downcase (compose string->symbol string-downcase symbol->string))
-
 (define-syntax for
   (syntax-rules (in)
     ((for (<var> <vars> ...) in <collection> b1 body ...)
@@ -325,9 +319,6 @@
 (define-public (string-take-to str i)
   (if (> i (string-length str))
       str (string-take str i)))
-
-(define-public (as-string s)
-  (if (symbol? s) (symbol->string s) s))
 
 (define-public (as-symb s)
   (if (string? s) (string->symbol s) s))
