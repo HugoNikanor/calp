@@ -7,7 +7,7 @@
 
 ;;; Code:
 
-(((util) mod!)
+(((util) set!)
  ((vulgar termios)
   make-termios copy-termios
   lflag
@@ -22,7 +22,7 @@
 (define tty (open-input-file "/dev/tty"))
 
 (define-syntax-rule (&= lvalue val)
-  (mod! lvalue (lambda (v) (& v val))))
+  (set! lvalue = ((lambda (v) (& v val)))))
 
 (define t (make-termios))
 

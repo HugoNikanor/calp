@@ -5,8 +5,8 @@
   #:use-module ((sxml fold) #:select (fold-values))
   #:use-module ((srfi srfi-9 gnu) #:select (set-fields))
   #:re-export (define*-public fold-values)
-  #:export (for mod! sort* sort*!
-                mod/r! set/r!
+  #:export (for sort* sort*!
+                set/r!
                 catch-multiple
                 quote?
                 re-export-modules
@@ -190,50 +190,30 @@
 ;; @end example
 ;; Still requires all variables to be defined beforehand.
 (define-syntax set!
-  (syntax-rules ()
+  (syntax-rules (=)
+    ((_ field = (op args ...) rest ...)
+     (set! field (op field args ...)
+           rest ...))
+    ((_ field = proc rest ...)
+     (set! field (proc field)
+           rest ...))
     ((_ field val)
      ((@ (guile) set!) field val))
     ((_ field val rest ...)
      (begin ((@ (guile) set!) field val)
             (set! rest ...)))))
 
-(define-syntax modf%
-  (syntax-rules (=)
-    ((_ field = (op args ...))
-     (set! field (op field args ...)))
-    ((_ field proc)
-     (set! field (proc field))))  )
-
-
-;; Like set!, but applies a transformer on the already present value.
-(define-syntax mod!
-  (syntax-rules (=)
-    ((_) *unspecified*)
-    ((_ field = proc)
-     (modf% field = proc))
-
-    ((_ field = proc rest ...)
-     (begin (modf% field = proc) (mod! rest ...)))
-
-    ((_ field proc)
-     (modf% field proc))
-
-    ((_ field proc rest ...)
-     (begin (modf% field proc) (mod! rest ...)))))
-
-(define-syntax-rule (set/r! args ... final)
-  (let ((val final))
-    (set! args ... val)
-    val))
-
-(define-syntax mod/r!
-  (syntax-rules (=)
-    ((_ args ... field = (proc pargs ...))
-     (begin (mod! args ...)
-            (set/r! field (proc field pargs ...))))
-    ((_  args ... ffield fproc)
-     (begin (mod! args ...)
-            (set/r! ffield (fproc ffield))))))
+;; only evaluates the final form once
+(define-syntax set/r!
+  (syntax-rules ()
+    ((_ args ... v = something)
+     (begin
+       (set! args ... v = something)
+       v))
+    ((_ args ... final)
+     (let ((val final))
+       (set! args ... val)
+       val))))
 
 
 (define-syntax define-many
@@ -481,8 +461,7 @@
      (->> (func obj) rest ...))))
 
 ;; Non-destructive set, syntax extension from set-fields from (srfi
-;; srfi-9 gnu). Also doubles as a non-destructive mod!, if the `='
-;; operator is used.
+;; srfi-9 gnu).
 (define-syntax set
   (syntax-rules (=)
     [(set (acc obj) value)

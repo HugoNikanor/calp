@@ -12,8 +12,7 @@
  ((vcomponent base) make-vcomponent prop prop* extract)
  ((datetime) parse-ics-datetime datetime time date
   datetime->string)
- ((util) -> mod!)
- ((guile) set!)
+ ((util) -> set!)
  ((srfi srfi-41) stream->list)
  ((srfi srfi-88) keyword->string))
 
@@ -51,7 +50,7 @@
             [else (cadr rem)]))
         ;; hack for multi valued fields
         (when (eq? symb 'EXDATE)
-          (mod! (prop* v symb) list)))
+          (set! (prop* v symb) = list)))
       (loop (cddr rem))))
 
   v)

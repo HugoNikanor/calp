@@ -142,9 +142,9 @@
              (set! date (current-date)
                    cur-event 0))
             ((#\j #\J) (unless (= cur-event (1- (length events)))
-                         (mod! cur-event 1+)))
+                         (set! cur-event = (+ 1))))
             ((#\k #\K) (unless (= cur-event 0)
-                         (mod! cur-event 1-)))
+                         (set! cur-event = (- 1))))
             ((#\g) (set! cur-event 0))
             ((#\G) (set! cur-event (1- (length events)))))
 
