@@ -80,12 +80,10 @@
   (date->string date "~Y-~m-~d"))
 
 ;; Generate an html id for an event.
-;; NOTE Not unique if two instances of the same event are placed at the exact
-;; same start time. Same event with different start times works fine.
 (define (html-id ev)
-  (string-append
-   (datetime->string (as-datetime (prop ev 'DTSTART)) "~Y~m~d~H~M~S")
-   (html-attr (prop ev 'UID))))
+  (or (prop ev '-HTML-ID)
+      (set/r! (prop ev '-HTML-ID)
+              (symbol->string (gensym "__html_id_")))))
 
 ;; Retuns an HTML-safe version of @var{str}.
 (define (html-attr str)
@@ -166,11 +164,13 @@
                                        "unknown"))))
                   ,(btn "×"
                         title: "Stäng"
-                        onclick: (format #f "close_popup(document.getElementById('~a'))" id)
+                        onclick: (format #f "close_popup(document.getElementById('~a'))"
+                                         id)
                         class: '("close-tooltip"))
                   ,(btn "🗑"
                         title: "Ta bort"
-                        onclick: (format #f "remove_event(document.getElementById('~a'))" id)))
+                        onclick: (format #f "remove_event(document.getElementById('~a'))"
+                                         (html-id ev))))
 
              ,(tabset
                (append
@@ -218,14 +218,15 @@
         (inner x (right-subtree tree))))))
 
 (define* (make-block ev optional: (extra-attributes '())
-                     key: element-id
+                     key:
                      (popup-id (symbol->string (gensym "popup"))))
 
-  `((a (@ (href "#" ,(or element-id (html-id ev)))
+  `((a (@ (href "#" ,(html-id ev))
           (class "hidelink"))
        (div (@ ,@(assq-merge
                   extra-attributes
-                  `((class "event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
+                  `((id ,(html-id ev))
+                    (class "event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
                                                         "unknown"))
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
@@ -827,7 +828,8 @@
             ;; form of special case with those in xhtml, but I can't find
             ;; the documentation for it.
             (div (@ (class "template event-container") (id "event-template")
-                    ;; Only needed to create a duration.
+                    ;; Only needed to create a duration. So actual dates
+                    ;; dosen't matter
                     (data-start "2020-01-01")
                     (data-end "2020-01-02"))
                       ,(let ((cal (vcalendar
@@ -842,8 +844,7 @@
                                                     summary: "New Event")))))
                          (caddar ; strip <a> tag
                           (make-block (car (children cal))
-                                      `((class " generated "))
-                                      element-id: "GENERATED")))))))))
+                                      `((class " generated ")))))))))))
 
 
 
