@@ -38,18 +38,20 @@
     (lambda () (set! port (mkstemp! tmpfile)))
     (lambda ()
       (with-output-to-port port thunk)
-      ;; (force-output port)
-      ;; TODO check buffereing, might throw exception?
+      ;; Closing a port forces a write, due to buffering
+      ;; some of the errors that logically would come
+      ;; from write calls are first raised here. But since
+      ;; crashing is acceptable here, that's fine.
       (close-port port)
       (rename-file tmpfile filename))
     (lambda ()
-      ;; (force-output port)
-      ;; TODO check buffereing, might throw exception?
-      ;; tmpfile still existing means that we never hit the
-      ;; rename above, clean up the file and note that we failed.
       (when (access? tmpfile F_OK)
-        (close-port port)
+        ;; I'm a bit unclear on how to trash our write buffer.
+        ;; hopefully first removing the file, followed by closing
+        ;; the port is enough for the kernel to do the sensible
+        ;; thing.
         (delete-file tmpfile)
+        (close-port port)
         ;; `when' defaults to the truthy `()', see (util)
         ;; (note that #<unspecified> is thruthy, but shouldn't be
         ;; counted on, since anything with an unspecified return
