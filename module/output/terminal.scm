@@ -84,21 +84,33 @@
   (date accessor: view-date
         init-keyword: date:)
   (cur-event accessor: cur-event
-             init-value: 0))
+             init-value: 0)
 
+  (cached-events accessor: cached-events
+                 init-value: #f)
+  (groups accessor: groups))
+
+
+(define-method (initialize (this <day-view>) args)
+  (next-method)
+  (set! (groups this) (group-stream (get-event-set this))))
 
 (define-method (output (this <day-view>))
-  (define date (view-date this))
-  (define event-set (get-event-set this))
-  (define groups (group-stream event-set))
-  (define group (get-groups-between groups date date))
-  (define events (group->event-list (stream-car group)))
+
+  (define events
+    (aif (cached-events this)
+         it
+         (set/r! (cached-events this)
+                 (group->event-list (stream-car (get-groups-between
+                                                 (groups this)
+                                                 (view-date this)
+                                                 (view-date this)))))))
 
   (cls)
 
   (display "== Day View ==\n")
 
-  (display-calendar-header! date)
+  (display-calendar-header! (view-date this))
 
   ;; display event list
   (let* ((date-width 20)
@@ -138,18 +150,16 @@
                                 (- height 8 5 (length events) 5)))))))
 
 (define-method (input (this <day-view>) char)
-  (define date (view-date this))
-  (define event-set (get-event-set this))
-  (define groups (group-stream event-set))
-  (define group (get-groups-between groups date date))
-  (define events (group->event-list (stream-car group)))
+  (define events (cached-events this))
 
   (case char
     ((#\L #\l)
-     (set! (view-date this) (add-day date)
+     (set! (view-date this) = add-day
+           (cached-events this) #f
            (cur-event this) 0))
     ((#\h #\H)
-     (set! (view-date this) (remove-day date)
+     (set! (view-date this) = remove-day
+           (cached-events this) #f
            (cur-event this) 0))
     ((#\t)
      ;; TODO this should be local time
@@ -172,14 +182,14 @@
        (set! search-term (readline "search: "))
        (set! (lflag attr) (logand (lognot ECHO) (lflag attr)))
        (tcsetattr! attr)
-       `(push ,(search-view search-term (event-set this)))
+       `(push ,(search-view search-term (get-event-set this)))
        ))))
 
 (define (day-view event-set date)
   (make <day-view> event-set: event-set date: date))
 
 (define-class <search-view> ()
-  (event-set getter: event-set init-keyword: event-set)
+  (event-set getter: get-event-set init-keyword: event-set:)
   (search-result getter: search-result)
   (search-term getter: search-term
                init-keyword: search-term:))
@@ -218,7 +228,7 @@
                         (resolve-module '(datetime))))
                         ,@all-pure-bindings)
                       ))
-               (event-set this))))
+               (get-event-set this))))
   ;; (define current-page 0)
   ;; (define current-entry 0)
   )
@@ -264,7 +274,6 @@
     (output (car state))
 
     (let ((char (read-char)))
-
       (when (eof-object? char)
         (break))
 
@@ -274,5 +283,4 @@
          (set! state (cdr state))
          (when (null? state) (break)))
         (('break) (break))
-        (else
-         'continue)))))
+        (else 'continue)))))
