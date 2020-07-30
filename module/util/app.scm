@@ -15,15 +15,14 @@
 (define current-app (make-parameter (make-app)))
 
 (define-syntax (define-method stx)
-  (with-syntax ((app (datum->syntax stx 'app))
-                (current-app (datum->syntax stx 'current-app)))
+  (with-syntax ((app (datum->syntax stx 'app)))
    (syntax-case stx ()
      [(_ (name args ...) body ...)
 
       (let* ((pre post (break (lambda (s) (eqv? key: (syntax->datum s)))
                               #'(args ...))))
         #`(define*-public (name #,@pre #,@(if (null? post) '(key:) post)
-                         (app (current-app)))
+                                (app (current-app)))
             (parameterize ((current-app app))
               body ...)))])))
 
@@ -35,10 +34,8 @@
 
 (define-syntax setf%
   (syntax-rules ()
-    [(_ field value)
-     (setf% (current-app) field value)]
     [(_ app field value)
-     (hashq-set! (get-ht app) field (delay value))]))
+     (hashq-set! (get-ht (current-app)) field (delay value))]))
 
 ;; TODO setting a field should invalidate the cache of all dependant
 ;; fields. Among other things allowing a full calendar reload by running
@@ -47,7 +44,7 @@
   (syntax-rules ()
     ;; special case to use current app)
     [(_ key value)
-     (setf% key value)]
+     (setf (current-app) key value)]
 
     [(_ app) app]
     [(_ app key value rest ...)
