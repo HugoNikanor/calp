@@ -18,18 +18,11 @@
   #:use-module (ice-9 curried-definitions)
   #:use-module (ice-9 match)
   #:use-module (text util)
+  #:use-module (vcomponent datetime output)
 
   #:use-module (git)
   ;; #:use-module (module config all)
   )
-
-(define-config summary-filter (lambda (_ a) a)
-  ""
-  pre: (ensure procedure?))
-
-(define-config description-filter (lambda (_ a) a)
-  ""
-  pre: (ensure procedure?))
 
 (define debug (make-parameter #f))
 (define-config debug #f
@@ -90,28 +83,6 @@
   (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
   (string-filter (lambda (c) (char-set-contains? cs c)) str))
 
-;; Takes an event, and returns a pretty string for the time interval
-;; the event occupies.
-(define (fmt-time-span ev)
-  (cond [(prop ev 'DTSTART) date?
-         => (lambda (s)
-              (cond [(prop ev 'DTEND)
-                     => (lambda (e)
-                          (if (date= e (date+ s (date day: 1)))
-                              (date->string s)  ; start = end, only return one value
-                              (values (date->string s)
-                                      (date->string e))))]
-                    ;; no end value, just return start
-                    [else (date->string s)]))]
-        [else ; guaranteed datetime
-         (let ((s (prop ev 'DTSTART))
-               (e (prop ev 'DTEND)))
-           (if e
-               (let ((fmt-str (if (date= (get-date s) (get-date e))
-                                  "~H:~M" "~Y-~m-~d ~H:~M")))
-                 (values (datetime->string s fmt-str)
-                         (datetime->string e fmt-str)))
-               (datetime->string s "~Y-~m-~d ~H:~M")))]))
 
 
 
@@ -249,7 +220,7 @@
              ,(when (prop ev 'RRULE)
                 `(span (@ (class "repeating")) "↺"))
              (span (@ (class "summary"))
-                   ,((get-config 'summary-filter) ev (prop ev 'SUMMARY)))
+                   ,(format-summary  ev (prop ev 'SUMMARY)))
              ,(when (prop ev 'LOCATION)
                 `(span (@ (class "location"))
                        ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
@@ -399,38 +370,6 @@
                                         start-date end-date))))))))
 
 
-;;; Prodcedures for text output
-
-;; ev → sxml
-(define (format-recurrence-rule ev)
-  `(span (@ (class "rrule"))
-         "Upprepas "
-         ,((@ (vcomponent recurrence display) format-recurrence-rule)
-            (prop ev 'RRULE))
-         ,@(awhen (prop* ev 'EXDATE)
-                  (list
-                   ", undantaget "
-                   (add-enumeration-punctuation
-                    (map (lambda (d)
-                           (if (date? d)
-                               ;; TODO show year?
-                               (date->string d "~e ~b")
-                               ;; NOTE only show time when it's different than the start time?
-                               ;; or possibly only when FREQ is hourly or lower.
-                               (if (memv ((@ (vcomponent recurrence internal) freq)
-                                       (prop ev 'RRULE))
-                                      '(HOURLY MINUTELY SECONDLY))
-                                   (datetime->string d "~e ~b ~k:~M")
-                                   (datetime->string d "~e ~b"))))
-                         (map value it)))))
-         "."))
-
-(define (format-description ev str)
-  (catch #t (lambda () ((get-config 'description-filter) ev str))
-    (lambda (err . args)
-      (warning "~a on formatting description, ~s" err args)
-      str)))
-
 
 ;; For sidebar, just text
 (define* (fmt-single-event ev
@@ -470,7 +409,7 @@
              ,(and=> (prop ev 'DESCRIPTION)
                      (lambda (str) (format-description ev str)))
              ,(awhen (prop ev 'RRULE)
-                     (format-recurrence-rule ev))
+                     `(span (@ (class "rrule")) ,@(format-recurrence-rule ev)))
              ,(when (prop ev 'LAST-MODIFIED)
                 `(span (@ (class "last-modified")) "Senast ändrad "
                        ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M")))
