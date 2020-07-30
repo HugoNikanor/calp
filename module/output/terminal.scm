@@ -90,6 +90,8 @@
                   init-value: 0)
   (current-page accessor: current-page
                 init-keyword: current-page:)
+  (page-length accessor: page-length
+               init-value: 0)
 
   )
 
@@ -155,29 +157,25 @@
                                 (- height 8 5 (length events) 5)))))))
 
 (define-method (input (this <day-view>) char)
-  (define events (cached-events this))
+  (set! (page-length this) (length (cached-events this)))
 
   (case char
     ((#\L #\l)
      (set! (current-page this) = add-day
            (cached-events this) #f
            (active-element this) 0))
+
     ((#\h #\H)
      (set! (current-page this) = remove-day
            (cached-events this) #f
            (active-element this) 0))
+
     ((#\t)
      ;; TODO this should be local time
      ;; currently it's UTC (maybe?)
      (set! (current-page this) (current-date)
            (active-element this) 0))
-    ((#\j #\J) (unless (= (active-element this) (1- (length events)))
-                 (set! (active-element this) = (+ 1))))
-    ((#\k #\K) (unless (= (active-element this) 0)
-                 (set! (active-element this) = (- 1))))
-    ((#\g) (set! (active-element this) 0))
-    ((#\G) (set! (active-element this) (1- (length events))))
-    ((#\q) '(pop))
+
     ((#\() (set-cursor-pos 0 (1- height))
      (let* ((attr (make-termios))
             (search-term #f))
@@ -190,7 +188,8 @@
        (set! (lflag attr) (logand (lognot ECHO) (lflag attr)))
        (tcsetattr! attr)
        `(push ,(search-view search-term (get-event-set this)))
-       ))))
+       ))
+    (else (next-method))))
 
 (define (day-view event-set date)
   (make <day-view> event-set: event-set current-page: date))
@@ -201,6 +200,8 @@
                init-keyword: search-term:)
   (max-page accessor: max-page
             init-form: (cons #f 0))
+  (cached-page accessor: cached-page
+               init-value: #f )
   )
 
 (define (search-view search-term event-set)
@@ -243,26 +244,27 @@
   )
 
 (define-method (output (this <search-view>))
-  (define page
-    (catch #t
-      (lambda ()
-       (call-with-time-limit
-        1
-        (lambda () (stream->list (stream-ref (search-result this) (current-page this))))
-        (lambda _ (throw 'timed-out))))
-      (lambda (err . args)
-        (display (cons err args) (current-error-port))
-        (newline  (current-error-port))
-        (case err
-          ((timed-out) (set! (max-page this) (cons #t (1- (current-page this)))
-                             (current-page this) (cdr (max-page this)))))
-        'timed-out ; when search took to long
-        'unbound-variable ; when search term has unbound variables
-        'wrong-type-arg ;; stream-ref
-        '()
+  (unless (cached-page this)
+    (set! (cached-page this)
+      (catch #t
+        (lambda ()
+          (call-with-time-limit
+           1
+           (lambda () (stream->list (stream-ref (search-result this) (current-page this))))
+           (lambda _ (throw 'timed-out))))
+        (lambda (err . args)
+          (display (cons err args) (current-error-port))
+          (newline  (current-error-port))
+          (case err
+            ((timed-out) (set! (max-page this) (cons #t (1- (current-page this)))
+                               (current-page this) (cdr (max-page this)))))
+          'timed-out                     ; when search took to long
+          'unbound-variable              ; when search term has unbound variables
+          'wrong-type-arg                ;; stream-ref
+          '()
 
-        )
-      ))
+          )
+        )))
 
   (cls)
 
@@ -273,7 +275,7 @@
 
   ;; display event list
   (display-event-table
-   page
+   (cached-page this)
    #:active-element (active-element this)
    #:location-width 15)
 
@@ -299,9 +301,30 @@
          ">"))
     (newline)))
 
-(define-method (input (this <search-view>) char)
+(define-method (input (this <view>) char)
   (case char
-    ((#\h) (set! (current-page this) = ((lambda (old) (max 0 (1- old))))))
+    ((#\j #\J) (unless (= (active-element this) (1- (page-length this)))
+                 (set! (active-element this) = (+ 1))))
+    ((#\k #\K) (unless (= (active-element this) 0)
+                 (set! (active-element this) = (- 1))))
+
+    ((#\g) (set! (active-element this) 0))
+    ((#\G) (set! (active-element this) (1- (page-length this))))
+
+    ((#\q) '(pop)))
+
+  )
+
+(define-method (input (this <search-view>) char)
+  (set! (page-length this) 10)
+
+  (case char
+    ((#\newline) `(push ,(day-view (get-event-set this)
+                                  (as-date (prop (list-ref (cached-page this)
+                                                           (active-element this))
+                                                 'DTSTART)))))
+    ((#\h) (set! (current-page this) = ((lambda (old) (max 0 (1- old))))
+                 (cached-page this) #f))
     ((#\l) (set! (current-page this) = ((lambda (old)
                                           ;; true final page
                                           (if (car (max-page this))
@@ -309,8 +332,9 @@
                                               (begin
                                                 (set! (cdr (max-page this))
                                                   (max (1+ old) (cdr (max-page this))))
-                                                (1+ old)))))))
-    ((#\q) '(pop))))
+                                                (1+ old)))))
+                 (cached-page this) #f))
+    (else (next-method))))
 
 (app/define-method (main-loop date)
   (define state (list (day-view (app/getf 'event-set) date)))
