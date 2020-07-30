@@ -6,7 +6,7 @@
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
   #:use-module (util)
-  #:use-module (util app)
+  #:use-module ((util app) :prefix app/)
   #:use-module (vulgar)
   #:use-module (vulgar info)
   #:use-module (vulgar color)
@@ -20,9 +20,18 @@
   #:use-module (text flow)
 
   #:use-module (ice-9 format)
+  #:use-module (ice-9 readline)
+  #:use-module (ice-9 sandbox)
+  #:use-module (ice-9 match)
+
+  #:use-module (vulgar termios)
+
+  #:use-module (oop goops)
+  #:use-module (oop goops describe)
 
   #:export (main-loop))
 
+(define-values (height width) (get-terminal-size))
 
 (define (open-in-editor fname)
   (system (string-append (getenv "EDITOR") " " fname)))
@@ -68,96 +77,202 @@
 (define (displayln a)
   (display a) (newline))
 
-(define-method (main-loop date)
 
-  (define event-stream (getf 'event-set))
+(define-class <day-view> ()
+  (event-set getter: get-event-set
+             init-keyword: event-set:)
+  (date accessor: view-date
+        init-keyword: date:)
+  (cur-event accessor: cur-event
+             init-value: 0))
 
-  (define cur-event 0)
 
-  (define-values (height width) (get-terminal-size))
+(define-method (output (this <day-view>))
+  (define date (view-date this))
+  (define event-set (get-event-set this))
+  (define groups (group-stream event-set))
+  (define group (get-groups-between groups date date))
+  (define events (group->event-list (stream-car group)))
 
-  (define grouped-stream (group-stream event-stream))
+  (cls)
+
+  (display "== Day View ==\n")
+
+  (display-calendar-header! date)
+
+  ;; display event list
+  (let* ((date-width 20)
+         (location-width 15)
+         (summary-width (- width date-width location-width 6)))
+    (displayln
+     (box-top #\┬ #\─ date-width (+ summary-width 2) (1+ location-width)))
+    (display-event-table
+     events
+     #:cur-event (cur-event this)
+     #:location-width location-width
+     #:summary-width summary-width)
+    (displayln
+     (box-top #\┴ #\─ date-width (+ summary-width 2) (1+ location-width))))
+
+  ;; display highlighted event
+  (unless (null? events)
+    (let ((ev (list-ref events (cur-event this))))
+      (format #t "~a~%~%  ~a~%~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
+              (prop ev '-X-HNH-FILENAME)
+              (prop ev 'SUMMARY)
+              (or (and=> (prop ev 'LOCATION)
+                         (cut string-append "\x1b[1mPlats:\x1b[m " <> "\n")) "")
+              ;; NOTE RFC 5545 says that DTSTART and DTEND MUST
+              ;; have the same type. However we believe that is
+              ;; another story.
+              (let ((start (prop ev 'DTSTART)))
+                (if (datetime? start)
+                    (datetime->string (prop ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
+                    (date->string start)))
+              (let ((end (prop ev 'DTEND)))
+                (if (datetime? end)
+                    (datetime->string (prop ev 'DTEND) "~Y-~m-~d ~H:~M:~S")
+                    (date->string end)))
+              (unlines (take-to (flow-text (or (prop ev 'DESCRIPTION) "")
+                                           #:width (min 70 width))
+                                (- height 8 5 (length events) 5)))))))
+
+(define-method (input (this <day-view>) char)
+  (define date (view-date this))
+  (define event-set (get-event-set this))
+  (define groups (group-stream event-set))
+  (define group (get-groups-between groups date date))
+  (define events (group->event-list (stream-car group)))
+
+  (case char
+    ((#\L #\l)
+     (set! (view-date this) (add-day date)
+           (cur-event this) 0))
+    ((#\h #\H)
+     (set! (view-date this) (remove-day date)
+           (cur-event this) 0))
+    ((#\t)
+     ;; TODO this should be local time
+     ;; currently it's UTC (maybe?)
+     (set! (view-date this) (current-date)
+           (cur-event this) 0))
+    ((#\j #\J) (unless (= (cur-event this) (1- (length events)))
+                 (set! (cur-event this) = (+ 1))))
+    ((#\k #\K) (unless (= (cur-event this) 0)
+                 (set! (cur-event this) = (- 1))))
+    ((#\g) (set! (cur-event this) 0))
+    ((#\G) (set! (cur-event this) (1- (length events))))
+    ((#\q) '(pop))
+    ((#\() (set-cursor-pos 0 (1- height))
+     (let* ((attr (make-termios))
+            (search-term #f))
+       (tcgetattr! attr)
+       (set! (lflag attr) (logior ECHO (lflag attr)))
+       (tcsetattr! attr)
+       (set! search-term (readline "search: "))
+       (set! (lflag attr) (logand (lognot ECHO) (lflag attr)))
+       (tcsetattr! attr)
+       `(push ,(search-view search-term (event-set this)))
+       ))))
+
+(define (day-view event-set date)
+  (make <day-view> event-set: event-set date: date))
+
+(define-class <search-view> ()
+  (event-set getter: event-set init-keyword: event-set)
+  (search-result getter: search-result)
+  (search-term getter: search-term
+               init-keyword: search-term:))
+
+(define (search-view search-term event-set)
+  (make <search-view> search-term: search-term event-set: event-set))
+
+(define (prepare-string str)
+
+  (define missing-parenthesis-count
+   (string-fold (lambda (char count)
+                  (case char
+                    ((#\() (1+ count))
+                    ((#\)) (1- count))
+                    (else count)))
+                0 str))
+
+  (string-append str (make-string missing-parenthesis-count #\))))
+
+(define-method (initialize (this <search-view>) args)
+  (next-method)
+  ;; (display (search-term this)) (newline)
+  (slot-set! this 'search-result
+             (stream-paginate
+              (stream-filter
+               (eval (print-and-return
+                      `(lambda (event) ,(call-with-input-string
+                                       (prepare-string (search-term this))
+                                     read)))
+                     (make-sandbox-module
+                      `(
+                        ((vcomponent base) prop)
+                        ((ice-9 regex) string-match)
+                        #;
+                        ((datetime) ,@(module-map (lambda (a . _) a) ; ;
+                        (resolve-module '(datetime))))
+                        ,@all-pure-bindings)
+                      ))
+               (event-set this))))
+  ;; (define current-page 0)
+  ;; (define current-entry 0)
+  )
+
+(define-method (output (this <search-view>))
+  (define page
+    (catch #t
+      (lambda ()
+       (call-with-time-limit
+        1
+        (lambda () (stream->list (stream-ref (search-result this) 0)))
+        (lambda _ (throw 'timed-out))))
+      (lambda (err . args)
+        (display (cons err args) (current-error-port))
+        (newline  (current-error-port))
+        'timed-out ; when search took to long
+        'unbound-variable ; when search term has unbound variables
+        '()
+
+        )
+      ))
+
+  (cls)
+
+  (display "== Search View ==\n")
+  (for entry in page
+       (let ((start (prop entry 'DTSTART)))
+         (display
+          (if (date? start)
+              (date->string start "~Y-~m-~d ")
+              (datetime->string start "~Y-~m-~d ~H:~M "))))
+       (display (prop entry 'SUMMARY))
+       (newline)))
+
+(define-method (input (this <search-view>) char)
+  (case char
+    ((#\q) '(pop))))
+
+(app/define-method (main-loop date)
+  (define state (list (day-view (app/getf 'event-set) date)))
 
   (while #t
-    ;; TODO reusing the same grouping causes it to lose events.
-    ;; I currently have no idea why, but it's BAD.
-    (let ((groups (get-groups-between grouped-stream
-                                      date date)))
-      (format (current-error-port) "len(groups) = ~a~%" (stream-length groups))
-      (let ((events
-             (if (stream-null? groups)
-                 '() (group->event-list (stream-car groups)))))
+    (output (car state))
 
-        (cls)
-        (display-calendar-header! date)
+    (let ((char (read-char)))
 
-        (let* ((date-width 20)
-               (location-width 15)
-               (summary-width (- width date-width location-width 6)))
-          (displayln
-           (box-top #\┬ #\─ date-width (+ summary-width 2) (1+ location-width)))
-          (display-event-table
-           events
-           #:cur-event cur-event
-           #:location-width location-width
-           #:summary-width summary-width)
-          (displayln
-           (box-top #\┴ #\─ date-width (+ summary-width 2) (1+ location-width))))
+      (when (eof-object? char)
+        (break))
 
-        (unless (null? events)
-          (let ((ev (list-ref events cur-event)))
-            (format #t "~a~%~%  ~a~%~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
-                    (prop ev '-X-HNH-FILENAME)
-                    (prop ev 'SUMMARY)
-                    (or (and=> (prop ev 'LOCATION)
-                               (cut string-append "\x1b[1mPlats:\x1b[m " <> "\n")) "")
-                    ;; NOTE RFC 5545 says that DTSTART and DTEND MUST
-                    ;; have the same type. However we believe that is
-                    ;; another story.
-                    (let ((start (prop ev 'DTSTART)))
-                      (if (datetime? start)
-                          (datetime->string (prop ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
-                          (date->string start)))
-                    (let ((end (prop ev 'DTEND)))
-                      (if (datetime? end)
-                          (datetime->string (prop ev 'DTEND) "~Y-~m-~d ~H:~M:~S")
-                          (date->string end)))
-                    (unlines (take-to (flow-text (or (prop ev 'DESCRIPTION) "")
-                                                 #:width (min 70 width))
-                                      (- height 8 5 (length events) 5))))))
-
-        (let ((char (read-char)))
-          ;; (format (current-error-port)
-          ;;         "c = ~c (~d)~%" char (char->integer char))
-          (case char
-            ((#\L #\l)
-             (set! date (add-day date)
-                   cur-event 0))
-            ((#\h #\H)
-             (set! date (remove-day date)
-                   cur-event 0))
-            ((#\t)
-             ;; TODO this should be local time
-             ;; currently it's UTC (maybe?)
-             (set! date (current-date)
-                   cur-event 0))
-            ((#\j #\J) (unless (= cur-event (1- (length events)))
-                         (set! cur-event = (+ 1))))
-            ((#\k #\K) (unless (= cur-event 0)
-                         (set! cur-event = (- 1))))
-            ((#\g) (set! cur-event 0))
-            ((#\G) (set! cur-event (1- (length events))))
-            ((#\() (set-cursor-pos 0 (1- height))
-             (let* ((attr (make-termios)))
-               (tcgetattr! attr)
-               (set! (lflag attr) (logior ECHO (lflag attr)))
-               (tcsetattr! attr)
-               (display (readline ">")
-                        (current-error-port))
-               (set! (lflag attr) (logand (lognot ECHO) (lflag attr)))
-               (tcsetattr! attr))))
-
-          (when (or (eof-object? char)
-                    (memv char '(#\q)))
-            (break)))
-        ))))
+      (match (input (car state) char)
+        (('push new-state) (set! state (cons new-state state)))
+        (('pop)
+         (set! state (cdr state))
+         (when (null? state) (break)))
+        (('break) (break))
+        (else
+         'continue)))))
