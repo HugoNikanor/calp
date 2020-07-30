@@ -11,13 +11,20 @@
   #:export (with-vulgar))
 
 (define-public (cls)
-  (display "\x1b[H")                    ; Move cursor to the origin
-  (display "\x1b[J")                    ; Clear everything after cursor
-  )
+  ;; [H]ome, [J]: clear everything after
+  (display "\x1b[H\x1b[J"))
+
+(define-public (set-cursor-pos x y)
+  (format #t "\x1b[~a;~aH"
+          (1+ y) (1+ x)))
+
 
 (define-syntax with-vulgar
   (syntax-rules ()
     ((_ thunk)
+     (with-vulgar (bitwise-not (bitwise-ior ECHO ICANON))
+                  thunk))
+    ((_ bits thunk)
      (let* ((ifd (current-input-port))
             (ofd (current-output-port))
             (iattr (make-termios))
@@ -29,12 +36,11 @@
            (tcgetattr! oattr ofd)
 
            ;; Store current settings to enable resetting the terminal later
-           (set! iattr* (copy-termios iattr))
-           (set! oattr* (copy-termios oattr))
+           (set! iattr* (copy-termios iattr)
+                 oattr* (copy-termios oattr)
 
-           (let ((bits (bitwise-not (bitwise-ior ECHO ICANON))))
-             (set! (lflag iattr) (bitwise-and (lflag iattr) bits))
-             (set! (lflag oattr) (bitwise-and (lflag oattr) bits)))
+                 (lflag iattr) (bitwise-and bits (lflag iattr))
+                 (lflag oattr) (bitwise-and bits (lflag oattr)))
 
            (tcsetattr! iattr ifd)
            (tcsetattr! oattr ofd))
