@@ -2,6 +2,7 @@
   #:use-module (output general)
   #:use-module (srfi srfi-1)
   #:use-module (datetime)
+  #:use-module (srfi srfi-17)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
@@ -42,20 +43,23 @@
           "" (map (cut make-string <> line) lengths)))
 
 (define* (display-event-table events #:key
-                              (cur-event -1)
-                              (summary-width 30)
+                              (active-element -1)
+                              ;; (summary-width 30)
+                              (date-width 17)
                               (location-width 20))
+  (define summary-width (- width date-width location-width 6))
+
+  (displayln
+   (box-top #\┬ #\─ date-width (+ summary-width 2) (1+ location-width)))
   (for-each
    (lambda (ev i)
      (display
       (string-append
        (if (datetime? (prop ev 'DTSTART))
-           (datetime->string (prop ev 'DTSTART) "~Y-~m-~d ~H:~M:~S")
-           ((@ (texinfo string-utils) center-string)
-            (date->string (prop ev 'DTSTART))
-            19))
+           (datetime->string (prop ev 'DTSTART) "~Y-~m-~d ~H:~M")
+           (date->string (prop ev 'DTSTART) "~Y-~m-~d --:--"))
        " │ "
-       (if (= i cur-event) "\x1b[7m" "")
+       (if (= i active-element) "\x1b[7m" "")
        (color-escape (prop (parent ev) 'COLOR))
        ;; Summary filter is a hook for the user
        (let ((dirty (prop ev '-X-HNH-DIRTY)))
@@ -72,19 +76,28 @@
        STR-RESET
        "\n")))
    events
-   (iota (length events))))
+   (iota (length events)))
+  (displayln
+   (box-top #\┴ #\─ date-width (+ summary-width 2) (1+ location-width))))
 
 (define (displayln a)
   (display a) (newline))
 
 
-(define-class <day-view> ()
-  (event-set getter: get-event-set
-             init-keyword: event-set:)
+(define-class <view> ()
+  (event-set getter: get-event-set init-keyword: event-set:)
+  (active-element accessor: active-element
+                  init-value: 0)
+  (current-page accessor: current-page
+                init-keyword: current-page:)
+
+  )
+
+
+(define-class <day-view> (<view>)
+  #;
   (date accessor: view-date
         init-keyword: date:)
-  (cur-event accessor: cur-event
-             init-value: 0)
 
   (cached-events accessor: cached-events
                  init-value: #f)
@@ -103,32 +116,24 @@
          (set/r! (cached-events this)
                  (group->event-list (stream-car (get-groups-between
                                                  (groups this)
-                                                 (view-date this)
-                                                 (view-date this)))))))
+                                                 (current-page this)
+                                                 (current-page this)))))))
 
   (cls)
 
   (display "== Day View ==\n")
 
-  (display-calendar-header! (view-date this))
+  (display-calendar-header! (current-page this))
 
   ;; display event list
-  (let* ((date-width 20)
-         (location-width 15)
-         (summary-width (- width date-width location-width 6)))
-    (displayln
-     (box-top #\┬ #\─ date-width (+ summary-width 2) (1+ location-width)))
-    (display-event-table
-     events
-     #:cur-event (cur-event this)
-     #:location-width location-width
-     #:summary-width summary-width)
-    (displayln
-     (box-top #\┴ #\─ date-width (+ summary-width 2) (1+ location-width))))
+  (display-event-table
+   events
+   active-element: (active-element this)
+   location-width: 15)
 
   ;; display highlighted event
   (unless (null? events)
-    (let ((ev (list-ref events (cur-event this))))
+    (let ((ev (list-ref events (active-element this))))
       (format #t "~a~%~%  ~a~%~%~a\x1b[1mStart:\x1b[m ~a	\x1b[1mSlut:\x1b[m ~a~%~%~a~%"
               (prop ev '-X-HNH-FILENAME)
               (prop ev 'SUMMARY)
@@ -154,24 +159,24 @@
 
   (case char
     ((#\L #\l)
-     (set! (view-date this) = add-day
+     (set! (current-page this) = add-day
            (cached-events this) #f
-           (cur-event this) 0))
+           (active-element this) 0))
     ((#\h #\H)
-     (set! (view-date this) = remove-day
+     (set! (current-page this) = remove-day
            (cached-events this) #f
-           (cur-event this) 0))
+           (active-element this) 0))
     ((#\t)
      ;; TODO this should be local time
      ;; currently it's UTC (maybe?)
-     (set! (view-date this) (current-date)
-           (cur-event this) 0))
-    ((#\j #\J) (unless (= (cur-event this) (1- (length events)))
-                 (set! (cur-event this) = (+ 1))))
-    ((#\k #\K) (unless (= (cur-event this) 0)
-                 (set! (cur-event this) = (- 1))))
-    ((#\g) (set! (cur-event this) 0))
-    ((#\G) (set! (cur-event this) (1- (length events))))
+     (set! (current-page this) (current-date)
+           (active-element this) 0))
+    ((#\j #\J) (unless (= (active-element this) (1- (length events)))
+                 (set! (active-element this) = (+ 1))))
+    ((#\k #\K) (unless (= (active-element this) 0)
+                 (set! (active-element this) = (- 1))))
+    ((#\g) (set! (active-element this) 0))
+    ((#\G) (set! (active-element this) (1- (length events))))
     ((#\q) '(pop))
     ((#\() (set-cursor-pos 0 (1- height))
      (let* ((attr (make-termios))
@@ -186,39 +191,41 @@
        ))))
 
 (define (day-view event-set date)
-  (make <day-view> event-set: event-set date: date))
+  (make <day-view> event-set: event-set current-page: date))
 
-(define-class <search-view> ()
-  (event-set getter: get-event-set init-keyword: event-set:)
+(define-class <search-view> (<view>)
   (search-result getter: search-result)
-  (search-term getter: search-term
-               init-keyword: search-term:))
+  (search-term accessor: search-term
+               init-keyword: search-term:)
+  (max-page accessor: max-page
+            init-form: (cons #f 0))
+  )
 
 (define (search-view search-term event-set)
   (make <search-view> search-term: search-term event-set: event-set))
 
 (define (prepare-string str)
-
   (define missing-parenthesis-count
-   (string-fold (lambda (char count)
-                  (case char
-                    ((#\() (1+ count))
-                    ((#\)) (1- count))
-                    (else count)))
-                0 str))
+    (string-fold (lambda (char count)
+                   (case char
+                     ((#\() (1+ count))
+                     ((#\)) (1- count))
+                     (else count)))
+                 0 str))
 
   (string-append str (make-string missing-parenthesis-count #\))))
 
 (define-method (initialize (this <search-view>) args)
+  (set! (current-page this) 0)
   (next-method)
   ;; (display (search-term this)) (newline)
   (slot-set! this 'search-result
              (stream-paginate
               (stream-filter
-               (eval (print-and-return
-                      `(lambda (event) ,(call-with-input-string
-                                       (prepare-string (search-term this))
-                                     read)))
+               (eval `(lambda (event) ,(set/r! (search-term this)
+                                          (call-with-input-string
+                                              (prepare-string (search-term this))
+                                            read)))
                      (make-sandbox-module
                       `(
                         ((vcomponent base) prop)
@@ -239,13 +246,17 @@
       (lambda ()
        (call-with-time-limit
         1
-        (lambda () (stream->list (stream-ref (search-result this) 0)))
+        (lambda () (stream->list (stream-ref (search-result this) (current-page this))))
         (lambda _ (throw 'timed-out))))
       (lambda (err . args)
         (display (cons err args) (current-error-port))
         (newline  (current-error-port))
+        (case err
+          ((timed-out) (set! (max-page this) (cons #t (1- (current-page this)))
+                             (current-page this) (cdr (max-page this)))))
         'timed-out ; when search took to long
         'unbound-variable ; when search term has unbound variables
+        'wrong-type-arg ;; stream-ref
         '()
 
         )
@@ -254,17 +265,49 @@
   (cls)
 
   (display "== Search View ==\n")
-  (for entry in page
-       (let ((start (prop entry 'DTSTART)))
-         (display
-          (if (date? start)
-              (date->string start "~Y-~m-~d ")
-              (datetime->string start "~Y-~m-~d ~H:~M "))))
-       (display (prop entry 'SUMMARY))
-       (newline)))
+
+  ;; display search term
+  (format #t "~y" (search-term this))
+
+  ;; display event list
+  (display-event-table
+   page
+   #:active-element (active-element this)
+   #:location-width 15)
+
+  ;; display page counter
+  (let ((start (max 0 (- (current-page this) 5)))
+        (end (min (+ (current-page this) 5) (cdr (max-page this)))))
+
+    (display
+     (if (= start 0)
+         "|" "<"))
+
+    (for-each (lambda (i)
+                (if (= i (current-page this))
+                    (format #t "[~2@a]" i)
+                    (format #t " ~2@a " i)))
+              (iota (1+ (- end start)) start))
+
+
+    (display
+     (if (= end (cdr (max-page this)))
+         (if (car (max-page this))
+             "|" "?")
+         ">"))
+    (newline)))
 
 (define-method (input (this <search-view>) char)
   (case char
+    ((#\h) (set! (current-page this) = ((lambda (old) (max 0 (1- old))))))
+    ((#\l) (set! (current-page this) = ((lambda (old)
+                                          ;; true final page
+                                          (if (car (max-page this))
+                                              (min (1+ old) (cdr (max-page this)))
+                                              (begin
+                                                (set! (cdr (max-page this))
+                                                  (max (1+ old) (cdr (max-page this))))
+                                                (1+ old)))))))
     ((#\q) '(pop))))
 
 (app/define-method (main-loop date)
