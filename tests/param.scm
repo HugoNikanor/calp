@@ -1,5 +1,3 @@
-;;; TODO rename this file to param.scm
-
 (((vcomponent base) param prop* parameters)
  ((vcomponent parse) parse-calendar)
  ((util) sort*))

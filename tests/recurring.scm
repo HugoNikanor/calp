@@ -6,6 +6,7 @@
  ((vcomponent recurrence) generate-recurrence-set))
 
 ;;; Test that basic recurrence works
+;;; also see the neighbour test file recurrence.scm for more tests.
 
 (define ev
   (call-with-input-string
@@ -77,10 +78,6 @@ END:VEVENT"
 
 (test-assert "weekly 10-12"
   (stream-car (generate-recurrence-set ev)))
-
-;;; TODO, also test:
-;;; - limited repetition
-;;; - weird rules
 
 (define ev
   (call-with-input-string

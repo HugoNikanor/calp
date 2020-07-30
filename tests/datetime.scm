@@ -120,11 +120,12 @@
 ;;                             #2018-01-17T08:00:00)))
 
 
-;; TODO
+;; NOTE
 ;; at the time of writing this returns #2020-02-00
 ;; The general question is, how is the last in a month handled?
-;; (test-equal
-;;     (date+ #2019-12-31 (date month: 1)))
+(test-equal
+    #2020-01-31
+  (date+ #2019-12-31 (date month: 1)))
 
 (test-assert (leap-year? 2020))
 

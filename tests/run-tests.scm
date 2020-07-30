@@ -56,7 +56,7 @@
  (for skip in to-skip
       (test-skip skip)))
 
-;; TODO test-group fails if called before any test begin, since
+;; NOTE test-group fails if called before any test begin, since
 ;; (test-runner-current) needs to be a test-runner (dead or not),
 ;; but is initially bound to #f.
 (test-begin "tests")
