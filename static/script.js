@@ -442,7 +442,7 @@ window.onload = function () {
     window.setInterval(update_current_time_bar, 1000 * 60)
 
     /* Is event creation active? */
-    if (true) {
+    if (EDIT_MODE) {
         let eventCreator = new EventCreator;
         for (let c of document.getElementsByClassName("events")) {
             c.onmousedown = eventCreator.create_event_down(c);
@@ -646,8 +646,6 @@ function bind_properties (el, wide_event=false) {
             default:
                 lst.push([s, (s, v) => s.innerHTML = v]);
             }
-            /* TODO the icalendar data is only here when we have edit mode entabled.
-               Either always include it, or find the default value some other way */
             el.properties["_value_" + field] = s.innerHTML;
         }
 

@@ -181,11 +181,21 @@
                                        "som iCal"))
                                 (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
                                        "som xCal"))))))
-                (when (edit-mode)
+                ;; Only display sxml when in debug mode. See below for other case
+                (when (debug)
                   `(("</>"
                      ,((@ (output xcal) ns-wrap)
                        ((@ (output xcal) vcomponent->sxcal)
-                        ev))))))))))
+                        ev)))))))
+             (div (@ (style "display:none !important;"))
+                  ;; NOTE This can be limited to only when edit-mode is enabled but debug
+                  ;; mode is not. That would however require a few more cases for the
+                  ;; javascript to work.
+                  ,(when (and (not (debug)) ; (edit-mode)
+                              )
+                     ((@ (output xcal) ns-wrap)
+                      ((@ (output xcal) vcomponent->sxcal)
+                       ev)))))))
 
 
 
@@ -672,6 +682,16 @@
                      (content ,(date->string start-date "~s"))))
             (meta (@ (name end-time)
                      (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
+
+            (script
+             "EDIT_MODE=true;")
+
+            (style ,(format #f "html {
+    --editmode: 1.0;
+    --event-font-size: 8pt;
+    --gray: #757575;
+    --btn-height: 0.5ex;
+}"))
 
             ,(include-css "/static/style.css")
             ,(include-alt-css "/static/dark.css"  '(title "Dark"))
