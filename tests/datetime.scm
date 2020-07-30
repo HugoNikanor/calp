@@ -85,6 +85,16 @@
   (datetime+ (datetime date: #2020-01-01)
              (datetime time: #10:00:00)))
 
+(test-equal
+    #2020-10-09T14:00:00
+  (datetime- #2020-10-10T00:00:00
+             (datetime time: #10:00:00)))
+
+(test-equal
+    #2020-09-24T14:00:00
+  (datetime- #2020-10-10T00:00:00
+             #0000-00-15T10:00:00))
+
 
 (test-equal #2020-03-10
   (date+ #2020-03-01

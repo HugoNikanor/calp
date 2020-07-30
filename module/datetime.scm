@@ -723,16 +723,16 @@
          minute: ,(minute t)
          second: ,(second t)))
 
-(define (datetime->sexp dt)
-  `(datetime date: ,(get-date dt)
-             time: ,(get-time% dt)
+(define* (datetime->sexp dt optional: verbose)
+  `(datetime date: ,(if verbose (date->sexp (get-date dt)) (get-date dt))
+             time: ,(if verbose (time->sexp (get-time% dt)) (get-time% dt))
              tz: ,(tz dt)))
 
 (define (date-reader chr port)
   (unread-char chr port)
   (let ((line (symbol->string (read port))))
     (cond [(string-contains line "T")
-           (-> line string->datetime datetime->sexp)]
+           (-> line string->datetime (datetime->sexp #t))]
           [(string-contains line ":")
            (-> line string->time time->sexp)]
           [(string-contains line "-")
@@ -1083,6 +1083,14 @@
               time: time
               tz: (get-timezone base)
               )))
+
+(define-public (datetime- base change)
+  (let* ((time underflow (time- (get-time% base) (get-time% change))))
+    (datetime date: (date- (get-date base)
+                           (get-date change)
+                           (date day: underflow))
+              time: time
+              tz: (tz base))))
 
 ;;; the *-difference procedures takes two actual datetimes.
 ;;; date- instead takes a date and a delta (but NOT an actual date).
