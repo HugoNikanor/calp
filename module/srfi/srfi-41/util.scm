@@ -86,6 +86,22 @@
      (stream-map cadr (stream-filter car strm))
      (stream-map cadr (stream-remove car strm)))))
 
+(define-public (stream-split idx stream)
+  (stream-cons (stream-take idx stream)
+               (stream-drop idx stream)))
+
+(define-stream (stream-paginate% stream page-size)
+  (stream-match (stream-split page-size stream)
+                ((page . rest)
+                 (if (stream-null? page)
+                     stream-null
+                     (stream-cons
+                      page
+                      (stream-paginate rest page-size))))))
+
+(define*-public (stream-paginate stream optional: (page-size 10))
+  (stream-paginate% stream page-size))
+
 ;; Evaluates @var{body} in a context where most list fundamentals are
 ;; replaced by stream alternatives.
 ;; commented defifinitions are items which could be included, but for
