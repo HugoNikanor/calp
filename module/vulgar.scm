@@ -43,8 +43,11 @@
                  (lflag oattr) (bitwise-and bits (lflag oattr)))
 
            (tcsetattr! iattr ifd)
-           (tcsetattr! oattr ofd))
+           (tcsetattr! oattr ofd)
+           (system "tput civis"))
          thunk
          (lambda ()
            (tcsetattr! iattr* ifd)
-           (tcsetattr! oattr* ofd)))))))
+           (tcsetattr! oattr* ofd)
+           (system "tput cnorm")
+           ))))))
