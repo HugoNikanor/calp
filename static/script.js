@@ -151,7 +151,12 @@ class EventCreator {
 
                 /* [0, 1) -- where are we in the container */
                 /* Ronud to force steps of quarters */
-                /* TODO possibly have floor_time instead */
+                /* NOTE for in-day events a floor here work better, while for
+                   all day events I want a round, but which has the tip over point
+                   around 0.7 instead of 0.5.
+                   It might also be an idea to subtract a tiny bit from the short events
+                   mouse position, since I feel I always get to late starts.
+                */
                 let time = round_time(pos_in(this, e), round_to);
 
                 event.dataset.time1 = time;
@@ -262,9 +267,6 @@ var current_cell = false
 
 function update_current_time_bar () {
     var now = new Date()
-    /* TODO
-       The bar and box doesn't get cleared when we leave our time interval.
-    */
     if (! (start_time <= now.getTime() && now.getTime() < end_time))
         return;
 
