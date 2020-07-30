@@ -7,6 +7,8 @@
 ;; For a source of data see:
 ;; https://data.iana.org/time-zones/tz-link.html or
 ;; https://github.com/eggert/tz.
+;;
+;; See zic(8) for data format
 ;;; Code:
 (define-module (datetime zic)
   :use-module (util)
@@ -31,7 +33,7 @@
 
 
 
-;; <day-name> := 'mon | 'tue | 'wed | 'thu | 'sat | 'sun
+;; <day-name> := [0..6]
 
 (define-immutable-record-type <rule>    ; EXPORTED
   ;; type should always be "-"
@@ -156,7 +158,7 @@
                           day:   (string->number day))
               time: (timespec-time timespec)
               tz: (case (timespec-type timespec)
-                    [(#\s) #| aoeuoeu oeu aoeuaoeuht aoeu htns|# ""]
+                    [(#\s) (warning "what even is \"Standard time\"‽") ""]
                     [(#\w) #f]
                     ;; Since we might represent times before UTC existed
                     ;; this is a bit of a lie. But it should work.
@@ -299,35 +301,50 @@ expries rules aren't yet implemented." type)]
 
 
 (define-public (rule->dtstart rule)
-  ;; TODO rule-from can contain the symbol 'minimum
-  (define d (date year: (rule-from rule)
+  ;; NOTE 'minimum and 'maximum represent the begining and end of time.
+  ;; since I don't have a way to represent those ideas I just set a very
+  ;; high and a very low year here. What 'maximum even entails for a start
+  ;; time is not noted in the spec.
+  (define d (date year: (case (rule-from rule)
+                          ((minimum) 0)
+                          ((maximum) 9999)
+                          (else (rule-from rule)))
                   month: (rule-in rule)
                   day: 1))
 
-  (datetime
-   date:
-   (let ((on (rule-on rule)))
-     (cond [(number? on)
-            (set (day d) on)]
-           [(eq? 'last (car on))
-            (iterate (lambda (d) (date- d (date day: 1)))
-                     (lambda (d) (eqv? (cadr on) (week-day d)))
-                     (set (day d) (days-in-month d)))]
-           [else                        ; < | >
-            (let* (((<> wday base-day) on))
-              (iterate (lambda (d) ((if (eq? '< <>)
-                                   date- date+)
-                               d (date day: 1)))
-                       (lambda (d) (eqv? wday (week-day d)))
-                       (set (day d) base-day)))]))
-   time:
-   (let ((timespec (rule-at rule)))
-     ;; TODO check type?
-     ;; NOTE I really hope that AT can never be negative
-     (timespec-time timespec))))
+  (define dt
+    (datetime
+     date:
+     (let ((on (rule-on rule)))
+       (cond [(number? on)
+              (set (day d) on)]
+             [(eq? 'last (car on))
+              (iterate (lambda (d) (date- d (date day: 1)))
+                       (lambda (d) (eqv? (cadr on) (week-day d)))
+                       (set (day d) (days-in-month d)))]
+             [else                      ; < | >
+              (let* (((<> wday base-day) on))
+                (iterate (lambda (d) ((if (eq? '< <>)
+                                     date- date+)
+                                 d (date day: 1)))
+                         (lambda (d) (eqv? wday (week-day d)))
+                         (set (day d) base-day)))]))
+     tz: (case (timespec-type (rule-at rule))
+           ((#\w) #f)
+           ((#\s) (warning "what even is \"Standard time\"‽") #f)
+           ((#\u #\g #\z) 'UTC))))
+
+  (let ((timespec (rule-at rule)))
+    ((case (timespec-sign timespec)
+       ((+) datetime+)
+       ((-) datetime-))
+     dt
+     (datetime time: (timespec-time timespec)))
+    ))
 
 
 (use-modules (vcomponent recurrence internal))
+
 (define-public (rule->rrule rule)
   (if (eq? 'only (rule-to rule))
       #f
@@ -336,12 +353,18 @@ expries rules aren't yet implemented." type)]
                    interval: 1
                    bymonth: (list (rule-in rule))
                    until: (let ((to  (rule-to rule)))
-                            (if (eq? 'maximum to)
-                                ;; TODO I possibly need to check the start of
-                                ;; the next rule to know when this rule really
-                                ;; ends.
-                                #f (datetime
-                                    date: (date year: to month: 1 day: 1)))))))
+                            (case to
+                              ((maximum) #f)
+                              ((minimum) (error "Check your input"))
+                              ((only)
+                               (datetime
+                                date: (date year: (rule-from rule) month: 1 day: 1)))
+                              (else
+                               ;; NOTE I possibly need to check the start of
+                               ;; the next rule to know when this rule really
+                               ;; ends.
+                               (datetime
+                                date: (date year: to month: 1 day: 1))))))))
 
 
         (cond [(number? (rule-on rule))
@@ -352,10 +375,15 @@ expries rules aren't yet implemented." type)]
                (set (byday base) (list (cons -1 (cadr (rule-on rule)))))]
 
               [else
+               ;; Sun<=25
+               ;; Sun>=8
                (let* (((<> wday base-day) (rule-on rule)))
                  (when (eq? '< <>)
                    (warning "Counting backward for RRULES unsupported"))
-                 ;; TODO this only realy works when base-day = 7n + 1, n ∈ 𝐍
+                 ;; NOTE this only realy works when base-day = 7n + 1, n ∈ N
+                 ;; something like Sun>=5 is hard to fix, since we can only
+                 ;; say which sunday in the month we want (first sunday,
+                 ;; second sunday, ...).
                  (set (byday base)
                       (list
                        (cons (ceiling-quotient base-day 7)
