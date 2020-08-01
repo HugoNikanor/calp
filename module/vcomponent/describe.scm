@@ -14,7 +14,7 @@
   (format #t "~aBEGIN ~a~%" ii (type vcomponent))
 
   (for-each (lambda (kv)
-              (let* ((key . values) kv)
+              (let* (((key . values) kv))
                 (define (out vline)
                   (format #t "~a~a = ~a"
                           iii
