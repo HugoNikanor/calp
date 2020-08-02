@@ -54,8 +54,8 @@
   )
 
 
-(define-method (get-event-by-uid (this <events>) uid)
-  (hash-ref (slot-ref this 'uid-map) uid))
+(define (get-event-by-uid uid)
+  (hash-ref (slot-ref global-event-object 'uid-map) uid))
 
 
 
@@ -113,9 +113,7 @@
   (slot-set! this 'events
              (cons event (slot-ref this 'events)))
 
-  (let* ((slot-name
-         (if (repeating? event)
-             'repeating-events 'fixed-events))
+  (let* ((slot-name (if (repeating? event) 'repeating-events 'fixed-events))
          (events (slot-ref this slot-name)))
     (slot-set! this slot-name (insert-ordered event events ev-time<?)))
 
@@ -153,5 +151,8 @@
              #f))
 
 
+
+;; this is loaded on compile, meaning that Guile's auto-compiler may
+;; evaluate this to early.
 (define-once global-event-object
   (make <events> calendar-files: (get-config 'calendar-files)))

@@ -33,7 +33,7 @@
   :use-module (output html)
   :use-module (output ical)
 
-  :autoload (vcomponent instance) (#|get-calendars|# global-event-object)
+  :autoload (vcomponent instance) (get-calendars global-event-object)
 
   :export (main)
   )
@@ -189,7 +189,7 @@
 
              (parameterize ((warnings-are-errors #t))
                (catch 'warning
-                 (lambda () (add-event calendar event))
+                 (lambda () (add-event global-event-object calendar event))
                  (lambda (err fmt args)
                    (return (build-response code: 400)
                            (format #f "~?~%" fmt args)))))
