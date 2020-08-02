@@ -9,7 +9,7 @@
 
 
 
-;; this is loaded on compile, meaning that Guile's auto-compiler may
+;; TODO this is loaded on compile, meaning that Guile's auto-compiler may
 ;; evaluate this to early.
 (define-once global-event-object
   (make (@@ (vcomponent instance methods) <events>)

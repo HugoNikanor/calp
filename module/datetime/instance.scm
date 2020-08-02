@@ -5,6 +5,7 @@
   :export (zoneinfo))
 
 
+;; TODO see (vcomponent instance), this has a similar problem with early load
 (define-once
   zoneinfo
   (let* ((pipe
