@@ -33,7 +33,7 @@
   :use-module (output html)
   :use-module (output ical)
 
-  :autoload (vcomponent instance) (get-calendars global-event-object)
+  :autoload (vcomponent instance) (#|get-calendars|# global-event-object)
 
   :export (main)
   )

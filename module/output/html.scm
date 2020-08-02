@@ -19,7 +19,7 @@
   #:use-module (text util)
   #:use-module (vcomponent datetime output)
 
-  #:autoload (vcomponent instance) (get-calendars get-event-set global-event-object)
+  #:autoload (vcomponent instance) (#|get-calendars get-event-set|# global-event-object)
 
   #:use-module (git)
   ;; #:use-module (module config all)
@@ -818,7 +818,7 @@
     (unless (file-exists? link)
       (symlink "../static" link))))
 
-(define (html-chunked-main count start-date chunk-length)
+(define-public (html-chunked-main count start-date chunk-length)
 
   (define calendars (get-calendars global-event-object))
   (define events (get-event-set global-event-object))
@@ -853,7 +853,7 @@
 
 
 
-(define (html-table-main count start-date)
+(define-public (html-table-main count start-date)
 
   (define calendars (get-calendars global-event-object))
   (define events (get-event-set global-event-object))

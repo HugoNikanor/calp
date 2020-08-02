@@ -6,25 +6,12 @@
 (set! (@ (global) basedir) (car %load-path))
 
 (use-modules (srfi srfi-1)
-             (srfi srfi-41)
-             (srfi srfi-41 util)
              (srfi srfi-88)             ; keyword syntax
 
              (util)
-             (util io)
-             (util time)
-             (util config)
+             ((util config) :select (set-config! get-configuration-documentation))
              (util options)
              ((util hooks) :select (shutdown-hook))
-
-             ((entry-points html)      :prefix      html-)
-             ((entry-points terminal)  :prefix  terminal-)
-             ((entry-points import)    :prefix    import-)
-             ((entry-points text)      :prefix      text-)
-             ((entry-points ical)      :prefix      ical-)
-             ((entry-points benchmark) :prefix benchmark-)
-
-             ((entry-points server)   :prefix   server-)
 
              (text markup)
 
@@ -46,7 +33,8 @@
           (description
            "Start a Guile repl which can be connected to, defaults to the unix socket "
            (i "/run/user/${UID}/calp-${PID}") ", but it can be bound to any unix or "
-           "TCP socket. ((@ (util app) current-app)) should return the current app context."
+           "TCP socket. ((@ (vcomponent instance) global-event-object)) "
+           "should contain all events."
            (br)
            (b "Should NOT be used in production.")))
 
@@ -155,21 +143,17 @@
                   (current-output-port))
          (throw 'return)
          )
-  ;; (current-app (make-app))
-
-  ;; ((@ (vcomponent) init-app) (get-config 'calendar-files))
-  ;; ((@ (datetime app) init-app))
 
   (let ((ropt (ornull (option-ref opts '() '())
                       '("term"))))
     ((case (string->symbol (car ropt))
-       ((html)       html-main)
-       ((term)   terminal-main)
-       ((import)   import-main)
-       ((text)       text-main)
-       ((ical)       ical-main)
-       ((server)   server-main)
-       ((benchmark) benchmark-main)
+       ((html)   (@ (entry-points     html) main))
+       ((term)   (@ (entry-points terminal) main))
+       ((import) (@ (entry-points   import) main))
+       ((text)   (@ (entry-points     text) main))
+       ((ical)   (@ (entry-points     ical) main))
+       ((server) (@ (entry-points   server) main))
+       ((benchmark) (@ (entry-points benchmark) main))
        (else => (lambda (s)
                   (format (current-error-port)
                           "Unsupported mode of operation: ~a~%"
@@ -185,7 +169,7 @@
                                  (string->symbol stprof)))))
 
 (define (main args)
-  (report-time! "Program start")
+  ((@ (util time) report-time!) "Program start")
   (dynamic-wind (lambda () 'noop)
                 (lambda () (catch 'return (lambda () (wrapped-main args)) values))
                 (lambda () (run-hook shutdown-hook))))

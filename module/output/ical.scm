@@ -221,7 +221,7 @@ CALSCALE:GREGORIAN\r
   (print-footer))
 
 
-(define (print-all-events)
+(define-public (print-all-events)
   (print-components-with-fake-parent
    (append (get-fixed-events global-event-object)
            ;; TODO RECCURENCE-ID exceptions
@@ -230,7 +230,7 @@ CALSCALE:GREGORIAN\r
            ;; the given date range.
            (get-repeating-events global-even-object))))
 
-(define (print-events-in-interval start end)
+(define-public (print-events-in-interval start end)
   (print-components-with-fake-parent
    (append (fixed-events-in-range start end)
            ;; TODO RECCURENCE-ID exceptions
