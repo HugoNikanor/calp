@@ -15,7 +15,7 @@
   :use-module (vcomponent geo)
   :use-module (output types)
   :use-module (output common)
-  :autoload (vcomponent instance) (#|get-calendars get-event-set|# global-event-object)
+  :autoload (vcomponent instance) (global-event-object)
   :autoload (datetime instance) (zoneinfo)
   )
 
@@ -228,7 +228,7 @@ CALSCALE:GREGORIAN\r
            ;; We just dump all repeating objects, since it's much cheaper to do
            ;; it this way than to actually figure out which are applicable for
            ;; the given date range.
-           (get-repeating-events global-even-object))))
+           (get-repeating-events global-event-object))))
 
 (define-public (print-events-in-interval start end)
   (print-components-with-fake-parent

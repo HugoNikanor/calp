@@ -19,7 +19,7 @@
   #:use-module (text util)
   #:use-module (vcomponent datetime output)
 
-  #:autoload (vcomponent instance) (#|get-calendars get-event-set|# global-event-object)
+  #:autoload (vcomponent instance) (global-event-object)
 
   #:use-module (git)
   ;; #:use-module (module config all)

@@ -33,7 +33,7 @@
   :use-module (output html)
   :use-module (output ical)
 
-  :autoload (vcomponent instance) (get-calendars global-event-object)
+  :autoload (vcomponent instance) (global-event-object)
 
   :export (main)
   )
@@ -113,12 +113,12 @@
            (return (build-response code: 400)
                    "uid required"))
 
-         (aif (get-event-by-uid uid)
+         (aif (get-event-by-uid global-event-object uid)
               (begin
                 ;; It's hard to properly remove a file. I also want a way to undo accidental
                 ;; deletions. Therefore I simply save the X-HNH-REMOVED flag to the file, and
                 ;; then simple don't use those events when loading.
-                (catch 'stack-overflow (lambda () (remove-event it))
+                (catch 'stack-overflow (lambda () (remove-event global-event-object it))
                   (lambda _
                     (display "It overflew...\n" (current-error-port))
                     (return (build-response code: 500)
@@ -240,7 +240,7 @@
                         (print-all-events))))))
 
    (GET "/calendar/:uid{.*}.xcs" (uid)
-        (aif (get-event-by-uid uid)
+        (aif (get-event-by-uid global-event-object uid)
              (return '((content-type application/calendar+xml))
                      ;; TODO sxml->xml takes a port, would be better
                      ;; to give it the return port imidiately.
@@ -256,7 +256,7 @@
                      (format #f "No component with UID=~a found." uid))))
 
    (GET "/calendar/:uid{.*}.ics" (uid)
-        (aif (get-event-by-uid uid)
+        (aif (get-event-by-uid global-event-object uid)
              (return '((content-type text/calendar))
                      (with-output-to-string
                        (lambda () (print-components-with-fake-parent

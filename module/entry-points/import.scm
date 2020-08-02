@@ -4,10 +4,10 @@
   :use-module (util options)
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 rdelim)
-  :use-module (vcomponent)
   :use-module (srfi srfi-1)
   :use-module (output vdir)
-  :autoload (vcomponent instance) (get-calendars global-event-object)
+  :use-module (vcomponent)
+  :autoload (vcomponent instance) (global-event-object)
   )
 
 (define options

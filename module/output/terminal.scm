@@ -29,7 +29,7 @@
   #:use-module (oop goops)
   #:use-module (oop goops describe)
 
-  #:autoload (vcomponent instance) (#|get-calendars get-event-set|# global-event-object)
+  #:autoload (vcomponent instance) (global-event-object)
 
   #:export (main-loop))
 
