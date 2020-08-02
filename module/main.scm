@@ -13,7 +13,6 @@
              (util)
              (util io)
              (util time)
-             (util app)
              (util config)
              (util options)
              ((util hooks) :select (shutdown-hook))
@@ -158,8 +157,8 @@
          )
   ;; (current-app (make-app))
 
-  ((@ (vcomponent) init-app) (get-config 'calendar-files))
-  ((@ (datetime app) init-app))
+  ;; ((@ (vcomponent) init-app) (get-config 'calendar-files))
+  ;; ((@ (datetime app) init-app))
 
   (let ((ropt (ornull (option-ref opts '() '())
                       '("term"))))

@@ -7,7 +7,6 @@
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
   #:use-module (util)
-  #:use-module ((util app) :prefix app/)
   #:use-module (vulgar)
   #:use-module (vulgar info)
   #:use-module (vulgar color)
@@ -29,6 +28,8 @@
 
   #:use-module (oop goops)
   #:use-module (oop goops describe)
+
+  #:autoload (vcomponent instance) (#|get-calendars get-event-set|# global-event-object)
 
   #:export (main-loop))
 
@@ -336,8 +337,8 @@
                  (cached-page this) #f))
     (else (next-method))))
 
-(app/define-method (main-loop date)
-  (define state (list (day-view (app/getf 'event-set) date)))
+(define-public (main-loop date)
+  (define state (list (day-view (get-event-set global-event-object) date)))
 
   (while #t
     (output (car state))

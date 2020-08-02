@@ -1,6 +1,5 @@
 (define-module (entry-points server)
   :use-module (util)
-  :use-module (util app)
   :use-module (util config)
   :use-module (util options)
   :use-module (util exceptions)
@@ -34,6 +33,8 @@
   :use-module (output html)
   :use-module (output ical)
 
+  :autoload (vcomponent instance) (get-calendars global-event-object)
+
   :export (main)
   )
 
@@ -59,7 +60,7 @@
             (cdr (scandir dir))))))
 
 
-(define-method (make-make-routes)
+(define (make-make-routes)
   (make-routes
 
    ;; Manual redirect to not reserve root.
@@ -77,8 +78,8 @@
           (return `((content-type application/xhtml+xml))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: (getf 'calendars)
-                                     events: (getf 'event-set)
+                      (html-generate calendars: (get-calendars global-event-object)
+                                     events: (get-event-set global-event-object)
                                      start-date: start-date
                                      end-date: (date+ start-date (date day: 6))
                                      next-start: (lambda (d) (date+ d (date day: 7)))
@@ -93,8 +94,8 @@
           (return '((content-type application/xhtml+xml))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: (getf 'calendars)
-                                     events: (getf 'event-set)
+                      (html-generate calendars: (get-calendars global-event-object)
+                                     events: (get-event-set global-event-object)
                                      start-date: start-date
                                      end-date: (date- (month+ start-date)
                                                       (date day: 1))
@@ -144,7 +145,7 @@
          ;; also, the default output gives everything.
          (let ((calendar
                 (find (lambda (c) (string=? cal (prop c 'NAME)))
-                      (getf 'calendars))))
+                      (get-calendars global-event-object))))
 
            (unless calendar
              (return (build-response code: 400)

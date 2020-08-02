@@ -8,7 +8,6 @@
   #:use-module (vcomponent datetime)
   #:use-module (vcomponent build)
   #:use-module (util)
-  #:use-module (util app)
   #:use-module (util exceptions)
   #:use-module (util config)
   #:use-module (util tree)
@@ -19,6 +18,8 @@
   #:use-module (ice-9 match)
   #:use-module (text util)
   #:use-module (vcomponent datetime output)
+
+  #:autoload (vcomponent instance) (get-calendars get-event-set global-event-object)
 
   #:use-module (git)
   ;; #:use-module (module config all)
@@ -817,10 +818,10 @@
     (unless (file-exists? link)
       (symlink "../static" link))))
 
-(define-method (html-chunked-main count start-date chunk-length)
+(define (html-chunked-main count start-date chunk-length)
 
-  (define calendars (getf 'calendars))
-  (define events (getf 'event-set))
+  (define calendars (get-calendars global-event-object))
+  (define events (get-event-set global-event-object))
 
   ((@ (util time) report-time!) "html start")
 
@@ -852,10 +853,10 @@
 
 
 
-(define-method (html-table-main count start-date)
+(define (html-table-main count start-date)
 
-  (define calendars (getf 'calendars))
-  (define events (getf 'event-set))
+  (define calendars (get-calendars global-event-object))
+  (define events (get-event-set global-event-object))
 
   (create-files)
 

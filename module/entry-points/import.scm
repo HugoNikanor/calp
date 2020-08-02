@@ -1,13 +1,14 @@
 (define-module (entry-points import)
   :export (main)
   :use-module (util)
-  :use-module (util app)
   :use-module (util options)
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 rdelim)
   :use-module (vcomponent)
   :use-module (srfi srfi-1)
-  :use-module (output vdir))
+  :use-module (output vdir)
+  :autoload (vcomponent instance) (get-calendars global-event-object)
+  )
 
 (define options
   '((calendar (value #t) (single-char #\c)
@@ -27,11 +28,11 @@
     (print-arg-help options)
     (throw 'return))
 
-  (let* ((calendars (getf 'calendars))
+  (let* ((calendars (get-calendars global-event-object))
          (calendar
           (and cal-name
                (find (lambda (c) (string=? cal-name (prop c 'NAME)))
-                     (getf 'calendars)))))
+                     (get-calendars global-event-object)))))
 
     (unless calendar
       (format (current-error-port) "No calendar named ~s~%" cal-name)

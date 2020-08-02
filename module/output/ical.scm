@@ -3,7 +3,6 @@
   :use-module (ice-9 match)
   :use-module (util)
   :use-module (util exceptions)
-  :use-module (util app)
   :use-module (vcomponent)
   :use-module (vcomponent datetime)
   :use-module (srfi srfi-1)
@@ -16,6 +15,8 @@
   :use-module (vcomponent geo)
   :use-module (output types)
   :use-module (output common)
+  :autoload (vcomponent instance) (#|get-calendars get-event-set|# global-event-object)
+  :autoload (datetime instance) (zoneinfo)
   )
 
 
@@ -171,7 +172,7 @@
 
   (awhen (param (prop* event 'DTSTART) 'TZID)
          ;; TODO this is broken
-         (add-child! cal (zoneinfo->vtimezone (getf 'zoneinfo) it)))
+         (add-child! cal (zoneinfo->vtimezone zoneinfo it)))
 
   (unless (prop event 'UID)
     (set! (prop event 'UID)
@@ -212,7 +213,7 @@ CALSCALE:GREGORIAN\r
     (for-each component->ical-string
               ;; TODO we realy should send the earliest event from each timezone here,
               ;; instead of just the first.
-              (map (lambda (name) (zoneinfo->vtimezone (getf 'zoneinfo) name (car events)))
+              (map (lambda (name) (zoneinfo->vtimezone zoneinfo name (car events)))
                    tz-names)))
 
   (for-each component->ical-string events)
@@ -220,20 +221,20 @@ CALSCALE:GREGORIAN\r
   (print-footer))
 
 
-(define-method (print-all-events)
+(define (print-all-events)
   (print-components-with-fake-parent
-   (append (getf 'fixed-events)
+   (append (get-fixed-events global-event-object)
            ;; TODO RECCURENCE-ID exceptions
            ;; We just dump all repeating objects, since it's much cheaper to do
            ;; it this way than to actually figure out which are applicable for
            ;; the given date range.
-           (getf 'repeating-events))))
+           (get-repeating-events global-even-object))))
 
-(define-method (print-events-in-interval start end)
+(define (print-events-in-interval start end)
   (print-components-with-fake-parent
    (append (fixed-events-in-range start end)
            ;; TODO RECCURENCE-ID exceptions
            ;; We just dump all repeating objects, since it's much cheaper to do
            ;; it this way than to actually figure out which are applicable for
            ;; the given date range.
-           (getf 'repeating-events))))
+           (get-repeating-events global-event-object))))

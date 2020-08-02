@@ -6,6 +6,7 @@
   datetime+
   datetime<=?
   datetime-difference
+  datetime-
   leap-year?
   )
  ((ice-9 format) format)

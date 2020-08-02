@@ -4,7 +4,7 @@
   :use-module (ice-9 getopt-long)
   :use-module (util options)
   :use-module (util)
-  :use-module (util app)
+  :use-module (srfi srfi-41)
   )
 
 
@@ -32,6 +32,8 @@
   (unless field
    (throw 'argument-error "Field `field' required."))
 
-  (aif (option-ref opts 'enable-output #f)
-       (write (getf field app: (current-app)))
-       (getf field app: (current-app))))
+  (let ((strm ((@ (vcomponent instance) get-event-set)
+               (@ (vcomponent instance) global-event-object))))
+    (if (option-ref opts 'enable-output #f)
+        (write (stream->list 1000 strm))
+        (stream->list 1000 strm))))
