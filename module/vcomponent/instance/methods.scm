@@ -23,21 +23,6 @@
 (define-public (load-calendars calendar-files)
   (map parse-cal-path calendar-files))
 
-;;; TODO both add- and remove-event sometimes crash with
-;;;;; Warning: Unwind-only `stack-overflow' exception; skipping pre-unwind handler.
-;;; I belive this is due to how getf and setf work.
-
-
-
-;; == vcomponent ==
-;; - calendar
-;; - events
-;; - repeating-events
-;; - fixed-events
-;; - event-set
-;; - uid-map
-
-
 
 (define-class <events> ()
   (calendar-files init-keyword: calendar-files:)
@@ -127,14 +112,13 @@
   (prop event 'UID))
 
 
-
-
 (define-method (remove-event (this <events>) event)
-  (slot-set! this 'events (delete event (slot-ref this 'events)))
+  ;; cons #f so delq1! can delete the first element
+
+  (delq1! event (cons #f (slot-ref this 'events)))
 
   (let ((slot-name (if (repeating? event) 'repeating-events 'fixed-events)))
-    (slot-set! this slot-name
-               (delete event (slot-ref this slot-name))))
+    (delq1! event (cons #f (slot-ref this slot-name))))
 
   (slot-set! this 'event-set
              (stream-remove
