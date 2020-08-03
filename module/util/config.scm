@@ -88,6 +88,9 @@
               (cond [(not value)
                      (set-value! conf #f)
                      ((config-attribute conf #:post identity) #f)]
+                    [(unconfig? conf)
+                     (hashq-set! config-values key
+                                 (make-unconfig value))]
                     [((config-attribute conf #:pre identity)
                       value)
                      => (lambda (it)

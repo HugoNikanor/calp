@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Downloads zoneinfo files if not already present
+# echos 2 lines,
+# - the directory with the zoneinfo files
+# - the names of the zoneinfo files to be parsed
+
 CACHE_DIR=${CACHE_DIR:-~/.cache/calp}
 RELEASE=2020a
 TZ_SRC="https://github.com/eggert/tz/archive/$RELEASE.tar.gz"

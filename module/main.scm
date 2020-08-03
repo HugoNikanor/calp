@@ -5,6 +5,14 @@
 
 (set! (@ (global) basedir) (car %load-path))
 
+(catch 'misc-error
+  (lambda () (use-modules (autoconfig)))
+  (lambda (err caller fmt args . rest)
+    (if (eqv? (caadr args) 'autoconfig)
+        (format (current-error-port) "Run ./configure first~%")
+        (format (current-error-port) "~?~%" fmt args))
+    (exit 1)))
+
 (use-modules (srfi srfi-1)
              (srfi srfi-88)             ; keyword syntax
 

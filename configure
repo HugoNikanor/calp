@@ -1,0 +1,44 @@
+#!/usr/bin/guile \
+--no-auto-compile -s
+!#
+
+(define // file-name-separator-string)
+
+(define here (cond ((current-filename) => dirname)
+                   (else (getcwd))))
+(define module-dir (string-append here // "module"))
+(add-to-load-path module-dir)
+
+(use-modules (util))
+
+;; --with-zoneinfo
+(define zoneinfo #t)
+
+;; when zoneinfo
+(use-modules (ice-9 rdelim))
+
+(define pipe
+  (-> here
+      (string-append "/tzget")
+      ((@ (ice-9 popen) open-input-pipe))))
+(define path (read-line pipe))
+(define names (string-split (read-line pipe) #\space))
+
+(use-modules (util io)
+             (datetime))
+(with-atomic-output-to-file
+ (string-append module-dir // "autoconfig.scm")
+ (lambda ()
+   (display ";;; Commentary:") (newline)
+   (display ";;; File genererated by ./configure on ")
+   (display (datetime->string
+             (current-datetime) "~Y-~m-~d ~H:~M:~S~Z"))
+   (newline)
+   (display ";;; DONT make any manual changes") (newline)
+   (display ";;; Code:") (newline)
+   (for-each (@ (ice-9 pretty-print) pretty-print)
+             `((define-module (autoconfig)
+                 use-module: (util config))
+               ,@(when zoneinfo
+                   `((set-config! 'tz-file ,path)
+                     (set-config! 'tz-list (quote ,names))))))))

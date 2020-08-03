@@ -16,7 +16,7 @@
   :use-module (output types)
   :use-module (output common)
   :autoload (vcomponent instance) (global-event-object)
-  :autoload (datetime instance) (zoneinfo)
+  :use-module ((datetime instance) :select (zoneinfo))
   )
 
 
@@ -172,7 +172,7 @@
 
   (awhen (param (prop* event 'DTSTART) 'TZID)
          ;; TODO this is broken
-         (add-child! cal (zoneinfo->vtimezone zoneinfo it)))
+         (add-child! cal (zoneinfo->vtimezone (zoneinfo) it)))
 
   (unless (prop event 'UID)
     (set! (prop event 'UID)
@@ -213,7 +213,9 @@ CALSCALE:GREGORIAN\r
     (for-each component->ical-string
               ;; TODO we realy should send the earliest event from each timezone here,
               ;; instead of just the first.
-              (map (lambda (name) (zoneinfo->vtimezone zoneinfo name (car events)))
+              (map (lambda (name) (zoneinfo->vtimezone
+                              (zoneinfo)
+                              name (car events)))
                    tz-names)))
 
   (for-each component->ical-string events)
