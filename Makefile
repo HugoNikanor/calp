@@ -12,7 +12,7 @@ GUILE_C_FLAGS = -Lmodule \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
 
-all: $(GO_FILES)
+all: $(GO_FILES) README
 
 obj/%.scm.go: %.scm
 	@mkdir -p obj
@@ -28,6 +28,9 @@ install:
 	install -d $(DESTDIR)/usr/share/calp/www
 	rsync -a static $(DESTDIR)/usr/share/calp/www
 	# TODO main, tzget
+
+README: README.in
+	./main text < README.in | sed "s/<<today>>/`date -I`/" > README
 
 test:
 	tests/run-tests.scm

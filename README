@@ -1,6 +1,6 @@
 			CALP
 		    Hugo Hörnquist
-		     2020-07-17
+		     2020-08-03
 
 Calp is primarily a program for loading  calendar files  (.ics's) from
 drendering  them in  different formats.  The goal  is however  to also
@@ -40,11 +40,17 @@ Standards and specifications
 
 Building
 --------
-Since   guile   is  primarily   a  scripting   language  no   explicit
-compilation  step  is  required.  Just  run  module/main.scm  and  the
-appropriate modules will be compiled  (guile will  tell you  what it's
-doing). For building this README, run
-	./main text < README.in | sed "s/2020-07-17/`date -I`/" > README
+	./configure
+	./main
+No explicit  compilation is  required for  general usage,  since Guile
+compiles
+files as they are  needed. You  do however  have to  run `./configure`
+before the first startup to set up some  local variables  and download
+the timezone db.
+
+To actually compile the files,  and render  the documentation  (at the
+time of writing only the README), run
+	make all
 
 Techical Details
 ----------------
