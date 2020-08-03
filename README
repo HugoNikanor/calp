@@ -56,6 +56,14 @@ Techical Details
 ----------------
 - Internally all weeks start on sunday, which is repsenented as `0'.
 
+== The configuration system ==
+For all user provided variables a  purpose built  configuration system
+is   used.   Thee  module   `(util  config)`   exposes  the   bindings
+`define-config`  along  with `set-config`  and `get-config`.  The idea
+behind this, instead of direct variables, is to  make it  clearer what
+is part of the configurable environment, it allows  a set!  before the
+point  of  definition,  and  it  makes  values  constraints  easier to
+manage.
 
 References
 ----------
