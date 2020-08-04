@@ -17,9 +17,15 @@
 ;; when zoneinfo
 (use-modules (ice-9 rdelim))
 
+(define *develop* #t)
+
+(define PREFIX //)
+(define CACHE_DIR (string-append PREFIX // "var/cache/calp"))
+(define LIBEXEC (if *develop* here (string-append PREFIX // "usr/lib/calp"))
+
 (define pipe
-  (-> here
-      (string-append "/tzget")
+  (-> LIBEXEC
+      (string-append // "tzget")
       ((@ (ice-9 popen) open-input-pipe))))
 (define path (read-line pipe))
 (define names (string-split (read-line pipe) #\space))

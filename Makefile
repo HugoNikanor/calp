@@ -28,6 +28,7 @@ install:
 	install -d $(DESTDIR)/usr/share/calp/www
 	rsync -a static $(DESTDIR)/usr/share/calp/www
 	# TODO main, tzget
+	@env CACHE_DIR=$(DESTDIR)/var/cache/calp/ ./tzget
 
 README: README.in
 	./main text < README.in | sed "s/<<today>>/`date -I`/" > README
