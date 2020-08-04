@@ -122,6 +122,15 @@ Event must have the DTSTART and DTEND protperty set."
                        (datetime-difference it (prop ev 'DTSTART)))
            #f)))
 
+(define-public (really-long-event? ev)
+  (let ((start (prop ev 'DTSTART))
+        (end (prop ev 'DTEND)))
+   (if (date? start)
+       (and end (date< (date+ start (date day: 1)) end))
+       (and end
+            (datetime< (datetime date: (date day: 1))
+                       (datetime-difference end start))))))
+
 
 ;; DTEND of the last instance of this event.
 ;; event → (or datetime #f)
@@ -136,7 +145,7 @@ Event must have the DTSTART and DTEND protperty set."
                  (as-datetime final))
             #f))))
 
-;; date, date, [sorted-stream events] → [list events]
+;; date, date, [sorted-stream events] → [sorted-stream events]
 (define-public (events-between start-date end-date events)
   (define (overlaps e)
     (timespan-overlaps? start-date (date+ end-date (date day: 1))

@@ -554,10 +554,10 @@
 ;; Returns a list of all dates from start to end.
 ;; both inclusive
 ;; date, date → [list date]
-(define-public (date-range start end)
+(define*-public (date-range start end optional: (increment (date day: 1)))
   (stream->list
    (stream-take-while (lambda (d) (date<= d end))
-                      (day-stream start))))
+                      (date-stream increment start))))
 
 
 ;;; Output

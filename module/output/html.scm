@@ -451,35 +451,58 @@
 ;; (stream event-group) -> sxml
 (define*-public (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
 
-  (define event-groups (get-groups-between (group-stream events)
-                                           pre-start post-end))
+  (define-values (long-events short-events)
+    (partition really-long-event? (stream->list (events-between pre-start post-end events))))
+
+  (define short-event-groups
+    (get-groups-between (group-stream (list->stream short-events))
+                        pre-start post-end))
 
   `((header (@ (class "table-head"))
             ,(string-titlecase (date->string start-date "~B ~Y")))
     (div (@ (class "caltable"))
          ,@(map (lambda (d) `(div (@ (class "thead")) ,(string-titlecase (week-day-name d))))
                 (weekday-list (get-config 'week-start)))
+         ,@(map (lambda (d i)
+                  (define e (date+ d (date day: 6)))
+                  `(div (@ (class "cal-cell cal-cell-long")
+                           (style "grid-area: long " ,i ";"
+                                  "grid-column: 1 / span 7;"))
+                        ,@(lay-out-long-events
+                           d e (stream->list
+                                (events-between d e (list->stream long-events))))))
+                (date-range pre-start post-end (date day: 7))
+                ;; date range limits, 100 ≫ days in month
+                (iota 100 1))
+         ,@(map (lambda (day-date i)
+                  `(div (@ (style "grid-area:time " ,(floor i))
+                           (class "cal-cell cal-cell-time"))
+                        (time (@ (class "date-info "
+                                   ,(if (or (date< day-date start-date)
+                                            (date< end-date day-date))
+                                        "non-current"
+                                        "current"))
+                                 (datetime ,(date->string day-date "~1")))
+                              (span (@ (class "day-number"))
+                                    ,(date->string day-date "~e"))
+                              ,(when (= 1 (day day-date))
+                                 `(span (@ (class "month-name"))
+                                        ,(date->string day-date "~b")))
+                              ,(when (= 1 (month day-date) (day day-date))
+                                 `(span (@ (class "year-number"))
+                                        ", " ,(date->string day-date "~Y"))))))
+                (date-range pre-start post-end)
+                (iota (length (date-range pre-start post-end)) 1 1/7))
+
          ,@(stream->list
             (stream-map
-             (match-lambda
-               [(day-date . events)
-                `(div (@ (class "cal-cell"))
-                      (time (@ (class "date-info "
-                                 ,(if (or (date< day-date start-date)
-                                          (date< end-date day-date))
-                                      "non-current"
-                                      "current"))
-                               (datetime ,(date->string day-date "~1")))
-                            (span (@ (class "day-number"))
-                                  ,(date->string day-date "~e"))
-                            ,(when (= 1 (day day-date))
-                               `(span (@ (class "month-name"))
-                                      ,(date->string day-date "~b")))
-                            ,(when (= 1 (month day-date) (day day-date))
-                               `(span (@ (class "year-number"))
-                                      ", " ,(date->string day-date "~Y"))))
+             (match-lambda*
+               [((day-date . events) i)
+                `(div (@ (style "grid-area:short " ,(floor (/ i 7)))
+                         (class "cal-cell cal-cell-short"))
                       ,@(stream->list (stream-map make-small-block events)))])
-             event-groups)))))
+             short-event-groups
+             (stream-from 1))))))
 
 
 
@@ -601,7 +624,8 @@
     (error 'html-generate "Prev-start needs to be a procedure"))
 
   ;; (display "<!doctype HTML>\n")
-  ((@ (sxml simple) sxml->xml)
+  (;;(@ (ice-9 pretty-print) pretty-print)
+   (@ (sxml simple) sxml->xml)
    `(*TOP*
      (*PI* xml "version=\"1.0\" encoding=\"UTF-8\"")
      ;; "<!doctype html>"
