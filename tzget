@@ -6,15 +6,19 @@
 # - the names of the zoneinfo files to be parsed
 
 CACHE_DIR=${CACHE_DIR:-~/.cache/calp}
-RELEASE=2020a
-TZ_SRC="https://github.com/eggert/tz/archive/$RELEASE.tar.gz"
+TAR=tzdata-latest.tar.gz
+TZ_SRC="https://www.iana.org/time-zones/repository/$TAR"
 
 mkdir -p $CACHE_DIR
 cd $CACHE_DIR
 
-test -f "$RELEASE.tar.gz" || curl -sOL $TZ_SRC
-test -d "tz-$RELEASE" || tar xzf "$RELEASE.tar.gz"
-cd "tz-$RELEASE"
+test -d "tzdata" || {
+	test -f "/tmp/$TAR" || env --chdir=/tmp curl -sOL $TZ_SRC
+	mkdir tzdata
+	tar xf "/tmp/$TAR" -C tzdata
+}
+cd "tzdata"
+
 
 tzpath=$(pwd)
 

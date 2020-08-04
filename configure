@@ -48,3 +48,5 @@
                ,@(when zoneinfo
                    `((set-config! 'tz-file ,path)
                      (set-config! 'tz-list (quote ,names))))))))
+
+;; vim:ft=scheme:
