@@ -458,22 +458,34 @@
     (get-groups-between (group-stream (list->stream short-events))
                         pre-start post-end))
 
+  (define long-event-groups
+    (map (lambda (s)
+           (define e (date+ s (date day: 6)))
+           (cons* s e
+                  (stream->list
+                   (events-between s e (list->stream long-events)))))
+         (date-range pre-start post-end (date day: 7))))
+
   `((header (@ (class "table-head"))
             ,(string-titlecase (date->string start-date "~B ~Y")))
-    (div (@ (class "caltable"))
+    (div (@ (class "caltable")
+            (style "grid-template-rows: 2em"
+              ,(string-concatenate
+                (map (lambda (long-group)
+                       (format #f " [time] 15pt [long] ~amm [short] 1fr"
+                               (min 10 (* 4 (length (cddr long-group))))))
+                     long-event-groups))))
          ,@(map (lambda (d) `(div (@ (class "thead")) ,(string-titlecase (week-day-name d))))
                 (weekday-list (get-config 'week-start)))
-         ,@(map (lambda (d i)
-                  (define e (date+ d (date day: 6)))
-                  `(div (@ (class "cal-cell cal-cell-long")
-                           (style "grid-area: long " ,i ";"
-                                  "grid-column: 1 / span 7;"))
-                        ,@(lay-out-long-events
-                           d e (stream->list
-                                (events-between d e (list->stream long-events))))))
-                (date-range pre-start post-end (date day: 7))
-                ;; date range limits, 100 ≫ days in month
-                (iota 100 1))
+         ,@(map (lambda (group i)
+                  (let* (((s e . events) group))
+                    `(div (@ (class "cal-cell cal-cell-long")
+                             (style "grid-area: long " ,i ";"
+                                    "grid-column: 1 / span 7;"))
+                          ,@(lay-out-long-events
+                             s e events))))
+                long-event-groups
+                (iota (length long-event-groups) 1))
          ,@(map (lambda (day-date i)
                   `(div (@ (style "grid-area:time " ,(floor i))
                            (class "cal-cell cal-cell-time"))

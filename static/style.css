@@ -325,7 +325,9 @@ along with their colors.
        correct way to do it. */
     /* grid-template-rows: 2em; */
     /* grid-auto-rows: 1fr; */
+    /*
     grid-template-rows: 2em repeat(6, [time] 15pt [long] 1fr [short] 1fr);
+*/
 
     max-height: 100%;
     /* Apparently needed to ensure that parent can contain all its children */
