@@ -448,6 +448,39 @@
 (define (make-small-block event)
   (make-block event))
 
+(define (caltable-time-cells start-date end-date
+                             pre-start post-end)
+  (map (lambda (day-date i)
+         `(div (@ (style "grid-area:time " ,i)
+                  (class "cal-cell cal-cell-time"))
+               (time (@ (class "date-info "
+                          ,(if (or (date< day-date start-date)
+                                   (date< end-date day-date))
+                               "non-current"
+                               "current"))
+                        (datetime ,(date->string day-date "~1")))
+                     (span (@ (class "day-number"))
+                           ,(date->string day-date "~e"))
+                     ,(when (= 1 (day day-date))
+                        `(span (@ (class "month-name"))
+                               ,(date->string day-date "~b")))
+                     ,(when (= 1 (month day-date) (day day-date))
+                        `(span (@ (class "year-number"))
+                               ", " ,(date->string day-date "~Y"))))))
+       (date-range pre-start post-end)
+       (map floor (iota (length (date-range pre-start post-end)) 1 1/7))))
+
+;; Natural numbers from 1 and up, each number repeated 7 times.
+(define (repeating-naturals from repeats)
+  (stream-unfold
+   cdr                      ; map
+   (const #t)               ; continue?
+   (lambda (x)                   ; gen next
+     (if (= (1- repeats) (car x))
+         (cons 0 (1+ (cdr x)))
+         (cons (1+ (car x)) (cdr x))))
+   (cons 0 from)))
+
 ;; (stream event-group) -> sxml
 (define*-public (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
 
@@ -479,53 +512,37 @@
                 (weekday-list (get-config 'week-start)))
          ,@(map (lambda (group i)
                   (let* (((s e . events) group))
-                    `(div (@ (class "cal-cell cal-cell-long")
+                    ;; These divs support dragging to create events.
+                    ;; They have correct size when draging, but are
+                    ;; then created with completely wrong start and
+                    ;; end times. TODO
+                    `(div (@ (class "cal-cell longevents event-container")
                              (style "grid-area: long " ,i ";"
-                                    "grid-column: 1 / span 7;"))
+                                    "grid-column: 1 / span 7;")
+                             (data-start ,(date->string s))
+                             (data-end ,(date->string e)))
                           ,@(lay-out-long-events
                              s e events))))
                 long-event-groups
                 (iota (length long-event-groups) 1))
-         ,@(map (lambda (day-date i)
-                  `(div (@ (style "grid-area:time " ,i)
-                           (class "cal-cell cal-cell-time"))
-                        (time (@ (class "date-info "
-                                   ,(if (or (date< day-date start-date)
-                                            (date< end-date day-date))
-                                        "non-current"
-                                        "current"))
-                                 (datetime ,(date->string day-date "~1")))
-                              (span (@ (class "day-number"))
-                                    ,(date->string day-date "~e"))
-                              ,(when (= 1 (day day-date))
-                                 `(span (@ (class "month-name"))
-                                        ,(date->string day-date "~b")))
-                              ,(when (= 1 (month day-date) (day day-date))
-                                 `(span (@ (class "year-number"))
-                                        ", " ,(date->string day-date "~Y"))))))
-                (date-range pre-start post-end)
-                (map floor (iota (length (date-range pre-start post-end)) 1 1/7)))
+
+         ,@(caltable-time-cells start-date end-date
+                                pre-start post-end)
 
          ,@(stream->list
             (stream-map
-             (match-lambda*
-               [((day-date . events) i)
-                (format (current-error-port) "> ~a: ~a~%" day-date
-                        (string-join (map (extract 'SUMMARY) (stream->list events))
-                                     ", " 'infix))
-                `(div (@ (style "grid-area:short " ,i)
-                         (class "cal-cell cal-cell-short"))
-                      ,@(stream->list (stream-map make-small-block events)))])
+             (lambda (group i)
+               (define day-date (car group))
+               (define events (cdr group))
+               `(div (@ (style "grid-area:short " ,i)
+                        (class "cal-cell cal-cell-short -event-container")
+                        (data-start ,(date->string day-date))
+                        (data-end ,(date->string (add-day day-date))))
+                     (div (@ (style "overflow-y:auto;"))
+                      ,@(map make-small-block (stream->list events)))))
              short-event-groups
-             ;; Natural numbers from 1 and up, each number repeated 7 times.
-             (stream-unfold
-              cdr        ; map
-              (const #t) ; continue?
-              (lambda (x)     ; gen next
-                (if (= 6 (car x))
-                    (cons 0 (1+ (cdr x)))
-                    (cons (1+ (car x)) (cdr x))))
-              (cons 0 1)))))))
+             (repeating-naturals 1 7)
+             )))))
 
 
 

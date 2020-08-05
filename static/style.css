@@ -320,17 +320,12 @@ along with their colors.
 
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    /* This is for the first name, the week days.
-       NOTE that I'm not sure this is actually the
-       correct way to do it. */
-    /* grid-template-rows: 2em; */
-    /* grid-auto-rows: 1fr; */
-    /*
-    grid-template-rows: 2em repeat(6, [time] 15pt [long] 1fr [short] 1fr);
-*/
+    /* grid template rows is generated
+       inline in the HTML */
 
     max-height: 100%;
-    /* Apparently needed to ensure that parent can contain all its children */
+    /* Apparently needed to ensure that parent
+       can contain all its children */
     min-height: 0;
 }
 
@@ -354,31 +349,19 @@ along with their colors.
     border-top: none
 }
 
-.caltable .cal-cell-long .event {
+.caltable .longevents .event {
     margin: 0;
     /* TODO use other border rules */
     border: 1px solid black;
 }
 
-.caltable .cal-cell-long .continuing {
-    border-radius: 1cm 0 0 1cm;
-}
-
-.caltable .cal-cell-long .continued {
-    border-radius: 0 1cm 1cm 0;
-}
-
-.caltable .cal-cell-long .continuing.continued {
-    border-radius: 0;
-}
-
-.caltable .cal-cell-long {
+.caltable .longevents {
     border-bottom: none;
     border-top: none;
     position: relative;
 }
 
-.caltable .cal-cell-long .event {
+.caltable .longevents .event {
     position: absolute;
     box-sizing: border-box;
     padding: 0;
@@ -386,9 +369,8 @@ along with their colors.
 
 .caltable .cal-cell {
     overflow-y: auto;
-    /* for long events */
-    overflow-x: hidden;
 }
+
 
 .cal-cell .event {
     font-size: 8pt;
@@ -400,12 +382,7 @@ along with their colors.
 
 
 .date-info .day-number {
-    font-size: 150%;
     padding: 2pt;
-}
-
-.caltable .day-number {
-    font-size: initial;
 }
 
 .date-info.current .day-number {
@@ -435,8 +412,8 @@ along with their colors.
 
 .sideclock {
     padding: 0;
-        grid-row: 3;
-        position: relative;
+    grid-row: 3;
+    position: relative;
 }
 .sideclock .day {
     border: 1px transparent;
