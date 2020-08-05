@@ -213,7 +213,10 @@
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative"))
-                    (onclick "toggle_child_popup(this)"))))
+                    ; (onclick "toggle_child_popup(this)")
+                    (onclick ,(format #f "toggle_popup(document.getElementById('~a'))"
+                                      (string-append "popup" (html-id ev))))
+                    )))
             ;; Inner div to prevent overflow. Previously "overflow: none"
             ;; was set on the surounding div, but the popup /needs/ to
             ;; overflow.
@@ -226,7 +229,9 @@
                 `(span (@ (class "location"))
                        ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                     (prop ev 'LOCATION)))))
-            ,(popup ev popup-id)))))
+            #;
+            ,(popup ev (string-append "popup" (html-id ev)) #; popup-id
+                    )))))
 
 ;; Format single event for graphical display
 (define (create-block date ev)
@@ -725,7 +730,11 @@
                                      post-end: post-end
                                      next-start: next-start
                                      prev-start: prev-start
-                                     ))
+                                     )
+                  ,@(for event in (stream->list
+                                   (events-between pre-start post-end events))
+                         (popup event (string-append "popup" (html-id event)) #; popup-id
+                                )))
 
                  ;; Page footer
                  (footer

@@ -569,10 +569,27 @@ function close_popup(popup) {
 
 function open_popup(popup) {
     popup.classList.add("visible");
+    let element = document.getElementById(popup.id.substr(5))
+    let root = document.body;
+    let offsetX = 0, offsetY = 0;
+    while (element !== root) {
+        console.log(element);
+        offsetX += element.offsetLeft;
+        offsetY += element.offsetTop;
+        element = element.offsetParent;
+    }
+    console.table({offsetX, offsetY})
+    popup.style.left = offsetX + "px";
+    popup.style.top = offsetY + "px";
 }
 
 function toggle_popup(popup) {
-    popup.classList.toggle("visible");
+    // popup.classList.toggle("visible");
+    if (popup.classList.contains("visible")) {
+        close_popup(popup);
+    } else {
+        open_popup(popup);
+    }
 }
 
 function toggle_child_popup(el) {
