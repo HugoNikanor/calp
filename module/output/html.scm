@@ -74,6 +74,7 @@
   (date->string date "~Y-~m-~d"))
 
 ;; Generate an html id for an event.
+;; TODO? same event placed multiple times, when spanning multiple cells
 (define (html-id ev)
   (or (prop ev '-HTML-ID)
       (set/r! (prop ev '-HTML-ID)
@@ -152,22 +153,11 @@
                             (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
                                        "som iCal"))
                                 (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
-                                       "som xCal"))))))
-                ;; Only display sxml when in debug mode. See below for other case
-                (when (debug)
-                  `(("</>"
-                     ,((@ (output xcal) ns-wrap)
-                       ((@ (output xcal) vcomponent->sxcal)
-                        ev)))))))
+                                       "som xCal"))))))))
              (div (@ (style "display:none !important;"))
-                  ;; NOTE This can be limited to only when edit-mode is enabled but debug
-                  ;; mode is not. That would however require a few more cases for the
-                  ;; javascript to work.
-                  ,(when (and (not (debug)) ; (edit-mode)
-                              )
-                     ((@ (output xcal) ns-wrap)
-                      ((@ (output xcal) vcomponent->sxcal)
-                       ev)))))))
+                  ,((@ (output xcal) ns-wrap)
+                    ((@ (output xcal) vcomponent->sxcal)
+                     ev))))))
 
 
 
@@ -199,9 +189,7 @@
         (inner (+ x w) (left-subtree tree))
         (inner x (right-subtree tree))))))
 
-(define* (make-block ev optional: (extra-attributes '())
-                     key:
-                     (popup-id (symbol->string (gensym "popup"))))
+(define* (make-block ev optional: (extra-attributes '()))
 
   `((a (@ (href "#" ,(html-id ev))
           (class "hidelink"))
@@ -214,12 +202,12 @@
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative"))
                     ; (onclick "toggle_child_popup(this)")
-                    (onclick ,(format #f "toggle_popup(document.getElementById('~a'))"
+                    (onclick ,(format #f "toggle_popup('~a')"
                                       (string-append "popup" (html-id ev))))
                     )))
             ;; Inner div to prevent overflow. Previously "overflow: none"
             ;; was set on the surounding div, but the popup /needs/ to
-            ;; overflow.
+            ;; overflow (for the tabs?).
             (div (@ (class "event-body"))
              ,(when (prop ev 'RRULE)
                 `(span (@ (class "repeating")) "↺"))
@@ -229,9 +217,10 @@
                 `(span (@ (class "location"))
                        ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                     (prop ev 'LOCATION)))))
-            #;
-            ,(popup ev (string-append "popup" (html-id ev)) #; popup-id
-                    )))))
+            (div (@ (style "display:none !important;"))
+                 ,((@ (output xcal) ns-wrap)
+                   ((@ (output xcal) vcomponent->sxcal)
+                    ev)))))))
 
 ;; Format single event for graphical display
 (define (create-block date ev)
@@ -540,7 +529,7 @@
                (define day-date (car group))
                (define events (cdr group))
                `(div (@ (style "grid-area:short " ,i)
-                        (class "cal-cell cal-cell-short -event-container")
+                        (class "cal-cell cal-cell-short event-container")
                         (data-start ,(date->string day-date))
                         (data-end ,(date->string (add-day day-date))))
                      (div (@ (style "overflow-y:auto;"))
@@ -731,10 +720,10 @@
                                      next-start: next-start
                                      prev-start: prev-start
                                      )
+
                   ,@(for event in (stream->list
                                    (events-between pre-start post-end events))
-                         (popup event (string-append "popup" (html-id event)) #; popup-id
-                                )))
+                         (popup event (string-append "popup" (html-id event)))))
 
                  ;; Page footer
                  (footer
@@ -860,24 +849,25 @@
             ;; This would idealy be a <template> element, but there is some
             ;; form of special case with those in xhtml, but I can't find
             ;; the documentation for it.
-            (div (@ (class "template event-container") (id "event-template")
-                    ;; Only needed to create a duration. So actual dates
-                    ;; dosen't matter
-                    (data-start "2020-01-01")
-                    (data-end "2020-01-02"))
-                      ,(let ((cal (vcalendar
-                                   name: "Generated"
-                                   children: (list (vevent
-                                                    ;; The event template SHOULD lack
-                                                    ;; a UID, to stop potential problems
-                                                    ;; with conflicts when multiple it's
-                                                    ;; cloned mulitple times.
-                                                    dtstart: (datetime)
-                                                    dtend: (datetime)
-                                                    summary: "New Event")))))
-                         (caddar ; strip <a> tag
-                          (make-block (car (children cal))
-                                      `((class " generated ")))))))))))
+            ,@(let* ((cal (vcalendar
+                           name: "Generated"
+                           children: (list (vevent
+                                            ;; The event template SHOULD lack
+                                            ;; a UID, to stop potential problems
+                                            ;; with conflicts when multiple it's
+                                            ;; cloned mulitple times.
+                                            dtstart: (datetime)
+                                            dtend: (datetime)
+                                            summary: "New Event"))))
+                     (event (car (children cal))))
+                `((div (@ (class "template event-container") (id "event-template")
+                          ;; Only needed to create a duration. So actual dates
+                          ;; dosen't matter
+                          (data-start "2020-01-01")
+                          (data-end "2020-01-02"))
+                       ,(caddar          ; strip <a> tag
+                         (make-block event `((class " generated ")))))
+                  ,(popup event (string-append "popup" (html-id event))))))))))
 
 
 

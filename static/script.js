@@ -364,8 +364,9 @@ async function create_event (event) {
 }
 
 function place_in_edit_mode (event) {
+    let popup = document.getElementById("popup" + event.id)
     function replace_with_time_input(fieldname, event) {
-        let field = event.getElementsByClassName(fieldname)[0];
+        let field = popup.getElementsByClassName(fieldname)[0];
 
         let input = makeElement ('input', {
             type: "time",
@@ -385,6 +386,7 @@ function place_in_edit_mode (event) {
         let slot = event.properties["_slot_" + fieldname]
         let idx = slot.findIndex(e => e[0] === field);
         slot.splice(idx, 1, [input, (s, v) => s.value = v.format("%H:%M")])
+
         field.replaceWith(input);
 
     }
@@ -395,7 +397,7 @@ function place_in_edit_mode (event) {
 
     /* ---------------------------------------- */
 
-    let summary = event.getElementsByClassName("summary")[1];
+    let summary = popup.getElementsByClassName("summary")[0];
     let input = makeElement('input', {
         name: "dtstart",
         placeholder: summary.innerText,
@@ -419,7 +421,7 @@ function place_in_edit_mode (event) {
         value: 'Skapa event',
     });
 
-    let article = event.getElementsByTagName("article")[0];
+    let article = popup.getElementsByTagName("article")[0];
     article.appendChild(submit);
 
 
@@ -453,7 +455,7 @@ window.onload = function () {
             );
             c.onmouseup = eventCreator.create_event_finisher(
                 function (event) {
-                    let popupElement = event.querySelector(".popup-container");
+                    let popupElement = document.getElementById("popup" + event.id);
                     open_popup(popupElement);
 
                     popupElement.querySelector("input[name='dtstart']").focus();
@@ -573,17 +575,16 @@ function open_popup(popup) {
     let root = document.body;
     let offsetX = 0, offsetY = 0;
     while (element !== root) {
-        console.log(element);
         offsetX += element.offsetLeft;
         offsetY += element.offsetTop;
         element = element.offsetParent;
     }
-    console.table({offsetX, offsetY})
     popup.style.left = offsetX + "px";
     popup.style.top = offsetY + "px";
 }
 
-function toggle_popup(popup) {
+function toggle_popup(popup_id) {
+    let popup = document.getElementById(popup_id);
     // popup.classList.toggle("visible");
     if (popup.classList.contains("visible")) {
         close_popup(popup);
@@ -643,6 +644,7 @@ Date.prototype.format = function (str) { return format_date (this, str); }
  */
 function bind_properties (el, wide_event=false) {
     el.properties = {}
+    let popup = document.getElementById("popup" + el.id);
     let children = el.getElementsByTagName("properties")[0].children;
 
     for (let child of children) {
@@ -654,6 +656,11 @@ function bind_properties (el, wide_event=false) {
             let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
             lst.push([s, f]);
         }
+        for (let s of popup.getElementsByClassName(field)) {
+            let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
+            lst.push([s, f]);
+        }
+
         for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
             switch (s.tagName) {
             case 'date':
@@ -682,6 +689,10 @@ function bind_properties (el, wide_event=false) {
     }
 
     let container = el.closest(".event-container");
+    if (container === null) {
+        console.log("No enclosing event container for", el);
+        return;
+    }
     let start = parseDate(container.dataset.start);
     let end = parseDate(container.dataset.end);
 
