@@ -73,7 +73,8 @@
              (r:host     (uri-host     r:uri))
              (r:port     (uri-port     r:uri))
              (r:path     (uri-path     r:uri))
-             (r:query    (uri-query    r:uri))
+             (r:query    (uri-decode (uri-query r:uri)
+                                     decode-plus-to-space?: #f))
              (r:fragment (uri-fragment r:uri)))
 
 
