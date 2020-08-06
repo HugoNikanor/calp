@@ -201,7 +201,6 @@
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative"))
-                    ; (onclick "toggle_child_popup(this)")
                     (onclick ,(format #f "toggle_popup('~a')"
                                       (string-append "popup" (html-id ev))))
                     )))

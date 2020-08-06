@@ -252,7 +252,7 @@ async function remove_event (element) {
     });
 
     console.log(response);
-    toggle_child_popup(element);
+    toggle_popup("popup" + element.id);
 
     if (response.status < 200 || response.status >= 300) {
         let body = await response.text();
@@ -333,7 +333,6 @@ async function create_event (event) {
     }
 
     let body = await response.text();
-    console.log(body);
 
     /* servere is assumed to return an XML document on the form
        <properties>
@@ -360,7 +359,7 @@ async function create_event (event) {
 
     event.classList.remove("generated");
     event.classList.add("CAL_Calendar");
-    toggle_child_popup(event);
+    toggle_popup("popup" + event.id);
 }
 
 function place_in_edit_mode (event) {
@@ -585,17 +584,11 @@ function open_popup(popup) {
 
 function toggle_popup(popup_id) {
     let popup = document.getElementById(popup_id);
-    // popup.classList.toggle("visible");
     if (popup.classList.contains("visible")) {
         close_popup(popup);
     } else {
         open_popup(popup);
     }
-}
-
-function toggle_child_popup(el) {
-    let popup = el.getElementsByClassName("popup-container")[0];
-    toggle_popup(popup);
 }
 
 function datepad(thing, width=2) {
