@@ -29,6 +29,7 @@
   :use-module (server macro)
 
   :use-module (vcomponent)
+  :use-module (vcomponent search)
   :use-module (datetime)
   :use-module (output html)
   :use-module (output ical)
@@ -211,9 +212,9 @@
              (return '((content-type application/xml))
                      (with-output-to-string
                        (lambda ()
-                        (sxml->xml
-                         `(properties
-                           (uid (text ,(prop event 'UID)))))))))))
+                         (sxml->xml
+                          `(properties
+                            (uid (text ,(prop event 'UID)))))))))))
 
    ;; Get specific page by query string instead of by path.
    ;; Useful for <form>'s, since they always submit in this form, but also
@@ -268,6 +269,31 @@
                               (list it)))))
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
+
+   (GET "/search" (q)
+        (define query-proc (build-query-proc q))
+        (define query (prepare-query
+                       query-proc
+                       (get-event-set global-event-object)))
+
+        (define search-result
+          (execute-query query 0))
+
+        (return '((content-type text/html #; application/xhtml+xml
+                   ))
+                (with-output-to-string
+                  (lambda ()
+                    (sxml->xml
+                     `(*TOP*
+                       (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
+                       (html
+                        (head (title "Search results"))
+                        (body
+                         (h2 "Search term")
+                         (pre ,(format #f "~y" q))
+                         ,@(for event in search-result
+                                `(div (@ (class "event"))
+                                      ,(prop event 'SUMMARY)))))))))))
 
    ;; NOTE this only handles files with extensions. Limited, but since this
    ;; is mostly for development, and something like nginx should be used in
