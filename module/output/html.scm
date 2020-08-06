@@ -478,6 +478,7 @@
 (define*-public (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
 
   (define-values (long-events short-events)
+    ;; TODO should be really-long-event? or event-spanning-midnight
     (partition really-long-event? (stream->list (events-between pre-start post-end events))))
 
   (define short-event-groups
@@ -505,15 +506,11 @@
                 (weekday-list (get-config 'week-start)))
          ,@(map (lambda (group i)
                   (let* (((s e . events) group))
-                    ;; These divs support dragging to create events.
-                    ;; They have correct size when draging, but are
-                    ;; then created with completely wrong start and
-                    ;; end times. TODO
                     `(div (@ (class "cal-cell longevents event-container")
                              (style "grid-area: long " ,i ";"
                                     "grid-column: 1 / span 7;")
                              (data-start ,(date->string s))
-                             (data-end ,(date->string e)))
+                             (data-end ,(date->string (add-day e))))
                           ,@(lay-out-long-events
                              s e events))))
                 long-event-groups
