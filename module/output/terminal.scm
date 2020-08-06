@@ -15,13 +15,13 @@
 
   #:use-module (vcomponent)
   #:use-module (vcomponent datetime)
+  #:use-module (vcomponent search)
 
   #:use-module (text util)
   #:use-module (text flow)
 
   #:use-module (ice-9 format)
   #:use-module (ice-9 readline)
-  #:use-module (ice-9 sandbox)
   #:use-module (ice-9 match)
 
   #:use-module (vulgar termios)
@@ -208,38 +208,24 @@
 (define (search-view search-term event-set)
   (make <search-view> search-term: search-term event-set: event-set))
 
-(define (prepare-string str)
-  (define missing-parenthesis-count
-    (string-fold (lambda (char count)
-                   (case char
-                     ((#\() (1+ count))
-                     ((#\)) (1- count))
-                     (else count)))
-                 0 str))
-
-  (string-append str (make-string missing-parenthesis-count #\))))
 
 (define-method (initialize (this <search-view>) args)
   (set! (current-page this) 0)
   (next-method)
   ;; (display (search-term this)) (newline)
-  (slot-set! this 'search-result
-             (stream-paginate
-              (stream-filter
-               (eval `(lambda (event) ,(set/r! (search-term this)
-                                          (call-with-input-string
-                                              (prepare-string (search-term this))
-                                            read)))
-                     (make-sandbox-module
-                      `(
-                        ((vcomponent base) prop)
-                        ((ice-9 regex) string-match)
-                        #;
-                        ((datetime) ,@(module-map (lambda (a . _) a) ; ;
-                        (resolve-module '(datetime))))
-                        ,@all-pure-bindings)
-                      ))
-               (get-event-set this))))
+  (format (current-error-port) "Entering search view~%")
+  (set! (search-term this)
+    (prepare-string (search-term this)))
+
+  (format (current-error-port) "String preprade")
+  (let ((q (build-query-proc (search-term this))))
+    (format (current-error-port) "Query built~%")
+    (slot-set! this 'search-result
+               (prepare-query
+                q
+                (get-event-set this)))
+    (format (current-error-port) "Query prepared~%")
+    )
   ;; (define current-page 0)
   ;; (define current-entry 0)
   )
@@ -247,25 +233,13 @@
 (define-method (output (this <search-view>))
   (unless (cached-page this)
     (set! (cached-page this)
-      (catch #t
-        (lambda ()
-          (call-with-time-limit
-           1
-           (lambda () (stream->list (stream-ref (search-result this) (current-page this))))
-           (lambda _ (throw 'timed-out))))
-        (lambda (err . args)
-          (display (cons err args) (current-error-port))
-          (newline  (current-error-port))
-          (case err
-            ((timed-out) (set! (max-page this) (cons #t (1- (current-page this)))
-                               (current-page this) (cdr (max-page this)))))
-          'timed-out                     ; when search took to long
-          'unbound-variable              ; when search term has unbound variables
-          'wrong-type-arg                ;; stream-ref
-          '()
+      (execute-query
+       (slot-ref this 'search-result)
+       (current-page this)
+       time-out-handler:
+       (lambda () (set! (max-page this) (cons #t (1- (current-page this)))
+                   (current-page this) (cdr (max-page this)))))))
 
-          )
-        )))
 
   (cls)
 
