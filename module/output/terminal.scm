@@ -212,20 +212,15 @@
 (define-method (initialize (this <search-view>) args)
   (set! (current-page this) 0)
   (next-method)
-  ;; (display (search-term this)) (newline)
-  (format (current-error-port) "Entering search view~%")
+
   (set! (search-term this)
     (prepare-string (search-term this)))
 
-  (format (current-error-port) "String preprade")
   (let ((q (build-query-proc (search-term this))))
-    (format (current-error-port) "Query built~%")
     (slot-set! this 'search-result
                (prepare-query
                 q
-                (get-event-set this)))
-    (format (current-error-port) "Query prepared~%")
-    )
+                (get-event-set this))))
   ;; (define current-page 0)
   ;; (define current-entry 0)
   )
