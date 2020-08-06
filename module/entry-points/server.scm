@@ -271,7 +271,8 @@
                      (format #f "No component with UID=~a found." uid))))
 
    (GET "/search" (q)
-        (define query-proc (build-query-proc q))
+        (define search-term (prepare-string q))
+        (define query-proc (build-query-proc search-term))
         (define query (prepare-query
                        query-proc
                        (get-event-set global-event-object)))
@@ -290,7 +291,7 @@
                         (head (title "Search results"))
                         (body
                          (h2 "Search term")
-                         (pre ,(format #f "~y" q))
+                         (pre ,(format #f "~y" search-term))
                          ,@(for event in search-result
                                 `(div (@ (class "event"))
                                       ,(prop event 'SUMMARY)))))))))))
