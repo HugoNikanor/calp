@@ -472,7 +472,7 @@ window.onload = function () {
             );
             c.onmouseup = eventCreator.create_event_finisher(
                 function (event) {
-                    let popupElement = event.querySelector(".popup-container");
+                    let popupElement = document.getElementById("popup" + event.id);
                     open_popup(popupElement);
 
                     popupElement.querySelector("input[name='dtstart']").focus();
