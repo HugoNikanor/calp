@@ -68,6 +68,11 @@
         (return '((content-type text/html))
                 (sxml->html-string '(a (@ (href "/today")) "Gå till idag"))))
 
+   (GET "/favicon.ico" ()
+        (return
+         `((content-type image/svg+xml))
+         (call-with-input-file "static/calendar.svg" read-string)))
+
    ;; TODO any exception in this causes the whole page to fail
    ;; It would be much better if most of the page could still make it.
    (GET "/week/:start-date.html" (start-date)
