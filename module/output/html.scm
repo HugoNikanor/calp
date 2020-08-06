@@ -863,7 +863,8 @@
                           (data-end "2020-01-02"))
                        ,(caddar          ; strip <a> tag
                          (make-block event `((class " generated ")))))
-                  ,(popup event (string-append "popup" (html-id event))))))))))
+                  (div (@ (class "template") (id "popup-template"))
+                   ,(popup event (string-append "popup" (html-id event)))))))))))
 
 
 

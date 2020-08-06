@@ -95,6 +95,7 @@ const gensym = (counter => (prefix="gensym") => prefix + ++counter)(0)
 let start_time = new Date();
 let end_time = new Date();
 
+
 class EventCreator {
 
     /* dynamicly created event when dragging */
@@ -102,6 +103,19 @@ class EventCreator {
         this.event = false;
         this.event_start = { x: NaN, y: NaN };
         this.down_on_event = false;
+
+    }
+
+    create_empty_event () {
+        let event = document.getElementById("event-template").firstChild.cloneNode(true);
+        let popup = document.getElementById("popup-template").firstChild.cloneNode(true);
+
+        let id = gensym ("__js_event");
+
+        event.id = id;
+        popup.id = "popup" + id;
+
+        return [popup, event];
     }
 
     create_event_down (intended_target) {
@@ -144,10 +158,11 @@ class EventCreator {
                 /* only on left click */
                 if (e.buttons != 1) return;
 
-                let event
-                    = that.event
-                    = document.getElementById("event-template")
-                      .firstChild.cloneNode(true);
+                let [popup, event] = that.create_empty_event();
+                that.event = event;
+
+                /* TODO better solution to add popup to DOM */
+                document.getElementsByTagName("main")[0].append(popup);
 
                 /* [0, 1) -- where are we in the container */
                 /* Ronud to force steps of quarters */
