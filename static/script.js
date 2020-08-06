@@ -587,7 +587,10 @@ function open_popup(popup) {
     popup.classList.add("visible");
     let element = document.getElementById(popup.id.substr(5))
     let root = document.body;
-    let offsetX = 0, offsetY = 0;
+    /* start <X, Y> sets offset between top left corner
+       of event in calendar and popup. 10, 10 soo old
+       event is still visible */
+    let offsetX = 10, offsetY = 10;
     while (element !== root) {
         offsetX += element.offsetLeft;
         offsetY += element.offsetTop;
