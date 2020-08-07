@@ -137,13 +137,11 @@
                                        "unknown"))))
                   ,(btn "×"
                         title: "Stäng"
-                        onclick: (format #f "close_popup(document.getElementById('~a'))"
-                                         id)
+                        onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
                         class: '("close-tooltip"))
                   ,(btn "🗑"
                         title: "Ta bort"
-                        onclick: (format #f "remove_event(document.getElementById('~a'))"
-                                         (html-id ev))))
+                        onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))"))
 
              ,(tabset
                (append
@@ -153,11 +151,7 @@
                             (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
                                        "som iCal"))
                                 (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
-                                       "som xCal"))))))))
-             (div (@ (style "display:none !important;"))
-                  ,((@ (output xcal) ns-wrap)
-                    ((@ (output xcal) vcomponent->sxcal)
-                     ev))))))
+                                       "som xCal")))))))))))
 
 
 
@@ -201,8 +195,7 @@
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative"))
-                    (onclick ,(format #f "toggle_popup('~a')"
-                                      (string-append "popup" (html-id ev))))
+                    (onclick "toggle_popup('popup' + this.id)")
                     )))
             ;; Inner div to prevent overflow. Previously "overflow: none"
             ;; was set on the surounding div, but the popup /needs/ to

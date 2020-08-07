@@ -89,12 +89,38 @@ function date_to_percent (date) {
 }
 
 /* if only there was such a thing as a let to wrap around my lambda... */
-const gensym = (counter => (prefix="gensym") => prefix + ++counter)(0)
+/* js infix to not collide with stuff generated backend */
+const gensym = (counter => (prefix="gensym") => prefix + "js" + ++counter)(0)
 
 /* start and end time for calendar page */
 let start_time = new Date();
 let end_time = new Date();
 
+function bind_popup_control (nav) {
+    nav.onmousedown = function (e) {
+        /* Ignore mousedown on children */
+        if (e.target != nav) return;
+        nav.style.cursor = "grabbing";
+        nav.dataset.grabbed = "true";
+        nav.dataset.grabPoint = e.clientX + ";" + e.clientY;
+        let popup = nav.closest(".popup-container");
+        nav.dataset.startPoint = popup.offsetLeft + ";" + popup.offsetTop;
+    }
+    window.addEventListener('mousemove', function (e) {
+        if (nav.dataset.grabbed) {
+            let [x, y] = nav.dataset.grabPoint.split(";").map(Number);
+            let [startX, startY] = nav.dataset.startPoint.split(";").map(Number);
+            let popup = nav.closest(".popup-container");
+
+            popup.style.left = startX + (e.clientX - x) + "px";
+            popup.style.top = startY + (e.clientY - y) + "px";
+        }
+    });
+    window.addEventListener('mouseup', function () {
+        nav.dataset.grabbed = "";
+        nav.style.cursor = "";
+    });
+}
 
 class EventCreator {
 
@@ -111,6 +137,23 @@ class EventCreator {
         let popup = document.getElementById("popup-template").firstChild.cloneNode(true);
 
         let id = gensym ("__js_event");
+
+        // TODO remove button?
+        // $("button 2??").onclick = `remove_event(document.getElementById('${id}'))`
+
+        let tabgroup_id = gensym();
+        for (let tab of popup.querySelectorAll(".tabgroup .tab")) {
+            let new_id = gensym();
+            let input = tab.querySelector("input");
+            input.id = new_id;
+            input.name = tabgroup_id;
+            tab.querySelector("label").setAttribute('for', new_id);
+        }
+
+        let nav = popup.getElementsByClassName("popup-control")[0];
+        bind_popup_control(nav);
+
+        // TODO download links
 
         event.id = id;
         popup.id = "popup" + id;
@@ -497,29 +540,7 @@ window.onload = function () {
     }
 
     for (let nav of document.getElementsByClassName("popup-control")) {
-        nav.onmousedown = function (e) {
-            /* Ignore mousedown on children */
-            if (e.target != nav) return;
-            nav.style.cursor = "grabbing";
-            nav.dataset.grabbed = "true";
-            nav.dataset.grabPoint = e.clientX + ";" + e.clientY;
-            let popup = nav.closest(".popup-container");
-            nav.dataset.startPoint = popup.offsetLeft + ";" + popup.offsetTop;
-        }
-        window.addEventListener('mousemove', function (e) {
-            if (nav.dataset.grabbed) {
-                let [x, y] = nav.dataset.grabPoint.split(";").map(Number);
-                let [startX, startY] = nav.dataset.startPoint.split(";").map(Number);
-                let popup = nav.closest(".popup-container");
-
-                popup.style.left = startX + (e.clientX - x) + "px";
-                popup.style.top = startY + (e.clientY - y) + "px";
-            }
-        });
-        window.addEventListener('mouseup', function () {
-            nav.dataset.grabbed = "";
-            nav.style.cursor = "";
-        });
+        bind_popup_control(nav);
     }
 
     for (let el of document.getElementsByClassName("event")) {
