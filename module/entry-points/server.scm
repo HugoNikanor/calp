@@ -290,7 +290,12 @@
                         (head (title "Search results"))
                         (body
                          (h2 "Search term")
-                         (pre ,(format #f "~y" search-term))
+                         (form
+                          (pre (textarea (@ (name "q") (rows 5) (spellcheck false)
+                                            (style "width:100%"))
+                                         ,(format #f "~y" search-term)))
+                          (input (@ (type submit))))
+                         (h2 "Result")
                          ,@(for event in search-result
                                 `(div (@ (class "event"))
                                       ,(prop event 'SUMMARY)))))))))))
