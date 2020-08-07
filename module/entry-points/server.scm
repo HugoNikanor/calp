@@ -280,14 +280,13 @@
         (define search-result
           (execute-query query 0))
 
-        (return '((content-type text/html #; application/xhtml+xml
-                   ))
+        (return '((content-type application/xhtml+xml))
                 (with-output-to-string
                   (lambda ()
                     (sxml->xml
                      `(*TOP*
                        (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
-                       (html
+                       (html (@ (xmlns "http://www.w3.org/1999/xhtml") (lang sv))
                         (head (title "Search results"))
                         (body
                          (h2 "Search term")
