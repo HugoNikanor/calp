@@ -5,6 +5,7 @@
   :use-module (util exceptions)
 
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-17)
 
   :use-module (ice-9 match)
   :use-module (ice-9 control)
@@ -59,6 +60,40 @@
                      (td (a (@ (href "/" ,dir "/" ,k)) ,k))
                      (td ,(number->string (stat:perms stat) 8)))))
             (cdr (scandir dir))))))
+
+(use-modules (srfi srfi-9))
+
+(define-record-type <query-page>
+  (make-query-page search-term query max-page errors)
+  query-page?
+  (search-term get-search-term)
+  (query get-query)
+  (max-page get-max-page set-max-page!)
+  (errors get-errors%))
+
+(define query-pages (make-hash-table))
+
+(define (get-query-page search-term)
+  (aif (hash-ref query-pages search-term)
+       it
+       (let* ((q (prepare-query
+                 (build-query-proc search-term)
+                 (get-event-set global-event-object)))
+              (qp (make-query-page search-term q (cons #f 0) '())))
+         (hash-set! query-pages search-term qp)
+         qp)))
+
+(define (run-query query-page page)
+  (catch 'timed-out
+    (lambda () (execute-query (get-query query-page) page))
+    (lambda (err . args)
+      (case err
+        ((timed-out)
+         (set-max-page! query-page (cons #t (1- page)))
+         (throw 'max-page (1- page))
+         ; (values (1- page) #| events here? (instead of '()) |# '())
+         ))))
+  )
 
 
 ;; TODO ensure encoding on all fields which take user provided data.
@@ -273,35 +308,49 @@
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
 
-   (GET "/search" (q)
-        (define search-term (prepare-string q))
-        (define query-proc (build-query-proc search-term))
-        (define query (prepare-query
-                       query-proc
-                       (get-event-set global-event-object)))
+   (GET "/search" (q p)
 
+
+
+        (define search-term (prepare-string q))
+
+        (define q= (find (lambda (s)
+                           (and (<= 2 (string-length s))
+                                (string=? "q=" (string-take s 2))))
+                         (string-split r:query #\&)))
+
+        (define query (get-query-page search-term))
+
+        (define page
+          (let ((page (string->number (or p "0"))))
+            (if (car (get-max-page query)) ; true final page
+                (return (build-response
+                         code: 307
+                         headers: `((location
+                                     . ,(format #f "?~a&p=~a" q
+                                                (min (1+ page) (cdr (get-max-page query))))))))
+
+                (begin
+                  (set! (cdr (get-max-page query))
+                    (max (1+ page) (cdr (get-max-page query))))
+                  (1+ page)))))
+
+        ;; TODO Propagate errors
         (define search-result
-          (execute-query query 0))
+          (catch 'max-page
+            (lambda () (run-query query page))
+            (lambda (err page-number)
+              (return (build-response
+                       code: 307
+                       headers: `((location
+                                   . ,(format #f "?~a&p=~a" q page-number))))))))
 
         (return '((content-type application/xhtml+xml))
                 (with-output-to-string
                   (lambda ()
                     (sxml->xml
-                     `(*TOP*
-                       (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
-                       (html (@ (xmlns "http://www.w3.org/1999/xhtml") (lang sv))
-                        (head (title "Search results"))
-                        (body
-                         (h2 "Search term")
-                         (form
-                          (pre (textarea (@ (name "q") (rows 5) (spellcheck false)
-                                            (style "width:100%"))
-                                         ,(format #f "~y" search-term)))
-                          (input (@ (type submit))))
-                         (h2 "Result")
-                         ,@(for event in search-result
-                                `(div (@ (class "event"))
-                                      ,(prop event 'SUMMARY)))))))))))
+                     ((@ (output html-search) search-result-page)
+                      search-term search-result (get-max-page query) q=))))))
 
    ;; NOTE this only handles files with extensions. Limited, but since this
    ;; is mostly for development, and something like nginx should be used in

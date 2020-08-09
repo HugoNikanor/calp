@@ -75,25 +75,24 @@
              (r:path     (uri-path     r:uri))
              (r:query    (uri-query    r:uri))
              (r:fragment (uri-fragment r:uri)))
-
-
          (call-with-values
              (lambda ()
-              (call/ec (lambda (return)
-                         (apply
-                          (cond ,@(map generate-case routes)
-                                (else (lambda* _ (return (build-response #:code 404)
-                                                         "404 Not Fonud"))))
-                          (append
-                           (parse-query r:query)
+               (call/ec (lambda (return)
+                          (apply
+                           (cond ,@(map generate-case routes)
+                                 (else (lambda* _ (return (build-response #:code 404)
+                                                          "404 Not Fonud"))))
+                           (append
+                            (parse-query r:query)
 
-                           (let ((content-type (assoc-ref r:headers 'content-type)))
-                             (when content-type
-                               (let ((type (car content-type))
-                                     (args (cdr content-type)))
-                                 (when (eq? type 'application/x-www-form-urlencoded)
-                                   (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
-                                     (parse-query (bytevector->string body encoding)
-                                                  encoding)))))))))))
-           (lambda* (a b #:optional new-state)
-             (values a b (or new-state state))))))))
+                            (let ((content-type (assoc-ref r:headers 'content-type)))
+                              (when content-type
+                                (let ((type (car content-type))
+                                      (args (cdr content-type)))
+                                  (when (eq? type 'application/x-www-form-urlencoded)
+                                    (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
+                                      (parse-query (bytevector->string body encoding)
+                                                   encoding)))))))))))
+           (case-lambda ((headers body new-state) (values headers body new-state))
+                        ((headers body) (values headers body state))
+                        ((headers) (values headers "" state))))))))

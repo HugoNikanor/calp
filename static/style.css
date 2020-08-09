@@ -662,6 +662,14 @@ along with their colors.
 .clock-24 { top: calc(100%/24 * 24); }
 
 
+/* Search page
+----------------------------------------
+ */
+
+.paginator a {
+    padding: 1em;
+}
+
 /* Popups
 ----------------------------------------
 */

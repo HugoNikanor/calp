@@ -125,6 +125,7 @@
                `(div (@ (class "tab"))
                      (input (@ (type "radio") (id ,id) (name ,tabgroup)
                                ,@(when (zero? i) '((checked)))))
+                     ;; TODO title attribute for label
                      (label (@ (for ,id) (style "top: " ,(* 6 i) "ex")) ,key)
                      (div (@ (class "content")) ,body)))))
 
@@ -144,14 +145,13 @@
                         onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))"))
 
              ,(tabset
-               (append
-                `(("📅" ,(fmt-single-event ev))
-                  ("⤓" (div (@ (style "font-family:sans"))
-                            (p "Ladda ner")
-                            (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
-                                       "som iCal"))
-                                (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
-                                       "som xCal")))))))))))
+               `(("📅" ,(fmt-single-event ev))
+                 ("⤓" (div (@ (style "font-family:sans"))
+                           (p "Ladda ner")
+                           (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
+                                      "som iCal"))
+                               (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
+                                      "som xCal"))))))))))
 
 
 

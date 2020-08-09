@@ -40,9 +40,9 @@
 ;; (event → bool), (stream event), (() → Any) → (paginated-stream event)
 (define*-public (execute-query query page
                                key:
-                               time-out-handler
+                               ;; time-out-handler
                                (time-limit 1))
-  (catch #t
+  (catch 'not-an-actual-error ; 'timed-out
     (lambda ()
       (call-with-time-limit
        time-limit
