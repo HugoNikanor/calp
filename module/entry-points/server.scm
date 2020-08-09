@@ -61,39 +61,18 @@
                      (td ,(number->string (stat:perms stat) 8)))))
             (cdr (scandir dir))))))
 
-(use-modules (srfi srfi-9))
+(define get-query-page
+  (let ((query-pages (make-hash-table)))
+   (lambda (search-term)
+     (aif (hash-ref query-pages search-term)
+          it
+          (let* ((q (prepare-query
+                     (build-query-proc search-term)
+                     (get-event-set global-event-object))))
+            (hash-set! query-pages search-term q)
+            q)))))
 
-(define-record-type <query-page>
-  (make-query-page search-term query max-page errors)
-  query-page?
-  (search-term get-search-term)
-  (query get-query)
-  (max-page get-max-page set-max-page!)
-  (errors get-errors%))
 
-(define query-pages (make-hash-table))
-
-(define (get-query-page search-term)
-  (aif (hash-ref query-pages search-term)
-       it
-       (let* ((q (prepare-query
-                 (build-query-proc search-term)
-                 (get-event-set global-event-object)))
-              (qp (make-query-page search-term q (cons #f 0) '())))
-         (hash-set! query-pages search-term qp)
-         qp)))
-
-(define (run-query query-page page)
-  (catch 'timed-out
-    (lambda () (execute-query (get-query query-page) page))
-    (lambda (err . args)
-      (case err
-        ((timed-out)
-         (set-max-page! query-page (cons #t (1- page)))
-         (throw 'max-page (1- page))
-         ; (values (1- page) #| events here? (instead of '()) |# '())
-         ))))
-  )
 
 
 ;; TODO ensure encoding on all fields which take user provided data.
@@ -270,7 +249,7 @@
 
         (return (build-response
                  code: 302
-                 headers: `((location . ,location)))
+                 headers: `((location ,location)))
                 ""))
 
    (GET "/calendar" (start end)
@@ -309,9 +288,6 @@
                      (format #f "No component with UID=~a found." uid))))
 
    (GET "/search" (q p)
-
-
-
         (define search-term (prepare-string q))
 
         (define q= (find (lambda (s)
@@ -319,38 +295,29 @@
                                 (string=? "q=" (string-take s 2))))
                          (string-split r:query #\&)))
 
-        (define query (get-query-page search-term))
+        (define paginator (get-query-page search-term))
 
-        (define page
-          (let ((page (string->number (or p "0"))))
-            (if (car (get-max-page query)) ; true final page
-                (return (build-response
-                         code: 307
-                         headers: `((location
-                                     . ,(format #f "?~a&p=~a" q
-                                                (min (1+ page) (cdr (get-max-page query))))))))
-
-                (begin
-                  (set! (cdr (get-max-page query))
-                    (max (1+ page) (cdr (get-max-page query))))
-                  (1+ page)))))
+        (define page (string->number (or p "0")))
 
         ;; TODO Propagate errors
         (define search-result
           (catch 'max-page
-            (lambda () (run-query query page))
+            (lambda () (get-page paginator page))
             (lambda (err page-number)
+              (define location
+                (build-relative-ref
+                 path: r:path ; host: r:host port: r:port
+                 query: (format #f "~a&p=~a" q= page-number)))
               (return (build-response
                        code: 307
-                       headers: `((location
-                                   . ,(format #f "?~a&p=~a" q page-number))))))))
+                       headers: `((location . ,location)))))))
 
         (return '((content-type application/xhtml+xml))
                 (with-output-to-string
                   (lambda ()
                     (sxml->xml
                      ((@ (output html-search) search-result-page)
-                      search-term search-result (get-max-page query) q=))))))
+                      search-term search-result page paginator q=))))))
 
    ;; NOTE this only handles files with extensions. Limited, but since this
    ;; is mostly for development, and something like nginx should be used in

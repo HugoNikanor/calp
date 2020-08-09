@@ -60,6 +60,7 @@
 (define-macro (make-routes . routes)
 
   `(lambda* (request body #:optional state)
+     (format (current-error-port) "~a~%"  request)
      ;; ALl these bindings generate compile time warnings since the expansion
      ;; of the macro might not use them. This isn't really a problem.
      (let ((r:method  (request-method  request))
@@ -70,8 +71,8 @@
            (r:port    (request-port    request)))
        (let ((r:scheme   (uri-scheme   r:uri))
              (r:userinfo (uri-userinfo r:uri))
-             (r:host     (uri-host     r:uri))
-             (r:port     (uri-port     r:uri))
+             (r:host     (or (uri-host r:uri) (request-host request)))
+             (r:port     (or (uri-port r:uri) (request-port request)))
              (r:path     (uri-path     r:uri))
              (r:query    (uri-query    r:uri))
              (r:fragment (uri-fragment r:uri)))

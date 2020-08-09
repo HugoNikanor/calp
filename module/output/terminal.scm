@@ -177,6 +177,22 @@
      (set! (current-page this) (current-date)
            (active-element this) 0))
 
+    ((#\/) (set-cursor-pos 0 (1- height))
+     (let* ((attr (make-termios))
+            (search-term #f))
+       (tcgetattr! attr)
+       (set! (lflag attr) (logior ECHO (lflag attr)))
+       (tcsetattr! attr)
+       (system "tput cnorm")
+       (set! search-term (readline "quick search: "))
+       (system "tput civis")
+       (set! (lflag attr) (logand (lognot ECHO) (lflag attr)))
+       (tcsetattr! attr)
+       `(push ,(search-view
+                (format #f "(regexp-exec (make-regexp \"~a\" regexp/icase) (prop event 'SUMMARY))"
+                        search-term)
+                (get-event-set this)))))
+
     ((#\() (set-cursor-pos 0 (1- height))
      (let* ((attr (make-termios))
             (search-term #f))
@@ -198,12 +214,7 @@
 (define-class <search-view> (<view>)
   (search-result getter: search-result)
   (search-term accessor: search-term
-               init-keyword: search-term:)
-  (max-page accessor: max-page
-            init-form: (cons #f 0))
-  (cached-page accessor: cached-page
-               init-value: #f )
-  )
+               init-keyword: search-term:))
 
 (define (search-view search-term event-set)
   (make <search-view> search-term: search-term event-set: event-set))
@@ -219,21 +230,21 @@
   (let ((q (build-query-proc (search-term this))))
     (slot-set! this 'search-result
                (prepare-query
-                q
-                (get-event-set this))))
+                q (get-event-set this))))
   ;; (define current-page 0)
   ;; (define current-entry 0)
   )
 
 (define-method (output (this <search-view>))
-  (unless (cached-page this)
-    (set! (cached-page this)
-      (execute-query
-       (slot-ref this 'search-result)
-       (current-page this)
-       time-out-handler:
-       (lambda () (set! (max-page this) (cons #t (1- (current-page this)))
-                   (current-page this) (cdr (max-page this)))))))
+
+  (define paginator (slot-ref this 'search-result))
+
+  (define page
+    (catch 'max-page
+      (lambda () (get-page paginator (current-page this)))
+      (lambda (err page-number)
+        (set! (current-page this) page-number)
+        (get-page paginator page-number))))
 
 
   (cls)
@@ -245,31 +256,27 @@
 
   ;; display event list
   (display-event-table
-   (cached-page this)
+   page
    #:active-element (active-element this)
    #:location-width 15)
 
-  ;; display page counter
-  (let ((start (max 0 (- (current-page this) 5)))
-        (end (min (+ (current-page this) 5) (cdr (max-page this)))))
-
-    (display
+  (paginator->sub-list
+   paginator (current-page this)
+   (lambda (i)
+     (if (= i (current-page this))
+         (format #t "[~2@a]" i)
+         (format #t " ~2@a " i)))
+   head-proc:
+   (lambda (start)
      (if (= start 0)
          "|" "<"))
-
-    (for-each (lambda (i)
-                (if (= i (current-page this))
-                    (format #t "[~2@a]" i)
-                    (format #t " ~2@a " i)))
-              (iota (1+ (- end start)) start))
-
-
-    (display
-     (if (= end (cdr (max-page this)))
-         (if (car (max-page this))
+   tail-proc:
+   (lambda (end)
+     (if (= end (get-max-page paginator))
+         (if (true-max-page? paginator)
              "|" "?")
-         ">"))
-    (newline)))
+         ">")))
+  (newline))
 
 (define-method (input (this <view>) char)
   (case char
@@ -290,20 +297,16 @@
 
   (case char
     ((#\newline) `(push ,(day-view (get-event-set this)
-                                  (as-date (prop (list-ref (cached-page this)
+                                   (as-date (prop (list-ref (get-page (slot-ref this 'search-result)
+                                                                      (current-page this))
                                                            (active-element this))
                                                  'DTSTART)))))
-    ((#\h) (set! (current-page this) = ((lambda (old) (max 0 (1- old))))
-                 (cached-page this) #f))
-    ((#\l) (set! (current-page this) = ((lambda (old)
-                                          ;; true final page
-                                          (if (car (max-page this))
-                                              (min (1+ old) (cdr (max-page this)))
-                                              (begin
-                                                (set! (cdr (max-page this))
-                                                  (max (1+ old) (cdr (max-page this))))
-                                                (1+ old)))))
-                 (cached-page this) #f))
+    ((#\h) (set! (current-page this) = ((lambda (old) (max 0 (1- old))))))
+    ((#\l)
+     (display "\n loading...\n")
+     (set! (current-page this)
+       (next-page (slot-ref this 'search-result)
+                  (current-page this))))
     (else (next-method))))
 
 (define-public (main-loop date)

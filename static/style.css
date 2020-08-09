@@ -666,8 +666,9 @@ along with their colors.
 ----------------------------------------
  */
 
-.paginator a {
-    padding: 1em;
+.paginator > * {
+    padding-left: 1em;
+    display: inline-block;
 }
 
 /* Popups
