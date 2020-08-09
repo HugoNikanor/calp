@@ -61,6 +61,9 @@
             (cdr (scandir dir))))))
 
 
+;; TODO ensure encoding on all fields which take user provided data.
+;; Possibly a fallback which strips everything unknown, and treats
+;; the bytevector as ascii.
 (define (make-make-routes)
   (make-routes
 

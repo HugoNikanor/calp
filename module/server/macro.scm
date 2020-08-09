@@ -87,8 +87,13 @@
                           (append
                            (parse-query r:query)
 
-                           (when (memv 'application/x-www-form-urlencoded
-                                    (or (assoc-ref r:headers 'content-type) '()))
-                             (parse-query (uri-decode (bytevector->string body "UTF-8")))))))))
+                           (let ((content-type (assoc-ref r:headers 'content-type)))
+                             (when content-type
+                               (let ((type (car content-type))
+                                     (args (cdr content-type)))
+                                 (when (eq? type 'application/x-www-form-urlencoded)
+                                   (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
+                                     (parse-query (bytevector->string body encoding)
+                                                  encoding)))))))))))
            (lambda* (a b #:optional new-state)
              (values a b (or new-state state))))))))
