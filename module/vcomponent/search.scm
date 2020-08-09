@@ -45,13 +45,19 @@
 ;; execute a query procedure created by build-query-proc.
 ;; (event → bool), int, (optional int) → (list event) throws 'timed-out
 (define* (execute-query query page key: (time-limit 1))
-  (call-with-time-limit
-   time-limit
-   ;; Stream->list needs to be here, since the actual
-   ;; stream-force needs to happen within the actual
-   ;; @var{call-with-time-limit}.
-   (lambda () (stream->list (stream-ref query page)))
-   (lambda _ (throw 'timed-out))))
+  (let ((lst '()))
+    (call-with-time-limit
+     time-limit
+     ;; Stream->list needs to be here, since the actual
+     ;; stream-force needs to happen within the actual
+     ;; @var{call-with-time-limit}.
+     (lambda ()
+       (let loop ((strm (stream-ref query page)))
+         (if (stream-null? strm) lst
+             (set! lst (cons (stream-car strm) lst))
+             (loop (stream-cdr strm)))))
+     (lambda _ (format (current-error-port) "~a~%" 'timed-out)))
+    (reverse lst)))
 
 
 ;; Creates a prepared query wrappend in a paginator.
