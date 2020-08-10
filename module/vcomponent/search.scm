@@ -145,6 +145,10 @@
                   '())
                 (let ((result (stream->list
                                (stream-ref (get-query paginator) page))))
+                  ;; This check isn't strictly necessary, but without it
+                  ;; we always needs to force the next page. And since this
+                  ;; page is "incomplete" we already know that this is the
+                  ;; final page.
                   (when (> 10 (length result))
                     (set-true-max-page! paginator))
 
