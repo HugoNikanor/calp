@@ -161,12 +161,12 @@
   (set! (page-length this) (length (cached-events this)))
 
   (case char
-    ((#\L #\l)
+    ((#\L #\l right)
      (set! (current-page this) = add-day
            (cached-events this) #f
            (active-element this) 0))
 
-    ((#\h #\H)
+    ((#\h #\H left)
      (set! (current-page this) = remove-day
            (cached-events this) #f
            (active-element this) 0))
@@ -280,13 +280,14 @@
 
 (define-method (input (this <view>) char)
   (case char
-    ((#\j #\J) (unless (= (active-element this) (1- (page-length this)))
-                 (set! (active-element this) = (+ 1))))
-    ((#\k #\K) (unless (= (active-element this) 0)
-                 (set! (active-element this) = (- 1))))
+    ((#\j #\J down) (unless (= (active-element this) (1- (page-length this)))
+                      (set! (active-element this) = (+ 1))))
+    ((#\k #\K up) (unless (= (active-element this) 0)
+                    (set! (active-element this) = (- 1))))
 
     ((#\g) (set! (active-element this) 0))
     ((#\G) (set! (active-element this) (1- (page-length this))))
+
 
     ((#\q) '(pop)))
 
@@ -301,8 +302,8 @@
                                                                       (current-page this))
                                                            (active-element this))
                                                  'DTSTART)))))
-    ((#\h) (set! (current-page this) = ((lambda (old) (max 0 (1- old))))))
-    ((#\l)
+    ((#\h left) (set! (current-page this) = ((lambda (old) (max 0 (1- old))))))
+    ((#\l right)
      (display "\n loading...\n")
      (set! (current-page this)
        (next-page (slot-ref this 'search-result)
@@ -318,6 +319,15 @@
     (let ((char (read-char)))
       (when (eof-object? char)
         (break))
+
+      (when (char=? char #\escape)
+        (case (read-char)
+          ((#\[)
+           (case (read-char)
+             ((#\A) (set! char 'up))
+             ((#\B) (set! char 'down))
+             ((#\C) (set! char 'right))
+             ((#\D) (set! char 'left))))))
 
       (match (input (car state) char)
         (('push new-state) (set! state (cons new-state state)))
