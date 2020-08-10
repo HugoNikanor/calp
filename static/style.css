@@ -671,6 +671,19 @@ along with their colors.
     display: inline-block;
 }
 
+.summary-line {
+    display: inline-flex;
+}
+
+.summary-line > * {
+    display: inline-block;
+}
+
+.summary-line time {
+    font-family: monospace;
+    min-width: 18ch;
+}
+
 /* Popups
 ----------------------------------------
 */
@@ -808,6 +821,15 @@ along with their colors.
     display: none;
 }
 
+
+.summary-line .square {
+    margin-right: 1em;
+}
+
+.square {
+    width: 1em;
+    height: 1em;
+}
 
 /* Icalendar
 ----------------------------------------

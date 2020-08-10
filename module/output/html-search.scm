@@ -5,6 +5,7 @@
   :use-module (vcomponent search)
   :use-module ((ice-9 pretty-print) :select (pretty-print))
   :use-module (html components)
+  :use-module (html vcomponent)
   )
 
 (define-public (search-result-page
@@ -23,9 +24,7 @@
      (input (@ (type submit))))
     (h2 "Result (page " ,page ")")
     (ul
-     ,@(for event in search-result
-            `(li (@ (class "event"))
-                 ,(prop event 'SUMMARY))))
+     ,@(compact-event-list search-result))
     (div (@ (class "paginator"))
          ,@(paginator->list
             paginator

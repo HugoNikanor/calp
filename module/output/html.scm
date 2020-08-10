@@ -13,13 +13,14 @@
   #:use-module (util tree)
   #:duplicates (last)
   #:use-module (datetime)
-  #:use-module (output general)
   #:use-module (ice-9 curried-definitions)
   #:use-module (ice-9 match)
   #:use-module (text util)
   #:use-module (vcomponent datetime output)
 
   #:use-module (html components)
+  #:use-module (html util)
+  #:use-module (html vcomponent)
 
   #:autoload (vcomponent instance) (global-event-object)
 
@@ -39,23 +40,6 @@
 (define-config edit-mode #t
   "Makes the document editable"
   post: edit-mode)
-
-
-
-(define (date-link date)
-  (date->string date "~Y-~m-~d"))
-
-;; Generate an html id for an event.
-;; TODO? same event placed multiple times, when spanning multiple cells
-(define (html-id ev)
-  (or (prop ev '-HTML-ID)
-      (set/r! (prop ev '-HTML-ID)
-              (symbol->string (gensym "__html_id_")))))
-
-;; Retuns an HTML-safe version of @var{str}.
-(define (html-attr str)
-  (define cs (char-set-adjoin char-set:letter+digit #\- #\_))
-  (string-filter (lambda (c) (char-set-contains? cs c)) str))
 
 
 
@@ -289,77 +273,6 @@
                     (get-groups-between (group-stream (list->stream short-events))
                                         start-date end-date))))))))
 
-
-
-;; For sidebar, just text
-(define* (fmt-single-event ev
-                           optional: (attributes '())
-                           key: (fmt-header list))
-  ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
-  `(article (@ ,@(assq-merge
-                  attributes
-                  `((class "eventtext CAL_bg_"
-                      ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))
-                      ,(when (and (prop ev 'PARTSTAT)
-                                  (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                         " tentative")))))
-            (h3 ,(fmt-header
-                  (when (prop ev 'RRULE)
-                    `(span (@ (class "repeating")) "↺"))
-                  `(span (@ (class "summary")) ,(prop ev 'SUMMARY))))
-            (div
-             ,(call-with-values (lambda () (fmt-time-span ev))
-                (case-lambda [(start) `(div (span (@ (class "dtstart")
-                                                     (data-fmt "%L%H:%M"))
-                                                  ,start))]
-                             [(start end) `(div (span (@ (class "dtstart")
-                                                         ;; TODO same format string
-                                                         ;; as fmt-time-span used
-                                                         (data-fmt "%L%H:%M"))
-                                                      ,start)
-                                                " — "
-                                                (span (@ (class "dtend")
-                                                         (data-fmt "%L%H:%M"))
-                                                      ,end))]))
-             ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
-                `(div (b "Plats: ")
-                      (div (@ (class "location"))
-                           ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                        (prop ev 'LOCATION)))))
-             ,(and=> (prop ev 'DESCRIPTION)
-                     (lambda (str) (format-description ev str)))
-             ,(awhen (prop ev 'RRULE)
-                     `(span (@ (class "rrule")) ,@(format-recurrence-rule ev)))
-             ,(when (prop ev 'LAST-MODIFIED)
-                `(span (@ (class "last-modified")) "Senast ändrad "
-                       ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M")))
-
-             )))
-
-;; Single event in side bar (text objects)
-(define (fmt-day day)
-  (let* (((date . events) day))
-    `(section (@ (class "text-day"))
-              (header (h2 ,(let ((s (date->string date "~Y-~m-~d")))
-                             `(a (@ (href "#" ,s)
-                                    (class "hidelink")) ,s))))
-              ,@(stream->list
-                 (stream-map
-                  (lambda (ev) (fmt-single-event
-                           ev `((id ,(html-id ev)))
-                           fmt-header:
-                           (lambda body
-                             `(a (@ (href "#" ,(date-link (as-date (prop ev 'DTSTART))))
-                                    (class "hidelink"))
-                                 ,@body))))
-                  (stream-filter
-                   (lambda (ev)
-                     ;; If start was an earlier day
-                     ;; This removes all descriptions from
-                     ;; events for previous days,
-                     ;; solving duplicates.
-                     (date/-time<=? date (prop ev 'DTSTART)))
-                   events))))))
 
 
 ;;; Table output
@@ -605,15 +518,7 @@
      ,(include-alt-css "/static/light.css" '(title "Light"))
 
      (script (@ (defer) (src "/static/script.js")))
-     (style ,(format #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
-                     (map (lambda (c)
-                            (let* ((name (html-attr (prop c 'NAME)))
-                                   (bg-color (prop c 'COLOR))
-                                   (fg-color (and=> (prop c 'COLOR)
-                                                    calculate-fg-color)))
-                              (list name (or bg-color 'white) (or fg-color 'black)
-                                    name (or bg-color 'black))))
-                          calendars))))
+     ,(calendar-styles calendars))
 
     (body
      (div (@ (class "root"))
