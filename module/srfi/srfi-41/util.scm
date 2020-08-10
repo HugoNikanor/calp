@@ -1,8 +1,10 @@
 (define-module (srfi srfi-41 util)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-41)
+  #:use-module ((ice-9 sandbox) :select (call-with-time-limit))
   #:use-module (util) ; let*, find-min
-  #:export (stream-car+cdr interleave-streams with-streams))
+  #:export (stream-car+cdr interleave-streams with-streams
+                           stream-timeslice-limit))
 
 (define (stream-car+cdr stream)
   (values (stream-car stream)
@@ -101,6 +103,22 @@
 
 (define*-public (stream-paginate stream optional: (page-size 10))
   (stream-paginate% stream page-size))
+
+
+;; stream cons, but eval arguments beforehand.
+(define (eager-stream-cons a b)
+  (stream-cons a b))
+
+;; Wrap a stream in time limits. Each element has at most @var{timeslice}
+;; seconds to produce a value, otherwise the stream ends. Useful for finding the
+;; "final" element matching a predicate in an infinite stream.
+(define-stream (stream-timeslice-limit strm timeslice)
+  (call-with-time-limit
+   timeslice
+   (lambda () (eager-stream-cons
+          (stream-car strm)
+          (stream-timeslice-limit (stream-cdr strm) timeslice)))
+   (lambda _ stream-null)))
 
 ;; Evaluates @var{body} in a context where most list fundamentals are
 ;; replaced by stream alternatives.
