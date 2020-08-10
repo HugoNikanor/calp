@@ -63,7 +63,7 @@
   (eval `(lambda (event) ,@expressions)
         (make-sandbox-module
          `(
-           ((vcomponent base) prop)
+           ((vcomponent base) prop param children type)
            ((ice-9 regex) string-match)
            ;; TODO datetime
            ,@all-pure-bindings)
