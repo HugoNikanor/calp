@@ -243,18 +243,18 @@
    ;; form of evaluation when clicked.
    (GET "/today" (view date)
         (define location
-          (parse-header 'location
-                        (format #f "/~a/~a.html"
-                                (or view "week")
-                                (date->string
-                                 (cond [date => parse-iso-date]
-                                       [else (current-date)])
-                                 "~1"))) )
+          (build-relative-ref
+           path:
+           (format #f "/~a/~a.html"
+                   (or view "week")
+                   (date->string
+                    (cond [date => parse-iso-date]
+                          [else (current-date)])
+                    "~1"))) )
 
         (return (build-response
                  code: 302
-                 headers: `((location ,location)))
-                ""))
+                 headers: `((location . ,location)))))
 
    (GET "/calendar" (start end)
         (return '((content-type text/calendar))
