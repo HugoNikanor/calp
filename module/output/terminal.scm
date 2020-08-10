@@ -157,6 +157,20 @@
                                            #:width (min 70 width))
                                 (- height 8 5 (length events) 5)))))))
 
+(define (get-line prompt)
+  (let* ((attr (make-termios))
+         (input-string #f))
+    (tcgetattr! attr)
+    (set! (lflag attr) (logior ECHO (lflag attr)))
+    (tcsetattr! attr)
+    (system "tput cnorm")
+    (set! input-string (readline prompt))
+    (system "tput civis")
+    (set! (lflag attr) (logand (lognot ECHO) (lflag attr)))
+    (tcsetattr! attr)
+    input-string
+    ))
+
 (define-method (input (this <day-view>) char)
   (set! (page-length this) (length (cached-events this)))
 
@@ -178,34 +192,16 @@
            (active-element this) 0))
 
     ((#\/) (set-cursor-pos 0 (1- height))
-     (let* ((attr (make-termios))
-            (search-term #f))
-       (tcgetattr! attr)
-       (set! (lflag attr) (logior ECHO (lflag attr)))
-       (tcsetattr! attr)
-       (system "tput cnorm")
-       (set! search-term (readline "quick search: "))
-       (system "tput civis")
-       (set! (lflag attr) (logand (lognot ECHO) (lflag attr)))
-       (tcsetattr! attr)
+     (let ((search-term (get-line "quick search: ")))
        `(push ,(search-view
                 (format #f "(regexp-exec (make-regexp \"~a\" regexp/icase) (prop event 'SUMMARY))"
                         search-term)
                 (get-event-set this)))))
 
     ((#\() (set-cursor-pos 0 (1- height))
-     (let* ((attr (make-termios))
-            (search-term #f))
-       (tcgetattr! attr)
-       (set! (lflag attr) (logior ECHO (lflag attr)))
-       (tcsetattr! attr)
-       (system "tput cnorm")
-       (set! search-term (readline "search: "))
-       (system "tput civis")
-       (set! (lflag attr) (logand (lognot ECHO) (lflag attr)))
-       (tcsetattr! attr)
-       `(push ,(search-view search-term (get-event-set this)))
-       ))
+     (let ((search-term (get-line "search: ")))
+       `(push ,(search-view search-term (get-event-set this)))))
+
     (else (next-method))))
 
 (define (day-view event-set date)
