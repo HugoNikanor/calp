@@ -62,6 +62,10 @@
             (cdr (scandir dir))))))
 
 (define get-query-page
+  ;; A user of the website is able to fill up all of the hosts memory by
+  ;; requesting a bunch of different search pages, and forcing a bunch
+  ;; of pages on each. Clean up this table from time to time, possibly
+  ;; by popularity-rank.
   (let ((query-pages (make-hash-table)))
    (lambda (search-term)
      (aif (hash-ref query-pages search-term)
@@ -287,6 +291,7 @@
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
 
+   ;; TODO search without query should work
    (GET "/search" (q p)
         (define search-term (prepare-string q))
 
@@ -302,6 +307,11 @@
         ;; TODO Propagate errors
         (define search-result
           (catch 'max-page
+            ;; TODO Get-page only puts a time limiter per page, meaning that
+            ;; if a user requests page 1000 the server is stuck trying to
+            ;; find that page, which can take up to 1000 * timeslice = 500s = 8min+
+            ;; A timeout here, and also an actual multithreaded server should
+            ;; solve this.
             (lambda () (get-page paginator page))
             (lambda (err page-number)
               (define location
