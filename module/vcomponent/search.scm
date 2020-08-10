@@ -63,7 +63,9 @@
 ;; Creates a prepared query wrappend in a paginator.
 ;; (event → bool), (stream event) → <paginator>
 (define-public (prepare-query query-proc event-set)
-  (make-paginator (stream-paginate (stream-filter query-proc event-set))))
+  (make-paginator (stream-paginate
+                   (stream-timeslice-limit
+                    (stream-filter query-proc event-set)))))
 
 (define-record-type <paginator>
   (make-paginator% query max-page true-max-page?)

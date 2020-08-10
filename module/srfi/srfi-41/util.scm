@@ -102,6 +102,21 @@
 (define*-public (stream-paginate stream optional: (page-size 10))
   (stream-paginate% stream page-size))
 
+
+(define (eager-stream-cons a b)
+  (stream-cons a b))
+
+(use-modules (ice-9 sandbox) )
+(define (stream-timeslice-limit strm)
+  (call-with-time-limit
+   0.1
+   (lambda () (eager-stream-cons
+          (stream-car strm)
+          (stream-timeslice-limit (stream-cdr strm))))
+   (lambda _ stream-null)))
+
+(export stream-timeslice-limit)
+
 ;; Evaluates @var{body} in a context where most list fundamentals are
 ;; replaced by stream alternatives.
 ;; commented defifinitions are items which could be included, but for
