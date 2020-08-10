@@ -155,6 +155,7 @@
                   (set-max-page! paginator (max page (get-max-page paginator)))
                   result))))
     (lambda (err proc fmt args data)
+      ;; TODO ensure the error actually is index out of range.
       ;; (format (current-error-port) "~?~%" fmt args)
       (set-max-page! paginator (get-max-page paginator))
       (set-true-max-page! paginator)
