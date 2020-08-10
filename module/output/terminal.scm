@@ -293,6 +293,7 @@
   )
 
 (define-method (input (this <search-view>) char)
+  ;; TODO update this to match actual page length
   (set! (page-length this) 10)
 
   (case char

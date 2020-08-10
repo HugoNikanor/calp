@@ -1,11 +1,38 @@
+;;; Commentary:
+
+;; Procedures for searching in a (possibly) infinite stream. Everything is general,
+;; with the exception of @var{build-query-proc}, which is tailored for searches on
+;; sets on vcomponents.
+
+;; > TODO since most of this module is generic, break it out and only have the
+;; > vcomponent-specific parts here.
+
+;; A search isn't guaranteed to include all available objects, since each object
+;; only has a limited time to get found. This is mostly a problem if the matches
+;; are /really/ far from one another.
+;; NOTE a system of continuations to allow a search to be resumed with a higher
+;; timeout would be cool to have.
+
+;; Currently all searches is assumed to go through prepare-query and the paginator
+;; interface. It shouldn't however be a problem to work with the flat result-set
+;; returned by @var{execute-query} directly.
+
+;; @var{<paginator>} isn't strictly necessary even for paginated queries, since the
+;; evaluation time and pagination is baked into the stream. It is however useful
+;; for keeping track of the number of available pages, and if we have found the
+;; "final" element.
+
+;;; Code:
+
 (define-module (vcomponent search)
   :use-module (util)
-  :use-module (ice-9 sandbox)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
-  )
+  :use-module ((ice-9 sandbox)
+               :select (make-sandbox-module
+                        all-pure-bindings)))
 
 
 ;; Takes a string and appends closing parenthese until all parenthese are
@@ -42,34 +69,35 @@
            ,@all-pure-bindings)
          )))
 
-;; execute a query procedure created by build-query-proc.
-;; (event → bool), int, (optional int) → (list event) throws 'timed-out
-(define* (execute-query query page key: (time-limit 1))
-  (call-with-time-limit
-   time-limit
-   ;; Stream->list needs to be here, since the actual
-   ;; stream-force needs to happen within the actual
-   ;; @var{call-with-time-limit}.
-   (lambda () (stream->list (stream-ref query page)))
-   (lambda _ (format (current-error-port) "~a~%" 'timed-out)
-      (throw 'timed-out)))
-)
 
+;; Returns a new stream which is the result of filtering the input set with the
+;; query procedure.
+;; (a → bool), (stream a) → (stream a)
+(define (execute-query query-proc event-set)
+  (stream-timeslice-limit
+   (stream-filter query-proc event-set)
+   ;; .5s, tested on my laptop. .1s sometimes doesn't get to events on
+   ;; 2020-08-10, where the first event is on 1974-12-02.
+   0.5))
 
 ;; Creates a prepared query wrappend in a paginator.
 ;; (event → bool), (stream event) → <paginator>
 (define*-public (prepare-query query-proc event-set optional: (page-size 10))
-  (make-paginator (stream-paginate
-                   (stream-timeslice-limit
-                    (stream-filter query-proc event-set))
-                   page-size)))
+  (make-paginator (stream-paginate (execute-query query-proc event-set)
+                                   page-size)))
 
 (define-record-type <paginator>
   (make-paginator% query max-page true-max-page?)
   paginator?
   (query get-query) ; (paginated-stream event)
   (max-page get-max-page set-max-page!) ; int
-  (true-max-page? true-max-page? set-true-max-page!))
+  (true-max-page? true-max-page? %set-true-max-page!))
+
+(define (set-true-max-page! paginator)
+  (%set-true-max-page! paginator #t))
+
+(define (unset-true-max-page! paginator)
+  (%set-true-max-page! paginator #f))
 
 (export paginator? get-query get-max-page true-max-page?)
 
@@ -109,15 +137,24 @@
 ;; highest known available page.
 ;; <paginator>, int → (list event) throws ('max-page <int>)
 (define-public (get-page paginator page)
-  (catch 'timed-out
-    (lambda () (let ((result (execute-query (get-query paginator) page)))
-            (set-max-page! paginator (max page (get-max-page paginator)))
-            (when (> 10 (length result))
-              (set-true-max-page! paginator #t))
-            result))
-    (lambda (err . args)
+  (catch 'wrong-type-arg
+    (lambda () (let ((q (get-query paginator)))
+            (if (stream-null? q)
+                (begin
+                  (set-true-max-page! paginator)
+                  '())
+                (let ((result (stream->list
+                               (stream-ref (get-query paginator) page))))
+                  (when (> 10 (length result))
+                    (set-true-max-page! paginator))
+
+                  (set-max-page! paginator (max page (get-max-page paginator)))
+                  result))))
+    (lambda (err proc fmt args data)
+      ;; (format (current-error-port) "~?~%" fmt args)
       (set-max-page! paginator (get-max-page paginator))
-      (set-true-max-page! paginator #t)
-      (throw 'max-page (get-max-page paginator)))))
+      (set-true-max-page! paginator)
+      (throw 'max-page (get-max-page paginator))
+      )))
 
 
