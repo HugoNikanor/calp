@@ -329,7 +329,7 @@
                 (with-output-to-string
                   (lambda ()
                     (sxml->xml
-                     ((@ (output html-search) search-result-page)
+                     ((@ (html view search) search-result-page)
                       search-term search-result page paginator q=))))))
 
    ;; NOTE this only handles files with extensions. Limited, but since this
