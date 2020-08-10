@@ -462,8 +462,8 @@
 ;; @example
 ;; (weekday-list sun)
 ;; => (0 1 2 3 4 5 6)
-;; @end example
-(define-public (weekday-list week-start)
+;; @end exampl
+(define*-public (weekday-list optional: (week-start (week-start)))
   (take (drop (apply circular-list (iota 7))
               week-start)
         7))

@@ -5,7 +5,6 @@
                :select (events-between))
   :use-module ((vcomponent build)
                :select (vcalendar vevent))
-  :use-module (util config)
   :use-module (datetime)
   :use-module (html components)
   :use-module ((html vcomponent)
@@ -38,8 +37,7 @@
 ;; @end example
 ;; date - a date in the month to display
 ;; week-start - which day the week begins on, see (datetime util)
-(define* (cal-table key: start-date end-date next-start prev-start
-                    (week-start (get-config 'week-start)))
+(define* (cal-table key: start-date end-date next-start prev-start)
 
   (define (td date)
     `(a (@ ,@(cond
@@ -203,7 +201,7 @@
                (div (@ (class "change-view"))
                     ,(btn href: (date->string
                                  (if (= 1 (day start-date))
-                                     (start-of-week start-date (get-config 'week-start))
+                                     (start-of-week start-date)
                                      start-date)
                                  "/week/~1.html")
                           "veckovy")

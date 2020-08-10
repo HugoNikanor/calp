@@ -6,7 +6,6 @@
   :use-module (datetime)
   :use-module (html view calendar shared)
   :use-module (html config)
-  :use-module (util config)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
                :select (really-long-event?
@@ -46,7 +45,7 @@
                                (min 10 (* 4 (length (cddr long-group))))))
                      long-event-groups))))
          ,@(map (lambda (d) `(div (@ (class "thead")) ,(string-titlecase (week-day-name d))))
-                (weekday-list (get-config 'week-start)))
+                (weekday-list))
          ,@(map (lambda (group i)
                   (let* (((s e . events) group))
                     `(div (@ (class "cal-cell longevents event-container")
