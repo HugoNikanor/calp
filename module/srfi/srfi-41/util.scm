@@ -77,6 +77,18 @@
 (define-public (stream->values stream)
   (apply values (stream->list stream)))
 
+
+;; Natural numbers from 1 and up, each number repeated 7 times.
+(define-public (repeating-naturals from repeats)
+  (stream-unfold
+   cdr                      ; map
+   (const #t)               ; continue?
+   (lambda (x)                   ; gen next
+     (if (= (1- repeats) (car x))
+         (cons 0 (1+ (cdr x)))
+         (cons (1+ (car x)) (cdr x))))
+   (cons 0 from)))
+
 ;; Returns two values. A stream of all the elements in stream
 ;; which satisfiy @var{pred}, and a stream of those elements
 ;; that don't. @var{pred} is called once per value in the

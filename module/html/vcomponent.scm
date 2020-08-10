@@ -5,10 +5,12 @@
   :use-module (srfi srfi-41)
   :use-module (datetime)
   :use-module (html util)
+  :use-module ((html components) :select (btn tabset))
   :use-module ((output general) :select (calculate-fg-color))
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
                         format-description
+                        format-summary
                         format-recurrence-rule
                                       ))
   )
@@ -126,3 +128,63 @@
                   (list name (or bg-color 'white) (or fg-color 'black)
                         name (or bg-color 'black))))
               calendars))))
+
+;; "Physical" block in calendar view
+(define*-public (make-block ev optional: (extra-attributes '()))
+
+  `((a (@ (href "#" ,(html-id ev))
+          (class "hidelink"))
+       (div (@ ,@(assq-merge
+                  extra-attributes
+                  `((id ,(html-id ev))
+                    (class "event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
+                                                        "unknown"))
+                      ,(when (and (prop ev 'PARTSTAT)
+                                  (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+                         " tentative"))
+                    (onclick "toggle_popup('popup' + this.id)")
+                    )))
+            ;; Inner div to prevent overflow. Previously "overflow: none"
+            ;; was set on the surounding div, but the popup /needs/ to
+            ;; overflow (for the tabs?).
+            (div (@ (class "event-body"))
+             ,(when (prop ev 'RRULE)
+                `(span (@ (class "repeating")) "↺"))
+             (span (@ (class "summary"))
+                   ,(format-summary  ev (prop ev 'SUMMARY)))
+             ,(when (prop ev 'LOCATION)
+                `(span (@ (class "location"))
+                       ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                    (prop ev 'LOCATION)))))
+            (div (@ (style "display:none !important;"))
+                 ,((@ (output xcal) ns-wrap)
+                   ((@ (output xcal) vcomponent->sxcal)
+                    ev)))))))
+
+
+
+(define-public (popup ev id)
+  `(div (@ (class "popup-container") (id ,id)
+           (onclick "event.stopPropagation()"))
+        (div (@ (class "popup"))
+             (nav (@ (class "popup-control CAL_"
+                       ,(html-attr (or (prop (parent ev) 'NAME)
+                                       "unknown"))))
+                  ,(btn "×"
+                        title: "Stäng"
+                        onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
+                        class: '("close-tooltip"))
+                  ,(btn "🗑"
+                        title: "Ta bort"
+                        onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))"))
+
+             ,(tabset
+               `(("📅" title: "Översikt"
+                  ,(fmt-single-event ev))
+                 ("⤓" title: "Nedladdning"
+                  (div (@ (style "font-family:sans"))
+                       (p "Ladda ner")
+                       (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
+                                  "som iCal"))
+                           (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
+                                  "som xCal"))))))))))
