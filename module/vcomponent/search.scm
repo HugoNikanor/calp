@@ -45,27 +45,24 @@
 ;; execute a query procedure created by build-query-proc.
 ;; (event → bool), int, (optional int) → (list event) throws 'timed-out
 (define* (execute-query query page key: (time-limit 1))
-  (let ((lst '()))
-    (call-with-time-limit
-     time-limit
-     ;; Stream->list needs to be here, since the actual
-     ;; stream-force needs to happen within the actual
-     ;; @var{call-with-time-limit}.
-     (lambda ()
-       (let loop ((strm (stream-ref query page)))
-         (if (stream-null? strm) lst
-             (set! lst (cons (stream-car strm) lst))
-             (loop (stream-cdr strm)))))
-     (lambda _ (format (current-error-port) "~a~%" 'timed-out)))
-    (reverse lst)))
+  (call-with-time-limit
+   time-limit
+   ;; Stream->list needs to be here, since the actual
+   ;; stream-force needs to happen within the actual
+   ;; @var{call-with-time-limit}.
+   (lambda () (stream->list (stream-ref query page)))
+   (lambda _ (format (current-error-port) "~a~%" 'timed-out)
+      (throw 'timed-out)))
+)
 
 
 ;; Creates a prepared query wrappend in a paginator.
 ;; (event → bool), (stream event) → <paginator>
-(define-public (prepare-query query-proc event-set)
+(define*-public (prepare-query query-proc event-set optional: (page-size 10))
   (make-paginator (stream-paginate
                    (stream-timeslice-limit
-                    (stream-filter query-proc event-set)))))
+                    (stream-filter query-proc event-set))
+                   page-size)))
 
 (define-record-type <paginator>
   (make-paginator% query max-page true-max-page?)
