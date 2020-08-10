@@ -21,7 +21,7 @@
 
 (define PREFIX //)
 (define CACHE_DIR (string-append PREFIX // "var/cache/calp"))
-(define LIBEXEC (if *develop* here (string-append PREFIX // "usr/lib/calp"))
+(define LIBEXEC (if *develop* here (string-append PREFIX // "usr/lib/calp")))
 
 (define pipe
   (-> LIBEXEC

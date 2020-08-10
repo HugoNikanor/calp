@@ -32,10 +32,12 @@
   :use-module (vcomponent)
   :use-module (vcomponent search)
   :use-module (datetime)
-  :use-module (output html)
+  ;; :use-module (output html)
   :use-module (output ical)
 
   :autoload (vcomponent instance) (global-event-object)
+
+  :use-module (html view calendar)
 
   :export (main)
   )
@@ -111,7 +113,7 @@
                                      end-date: (date+ start-date (date day: 6))
                                      next-start: (lambda (d) (date+ d (date day: 7)))
                                      prev-start: (lambda (d) (date- d (date day: 7)))
-                                     render-calendar: render-calendar
+                                     render-calendar: (@ (html view calendar week) render-calendar)
                                      intervaltype: 'week
                                      ))))))
 
@@ -128,7 +130,8 @@
                                                       (date day: 1))
                                      next-start: month+
                                      prev-start: month-
-                                     render-calendar: render-calendar-table
+                                     render-calendar: (@ (html view calendar month)
+                                                         render-calendar-table)
                                      pre-start: (start-of-week start-date (get-config 'week-start))
                                      post-end: (end-of-week (end-of-month start-date) (get-config 'week-start))
                                      intervaltype: 'month
