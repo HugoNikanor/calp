@@ -8,11 +8,9 @@
   )
 
 (define-config summary-filter (lambda (_ a) a)
-  ""
   pre: (ensure procedure?))
 
 (define-config description-filter (lambda (_ a) a)
-  ""
   pre: (ensure procedure?))
 
 ;; ev → sxml

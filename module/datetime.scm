@@ -49,9 +49,8 @@
 ;;; Configuration
 
 (define-public week-start (make-parameter sun))
-
 (define-config week-start sun
-  "First day of week"
+  description: "First day of week"
   pre: (ensure (lambda (x) (<= sun x sat)))
   post: week-start)
 

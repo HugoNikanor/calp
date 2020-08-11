@@ -13,110 +13,59 @@
   :use-module (srfi srfi-26)
   :use-module (ice-9 match)
   :use-module (ice-9 format)
-  :use-module (ice-9 curried-definitions)
+  :use-module (ice-9 curried-definitions) ; for ensure
   :use-module (util)
-  :export (define-config))
+  :export (define-config)
+)
 
 (define-once config-values (make-hash-table))
+(define-once config-properties (make-hash-table))
+(hashq-set! config-properties #:description (make-object-property))
+(hashq-set! config-properties #:source-module (make-object-property))
+(hashq-set! config-properties #:pre (make-object-property))
+(hashq-set! config-properties #:post (make-object-property))
 
-(define-record-type <config>
-  (make-config value documentation source-module attributes)
-  config?
-  (value get-value set-value!)
-  (documentation get-documentation)
-  (source-module get-source-module)
-  (attributes config-attributes)
-  )
+(define-public (get-property config-name property-key)
+  ((hashq-ref config-properties property-key) config-name))
 
-(define-record-type <un-config>
-  (make-unconfig value)
-  unconfig?
-  (value get-un-value))
+(define (define-config% name default-value kwargs)
+  (for (key value) in (group kwargs 2)
+       (set! ((or (hashq-ref config-properties key)
+                  (error "Missing config protperty slot " key))
+              name)
+         value))
+  (set-config! name (get-config name default-value)))
 
+(define-syntax define-config
+  (syntax-rules ()
+    ((_ name default kwargs ...)
+     (define-config% (quote name) default
+       (list source-module: (current-module)
+             kwargs ...)))))
 
-;; similar to emacs defcustom
-;; NOTE that it's valid to set a value (or default value) to #f
-;; but that any #:pre procedure can only return #f to indicate
-;; failure.
-(define-macro (define-config name default-value documentation . rest)
-  (let ((make-config '(@@ (util config) make-config))
-        (config-values '(@@ (util config) config-values))
-        (config? '(@@ (util config) config?))
-        (get-value '(@@ (util config) get-value)))
+(define-public (set-config! name value)
+  (hashq-set! config-values name
+              (aif (get-property name #:pre)
+                   (or (it value) (error "Pre crashed for" name))
+                   value))
 
-    `(cond [(hashq-ref ,config-values (quote ,name))
-            => (lambda (value)
-                 ;; When reloading a module an already defined configuration item
-                 ;; might be loaded again, just anwrap it and pretend that didn't
-                 ;; happen.
-                 (when (,config? value)
-                   (set! value (,get-value value)))
-
-                 (hashq-set! ,config-values (quote ,name)
-                             (,make-config 'dummy ,documentation (current-module)
-                                           (list ,@rest)))
-
-                 ;; Fatal error when the default value doesn't work.
-                 (catch 'config-error
-                   (lambda () (set-config! (quote ,name) value))
-                   (lambda (err _ fmt args __)
-                     (apply (@ (util exceptions) fatal) fmt args))))]
-
-           ;; value not set in advance
-           [else
-            (hashq-set! ,config-values (quote ,name)
-                        (,make-config 'dummy ,documentation
-                                      (current-module) (list ,@rest)))
-            (catch 'config-error
-              (lambda () (set-config! (quote ,name) ,default-value))
-              (lambda (err _ fmt args __)
-                ((@ (util exceptions) fatal) "~a ~a" fmt args)))])))
-
-
-(define* (config-attribute config attr optional: default)
-  (aif (memv attr (config-attributes config))
-       (cadr it)
-       default))
+  (awhen (get-property name #:post)
+         (it value)))
+;; unique symbol here since #f is a valid configuration value.
+(define %uniq (gensym))
+(define*-public (get-config key optional: (default %uniq))
+  (if (eq? default %uniq)
+      (let ((v (hashq-ref config-values key %uniq)))
+        (when (eq? v %uniq)
+          (error "Missing config" key))
+        v)
+      (hashq-ref config-values key default)))
 
 (define-public ((ensure predicate) value)
   (if (not (predicate value))
       #f value))
 
-(define-public (set-config! key value)
-  (cond [(hashq-ref config-values key)
-         => (lambda (conf)
-              (cond [(not value)
-                     (set-value! conf #f)
-                     ((config-attribute conf #:post identity) #f)]
-                    [(unconfig? conf)
-                     (hashq-set! config-values key
-                                 (make-unconfig value))]
-                    [((config-attribute conf #:pre identity)
-                      value)
-                     => (lambda (it)
-                          (set-value! conf it)
-                          ((config-attribute conf #:post identity) it))]
-                    [else
-                     (throw 'config-error 'set-config!
-                            "~a->~a = ~s is invalid,~%Field doc is \"~a\""
-                            (module-name (get-source-module conf))
-                            key value
-                            (get-documentation conf))])
-              )]
-        [else (hashq-set! config-values key (make-unconfig value))]))
-
-;; unique symbol here since #f is a valid configuration value.
-(define %uniq (gensym))
-(define*-public (get-config key optional: (default %uniq))
-  (let ((v (if (eq? default %uniq)
-               (let ((v (hashq-ref config-values key %uniq)))
-                 (when (eq? v %uniq)
-                   (error "Missing config" key))
-                 v)
-               (hashq-ref config-values key default))))
-    (if (config? v)
-        (get-value v)
-        v)))
+
 
 ;; (format-procedure (lambda (x y) ...)) => λx, y
 ;; (define (f x) ...)
@@ -173,3 +122,4 @@
                                     (format-procedure v)
                                     `(scheme ,v)))
                              (br)))))))))))
+

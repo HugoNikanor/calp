@@ -5,10 +5,10 @@
   :export (zoneinfo))
 
 (define-config tz-dir #f
-  "Directory in which zoneinfo files can be found")
+  description: "Directory in which zoneinfo files can be found")
 
 (define-config tz-list '()
-  "List of default zoneinfo files to be parsed")
+  description: "List of default zoneinfo files to be parsed")
 
 
 (define / file-name-separator-string)

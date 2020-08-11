@@ -52,7 +52,7 @@
   (make-parameter #f))
 
 (define-config warnings-are-errors #f
-  "Crash on warnings."
+  description: "Crash on warnings."
   post: warnings-are-errors)
 
 ;; forwards return from warning-hander. By default returns an unspecified value,
