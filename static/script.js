@@ -459,7 +459,7 @@ function place_in_edit_mode (event) {
     let input = makeElement('input', {
         name: "summary",
         value: summary.innerText,
-		placeholder: "Sammanfattning",
+        placeholder: "Sammanfattning",
         required: true,
     });
 
@@ -475,30 +475,32 @@ function place_in_edit_mode (event) {
 
     /* ---------------------------------------- */
 
-	/* TODO add elements if the arent't already there
-	 * Almost all should be direct children of '.event-body'.
-	 * Biggest problem is generated fields relative order.
-	 */
-	let descs = popup.getElementsByClassName("description");
-	if (descs.length === 1) {
-		let description = descs[0];
-		let textarea = makeElement('textarea', {
-			name: "description",
-			placeholder: "Description (optional)",
-			innerHTML: description.innerText,
-			required: false,
-		});
+    /* TODO add elements if the arent't already there
+     * Almost all should be direct children of '.event-body' (or
+         * '.eventtext'?).
+     * Biggest problem is generated fields relative order.
+     */
+    let descs = popup.getElementsByClassName("description");
+    if (descs.length === 1) {
+        let description = descs[0];
+        let textarea = makeElement('textarea', {
+            name: "description",
+            placeholder: "Description (optional)",
+            innerHTML: description.innerText,
+            required: false,
+        });
 
-		textarea.oninput = function () {
-			event.properties["description"] = this.value;
-		}
+        textarea.oninput = function () {
+            event.properties["description"] = this.value;
+        }
 
-		let slot = event.properties["_slot_description"]
-		let idx = slot.findIndex(e => e[0] === description);
-		slot.splice(idx, 1, [input, (s, v) => s.innerHTML = v])
+        let slot = event.properties["_slot_description"]
+        let idx = slot.findIndex(e => e[0] === description);
+        slot.splice(idx, 1, [input, (s, v) => s.innerHTML = v])
 
-		description.replaceWith(textarea);
-	}
+        description.replaceWith(textarea);
+    }
+
 
     /* ---------------------------------------- */
 
