@@ -1,20 +1,14 @@
 ;;; Commentary:
 
-;; This file should define all global configurable variables which
-;; doesn't belong anywhere else. The config module should then import
-;; this module, and set all configs as needed. The config module
-;; should also be able to set configs gotten from other parts.
+;; Configuration system.
 
 ;;; Code:
 
 (define-module (util config)
-  :use-module (srfi srfi-1)
-  :use-module (srfi srfi-9)
-  :use-module (srfi srfi-26)
-  :use-module (ice-9 match)
-  :use-module (ice-9 format)
-  :use-module (ice-9 curried-definitions) ; for ensure
   :use-module (util)
+  :use-module (srfi srfi-1)
+  :use-module (ice-9 format) ; for format-procedure
+  :use-module (ice-9 curried-definitions) ; for ensure
   :export (define-config)
 )
 
