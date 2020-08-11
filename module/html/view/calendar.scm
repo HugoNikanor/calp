@@ -317,7 +317,7 @@
                                      ;; cloned mulitple times.
                                      dtstart: (datetime)
                                      dtend: (datetime)
-                                     summary: "New Event"
+                                     summary: ""
                                      ;; force a description field,
                                      ;; but don't put anything in
                                      ;; it.

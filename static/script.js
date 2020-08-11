@@ -457,8 +457,9 @@ function place_in_edit_mode (event) {
 
     let summary = popup.getElementsByClassName("summary")[0];
     let input = makeElement('input', {
-        name: "dtstart",
-        placeholder: summary.innerText,
+        name: "summary",
+        value: summary.innerText,
+		placeholder: "Sammanfattning",
         required: true,
     });
 
@@ -539,7 +540,7 @@ window.onload = function () {
                     let popupElement = document.getElementById("popup" + event.id);
                     open_popup(popupElement);
 
-                    popupElement.querySelector("input[name='dtstart']").focus();
+                    popupElement.querySelector("input[name='summary']").focus();
 
                 });
         }
@@ -557,7 +558,7 @@ window.onload = function () {
                     let popupElement = document.getElementById("popup" + event.id);
                     open_popup(popupElement);
 
-                    popupElement.querySelector("input[name='dtstart']").focus();
+                    popupElement.querySelector("input[name='summary']").focus();
 
                 });
         }
