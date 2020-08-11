@@ -36,7 +36,6 @@
 ;; 29 30
 ;; @end example
 ;; date - a date in the month to display
-;; week-start - which day the week begins on, see (datetime util)
 (define* (cal-table key: start-date end-date next-start prev-start)
 
   (define (td date)
@@ -68,17 +67,17 @@
         (time (@ (datetime ,(date->string date "~Y-~m-~d"))) ,(day date))))
 
   (let* ((last-months current next
-                      (month-days (start-of-month start-date) week-start))
+                      (month-days (start-of-month start-date)))
          (events (append last-months current next)))
     `(div (@ (class "small-calendar"))
           (div (@ (class "column-head row-head")) "v.")
           ,@(map (lambda (d) `(div (@ (class "column-head"))
                               ,(string-titlecase (week-day-name d 2))))
-                 (weekday-list week-start))
-          ,@(let ((first (start-of-week (car events) week-start))
-                  (last (start-of-week (last events) week-start)))
+                 (weekday-list))
+          ,@(let ((first (start-of-week (car events)))
+                  (last (start-of-week (last events))))
               (map (lambda (v) `(div (@ (class "row-head")) ,v))
-                   (map (lambda (d) (week-number d week-start))
+                   (map (lambda (d) (week-number d))
                         (stream->list
                          (stream-take-while (lambda (s) (date<= s last))
                                             (week-stream first))))))
