@@ -19,14 +19,27 @@
 )
 
 (define-once config-values (make-hash-table))
+
+;; properties declared before being bound into hash-map
+;; to allow nicer scripting in this file.
+
 (define-once config-properties (make-hash-table))
-(hashq-set! config-properties #:description (make-object-property))
-(hashq-set! config-properties #:source-module (make-object-property))
-(hashq-set! config-properties #:pre (make-object-property))
-(hashq-set! config-properties #:post (make-object-property))
+(define description (make-object-property))
+(define source-module (make-object-property))
+(define pre (make-object-property))
+(define post (make-object-property))
+(hashq-set! config-properties #:description description)
+(hashq-set! config-properties #:source-module source-module)
+(hashq-set! config-properties #:pre pre)
+(hashq-set! config-properties #:post post)
+
+
+;; Config cells "are" immutable. @var{set-property!} is
+;; therefore intentionally unwritten.
 
 (define-public (get-property config-name property-key)
   ((hashq-ref config-properties property-key) config-name))
+
 
 (define (define-config% name default-value kwargs)
   (for (key value) in (group kwargs 2)
@@ -45,12 +58,12 @@
 
 (define-public (set-config! name value)
   (hashq-set! config-values name
-              (aif (get-property name #:pre)
+              (aif (pre name)
                    (or (it value) (error "Pre crashed for" name))
                    value))
 
-  (awhen (get-property name #:post)
-         (it value)))
+  (awhen (post name) (it value)))
+
 ;; unique symbol here since #f is a valid configuration value.
 (define %uniq (gensym))
 (define*-public (get-config key optional: (default %uniq))
@@ -60,6 +73,8 @@
           (error "Missing config" key))
         v)
       (hashq-ref config-values key default)))
+
+
 
 (define-public ((ensure predicate) value)
   (if (not (predicate value))
@@ -97,29 +112,31 @@
 
 (export format-procedure)
 
+(define (->str any)
+  (with-output-to-string
+    (lambda () (display any))))
+
 (define-public (get-configuration-documentation)
   (define groups
-    (group-by (match-lambda [(__ v)
-                             (if (config? v)
-                                 (get-source-module v)
-                                 #f)])
-              (hash-map->list list config-values )) )
-
+    (group-by (compose source-module car)
+              (hash-map->list list config-values)))
 
   `(*TOP*
     (header "Configuration variables")
     (dl
      ,@(concatenate
         (for (module values) in groups
-             `((dt "") (dd (header ,(format #f "~a" (module-name module))))
+             `((dt "") (dd (header ,(aif module
+                                         (->str (module-name it))
+                                         #f)))
                ,@(concatenate
                   (for (key value) in values
                        `((dt ,key)
-                         (dd (p (@ (inline)) ,(get-documentation value)))
+                         (dd (p (@ (inline))
+                                ,(or (description key) "")))
                          (dt "V:")
-                         (dd ,(let ((v (get-value value)))
-                                (if (procedure? v)
-                                    (format-procedure v)
-                                    `(scheme ,v)))
+                         (dd ,(if (procedure? value)
+                                  (format-procedure value)
+                                  `(scheme ,value))
                              (br)))))))))))
 
