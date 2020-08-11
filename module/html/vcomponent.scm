@@ -168,10 +168,13 @@
 
 
 (define-public (popup ev id)
-  `(div (@ (class "popup-container") (id ,id)
+  `(div (@ (id ,id) (class "popup-container CAL_" 
+                           ,(html-attr (or (prop (parent ev) 'NAME)
+                                           "unknown"))) 
            (onclick "event.stopPropagation()"))
-        (div (@ (class "popup CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
-                                                    "unknown"))) )
+        ;; TODO all (?) code uses .popup-container as the popup, while .popup sits and does nothing.
+        ;; Do something about this?
+        (div (@ (class "popup"))
              (nav (@ (class "popup-control"))
                   ,(btn "×"
                         title: "Stäng"

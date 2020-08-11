@@ -742,6 +742,10 @@ along with their colors.
 
     cursor: grab;
     background-color: var(--color);
+    /* Transition for background color 
+     * Matches that of '.event'.
+     * TODO break out to common place */
+    transition: 0.3s;
 }
 
 .popup-control .btn {

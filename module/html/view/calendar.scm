@@ -290,6 +290,7 @@
                                calendars))
                         (div (@ (id "calendar-dropdown-template") (class "template"))
                              (select
+                               (option "- Choose a Calendar -")
                                ,@(map (lambda (calendar)
                                         `(option (@ (value ,(html-attr (prop calendar 'NAME))))
                                                  ,(prop calendar 'NAME)))

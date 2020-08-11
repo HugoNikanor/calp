@@ -122,6 +122,21 @@ function bind_popup_control (nav) {
     });
 }
 
+/*
+ * Finds the first element of the DOMTokenList whichs value matches
+ * the supplied regexp. Returns a pair of the index and the value.
+ */
+DOMTokenList.prototype.find = function (regexp) {
+    console.log(this);
+    let entries = this.entries();
+    let entry;
+    while (! (entry = entries.next()).done) {
+        if (entry.value[1].match(regexp)) {
+            return entry.value;
+        }
+    }
+}
+
 class EventCreator {
 
     /* dynamicly created event when dragging */
@@ -505,6 +520,29 @@ function place_in_edit_mode (event) {
 
     let evtext = popup.getElementsByClassName('eventtext')[0]
     let calendar_dropdown = document.getElementById('calendar-dropdown-template').firstChild.cloneNode(true);
+
+    let [_, calclass] = popup.classList.find(/^CAL_/);
+    for (let [i, option] of calendar_dropdown.childNodes.entries()) {
+        if (option.value === calclass.substr(4)) {
+            calendar_dropdown.selectedIndex = i;
+            break;
+        }
+    }
+
+    /* Instant change while user is stepping through would be
+     * preferable. But I believe that <option> first gives us the
+     * input once selected */
+    calendar_dropdown.onchange = function () {
+        let popup = this.closest('.popup-container')
+        let event = document.getElementById(popup.id.substr(5))
+
+        let [_, calclass] = popup.classList.find(/^CAL_/);
+
+        popup.classList.replace(calclass, "CAL_" + this.value)
+        event.classList.replace(calclass, "CAL_" + this.value)
+
+
+    }
     evtext.prepend(calendar_dropdown);
 
     /* ---------------------------------------- */
