@@ -22,6 +22,7 @@
 
     [(boolean) (string=? "true" (car value))]
 
+    ;; TODO possibly trim whitespace on text fields
     [(cal-address uri text unknown) (car value)]
 
     [(date) (parse-iso-date (car value))]
