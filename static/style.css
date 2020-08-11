@@ -300,6 +300,7 @@ along with their colors.
     list-style-type: none;
     border-left-width: 1em;
     border-left-style: solid;
+	border-color: var(--color);
     padding-left: 1ex;
 
     /* force to single line */
@@ -507,6 +508,8 @@ along with their colors.
     transition: 0.3s;
     font-size: var(--event-font-size);
     overflow: visible;
+	background-color: var(--color);
+	color: var(--complement);
 }
 
 .popup input {
@@ -605,6 +608,10 @@ along with their colors.
     font-size: 80%;
     color: var(--gray);
     padding-right: 1em;
+}
+
+.eventlist .eventtext {
+	border-color: var(--color);
 }
 
 .eventlist .eventtext.tentative {

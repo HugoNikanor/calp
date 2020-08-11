@@ -50,7 +50,7 @@
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
   `(article (@ ,@(assq-merge
                   attributes
-                  `((class "eventtext CAL_bg_"
+                  `((class "eventtext CAL_"
                       ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
@@ -119,16 +119,14 @@
 
 (define-public (calendar-styles calendars)
   `(style
-       ,(format
-         #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
-         (map (lambda (c)
-                (let* ((name (html-attr (prop c 'NAME)))
-                       (bg-color (prop c 'COLOR))
-                       (fg-color (and=> (prop c 'COLOR)
-                                        calculate-fg-color)))
-                  (list name (or bg-color 'white) (or fg-color 'black)
-                        name (or bg-color 'black))))
-              calendars))))
+     ,(format #f "~:{.CAL_~a { --color: ~a; --complement: ~a }~%~}"
+              (map (lambda (c)
+                     (let* ((name (html-attr (prop c 'NAME)))
+                            (bg-color (prop c 'COLOR))
+                            (fg-color (and=> (prop c 'COLOR)
+                                             calculate-fg-color)))
+                       (list name (or bg-color 'white) (or fg-color 'black))))
+                   calendars))))
 
 ;; "Physical" block in calendar view
 (define*-public (make-block ev optional: (extra-attributes '()))

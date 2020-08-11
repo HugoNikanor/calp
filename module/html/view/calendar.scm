@@ -284,7 +284,7 @@
                         (summary "Calendar list")
                         (ul ,@(map
                                (lambda (calendar)
-                                 `(li (@ (class "CAL_bg_"
+                                 `(li (@ (class "CAL_"
                                            ,(html-attr (prop calendar 'NAME))))
                                       ,(prop calendar 'NAME)))
                                calendars))))
