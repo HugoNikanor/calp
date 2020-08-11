@@ -127,7 +127,6 @@ function bind_popup_control (nav) {
  * the supplied regexp. Returns a pair of the index and the value.
  */
 DOMTokenList.prototype.find = function (regexp) {
-    console.log(this);
     let entries = this.entries();
     let entry;
     while (! (entry = entries.next()).done) {
