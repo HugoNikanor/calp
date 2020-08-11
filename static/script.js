@@ -473,6 +473,28 @@ function place_in_edit_mode (event) {
 
     /* ---------------------------------------- */
 
+	let descs = popup.getElementsByClassName("description");
+	if (descs.length === 1) {
+		let description = descs[0];
+		let textarea = makeElement('textarea', {
+			name: "description",
+			placeholder: description.innerText,
+			required: false,
+		});
+
+		textarea.oninput = function () {
+			event.properties["description"] = this.value;
+		}
+
+		let slot = event.properties["_slot_description"]
+		let idx = slot.findIndex(e => e[0] === description);
+		slot.splice(idx, 1, [input, (s, v) => s.innerHTML = v])
+
+		description.replaceWith(textarea);
+	}
+
+    /* ---------------------------------------- */
+
     let submit = makeElement( 'input', {
         type: 'submit',
         value: 'Skapa event',
