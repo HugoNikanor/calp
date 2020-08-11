@@ -287,7 +287,14 @@
                                  `(li (@ (class "CAL_"
                                            ,(html-attr (prop calendar 'NAME))))
                                       ,(prop calendar 'NAME)))
-                               calendars))))
+                               calendars))
+                        (div (@ (id "calendar-dropdown-template") (class "template"))
+                             (select
+                               ,@(map (lambda (calendar)
+                                        `(option (@ (value ,(prop calendar 'NAME)))
+                                                 ,(prop calendar 'NAME)))
+                                      calendars))
+                             )))
 
           ;; List of events
           (div (@ (class "eventlist")

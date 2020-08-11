@@ -501,6 +501,11 @@ function place_in_edit_mode (event) {
         description.replaceWith(textarea);
     }
 
+    /* ---------------------------------------- */
+
+    let evtext = popup.getElementsByClassName('eventtext')[0]
+    let calendar_dropdown = document.getElementById('calendar-dropdown-template').firstChild.cloneNode(true);
+    evtext.prepend(calendar_dropdown);
 
     /* ---------------------------------------- */
 
