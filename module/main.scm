@@ -147,7 +147,12 @@
          (display (sxml->ansi-text module-help)
                   (current-output-port))
          (print-arg-help options)
-         (display (sxml->ansi-text (get-configuration-documentation))
+         (display (sxml->ansi-text
+                   ;; NOTE that this can only display config
+                   ;; items in loaded modules.
+                   ;; See scripts/get-config.scm for finding
+                   ;; all configuration items.
+                   (get-configuration-documentation))
                   (current-output-port))
          (throw 'return)
          )
