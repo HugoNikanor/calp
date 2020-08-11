@@ -163,6 +163,9 @@
                       (format #f "No event with UID '~a'" uid))))
 
    ;; TODO this fails when dtstart is <date>.
+   ;; TODO If data has an explicit UID and that UID already exists we
+   ;; overwrite it in the database. We however don't remove the old
+   ;; event from the in-memory set, but rather just adds the new.
    (POST "/insert" (cal data)
 
          (unless (and cal data)

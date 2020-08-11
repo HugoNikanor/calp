@@ -475,6 +475,10 @@ function place_in_edit_mode (event) {
 
     /* ---------------------------------------- */
 
+	/* TODO add elements if the arent't already there
+	 * Almost all should be direct children of '.event-body'.
+	 * Biggest problem is generated fields relative order.
+	 */
 	let descs = popup.getElementsByClassName("description");
 	if (descs.length === 1) {
 		let description = descs[0];
@@ -514,6 +518,11 @@ function place_in_edit_mode (event) {
         }});
     article.replaceWith(wrappingForm);
     wrappingForm.appendChild(article);
+
+	/* this is for existing events.
+	 * Newly created events aren't in the DOM tree yet, and can
+	 * therefore not yet be focused */
+	input.focus();
 
 }
 
@@ -558,7 +567,7 @@ window.onload = function () {
                     let popupElement = document.getElementById("popup" + event.id);
                     open_popup(popupElement);
 
-                    popupElement.querySelector("input[name='summary']").focus();
+					popupElement.querySelector("input[name='summary']").focus();
 
                 });
         }
