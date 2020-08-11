@@ -818,7 +818,7 @@ along with their colors.
 }
 
 .tab [type=radio]:checked ~ label ~ .content {
-	z-index: 1;
+    z-index: 1;
 }
 
 /* Other

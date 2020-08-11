@@ -43,18 +43,21 @@
           ;; TODO better format, add show in calendar button
           ,(fmt-single-event event)))))
 
-;; For sidebar, just text
+;; Format event as text.
+;; Used in
+;; - sidebar
+;; - popup overwiew tab
+;; - search result (event details)
 (define*-public (fmt-single-event ev
                                   optional: (attributes '())
                                   key: (fmt-header list))
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
   `(article (@ ,@(assq-merge
                   attributes
-                  `((class "eventtext CAL_"
-                      ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))
+                  `((class " eventtext "
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                         " tentative")))))
+                         " tentative ")))))
             (h3 ,(fmt-header
                   (when (prop ev 'RRULE)
                     `(span (@ (class "repeating")) "↺"))
@@ -100,13 +103,15 @@
                                     (class "hidelink")) ,s))))
               ,@(stream->list
                  (stream-map
-                  (lambda (ev) (fmt-single-event
-                           ev `((id ,(html-id ev)))
-                           fmt-header:
-                           (lambda body
-                             `(a (@ (href "#" ,(date-link (as-date (prop ev 'DTSTART))))
-                                    (class "hidelink"))
-                                 ,@body))))
+                  (lambda (ev)
+                    (fmt-single-event
+                      ev `((id ,(html-id ev))
+                           (class "CAL_" ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))))
+                      fmt-header:
+                      (lambda body
+                        `(a (@ (href "#" ,(date-link (as-date (prop ev 'DTSTART))))
+                               (class "hidelink"))
+                            ,@body))))
                   (stream-filter
                    (lambda (ev)
                      ;; If start was an earlier day
@@ -165,10 +170,9 @@
 (define-public (popup ev id)
   `(div (@ (class "popup-container") (id ,id)
            (onclick "event.stopPropagation()"))
-        (div (@ (class "popup"))
-             (nav (@ (class "popup-control CAL_"
-                       ,(html-attr (or (prop (parent ev) 'NAME)
-                                       "unknown"))))
+        (div (@ (class "popup CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
+                                                    "unknown"))) )
+             (nav (@ (class "popup-control"))
                   ,(btn "×"
                         title: "Stäng"
                         onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
@@ -181,12 +185,12 @@
                         onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))"))
 
              ,(tabset
-               `(("📅" title: "Översikt"
-                  ,(fmt-single-event ev))
-                 ("⤓" title: "Nedladdning"
-                  (div (@ (style "font-family:sans"))
-                       (p "Ladda ner")
-                       (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
-                                  "som iCal"))
-                           (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
-                                  "som xCal"))))))))))
+                `(("📅" title: "Översikt"
+                   ,(fmt-single-event ev))
+                  ("⤓" title: "Nedladdning"
+                   (div (@ (style "font-family:sans"))
+                        (p "Ladda ner")
+                        (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
+                                   "som iCal"))
+                            (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
+                                   "som xCal"))))))))))

@@ -291,7 +291,7 @@
                         (div (@ (id "calendar-dropdown-template") (class "template"))
                              (select
                                ,@(map (lambda (calendar)
-                                        `(option (@ (value ,(prop calendar 'NAME)))
+                                        `(option (@ (value ,(html-attr (prop calendar 'NAME))))
                                                  ,(prop calendar 'NAME)))
                                       calendars))
                              )))
