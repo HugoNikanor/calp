@@ -126,21 +126,27 @@
                  (let ((params (handle-parameters parameters))
                        (tag* (symbol-upcase tag)))
                    (for (type value) in (zip type value)
-                        (set! (prop* component tag*)
-                          (make-vline tag*
-                                      (handle-tag
-                                       tag (handle-value type params value))
-                                      params))))]
+                        ;; ignore empty fields
+                        ;; mostly for <text/>
+                        (unless (null? value)
+                          (set! (prop* component tag*)
+                            (make-vline tag*
+                                        (handle-tag
+                                          tag (handle-value type params value))
+                                        params)))))]
 
                 [(tag (type value ...) ...)
                  (for (type value) in (zip type value)
-                      (let ((params (make-hash-table))
-                            (tag* (symbol-upcase tag)))
-                        (set! (prop* component tag*)
-                          (make-vline tag*
-                                      (handle-tag
-                                       tag (handle-value type params value))
-                                      params))))])))
+                      ;; ignore empty fields
+                      ;; mostly for <text/>
+                      (unless (null? value)
+                        (let ((params (make-hash-table))
+                              (tag* (symbol-upcase tag)))
+                          (set! (prop* component tag*)
+                            (make-vline tag*
+                                        (handle-tag
+                                          tag (handle-value type params value))
+                                        params)))))])))
 
   ;; children
   (awhen (assoc-ref sxcal 'components)

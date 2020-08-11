@@ -478,7 +478,8 @@ function place_in_edit_mode (event) {
 		let description = descs[0];
 		let textarea = makeElement('textarea', {
 			name: "description",
-			placeholder: description.innerText,
+			placeholder: "Description (optional)",
+			innerHTML: description.innerText,
 			required: false,
 		});
 

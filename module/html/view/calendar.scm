@@ -318,7 +318,10 @@
                                      dtstart: (datetime)
                                      dtend: (datetime)
                                      summary: "New Event"
-                                     description: "None yet"))))
+                                     ;; force a description field,
+                                     ;; but don't put anything in
+                                     ;; it.
+                                     description: ""))))
               (event (car (children cal))))
          `((div (@ (class "template event-container") (id "event-template")
                    ;; Only needed to create a duration. So actual dates
