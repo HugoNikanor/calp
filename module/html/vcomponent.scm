@@ -175,6 +175,9 @@
                         title: "Stäng"
                         onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
                         class: '("close-tooltip"))
+                  ,(btn "🖊️"
+                        title: "Redigera"
+                        onclick: "place_in_edit_mode(document.getElementById(this.closest('.popup-container').id.substr(5)))")
                   ,(btn "🗑"
                         title: "Ta bort"
                         onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))"))

@@ -509,7 +509,7 @@ along with their colors.
     overflow: visible;
 }
 
-.event input {
+.popup input {
     white-space: initial;
     border: 1px solid gray;
     max-width: 100%;

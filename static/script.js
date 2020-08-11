@@ -428,6 +428,7 @@ function place_in_edit_mode (event) {
         let input = makeElement ('input', {
             type: "time",
             required: true,
+			value: field.innerText,
 
             onchange: function (e) {
                 /* Only update datetime when the input is filled out */
