@@ -386,11 +386,12 @@ function close_all_popups () {
 async function create_event (event) {
 
     let xml = event.getElementsByTagName("icalendar")[0].outerHTML
+    let calendar = event.properties.calendar;
 
-    console.log(xml);
+    console.log(calendar, xml);
 
     let data = new URLSearchParams();
-    data.append("cal", "Calendar");
+    data.append("cal", calendar);
     data.append("data", xml);
 
     let response = await fetch ( '/insert', {
@@ -400,7 +401,8 @@ async function create_event (event) {
 
     console.log(response);
     if (response.status < 200 || response.status >= 300) {
-        alert(`HTTP error ${response.status}\n${response.statusText}`)
+        let body = await response.text();
+        alert(`HTTP error ${response.status}\n${body}`)
         return;
     }
 
@@ -430,7 +432,6 @@ async function create_event (event) {
     }
 
     event.classList.remove("generated");
-    event.classList.add("CAL_Calendar");
     toggle_popup("popup" + event.id);
 }
 
@@ -528,19 +529,12 @@ function place_in_edit_mode (event) {
         }
     }
 
+
     /* Instant change while user is stepping through would be
      * preferable. But I believe that <option> first gives us the
      * input once selected */
     calendar_dropdown.onchange = function () {
-        let popup = this.closest('.popup-container')
-        let event = document.getElementById(popup.id.substr(5))
-
-        let [_, calclass] = popup.classList.find(/^CAL_/);
-
-        popup.classList.replace(calclass, "CAL_" + this.value)
-        event.classList.replace(calclass, "CAL_" + this.value)
-
-
+        event.properties.calendar = this.value;
     }
     evtext.prepend(calendar_dropdown);
 
@@ -823,4 +817,39 @@ function bind_properties (el, wide_event=false) {
             [el.style,
              (s, v) => s[wide_event?'right':'bottom'] = 100 * (1 - (to_local(v)-start)/(end-start)) + "%"]);
     }
+
+    if (! el.dataset.calendar) {
+        el.dataset.calendar = "Unknown";
+    }
+
+    el.properties._value_calendor = el.dataset.calendar;
+    el.properties._slot_calendar = [];
+
+    /* TODO merge this and instance above */
+    let field = 'calendar';
+    Object.defineProperty(
+        el.properties, field,
+        {
+            get: function () {
+                return this["_value_" + field];
+            },
+            set: function (value) {
+                this["_value_" + field] = value;
+                for (let [slot,updater] of el.properties["_slot_" + field]) {
+                    updater(slot, value);
+                }
+            }
+        });
+
+    const rplcs = (s, v) => {
+        let [_, calclass] = s.classList.find(/^CAL_/);
+        s.classList.replace(calclass, "CAL_" + v);
+    }
+
+    el.properties._slot_calendar.push([popup, rplcs]);
+    el.properties._slot_calendar.push([el, rplcs]);
+
+    el.properties._slot_calendar.push(
+        [el, (s, v) => s.dataset.calendar = v]);
+
 }

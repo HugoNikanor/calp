@@ -142,6 +142,7 @@
        (div (@ ,@(assq-merge
                   extra-attributes
                   `((id ,(html-id ev))
+                    (data-calendar ,(html-attr (or (prop (parent ev) 'NAME) "unknown")))
                     (class "event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
                                                         "unknown"))
                       ,(when (and (prop ev 'PARTSTAT)
