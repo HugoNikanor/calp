@@ -829,7 +829,7 @@ function bind_properties (el, wide_event=false) {
         el.dataset.calendar = "Unknown";
     }
 
-    el.properties._value_calendor = el.dataset.calendar;
+    el.properties._value_calendar = el.dataset.calendar;
     el.properties._slot_calendar = [];
 
     /* TODO merge this and instance above */
