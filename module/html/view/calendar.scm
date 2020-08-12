@@ -16,10 +16,14 @@
                                           ))
   :use-module (html config)
   :use-module (html util)
+
+  :use-module (util config)
+
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
+
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
   :use-module ((git)
@@ -288,13 +292,17 @@
                                            ,(html-attr (prop calendar 'NAME))))
                                       ,(prop calendar 'NAME)))
                                calendars))
-                        (div (@ (id "calendar-dropdown-template") (class "template"))
-                             (select
+                      (div (@ (id "calendar-dropdown-template") (class "template"))
+                           (select
                                (option "- Choose a Calendar -")
-                               ,@(map (lambda (calendar)
-                                        `(option (@ (value ,(html-attr (prop calendar 'NAME))))
-                                                 ,(prop calendar 'NAME)))
-                                      calendars))
+                               ,@(let ((dflt (get-config 'default-calendar)))
+                                   (map (lambda (calendar)
+                                          (define name (prop calendar 'NAME))
+                                          `(option (@ (value ,(html-attr name))
+                                                      ,@(when (string=? name dflt)
+                                                          '((selected))))
+                                                   ,name))
+                                        calendars)))
                              )))
 
           ;; List of events

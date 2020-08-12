@@ -522,12 +522,19 @@ function place_in_edit_mode (event) {
     let calendar_dropdown = document.getElementById('calendar-dropdown-template').firstChild.cloneNode(true);
 
     let [_, calclass] = popup.classList.find(/^CAL_/);
-    for (let [i, option] of calendar_dropdown.childNodes.entries()) {
-        if (option.value === calclass.substr(4)) {
-            calendar_dropdown.selectedIndex = i;
-            break;
-        }
-    }
+	label: {
+		for (let [i, option] of calendar_dropdown.childNodes.entries()) {
+			if (option.value === calclass.substr(4)) {
+				calendar_dropdown.selectedIndex = i;
+				break label;
+			}
+		}
+		/* no match, try find default calendar */
+		let t;
+		if ((t = calendar_dropdown.querySelector("[selected]"))) {
+			event.properties.calendar = t.value;
+		}
+	}
 
 
     /* Instant change while user is stepping through would be
