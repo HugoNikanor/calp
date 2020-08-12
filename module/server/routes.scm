@@ -146,17 +146,13 @@
                 ;; It's hard to properly remove a file. I also want a way to undo accidental
                 ;; deletions. Therefore I simply save the X-HNH-REMOVED flag to the file, and
                 ;; then simple don't use those events when loading.
-                (catch 'stack-overflow (lambda () (remove-event global-event-object it))
-                  (lambda _
-                    (display "It overflew...\n" (current-error-port))
-                    (return (build-response code: 500)
-                               "It overflew again...")))
+                (remove-event global-event-object it)
                 (set! (prop it 'X-HNH-REMOVED) #t)
                 (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
                 (unless ((@ (output vdir) save-event) it)
                   (return (build-response code: 500)
                           "Saving event to disk failed."))
-                (return (build-response code: 204) ""))
+                (return (build-response code: 204)))
               (return (build-response code: 400)
                       (format #f "No event with UID '~a'" uid))))
 
@@ -227,9 +223,11 @@
                         (begin (vcomponent-update! old-event event)
                                ;; for save below
                                (set! event old-event))
+
                         ;; change calendar
                         (begin
                           ;; (remove-from-calendar! old-event)
+                          ;; TODO remove the old event from disk here
                           (remove-event global-event-object old-event)
 
                           (parameterize ((warnings-are-errors #t))
