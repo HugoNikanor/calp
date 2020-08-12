@@ -5,6 +5,7 @@
   :use-module (srfi srfi-41)
   :use-module (datetime)
   :use-module (html util)
+  :use-module ((html config) :select (edit-mode))
   :use-module ((html components) :select (btn tabset))
   :use-module ((output general) :select (calculate-fg-color))
   :use-module ((vcomponent datetime output)
@@ -180,12 +181,14 @@
                         title: "Stäng"
                         onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
                         class: '("close-tooltip"))
-                  ,(btn "🖊️"
-                        title: "Redigera"
-                        onclick: "place_in_edit_mode(document.getElementById(this.closest('.popup-container').id.substr(5)))")
-                  ,(btn "🗑"
-                        title: "Ta bort"
-                        onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))"))
+                  ,(when (edit-mode)
+                     (list
+                      (btn "🖊️"
+                           title: "Redigera"
+                           onclick: "place_in_edit_mode(document.getElementById(this.closest('.popup-container').id.substr(5)))")
+                      (btn "🗑"
+                           title: "Ta bort"
+                           onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))"))))
 
              ,(tabset
                 `(("📅" title: "Översikt"

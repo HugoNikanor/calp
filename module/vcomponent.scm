@@ -11,7 +11,7 @@
                    (vcomponent instance methods))
 
 (define-config calendar-files '()
-  "Which files to parse. Takes a list of paths or a single string which will be globbed."
+  description: "Which files to parse. Takes a list of paths or a single string which will be globbed."
   pre: (lambda (v)
          (cond [(list? v) v]
                [(string? v) ((@ (glob) glob) v)]
