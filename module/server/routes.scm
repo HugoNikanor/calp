@@ -158,9 +158,6 @@
                       (format #f "No event with UID '~a'" uid))))
 
    ;; TODO this fails when dtstart is <date>.
-   ;; TODO If data has an explicit UID and that UID already exists we
-   ;; overwrite it in the database. We however don't remove the old
-   ;; event from the in-memory set, but rather just adds the new.
    (POST "/insert" (cal data)
 
          (unless (and cal data)
@@ -170,7 +167,7 @@
 
          ;; NOTE that this leaks which calendar exists,
          ;; but you can only query for existance.
-         ;; also, the default output gives everything.
+         ;; also, the calendar view already show all calendars.
          (let ((calendar
                 (find (lambda (c) (string=? cal (prop c 'NAME)))
                       (get-calendars global-event-object))))
@@ -215,21 +212,54 @@
              ;; to use a /update endpoint to change events. This to prevent
              ;; accidental overwriting.
 
-             (parameterize ((warnings-are-errors #t))
-               (catch 'warning
-                 (lambda () (add-event global-event-object calendar event))
-                 (lambda (err fmt args)
-                   (return (build-response code: 400)
-                           (format #f "~?~%" fmt args)))))
 
-             ;; NOTE Posibly defer save to a later point.
-             ;; That would allow better asyncronous preformance.
-             (unless ((@ (output vdir) save-event) event)
-               (return (build-response code: 500)
-                       "Saving event to disk failed."))
+             (cond
+              [(get-event-by-uid global-event-object (prop event 'UID))
+               => (lambda (old-event)
 
-             (format (current-error-port)
-                     "Event inserted ~a~%" (prop event 'UID))
+                    (if (eq? calendar (parent old-event))
+                        (begin (vcomponent-update! old-event event)
+                               ;; for save below
+                               (set! event old-event))
+                        ;; change calendar
+                        (begin
+                          ;; (remove-from-calendar! old-event)
+                          (remove-event global-event-object old-event)
+
+                          (parameterize ((warnings-are-errors #t))
+                            (catch 'warning
+                              (lambda () (add-event global-event-object calendar event))
+                              (lambda (err fmt args)
+                                (return (build-response code: 400)
+                                        (format #f "~?~%" fmt args)))))))
+
+
+                    ;; NOTE Posibly defer save to a later point.
+                    ;; That would allow better asyncronous preformance.
+                    (unless ((@ (output vdir) save-event) event)
+                      (return (build-response code: 500)
+                              "Saving event to disk failed."))
+
+
+                    (format (current-error-port)
+                            "Event updated ~a~%" (prop event 'UID)))]
+
+              [else
+               (parameterize ((warnings-are-errors #t))
+                 (catch 'warning
+                   (lambda () (add-event global-event-object calendar event))
+                   (lambda (err fmt args)
+                     (return (build-response code: 400)
+                             (format #f "~?~%" fmt args)))))
+
+               ;; NOTE Posibly defer save to a later point.
+               ;; That would allow better asyncronous preformance.
+               (unless ((@ (output vdir) save-event) event)
+                 (return (build-response code: 500)
+                         "Saving event to disk failed."))
+
+               (format (current-error-port)
+                       "Event inserted ~a~%" (prop event 'UID))])
 
              (return '((content-type application/xml))
                      (with-output-to-string
