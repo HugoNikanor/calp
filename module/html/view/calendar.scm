@@ -304,6 +304,8 @@
                ;; but "spill" into our time span.
                (section (@ (class "text-day"))
                         (header (h2 "Tidigare"))
+                        ;; TODO this group gets styles applied incorrectly.
+                        ;; Figure out way to merge it with the below call.
                         ,@(stream->list
                            (stream-map
                             fmt-single-event

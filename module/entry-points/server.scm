@@ -1,6 +1,5 @@
 (define-module (entry-points server)
   :use-module (util)
-  :use-module (util config)
   :use-module (util options)
   :use-module (util exceptions)
 
@@ -9,11 +8,9 @@
 
   :use-module (ice-9 match)
   :use-module (ice-9 control)
-  :use-module (ice-9 rdelim)
-  :use-module (ice-9 curried-definitions)
-  :use-module (ice-9 ftw)
+  :use-module ((ice-9 rdelim) :select (read-string))
+  :use-module ((ice-9 ftw) :select (scandir))
   :use-module (ice-9 getopt-long)
-  :use-module (ice-9 iconv)
   :use-module (ice-9 regex) #| regex here due to bad macros |#
 
   :use-module (web server)
@@ -38,6 +35,7 @@
   :autoload (vcomponent instance) (global-event-object)
 
   :use-module (html view calendar)
+  :use-module ((html view search) :select (search-result-page))
 
   :export (main)
   )
@@ -101,8 +99,7 @@
    ;; It would be much better if most of the page could still make it.
    (GET "/week/:start-date.html" (start-date)
         (let* ((start-date
-                (start-of-week (parse-iso-date start-date)
-                               (get-config 'week-start))))
+                (start-of-week (parse-iso-date start-date))))
 
           (return `((content-type application/xhtml+xml))
                   (with-output-to-string
@@ -132,8 +129,8 @@
                                      prev-start: month-
                                      render-calendar: (@ (html view calendar month)
                                                          render-calendar-table)
-                                     pre-start: (start-of-week start-date (get-config 'week-start))
-                                     post-end: (end-of-week (end-of-month start-date) (get-config 'week-start))
+                                     pre-start: (start-of-week start-date)
+                                     post-end: (end-of-week (end-of-month start-date))
                                      intervaltype: 'month
                                      ))))))
 
@@ -332,7 +329,7 @@
                 (with-output-to-string
                   (lambda ()
                     (sxml->xml
-                     ((@ (html view search) search-result-page)
+                     (search-result-page
                       search-term search-result page paginator q=))))))
 
    ;; NOTE this only handles files with extensions. Limited, but since this
