@@ -6,24 +6,11 @@
   :use-module (srfi srfi-1)
 
   :use-module (ice-9 getopt-long)
-  :use-module (ice-9 regex) #| regex here due to bad macros |#
+  ;; :use-module (ice-9 regex) #| regex here due to bad macros |#
 
-  :use-module ((web server) :select (run-server))
+  :use-module ((server server) :select (start-server))
 
-  ;; :use-module (vcomponent)
-  ;; :use-module (vcomponent search)
-  ;; :use-module (datetime)
-  ;; :use-module (output html)
-  ;; :use-module (output ical)
-
-  :use-module ((server routes) :select (make-make-routes))
-
-  :export (main)
-  )
-
-
-
-
+  :export (main))
 
 
 (define options
@@ -64,16 +51,6 @@
         (if (eqv? family AF_INET6)
             "::" "0.0.0.0")))
 
-  ;; NOTE The default make-default-socket is broken for IPv6.
-  ;; A patch has been submitted to the mailing list. 2020-03-31
-  (module-set!
-   (resolve-module '(web server http))
-   'make-default-socket
-   (lambda (family addr port)
-     (let ((sock (socket family SOCK_STREAM 0)))
-       (setsockopt sock SOL_SOCKET SO_REUSEADDR 1)
-       (bind sock family addr port)
-       sock)))
 
   (format #t "Starting server on ~a:~a~%I'm ~a, runing from ~a~%"
           addr port
@@ -81,12 +58,8 @@
 
   (catch 'system-error
     (lambda ()
-     (run-server (make-make-routes)
-                 'http
-                 `(family: ,family
-                           port: ,port
-                           host: ,addr)
-                 0))
+      (start-server `(family: ,family port: ,port host: ,addr)))
+
     ;; probably address already in use
     (lambda (err proc fmt args errno)
       (format (current-error-port) "~a: ~?~%"

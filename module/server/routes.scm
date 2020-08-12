@@ -133,7 +133,6 @@
                                      intervaltype: 'month
                                      ))))))
 
-
    (POST "/remove" (uid)
          (unless uid
            (return (build-response code: 400)
