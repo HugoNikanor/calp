@@ -16,6 +16,9 @@
   :use-module (sxml xpath)
   :use-module (sxml namespace)
 
+
+  :use-module ((html util) :select (html-unattr))
+
   :use-module (server util)
   :use-module (server macro)
 
@@ -158,6 +161,8 @@
                       (format #f "No event with UID '~a'" uid))))
 
    ;; TODO this fails when dtstart is <date>.
+   ;; @var{cal} should be the name of the calendar encoded with
+   ;; modified base64. See (html util).
    (POST "/insert" (cal data)
 
          (unless (and cal data)
@@ -168,13 +173,14 @@
          ;; NOTE that this leaks which calendar exists,
          ;; but you can only query for existance.
          ;; also, the calendar view already show all calendars.
-         (let ((calendar
-                (find (lambda (c) (string=? cal (prop c 'NAME)))
-                      (get-calendars global-event-object))))
+         (let* ((calendar-name (html-unattr cal))
+                (calendar
+                  (find (lambda (c) (string=? calendar-name (prop c 'NAME)))
+                        (get-calendars global-event-object))))
 
            (unless calendar
              (return (build-response code: 400)
-                     (format #f "No calendar with name [~a]\r\n" cal)))
+                     (format #f "No calendar with name [~a]\r\n" calendar-name)))
 
            ;; Expected form of data (but in XML) is:
            ;; @example
