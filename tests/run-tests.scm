@@ -76,7 +76,9 @@
                  #:allocation-limit #e10e8
                  #:module (make-sandbox-module
                            (append modules
-                                   '(((srfi srfi-64) test-assert test-equal test-error)
+                                   '(((srfi srfi-64) test-assert
+                                      test-equal test-error
+                                      test-eqv)
                                      ((ice-9 ports) call-with-input-string)
                                      ((guile) make-struct/no-tail)
                                      )
