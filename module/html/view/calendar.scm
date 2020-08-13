@@ -97,6 +97,10 @@
 
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
+
+;; TODO document what @var{render-calendar} is supposed to take and return.
+;; Can at least note that @var{render-calendar} is strongly encouraged to include
+;; (script "const VIEW='??';"), where ?? is replaced by the name of the view.
 (define*-public (html-generate
                  key:
                  (intervaltype 'all)    ; 'week | 'month | 'all
@@ -179,10 +183,11 @@
                               next-start: next-start
                               prev-start: prev-start
                               )
-
-           ,@(for event in (stream->list
-                            (events-between pre-start post-end events))
-                  (popup event (string-append "popup" (html-id event)))))
+           ;; Popups used to be here, but was moved into render-calendar so each
+           ;; sub-view can itself decide where to put them. This is important
+           ;; since they need to be placed as children to the scrolling
+           ;; component, if one such component exists.
+           )
 
           ;; Page footer
           (footer

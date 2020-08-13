@@ -35,7 +35,8 @@
                    (events-between s e (list->stream long-events)))))
          (date-range pre-start post-end (date day: 7))))
 
-  `((header (@ (class "table-head"))
+  `((script "const VIEW='month';")
+    (header (@ (class "table-head"))
             ,(string-titlecase (date->string start-date "~B ~Y")))
     (div (@ (class "caltable")
             (style "grid-template-rows: 2em"
@@ -74,7 +75,14 @@
                       ,@(map make-small-block (stream->list events)))))
              short-event-groups
              (repeating-naturals 1 7)
-             )))))
+             )))
+
+    ;; These popups are relative the document root. Can thus be placed anywhere in the DOM.
+    ,@(for event in (stream->list
+                     (events-between start-date end-date events))
+           ((@ (html vcomponent) popup) event
+            (string-append "popup" ((@ (html util) html-id) event))))
+    ))
 
 
 

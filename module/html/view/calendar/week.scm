@@ -22,7 +22,8 @@
 (define*-public (render-calendar key: events start-date end-date #:allow-other-keys)
   (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))
          (range (date-range start-date end-date)))
-    `((div (@ (class "calendar"))
+    `((script "const VIEW='week';")
+      (div (@ (class "calendar"))
            (div (@ (class "days"))
                 ,@(time-marker-div)
                 (div (@ (class "longevents event-container")
@@ -41,7 +42,13 @@
                    (stream-map
                     lay-out-day
                     (get-groups-between (group-stream (list->stream short-events))
-                                        start-date end-date))))))))
+                                        start-date end-date)))
+
+                ,@(for event in (stream->list
+                                 (events-between start-date end-date events))
+                       ((@ (html vcomponent ) popup) event (string-append "popup" (html-id event))))
+
+                )))))
 
 
 
