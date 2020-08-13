@@ -22,11 +22,28 @@
 
     [(vdir)
      (let* ((uid (or (prop event 'UID) (uuidgen))))
-       (set! (prop event 'UID) uid)
-       (with-atomic-output-to-file
-        (string-append (prop calendar '-X-HNH-DIRECTORY) / uid ".ics")
+       (set! (prop event 'UID) uid
+             ;; TODO use existing filename if present?
+             (prop event '-X-HNH-FILENAME) (string-append
+                                            (prop calendar '-X-HNH-DIRECTORY)
+                                            / uid ".ics"))
+       (with-atomic-output-to-file (prop event '-X-HNH-FILENAME)
         (lambda () (print-components-with-fake-parent (list event))))
        uid)]
+
+    [else
+     (error "Source of calendar unknown, aborting.")
+     ]))
+
+
+(define-public (remove-event event)
+  (define calendar (parent event))
+  (case (prop calendar '-X-HNH-SOURCETYPE)
+    [(file)
+     (error "Removing events from large files unsupported")]
+
+    [(vdir)
+     (delete-file (prop event '-X-HNH-FILENAME))]
 
     [else
      (error "Source of calendar unknown, aborting.")
