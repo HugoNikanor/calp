@@ -21,7 +21,11 @@
   #:use-module ((vcomponent instance methods)
                 :select (get-calendars get-event-set))
 
+
+  #:use-module ((ice-9 regex) :select (string-match regexp-substitute))
+
   #:use-module ((sxml simple) :select (sxml->xml))
+  #:use-module ((sxml transformations) :select (href-transformer))
 
   #:autoload (vcomponent instance) (global-event-object)
   )
@@ -40,7 +44,7 @@
 
 
 (define (get-filename start-date)
-  (format #f "~a/html/~a.html"
+  (format #f "~a/html/~a.xml"
           (dirname (or (@ (global) basedir) "."))
           (date->string start-date "~1")))
 
@@ -58,7 +62,14 @@
    (lambda (start-date)
      (define fname (get-filename start-date))
      (format (current-error-port) "Writing to [~a]~%" fname)
-     (with-output-to-file fname (lambda () (sxml->xml (proc calendars events))) ))
+     (with-output-to-file fname
+       (lambda () (sxml->xml
+              (href-transformer
+               (proc calendars events)
+               (lambda (str)
+                 (aif (string-match "^/static" str)
+                      (regexp-substitute #f it 'pre "static" 'post)
+                      str)))))))
    (stream-take count (date-stream chunk-length start-date))
    ))
 
@@ -77,20 +88,13 @@
                            prev-start: (lambda (d) (date- d chunk-length))
                            ))))
 
-
-
 (define-public (html-table-main count start-date)
 
   (common count start-date (date month: 1)
-          (let* ((before current after
-                         (month-days start-date)))
-
-            ;; TODO this produces incorrect next and prev links
-            ;; TODO It actually produces almost all date links wrong
+          (let* ((before current after (month-days start-date)))
             (lambda (calendars events)
               (html-generate calendars: calendars
                              events: events
-                             ;; Appends for case where before or after is empty
                              start-date: (car current)
                              end-date: (date- (if (null? after)
                                                   (last current)
@@ -99,6 +103,7 @@
                              render-calendar: render-calendar-table
                              next-start: month+
                              prev-start: month-
+                             ;; Appends for case where before or after is empty
                              pre-start: (car (append before current))
                              post-end: (last (append current after))
                              )))))
