@@ -1,0 +1,977 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.root {
+    display: grid;
+    margin: 0;
+    max-width: 100%;
+    height: 100%;
+
+    grid-template-columns: auto auto 20em;
+    grid-template-rows: auto;
+
+    grid-template-areas:
+        "main main nav"
+        "main main cal"
+            "main main details"
+            "main main events"
+            "footer footer events";
+
+    main {
+        min-width: 0;  /* for wide */
+        min-height: 0; /* for tall */
+
+        /* apparently required if one wants to have multiple
+       items within main, without it overflowing
+       */
+        display: flex;
+        flex-direction: column;
+    }
+
+
+    footer {
+        margin: 0.5em;
+        color: ray;
+        font-size: 8pt;
+
+        display: flex;
+        justify-content: space-between;
+
+        flex-direction: row;
+
+        span {
+            margin: 0 1em;
+            white-space: nowrap;
+        }
+    }
+}
+
+@media (max-aspect-ratio: 3/4) {
+    .root {
+        grid-template-areas:
+            "main main"
+                "nav events"
+                "cal events"
+                "details events"
+                ". events"
+                "footer events";
+        grid-template-rows: 70% auto;
+        grid-template-columns: 50% auto;
+
+        footer {
+            flex-direction: column;
+        }
+    }
+}
+
+.hidelink {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+/* Change View
+----------------------------------------
+"Buttons" for changing between weekly and monthly layout
+*/
+
+.calnav {
+    display: flex;
+    flex-direction: column;
+    padding-left: 2em;
+    padding-right: 2em;
+}
+
+.change-view {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    padding-top: 1ex;
+    padding-bottom: 1ex;
+}
+
+#jump-to {
+    > form {
+        display: flex;
+    }
+
+    input {
+        flex-grow: 2;
+        margin-right: 1em;
+    }
+
+    button, a {
+        /* Same as height, figure out way to force this */
+        width: 2.5em;
+    }
+}
+
+/* button
+--------------------------------------------------
+*/
+
+.btn {
+    padding: 0;
+
+    /* if a */
+    text-decoration: none;
+
+    /* if button */
+    border: none;
+    background-color: inherit;
+
+    > div {
+        padding: 0.5em;
+        background-color: #3399ff;
+        color: white;
+
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        /* shouldn't be needed, but otherwise wont align with a text input
+       inside a shared flex-container.
+       It however seems to make <a> and <button> tag refuse to be the same height?
+       */
+        height: 2.5em;
+
+        box-shadow: var(--btn-height) var(--btn-height) gray;
+    }
+
+    &:active > div {
+        transform: translate(var(--btn-height), var(--btn-height));
+        box-shadow: none;
+    }
+}
+
+/* Eventlist
+----------------------------------------
+The sidebar with all the events
+*/
+
+.eventlist {
+    min-height: 0;
+    overflow: auto;
+    border-top: 3px solid var(--gray);
+    /* mostly for long links */
+    word-break: break-word;
+
+    article {
+        border-bottom: 1px solid black;
+        margin-top: 1em;
+        border-left-style: solid;
+        border-left-width: 6px;
+        padding-left: 2px;
+    }
+
+    .eventtext {
+        border-color: var(--color);
+
+        &.tentative {
+            border-left-style: dashed;
+        }
+    }
+}
+
+/* Text day
+----------------------------------------
+Each event within the eventlist
+*/
+
+.text-day {
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+    padding-left: 2px;
+    margin-top: 1em;
+
+    header h2 {
+        width: 100%;
+        text-align: center;
+        font-size: 14pt;
+    }
+}
+
+/* Small calendar
+----------------------------------------
+*/
+
+.smallcal {
+    display: flex;
+    justify-content: center;
+
+    .nav {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        font-size: 150%;
+    }
+}
+
+.smallcall-head {
+    text-align: center;
+    font-weight: bold;
+}
+
+
+.small-calendar {
+    display: grid;
+    grid-template-rows: auto;
+    grid-template-columns: auto;
+
+    grid-auto-flow: dense;
+
+    > * {
+        text-align: center;
+        > time {
+            width: 100%;
+            text-align: right;
+            /* padding place in <time> instead on parent block element
+       to allow a border radius without making the link area
+       smaller
+           */
+            padding: 5px;
+        }
+    }
+    > *:not(.column-head) {
+        display: flex;
+        align-items: center; /* vertically center */
+        text-align: right;
+    }
+    a {
+        color: initial;
+        text-decoration: none;
+    }
+
+    .row-head {
+        grid-column: 1;
+        border-right: 1px solid black;
+
+        /* Sort of hack to get week numbers looking ok */
+        justify-content: right;
+        padding-right: 5px;
+    }
+
+    .column-head {
+        grid-row: 1;
+        border-bottom: 1px solid black;
+    }
+
+    .next, .prev {
+        color: var(--gray);
+    }
+
+    .today {
+        border: 1px solid black;
+    }
+}
+
+/* Sliders
+----------------------------------------
+ */
+
+.sliders {
+    label {
+        padding-left: 1em;
+    }
+
+    input[type="range"] {
+        width: 100%;
+        margin: 0;
+    }
+
+    .input-group {
+        display: flex;
+
+        input {
+            min-width: 0;
+        }
+    }
+}
+
+/* Calendar List
+----------------------------------------
+The list of all the loaded calendars,
+along with their colors.
+*/
+
+.calendarlist li {
+    font-size: 8pt;
+    list-style-type: none;
+    border-left-width: 1em;
+    border-left-style: solid;
+    border-color: var(--color);
+    padding-left: 1ex;
+
+    /* force to single line */
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* Caltable
+----------------------------------------
+*/
+
+.table-head {
+    font-size: 200%;
+    text-align: center;
+}
+
+.caltable {
+    flex-grow: 10;
+
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    /* grid template rows is generated
+       inline in the HTML */
+
+    max-height: 100%;
+    /* Apparently needed to ensure that parent
+       can contain all its children */
+    min-height: 0;
+
+    .thead {
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .thead, .cal-cell {
+        border: 1px solid var(--gray);
+    }
+
+    .cal-cell {
+        overflow-y: auto;
+
+        .event {
+            font-size: 8pt;
+            border-radius: 5px;
+            padding: 2px;
+            margin: 2px;
+            font-family: arial;
+        }
+    }
+
+    .cal-cell-time {
+        border-bottom: none;
+    }
+
+    .cal-cell-short {
+        border-top: none
+    }
+
+
+    .longevents {
+        border-bottom: none;
+        border-top: none;
+        position: relative;
+
+        .event {
+            margin: 0;
+            /* TODO use other border rules */
+            border: 1px solid black;
+
+            position: absolute;
+            box-sizing: border-box;
+            padding: 0;
+        }
+    }
+}
+
+
+.date-info {
+    color: var(--gray);
+    .day-number {
+        padding: 2pt;
+    }
+
+    &.current .day-number {
+        color: black;
+    }
+}
+
+
+/* Weekly calendar
+----------------------------------------
+*/
+
+.calendar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-grow: 2;
+}
+
+.clock {
+    color: var(--gray);
+    border-top: 1px dotted var(--gray);
+    width: 100%;
+    pointer-events: none;
+}
+
+.sideclock {
+    padding: 0;
+    grid-row: 3;
+    position: relative;
+    .day {
+        border: 1px transparent;
+        min-width: 0;
+    }
+    .clock {
+        border-top: 1px dotted var(--gray);
+        grid-row: 3;
+    }
+}
+
+.days {
+    display: grid;
+    grid-template-rows: 4em 4em auto;
+    grid-template-columns: 5ch auto;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    overflow-x: scroll;
+
+    /* allow for popup placement */
+    position: relative;
+
+    .meta {
+        border-bottom: 2px solid var(--gray);
+        grid-row: 1;
+    }
+
+    .events {
+        grid-row: 3;
+    }
+
+    .event {
+        border: 1px solid black;
+    }
+
+    .longevents {
+        grid-row: 2;
+        grid-column-start: 2;
+        position: relative;
+    }
+}
+
+.events {
+    position: relative;
+    border: 1px solid var(--gray);
+
+    .event {
+        width: 100%;
+
+        &.generated {
+            width: calc(100% * var(--editmode));
+        }
+
+        &.continuing {
+            border-bottom: none;
+            background-image: linear-gradient(to top, #0007 0%,#FFF0 2em);
+        }
+
+        &.continued {
+            border-top: none;
+            background-image: linear-gradient(to bottom, #FFF7 0%,#FFF0 3em);
+        }
+
+        &.continued.continuing {
+            border-top: none;
+            border-bottom: none;
+            background-image:
+                linear-gradient(to bottom,
+                                #FFF7  0%, #FFF0 10%,
+                                #FFF0 90%, #0007 100%);
+        }
+
+    }
+
+}
+
+/*
+ * This makes the borders of the object be part of the size.
+ * Making placing it on the correct line much simpler.
+ */
+.clock, .days .event, .eventlike {
+    position: absolute;
+    box-sizing: border-box;
+    margin: 0;
+    display: block;
+}
+
+.clocktext {
+    z-index: 1;
+    text-align: right;
+}
+
+.meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+
+    padding-left: 1em;
+    padding-right: 1em;
+    .dayname {
+        position: absolute;
+        left: 5px;
+        top: 2px;
+        color: var(--gray);
+    }
+
+    .daydate {
+        white-space: nowrap;
+        font-size: 150%;
+    }
+}
+
+.event {
+    transition: 0.3s;
+    font-size: var(--event-font-size);
+    overflow: visible;
+    background-color: var(--color);
+    color: var(--complement);
+
+    &.tentative {
+        border: 3px dashed black;
+    }
+
+    &.generated {
+        opacity: 40%;
+        transition: none;
+    }
+
+    &.repeating {
+        float: left;
+        font-size: 150%;
+    }
+
+    .location {
+        display: block;
+        font-size: 80%;
+        font-style: italic;
+        white-space: pre;
+    }
+}
+
+.event-body {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.zero-width-events .event {
+    width: initial;
+    padding: 0.5em;
+    margin: 0.2em;
+    border-radius: 1ex;
+    position: relative;
+    float: left;
+}
+
+
+.repeating {
+    color: red;
+}
+
+.eventtext {
+    white-space: pre-line;
+    font-size: 10pt;
+
+    h3 {
+        font-size: 12pt;
+        border-bottom: 1px solid var(--gray);
+        margin-bottom: 0;
+        font-weight: 300;
+        margin-top: 0;
+    }
+
+    .location {
+        display: inline-block;
+        vertical-align: text-top;
+    }
+
+    .last-modified, .rrule {
+        display: flex;
+        justify-content: right;
+        text-align: right;
+        font-size: 80%;
+        color: var(--gray);
+        padding-right: 1em;
+    }
+}
+
+/* */
+
+.longevents {
+    .event {
+        border-radius: 1em;
+        padding-left: 1em;
+        &.continuing {
+            border-right: none;
+            border-radius: 1em 0 0 1em;
+        }
+
+        &.continued {
+            border-left: none;
+            border-radius: 0 1em 1em 0;
+        }
+
+        &.continued.continuing {
+            border-radius: 0;
+        }
+
+    }
+}
+
+/*
+ * All other CAL_ classes are generated by the backend.
+ * NOTE Possibly move this there.
+ */
+.CAL_Generated {
+    background-color: #55FF55;
+}
+
+.clock-0  { top: calc(100%/24 *  0); }
+.clock-2  { top: calc(100%/24 *  2); }
+.clock-4  { top: calc(100%/24 *  4); }
+.clock-6  { top: calc(100%/24 *  6); }
+.clock-8  { top: calc(100%/24 *  8); border-width: 2px; }
+.clock-10 { top: calc(100%/24 * 10); }
+.clock-12 { top: calc(100%/24 * 12); }
+.clock-14 { top: calc(100%/24 * 14); }
+.clock-16 { top: calc(100%/24 * 16); border-width: 2px; }
+.clock-18 { top: calc(100%/24 * 18); }
+.clock-20 { top: calc(100%/24 * 20); }
+.clock-22 { top: calc(100%/24 * 22); }
+.clock-24 { top: calc(100%/24 * 24); }
+
+
+/* Search page
+----------------------------------------
+ */
+
+.paginator > * {
+    padding-left: 1em;
+    display: inline-block;
+}
+
+.summary-line {
+    display: inline-flex;
+
+    > * {
+        display: inline-block;
+    }
+
+    time {
+        font-family: monospace;
+        min-width: 18ch;
+    }
+}
+
+/* Popups
+----------------------------------------
+*/
+
+.popup-container {
+    display: none;
+    position: absolute;
+    z-index: 10;
+
+    left: 10px;
+    top: -50px;
+
+    &.visible {
+        display: block;
+    }
+}
+
+.popup {
+    display: flex;
+    background-color: #dedede;
+    color: black;
+    font-size: 80%;
+
+    /* overflow-y: auto; */
+    max-width: 60ch;
+    max-height: 60ch;
+    min-width: 40ch;
+    min-height: 20ch;
+
+    input {
+        white-space: initial;
+        border: 1px solid gray;
+        max-width: 100%;
+    }
+
+    article {
+        /* makes the text in the popup scroll, but not the sidebar */
+        overflow-y: auto;
+        padding: 1em;
+        word-break: break-word;
+    }
+
+    .location {
+        font-style: initial;
+    }
+
+    .popup-control {
+        display: flex;
+        flex-direction: column;
+
+        /* not needed, but the icons aren't text
+       and should therefor not be copied */
+        user-select: none;
+
+        cursor: grab;
+        background-color: var(--color);
+        /* Transition for background color 
+         * Matches that of '.event'.
+         * TODO break out to common place */
+        transition: 0.3s;
+
+        .btn {
+            max-width: 2em;
+            max-height: 2em;
+            margin: 1em;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 150%;
+        }
+
+    }
+}
+
+
+#bar {
+    width: calc(100% + 2em);
+    height: 4px;
+    background: blue;
+    border-color: blue;
+    left: -1em;
+}
+
+/* Tabs
+----------------------------------------
+*/
+
+.tabgroup {
+    position: relative;
+    width: 100%;
+    resize: both;
+}
+
+.tab {
+    label {
+        position: absolute;
+
+        left: 100%;
+        top: 0;
+        display: block;
+
+        max-height: 5ex;
+        min-height: 5ex;
+        min-width: 5ex;
+        max-width: 5ex;
+
+        border: 1px solid #ccc;
+        border-radius: 0 5px 5px 0;
+        background-color: #aeaeae;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    [type=radio] {
+        display: none;
+        &:checked ~ label {
+            z-index: 1;
+            /* to align all tab */
+            border-left: 3px solid transparent;
+            background-color: #dedede;
+
+            ~ .content {
+                z-index: 1;
+            }
+        }
+    }
+
+    .content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: #dedede;
+        right: 0;
+        bottom: 0;
+        overflow: auto;
+
+        min-width: 100%;
+        min-height: 100%;
+    }
+}
+
+/* Other
+----------------------------------------
+*/
+
+.template {
+    display: none;
+}
+
+
+.summary-line .square {
+    margin-right: 1em;
+}
+
+.square {
+    width: 1em;
+    height: 1em;
+    background-color: var(--color);
+}
+
+/* Icalendar
+----------------------------------------
+*/
+
+/* Below is for styling embedded xcalendar components in the xhtml
+   document. I can't find anything about if this is allowed
+   according to any standard, but it seems to work.
+   Firefox doesn't want to admit it, and shows nothing in the
+   inspector, but the document renders fine.
+   Vivaldi works fine in the inspector.
+ */
+
+icalendar {
+    display: inline-block;
+    padding-left: 1ch;
+    font-family: monospace;
+    font-size: xx-small;
+    padding-left: 1ch;
+
+    properties > * {
+        display: block;
+    }
+
+    properties * {
+        padding-right: 1ch;
+    }
+
+
+    /* All icalendar properties  */
+    calscale::before { content: "calscale: "; }
+    method::before { content: "method: "; }
+    prodid::before { content: "prodid: "; }
+    version::before { content: "version: "; }
+    attach::before { content: "attach: "; }
+    categories::before { content: "categories: "; }
+    class::before { content: "class: "; }
+    comment::before { content: "comment: "; }
+    description::before { content: "description: "; }
+    geo::before { content: "geo: "; }
+    location::before { content: "location: "; }
+    percent-complete::before { content: "percent-complete: "; }
+    priority::before { content: "priority: "; }
+    resources::before { content: "resources: "; }
+    status::before { content: "status: "; }
+    summary::before { content: "summary: "; }
+    completed::before { content: "completed: "; }
+    dtend::before { content: "dtend: "; }
+    due::before { content: "due: "; }
+    dtstart::before { content: "dtstart: "; }
+    duration::before { content: "duration: "; }
+    freebusy::before { content: "freebusy: "; }
+    transp::before { content: "transp: "; }
+    tzid::before { content: "tzid: "; }
+    tzname::before { content: "tzname: "; }
+    tzoffsetfrom::before { content: "tzoffsetfrom: "; }
+    tzoffsetto::before { content: "tzoffsetto: "; }
+    tzurl::before { content: "tzurl: "; }
+    attendee::before { content: "attendee: "; }
+    contact::before { content: "contact: "; }
+    organizer::before { content: "organizer: "; }
+    recurrence-id::before { content: "recurrence-id: "; }
+    related-to::before { content: "related-to: "; }
+    url::before { content: "url: "; }
+    uid::before { content: "uid: "; }
+    exdate::before { content: "exdate: "; }
+    rdate::before { content: "rdate: "; }
+    rrule::before { content: "rrule: "; }
+    action::before { content: "action: "; }
+    repeat::before { content: "repeat: "; }
+    trigger::before { content: "trigger: "; }
+    created::before { content: "created: "; }
+    dtstamp::before { content: "dtstamp: "; }
+    last-modified::before { content: "last-modified: "; }
+    sequence::before { content: "sequence: "; }
+    request-status::before { content: "request-status: "; }
+
+    parameters {
+        color: gray;
+
+        /* icalendar parameters */
+        altrep::before { content: "altrep:"; }
+        cn::before { content: "cn:"; }
+        cutype::before { content: "cutype:"; }
+        delegated-from::before { content: "delegated-from:"; }
+        delegated-to::before { content: "delegated-to:"; }
+        dir::before { content: "dir:"; }
+        encoding::before { content: "encoding:"; }
+        fmttype::before { content: "fmttype:"; }
+        fbtype::before { content: "fbtype:"; }
+        language::before { content: "language:"; }
+        member::before { content: "member:"; }
+        partstat::before { content: "partstat:"; }
+        range::before { content: "range:"; }
+        related::before { content: "related:"; }
+        reltype::before { content: "reltype:"; }
+        role::before { content: "role:"; }
+        rsvp::before { content: "rsvp:"; }
+        sent-by::before { content: "sent-by:"; }
+        tzid::before { content: "tzid:"; }
+    }
+
+    /* special fields inside some properties */
+    period {
+        start { content: "start:"; }
+        end { content: "end:"; }
+        duration { content: "duration:" }
+    }
+
+    recur {
+        freq  { content: "freq:"; }
+        until { content: "until:"; }
+        count { content: "count:"; }
+        bymonth    { content: "bymonth"; }
+        byweekno   { content: "byweekno"; }
+        byyearday  { content: "byyearday"; }
+        bymonthday { content: "bymonthday"; }
+        byday      { content: "byday"; }
+        byhour     { content: "byhour"; }
+        byminute   { content: "byminute"; }
+        bysecond   { content: "bysecond"; }
+        bysetpos   { content: "bysetpos"; }
+    }
+
+    /* types */
+    date-time, date, until {color: purple;}
+    text { color: green; }
+    integer { color: blue; }
+    unknown { color: red; }
+}
+
+/* vim:expandtab:softtabstop=4:shiftwidth=4:
+ */

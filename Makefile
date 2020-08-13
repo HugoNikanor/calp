@@ -1,4 +1,5 @@
-.PHONY: all clean test
+.PHONY: all clean test \
+	static
 
 GUILE_SITE_DIR=$(shell guile -c "(display (%site-dir))")
 GUILE_CCACHE_DIR=$(shell guile -c "(display (%site-ccache-dir))")
@@ -12,13 +13,17 @@ GUILE_C_FLAGS = -Lmodule \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
 
-all: $(GO_FILES) README
+all: $(GO_FILES) README static
+
+static:
+	$(MAKE) -C static
 
 obj/%.scm.go: %.scm
 	@mkdir -p obj
 	guild compile $(GUILE_C_FLAGS) -o $@ $<
 
 clean:
+	$(MAKE) -C static clean
 	-rm -r obj
 
 install:
