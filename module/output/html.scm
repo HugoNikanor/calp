@@ -21,6 +21,8 @@
   #:use-module ((vcomponent instance methods)
                 :select (get-calendars get-event-set))
 
+  #:use-module ((sxml simple) :select (sxml->xml))
+
   #:autoload (vcomponent instance) (global-event-object)
   )
 
@@ -56,7 +58,7 @@
    (lambda (start-date)
      (define fname (get-filename start-date))
      (format (current-error-port) "Writing to [~a]~%" fname)
-     (with-output-to-file fname (lambda () (proc calendars events)) ))
+     (with-output-to-file fname (lambda () (sxml->xml (proc calendars events))) ))
    (stream-take count (date-stream chunk-length start-date))
    ))
 

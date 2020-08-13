@@ -106,15 +106,16 @@
           (return `((content-type application/xhtml+xml))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: (get-calendars global-event-object)
-                                     events: (get-event-set global-event-object)
-                                     start-date: start-date
-                                     end-date: (date+ start-date (date day: 6))
-                                     next-start: (lambda (d) (date+ d (date day: 7)))
-                                     prev-start: (lambda (d) (date- d (date day: 7)))
-                                     render-calendar: (@ (html view calendar week) render-calendar)
-                                     intervaltype: 'week
-                                     ))))))
+                      (sxml->xml
+                       (html-generate calendars: (get-calendars global-event-object)
+                                      events: (get-event-set global-event-object)
+                                      start-date: start-date
+                                      end-date: (date+ start-date (date day: 6))
+                                      next-start: (lambda (d) (date+ d (date day: 7)))
+                                      prev-start: (lambda (d) (date- d (date day: 7)))
+                                      render-calendar: (@ (html view calendar week) render-calendar)
+                                      intervaltype: 'week
+                                      )))))))
 
    (GET "/month/:start-date.html" (start-date)
         (let* ((start-date (start-of-month (parse-iso-date start-date))))
@@ -122,19 +123,20 @@
           (return '((content-type application/xhtml+xml))
                   (with-output-to-string
                     (lambda ()
-                      (html-generate calendars: (get-calendars global-event-object)
-                                     events: (get-event-set global-event-object)
-                                     start-date: start-date
-                                     end-date: (date- (month+ start-date)
-                                                      (date day: 1))
-                                     next-start: month+
-                                     prev-start: month-
-                                     render-calendar: (@ (html view calendar month)
-                                                         render-calendar-table)
-                                     pre-start: (start-of-week start-date)
-                                     post-end: (end-of-week (end-of-month start-date))
-                                     intervaltype: 'month
-                                     ))))))
+                      (sxml->xml
+                       (html-generate calendars: (get-calendars global-event-object)
+                                      events: (get-event-set global-event-object)
+                                      start-date: start-date
+                                      end-date: (date- (month+ start-date)
+                                                       (date day: 1))
+                                      next-start: month+
+                                      prev-start: month-
+                                      render-calendar: (@ (html view calendar month)
+                                                          render-calendar-table)
+                                      pre-start: (start-of-week start-date)
+                                      post-end: (end-of-week (end-of-month start-date))
+                                      intervaltype: 'month
+                                      )))))))
 
    (POST "/remove" (uid)
          (unless uid
