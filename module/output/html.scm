@@ -5,10 +5,12 @@
   #:use-module ((srfi srfi-41) :select (stream-take stream-for-each))
   #:use-module ((datetime)
                 :select (date-stream date
-                         remove-day month-days
+                         remove-day
                          date+ date-
-                         month+ month-
-                         date->string))
+                         date->string
+                         start-of-week end-of-week
+                         end-of-month
+                         ))
   #:use-module ((html view calendar)
                 :select (html-generate))
 
@@ -79,31 +81,37 @@
 
   (common count start-date chunk-length
           (lambda (calendars events)
-            (html-generate calendars: calendars
-                           events: events
-                           start-date: start-date
-                           end-date: (remove-day (date+ start-date chunk-length))
-                           render-calendar: render-calendar
-                           next-start: (lambda (d) (date+ d chunk-length))
-                           prev-start: (lambda (d) (date- d chunk-length))
-                           ))))
+            (html-generate
+             ;; same
+             calendars: calendars
+             events: events
+             next-start: (lambda (d) (date+ d chunk-length))
+             prev-start: (lambda (d) (date- d chunk-length))
+             start-date: start-date
+             end-date: (remove-day (date+ start-date chunk-length))
+             render-calendar: render-calendar
+             ;; different
+             ))))
 
+;; start date MUST be the first in month
 (define-public (html-table-main count start-date)
 
-  (common count start-date (date month: 1)
-          (let* ((before current after (month-days start-date)))
-            (lambda (calendars events)
-              (html-generate calendars: calendars
-                             events: events
-                             start-date: (car current)
-                             end-date: (date- (if (null? after)
-                                                  (last current)
-                                                  (car after))
-                                              (date day: 1))
-                             render-calendar: render-calendar-table
-                             next-start: month+
-                             prev-start: month-
-                             ;; Appends for case where before or after is empty
-                             pre-start: (car (append before current))
-                             post-end: (last (append current after))
-                             )))))
+  (define chunk-length (date month: 1))
+  (define render-calendar render-calendar-table)
+
+  (common count start-date chunk-length
+          (lambda (calendars events)
+            (html-generate
+             ;; same
+             calendars: calendars
+             events: events
+             next-start: (lambda (d) (date+ d chunk-length))
+             prev-start: (lambda (d) (date- d chunk-length))
+             start-date: start-date
+             end-date: (remove-day (date+ start-date chunk-length))
+             render-calendar: render-calendar
+
+             ;; different
+             pre-start: (start-of-week start-date)
+             post-end: (end-of-week (end-of-month start-date))
+             ))))
