@@ -53,46 +53,46 @@
                                   optional: (attributes '())
                                   key: (fmt-header list))
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
-  `(article (@ ,@(assq-merge
-                  attributes
-                  `((class " eventtext "
-                      ,(when (and (prop ev 'PARTSTAT)
-                                  (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                         " tentative ")))))
-            (h3 ,(fmt-header
-                  (when (prop ev 'RRULE)
-                    `(span (@ (class "repeating")) "↺"))
-                  `(span (@ (class "summary")) ,(prop ev 'SUMMARY))))
-            (div
-             ,(call-with-values (lambda () (fmt-time-span ev))
-                (case-lambda [(start) `(div (span (@ (class "dtstart")
+  `(div (@ ,@(assq-merge
+              attributes
+              `((class " eventtext "
+                  ,(when (and (prop ev 'PARTSTAT)
+                              (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+                     " tentative ")))))
+        (h3 ,(fmt-header
+              (when (prop ev 'RRULE)
+                `(span (@ (class "repeating")) "↺"))
+              `(span (@ (class "summary")) ,(prop ev 'SUMMARY))))
+        (div
+         ,(call-with-values (lambda () (fmt-time-span ev))
+            (case-lambda [(start) `(div (span (@ (class "dtstart")
+                                                 (data-fmt "%L%H:%M"))
+                                              ,start))]
+                         [(start end) `(div (span (@ (class "dtstart")
+                                                     ;; TODO same format string
+                                                     ;; as fmt-time-span used
                                                      (data-fmt "%L%H:%M"))
-                                                  ,start))]
-                             [(start end) `(div (span (@ (class "dtstart")
-                                                         ;; TODO same format string
-                                                         ;; as fmt-time-span used
-                                                         (data-fmt "%L%H:%M"))
-                                                      ,start)
-                                                " — "
-                                                (span (@ (class "dtend")
-                                                         (data-fmt "%L%H:%M"))
-                                                      ,end))]))
-             ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
-                `(div (b "Plats: ")
-                      (div (@ (class "location"))
-                           ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                        (prop ev 'LOCATION)))))
-             ,(awhen (prop ev 'DESCRIPTION)
-                     `(span (@ (class "description"))
-                            ,(format-description ev it)))
-             ,(awhen (prop ev 'RRULE)
-                     `(span (@ (class "rrule"))
-                            ,@(format-recurrence-rule ev)))
-             ,(when (prop ev 'LAST-MODIFIED)
-                `(span (@ (class "last-modified")) "Senast ändrad "
-                       ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M")))
+                                                  ,start)
+                                            " — "
+                                            (span (@ (class "dtend")
+                                                     (data-fmt "%L%H:%M"))
+                                                  ,end))]))
+         ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
+            `(div (b "Plats: ")
+                  (div (@ (class "location"))
+                       ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                    (prop ev 'LOCATION)))))
+         ,(awhen (prop ev 'DESCRIPTION)
+                 `(span (@ (class "description"))
+                        ,(format-description ev it)))
+         ,(awhen (prop ev 'RRULE)
+                 `(span (@ (class "rrule"))
+                        ,@(format-recurrence-rule ev)))
+         ,(when (prop ev 'LAST-MODIFIED)
+            `(span (@ (class "last-modified")) "Senast ändrad "
+                   ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M")))
 
-             )))
+         )))
 
 
 ;; Single event in side bar (text objects)
@@ -168,6 +168,11 @@
                     ev)))))))
 
 
+(define (repeat-info event)
+  `(div (@ (class "eventtext"))
+        (h2 "Upprepningar")
+        (pre ,(prop event 'RRULE))))
+
 
 (define-public (popup ev id)
   `(div (@ (id ,id) (class "popup-container CAL_" 
@@ -195,9 +200,12 @@
                 `(("📅" title: "Översikt"
                    ,(fmt-single-event ev))
                   ("⤓" title: "Nedladdning"
-                   (div (@ (style "font-family:sans"))
-                        (p "Ladda ner")
+                   (div (@ (class "eventtext") (style "font-family:sans"))
+                        (h2 "Ladda ner")
                         (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
                                    "som iCal"))
                             (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
-                                   "som xCal"))))))))))
+                                   "som xCal")))))
+                  ,@(when (prop ev 'RRULE)
+                      `(("↺" title: "Upprepningar" class: "repeating"
+                         ,(repeat-info ev)))))))))

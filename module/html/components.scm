@@ -101,9 +101,9 @@
                `(div (@ (class "tab"))
                      (input (@ (type "radio") (id ,id) (name ,tabgroup)
                                ,@(when (zero? i) '((checked)))))
-                     (label (@ (for ,id) (style "top: " ,(* 6 i) "ex")
-                               ,(awhen (memv title: args)
-                                       `(title ,(cadr it))))
+                     (label (@ ,@(assq-merge `((for ,id)
+                                               (style "top: " ,(* 6 i) "ex"))
+                                             (kvlist->assq args)))
                             ,key)
                      (div (@ (class "content")) ,body)))))
 

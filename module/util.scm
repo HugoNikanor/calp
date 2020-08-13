@@ -365,6 +365,11 @@
             (assq-set! alist k (append v (or o '())))))
         (copy-tree a) b))
 
+(define-public (kvlist->assq kvlist)
+  (map (lambda (pair)
+         (cons (keyword->symbol (car pair)) (cdr pair)))
+       (group kvlist 2)))
+
 (define*-public (assq-limit alist optional: (number 1))
   (map (lambda (pair)
          (take-to pair (1+ number)))
