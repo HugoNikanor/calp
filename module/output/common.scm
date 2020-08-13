@@ -15,9 +15,6 @@
             (string-take-to (symbol->string symbol)
                             (string-length prefix))))
 
-(define-public (->string a)
-  (with-output-to-string (lambda () (display a))))
-
 (define-public (get-tz-names events)
   (lset-difference
    equal? (lset-union

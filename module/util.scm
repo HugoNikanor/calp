@@ -518,6 +518,11 @@
 (define-public (vector-last v)
   (vector-ref v (1- (vector-length v))))
 
+(define-public (->str any)
+  (with-output-to-string (lambda () (display any))))
+
+(define-public ->string ->str)
+
 
 
 
