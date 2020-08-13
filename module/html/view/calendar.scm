@@ -26,7 +26,9 @@
                :select (get-git-version))
   )
 
-;; date should be start of month
+;; Small calendar similar to the one below.
+;; TODO highlight days depending on which events they contain
+;; TODO run this standalone, for embedding in other websites.
 ;; @example
 ;; må ti on to fr lö sö
 ;;  1  2  3  4  5  6  7
@@ -35,7 +37,7 @@
 ;; 22 23 24 25 26 27 28
 ;; 29 30
 ;; @end example
-;; date - a date in the month to display
+;; date - The start date of the month to display
 (define* (cal-table key: start-date end-date next-start prev-start)
 
   (define (td date)
@@ -95,6 +97,7 @@
 ;;; and the html-generate procedure also filters, but instead to find earlier eventns.
 ;;; All this filtering is probably slow, and should be looked into.
 
+;; TODO place this somewhere proper
 (define repo-url (make-parameter "https://git.hornquist.se"))
 
 
