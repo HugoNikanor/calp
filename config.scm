@@ -76,3 +76,4 @@
          [else (parse-links str)])))
 
 (set-config! 'week-start mon)
+(set-config! 'default-calendar "Calendar")

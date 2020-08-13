@@ -16,10 +16,14 @@
                                           ))
   :use-module (html config)
   :use-module (html util)
+
+  :use-module (util config)
+
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
+
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
   :use-module ((git)
@@ -292,10 +296,22 @@
                         (summary "Calendar list")
                         (ul ,@(map
                                (lambda (calendar)
-                                 `(li (@ (class "CAL_bg_"
+                                 `(li (@ (class "CAL_"
                                            ,(html-attr (prop calendar 'NAME))))
                                       ,(prop calendar 'NAME)))
-                               calendars))))
+                               calendars))
+                      (div (@ (id "calendar-dropdown-template") (class "template"))
+                           (select
+                               (option "- Choose a Calendar -")
+                               ,@(let ((dflt (get-config 'default-calendar)))
+                                   (map (lambda (calendar)
+                                          (define name (prop calendar 'NAME))
+                                          `(option (@ (value ,(html-attr name))
+                                                      ,@(when (string=? name dflt)
+                                                          '((selected))))
+                                                   ,name))
+                                        calendars)))
+                             )))
 
           ;; List of events
           (div (@ (class "eventlist")
@@ -304,6 +320,8 @@
                ;; but "spill" into our time span.
                (section (@ (class "text-day"))
                         (header (h2 "Tidigare"))
+                        ;; TODO this group gets styles applied incorrectly.
+                        ;; Figure out way to merge it with the below call.
                         ,@(stream->list
                            (stream-map
                             fmt-single-event
@@ -325,7 +343,11 @@
                                      ;; cloned mulitple times.
                                      dtstart: (datetime)
                                      dtend: (datetime)
-                                     summary: "New Event"))))
+                                     summary: ""
+                                     ;; force a description field,
+                                     ;; but don't put anything in
+                                     ;; it.
+                                     description: ""))))
               (event (car (children cal))))
          `((div (@ (class "template event-container") (id "event-template")
                    ;; Only needed to create a duration. So actual dates

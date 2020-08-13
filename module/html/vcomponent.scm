@@ -44,18 +44,21 @@
           ;; TODO better format, add show in calendar button
           ,(fmt-single-event event)))))
 
-;; For sidebar, just text
+;; Format event as text.
+;; Used in
+;; - sidebar
+;; - popup overwiew tab
+;; - search result (event details)
 (define*-public (fmt-single-event ev
                                   optional: (attributes '())
                                   key: (fmt-header list))
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
   `(article (@ ,@(assq-merge
                   attributes
-                  `((class "eventtext CAL_bg_"
-                      ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))
+                  `((class " eventtext "
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                         " tentative")))))
+                         " tentative ")))))
             (h3 ,(fmt-header
                   (when (prop ev 'RRULE)
                     `(span (@ (class "repeating")) "↺"))
@@ -79,8 +82,9 @@
                       (div (@ (class "location"))
                            ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                         (prop ev 'LOCATION)))))
-             ,(and=> (prop ev 'DESCRIPTION)
-                     (lambda (str) (format-description ev str)))
+             ,(awhen (prop ev 'DESCRIPTION)
+                     `(span (@ (class "description"))
+                            ,(format-description ev it)))
              ,(awhen (prop ev 'RRULE)
                      `(span (@ (class "rrule"))
                             ,@(format-recurrence-rule ev)))
@@ -100,13 +104,15 @@
                                     (class "hidelink")) ,s))))
               ,@(stream->list
                  (stream-map
-                  (lambda (ev) (fmt-single-event
-                           ev `((id ,(html-id ev)))
-                           fmt-header:
-                           (lambda body
-                             `(a (@ (href "#" ,(date-link (as-date (prop ev 'DTSTART))))
-                                    (class "hidelink"))
-                                 ,@body))))
+                  (lambda (ev)
+                    (fmt-single-event
+                      ev `((id ,(html-id ev))
+                           (class "CAL_" ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))))
+                      fmt-header:
+                      (lambda body
+                        `(a (@ (href "#" ,(date-link (as-date (prop ev 'DTSTART))))
+                               (class "hidelink"))
+                            ,@body))))
                   (stream-filter
                    (lambda (ev)
                      ;; If start was an earlier day
@@ -119,16 +125,14 @@
 
 (define-public (calendar-styles calendars)
   `(style
-       ,(format
-         #f "~:{.CAL_~a { background-color: ~a; color: ~a }~%.CAL_bg_~a { border-color: ~a }~%~}"
-         (map (lambda (c)
-                (let* ((name (html-attr (prop c 'NAME)))
-                       (bg-color (prop c 'COLOR))
-                       (fg-color (and=> (prop c 'COLOR)
-                                        calculate-fg-color)))
-                  (list name (or bg-color 'white) (or fg-color 'black)
-                        name (or bg-color 'black))))
-              calendars))))
+     ,(format #f "~:{.CAL_~a { --color: ~a; --complement: ~a }~%~}"
+              (map (lambda (c)
+                     (let* ((name (html-attr (prop c 'NAME)))
+                            (bg-color (prop c 'COLOR))
+                            (fg-color (and=> (prop c 'COLOR)
+                                             calculate-fg-color)))
+                       (list name (or bg-color 'white) (or fg-color 'black))))
+                   calendars))))
 
 ;; "Physical" block in calendar view
 (define*-public (make-block ev optional: (extra-attributes '()))
@@ -138,6 +142,7 @@
        (div (@ ,@(assq-merge
                   extra-attributes
                   `((id ,(html-id ev))
+                    (data-calendar ,(html-attr (or (prop (parent ev) 'NAME) "unknown")))
                     (class "event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
                                                         "unknown"))
                       ,(when (and (prop ev 'PARTSTAT)
@@ -165,28 +170,34 @@
 
 
 (define-public (popup ev id)
-  `(div (@ (class "popup-container") (id ,id)
+  `(div (@ (id ,id) (class "popup-container CAL_" 
+                           ,(html-attr (or (prop (parent ev) 'NAME)
+                                           "unknown"))) 
            (onclick "event.stopPropagation()"))
+        ;; TODO all (?) code uses .popup-container as the popup, while .popup sits and does nothing.
+        ;; Do something about this?
         (div (@ (class "popup"))
-             (nav (@ (class "popup-control CAL_"
-                       ,(html-attr (or (prop (parent ev) 'NAME)
-                                       "unknown"))))
+             (nav (@ (class "popup-control"))
                   ,(btn "×"
                         title: "Stäng"
                         onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
                         class: '("close-tooltip"))
                   ,(when (edit-mode)
-                     (btn "🗑"
-                          title: "Ta bort"
-                          onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))")))
+                     (list
+                      (btn "🖊️"
+                           title: "Redigera"
+                           onclick: "place_in_edit_mode(document.getElementById(this.closest('.popup-container').id.substr(5)))")
+                      (btn "🗑"
+                           title: "Ta bort"
+                           onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))"))))
 
              ,(tabset
-               `(("📅" title: "Översikt"
-                  ,(fmt-single-event ev))
-                 ("⤓" title: "Nedladdning"
-                  (div (@ (style "font-family:sans"))
-                       (p "Ladda ner")
-                       (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
-                                  "som iCal"))
-                           (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
-                                  "som xCal"))))))))))
+                `(("📅" title: "Översikt"
+                   ,(fmt-single-event ev))
+                  ("⤓" title: "Nedladdning"
+                   (div (@ (style "font-family:sans"))
+                        (p "Ladda ner")
+                        (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
+                                   "som iCal"))
+                            (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
+                                   "som xCal"))))))))))

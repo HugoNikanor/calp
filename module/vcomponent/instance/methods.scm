@@ -54,13 +54,18 @@
 
   (slot-set! this 'calendars (load-calendars (slot-ref this 'calendar-files)))
 
-  (slot-set! this 'events
-             (concatenate
-              (map (lambda (cal) (remove
-                             (extract 'X-HNH-REMOVED)
-                             (filter (lambda (o) (eq? 'VEVENT (type o)))
-                                     (children cal))))
-                   (slot-ref this 'calendars))))
+
+  (let* ((groups
+          (group-by
+           type (concatenate
+                 (map children (slot-ref this 'calendars)))))
+         (events (awhen (assoc-ref groups 'VEVENT)
+                        (car it)))
+         (removed remaining (partition (extract 'X-HNH-REMOVED) events)))
+
+    ;; TODO figure out what to do with removed events
+
+    (slot-set! this 'events (append #|removed|# remaining)))
 
   (let* ((repeating regular (partition repeating? (slot-ref this 'events))))
     (slot-set! this 'fixed-events     (sort*! regular   date/-time<? (extract 'DTSTART)))

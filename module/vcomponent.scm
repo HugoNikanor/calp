@@ -17,3 +17,7 @@
                [(string? v) ((@ (glob) glob) v)]
                [else #f])))
 
+(define-config default-calendar ""
+  description: "Default calendar to use for operations. Set to empty string to unset"
+  pre: (ensure string?))
+

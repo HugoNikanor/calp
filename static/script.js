@@ -122,6 +122,20 @@ function bind_popup_control (nav) {
     });
 }
 
+/*
+ * Finds the first element of the DOMTokenList whichs value matches
+ * the supplied regexp. Returns a pair of the index and the value.
+ */
+DOMTokenList.prototype.find = function (regexp) {
+    let entries = this.entries();
+    let entry;
+    while (! (entry = entries.next()).done) {
+        if (entry.value[1].match(regexp)) {
+            return entry.value;
+        }
+    }
+}
+
 class EventCreator {
 
     /* dynamicly created event when dragging */
@@ -372,11 +386,12 @@ function close_all_popups () {
 async function create_event (event) {
 
     let xml = event.getElementsByTagName("icalendar")[0].outerHTML
+    let calendar = event.properties.calendar;
 
-    console.log(xml);
+    console.log(calendar, xml);
 
     let data = new URLSearchParams();
-    data.append("cal", "Calendar");
+    data.append("cal", calendar);
     data.append("data", xml);
 
     let response = await fetch ( '/insert', {
@@ -386,7 +401,8 @@ async function create_event (event) {
 
     console.log(response);
     if (response.status < 200 || response.status >= 300) {
-        alert(`HTTP error ${response.status}\n${response.statusText}`)
+        let body = await response.text();
+        alert(`HTTP error ${response.status}\n${body}`)
         return;
     }
 
@@ -416,7 +432,6 @@ async function create_event (event) {
     }
 
     event.classList.remove("generated");
-    event.classList.add("CAL_Calendar");
     toggle_popup("popup" + event.id);
 }
 
@@ -428,6 +443,7 @@ function place_in_edit_mode (event) {
         let input = makeElement ('input', {
             type: "time",
             required: true,
+			value: field.innerText,
 
             onchange: function (e) {
                 /* Only update datetime when the input is filled out */
@@ -456,8 +472,9 @@ function place_in_edit_mode (event) {
 
     let summary = popup.getElementsByClassName("summary")[0];
     let input = makeElement('input', {
-        name: "dtstart",
-        placeholder: summary.innerText,
+        name: "summary",
+        value: summary.innerText,
+        placeholder: "Sammanfattning",
         required: true,
     });
 
@@ -470,6 +487,63 @@ function place_in_edit_mode (event) {
     slot.splice(idx, 1, [input, (s, v) => s.value = v])
 
     summary.replaceWith(input);
+
+    /* ---------------------------------------- */
+
+    /* TODO add elements if the arent't already there
+     * Almost all should be direct children of '.event-body' (or
+         * '.eventtext'?).
+     * Biggest problem is generated fields relative order.
+     */
+    let descs = popup.getElementsByClassName("description");
+    if (descs.length === 1) {
+        let description = descs[0];
+        let textarea = makeElement('textarea', {
+            name: "description",
+            placeholder: "Description (optional)",
+            innerHTML: description.innerText,
+            required: false,
+        });
+
+        textarea.oninput = function () {
+            event.properties["description"] = this.value;
+        }
+
+        let slot = event.properties["_slot_description"]
+        let idx = slot.findIndex(e => e[0] === description);
+        slot.splice(idx, 1, [input, (s, v) => s.innerHTML = v])
+
+        description.replaceWith(textarea);
+    }
+
+    /* ---------------------------------------- */
+
+    let evtext = popup.getElementsByClassName('eventtext')[0]
+    let calendar_dropdown = document.getElementById('calendar-dropdown-template').firstChild.cloneNode(true);
+
+    let [_, calclass] = popup.classList.find(/^CAL_/);
+	label: {
+		for (let [i, option] of calendar_dropdown.childNodes.entries()) {
+			if (option.value === calclass.substr(4)) {
+				calendar_dropdown.selectedIndex = i;
+				break label;
+			}
+		}
+		/* no match, try find default calendar */
+		let t;
+		if ((t = calendar_dropdown.querySelector("[selected]"))) {
+			event.properties.calendar = t.value;
+		}
+	}
+
+
+    /* Instant change while user is stepping through would be
+     * preferable. But I believe that <option> first gives us the
+     * input once selected */
+    calendar_dropdown.onchange = function () {
+        event.properties.calendar = this.value;
+    }
+    evtext.prepend(calendar_dropdown);
 
     /* ---------------------------------------- */
 
@@ -489,6 +563,11 @@ function place_in_edit_mode (event) {
         }});
     article.replaceWith(wrappingForm);
     wrappingForm.appendChild(article);
+
+	/* this is for existing events.
+	 * Newly created events aren't in the DOM tree yet, and can
+	 * therefore not yet be focused */
+	input.focus();
 
 }
 
@@ -515,7 +594,7 @@ window.onload = function () {
                     let popupElement = document.getElementById("popup" + event.id);
                     open_popup(popupElement);
 
-                    popupElement.querySelector("input[name='dtstart']").focus();
+                    popupElement.querySelector("input[name='summary']").focus();
 
                 });
         }
@@ -533,7 +612,7 @@ window.onload = function () {
                     let popupElement = document.getElementById("popup" + event.id);
                     open_popup(popupElement);
 
-                    popupElement.querySelector("input[name='dtstart']").focus();
+					popupElement.querySelector("input[name='summary']").focus();
 
                 });
         }
@@ -755,4 +834,39 @@ function bind_properties (el, wide_event=false) {
             [el.style,
              (s, v) => s[wide_event?'right':'bottom'] = 100 * (1 - (to_local(v)-start)/(end-start)) + "%"]);
     }
+
+    if (! el.dataset.calendar) {
+        el.dataset.calendar = "Unknown";
+    }
+
+    el.properties._value_calendar = el.dataset.calendar;
+    el.properties._slot_calendar = [];
+
+    /* TODO merge this and instance above */
+    let field = 'calendar';
+    Object.defineProperty(
+        el.properties, field,
+        {
+            get: function () {
+                return this["_value_" + field];
+            },
+            set: function (value) {
+                this["_value_" + field] = value;
+                for (let [slot,updater] of el.properties["_slot_" + field]) {
+                    updater(slot, value);
+                }
+            }
+        });
+
+    const rplcs = (s, v) => {
+        let [_, calclass] = s.classList.find(/^CAL_/);
+        s.classList.replace(calclass, "CAL_" + v);
+    }
+
+    el.properties._slot_calendar.push([popup, rplcs]);
+    el.properties._slot_calendar.push([el, rplcs]);
+
+    el.properties._slot_calendar.push(
+        [el, (s, v) => s.dataset.calendar = v]);
+
 }
