@@ -2,6 +2,11 @@
 ;;; Module for writing components to the vdir storage format.
 ;;; Currently also has some cases for "big" icalendar files,
 ;;; but those are currently unsupported.
+
+;;; TODO generalize save-event and remove-event into a general interface,
+;;; which different database backends can implement. Actually, do that for all
+;;; loading and writing.
+
 ;;; Code:
 
 (define-module (output vdir)
