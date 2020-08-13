@@ -688,8 +688,11 @@ along with their colors.
     position: absolute;
     z-index: 10;
 
+    /* ??? */
     left: 10px;
     top: -50px;
+
+    box-shadow: gray 10px 10px 10px;
 
     &.visible {
         display: block;

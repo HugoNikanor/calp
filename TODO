@@ -33,14 +33,6 @@ Cutoff-punkten är dock lite för smal. Kom på hur minimi-brädden på
 Events in pre-start and post-start not mentioned in event list
 --------------------------------------------------------------
 
-Skriv eget popup-system
------------------------
-Byt ut "tipped" mot någonting eget.
-
-Popup Dropshadow
-----------------
-Skulle nog se bra ut. Fungerar dock inte med nuvarande popup-bibliotek.
-
 Knappar för nästa och föregående instans av ett upprepat event
 --------------------------------------------------------------
 
