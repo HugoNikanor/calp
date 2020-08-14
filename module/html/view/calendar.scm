@@ -163,8 +163,6 @@
     (style ,(format #f "html {
     --editmode: 1.0;
     --event-font-size: 8pt;
-    --gray: #757575;
-    --btn-height: 0.5ex;
 }"))
 
     ,(include-css "/static/style.css")

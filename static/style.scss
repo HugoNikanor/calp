@@ -1,3 +1,6 @@
+$gray: #757575;
+$btn-height: 0.5ex;
+
 html, body {
     height: 100%;
     margin: 0;
@@ -142,11 +145,11 @@ html, body {
        */
         height: 2.5em;
 
-        box-shadow: var(--btn-height) var(--btn-height) gray;
+        box-shadow: $btn-height $btn-height gray;
     }
 
     &:active > div {
-        transform: translate(var(--btn-height), var(--btn-height));
+        transform: translate($btn-height, $btn-height);
         box-shadow: none;
     }
 }
@@ -159,7 +162,7 @@ The sidebar with all the events
 .eventlist {
     min-height: 0;
     overflow: auto;
-    border-top: 3px solid var(--gray);
+    border-top: 3px solid $gray;
     /* mostly for long links */
     word-break: break-word;
 
@@ -264,7 +267,7 @@ Each event within the eventlist
     }
 
     .next, .prev {
-        color: var(--gray);
+        color: $gray;
     }
 
     .today {
@@ -344,7 +347,7 @@ along with their colors.
     }
 
     .thead, .cal-cell {
-        border: 1px solid var(--gray);
+        border: 1px solid $gray;
     }
 
     .cal-cell {
@@ -387,7 +390,7 @@ along with their colors.
 
 
 .date-info {
-    color: var(--gray);
+    color: $gray;
     .day-number {
         padding: 2pt;
     }
@@ -410,8 +413,8 @@ along with their colors.
 }
 
 .clock {
-    color: var(--gray);
-    border-top: 1px dotted var(--gray);
+    color: $gray;
+    border-top: 1px dotted $gray;
     width: 100%;
     pointer-events: none;
 }
@@ -425,7 +428,7 @@ along with their colors.
         min-width: 0;
     }
     .clock {
-        border-top: 1px dotted var(--gray);
+        border-top: 1px dotted $gray;
         grid-row: 3;
     }
 }
@@ -443,7 +446,7 @@ along with their colors.
     position: relative;
 
     .meta {
-        border-bottom: 2px solid var(--gray);
+        border-bottom: 2px solid $gray;
         grid-row: 1;
     }
 
@@ -464,7 +467,7 @@ along with their colors.
 
 .events {
     position: relative;
-    border: 1px solid var(--gray);
+    border: 1px solid $gray;
 
     .event {
         width: 100%;
@@ -524,7 +527,7 @@ along with their colors.
         position: absolute;
         left: 5px;
         top: 2px;
-        color: var(--gray);
+        color: $gray;
     }
 
     .daydate {
@@ -590,7 +593,7 @@ along with their colors.
 
     h3 {
         font-size: 12pt;
-        border-bottom: 1px solid var(--gray);
+        border-bottom: 1px solid $gray;
         margin-bottom: 0;
         font-weight: 300;
         margin-top: 0;
@@ -606,7 +609,7 @@ along with their colors.
         justify-content: right;
         text-align: right;
         font-size: 80%;
-        color: var(--gray);
+        color: $gray;
         padding-right: 1em;
     }
 }
