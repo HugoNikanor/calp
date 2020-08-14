@@ -5,7 +5,7 @@ GUILE_SITE_DIR=$(shell guile -c "(display (%site-dir))")
 GUILE_CCACHE_DIR=$(shell guile -c "(display (%site-ccache-dir))")
 
 SCM_FILES = $(shell find module/ -type f -name \*.scm)
-GO_FILES = $(SCM_FILES:%=obj/%.go)
+GO_FILES = $(SCM_FILES:module/%.scm=obj/%.go)
 
 GUILE_C_FLAGS = -Lmodule \
 				-Wunused-toplevel \
@@ -18,15 +18,16 @@ all: $(GO_FILES) README static
 static:
 	$(MAKE) -C static
 
-obj/%.scm.go: %.scm
+obj/%.go: module/%.scm
 	@mkdir -p obj
-	guild compile $(GUILE_C_FLAGS) -o $@ $<
+	@echo guild compile $<
+	@guild compile $(GUILE_C_FLAGS) -o $@ $<
 
 clean:
 	$(MAKE) -C static clean
 	-rm -r obj
 
-install:
+install: all
 	install -d $(DESTDIR)$(GUILE_SITE_DIR)  $(DESTDIR)$(GUILE_CCACHE_DIR)
 	rsync -a module/ $(DESTDIR)$(GUILE_SITE_DIR)
 	rsync -a obj/ $(DESTDIR)$(GUILE_CCACHE_DIR)
