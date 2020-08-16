@@ -16,6 +16,7 @@
                                           ))
   :use-module (html config)
   :use-module (html util)
+  :use-module ((html caltable) :select (cal-table))
 
   :use-module (util config)
 
@@ -30,69 +31,6 @@
                :select (get-git-version))
   )
 
-
-;; Small calendar similar to the one below.
-;; TODO highlight days depending on which events they contain
-;; TODO run this standalone, for embedding in other websites.
-;; @example
-;; må ti on to fr lö sö
-;;  1  2  3  4  5  6  7
-;;  8  9 10 11 12 13 14
-;; 15 16 17 18 19 20 21
-;; 22 23 24 25 26 27 28
-;; 29 30
-;; @end example
-;; date - The start date of the month to display
-(define* (cal-table key: start-date end-date next-start prev-start)
-
-  (define (td date)
-    `(a (@ ,@(cond
-              ;; We are before our time interval
-              [(date< date start-date)
-               ;; TODO find a prettier way to generate links to previous and next time intervals
-               `((class "prev")
-                 (href ,(date->string
-                         (stream-find (lambda (d) (date<= d date (next-start d)))
-                                      (stream-iterate prev-start start-date))
-                         "~Y-~m-~d.html")
-                       "#" ,(date-link date)))]
-              ;; We are after our time interval
-              [(date< end-date date)
-               `((class "next")
-                 (href ,(date->string
-                         (stream-find (lambda (d) (and (date<= d date)
-                                                  (date< date (next-start d))))
-                                      (stream-iterate next-start start-date))
-                         "~Y-~m-~d.html")
-                       "#" ,(date-link date)))]
-              ;; We are in our time interval
-              [else `((href "#" ,(date-link date)))]))
-        ;; NOTE This time object is the correct place to show the existance
-        ;; of an event on a given day in this small calendar. For example
-        ;; making the text red for all holidays, or creating a yellow background
-        ;; for events from a specific source.
-        (time (@ (datetime ,(date->string date "~Y-~m-~d"))) ,(day date))))
-
-  (let* ((last-months current next
-                      (month-days (start-of-month start-date)))
-         (events (append last-months current next)))
-    `(div (@ (class "small-calendar"))
-          (div (@ (class "column-head row-head")) "v.")
-          ,@(map (lambda (d) `(div (@ (class "column-head"))
-                              ,(string-titlecase (week-day-name d 2))))
-                 (weekday-list))
-          ,@(let ((first (start-of-week (car events)))
-                  (last (start-of-week (last events))))
-              (map (lambda (v) `(div (@ (class "row-head")) ,v))
-                   (map (lambda (d) (week-number d))
-                        (stream->list
-                         (stream-take-while (lambda (s) (date<= s last))
-                                            (week-stream first))))))
-          ,@(map td events
-                 ))))
-
-
-
 
 ;;; Main-stuff
 
