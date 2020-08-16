@@ -1,0 +1,23 @@
+pkgname=calp
+pkgver=0.9
+pkgrel=1
+pkgdesc=Calendar program
+arch=('any')
+url=https://git.hornquist.se/git/calp
+license=('AGPL')
+depends=('guile>=2.2')
+makedepends=('ruby-sass')
+optdepends=('vdirsyncer': 'Download calendar files')
+source=("https://github.com/HugoNikanor/$pkgname/archive/v$pkgver.tar.gz")
+
+build() {
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
