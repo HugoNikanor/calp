@@ -222,58 +222,11 @@ Each event within the eventlist
     font-weight: bold;
 }
 
+/* Sass greatly discourages @import in favour of @use. @use however doesn't work
+   for me.
+*/
+@import 'small-calendar';
 
-.small-calendar {
-    display: grid;
-    grid-template-rows: auto;
-    grid-template-columns: auto;
-
-    grid-auto-flow: dense;
-
-    > * {
-        text-align: center;
-        > time {
-            width: 100%;
-            text-align: right;
-            /* padding place in <time> instead on parent block element
-       to allow a border radius without making the link area
-       smaller
-           */
-            padding: 5px;
-        }
-    }
-    > *:not(.column-head) {
-        display: flex;
-        align-items: center; /* vertically center */
-        text-align: right;
-    }
-    a {
-        color: initial;
-        text-decoration: none;
-    }
-
-    .row-head {
-        grid-column: 1;
-        border-right: 1px solid black;
-
-        /* Sort of hack to get week numbers looking ok */
-        justify-content: right;
-        padding-right: 5px;
-    }
-
-    .column-head {
-        grid-row: 1;
-        border-bottom: 1px solid black;
-    }
-
-    .next, .prev {
-        color: $gray;
-    }
-
-    .today {
-        border: 1px solid black;
-    }
-}
 
 /* Sliders
 ----------------------------------------

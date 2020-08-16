@@ -8,4 +8,4 @@ clean:
 	rm $(TARGETS)
 
 %.css: %.scss
-	scss $< $@
+	scss -I. $< $@
