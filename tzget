@@ -5,8 +5,11 @@
 # - the directory with the zoneinfo files
 # - the names of the zoneinfo files to be parsed
 
+# Where to savze the file
 CACHE_DIR=${CACHE_DIR:-~/.cache/calp}
+# Which file to get
 TAR=tzdata-latest.tar.gz
+# Where to get it from
 TZ_SRC="https://www.iana.org/time-zones/repository/$TAR"
 
 mkdir -p $CACHE_DIR

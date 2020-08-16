@@ -4,5 +4,6 @@ here=$(dirname $(realpath $0))
 . $here/env
 
 GUILE=${GUILE:-guile}
+# GUILE_LOAD_PATH=$here/module
 
 exec $GUILE -e main -s $here/module/main.scm "$@"

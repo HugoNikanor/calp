@@ -1,9 +1,6 @@
 ;; -*- geiser-scheme-implementation: guile -*-
 
-(when (current-filename)
-  (add-to-load-path (dirname (current-filename))))
-
-(set! (@ (global) basedir) (car %load-path))
+;; config
 
 (catch 'misc-error
   (lambda () (use-modules (autoconfig)))
@@ -63,6 +60,8 @@
              "Can " (i "not") " be given with an equal after --option."
              (br) "Can be given multiple times."))
 
+    (setup-zoneinfo)
+
     (help (single-char #\h)
           (description "Print this help"))))
 
@@ -111,7 +110,8 @@
 
   (when stprof (statprof-start))
 
-  (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a" (runtime-dir) (getpid)))]
+  (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a" 
+                                            runtime-directory (getpid)))]
         [repl => repl-start])
 
   (if altconfig
@@ -120,10 +120,12 @@
             (primitive-load altconfig)
             (throw 'option-error "Configuration file ~a missing" altconfig)))
       ;; if not altconfig, then regular config
-      (let ((config-file (format #f "~a/.config/calp/config.scm"
-                                 (getenv "HOME"))))
-        (when (file-exists? config-file)
-          (primitive-load config-file))))
+
+      (awhen (find file-exists?
+                   (list
+                     (path-append user-config-directory "/config.scm")
+                     (path-append system-config-directory "/config.scm")))
+             (primitive-load it)))
 
 
   ;; NOTE this doesn't stop at first non-option, meaning that -o flags
@@ -156,6 +158,13 @@
                   (current-output-port))
          (throw 'return)
          )
+
+  ;; ((@ (cache) load-cache))
+
+  ;; (when (option-ref opts 'setup-zoneinfo #f)
+  ;;   (get-config 'libexec)/tzget
+
+  ;;   )
 
   (let ((ropt (ornull (option-ref opts '() '())
                       '("term"))))

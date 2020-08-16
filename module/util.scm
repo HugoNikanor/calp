@@ -528,6 +528,21 @@
 
 (define-public ->string ->str)
 
+(define-public (path-append . strings)
+  (fold (lambda (s done)
+            (string-append
+             done
+             (if (string-null? s)
+                 (string-append s "/")
+                 (if (char=? #\/ (string-last done))
+                     (if (char=? #\/ (string-first s))
+                         (string-drop s 1) s)
+                     (if (char=? #\/ (string-first s))
+                         s (string-append "/" s))))))
+        (let ((s (car strings)))
+          (if (string-null? s)
+              "/" s))
+        (cdr strings)))
 
 
 

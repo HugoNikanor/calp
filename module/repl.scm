@@ -5,10 +5,6 @@
   :use-module (util exceptions)
   )
 
-(define-public (runtime-dir)
-  (or (getenv "XDG_RUNTIME_DIR")
-      "/tmp"))
-
 (define-public (repl-start address)
   (define lst (string->list address))
   (format (current-error-port)
