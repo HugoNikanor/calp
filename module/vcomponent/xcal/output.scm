@@ -3,7 +3,7 @@
   :use-module (util exceptions)
   :use-module (vcomponent)
   :use-module (vcomponent geo)
-  :use-module (output sxml-types)
+  :use-module (vcomponent xcal types)
   :use-module (ice-9 match)
   :use-module (output common)
   :use-module (datetime)

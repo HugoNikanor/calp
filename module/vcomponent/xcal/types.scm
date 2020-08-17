@@ -1,6 +1,6 @@
-(define-module (output sxml-types)
+(define-module (vcomponent xcal types)
   :use-module (util)
-  :use-module (output types)
+  :use-module (vcomponent ical types)
   :use-module (datetime)
   :use-module (output common)
   )
@@ -41,7 +41,7 @@
      (hashq-set! sxml-writers simple-type
                  (lambda (p v)
                    `(,(downcase-symbol simple-type)
-                     ,(((@ (output types) get-writer) simple-type) p v)))))
+                     ,(((@ (vcomponent ical types) get-writer) simple-type) p v)))))
 
 (hashq-set! sxml-writers 'BOOLEAN write-boolean)
 (hashq-set! sxml-writers 'DATE write-date)

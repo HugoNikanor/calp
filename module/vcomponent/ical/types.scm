@@ -1,5 +1,5 @@
 ;; see (vcomponent parse types)
-(define-module (output types)
+(define-module (vcomponent ical types)
   :use-module (util)
   :use-module (util exceptions)
   :use-module (util base64)
