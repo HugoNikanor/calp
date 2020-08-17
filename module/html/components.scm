@@ -101,8 +101,13 @@
                `(div (@ (class "tab"))
                      (input (@ (type "radio") (id ,id) (name ,tabgroup)
                                ,@(when (zero? i) '((checked)))))
+                     ;; It would be preferable to place the labels in a separate
+                     ;; div and set that to have fixed position, since we could
+                     ;; then just flow them. That hovever doesn't work since we
+                     ;; need a css-selector for the label to the selected radio
+                     ;; option.
                      (label (@ ,@(assq-merge `((for ,id)
-                                               (style "top: " ,(* 6 i) "ex"))
+                                               (style "top: calc(var(--tab-size) * " ,i ")"))
                                              (kvlist->assq args)))
                             ,key)
                      (div (@ (class "content")) ,body)))))
