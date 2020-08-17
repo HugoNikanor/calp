@@ -1,5 +1,4 @@
-(define-module (output terminal)
-  #:use-module (output general)
+(define-module (calp terminal)
   #:use-module (srfi srfi-1)
   #:use-module (datetime)
   #:use-module (srfi srfi-17)
