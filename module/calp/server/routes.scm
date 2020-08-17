@@ -19,8 +19,7 @@
 
   :use-module ((html util) :select (html-unattr))
 
-  :use-module (server util)
-  :use-module (server macro)
+  :use-module (web http make-routes)
 
   :use-module (vcomponent)
   :use-module (vcomponent search)

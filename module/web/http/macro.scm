@@ -1,4 +1,4 @@
-(define-module (server macro)
+(define-module (web http make-routes)
   :export (make-routes)
   :use-module (util)
   :use-module (ice-9 regex)

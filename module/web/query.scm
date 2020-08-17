@@ -1,8 +1,7 @@
-(define-module (server util)
+(define-module (web query)
   :use-module (util)
   :use-module (srfi srfi-1)
   :use-module (web uri))
-
 
 (define*-public (parse-query query-string optional: (encoding "UTF-8"))
   (unless (or (not query-string) (string-null? query-string))
