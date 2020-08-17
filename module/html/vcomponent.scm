@@ -65,18 +65,22 @@
               `(span (@ (class "summary")) ,(prop ev 'SUMMARY))))
         (div
          ,(call-with-values (lambda () (fmt-time-span ev))
-            (case-lambda [(start) `(div (span (@ (class "dtstart")
-                                                 (data-fmt "%L%H:%M"))
-                                              ,start))]
-                         [(start end) `(div (span (@ (class "dtstart")
-                                                     ;; TODO same format string
-                                                     ;; as fmt-time-span used
-                                                     (data-fmt "%L%H:%M"))
-                                                  ,start)
-                                            " — "
-                                            (span (@ (class "dtend")
-                                                     (data-fmt "%L%H:%M"))
-                                                  ,end))]))
+            (case-lambda [(start)
+                          `(div (span (@ (class "dtstart")
+                                         (data-fmt ,(string-append "~L" start)))
+                                      ,(datetime->string
+                                        (as-datetime (prop ev 'DTSTART))
+                                        start)))]
+                         [(start end)
+                          `(div (span (@ (class "dtstart")
+                                         (data-fmt ,(string-append "~L" start)))
+                                      ,(datetime->string (as-datetime (prop ev 'DTSTART))
+                                                         start))
+                                " — "
+                                (span (@ (class "dtend")
+                                         (data-fmt ,(string-append "~L" end)))
+                                      ,(datetime->string (as-datetime (prop ev 'DTEND))
+                                                         end)))]))
          ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
             `(div (b "Plats: ")
                   (div (@ (class "location"))
@@ -198,7 +202,9 @@
 
              ,(tabset
                 `(("📅" title: "Översikt"
-                   ,(fmt-single-event ev))
+                   ,(begin(format (current-error-port)
+                    "start=~a end=~a~%" (prop ev 'DTSTART)
+                    (prop ev 'DTEND)) (fmt-single-event ev)))
                   ("⤓" title: "Nedladdning"
                    (div (@ (class "eventtext") (style "font-family:sans"))
                         (h2 "Ladda ner")

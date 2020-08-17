@@ -342,7 +342,7 @@ function update_current_time_bar () {
     if (! (start_time <= now.getTime() && now.getTime() < end_time))
         return;
 
-    var event_area = document.getElementById(now.format("%Y-%m-%d"))
+    var event_area = document.getElementById(now.format("~Y-~m-~d"))
 
     if (event_area) {
         if (bar_object) {
@@ -364,13 +364,13 @@ function update_current_time_bar () {
         current_cell.style.border = "";
     }
     current_cell = document.querySelector(
-        ".small-calendar time[datetime='" + now.format("%Y-%m-%d") + "']");
+        ".small-calendar time[datetime='" + now.format("~Y-~m-~d") + "']");
     current_cell.style.border = "1px solid black";
 
     /* Update [today] button */
 
     document.getElementById("today-button").href
-        = (new Date).format("%Y-%m-%d") + ".html";
+        = (new Date).format("~Y-~m-~d") + ".html";
 }
 
 function setVar(str, val) {
@@ -458,7 +458,7 @@ function place_in_edit_mode (event) {
         });
         let slot = event.properties["_slot_" + fieldname]
         let idx = slot.findIndex(e => e[0] === field);
-        slot.splice(idx, 1, [input, (s, v) => s.value = v.format("%H:%M")])
+        slot.splice(idx, 1, [input, (s, v) => s.value = v.format("~H:~M")])
 
         field.replaceWith(input);
 
@@ -654,7 +654,7 @@ window.onload = function () {
     */
 
     let gotodatebtn = document.querySelector("#jump-to .btn");
-    let target_href = (new Date).format("%Y-%m-%d") + ".html";
+    let target_href = (new Date).format("~Y-~m-~d") + ".html";
     let golink = makeElement('a', {
         className: 'btn',
         href: target_href,
@@ -664,7 +664,7 @@ window.onload = function () {
     gotodatebtn.replaceWith(golink);
 
     document.querySelector("#jump-to input[name='date']").onchange = function () {
-        let date = this.valueAsDate.format("%Y-%m-%d");
+        let date = this.valueAsDate.format("~Y-~m-~d");
         console.log(date);
         golink.href = date + ".html";
     }
@@ -740,7 +740,7 @@ function format_date(date, str) {
             case 'Z': if (date.utc) outstr += 'Z'; break;
             }
             fmtmode = false;
-        } else if (str[i] == '%') {
+        } else if (str[i] == '~') {
             fmtmode = true;
         } else {
             outstr += str[i];
@@ -785,9 +785,9 @@ function bind_properties (el, wide_event=false) {
         for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
             switch (s.tagName) {
             case 'date':
-                lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%d")]); break;
+                lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~d")]); break;
             case 'date-time':
-                lst.push([s, (s, v) => s.innerHTML = v.format("%Y-%m-%dT%H:%M:%S%Z")]); break;
+                lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~dT~H:~M:~S~Z")]); break;
             default:
                 lst.push([s, (s, v) => s.innerHTML = v]);
             }

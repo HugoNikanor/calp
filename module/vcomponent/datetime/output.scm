@@ -54,9 +54,9 @@
               (cond [(prop ev 'DTEND)
                      => (lambda (e)
                           (if (date= e (date+ s (date day: 1)))
-                              (date->string s)  ; start = end, only return one value
-                              (values (date->string s)
-                                      (date->string e))))]
+                              "~Y-~m-~d"  ; start = end, only return one value
+                              (values "~Y-~m-~d"
+                                      "~Y-~m-~d")))]
                     ;; no end value, just return start
                     [else (date->string s)]))]
         [else ; guaranteed datetime
@@ -65,6 +65,5 @@
            (if e
                (let ((fmt-str (if (date= (get-date s) (get-date e))
                                   "~H:~M" "~Y-~m-~d ~H:~M")))
-                 (values (datetime->string s fmt-str)
-                         (datetime->string e fmt-str)))
-               (datetime->string s "~Y-~m-~d ~H:~M")))]))
+                 (values fmt-str fmt-str))
+               "~Y-~m-~d ~H:~M"))]))
