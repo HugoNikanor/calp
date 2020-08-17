@@ -1,4 +1,4 @@
-(define-module (entry-points ical)
+(define-module (calp entry-points ical)
   :export (main)
   :use-module (util)
   :use-module (util options)

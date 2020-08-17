@@ -1,4 +1,4 @@
-(define-module (entry-points benchmark)
+(define-module (calp entry-points benchmark)
   :use-module (util)
 
   :use-module (ice-9 getopt-long)

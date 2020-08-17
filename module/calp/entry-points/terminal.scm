@@ -1,4 +1,4 @@
-(define-module (entry-points terminal)
+(define-module (calp entry-points terminal)
   :export (main)
   :use-module (output terminal)
   :use-module (vcomponent)

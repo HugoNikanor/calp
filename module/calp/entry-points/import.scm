@@ -1,4 +1,4 @@
-(define-module (entry-points import)
+(define-module (calp entry-points import)
   :export (main)
   :use-module (util)
   :use-module (util options)

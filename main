@@ -6,4 +6,4 @@ here=$(dirname $(realpath $0))
 GUILE=${GUILE:-$(which guile)}
 # GUILE_LOAD_PATH=$here/module
 
-exec $GUILE -c '((@ (main) main) (command-line))' "$@"
+exec $GUILE -c '((@ (calp main) main) (command-line))' "$@"

@@ -1,4 +1,4 @@
-(define-module (entry-points text)
+(define-module (calp entry-points text)
   :export (main)
   :use-module (text flow)
   :use-module (ice-9 getopt-long)

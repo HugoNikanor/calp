@@ -1,5 +1,5 @@
 ;; -*- geiser-scheme-implementation: guile -*-
-(define-module (main)
+(define-module (calp main)
   :use-module (util)
 
   :use-module (srfi srfi-1)
@@ -174,13 +174,13 @@
   (let ((ropt (ornull (option-ref opts '() '())
                       '("term"))))
     ((case (string->symbol (car ropt))
-       ((html)   (@ (entry-points     html) main))
-       ((term)   (@ (entry-points terminal) main))
-       ((import) (@ (entry-points   import) main))
-       ((text)   (@ (entry-points     text) main))
-       ((ical)   (@ (entry-points     ical) main))
-       ((server) (@ (entry-points   server) main))
-       ((benchmark) (@ (entry-points benchmark) main))
+       ((html)   (@ (calp entry-points     html) main))
+       ((term)   (@ (calp entry-points terminal) main))
+       ((import) (@ (calp entry-points   import) main))
+       ((text)   (@ (calp entry-points     text) main))
+       ((ical)   (@ (calp entry-points     ical) main))
+       ((server) (@ (calp entry-points   server) main))
+       ((benchmark) (@ (calp entry-points benchmark) main))
        (else => (lambda (s)
                   (format (current-error-port)
                           "Unsupported mode of operation: ~a~%"

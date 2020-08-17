@@ -1,4 +1,4 @@
-(define-module (entry-points server)
+(define-module (calp entry-points server)
   :use-module (util)
   :use-module (util options)
   :use-module (util exceptions)

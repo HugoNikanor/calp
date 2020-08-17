@@ -1,4 +1,4 @@
-(define-module (entry-points html)
+(define-module (calp entry-points html)
   :export (main)
   :use-module (util)
   :use-module (util time)
