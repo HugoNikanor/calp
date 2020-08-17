@@ -18,6 +18,10 @@
   :use-module ((datetime instance) :select (zoneinfo))
   )
 
+(define (prodid)
+  (format #f "-//hugo//calp ~a//EN"
+          (@ (calp) version)))
+
 
 ;; Format value depending on key type.
 ;; Should NOT emit the key.
@@ -163,7 +167,7 @@
 (define (write-event-to-file event calendar-path)
   (define cal (make-vcomponent 'VCALENDAR))
 
-  (set! (prop cal 'PRODID) (@ (global) *prodid*)
+  (set! (prop cal 'PRODID) (prodid)
         (prop cal 'VERSION) "2.0"
         (prop cal 'CALSCALE) "GREGORIAN")
 
@@ -191,7 +195,7 @@
 PRODID:~a\r
 VERSION:2.0\r
 CALSCALE:GREGORIAN\r
-" (@ (global) *prodid*)
+" (prodid)
 ))
 
 

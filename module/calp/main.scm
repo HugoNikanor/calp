@@ -23,7 +23,7 @@
 
 
 (define options
-  '((statprof (value display-style)
+  `((statprof (value display-style)
               (description "Run the program within Guile's built in statical "
                            "profiler. Display style is one of "
                            (b "flat") " or " (b "tree") "."))
@@ -52,6 +52,9 @@
              "priority over those from the file. "
              "Can " (i "not") " be given with an equal after --option."
              (br) "Can be given multiple times."))
+
+    (version (single-char #\v)
+             (description "Display version, which is " ,(@ (calp) version) " btw."))
 
     (update-zoneinfo)
 
@@ -151,6 +154,10 @@
                   (current-output-port))
          (throw 'return)
          )
+
+  (when (option-ref opts 'version #f)
+    (format #t "Calp version ~a~%" (@ (calp) version))
+    (throw 'return))
 
   (when (option-ref opts 'update-zoneinfo #f)
     (let ((pipe
