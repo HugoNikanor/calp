@@ -189,3 +189,8 @@
 
 (define-public (x-property? symb)
   (string=? "X-" (string-take (symbol->string symb) 2)))
+
+(define*-public (internal-field? symbol optional: (prefix "-"))
+  (string=? prefix
+            (string-take-to (symbol->string symbol)
+                            (string-length prefix))))

@@ -116,12 +116,6 @@
     rrule)
    ";"))
 
-(define (downcase-symbol symb)
-  (-> symb
-      symbol->string
-      string-downcase
-      string->symbol))
-
 (define-public (recur-rule->rrule-sxml rrule)
   (map-fields
    (lambda (field value)

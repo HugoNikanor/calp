@@ -199,6 +199,15 @@ CALSCALE:GREGORIAN\r
 (define (print-footer)
   (format #t "END:VCALENDAR\r\n"))
 
+(define (get-tz-names events)
+  (lset-difference
+   equal? (lset-union
+           equal? '("dummy")
+           (filter-map
+            (lambda (vline) (and=> (param vline 'TZID) car))
+            (filter-map (extract* 'DTSTART)
+                        events)))
+   '("dummy" "local")))
 
 
 (define-public (print-components-with-fake-parent events)

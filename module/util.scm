@@ -309,6 +309,13 @@
 (define-public (as-symb s)
   (if (string? s) (string->symbol s) s))
 
+(define-public (downcase-symbol symb)
+  (-> symb
+      symbol->string
+      string-downcase
+      string->symbol))
+
+
 (define-public (enumerate lst)
   (zip (iota (length lst))
        lst))
