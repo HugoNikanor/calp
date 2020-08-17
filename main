@@ -3,7 +3,7 @@
 here=$(dirname $(realpath $0))
 . $here/env
 
-GUILE=${GUILE:-guile}
+GUILE=${GUILE:-$(which guile)}
 # GUILE_LOAD_PATH=$here/module
 
-exec $GUILE -e main -s $here/module/main.scm "$@"
+exec $GUILE -c '((@ (main) main) (command-line))' "$@"
