@@ -66,10 +66,16 @@
                  (a (match:substring m))
                  (recur (match:suffix m)))))))
 
+(define html-cals
+  '("D-sektionens officiella kalender"
+    "LiTHe kod"
+    "Klassfadder 2020"))
+
 (set-config! 'description-filter
  (lambda (ev str)
    (cond [(member (prop (parent ev) 'NAME)
-                  '("D-sektionens officiella kalender" "LiTHe kod"))
+                  html-cals
+                  )
           (parse-html (regexp-substitute/global
                         #f "<br>" str
                         'pre "<br/>" 'post))]

@@ -22,6 +22,9 @@ html, body {
             "main main events"
             "footer footer events";
 
+    /* main the graphical portion
+       of both the wide and the table
+       view */
     main {
         min-width: 0;  /* for wide */
         min-height: 0; /* for tall */
