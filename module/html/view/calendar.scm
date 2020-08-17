@@ -27,8 +27,6 @@
 
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
-  :use-module ((git)
-               :select (get-git-version))
   )
 
 
@@ -135,11 +133,7 @@
           (@ (style "grid-area: footer"))
           (span "Page generated " ,(date->string (current-date)))
           (span (a (@ (href ,(repo-url) "/calparse"))
-                   "Source Code"))
-          ,(let* ((long-hash short-hash (get-git-version))
-                  (url (format #f "~a/calparse/commit/?id=~a"
-                               (repo-url) long-hash)))
-             `(span "Version " (a (@ (href ,url)) ,short-hash))))
+                   "Source Code")))
 
          ;; Small calendar and navigation
          (nav (@ (class "calnav") (style "grid-area: nav"))
