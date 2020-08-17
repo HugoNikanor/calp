@@ -587,6 +587,9 @@ along with their colors.
     .event {
         border-radius: 1em;
         padding-left: 1em;
+
+        height: 90%;
+
         &.continuing {
             border-right: none;
             border-radius: 1em 0 0 1em;
@@ -653,21 +656,6 @@ along with their colors.
 ----------------------------------------
 */
 
-.popup-container {
-    display: none;
-    position: absolute;
-    z-index: 10;
-
-    /* ??? */
-    left: 10px;
-    top: -50px;
-
-    box-shadow: gray 10px 10px 10px;
-
-    &.visible {
-        display: block;
-    }
-}
 
 .popup {
     display: flex;
@@ -680,6 +668,22 @@ along with their colors.
     max-height: 60ch;
     min-width: 40ch;
     min-height: 20ch;
+
+    &-container {
+        display: none;
+        position: absolute;
+        z-index: 10;
+
+        /* ??? */
+        left: 10px;
+        top: -50px;
+
+        box-shadow: gray 10px 10px 10px;
+
+        &.visible {
+            display: block;
+        }
+    }
 
     input {
         white-space: initial;
