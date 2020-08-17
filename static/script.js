@@ -552,7 +552,7 @@ function place_in_edit_mode (event) {
         value: 'Skapa event',
     });
 
-    let article = popup.getElementsByTagName("article")[0];
+    let article = popup.getElementsByClassName("eventtext")[0];
     article.appendChild(submit);
 
 

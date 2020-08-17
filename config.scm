@@ -77,3 +77,4 @@
 
 (set-config! 'week-start mon)
 (set-config! 'default-calendar "Calendar")
+(set-config! 'path-prefix (car (glob "~/.local")))

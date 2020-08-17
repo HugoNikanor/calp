@@ -5,6 +5,9 @@
 # - the directory with the zoneinfo files
 # - the names of the zoneinfo files to be parsed
 
+PREFIX=${PREFIX:-/usr}
+DATA_DIR=${XDG_DATA_HOME:-$PREFIX/share}/calp/zoneinfo
+
 # Where to savze the file
 CACHE_DIR=${CACHE_DIR:-~/.cache/calp}
 # Which file to get
@@ -12,8 +15,8 @@ TAR=tzdata-latest.tar.gz
 # Where to get it from
 TZ_SRC="https://www.iana.org/time-zones/repository/$TAR"
 
-mkdir -p $CACHE_DIR
-cd $CACHE_DIR
+mkdir -p $DATA_DIR
+cd $DATA_DIR
 
 test -d "tzdata" || {
 	test -f "/tmp/$TAR" || env --chdir=/tmp curl -sOL $TZ_SRC
@@ -22,8 +25,7 @@ test -d "tzdata" || {
 }
 cd "tzdata"
 
-
-tzpath=$(pwd)
+# tzpath=$(pwd)
 
 size=$(stat -c "%s" Makefile)
 
@@ -36,5 +38,5 @@ files=$(make print-tdata)
 
 truncate -cs $size Makefile
 
-echo $tzpath
+# echo $tzpath
 echo $files

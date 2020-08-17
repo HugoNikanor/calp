@@ -300,6 +300,12 @@
   (if (> i (string-length str))
       str (string-take str i)))
 
+(define-public (string-first str)
+  (string-ref str 0))
+
+(define-public (string-last str)
+  (string-ref str (1- (string-length str))))
+
 (define-public (as-symb s)
   (if (string? s) (string->symbol s) s))
 
@@ -545,6 +551,17 @@
         (cdr strings)))
 
 
+
+(define-syntax catch-warnings
+  (syntax-rules ()
+    ((_ default body ...)
+     (parametrize ((warnings-are-errors #t))
+       (catch 'warning
+         (lambda ()
+           body ...)
+         (lambda _ default))))))
+
+
 
 (define-syntax let-env
   (syntax-rules ()

@@ -2,26 +2,28 @@
 
 ;; config
 
-(catch 'misc-error
-  (lambda () (use-modules (autoconfig)))
-  (lambda (err caller fmt args . rest)
-    (if (eqv? (caadr args) 'autoconfig)
-        (format (current-error-port) "Run ./configure first~%")
-        (format (current-error-port) "~?~%" fmt args))
-    (exit 1)))
+; (catch 'misc-error
+;   (lambda () (use-modules (autoconfig)))
+;   (lambda (err caller fmt args . rest)
+;     (if (eqv? (caadr args) 'autoconfig)
+;         (format (current-error-port) "Run ./configure first~%")
+;         (format (current-error-port) "~?~%" fmt args))
+;     (exit 1)))
 
 (use-modules (srfi srfi-1)
              (srfi srfi-88)             ; keyword syntax
 
              (util)
-             ((util config) :select (set-config! get-configuration-documentation))
+             ((util config) :select (set-config! get-config get-configuration-documentation))
              (util options)
              ((util hooks) :select (shutdown-hook))
+             (directories)
 
              (text markup)
 
              (ice-9 getopt-long)
              (ice-9 regex)
+             ((ice-9 popen) :select (open-input-pipe))
 
              (statprof)
              (repl)
@@ -60,7 +62,7 @@
              "Can " (i "not") " be given with an equal after --option."
              (br) "Can be given multiple times."))
 
-    (setup-zoneinfo)
+    (update-zoneinfo)
 
     (help (single-char #\h)
           (description "Print this help"))))
@@ -159,12 +161,24 @@
          (throw 'return)
          )
 
-  ;; ((@ (cache) load-cache))
+  (when (option-ref opts 'update-zoneinfo #f)
+    (let ((pipe  
+            (let-env ((PREFIX (get-config 'path-prefix)))
+                     (open-input-pipe (path-append libexec "/tzget")))))
 
-  ;; (when (option-ref opts 'setup-zoneinfo #f)
-  ;;   (get-config 'libexec)/tzget
+      ;; (define path (read-line pipe))
+      (define names (string-split ((@ (ice-9 rdelim) read-line) pipe) #\space))
+      ((@ (util io) with-atomic-output-to-file)
+        (path-append data-directory "/zoneinfo.scm")
+        (lambda ()
+          (write `(set-config! 'tz-list ',names)) (newline)
+          (write `(set-config! 'last-zoneinfo-upgrade ,((@ (datetime) current-date))) (newline))))))
 
-  ;;   )
+  ;; always load zoneinfo if available.
+  (let ((z (path-append data-directory "/zoneinfo")))
+    (when (file-exists? z)
+      (primitive-load z)))
+
 
   (let ((ropt (ornull (option-ref opts '() '())
                       '("term"))))

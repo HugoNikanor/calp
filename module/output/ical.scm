@@ -170,7 +170,8 @@
 
   (add-child! cal event)
 
-  (awhen (param (prop* event 'DTSTART) 'TZID)
+  (awhen (and (provided? 'zoneinfo) 
+              (param (prop* event 'DTSTART) 'TZID))
          ;; TODO this is broken
          (add-child! cal (zoneinfo->vtimezone (zoneinfo) it)))
 
@@ -209,14 +210,15 @@ CALSCALE:GREGORIAN\r
 
   (print-header)
 
-  (let ((tz-names (get-tz-names events)))
-    (for-each component->ical-string
-              ;; TODO we realy should send the earliest event from each timezone here,
-              ;; instead of just the first.
-              (map (lambda (name) (zoneinfo->vtimezone
-                              (zoneinfo)
-                              name (car events)))
-                   tz-names)))
+  (when (provided? 'zoneinfo)
+    (let ((tz-names (get-tz-names events)))
+      (for-each component->ical-string
+                ;; TODO we realy should send the earliest event from each timezone here,
+                ;; instead of just the first.
+                (map (lambda (name) (zoneinfo->vtimezone
+                                      (zoneinfo)
+                                      name (car events)))
+                     tz-names))))
 
   (for-each component->ical-string events)
 
