@@ -7,7 +7,7 @@
   :use-module (html util)
   :use-module ((html config) :select (edit-mode))
   :use-module ((html components) :select (btn tabset))
-  :use-module ((output general) :select (calculate-fg-color))
+  :use-module ((output color) :select (calculate-fg-color))
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
                         format-description

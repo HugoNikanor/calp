@@ -150,7 +150,7 @@
                 (remove-event global-event-object it)
                 (set! (prop it 'X-HNH-REMOVED) #t)
                 (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
-                (unless ((@ (output vdir) save-event) it)
+                (unless ((@ (vcomponent vdir save-delete) save-event) it)
                   (return (build-response code: 500)
                           "Saving event to disk failed."))
                 (return (build-response code: 204)))
@@ -249,7 +249,7 @@
                               (format (current-error-port)
                                       "Unlinking old event from ~a~%"
                                       (prop old-event '-X-HNH-FILENAME))
-                              ((@ (output vdir) remove-event) old-event)))
+                              ((@ (vcomponent vdir save-delete) remove-event) old-event)))
 
                           (parameterize ((warnings-are-errors #t))
                             (catch 'warning
@@ -261,7 +261,7 @@
 
                     ;; NOTE Posibly defer save to a later point.
                     ;; That would allow better asyncronous preformance.
-                    (unless ((@ (output vdir) save-event) event)
+                    (unless ((@ (vcomponent vdir save-delete) save-event) event)
                       (return (build-response code: 500)
                               "Saving event to disk failed."))
 
@@ -280,7 +280,7 @@
 
                ;; NOTE Posibly defer save to a later point.
                ;; That would allow better asyncronous preformance.
-               (unless ((@ (output vdir) save-event) event)
+               (unless ((@ (vcomponent vdir save-delete) save-event) event)
                  (return (build-response code: 500)
                          "Saving event to disk failed."))
 

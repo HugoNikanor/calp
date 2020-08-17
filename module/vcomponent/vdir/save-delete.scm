@@ -9,7 +9,7 @@
 
 ;;; Code:
 
-(define-module (output vdir)
+(define-module (vcomponent vdir save-delete)
   :use-module (util)
   :use-module (vcomponent ical output)
   :use-module (vcomponent)
