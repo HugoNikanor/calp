@@ -22,8 +22,9 @@
     "/calp"))
 
 (define (libexec%)
-  (path-append (get-config 'path-prefix)
-               "/lib/calp"))
+  (or (getenv "LIBEXEC")
+      (path-append (get-config 'path-prefix)
+                   "/lib/calp")))
 
 (define-syntax libexec (identifier-syntax (libexec%)))
 (export libexec)

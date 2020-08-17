@@ -165,15 +165,16 @@
                     (open-input-pipe (path-append libexec "/tzget")))))
 
       ;; (define path (read-line pipe))
-      (define names (string-split ((@ (ice-9 rdelim) read-line) pipe) #\space))
+      (define line ((@ (ice-9 rdelim) read-line) pipe))
+      (define names (string-split line #\space))
       ((@ (util io) with-atomic-output-to-file)
        (path-append data-directory "/zoneinfo.scm")
        (lambda ()
          (write `(set-config! 'tz-list ',names)) (newline)
-         (write `(set-config! 'last-zoneinfo-upgrade ,((@ (datetime) current-date))) (newline))))))
+         (write `(set-config! 'last-zoneinfo-upgrade ,((@ (datetime) current-date)))) (newline)))))
 
   ;; always load zoneinfo if available.
-  (let ((z (path-append data-directory "/zoneinfo")))
+  (let ((z (path-append data-directory "/zoneinfo.scm")))
     (when (file-exists? z)
       (primitive-load z)))
 
