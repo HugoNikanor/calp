@@ -21,7 +21,7 @@
                (lambda (s) (path-append s "/.config"))))
     "/calp"))
 
-(define (libexec%) 
+(define (libexec%)
   (path-append (get-config 'path-prefix)
                "/lib/calp"))
 

@@ -19,6 +19,7 @@
 
   :use-module ((sxml simple) :select (sxml->xml))
   :use-module ((sxml transformations) :select (href-transformer))
+  :use-module (directories)
 
   :autoload (vcomponent instance) (global-event-object)
   )
@@ -35,6 +36,9 @@
                         "2020-04-27, 2020-05-04, 2020-05-11, and 2020-05-25. "
                         "Defaults to 12 to give a whole year when --style=" (b "month") "."
                         ))
+
+    (target (single-char #\t) (value #t)
+            (description "Directory where html files should end up. Default to " (b "./html")))
 
     (style (value #t) (predicate ,(lambda (v) (memv (string->symbol v)
                                             '(wide week table))))
@@ -55,20 +59,18 @@
 
 
 ;; file existing but is of wrong type,
-(define (create-files)
-  (let* ((dir (dirname (or (@ (global) basedir) ".")))
-         (html (string-append dir "/html"))
-         (link (string-append html "/static")))
-    (unless (file-exists? html)
-      (mkdir html))
-    (unless (file-exists? link)
-      (symlink "../static" link))))
+(define (create-files output-directory)
 
+  (let* ((link (path-append output-directory "/static")))
 
-(define (get-filename start-date)
-  (format #f "~a/html/~a.xml"
-          (dirname (or (@ (global) basedir) "."))
-          (date->string start-date "~1")))
+    (unless (file-exists? output-directory)
+      (mkdir output-directory))
+
+    ;; TODO nicer way to resolve static
+    (let ((link (path-append output-directory "/static")))
+     (unless (file-exists? link)
+       (symlink (path-append data-directory "www/static") link)))))
+
 
 (define (re-root-static tree)
   (href-transformer
@@ -78,7 +80,7 @@
           (regexp-substitute #f it 'pre "static" 'post)
           str))))
 
-(define (common count start-date chunk-length
+(define (common target-directory count start-date chunk-length
                 render-calendar . extra-args)
 
   (define calendars (get-calendars global-event-object))
@@ -86,11 +88,11 @@
 
   ((@ (util time) report-time!) "html start")
 
-  (create-files)
+  (create-files target-directory)
 
   (stream-for-each
    (lambda (start-date)
-     (define fname (get-filename start-date))
+     (define fname (path-append target-directory (date->string start-date "~1.xml")))
      (format (current-error-port) "Writing to [~a]~%" fname)
      (with-output-to-file fname
        (lambda () (sxml->xml (re-root-static
@@ -117,6 +119,8 @@
 
   (define style (string->symbol (option-ref opts 'style "wide")))
 
+  (define target-directory (option-ref opts 'target "./html"))
+
   (when (option-ref opts 'help #f)
     (print-arg-help opt-spec)
     (throw 'return)
@@ -127,19 +131,20 @@
 
   (case style
     [(wide)
-     (common count start (date month: 1) render-calendar-wide)]
+     (common target-directory count start (date month: 1) render-calendar-wide)]
 
     [(week)
 
      ;; TODO The small calendar is always centered on months, it might
      ;; be a good idea to instead center it on the current week, meaning
      ;; that the active row is always in the center
-     (common count (start-of-week start)
+     (common target-directory count (start-of-week start)
              (date day: 7)
              render-calendar-wide)]
     [(table)
 
-     (common count (start-of-month start) (date month: 1)
+     (common target-directory
+             count (start-of-month start) (date month: 1)
              render-calendar-table
              pre-start: (start-of-week start)
              post-end: (end-of-week (end-of-month start)))]
