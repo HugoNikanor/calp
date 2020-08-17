@@ -16,7 +16,7 @@
   :use-module (util exceptions)
   :use-module (vcomponent base)
 
-  :use-module (vcomponent parse ical)
+  :use-module (vcomponent ical parse)
   :re-export (parse-calendar)
   )
 

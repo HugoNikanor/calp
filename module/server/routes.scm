@@ -25,8 +25,7 @@
   :use-module (vcomponent)
   :use-module (vcomponent search)
   :use-module (datetime)
-  ;; :use-module (output html)
-  :use-module (output ical)
+  :use-module (vcomponent ical output)
 
   :autoload (vcomponent instance) (global-event-object)
 
@@ -194,7 +193,7 @@
            ;; *TOP* node is a required part of the sxml.
 
            (let ((event
-                   ((@ (vcomponent parse xcal) sxcal->vcomponent)
+                   ((@ (vcomponent xcal parse) sxcal->vcomponent)
                     (catch 'parser-error
                       (lambda ()
                         (move-to-namespace
@@ -336,7 +335,7 @@
                        ;; Look into changing how events carry around their
                        ;; parent information, possibly splitting "source parent"
                        ;; and "program parent" into different fields.
-                       (lambda () (sxml->xml ((@ (output xcal) vcomponent->sxcal) it)))))
+                       (lambda () (sxml->xml ((@ (vcomponent xcal output) vcomponent->sxcal) it)))))
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
 

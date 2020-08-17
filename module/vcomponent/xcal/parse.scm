@@ -1,4 +1,4 @@
-(define-module (vcomponent parse xcal)
+(define-module (vcomponent xcal parse)
   :use-module (util)
   :use-module (util exceptions)
   :use-module (util base64)

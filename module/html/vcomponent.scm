@@ -181,8 +181,8 @@
                        ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                     (prop ev 'LOCATION)))))
             (div (@ (style "display:none !important;"))
-                 ,((@ (output xcal) ns-wrap)
-                   ((@ (output xcal) vcomponent->sxcal)
+                 ,((@ (vcomponent xcal output) ns-wrap)
+                   ((@ (vcomponent xcal output) vcomponent->sxcal)
                     ev)))))))
 
 

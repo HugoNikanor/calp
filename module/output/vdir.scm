@@ -11,7 +11,7 @@
 
 (define-module (output vdir)
   :use-module (util)
-  :use-module (output ical)
+  :use-module (vcomponent ical output)
   :use-module (vcomponent)
   :use-module ((util io) :select (with-atomic-output-to-file))
   )

@@ -1,5 +1,5 @@
-(((vcomponent parse xcal) sxcal->vcomponent)
- ((vcomponent parse ical) parse-calendar)
+(((vcomponent xcal parse) sxcal->vcomponent)
+ ((vcomponent ical parse) parse-calendar)
  ((output xcal) vcomponent->sxcal)
  ((util) ->)
  ((vcomponent base)

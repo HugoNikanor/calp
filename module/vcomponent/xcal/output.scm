@@ -1,4 +1,4 @@
-(define-module (output xcal)
+(define-module (vcomponent xcal output)
   :use-module (util)
   :use-module (util exceptions)
   :use-module (vcomponent)

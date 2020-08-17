@@ -1,4 +1,4 @@
-(define-module (output ical)
+(define-module (vcomponent ical output)
   :use-module (ice-9 format)
   :use-module (ice-9 match)
   :use-module (util)
