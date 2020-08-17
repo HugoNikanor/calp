@@ -151,7 +151,11 @@
                                                         "unknown"))
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                         " tentative"))
+                         " tentative")
+                      ,(when (and (prop ev 'TRANSP)
+                                  (eq? 'TRANSPARENT (prop ev 'TRANSP)))
+                         " transparent")
+                      )
                     (onclick "toggle_popup('popup' + this.id)")
                     )))
             ;; Inner div to prevent overflow. Previously "overflow: none"
