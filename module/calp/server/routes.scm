@@ -1,4 +1,4 @@
-(define-module (server routes)
+(define-module (calp server routes)
   :use-module (util)
   :use-module (util options)
   :use-module (util exceptions)

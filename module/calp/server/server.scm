@@ -1,7 +1,7 @@
-(define-module (server server)
+(define-module (calp server server)
   :use-module (util)
   :use-module (web server)
-  :use-module ((server routes) :select (make-make-routes))
+  :use-module ((calp server routes) :select (make-make-routes))
   :use-module (ice-9 threads))
 
 ;; NOTE The default make-default-socket is broken for IPv6.

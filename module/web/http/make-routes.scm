@@ -89,7 +89,7 @@
                          (else (lambda* _ (return (build-response #:code 404)
                                                   "404 Not Fonud"))))
                    (append
-                    (parse-query r:query)
+                    ((@ (web query) parse-query) r:query)
 
                     (let ((content-type (assoc-ref r:headers 'content-type)))
                       (when content-type
@@ -97,9 +97,10 @@
                               (args (cdr content-type)))
                           (when (eq? type 'application/x-www-form-urlencoded)
                             (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
-                              (parse-query ((@ (ice-9 iconv) bytevector->string)
-                                            body encoding)
-                                           encoding)))))))))))
+                              ((@ (web query) parse-query)
+                               ((@ (ice-9 iconv) bytevector->string)
+                                body encoding)
+                               encoding)))))))))))
            (case-lambda ((headers body new-state) (values headers body new-state))
                         ((headers body) (values headers body state))
                         ((headers) (values headers "" state))))))))

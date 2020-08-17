@@ -8,7 +8,7 @@
   :use-module (ice-9 getopt-long)
   ;; :use-module (ice-9 regex) #| regex here due to bad macros |#
 
-  :use-module ((server server) :select (start-server))
+  :use-module ((calp server server) :select (start-server))
 
   :export (main))
 
