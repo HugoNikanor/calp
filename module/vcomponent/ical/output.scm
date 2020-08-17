@@ -14,7 +14,6 @@
   :use-module (vcomponent recurrence)
   :use-module (vcomponent geo)
   :use-module (vcomponent ical types)
-  :use-module (output common)
   :autoload (vcomponent instance) (global-event-object)
   :use-module ((datetime instance) :select (zoneinfo))
   )

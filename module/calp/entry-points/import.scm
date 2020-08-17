@@ -5,7 +5,9 @@
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 rdelim)
   :use-module (srfi srfi-1)
-  :use-module (output vdir)
+  ;; TODO FIX
+  ;; :use-module (output vdir)
+  :use-module ((vcomponent vdir save-delete) :select (save-event))
   :use-module (vcomponent)
   :autoload (vcomponent instance) (global-event-object)
   )

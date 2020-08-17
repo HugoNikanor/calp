@@ -11,6 +11,7 @@
 
 (define-module (vcomponent vdir save-delete)
   :use-module (util)
+  :use-module ((util exceptions) :select (assert)) 
   :use-module (vcomponent ical output)
   :use-module (vcomponent)
   :use-module ((util io) :select (with-atomic-output-to-file))
@@ -20,7 +21,7 @@
 (define-public (save-event event)
   (define calendar (parent event))
 
-  (assert 'vdir (prop calendar '-X-HNH-SOURCETYPE))
+  (assert (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE)))
 
   (let* ((uid (or (prop event 'UID) (uuidgen))))
     (set! (prop event 'UID) uid
@@ -35,5 +36,5 @@
 
 (define-public (remove-event event)
   (define calendar (parent event))
-  (assert 'vdir (prop calendar '-X-HNH-SOURCETYPE))
+  (assert (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE)))
   (delete-file (prop event '-X-HNH-FILENAME)))

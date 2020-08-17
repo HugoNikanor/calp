@@ -309,11 +309,6 @@
 (define-public (as-symb s)
   (if (string? s) (string->symbol s) s))
 
-(define-public (downcase-symbol symb)
-  (-> symb
-      symbol->string
-      string-downcase
-      string->symbol))
 
 
 (define-public (enumerate lst)
@@ -504,6 +499,13 @@
     [(_ value proc rest ...)
      (and=>> (and=> value proc)
              rest ...)]))
+
+(define-public (downcase-symbol symb)
+  (-> symb
+      symbol->string
+      string-downcase
+      string->symbol))
+
 
 ;; @example
 ;; (group (iota 10) 2)

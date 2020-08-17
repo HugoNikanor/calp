@@ -4,7 +4,7 @@
 ;; (vcomponent parse ical) handles reading data from icalendar files.
 ;;; Code:
 
-(define-module (vcomponent parse)
+(define-module (vcomponent vdir parse)
   :use-module (srfi srfi-1)
 
   :use-module ((ice-9 hash-table) :select (alist->hash-table))
@@ -24,7 +24,7 @@
 ;; All VTIMEZONE's seem to be in "local" time in relation to
 ;; themselves. Therefore, a simple comparison should work,
 ;; and then the TZOFFSETTO properties can be subtd.
-(define (parse-vdir path)
+(define-public (parse-vdir path)
   (let ((/ (lambda args (string-join args file-name-separator-string 'infix))))
     (let ((color
            (catch 'system-error

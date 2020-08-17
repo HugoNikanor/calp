@@ -1,4 +1,4 @@
-(define-module (output color)
+(define-module (util color)
   )
 
 ;; Returns a color with good contrast to the given background color.

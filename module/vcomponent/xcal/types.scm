@@ -2,7 +2,6 @@
   :use-module (util)
   :use-module (vcomponent ical types)
   :use-module (datetime)
-  :use-module (output common)
   )
 
 (define (write-boolean _ v)

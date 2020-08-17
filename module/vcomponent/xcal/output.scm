@@ -5,7 +5,6 @@
   :use-module (vcomponent geo)
   :use-module (vcomponent xcal types)
   :use-module (ice-9 match)
-  :use-module (output common)
   :use-module (datetime)
   :use-module (srfi srfi-1)
   )
