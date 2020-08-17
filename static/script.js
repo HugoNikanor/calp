@@ -440,10 +440,30 @@ function place_in_edit_mode (event) {
     function replace_with_time_input(fieldname, event) {
         let field = popup.getElementsByClassName(fieldname)[0];
 
-        let input = makeElement ('input', {
+        let dt = new Date(field.dateTime);
+
+        let dateinput = makeElement ('input', {
+            type: 'date',
+            required: true,
+            value: dt.format("~Y-~m-~d"),
+
+            onchange: function (e) {
+                /* Only update datetime when the input is filled out */
+                if (! this.value) return;
+                let [year, month, day] = this.value.split("-").map(Number);
+                /* retain the hour and second information */
+                let d = copyDate(event.properties[fieldname]);
+                d.setYear(year);
+                d.setMonth(month - 1);
+                d.setDate(day);
+                event.properties[fieldname] = d;
+            }
+        });
+
+        let timeinput = makeElement ('input', {
             type: "time",
             required: true,
-			value: field.innerText,
+	    value: dt.format("~H:~M"),
 
             onchange: function (e) {
                 /* Only update datetime when the input is filled out */
@@ -458,9 +478,13 @@ function place_in_edit_mode (event) {
         });
         let slot = event.properties["_slot_" + fieldname]
         let idx = slot.findIndex(e => e[0] === field);
-        slot.splice(idx, 1, [input, (s, v) => s.value = v.format("~H:~M")])
+        slot.splice(idx, 1, [timeinput, (s, v) => s.value = v.format("~H:~M")])
+        slot.splice(idx, 0, [dateinput, (s, v) => s.value = v.format("~Y-~m-~d")])
 
-        field.replaceWith(input);
+        field.innerHTML = '';
+        field.appendChild(dateinput);
+        field.appendChild(timeinput);
+        // field.replaceWith(timeinput);
 
     }
 

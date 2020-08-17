@@ -66,19 +66,28 @@
         (div
          ,(call-with-values (lambda () (fmt-time-span ev))
             (case-lambda [(start)
-                          `(div (span (@ (class "dtstart")
-                                         (data-fmt ,(string-append "~L" start)))
+                          `(div (time (@ (class "dtstart")
+                                         (data-fmt ,(string-append "~L" start))
+                                         (datetime ,(datetime->string
+                                                     (as-datetime (prop ev 'DTSTART))
+                                                     "~1T~3")))
                                       ,(datetime->string
                                         (as-datetime (prop ev 'DTSTART))
                                         start)))]
                          [(start end)
-                          `(div (span (@ (class "dtstart")
-                                         (data-fmt ,(string-append "~L" start)))
+                          `(div (time (@ (class "dtstart")
+                                         (data-fmt ,(string-append "~L" start))
+                                         (datetime ,(datetime->string
+                                                     (as-datetime (prop ev 'DTSTART))
+                                                     "~1T~3")))
                                       ,(datetime->string (as-datetime (prop ev 'DTSTART))
                                                          start))
                                 " — "
-                                (span (@ (class "dtend")
-                                         (data-fmt ,(string-append "~L" end)))
+                                (time (@ (class "dtend")
+                                         (data-fmt ,(string-append "~L" end))
+                                         (datetime ,(datetime->string
+                                                     (as-datetime (prop ev 'DTSTART))
+                                                     "~1T~3")))
                                       ,(datetime->string (as-datetime (prop ev 'DTEND))
                                                          end)))]))
          ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
