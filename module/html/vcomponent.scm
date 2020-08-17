@@ -123,7 +123,8 @@
                            (class "CAL_" ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))))
                       fmt-header:
                       (lambda body
-                        `(a (@ (href "#" ,(date-link (as-date (prop ev 'DTSTART))))
+                        `(a (@ (href "#" ,(html-id ev) #; (date-link (as-date (prop ev 'DTSTART)))
+                                     )
                                (class "hidelink"))
                             ,@body))))
                   (stream-filter

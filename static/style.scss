@@ -31,6 +31,15 @@ html, body {
        */
         display: flex;
         flex-direction: column;
+
+        .event:target {
+            box-shadow:
+                 1em  1em 0.5em gold,
+                -1em -1em 0.5em gold,
+                 1em -1em 0.5em gold,
+                -1em  1em 0.5em gold;
+            z-index: 1;
+        }
     }
 
 
