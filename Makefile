@@ -34,12 +34,8 @@ install: all
 	install -d $(DESTDIR)/usr/share/calp/www
 	rsync -a static $(DESTDIR)/usr/share/calp/www
 	install -m 644 -D -t $(DESTDIR)/usr/share/doc/calp README
-	install -m 755 -D -t $(DESTDIR)/usr/lib/calp/ main
-	install -m 755 -D -t $(DESTDIR)/usr/lib/calp/ tzget
-	install -d $(DESTDIR)/usr/bin
-	ln -s -f /usr/lib/calp/main $(DESTDIR)/usr/bin/calp
-	@env CACHE_DIR=$(DESTDIR)/var/cache/calp/ ./tzget
-	# TODO zoneinfo files
+	install -m 755 -D -t $(DESTDIR)/usr/lib/calp/ scripts/tzget
+	install -D production-main $(DESTDIR)/usr/bin/calp
 
 README: README.in
 	./main text < README.in | sed "s/<<today>>/`date -I`/" > README

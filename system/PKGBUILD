@@ -8,16 +8,23 @@ license=('AGPL')
 depends=('guile>=2.2')
 makedepends=('ruby-sass')
 optdepends=('vdirsyncer': 'Download calendar files')
-source=("https://github.com/HugoNikanor/$pkgname/archive/v$pkgver.tar.gz")
+source=(
+	calp.service
+	config.scm
+	"https://github.com/HugoNikanor/$pkgname/archive/v$pkgver.tar.gz"
+)
 
 build() {
 	make
 }
 
-check() {
-	make test
-}
+# check() {
+# 	make test
+# }
 
 package() {
 	make DESTDIR="$pkgdir" install
+	install -m 644 -D -t $pkgdir/usr/lib/systemd/system calp.service
+	install -m 644 -D -t $pkgdir/etc/calp/config.scm config.scm
 }
+
