@@ -93,8 +93,7 @@
     (meta (@ (name end-time)
              (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
 
-    (script
-     "EDIT_MODE=true;")
+    (script "EDIT_MODE=" ,(if (edit-mode) "true" "false") ";")
 
     (style ,(format #f "html {
     --editmode: 1.0;
