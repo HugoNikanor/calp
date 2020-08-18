@@ -2,6 +2,7 @@
   :use-module (util)
   :use-module (util options)
   :use-module (util exceptions)
+  :use-module (util config)
 
   :use-module (srfi srfi-1)
 
@@ -14,8 +15,11 @@
 
 (define options
   '((port (value #t) (single-char #\p)
-          (description "Bind to TCP port, defaults to " (i 8080) "."))
+          (description "Bind to TCP port, defaults to " (i 8080) "."
+                       (br) "Can also be set through the config variable "
+                       (i "port") "."))
     (addr (value #t)
+
           (description "Address to use, defaults to " (i "0.0.0.0")
                        " for IPv4, and " (i "::") " for IPv6.")
           )
@@ -27,11 +31,15 @@
           (description "Print this help."))))
 
 
+(define-config port 8080)
+
 (define-public (main args)
 
   (define opts (getopt-long args (getopt-opt options)))
-  (define port (string->number (option-ref opts 'port "8080")))
   (define addr (option-ref opts 'addr #f))
+  (define port (or (and=> (option-ref opts 'port #f)
+                          string->number)
+                   (get-config 'port)))
   (define family
     (cond [(option-ref opts 'six  #f) AF_INET6]
           [(option-ref opts 'four #f) AF_INET]
@@ -60,6 +68,8 @@
         (display "Received SIGUSR1, reloading calendars\n"
                  (current-error-port))
         ((@ (vcomponent instance) reload)))))
+
+
 
   (format #t "Starting server on ~a:~a~%I'm ~a, runing from ~a~%"
           addr port
