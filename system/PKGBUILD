@@ -1,21 +1,22 @@
 pkgname=calp
 pkgver=0.5
 pkgrel=1
-pkgdesc=Calendar program
+pkgdesc='Calendar program'
 arch=('any')
 url=https://git.hornquist.se/git/calp
 license=('AGPL')
 depends=('guile>=2.2')
 makedepends=('ruby-sass')
-optdepends=('vdirsyncer': 'Download calendar files')
+optdepends=('vdirsyncer: Download calendar files')
 source=(
 	calp.service
 	config.scm
 	"https://github.com/HugoNikanor/$pkgname/archive/v$pkgver.tar.gz"
 )
+md5sums=('SKIP' 'SKIP' 'SKIP')
 
 build() {
-	make
+	make -C $pkgname-$pkgver
 }
 
 # check() {
@@ -23,8 +24,8 @@ build() {
 # }
 
 package() {
-	make DESTDIR="$pkgdir" install
-	install -m 644 -D -t $pkgdir/usr/lib/systemd/system calp.service
-	install -m 644 -D -t $pkgdir/etc/calp/config.scm config.scm
+	make -C $pkgname-$pkgver DESTDIR="$pkgdir" install
+	install -m 644 -D -t $pkgdir/usr/lib/systemd/system/ calp.service
+	install -m 644 -D -t $pkgdir/etc/calp/ config.scm
 }
 

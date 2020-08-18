@@ -1,3 +1,8 @@
+(use-modules (util config)
+             (ice-9 regex)
+             ((datetime) :select (mon))
+             (glob))
+
 (set-config! 'calendar-files (glob "/var/lib/calp/.local/var/cal/*"))
 
 (define (parse-links str)
@@ -16,5 +21,5 @@
 (set-config! 'week-start mon)
 ;; (set-config! 'default-calendar "Calendar")
 
-(set-config 'port 8082)
-(set-config 'edit-mode #t)
+(set-config! 'port 8082)
+(set-config! 'edit-mode #t)
