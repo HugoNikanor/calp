@@ -48,8 +48,8 @@
       (map (lambda (node) (replace-symbols node dict))
            tree)))
 
-(define (atom? x)
-  ;; NOT symbol
+;; Direct values. Lisp also has quoted symbols in this group.
+(define (immediate? x)
   (or (number? x)
       (char? x)
       (string? x)))
@@ -78,7 +78,7 @@
     (lset-difference
      eq?
      (remove primitive?
-             (remove atom?
+             (remove immediate?
                      (flatten (if (list? right)
                                   right (list right)))))
      proc-args))
