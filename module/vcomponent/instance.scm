@@ -14,3 +14,9 @@
 (define-once global-event-object
   (make (@@ (vcomponent instance methods) <events>)
     calendar-files: (get-config 'calendar-files)))
+
+(define-public (reload)
+  (let ((new-value (make (@@ (vcomponent instance methods) <events>)
+                     calendar-files: (get-config 'calendar-files))))
+    (display "Reload done\n" (current-error-port))
+    (set! global-event-object new-value)))

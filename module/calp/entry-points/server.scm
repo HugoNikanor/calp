@@ -6,7 +6,6 @@
   :use-module (srfi srfi-1)
 
   :use-module (ice-9 getopt-long)
-  ;; :use-module (ice-9 regex) #| regex here due to bad macros |#
 
   :use-module ((calp server server) :select (start-server))
 
@@ -23,6 +22,7 @@
     ;; numbers as single-char doesn't work.
     (six (description "Use IPv6."))
     (four (description "Use IPv4."))
+    (sigusr (description "Reload events on SIGUSR1"))
     (help (single-char #\h)
           (description "Print this help."))))
 
@@ -51,6 +51,15 @@
         (if (eqv? family AF_INET6)
             "::" "0.0.0.0")))
 
+  (when (option-ref opts 'sigusr #f)
+    (display "Listening for SIGUSR1\n" (current-error-port))
+    ;; NOTE this uses the main thread, and does therefore block HTTP requests
+    ;; while reloading. However, it appears to not cause any race conditions.
+    (sigaction SIGUSR1
+      (lambda _
+        (display "Received SIGUSR1, reloading calendars\n"
+                 (current-error-port))
+        ((@ (vcomponent instance) reload)))))
 
   (format #t "Starting server on ~a:~a~%I'm ~a, runing from ~a~%"
           addr port

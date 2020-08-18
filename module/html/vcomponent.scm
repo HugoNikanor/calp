@@ -216,9 +216,7 @@
 
              ,(tabset
                 `(("📅" title: "Översikt"
-                   ,(begin(format (current-error-port)
-                    "start=~a end=~a~%" (prop ev 'DTSTART)
-                    (prop ev 'DTEND)) (fmt-single-event ev)))
+                   ,(fmt-single-event ev))
                   ("⤓" title: "Nedladdning"
                    (div (@ (class "eventtext") (style "font-family:sans"))
                         (h2 "Ladda ner")
