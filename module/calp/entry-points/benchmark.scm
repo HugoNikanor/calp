@@ -27,7 +27,9 @@
     (print-arg-help opt-spec)
     (throw 'return))
 
-  (let ((strm (get-event-set global-event-object)))
-    (if (option-ref opts 'enable-output #f)
-        (write (stream->list 1000 strm))
-        (stream->list 1000 strm))))
+
+  (awhen (option-ref opts '() #f)
+         ((module-ref (resolve-module
+                       `(calp benchmark ,@(map string->symbol it)))
+                      'run-benchmark)))
+)
