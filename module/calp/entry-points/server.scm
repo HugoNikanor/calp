@@ -31,7 +31,8 @@
           (description "Print this help."))))
 
 
-(define-config port 8080)
+(define-config port 8080
+  description: "Port to which the web server should bind.")
 
 (define-public (main args)
 
