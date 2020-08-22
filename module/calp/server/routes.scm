@@ -42,15 +42,13 @@
 
 
 
-(define (// . args) (string-join args file-name-separator-string ))
-
 (define (directory-table dir)
   `(table
     (thead
      (tr (th "") (th "Name") (th "Perm")))
     (tbody
      ,@(map (lambda (k)
-              (let* ((stat (lstat (// dir k))))
+              (let* ((stat (lstat (path-append dir k))))
                 `(tr (td ,(case (stat:type stat)
                             [(directory) "📁"]
                             [(regular) "📰"]
@@ -406,7 +404,7 @@
         (return
          '((content-type text/html))
          (sxml->html-string
-          (directory-table (// "static" *)))))
+          (directory-table (path-append "static" *)))))
 
 
    (GET "/count" ()
