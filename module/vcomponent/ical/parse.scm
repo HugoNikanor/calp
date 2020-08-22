@@ -11,6 +11,14 @@
   :use-module (vcomponent geo)
  )
 
+(define string->symbol
+  (let ((ht (make-hash-table 1000)))
+    (lambda (str)
+      (or (hash-ref ht str)
+          (let ((symb ((@ (guile) string->symbol) str)))
+            (hash-set! ht str symb)
+            symb)))))
+
 ;; TODO rename to parse-vcomponent, or parse-ical (?).
 (define-public (parse-calendar port)
   (parse (map tokenize (read-file port))))
@@ -54,7 +62,7 @@
   (data get-data) ; (key kv ... value)
   )
 
-;; (list <line>) → (list <tokens>)
+;; <line> → <tokens>
 (define (tokenize line-obj)
   (define line (get-string line-obj))
   (define colon-idx (string-index line #\:))
