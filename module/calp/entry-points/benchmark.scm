@@ -28,8 +28,9 @@
     (throw 'return))
 
 
-  (awhen (option-ref opts '() #f)
-         ((module-ref (resolve-module
-                       `(calp benchmark ,@(map string->symbol it)))
-                      'run-benchmark)))
-)
+  (let ((opt (option-ref opts '() #f)))
+    (if (null? opt)
+        (print-arg-help opt-spec)
+        ((module-ref (resolve-module
+                      `(calp benchmark ,@(map string->symbol opt)))
+                     'run-benchmark)))))

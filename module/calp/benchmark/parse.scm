@@ -12,6 +12,7 @@
   (define all-calendar-files
     (statprof
      (lambda ()
+       (display "All calendar files\n")
        (concatenate
         (map (lambda (path)
                (map
@@ -23,6 +24,7 @@
   (define all-read
     (statprof
      (lambda ()
+       (display "All read\n")
        (map (lambda ( fullname)
               (let ((cal (call-with-input-file fullname
                            (@@ (vcomponent ical parse) read-file))))
@@ -32,6 +34,7 @@
   (define tokenized
     (statprof
      (lambda ()
+       (display "Tokenized\n")
        (map (lambda (one-read)
               (map (@@ (vcomponent ical parse) tokenize)
                    one-read))
@@ -40,6 +43,7 @@
   (define parsed
     (statprof
      (lambda ()
+       (display "Parsed\n")
        (map (@@ (vcomponent ical parse) parse) tokenized))))
 
   (format #t "~a files processed~%"

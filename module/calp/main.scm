@@ -83,8 +83,8 @@
        "reserializes it back into ICAL format. "
        "Useful for merging calendars.")
 
-    (p (b "benchmark") " Forces a field from the current app. Preferably used together with "
-       (i "--statprof") " for some for profiling the code.")
+    (p (b "benchmark") " " (i "module") (br)
+       "Runs the procedure 'run-benchmark' from the module (calp benchmark " (i "module") ").")
 
     (p (b "server") " starts an HTTP server which dynamicly loads and displays event. The "
        (i "/month/{date}.html") " & " (i "/week/{date}.html") " runs the same output code as "
