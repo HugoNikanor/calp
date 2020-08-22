@@ -17,7 +17,7 @@
   :use-module ((ice-9 popen) :select (open-input-pipe))
 
   :use-module (statprof)
-  :use-module (repl)
+  :use-module (calp repl)
 
   )
 

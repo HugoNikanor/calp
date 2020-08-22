@@ -1,4 +1,8 @@
-(define-module (repl)
+;;; Commentary:
+;;; Starts a repl server on some form of address.
+;;; Code:
+
+(define-module (calp repl)
   :use-module (system repl server)
   :use-module (ice-9 regex)
   :use-module ((util hooks) :select (shutdown-hook))
