@@ -10,7 +10,7 @@
   )
 
 (define-public (search-result-page
-                search-term search-result page paginator q=)
+                has-query? search-term search-result page paginator q=)
   (xhtml-doc
    (@ (lang sv))
    (head (title "Search results")
@@ -20,8 +20,9 @@
     (form
      (pre (textarea (@ (name "q") (rows 5) (spellcheck false)
                        (style "width:100%"))
-                    ,(with-output-to-string
-                       (lambda () (pretty-print search-term)))))
+                    ,(when has-query?
+                       (with-output-to-string
+                         (lambda () (pretty-print search-term))))))
      (input (@ (type submit))))
     (h2 "Result (page " ,page ")")
     (ul

@@ -345,14 +345,15 @@
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
 
-   ;; TODO search without query should work
    (GET "/search" (q p)
-        (define search-term (prepare-string q))
+        (define search-term (and=> q prepare-string))
 
-        (define q= (find (lambda (s)
-                           (and (<= 2 (string-length s))
-                                (string=? "q=" (string-take s 2))))
-                         (string-split r:query #\&)))
+        ;; keep original string for links below. Should guarantee that it's correct.
+        (define q= (if (not q)
+                       "" (find (lambda (s)
+                                  (and (<= 2 (string-length s))
+                                       (string=? "q=" (string-take s 2))))
+                                (string-split r:query #\&))))
 
         (define paginator (get-query-page search-term))
 
@@ -381,7 +382,7 @@
                   (lambda ()
                     (sxml->xml
                      (search-result-page
-                      search-term search-result page paginator q=))))))
+                      q search-term search-result page paginator q=))))))
 
    ;; NOTE this only handles files with extensions. Limited, but since this
    ;; is mostly for development, and something like nginx should be used in
