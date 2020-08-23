@@ -17,7 +17,7 @@
   :use-module (sxml namespace)
 
 
-  :use-module ((html util) :select (html-unattr))
+  :use-module ((calp html util) :select (html-unattr))
 
   :use-module (web http make-routes)
 
@@ -28,8 +28,8 @@
 
   :autoload (vcomponent instance) (global-event-object)
 
-  :use-module (html view calendar)
-  :use-module ((html view search) :select (search-result-page))
+  :use-module (calp html view calendar)
+  :use-module ((calp html view search) :select (search-result-page))
 
 
   )
@@ -109,7 +109,7 @@
                                       end-date: (date+ start-date (date day: 6))
                                       next-start: (lambda (d) (date+ d (date day: 7)))
                                       prev-start: (lambda (d) (date- d (date day: 7)))
-                                      render-calendar: (@ (html view calendar week) render-calendar)
+                                      render-calendar: (@ (calp html view calendar week) render-calendar)
                                       intervaltype: 'week
                                       )))))))
 
@@ -127,7 +127,7 @@
                                                        (date day: 1))
                                       next-start: month+
                                       prev-start: month-
-                                      render-calendar: (@ (html view calendar month)
+                                      render-calendar: (@ (calp html view calendar month)
                                                           render-calendar-table)
                                       pre-start: (start-of-week start-date)
                                       post-end: (end-of-week (end-of-month start-date))
@@ -156,7 +156,7 @@
 
    ;; TODO this fails when dtstart is <date>.
    ;; @var{cal} should be the name of the calendar encoded with
-   ;; modified base64. See (html util).
+   ;; modified base64. See (calp html util).
    (POST "/insert" (cal data)
 
          (unless (and cal data)

@@ -1,18 +1,18 @@
-(define-module (html view calendar week)
+(define-module (calp html view calendar week)
   :use-module (util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (datetime)
-  :use-module (html view calendar shared)
-  :use-module (html config)
-  :use-module (html util)
+  :use-module (calp html view calendar shared)
+  :use-module (calp html config)
+  :use-module (calp html util)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
                :select (long-event?
                         event-length/day
                         event-zero-length?
                         events-between))
-  :use-module ((html vcomponent)
+  :use-module ((calp html vcomponent)
                :select (make-block) )
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
@@ -46,7 +46,7 @@
 
                 ,@(for event in (stream->list
                                  (events-between start-date end-date events))
-                       ((@ (html vcomponent ) popup) event (string-append "popup" (html-id event))))
+                       ((@ (calp html vcomponent ) popup) event (string-append "popup" (html-id event))))
 
                 )))))
 

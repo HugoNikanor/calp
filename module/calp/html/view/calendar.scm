@@ -1,4 +1,4 @@
-(define-module (html view calendar)
+(define-module (calp html view calendar)
   :use-module (util)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
@@ -6,17 +6,17 @@
   :use-module ((vcomponent build)
                :select (vcalendar vevent))
   :use-module (datetime)
-  :use-module (html components)
-  :use-module ((html vcomponent)
+  :use-module (calp html components)
+  :use-module ((calp html vcomponent)
                :select (popup
                         calendar-styles
                         fmt-day
                         make-block
                         fmt-single-event
                                           ))
-  :use-module (html config)
-  :use-module (html util)
-  :use-module ((html caltable) :select (cal-table))
+  :use-module (calp html config)
+  :use-module (calp html util)
+  :use-module ((calp html caltable) :select (cal-table))
 
   :use-module (util config)
 

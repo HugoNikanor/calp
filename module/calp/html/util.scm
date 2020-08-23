@@ -1,4 +1,4 @@
-(define-module (html util)
+(define-module (calp html util)
   :use-module ((base64) :select (base64encode base64decode))
   :use-module (util))
 

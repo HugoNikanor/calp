@@ -8,11 +8,11 @@
   :use-module ((ice-9 regex) :select (string-match regexp-substitute))
 
   :use-module ((srfi srfi-41) :select (stream-take stream-for-each))
-  :use-module ((html view calendar) :select (html-generate))
-  :use-module ((html view calendar week)
+  :use-module ((calp html view calendar) :select (html-generate))
+  :use-module ((calp html view calendar week)
                :select (render-calendar)
                :renamer (lambda _ 'render-calendar-wide))
-  :use-module ((html view calendar month)
+  :use-module ((calp html view calendar month)
                :select (render-calendar-table))
   :use-module ((vcomponent instance methods)
                 :select (get-calendars get-event-set))
@@ -144,7 +144,7 @@
          (lambda ()
            (sxml->xml
             (re-root-static
-             ((@ (html view small-calendar) render-small-calendar)
+             ((@ (calp html view small-calendar) render-small-calendar)
               start standalone))))))]
 
     [(wide)

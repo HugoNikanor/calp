@@ -1,4 +1,4 @@
-(define-module (html components)
+(define-module (calp html components)
   :use-module (util)
   :use-module (util exceptions)
   :export (xhtml-doc)

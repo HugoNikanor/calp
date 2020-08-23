@@ -1,6 +1,6 @@
-(define-module (html view small-calendar)
-  :use-module ((html components) :select (xhtml-doc include-css))
-  :use-module ((html caltable) :select (cal-table))
+(define-module (calp html view small-calendar)
+  :use-module ((calp html components) :select (xhtml-doc include-css))
+  :use-module ((calp html caltable) :select (cal-table))
   :use-module ((datetime) :select (month- month+ remove-day date->string))
   )
 

@@ -1,6 +1,6 @@
-(define-module (html caltable)
+(define-module (calp html caltable)
   :use-module (util)
-  :use-module (html util)
+  :use-module (calp html util)
   :use-module (datetime)
   :use-module (srfi srfi-41)
   )

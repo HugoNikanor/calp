@@ -1,4 +1,4 @@
-(define-module (html config)
+(define-module (calp html config)
   :use-module (util)
   :use-module (util config)
   )
