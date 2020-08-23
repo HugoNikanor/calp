@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-TARGETS := style.css
+TARGETS := style.css smallcal.css
 
 all: $(TARGETS)
 

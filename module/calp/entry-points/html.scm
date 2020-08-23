@@ -41,7 +41,7 @@
             (description "Directory where html files should end up. Default to " (b "./html")))
 
     (style (value #t) (predicate ,(lambda (v) (memv (string->symbol v)
-                                            '(wide week table))))
+                                            '(small wide week table))))
            (description "How the body of the HTML page should be layed out. "
                         (br) (b "week")
                         " gives a horizontally scrolling page with 7 elements, "
@@ -53,6 +53,11 @@
                         (br) (b "wide")
                         " is the same as week, but gives a full month.")
            )
+
+    (standalone
+     (description "Creates a standalone document instead of an HTML fragment "
+                  "for embedding in a larger page. Currently only applies to the "
+                  (i "small") "style"))
 
     (help (single-char #\h) (description "Print this help."))))
 
@@ -121,6 +126,8 @@
 
   (define target-directory (option-ref opts 'target "./html"))
 
+  (define standalone (option-ref opts 'standalone #f))
+
   (when (option-ref opts 'help #f)
     (print-arg-help opt-spec)
     (throw 'return)
@@ -130,6 +137,16 @@
   ;; while we save the documents as .xml.
 
   (case style
+
+    [(small)
+     (let ((fname (path-append target-directory (date->string start "small-~1.xml"))))
+       (with-output-to-file fname
+         (lambda ()
+           (sxml->xml
+            (re-root-static
+             ((@ (html view small-calendar) render-small-calendar)
+              start standalone))))))]
+
     [(wide)
      (common target-directory count start (date month: 1) render-calendar-wide)]
 
