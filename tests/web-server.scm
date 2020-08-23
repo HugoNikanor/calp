@@ -1,4 +1,4 @@
-(((server routes) make-make-routes)
+(((calp server routes) make-make-routes)
  ((web server) run-server)
  ((ice-9 threads) call-with-new-thread cancel-thread)
  ((web client) http-get)

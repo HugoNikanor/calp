@@ -154,8 +154,8 @@
       [(2)
        ;; varannan månad
        ;; vartannat år
-       (list (if neutrum "t")
+       (list (when neutrum "t")
              "anna"
              (if neutrum "t" "n"))]
-      [else (list (if neutrum "t") " "
+      [else (list (when neutrum "t") " "
                   (number->string-ordinal count))]))))
