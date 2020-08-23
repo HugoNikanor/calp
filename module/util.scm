@@ -561,17 +561,6 @@
 
 
 
-(define-syntax catch-warnings
-  (syntax-rules ()
-    ((_ default body ...)
-     (parametrize ((warnings-are-errors #t))
-       (catch 'warning
-         (lambda ()
-           body ...)
-         (lambda _ default))))))
-
-
-
 (define-syntax let-env
   (syntax-rules ()
     [(_ ((name value) ...)

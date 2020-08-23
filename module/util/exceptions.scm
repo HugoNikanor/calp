@@ -83,3 +83,13 @@
      (throw 'assertion-error "Assertion for ~a failed, ~a"
             (quote ,form)
             ((@@ (util exceptions) prettify-tree) ,(cons 'list form)))))
+
+
+(define-syntax catch-warnings
+  (syntax-rules ()
+    ((_ default body ...)
+     (parametrize ((warnings-are-errors #t))
+       (catch 'warning
+         (lambda ()
+           body ...)
+         (lambda _ default))))))
