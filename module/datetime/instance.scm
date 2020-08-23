@@ -3,7 +3,7 @@
   :use-module (util config)
   :use-module (util exceptions)
   :use-module (datetime zic)
-  :use-module (directories)
+  :use-module ((xdg basedir) :prefix xdg-)
   :export (zoneinfo))
 
 (define-config tz-list '()
@@ -21,7 +21,7 @@
                 (self tz-list)))
              ((file-list)
               (provide 'zoneinfo)
-              (let* ((directory (path-append data-directory "/zoneinfo"))
+              (let* ((directory (path-append (xdg-data-home) "/calp/zoneinfo"))
                      (key (cons directory file-list)))
                 (aif (hash-ref cache key)
                      it

@@ -8,7 +8,6 @@
   :use-module ((util config) :select (set-config! get-config get-configuration-documentation))
   :use-module (util options)
   :use-module ((util hooks) :select (shutdown-hook))
-  :use-module (directories)
 
   :use-module ((text markup) :select (sxml->ansi-text))
 
@@ -18,6 +17,8 @@
 
   :use-module (statprof)
   :use-module (calp repl)
+
+  :use-module ((xdg basedir) :prefix xdg-)
 
   )
 
@@ -106,8 +107,9 @@
 
   (when stprof (statprof-start))
 
-  (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a" 
-                                            runtime-directory (getpid)))]
+  (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a"
+                                            (xdg-runtime-dir)
+                                            (getpid)))]
         [repl => repl-start])
 
   (if altconfig
@@ -119,8 +121,8 @@
 
       (awhen (find file-exists?
                    (list
-                     (path-append user-config-directory "/config.scm")
-                     (path-append system-config-directory "/config.scm")))
+                     (path-append (xdg-config-home) "/calp/config.scm")
+                     (path-append (xdg-sysconfdir) "/calp/config.scm")))
              (primitive-load it)))
 
 
@@ -160,21 +162,22 @@
     (throw 'return))
 
   (when (option-ref opts 'update-zoneinfo #f)
-    (let ((pipe
-           (let-env ((PREFIX (get-config 'path-prefix)))
-                    (open-input-pipe (path-append libexec "/tzget")))))
+    (let* ((locations (list "/usr/libexec/calp/tzget" (path-append (xdg-data-home) "/tzget")))
+           (filename (or (find file-exists? locations)
+                         (error "tzget not installed, please put it in one of ~a" locations)))
+           (pipe (open-input-pipe filename)))
 
       ;; (define path (read-line pipe))
       (define line ((@ (ice-9 rdelim) read-line) pipe))
       (define names (string-split line #\space))
       ((@ (util io) with-atomic-output-to-file)
-       (path-append data-directory "/zoneinfo.scm")
+       (path-append (xdg-data-home) "/calp/zoneinfo.scm")
        (lambda ()
          (write `(set-config! 'tz-list ',names)) (newline)
          (write `(set-config! 'last-zoneinfo-upgrade ,((@ (datetime) current-date)))) (newline)))))
 
   ;; always load zoneinfo if available.
-  (let ((z (path-append data-directory "/zoneinfo.scm")))
+  (let ((z (path-append (xdg-data-home) "/calp/zoneinfo.scm")))
     (when (file-exists? z)
       (primitive-load z)))
 

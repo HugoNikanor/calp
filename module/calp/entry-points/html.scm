@@ -19,7 +19,7 @@
 
   :use-module ((sxml simple) :select (sxml->xml))
   :use-module ((sxml transformations) :select (href-transformer))
-  :use-module (directories)
+  :use-module ((xdg basedir) :prefix xdg-)
 
   :autoload (vcomponent instance) (global-event-object)
   )
@@ -74,7 +74,7 @@
     ;; TODO nicer way to resolve static
     (let ((link (path-append output-directory "/static")))
      (unless (file-exists? link)
-       (symlink (path-append data-directory "www/static") link)))))
+       (symlink (path-append (xdg-data-home) "/calp/www/static") link)))))
 
 
 (define (re-root-static tree)
