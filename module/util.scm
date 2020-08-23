@@ -17,7 +17,7 @@
                 print-and-return
                 )
   #:replace (let* set! define-syntax
-                  when unless if))
+                  when unless))
 
 ((@ (guile) define-syntax) define-syntax
   (syntax-rules ()
@@ -27,8 +27,6 @@
         body ...)))
     ((_ otherwise ...)
      ((@ (guile) define-syntax) otherwise ...))))
-
-(define-public *unspecified* ((@ (guile) if) #f #f))
 
 
 
@@ -46,15 +44,6 @@
 
 (define-syntax-rule (unless pred body ...)
   (if pred '() (begin body ...)))
-
-(define-syntax if
-  (syntax-rules ()
-   [(_ p t)
-    (when p t)]
-
-   [(_ p t f ...)
-    ((@ (guile) if) p t
-     (begin f ...))]))
 
 
 (define-syntax (aif stx)
