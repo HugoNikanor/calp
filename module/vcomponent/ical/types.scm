@@ -2,7 +2,7 @@
 (define-module (vcomponent ical types)
   :use-module (util)
   :use-module (util exceptions)
-  :use-module (util base64)
+  :use-module (base64)
   :use-module (datetime))
 
 

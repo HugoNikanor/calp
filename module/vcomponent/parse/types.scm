@@ -1,7 +1,7 @@
 (define-module (vcomponent parse types)
   :use-module (util)
   :use-module (util exceptions)
-  :use-module (util base64)
+  :use-module (base64)
   :use-module (datetime)
   :use-module (srfi srfi-9 gnu)
   )

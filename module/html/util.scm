@@ -1,6 +1,5 @@
 (define-module (html util)
-  :use-module ((util base64)
-               :select (base64encode base64decode))
+  :use-module ((base64) :select (base64encode base64decode))
   :use-module (util))
 
 ;;; @var{html-attr} & @var{html-unattr} used to just strip any

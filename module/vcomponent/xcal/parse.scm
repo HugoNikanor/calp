@@ -1,7 +1,7 @@
 (define-module (vcomponent xcal parse)
   :use-module (util)
   :use-module (util exceptions)
-  :use-module (util base64)
+  :use-module (base64)
   :use-module (ice-9 match)
   :use-module (sxml match)
   :use-module (vcomponent)

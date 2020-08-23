@@ -1,5 +1,7 @@
-(define-module (util base64)
-  :use-module (util)
+(define-module (base64)
+  :use-module ((ice-9 optargs) :select (define*-public))
+  :use-module ((srfi srfi-71) :select (let*))
+  :use-module (srfi srfi-88) ; suffix keywords
   :use-module ((rnrs bytevectors)
                :select (bytevector-u8-ref
                         bytevector-u8-set!
@@ -66,10 +68,9 @@
               (let ((aa (logior (ash a 2) (ash b -4)))
                     (ab (logior (ash (logand b #xF) 4) (ash c -2)))
                     (ac (logior (ash (logand c 3) 6) d)))
-
-                (set! (ref ret (+ (* i 3) 0)) aa
-                      (ref ret (+ (* i 3) 1)) ab
-                      (ref ret (+ (* i 3) 2)) ac))))
+                (set! (ref ret (+ (* i 3) 0)) aa)
+                (set! (ref ret (+ (* i 3) 1)) ab)
+                (set! (ref ret (+ (* i 3) 2)) ac))))
 
 
           (case rest
@@ -84,8 +85,8 @@
                    (c (encoded->real (ref bv (+ (* (floor x) 4) 2)))))
                (let ((aa (logior (ash a 2) (ash b -4)))
                      (ab (logior (ash (logand b #xF) 4) (ash c -2))))
-                 (set! (ref ret (- ret-len 2)) aa
-                       (ref ret (- ret-len 1)) ab)))])
+                 (set! (ref ret (- ret-len 2)) aa)
+                 (set! (ref ret (- ret-len 1)) ab)))])
 
           ret))))
 
@@ -105,30 +106,30 @@
               (ab (logior (ash (logand #b11 a) 4)   (ash b -4)))
               (ac (logior (ash (logand b #b1111) 2) (ash c -6)))
               (ad (logand c #x3F)))
-          (set! (ref ret (+ (* i 4) 0)) (real->encoded aa)
-                (ref ret (+ (* i 4) 1)) (real->encoded ab)
-                (ref ret (+ (* i 4) 2)) (real->encoded ac)
-                (ref ret (+ (* i 4) 3)) (real->encoded ad)))))
+          (set! (ref ret (+ (* i 4) 0)) (real->encoded aa))
+          (set! (ref ret (+ (* i 4) 1)) (real->encoded ab))
+          (set! (ref ret (+ (* i 4) 2)) (real->encoded ac))
+          (set! (ref ret (+ (* i 4) 3)) (real->encoded ad)))))
 
     (case rest
       [(1)
        (let ((byte (ref bv (- len 1))))
          (let ((a (ash byte -2))
                (b (ash (logand byte 3) 4)))
-           (set! (ref ret (+ 0 (* 4 iterations))) (real->encoded a)
-                 (ref ret (+ 1 (* 4 iterations))) (real->encoded b)
-                 (ref ret (+ 2 (* 4 iterations))) (char->integer #\=)
-                 (ref ret (+ 3 (* 4 iterations))) (char->integer #\=))))]
+           (set! (ref ret (+ 0 (* 4 iterations))) (real->encoded a))
+           (set! (ref ret (+ 1 (* 4 iterations))) (real->encoded b))
+           (set! (ref ret (+ 2 (* 4 iterations))) (char->integer #\=))
+           (set! (ref ret (+ 3 (* 4 iterations))) (char->integer #\=))))]
       [(2)
        (let ((byte1 (ref bv (- len 2)))
              (byte2 (ref bv (- len 1))))
          (let ((a (ash byte1 -2))
                (b (logior (ash (logand byte1 3) 4) (ash byte2 -4 )))
                (c (ash (logand byte2 #xF) 2)))
-           (set! (ref ret (+ 0 (* 4 iterations))) (real->encoded a)
-                 (ref ret (+ 1 (* 4 iterations))) (real->encoded b)
-                 (ref ret (+ 2 (* 4 iterations))) (real->encoded c)
-                 (ref ret (+ 3 (* 4 iterations))) (char->integer #\=))))])
+           (set! (ref ret (+ 0 (* 4 iterations))) (real->encoded a))
+           (set! (ref ret (+ 1 (* 4 iterations))) (real->encoded b))
+           (set! (ref ret (+ 2 (* 4 iterations))) (real->encoded c))
+           (set! (ref ret (+ 3 (* 4 iterations))) (char->integer #\=))))])
 
     ret))
 

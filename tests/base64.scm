@@ -1,4 +1,4 @@
-(((util base64) base64encode base64decode))
+(((base64) base64encode base64decode))
 
 ;; Examples from RFC4648
 
