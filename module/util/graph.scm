@@ -78,7 +78,7 @@
     (values node (remove-node graph node))))
 
 ;; Assumes that the edges of the graph are dependencies.
-;; Returns a list of all nodes so that each node is after its dependants.
+;; Returns a list of all nodes so that each node is before its dependants.
 ;; A missing dependency (and probably a loop) is an error, and currently
 ;; leads to some weird error messages.
 (define-public (resolve-dependency-graph graph)
