@@ -6,7 +6,7 @@
 ;;; Code:
 
 (define-module (vcomponent recurrence display)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (vcomponent recurrence internal)
   :use-module (text util)
   :use-module (text numbers)

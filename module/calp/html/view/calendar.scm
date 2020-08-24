@@ -1,5 +1,5 @@
 (define-module (calp html view calendar)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
                :select (events-between))
@@ -18,7 +18,7 @@
   :use-module (calp html util)
   :use-module ((calp html caltable) :select (cal-table))
 
-  :use-module (util config)
+  :use-module (calp util config)
 
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)

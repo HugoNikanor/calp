@@ -1,5 +1,5 @@
 (define-module (text flow)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (text util)
   :use-module (srfi srfi-1)
   )

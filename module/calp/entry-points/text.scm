@@ -2,8 +2,8 @@
   :export (main)
   :use-module (text flow)
   :use-module (ice-9 getopt-long)
-  :use-module (util io)
-  :use-module (util options)
+  :use-module (calp util io)
+  :use-module (calp util options)
   )
 
 

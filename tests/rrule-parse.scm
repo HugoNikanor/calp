@@ -2,7 +2,7 @@
   parse-recurrence-rule)
  ((vcomponent recurrence) make-recur-rule)
  ((datetime) mon)
- ((util exceptions) warnings-are-errors warning-handler)
+ ((calp util exceptions) warnings-are-errors warning-handler)
  )
 
 (test-equal (make-recur-rule freq: 'HOURLY wkst: mon interval: 1)

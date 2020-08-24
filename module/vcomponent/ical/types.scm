@@ -1,7 +1,7 @@
 ;; see (vcomponent parse types)
 (define-module (vcomponent ical types)
-  :use-module (util)
-  :use-module (util exceptions)
+  :use-module (calp util)
+  :use-module (calp util exceptions)
   :use-module (base64)
   :use-module (datetime))
 

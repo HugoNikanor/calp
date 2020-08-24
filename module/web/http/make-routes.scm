@@ -1,6 +1,6 @@
 (define-module (web http make-routes)
   :export (make-routes)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (ice-9 regex)
   :use-module (srfi srfi-1)
   :use-module (web response)

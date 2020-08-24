@@ -1,4 +1,4 @@
-(define-module (util)
+(define-module (calp util)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-88)           ; postfix keywords
   #:use-module ((ice-9 optargs) #:select (define*-public))

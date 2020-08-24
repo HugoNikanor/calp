@@ -17,7 +17,7 @@
              (ice-9 getopt-long)
              (srfi srfi-64)             ; test suite
              (srfi srfi-88)             ; suffix keywords
-             ((util) :select (for awhen))
+             ((calp util) :select (for awhen))
              ;; datetime introduces the reader extensions for datetimes,
              ;; which leaks into the sandboxes below.
              (datetime))

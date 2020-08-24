@@ -1,5 +1,5 @@
 (define-module (calp html view calendar week)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (datetime)

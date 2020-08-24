@@ -1,6 +1,6 @@
 (define-module (vcomponent ical parse)
-  :use-module (util)
-  :use-module (util exceptions)
+  :use-module (calp util)
+  :use-module (calp util exceptions)
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module (vcomponent base)
   :use-module (datetime)

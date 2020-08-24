@@ -1,4 +1,4 @@
-(((util) let*)
+(((calp util) let*)
  ((guile) set!))
 
 (test-assert (let* ((a #t)) a))

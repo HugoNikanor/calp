@@ -2,7 +2,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-41)
   #:use-module ((ice-9 sandbox) :select (call-with-time-limit))
-  #:use-module (util) ; let*, find-min
+  #:use-module (calp util) ; let*, find-min
   #:export (stream-car+cdr interleave-streams with-streams
                            stream-timeslice-limit))
 

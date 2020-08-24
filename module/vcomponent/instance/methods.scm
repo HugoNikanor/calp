@@ -1,5 +1,5 @@
 (define-module (vcomponent instance methods)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)

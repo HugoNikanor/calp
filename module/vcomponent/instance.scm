@@ -1,6 +1,6 @@
 (define-module (vcomponent instance)
-  :use-module (util)
-  :use-module ((util config) :select (get-config))
+  :use-module (calp util)
+  :use-module ((calp util config) :select (get-config))
   :use-module ((oop goops) :select (make))
   :export (global-event-object)
 )

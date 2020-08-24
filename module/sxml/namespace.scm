@@ -1,5 +1,5 @@
 (define-module (sxml namespace)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (sxml transform))
 
 (define* (symbol-split symbol key: (sep #\:))

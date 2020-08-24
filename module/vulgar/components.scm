@@ -1,6 +1,6 @@
 (define-module (vulgar components)
   #:use-module (datetime)
-  #:use-module (util)
+  #:use-module (calp util)
   #:export ())
 
 (define-public (display-calendar-header! date)

@@ -1,4 +1,4 @@
-(define-module (util color)
+(define-module (calp util color)
   )
 
 ;; Returns a color with good contrast to the given background color.

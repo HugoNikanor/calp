@@ -1,6 +1,6 @@
 (define-module (calp html components)
-  :use-module (util)
-  :use-module (util exceptions)
+  :use-module (calp util)
+  :use-module (calp util exceptions)
   :export (xhtml-doc)
   )
 

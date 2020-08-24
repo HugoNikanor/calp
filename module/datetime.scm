@@ -9,13 +9,13 @@
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
 
-  :use-module (util)
+  :use-module (calp util)
 
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
-  :use-module (util config)
+  :use-module (calp util config)
   :re-export (locale-month)
   )
 

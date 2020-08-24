@@ -1,4 +1,4 @@
-(define-module (util io)
+(define-module (calp util io)
   :use-module ((ice-9 rdelim) :select (read-line)))
 
 (define-public (open-input-port str)
@@ -52,7 +52,7 @@
         ;; thing.
         (delete-file tmpfile)
         (close-port port)
-        ;; `when' defaults to the truthy `()', see (util)
+        ;; `when' defaults to the truthy `()', see (calp util)
         ;; (note that #<unspecified> is thruthy, but shouldn't be
         ;; counted on, since anything with an unspecified return
         ;; value might as well return #f)

@@ -1,7 +1,7 @@
-(define-module (util exceptions)
+(define-module (calp util exceptions)
   #:use-module (srfi srfi-1)
-  #:use-module (util)
-  #:use-module (util config)
+  #:use-module (calp util)
+  #:use-module (calp util config)
   #:use-module (ice-9 format)
   #:export (throw-returnable
             catch-multiple
@@ -82,7 +82,7 @@
   `(unless ,form
      (throw 'assertion-error "Assertion for ~a failed, ~a"
             (quote ,form)
-            ((@@ (util exceptions) prettify-tree) ,(cons 'list form)))))
+            ((@@ (calp util exceptions) prettify-tree) ,(cons 'list form)))))
 
 
 (define-syntax catch-warnings

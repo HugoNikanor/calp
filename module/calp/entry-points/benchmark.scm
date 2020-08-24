@@ -1,8 +1,8 @@
 (define-module (calp entry-points benchmark)
-  :use-module (util)
+  :use-module (calp util)
 
   :use-module (ice-9 getopt-long)
-  :use-module (util options)
+  :use-module (calp util options)
   :use-module ((srfi srfi-41) :select (stream->list))
 
   :use-module ((vcomponent instance methods) :select (get-event-set))

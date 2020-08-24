@@ -1,4 +1,4 @@
-(((util) filter-sorted set/r!))
+(((calp util) filter-sorted set/r!))
 
 (test-equal "Filter sorted"
   '(3 4 5)

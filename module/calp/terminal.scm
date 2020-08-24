@@ -5,7 +5,7 @@
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
-  #:use-module (util)
+  #:use-module (calp util)
   #:use-module (vulgar)
   #:use-module (vulgar info)
   #:use-module (vulgar color)

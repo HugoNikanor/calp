@@ -1,5 +1,5 @@
 (define-module (vulgar info)
-  :use-module (util))
+  :use-module (calp util))
 
 (define-public (get-terminal-size)
  (let* (((rpipe . wpipe) (pipe)))

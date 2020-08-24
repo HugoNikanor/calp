@@ -1,5 +1,5 @@
 (define-module (text numbers)
-  :use-module (util))
+  :use-module (calp util))
 
 ;; only used in number->string-cardinal
 (define (large-prefix e)

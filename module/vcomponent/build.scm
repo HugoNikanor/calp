@@ -9,7 +9,7 @@
 ;;; Code:
 
 (define-module (vcomponent build)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (vcomponent base)
   :use-module (srfi srfi-26)
   :use-module ((srfi srfi-88) :select (keyword->string)))

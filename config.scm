@@ -10,7 +10,7 @@
              (sxml simple)
              (glob)
 
-             (util config)
+             (calp util config)
 
              (datetime)
 

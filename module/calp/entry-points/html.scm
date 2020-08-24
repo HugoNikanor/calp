@@ -1,8 +1,8 @@
 (define-module (calp entry-points html)
   :export (main)
-  :use-module (util)
-  :use-module (util time)
-  :use-module (util options)
+  :use-module (calp util)
+  :use-module (calp util time)
+  :use-module (calp util options)
   :use-module (datetime)
   :use-module (ice-9 getopt-long)
   :use-module ((ice-9 regex) :select (string-match regexp-substitute))
@@ -91,7 +91,7 @@
   (define calendars (get-calendars global-event-object))
   (define events (get-event-set global-event-object))
 
-  ((@ (util time) report-time!) "html start")
+  ((@ (calp util time) report-time!) "html start")
 
   (create-files target-directory)
 
@@ -168,5 +168,5 @@
     [else
      (error "Unknown html style: ~a" style)])
 
-  ((@ (util time) report-time!) "all done")
+  ((@ (calp util time) report-time!) "all done")
   )

@@ -10,11 +10,11 @@
 ;;; Code:
 
 (define-module (vcomponent vdir save-delete)
-  :use-module (util)
-  :use-module ((util exceptions) :select (assert)) 
+  :use-module (calp util)
+  :use-module ((calp util exceptions) :select (assert)) 
   :use-module (vcomponent ical output)
   :use-module (vcomponent)
-  :use-module ((util io) :select (with-atomic-output-to-file))
+  :use-module ((calp util io) :select (with-atomic-output-to-file))
   )
 
 

@@ -1,6 +1,6 @@
 (define-module (calp html util)
   :use-module ((base64) :select (base64encode base64decode))
-  :use-module (util))
+  :use-module (calp util))
 
 ;;; @var{html-attr} & @var{html-unattr} used to just strip any
 ;;; attributes not valid in css. That allowed a human reader to

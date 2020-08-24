@@ -1,5 +1,5 @@
 (define-module (text util)
-  :use-module (util))
+  :use-module (calp util))
 
 (define-public (words str) (string-split str #\space))
 (define-public (unwords list) (string-join list " " 'infix))

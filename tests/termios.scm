@@ -7,7 +7,7 @@
 
 ;;; Code:
 
-(((util) set!)
+(((calp util) set!)
  ((vulgar termios)
   make-termios copy-termios
   lflag

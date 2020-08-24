@@ -1,4 +1,4 @@
-(define-module (util hooks)
+(define-module (calp util hooks)
   :export (shutdown-hook))
 
 ;; Run before program terminates

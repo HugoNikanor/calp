@@ -11,8 +11,8 @@
 ;; See zic(8) for data format
 ;;; Code:
 (define-module (datetime zic)
-  :use-module (util)
-  :use-module (util exceptions)
+  :use-module (calp util)
+  :use-module (calp util exceptions)
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (ice-9 rdelim)

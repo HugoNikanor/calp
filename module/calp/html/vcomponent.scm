@@ -1,5 +1,5 @@
 (define-module (calp html vcomponent)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (vcomponent)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
@@ -7,7 +7,7 @@
   :use-module (calp html util)
   :use-module ((calp html config) :select (edit-mode))
   :use-module ((calp html components) :select (btn tabset))
-  :use-module ((util color) :select (calculate-fg-color))
+  :use-module ((calp util color) :select (calculate-fg-color))
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
                         format-description

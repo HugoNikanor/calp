@@ -1,8 +1,8 @@
 (define-module (vcomponent parse)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (vcomponent base)
   :use-module ((vcomponent vdir parse) :select (parse-vdir))
-  :use-module ((util time) :select (report-time!))
+  :use-module ((calp util time) :select (report-time!))
 
   :use-module (vcomponent ical parse)
   :re-export (parse-calendar)

@@ -1,6 +1,6 @@
 (define-module (vcomponent)
-  :use-module (util)
-  :use-module (util config)
+  :use-module (calp util)
+  :use-module (calp util config)
   :use-module (vcomponent base)
   :use-module (vcomponent parse)
   :use-module (vcomponent instance methods)

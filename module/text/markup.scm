@@ -1,5 +1,5 @@
 (define-module (text markup)
-  :use-module (util)
+  :use-module (calp util)
   :use-module (srfi srfi-1)
   :use-module (ice-9 match)
   :use-module (ice-9 pretty-print)

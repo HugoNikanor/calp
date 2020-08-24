@@ -4,8 +4,8 @@
 ;; order on symbols in scheme.
 ;;; Code:
 
-(define-module (util graph)
-  :use-module (util)
+(define-module (calp util graph)
+  :use-module (calp util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9 gnu))
 

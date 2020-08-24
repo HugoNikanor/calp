@@ -1,4 +1,4 @@
-(use-modules (util config)
+(use-modules (calp util config)
              (ice-9 regex)
              ((datetime) :select (mon))
              (glob))

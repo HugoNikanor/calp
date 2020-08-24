@@ -10,7 +10,7 @@
   leap-year?
   )
  ((ice-9 format) format)
- ((util) let*)
+ ((calp util) let*)
  )
 
 (test-equal "empty time"

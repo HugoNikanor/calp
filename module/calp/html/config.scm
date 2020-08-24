@@ -1,6 +1,6 @@
 (define-module (calp html config)
-  :use-module (util)
-  :use-module (util config)
+  :use-module (calp util)
+  :use-module (calp util config)
   )
 
 (define-public debug (make-parameter #f))

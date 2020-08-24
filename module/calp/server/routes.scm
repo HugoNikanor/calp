@@ -1,7 +1,7 @@
 (define-module (calp server routes)
-  :use-module (util)
-  :use-module (util options)
-  :use-module (util exceptions)
+  :use-module (calp util)
+  :use-module (calp util options)
+  :use-module (calp util exceptions)
 
   :use-module (srfi srfi-1)
 

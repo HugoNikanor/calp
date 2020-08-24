@@ -1,13 +1,13 @@
 ;; -*- geiser-scheme-implementation: guile -*-
 (define-module (calp main)
-  :use-module (util)
+  :use-module (calp util)
 
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-88)             ; keyword syntax
 
-  :use-module ((util config) :select (set-config! get-config get-configuration-documentation))
-  :use-module (util options)
-  :use-module ((util hooks) :select (shutdown-hook))
+  :use-module ((calp util config) :select (set-config! get-config get-configuration-documentation))
+  :use-module (calp util options)
+  :use-module ((calp util hooks) :select (shutdown-hook))
 
   :use-module ((text markup) :select (sxml->ansi-text))
 
@@ -170,7 +170,7 @@
       ;; (define path (read-line pipe))
       (define line ((@ (ice-9 rdelim) read-line) pipe))
       (define names (string-split line #\space))
-      ((@ (util io) with-atomic-output-to-file)
+      ((@ (calp util io) with-atomic-output-to-file)
        (path-append (xdg-data-home) "/calp/zoneinfo.scm")
        (lambda ()
          (write `(set-config! 'tz-list ',names)) (newline)
@@ -207,7 +207,7 @@
                                  (string->symbol stprof)))))
 
 (define-public (main args)
-  ((@ (util time) report-time!) "Program start")
+  ((@ (calp util time) report-time!) "Program start")
   (dynamic-wind (lambda () 'noop)
                 (lambda () (catch 'return (lambda () (wrapped-main args)) values))
                 (lambda () (run-hook shutdown-hook))))

@@ -11,8 +11,8 @@
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module ((ice-9 ftw) :select (scandir ftw))
 
-  :use-module (util)
-  :use-module (util exceptions)
+  :use-module (calp util)
+  :use-module (calp util exceptions)
   :use-module (vcomponent base)
 
   :use-module (vcomponent ical parse)

@@ -1,5 +1,5 @@
 (define-module (vcomponent control)
-  #:use-module (util)
+  #:use-module (calp util)
   #:use-module (vcomponent)
   #:export (with-replaced-properties))
 

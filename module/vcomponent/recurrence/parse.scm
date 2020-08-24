@@ -7,8 +7,8 @@
   #:use-module (datetime)
   #:use-module (srfi srfi-26)
   #:use-module (vcomponent recurrence internal)
-  #:use-module (util)
-  #:use-module (util exceptions)
+  #:use-module (calp util)
+  #:use-module (calp util exceptions)
   #:use-module (ice-9 match))
 
 

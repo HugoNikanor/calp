@@ -1,8 +1,8 @@
 (define-module (calp entry-points server)
-  :use-module (util)
-  :use-module (util options)
-  :use-module (util exceptions)
-  :use-module (util config)
+  :use-module (calp util)
+  :use-module (calp util options)
+  :use-module (calp util exceptions)
+  :use-module (calp util config)
 
   :use-module (srfi srfi-1)
 

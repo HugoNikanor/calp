@@ -1,6 +1,6 @@
 (((vcomponent base) param prop* parameters)
  ((vcomponent parse) parse-calendar)
- ((util) sort*))
+ ((calp util) sort*))
 
 (define v (call-with-input-string
               "BEGIN:DUMMY

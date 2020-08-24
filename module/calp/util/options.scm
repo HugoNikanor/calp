@@ -1,5 +1,5 @@
-(define-module (util options)
-  :use-module (util)
+(define-module (calp util options)
+  :use-module (calp util)
   :use-module (srfi srfi-1)
 )
 

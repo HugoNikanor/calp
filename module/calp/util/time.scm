@@ -1,4 +1,4 @@
-(define-module (util time)
+(define-module (calp util time)
   :use-module (ice-9 match)
   :export (report-time! profile!))
 

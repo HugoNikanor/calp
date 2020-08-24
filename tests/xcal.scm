@@ -1,7 +1,7 @@
 (((vcomponent xcal parse) sxcal->vcomponent)
  ((vcomponent xcal output) vcomponent->sxcal)
  ((vcomponent ical parse) parse-calendar)
- ((util) ->)
+ ((calp util) ->)
  ((vcomponent base)
   parameters prop* children)
  )

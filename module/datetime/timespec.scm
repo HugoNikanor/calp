@@ -4,8 +4,8 @@
 ;;; Code:
 
 (define-module (datetime timespec)
-  :use-module (util)
-  :use-module (util exceptions)
+  :use-module (calp util)
+  :use-module (calp util exceptions)
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9 gnu)
