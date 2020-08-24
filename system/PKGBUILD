@@ -1,5 +1,5 @@
 pkgname=calp
-pkgver=0.5.1
+pkgver=0.5.9
 pkgrel=1
 pkgdesc='Calendar program'
 arch=('any')
