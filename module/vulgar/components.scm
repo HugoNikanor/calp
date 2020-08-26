@@ -11,8 +11,7 @@
     ;; testing the functionality. This seems to at least give me
     ;; an (almost) working display, albeit ugly.
     (if (file-exists? "/usr/bin/ncal")
-        (system*  "ncal" "-3" "-H" (format #f "~a-~a-~a"
-                                          year month day)
-                  month year)
+        (system* "ncal" "-3" "-H" (date->string date)
+                 month year)
         (system* "cal" "-3" day month year))))
 
