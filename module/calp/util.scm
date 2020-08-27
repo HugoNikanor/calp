@@ -421,7 +421,7 @@
         [(list? tree) (string-concatenate (map string-flatten tree))]
         [else (format #f "~a" tree)]))
 
-(define-public (intersperce item list)
+(define-public (intersperse item list)
   (let loop ((flipflop #f)
              (rem list))
     (if (null? rem)

@@ -27,7 +27,7 @@
 ;; TODO also, grouping of -dagen. e.g. "första mån- och tisdagen"
 (define (format-byday-list lst)
   (let* ((groups (group-by car lst)))
-    (intersperce
+    (intersperse
      " samt "
      (map (lambda (group)
             ;; TODO sort week days

@@ -3,7 +3,7 @@
 ;;; Code:
 
 (define-module (text util)
-  :use-module ((calp util) :select (define*-public intersperce) )
+  :use-module ((calp util) :select (define*-public intersperse) )
   )
 
 (define-public (words str) (string-split str #\space))
@@ -49,4 +49,4 @@
                 (tail (car rev))
                 (rest (cdr rev)))
            (reverse (cons* tail " " final-delim " "
-                           (intersperce ", " rest))))]))
+                           (intersperse ", " rest))))]))
