@@ -9,7 +9,7 @@
   :use-module (calp util)
   :use-module (vcomponent recurrence internal)
   :use-module (text util)
-  :use-module (text numbers)
+  :use-module (text numbers sv)
   :use-module ((datetime) :select (time time->string
                                         datetime->string
                                         week-day-name
