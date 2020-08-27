@@ -165,6 +165,14 @@ html, body {
     }
 }
 
+.simplesearch {
+    display: flex;
+
+    input[type=text] {
+        flex-grow: 1;
+    }
+}
+
 /* Eventlist
 ----------------------------------------
 The sidebar with all the events

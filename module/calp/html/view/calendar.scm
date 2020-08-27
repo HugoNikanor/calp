@@ -194,6 +194,15 @@
 
 
          (div (@ (style "grid-area: details"))
+
+              (form (@ (class "simplesearch")
+                       (action "/search/text"))
+                    (input (@ (type "text")
+                              (name "q")
+                              (placeholder "Sök")))
+                    (input (@ (type "submit")
+                              (value ">"))))
+
               ,(when (or (debug) (edit-mode))
                  `(details (@ (class "sliders"))
                            (summary "Option sliders")
