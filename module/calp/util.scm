@@ -533,6 +533,9 @@
 
 (define-public ->string ->str)
 
+(define-public (->quoted-string any)
+  (with-output-to-string (lambda () (write any))))
+
 (define-public (path-append . strings)
   (fold (lambda (s done)
             (string-append

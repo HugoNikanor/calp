@@ -11,6 +11,7 @@
 
   :use-module ((web response) :select (build-response))
   :use-module ((web uri) :select (build-relative-ref))
+  :use-module ((web uri-query) :select (encode-query-parameters))
 
   :use-module (sxml simple)
   :use-module (sxml xpath)
@@ -344,6 +345,21 @@
                               (list it)))))
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
+
+   (GET "/search/text" (q)
+        (return (build-response
+                 code: 302
+                 headers:
+                 `((location
+                    . ,(build-relative-ref
+                        path: "/search/"
+                        query:
+                        (encode-query-parameters
+                         `((q . (regexp-exec
+                                 (make-regexp ,(->quoted-string q)
+                                              regexp/icase)
+                                 (prop event 'SUMMARY)))))
+                        ))))))
 
    (GET "/search" (q p)
         (define search-term (and=> q prepare-string))
