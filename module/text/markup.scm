@@ -7,6 +7,11 @@
   :use-module (text flow)
   :use-module (texinfo string-utils))
 
+;; Takes an HTML-like sxml coded tree, and produces a string with
+;; appropriate spacing and ANSI-escapes for different tags.
+(define-public (sxml->ansi-text tree)
+  ((parse-tree ontree onleaf) tree))
+
 
 (define (esc . effect)
   (format #f "\x1b[~am"
@@ -117,5 +122,3 @@
     [any (leaf-callback any)]))
 
 
-(define-public (sxml->ansi-text tree)
-  ((parse-tree ontree onleaf) tree))

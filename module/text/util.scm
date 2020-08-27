@@ -1,5 +1,10 @@
+;;; Commentary:
+;;; Small utility functions which helps the rest of the text processing.
+;;; Code:
+
 (define-module (text util)
-  :use-module (calp util))
+  :use-module ((calp util) :select (define*-public intersperce) )
+  )
 
 (define-public (words str) (string-split str #\space))
 (define-public (unwords list) (string-join list " " 'infix))
@@ -40,6 +45,8 @@
   (cond [(null? list) ""]
         [(= 1 (length list)) (car list)]
         [else
-         (let* (((tail . rest) (reverse list)))
+         (let* ((rev (reverse list))
+                (tail (car rev))
+                (rest (cdr rev)))
            (reverse (cons* tail " " final-delim " "
                            (intersperce ", " rest))))]))

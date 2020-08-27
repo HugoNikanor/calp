@@ -1,3 +1,8 @@
+;;; Commentary:
+;;; @var{flow-text} take a (multiline) string, and justifies
+;;; its contents. All linebreaks are treated as hard line breaks.
+;;; Code:
+
 (define-module (text flow)
   :use-module (calp util)
   :use-module (text util)
@@ -5,22 +10,11 @@
   )
 
 
-
-;; (str) -> str
-(define* (justify-line-helper words #:key (width 70))
-  (let* ((phrase-length (true-string-length (string-concatenate/shared words)))
-         (needed-spaces (- width phrase-length))
-         (slots (1- (length words)))
-         (space-list
-          (let loop ((n needed-spaces) (d slots))
-            (unless (zero? d)
-              (let ((v (round (/ n d))))
-                (cons v (loop (- n v)
-                              (1- d))))))))
-    (string-concatenate/shared
-     (merge words (map (lambda (n) (make-string n #\space))
-                       space-list)
-            (let ((f #t)) (lambda _ (set/r! f = not)))))))
+;; str -> (str)
+(define*-public (flow-text str #:key (width 70))
+  (flatten
+   (map (lambda (line) (justify-line line #:width width))
+        (lines str))))
 
 
 
@@ -44,8 +38,19 @@
             (else (cons (justify-line-helper head #:width width)
                         (recur tail)))))))
 
-;; str -> (str)
-(define*-public (flow-text str #:key (width 70))
-  (flatten
-   (map (lambda (line) (justify-line line #:width width))
-        (lines str))))
+;; (str) -> str
+(define* (justify-line-helper words #:key (width 70))
+  (let* ((phrase-length (true-string-length (string-concatenate/shared words)))
+         (needed-spaces (- width phrase-length))
+         (slots (1- (length words)))
+         (space-list
+          (let loop ((n needed-spaces) (d slots))
+            (unless (zero? d)
+              (let ((v (round (/ n d))))
+                (cons v (loop (- n v)
+                              (1- d))))))))
+    (string-concatenate/shared
+     (merge words (map (lambda (n) (make-string n #\space))
+                       space-list)
+            (let ((f #t)) (lambda _ (set/r! f = not)))))))
+
