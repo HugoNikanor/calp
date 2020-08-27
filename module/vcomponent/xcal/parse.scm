@@ -75,7 +75,8 @@
          [(ptag (ptype pvalue ...) ...)
           ;; TODO parameter type (rfc6321 3.5.)
           ;; TODO multi-valued parameters!!!
-          (hashq-set! ht (symbol-upcase ptag) (car (concatenate pvalue)))]))
+          (hashq-set! ht (symbol-upcase ptag)
+                      (car (concatenate pvalue)))]))
   ht)
 
 (define* (parse-enum str enum optional: (allow-other #t))

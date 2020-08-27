@@ -10,6 +10,7 @@
   )
 
 (define-public (search-result-page
+                errors
                 has-query? search-term search-result page paginator q=)
   (xhtml-doc
    (@ (lang sv))
@@ -24,15 +25,16 @@
                        (with-output-to-string
                          (lambda () (pretty-print search-term))))))
      (input (@ (type submit))))
-    (h2 "Result (page " ,page ")")
-    (ul
-     ,@(compact-event-list search-result))
-    (div (@ (class "paginator"))
-         ,@(paginator->list
-            paginator
-            (lambda (p) (if (= p page)
-                       `(span ,p)
-                       `(a (@ (href "?" ,q= "&p=" ,p)) ,p)))
-            (lambda (p) `(a (@ (href "?" ,q= "&p=" ,p)) "»"))))
-    )))
-
+    ,@(if errors
+          `((h2 "Error searching")
+            (div (@ (class "error"))
+                 (pre ,errors)))
+          `((h2 "Result (page " ,page ")")
+            (ul ,@(compact-event-list search-result))
+            (div (@ (class "paginator"))
+                 ,@(paginator->list
+                    paginator
+                    (lambda (p) (if (= p page)
+                               `(span ,p)
+                               `(a (@ (href "?" ,q= "&p=" ,p)) ,p)))
+                    (lambda (p) `(a (@ (href "?" ,q= "&p=" ,p)) "»")))))))))

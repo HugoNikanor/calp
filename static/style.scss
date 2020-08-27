@@ -671,6 +671,15 @@ along with their colors.
     }
 }
 
+.error {
+    border: 3px solid red;
+    background-color: pink;
+    
+    pre {
+        padding: 1em;
+    }
+}
+
 /* Popups
 ----------------------------------------
 */

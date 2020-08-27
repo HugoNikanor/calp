@@ -375,29 +375,36 @@
 
         (define page (string->number (or p "0")))
 
-        ;; TODO Propagate errors
+        (define error #f)
+
         (define search-result
-          (catch 'max-page
-            ;; TODO Get-page only puts a time limiter per page, meaning that
-            ;; if a user requests page 1000 the server is stuck trying to
-            ;; find that page, which can take up to 1000 * timeslice = 500s = 8min+
-            ;; A timeout here, and also an actual multithreaded server should
-            ;; solve this.
-            (lambda () (get-page paginator page))
-            (lambda (err page-number)
-              (define location
-                (build-relative-ref
-                 path: r:path ; host: r:host port: r:port
-                 query: (format #f "~a&p=~a" q= page-number)))
-              (return (build-response
-                       code: 307
-                       headers: `((location . ,location)))))))
+          (catch #t
+            (lambda ()
+             (catch 'max-page
+               ;; TODO Get-page only puts a time limiter per page, meaning that
+               ;; if a user requests page 1000 the server is stuck trying to
+               ;; find that page, which can take up to 1000 * timeslice = 500s = 8min+
+               ;; A timeout here, and also an actual multithreaded server should
+               ;; solve this.
+               (lambda () (get-page paginator page))
+               (lambda (err page-number)
+                 (define location
+                   (build-relative-ref
+                    path: r:path        ; host: r:host port: r:port
+                    query: (format #f "~a&p=~a" q= page-number)))
+                 (return (build-response
+                          code: 307
+                          headers: `((location . ,location)))))))
+           (lambda (err callee fmt arg data)
+             (set! error
+              (format #f "~?~%" fmt arg)))))
 
         (return '((content-type application/xhtml+xml))
                 (with-output-to-string
                   (lambda ()
                     (sxml->xml
                      (search-result-page
+                      error
                       q search-term search-result page paginator q=))))))
 
    ;; NOTE this only handles files with extensions. Limited, but since this
