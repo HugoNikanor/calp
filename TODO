@@ -6,12 +6,6 @@ XDG_CONFIG_HOME
 Liknande för cache, genererade filer, med mera
 Både när programmet körs som användare och som systemtjänst.
 
-Terminal
-========
-
-Handle systems with bad `cal' programs
---------------------------------------
-
 HTML
 ====
 
