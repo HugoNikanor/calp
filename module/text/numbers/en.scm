@@ -9,7 +9,7 @@
 
 ;; Allows extra args to handle eventual local changes.
 (define-public (each-string count . _)
-  (cond count
+  (case count
         [(1) "each"]
         [(2) "every other"]
-        [else (format #f "every ~:r" n)]))
+        [else (format #f "every ~:r" count)]))
