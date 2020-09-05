@@ -202,19 +202,29 @@
   (cond [(datetime? date/-time) (get-date date/-time)]
         [(date? date/-time) date/-time]
         [(time? date/-time) (date)]
-        [else (error "Object not a date, time, or datetime object ~a" date/-time)]))
+        [else (scm-error 'wrong-type-arg
+                     "as-date"
+                     "Object not a date, time, or datetime object ~a"
+                     (list date/-time)
+                     #f)]))
 
 (define-public (as-time date/-time)
   (cond [(datetime? date/-time) (get-time% date/-time)]
         [(date? date/-time) (time)]
         [(time? date/-time) date/-time]
-        [else (error "Object not a date, time, or datetime object ~a" date/-time)]))
+        [else (scm-error 'wrong-type-arg "as-time"
+                     "Object not a date, time, or datetime object ~a"
+                     (list date/-time)
+                     #f)]))
 
 (define-public (as-datetime dt)
   (cond [(datetime? dt) dt]
         [(date? dt) (datetime date: dt time: (time))]
         [(time? dt) (datetime time: dt date: (date))]
-        [else (error "Object not a date, time, or datetime object ~a" dt)]))
+        [else (scm-error 'wrong-type-arg "as-datetime"
+                     "Object not a date, time, or datetime object ~a"
+                     (list dt)
+                     #f)]))
 
 
 
@@ -238,7 +248,10 @@
          ((feb)
           (if (leap-year? (year date))
               29 28))
-         (else (error "No month ~a (~a)" (month date) date))))
+         (else (scm-error 'out-of-range "days-in-month"
+                      "No month number ~a (~a)"
+                      (list (month date) date)
+                      #f))))
 
 (define-public (days-in-year date)
   (if (leap-year? (year date))
@@ -366,10 +379,10 @@
   (let ((str (catch 'out-of-range
                (lambda () (locale-day (1+ (modulo week-day-number 7)) locale))
                (lambda (oor str num)
-                 (scm-error 'out-of-range 'week-day-name
-                            "~a == (~a % 7) + 1"
-                            (list num week-day-number)
-                            (list week-day-number))))))
+                 (scm-error 'out-of-range "week-day-name"
+                        "~a == (~a % 7) + 1"
+                        (list num week-day-number)
+                        #f)))))
     ;; I also know about the @var{locale-day-short} method, but I need
     ;; strings of length 2.
     (if truncate-to
@@ -545,7 +558,10 @@
                   (days-in-interval start-date end-date)) ]
                [(or (not (zero? (month (get-date dt))))
                     (not (zero? (year (get-date dt)))))
-                (error "Multi-month intervals only supported when start-date is given" dt)]
+                (scm-error 'misc-error "datetime->decimal-hour"
+                       "Multi-month intervals only supported when start-date is given (~a)"
+                       (list dt)
+                       #f)]
                [else (day (get-date dt))])))
     (+ (time->decimal-hour (get-time% dt))
        (* (1- date-diff) 24))))
@@ -594,7 +610,10 @@
                    ((#\B) (display (locale-month (month date))))
                    ((#\Z) (when (equal? "UTC" (get-timezone datetime)) (display "Z")))
                    (else (unless allow-unknown?
-                           (error 'datetime->string "Invalid format token ~a" token))))
+                           (scm-error 'misc-error "datetime->string"
+                                  "Invalid format token ~a"
+                                  (list token)
+                                  #f))))
                  #f)
                 (else (unless (char=? #\~ token) (display token)) token)))
             #f
@@ -640,7 +659,13 @@
                         (loop (cdr str)
                               (cddr fmt)
                               dt)
-                        (error "Non-match"))]
+                        ;; TODO name the loop-local variables something
+                        ;; other than the top level, to allow better error
+                        ;; messages.
+                        (scm-error 'misc-error "string->datetime"
+                               "Mismatched symbol, expected ~a got ~a"
+                               (list #\~ (car str))
+                               #f))]
              [(#\Z)
               (if (eq? #\Z (car str))
                   (loop (cdr str)
@@ -672,14 +697,19 @@
                  (as-dt (set (year date) num))))]
 
              [else
-              (error "Unimplemented or incorrect parse token")])]
+              (scm-error 'misc-error "string->datetime"
+                     "Unimplemented or incorrect parse token ~S"
+                     (list str)
+                     #f)])]
           [else
            (if (eq? (car str) (car fmt))
                (loop (cdr str)
                      (cdr fmt)
                      dt)
-               (error (format #f "Mismatched symbol, expected ~a got ~a"
-                              (car fmt) (car str))))])))
+               (scm-error 'misc-error "string->datetime"
+                      "Mismatched symbol, expected ~a got ~a"
+                      (list (car fmt) (car str))
+                      #f))])))
 
 (define*-public (string->time str optional: (fmt "~H:~M:~S"))
   (get-time% (string->datetime str fmt)))
@@ -914,11 +944,16 @@
   (when (or (negative? (year change))
             (negative? (month change))
             (negative? (day change)))
-    (error "Change can't be negative"))
+    (scm-error 'misc-error "date+%" "Negative change ~a invalid (base=~a)"
+               (list change base)
+               #f))
 
   (unless (and (< 0 (month base))
                (< 0 (day base)))
-    (error "Base day and month needs to be at least one" base))
+    (scm-error 'misc-error "date+%"
+           "~a needs day and month to be at least one"
+           (list base)
+           #f))
 
   (date+%% change base))
 
@@ -964,11 +999,16 @@
   (when (or (negative? (year change))
             (negative? (month change))
             (negative? (day change)))
-    (error "Change can't be negative"))
+    (scm-error 'misc-error "date-%" "Negative change ~a invalid (base=~a)"
+           (list change base)
+           #f))
 
   (when (or (negative? (month base))
             (negative? (day base)))
-    (error "Base month or day can't be negative"))
+    (scm-error 'misc-error "date-%"
+           "~a needs day and month to be at least one"
+           (list base)
+           #f))
 
   (date-%% change base)
   )
@@ -1142,7 +1182,10 @@
             (negative? (day   b))
             (negative? (month a))
             (negative? (day   a)) )
-    (error "Negative months or days are errors"))
+    (scm-error 'misc-error "date-difference"
+           "~a or ~a contains negative months or days"
+           (list a b)
+           #f))
 
   (date-difference% (set-> b
                            (month = (- 1))
