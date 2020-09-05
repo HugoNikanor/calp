@@ -10,6 +10,7 @@
   :use-module ((calp util hooks) :select (shutdown-hook))
 
   :use-module ((text markup) :select (sxml->ansi-text))
+  :use-module ((calp util exceptions) :select (filter-stack))
 
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 regex)
@@ -206,8 +207,19 @@
                                  'flat
                                  (string->symbol stprof)))))
 
+
+
 (define-public (main args)
   ((@ (calp util time) report-time!) "Program start")
-  (dynamic-wind (lambda () 'noop)
-                (lambda () (catch 'return (lambda () (wrapped-main args)) values))
-                (lambda () (run-hook shutdown-hook))))
+  (with-throw-handler #t
+    (lambda ()
+      (dynamic-wind (lambda () 'noop)
+                    (lambda () (catch 'return (lambda () (wrapped-main args)) values))
+                    (lambda () (run-hook shutdown-hook))))
+    (lambda _
+      ;; Finds any direct vcomponents (not in lists or similar) on the stack
+      ;; and prints them.
+      (map (lambda (it)
+             (with-output-to-port (current-error-port)
+               (lambda () ((@ (vcomponent describe) describe) it))))
+           (filter-stack (@ (vcomponent) vcomponent?) (make-stack #t))))))
