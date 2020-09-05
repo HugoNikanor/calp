@@ -84,9 +84,9 @@
 
 (define-macro (assert form)
   `(unless ,form
-     (throw 'assertion-error "Assertion for ~a failed, ~a"
+     (throw 'assertion-error "Assertion failed. ~a expected, ~a got"
             (quote ,form)
-            ((@@ (calp util exceptions) prettify-tree) ,(cons 'list form)))))
+            ((@@ (calp util exceptions) prettify-tree) (list ,form)))))
 
 
 (define-syntax catch-warnings
