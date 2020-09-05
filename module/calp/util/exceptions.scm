@@ -3,6 +3,10 @@
   #:use-module (calp util)
   #:use-module (calp util config)
   #:use-module (ice-9 format)
+
+  #:use-module ((system vm frame)
+                :select (frame-bindings binding-ref))
+
   #:export (throw-returnable
             catch-multiple
             assert))
@@ -93,3 +97,9 @@
          (lambda ()
            body ...)
          (lambda _ default))))))
+
+
+(define-public (filter-stack pred? stk)
+  (concatenate
+   (for i in (iota (stack-length stk))
+        (filter pred? (map binding-ref (frame-bindings (stack-ref stk i)))))))
