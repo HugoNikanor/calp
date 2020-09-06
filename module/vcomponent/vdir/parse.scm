@@ -70,8 +70,9 @@
                  ;; But the patches can apparently share a sequence number
                  ;; of 0 with the original event!
                  ;; (╯°□°）╯ ┻━┻
-                 (let* ((head (find (negate (extract 'RECURRENCE-ID))
-                                    events))
+                 (let* ((head (or (find (extract 'RRULE) events)
+                                  (find (negate (extract 'RECURRENCE-ID)) events)
+                                  (car events)))
                         (rest (delete head events eq?)))
 
                    (set! (prop head '-X-HNH-ALTERNATIVES)

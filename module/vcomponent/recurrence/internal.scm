@@ -13,7 +13,8 @@
 (define (repeating? ev)
   "Does this event repeat?"
   (or (prop ev 'RRULE)
-      (prop ev 'RDATE)))
+      (prop ev 'RDATE)
+      (prop ev '-X-HNH-ALTERNATIVES)))
 
 ;; weekday := [0, 7)
 

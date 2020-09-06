@@ -333,13 +333,18 @@
                       ;; anything after monday. This filters these out.
                       (stream-drop-while
                        (lambda (d) (date/-time< d (prop event 'DTSTART)))
-                       (generate-posibilities rrule (prop event 'DTSTART)))
+                       (if rrule
+                           (generate-posibilities rrule (prop event 'DTSTART))
+                           stream-null))
                       ;; TODO ideally I should merge the limited recurrence set
                       ;; with the list of rdates here. However, I have never
                       ;; sen an event with an RDATE property, so I wont worry
                       ;; about it for now.
                       ;; (stream-merge (list->stream (#|rdate's|#))
                       )))
+    ;; TODO count and until shoud be applied to the RRULE events,
+    ;; but not the RDATE events ???
+    ;; (TODO test against some other calendar program)
     (cond [(count rrule) => (lambda (c) (stream-take c date-stream))]
           [(until rrule) => (lambda (end) (stream-take-while
                                       (cut (if (date? (prop event 'DTSTART))
@@ -371,7 +376,29 @@
               (datetime-difference end (prop base-event 'DTSTART)))
           #f)))
 
-  (define rrule-stream (rrule-instances base-event))
+
+
+  (define rrule-stream-regular
+    (if (prop base-event 'RRULE)
+        (rrule-instances base-event)
+        stream-null))
+
+  ;; NOTE Others have interpreted the standard to allow RECURRENCE-ID:s to
+  ;; create new instances. While I thought that you needed to specifie them
+  ;; through RDATE components.
+  (define alternative-times
+    (awhen (prop base-event '-X-HNH-ALTERNATIVES)
+           (list (list->stream
+                  (sort*
+                   (hash-map->list (lambda (_ v) (prop v 'DTSTART)) it)
+                   date/-time<?)))))
+
+  (define rrule-stream
+    ;; TODO remove duplicates
+    (interleave-streams
+     date/-time<?
+     (cons rrule-stream-regular
+           alternative-times)))
 
   (stream-map
    (aif (prop base-event '-X-HNH-ALTERNATIVES)
@@ -380,25 +407,31 @@
                it ; RECURRENCE-ID objects come with their own DTEND
                (let ((ev (copy-vcomponent base-event)))
                  (set! (prop ev 'DTSTART) dt)
-                 (when duration
+                 (when duration ; (and (not (prop ev 'DTEND)) duration)
                    ;; p. 123 (3.8.5.3 Recurrence Rule)
                    ;; specifies that the DTEND should be updated to match how the
                    ;; initial dtend related to the initial DTSTART. It also notes
                    ;; that an event of 1 day in length might be longer or shorter
                    ;; than 24h depending on timezone shifts.
-                   (set! (prop ev 'DTEND) ((cond [(date? dt) date+]
-                                                 [(datetime? dt) datetime+]
-                                                 [else (error "Bad type")])
-                                           dt duration)))
+                   (set! (prop ev 'DTEND)
+                     (cond [(date? dt)
+                            (unless (date? duration)
+                              (warning "Expected date, got ~a" duration))
+                            (date+ dt (as-date duration))]
+                           [(datetime? dt)
+                            (unless (datetime? duration)
+                              (warning "Expected datetime, got ~a" duration))
+                            (datetime+ dt (as-datetime duration)) ]
+                           [else (error "Bad type")])))
                  ev)))
         (lambda (dt)
           (let ((ev (copy-vcomponent base-event)))
             (set! (prop ev 'DTSTART) dt)
             (when duration
-             (set! (prop ev 'DTEND) ((cond [(date? dt) date+]
-                                           [(datetime? dt) datetime+]
-                                           [else (error "Bad type")])
-                                     dt duration)))
+              (set! (prop ev 'DTEND) ((cond [(date? dt) date+]
+                                            [(datetime? dt) datetime+]
+                                            [else (error "Bad type")])
+                                      dt duration)))
             ev)))
    rrule-stream))
 
