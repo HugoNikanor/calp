@@ -222,6 +222,8 @@
    extension-rule))
 
 
+;; (or 'YEARLY 'MONTHLY 'WEEKLY 'HOURLY 'MINUTELY 'SECONDLY)
+;; → <datetime>
 (define (make-date-increment rr)
   (case (freq rr)
     [(YEARLY)   (datetime date: (date year: (interval rr)))]
@@ -309,12 +311,15 @@
     (limiters->predicate (all-limiters rrule))
     date-stream)))
 
+;; (a := <date|datetime>) => <rrule>, a → (stream a)
 (define-stream (generate-posibilities rrule start-date)
   (limit-recurrence-set
    rrule
    (extend-recurrence-set
     rrule start-date)))
 
+
+;; Recurring <vcomponent> → (stream <date|datetime>)
 (define-stream (rrule-instances event)
   (define rrule (prop event 'RRULE))
 
