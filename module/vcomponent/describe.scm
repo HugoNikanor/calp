@@ -32,7 +32,10 @@
                 (if (list? values)
                     (for-each out values)
                     (out values))))
-            (properties vcomponent))
+            (sort* (properties vcomponent)
+                   string<?
+                   ;; TODO is key always a symbol?
+                   (compose symbol->string car)))
 
   (for child in (children vcomponent)
 
