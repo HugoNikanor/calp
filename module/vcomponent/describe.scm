@@ -22,6 +22,8 @@
                           (trim-to-width
                            (format #f "~a" (value vline))
                            (- 80 indent maxlen)))
+                  (awhen (vline-source vline)
+                         (display ((@@ (vcomponent ical parse) get-line) it)))
                   (unless (null? (parameters vline))
                     (display " ;")
                     (for (key value) in (parameters vline)
