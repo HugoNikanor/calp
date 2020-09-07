@@ -386,7 +386,7 @@ function place_in_edit_mode (event) {
                 event.properties[fieldname] = d;
             }
         });
-        let slot = event.properties["_slot_" + fieldname]
+        let slot = get_property(event, fieldname);
         let idx = slot.findIndex(e => e[0] === field);
         slot.splice(idx, 1, [timeinput, (s, v) => s.value = v.format("~H:~M")])
         slot.splice(idx, 0, [dateinput, (s, v) => s.value = v.format("~Y-~m-~d")])
@@ -416,7 +416,7 @@ function place_in_edit_mode (event) {
         event.properties["summary"] = this.value;
     }
 
-    let slot = event.properties["_slot_summary"]
+    let slot = get_property(event, "summary");
     let idx = slot.findIndex(e => e[0] === summary);
     slot.splice(idx, 1, [input, (s, v) => s.value = v])
 
@@ -443,7 +443,7 @@ function place_in_edit_mode (event) {
             event.properties["description"] = this.value;
         }
 
-        let slot = event.properties["_slot_description"]
+        let slot = get_property(event, "description");
         let idx = slot.findIndex(e => e[0] === description);
         slot.splice(idx, 1, [input, (s, v) => s.innerHTML = v])
 
@@ -655,6 +655,34 @@ function toggle_popup(popup_id) {
 
 
 
+function get_property(el, field, default_value) {
+    if (! el.properties) {
+        el.properties = {};
+    }
+
+    if (! el.properties["_slot_" + field]) {
+        el.properties["_slot_" + field] = [];
+        el.properties["_value_" + field] = default_value;
+
+        Object.defineProperty(
+            el.properties, field,
+            {
+                get: function () {
+                    return this["_value_" + field];
+                },
+                set: function (value) {
+                    this["_value_" + field] = value;
+                    for (let [slot,updater] of el.properties["_slot_" + field]) {
+                        updater(slot, value);
+                    }
+                }
+            });
+    }
+
+    return el.properties["_slot_" + field];
+}
+
+
 /*
   Properties are icalendar properties.
 
@@ -674,8 +702,7 @@ function bind_properties (el, wide_event=false) {
     for (let child of children) {
         let field = child.tagName;
 
-
-        let lst = el.properties["_slot_" + field] = []
+        let lst = get_property(el, field);
         for (let s of el.getElementsByClassName(field)) {
             let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
             lst.push([s, f]);
@@ -696,20 +723,6 @@ function bind_properties (el, wide_event=false) {
             }
             el.properties["_value_" + field] = s.innerHTML;
         }
-
-        Object.defineProperty(
-            el.properties, field,
-            {
-                get: function () {
-                    return this["_value_" + field];
-                },
-                set: function (value) {
-                    this["_value_" + field] = value;
-                    for (let [slot,updater] of el.properties["_slot_" + field]) {
-                        updater(slot, value);
-                    }
-                }
-            });
     }
 
     let container = el.closest(".event-container");
@@ -722,7 +735,7 @@ function bind_properties (el, wide_event=false) {
 
     if (el.properties.dtstart) {
         el.properties.dtstart = parseDate(el.properties.dtstart);
-        el.properties["_slot_dtstart"].push(
+        get_property(el, 'dtstart').push(
             [el.style, (s, v) =>
              s[wide_event?'left':'top'] = 100 * (to_local(v) - start)/(end - start) + "%"]);
     }
@@ -730,7 +743,7 @@ function bind_properties (el, wide_event=false) {
 
     if (el.properties.dtend) {
         el.properties.dtend = parseDate(el.properties.dtend);
-        el.properties["_slot_dtend"].push(
+        get_property(el, 'dtend').push(
             // TODO right and bottom only works if used from the start. However,
             // events from the backend instead use top/left and width/height.
             // Normalize so all use the same, or find a way to convert between.
@@ -738,38 +751,21 @@ function bind_properties (el, wide_event=false) {
              (s, v) => s[wide_event?'right':'bottom'] = 100 * (1 - (to_local(v)-start)/(end-start)) + "%"]);
     }
 
+    /* ---------- Calendar ------------------------------ */
+
     if (! el.dataset.calendar) {
         el.dataset.calendar = "Unknown";
     }
 
-    el.properties._value_calendar = el.dataset.calendar;
-    el.properties._slot_calendar = [];
-
-    /* TODO merge this and instance above */
-    let field = 'calendar';
-    Object.defineProperty(
-        el.properties, field,
-        {
-            get: function () {
-                return this["_value_" + field];
-            },
-            set: function (value) {
-                this["_value_" + field] = value;
-                for (let [slot,updater] of el.properties["_slot_" + field]) {
-                    updater(slot, value);
-                }
-            }
-        });
+    let calprop = get_property(el, 'calendar', el.dataset.calendar);
 
     const rplcs = (s, v) => {
         let [_, calclass] = s.classList.find(/^CAL_/);
         s.classList.replace(calclass, "CAL_" + v);
     }
 
-    el.properties._slot_calendar.push([popup, rplcs]);
-    el.properties._slot_calendar.push([el, rplcs]);
-
-    el.properties._slot_calendar.push(
-        [el, (s, v) => s.dataset.calendar = v]);
+    calprop.push([popup, rplcs]);
+    calprop.push([el, rplcs]);
+    calprop.push([el, (s, v) => s.dataset.calendar = v]);
 
 }
