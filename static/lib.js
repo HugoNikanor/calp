@@ -130,3 +130,5 @@ function format_date(date, str) {
 }
 Object.prototype.format = function () { return this; } /* any number of arguments */
 Date.prototype.format = function (str) { return format_date (this, str); }
+
+const xcal = "urn:ietf:params:xml:ns:icalendar-2.0";

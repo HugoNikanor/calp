@@ -429,9 +429,21 @@ function place_in_edit_mode (event) {
          * '.eventtext'?).
      * Biggest problem is generated fields relative order.
      */
-    let descs = popup.getElementsByClassName("description");
-    if (descs.length === 1) {
-        let description = descs[0];
+    {
+        let descs = popup.getElementsByClassName("description");
+        let description;
+        if (descs.length === 1) {
+            description = descs[0];
+        } else {
+            let fields = popup.getElementsByClassName("fields")[0]
+            description = makeElement('span', {
+                class: 'description',
+            });
+            fields.appendChild(description);
+            let slot = get_property(event, "description");
+            slot.push([description, (s, v) => s.innerHTML = v]);
+        }
+
         let textarea = makeElement('textarea', {
             name: "description",
             placeholder: "Description (optional)",
@@ -655,7 +667,14 @@ function toggle_popup(popup_id) {
 
 
 
-function get_property(el, field, default_value) {
+/*
+  Returns the _value_ slot of given field in event, creating it if needed .
+  el - the event to work on
+  field - name of the field
+  default_value - default value when creating
+  bind_to_ical - should this property be added to the icalendar subtree?
+*/
+function get_property(el, field, default_value, bind_to_ical=true) {
     if (! el.properties) {
         el.properties = {};
     }
@@ -677,6 +696,20 @@ function get_property(el, field, default_value) {
                     }
                 }
             });
+    }
+
+    if (bind_to_ical) {
+        let ical_properties = el.querySelector("icalendar vevent properties");
+        if (! ical_properties.querySelector(field)) {
+            let text = document.createElementNS(xcal, 'text');
+            let element = document.createElementNS(xcal, field);
+            element.appendChild(text);
+            if (default_value) {text.innerHTML = default_value;}
+
+            ical_properties.appendChild(element);
+            el.properties["_slot_" + field].push(
+                [text, (s, v) => s.innerHTML = v]);
+        }
     }
 
     return el.properties["_slot_" + field];
@@ -703,6 +736,8 @@ function bind_properties (el, wide_event=false) {
         let field = child.tagName;
 
         let lst = get_property(el, field);
+
+        /* Bind HTML fields for this event */
         for (let s of el.getElementsByClassName(field)) {
             let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
             lst.push([s, f]);
@@ -712,6 +747,7 @@ function bind_properties (el, wide_event=false) {
             lst.push([s, f]);
         }
 
+        /* Bind vcomponent fields for this event */
         for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
             switch (s.tagName) {
             case 'date':
@@ -757,7 +793,7 @@ function bind_properties (el, wide_event=false) {
         el.dataset.calendar = "Unknown";
     }
 
-    let calprop = get_property(el, 'calendar', el.dataset.calendar);
+    let calprop = get_property(el, 'calendar', el.dataset.calendar, false);
 
     const rplcs = (s, v) => {
         let [_, calclass] = s.classList.find(/^CAL_/);
