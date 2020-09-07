@@ -256,6 +256,9 @@
                                 (return (build-response code: 400)
                                         (format #f "~?~%" fmt args)))))))
 
+                    (set! (prop event 'LAST-MODIFIED)
+                      (current-datetime))
+
 
                     ;; NOTE Posibly defer save to a later point.
                     ;; That would allow better asyncronous preformance.
@@ -275,6 +278,8 @@
                    (lambda (err fmt args)
                      (return (build-response code: 400)
                              (format #f "~?~%" fmt args)))))
+
+               (set! (prop event 'LAST-MODIFIED) (current-datetime))
 
                ;; NOTE Posibly defer save to a later point.
                ;; That would allow better asyncronous preformance.
