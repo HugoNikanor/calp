@@ -104,6 +104,7 @@
     ,(include-alt-css "/static/dark.css"  '(title "Dark"))
     ,(include-alt-css "/static/light.css" '(title "Light"))
 
+    (script (@ (defer) (src "/static/lib.js")))
     (script (@ (defer) (src "/static/script.js")))
     ,(calendar-styles calendars))
 
