@@ -4,6 +4,7 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (datetime)
+  :use-module ((text util) :select (add-enumeration-punctuation))
   :use-module (calp html util)
   :use-module ((calp html config) :select (edit-mode))
   :use-module ((calp html components) :select (btn tabset))
@@ -190,7 +191,26 @@
 (define (repeat-info event)
   `(div (@ (class "eventtext"))
         (h2 "Upprepningar")
-        (pre ,(prop event 'RRULE))))
+        (table (@ (class "recur-components"))
+               ,@((@@ (vcomponent recurrence internal) map-fields)
+                  (lambda (key value)
+                    `(tr (@ (class ,key)) (th ,key)
+                         (td
+                          ,(case key
+                             ((wkst) (week-day-name value))
+                             ((until) (if (date? value)
+                                          (date->string value)
+                                          (datetime->string value)))
+                             ((byday) (add-enumeration-punctuation
+                                       (map (lambda (pair)
+                                              (string-append
+                                               (if (car pair)
+                                                   (format #f "~a " (car pair))
+                                                   "")
+                                               (week-day-name (cdr pair))))
+                                            value)))
+                             (else (->string value))))))
+                  (prop event 'RRULE)))))
 
 
 (define-public (popup ev id)
