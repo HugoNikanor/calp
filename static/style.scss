@@ -704,7 +704,7 @@ along with their colors.
     &-container {
         display: none;
         position: absolute;
-        z-index: 10;
+        z-index: 1000;
 
         /* ??? */
         left: 10px;
@@ -814,13 +814,13 @@ along with their colors.
     [type=radio] {
         display: none;
         &:checked ~ label {
-            z-index: 1;
+            z-index: 100;
             /* to align all tab */
             border-left: 3px solid transparent;
             background-color: #dedede;
 
             ~ .content {
-                z-index: 1;
+                z-index: 100;
             }
         }
     }
@@ -847,6 +847,37 @@ along with their colors.
         /* REG */
         input[type='text'], textarea {
             width: 100%;
+        }
+
+        .timeinput {
+
+            display: grid;
+            grid-template-columns: 1fr [lbl-start] 1ch 1fr 1ch [lbl-end];
+            grid-template-rows: [lbl-start] 0.7fr 1fr 1fr 0.3fr [lbl-end];
+
+            label {
+                background-color: rgba(10,20,30,0.7);
+                color: white;
+                border-radius: 1em;
+
+                grid-column: lbl-start / lbl-end;
+                grid-row: lbl-start / lbl-end;
+
+                text-align: center;
+
+                user-select: none;
+
+                z-index: 1;
+
+            }
+
+            input {
+                z-index: 2;
+            }
+
+            input:checked ~ input {
+                z-index: 0;
+            }
         }
     }
 

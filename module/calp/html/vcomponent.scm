@@ -125,65 +125,81 @@
                               optional: (attributes '())
                               key: (fmt-header list))
   `(div (@ (class " eventtext "))
-        (div (@ (class "edit-form"))
-             (h3 (input (@ (type "text") (class "summary")
-                           (placeholder "Sammanfattning")
-                           (name "summary") (required)
-                           (value ,(prop ev 'SUMMARY)))))
+        (form (@ (class "edit-form"))
+              (h3 (input (@ (type "text")
+                            (placeholder "Sammanfattning")
+                            (name "summary") (required)
+                            (value ,(prop ev 'SUMMARY)))))
 
-             ,@(with-label "Heldag?" `(input (@ (name "wholeday") (type "checkbox"))))
+              ,(let ((start (prop ev 'DTSTART))
+                     (end (prop ev 'DTEND)))
+                 `(div (@ (class "timeinput"))
 
-             ,@(let ((start (prop ev 'DTSTART)))
-                 (with-label "Start"
-                             `(div (input (@ (type "date")
-                                             (name "dtstart-date")
-                                             (value ,(date->string (as-date start)))))
-                                   (input (@ ,@(when (date? start)
-                                                 '((style "display:none")))
-                                             (type "time")
-                                             (name "dtstart-end")
-                                             (value ,(time->string (as-time start))))))))
-             ,@(let ((end (prop ev 'DTEND)))
-                 (with-label "Slut"
-                             `(div (input (@ (type "date")
-                                             (name "dtend-date")
-                                             ,@(when end `((value ,(date->string (as-date end)))))))
-                                   (input (@ ,@(when (date? end)
-                                                 '((style "display:none")))
-                                             (type "time")
-                                             (name "dtend-time")
-                                             ,@(when end `((value ,(time->string (as-time end)))))
-                                             )))))
+                       (input (@ (type "date")
+                                 (name "dtstart-date")
+                                 (style "grid-column:1;grid-row:2")
+                                 (value ,(date->string (as-date start)))))
 
-             ,@(with-label
-                "Plats"
-                `(input (@ (placeholder "Plats")
-                           (name "location")
-                           (type "text")
-                           (value ,(or (prop ev 'LOCATION) "")))))
+                       (input (@ (type "date")
+                                 (name "dtend-date")
+                                 (style "grid-column:1;grid-row:3")
+                                 ,@(when end `((value ,(date->string (as-date end)))))))
 
-             ,@(with-label
-                "Beskrivning"
-                `(textarea (@ (placeholder "Beskrivning")
-                              (name "description"))
-                           ,(prop ev 'DESCRIPTION)))
+                       ,@(with-label
+                          "Heldag?"
+                          `(input (@ (type "checkbox") (style "display:none")
+                                     (name "wholeday"))))
 
-             ,@(with-label
-                "Kategorier"
-                `(div (@ (class "inline-edit"))
-                      ,@(awhen (prop ev 'CATEGORIES)
-                               (map (lambda (c)
-                                      `(input (@ (size 2)
-                                                 (value ,c))))
-                                    it))
+                       (input (@ ,@(when (date? start)
+                                     '((style "display:none")))
+                                 (type "time")
+                                 (name "dtstart-end")
+                                 (style "grid-column:3;grid-row:2")
+                                 (value ,(time->string (as-time start)))))
 
-                      (input (@ (class "final")
-                                (size 2)
-                                (type "text")
-                                ))))
+                       (input (@ ,@(when (date? end)
+                                     '((style "display:none")))
+                                 (type "time")
+                                 (name "dtend-time")
+                                 (style "grid-column:3;grid-row:3")
+                                 ,@(when end `((value ,(time->string (as-time end)))))
+                                 ))))
 
-             (input (@ (type "submit")))
-             )))
+              ,@(with-label
+                 "Plats"
+                 `(input (@ (placeholder "Plats")
+                            (name "location")
+                            (type "text")
+                            (value ,(or (prop ev 'LOCATION) "")))))
+
+              ,@(with-label
+                 "Beskrivning"
+                 `(textarea (@ (placeholder "Beskrivning")
+                               (name "description"))
+                            ,(prop ev 'DESCRIPTION)))
+
+              ,@(with-label
+                 "Kategorier"
+                 `(div (@ (class "inline-edit"))
+                       ,@(awhen (prop ev 'CATEGORIES)
+                                (map (lambda (c)
+                                       `(input (@ (size 2)
+                                                  (value ,c))))
+                                     it))
+
+                       (input (@ (class "final")
+                                 (size 2)
+                                 (type "text")
+                                 ))))
+
+              #;
+              (input (@ (type "text")
+                        (list "known-fields")
+                        (placeholder "Nytt fält")))
+
+
+              (input (@ (type "submit")))
+              )))
 
 
 ;; Single event in side bar (text objects)
