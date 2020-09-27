@@ -131,7 +131,7 @@
                            (name "summary") (required)
                            (value ,(prop ev 'SUMMARY)))))
 
-             ,@(with-label "Heldag" `(input (@ (name "wholeday") (type "checkbox"))))
+             ,@(with-label "Heldag?" `(input (@ (name "wholeday") (type "checkbox"))))
 
              ,@(let ((start (prop ev 'DTSTART)))
                  (with-label "Start"
@@ -170,13 +170,19 @@
 
              ,@(with-label
                 "Kategorier"
-                (awhen (prop ev 'CATEGORIES)
-                       (map (lambda (c) `(button (@ (class "category")) ,c))
-                            it))
+                `(div (@ (class "inline-edit"))
+                      ,@(awhen (prop ev 'CATEGORIES)
+                               (map (lambda (c)
+                                      `(input (@ (size 2)
+                                                 (value ,c))))
+                                    it))
 
-                `(input (@ (class "category")
-                           (type "text")
-                           (placeholder "category"))))
+                      (input (@ (class "final")
+                                (size 2)
+                                (type "text")
+                                ))))
+
+             (input (@ (type "submit")))
              )))
 
 

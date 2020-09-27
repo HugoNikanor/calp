@@ -623,6 +623,11 @@ window.onload = function () {
     serializer.serializeToString(xml);
     */
 
+
+    for (let el of document.querySelectorAll(".inline-edit input")) {
+        el.oninput = update_inline_list;
+    }
+
 }
 
 function close_popup(popup) {
@@ -716,6 +721,25 @@ function get_property(el, field, default_value, bind_to_ical=true) {
 }
 
 
+
+/*
+class display_tab {
+}
+
+class edit_tab {
+}
+
+class vcomponent {
+    set_value(field, value) {
+        if (value === '') {
+            remove_property(field);
+        }
+    }
+}
+
+
+*/
+
 /*
   Properties are icalendar properties.
 
@@ -804,4 +828,34 @@ function bind_properties (el, wide_event=false) {
     calprop.push([el, rplcs]);
     calprop.push([el, (s, v) => s.dataset.calendar = v]);
 
+
+
+    /* ---------- Calendar ------------------------------ */
+
+
+}
+
+
+function advance_final(li) {
+    li.classList.remove("final");
+    let new_li = makeElement ('input', {
+        className: 'final',
+        size: 2,
+        oninput: li.oninput,
+    });
+    li.closest(".inline-edit").appendChild(new_li);
+}
+
+function update_inline_list () {
+    if (this.classList.contains("final")) {
+        if (this.value !== '') {
+            advance_final(this);
+        }
+    } else {
+        if (this.value === '') {
+            let sibling = this.previousElementSibling || this.nextElementSibling;
+            this.remove();
+            sibling.focus();
+        }
+    }
 }

@@ -844,12 +844,21 @@ along with their colors.
             display: block;
         }
 
+        /* REG */
         input[type='text'], textarea {
             width: 100%;
         }
     }
 
 
+}
+
+.inline-edit {
+    input {
+        /* important since regular spec is much stronger...*/
+        /* [REG] */
+        width: initial !important;
+    }
 }
 
 /* Other
