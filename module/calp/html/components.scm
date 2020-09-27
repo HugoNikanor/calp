@@ -1,6 +1,8 @@
 (define-module (calp html components)
   :use-module (calp util)
   :use-module (calp util exceptions)
+  :use-module (ice-9 curried-definitions)
+  :use-module (ice-9 match)
   :export (xhtml-doc)
   )
 
@@ -111,6 +113,54 @@
                                              (kvlist->assq args)))
                             ,key)
                      (div (@ (class "content")) ,body)))))
+
+(define ((set-attribute attr) el)
+  (match el
+    [(tagname ('@ params ...) inner-body ...)
+     `(,tagname (@ ,@(assq-merge params attr))
+                ,@inner-body)]
+    [(tagname inner-body ...)
+     `(,tagname (@ ,attr)
+                ,@inner-body)]))
+
+
+(define-public (with-label lbl . forms)
+
+  (define id (gensym "label"))
+
+  (cons `(label (@ (for ,id)) ,lbl)
+   (let recurse ((forms forms))
+     (map (lambda (form)
+            (cond [(not (list? form)) form]
+                  [(null? form) '()]
+                  [(eq? 'input (car form))
+                   ((set-attribute `((id ,id))) form)]
+                  [(list? (car form))
+                   (cons (recurse (car form))
+                         (recurse (cdr form)))]
+                  [else
+                   (cons (car form)
+                         (recurse (cdr form)))]))
+          forms))))
+
+
+(define-public (form elements)
+  `(form
+    ,@(map (label self
+                  (lambda (el)
+                    (match el
+                      ((name ('@ tags ...) body ...)
+                       (let ((id (gensym "formelement")))
+                         (cons
+                          `(label (@ (for ,id)) ,name)
+                          (map
+                           (set-attribute `((name ,name)))
+                           (cons
+                            ((set-attribute `((id ,id))) (car body))
+                            (cdr body))))))
+                      ((name body ...)
+                       (self `(,name (@) ,@body))))))
+           elements)))
 
 
 (define-public (include-css path . extra-attributes)

@@ -698,8 +698,8 @@ along with their colors.
     /* overflow-y: auto; */
     max-width: 60ch;
     max-height: 60ch;
-    min-width: 40ch;
-    min-height: 20ch;
+    min-width: 60ch;
+    min-height: 30ch;
 
     &-container {
         display: none;
@@ -790,7 +790,7 @@ along with their colors.
 }
 
 .tab {
-    label {
+    > label {
         position: absolute;
 
         left: 100%;
@@ -837,6 +837,19 @@ along with their colors.
         min-width: 100%;
         min-height: 100%;
     }
+
+
+    .edit-form {
+        label {
+            display: block;
+        }
+
+        input[type='text'], textarea {
+            width: 100%;
+        }
+    }
+
+
 }
 
 /* Other

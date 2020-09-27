@@ -7,7 +7,7 @@
   :use-module ((text util) :select (add-enumeration-punctuation))
   :use-module (calp html util)
   :use-module ((calp html config) :select (edit-mode))
-  :use-module ((calp html components) :select (btn tabset))
+  :use-module ((calp html components) :select (btn tabset form with-label))
   :use-module ((calp util color) :select (calculate-fg-color))
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
@@ -125,46 +125,59 @@
                               optional: (attributes '())
                               key: (fmt-header list))
   `(div (@ (class " eventtext "))
-        (h3 (input (@ (type "text") (class "summary")
-                      (placeholder "Sammanfattning")
-                      (name "summary") (required)
-                      (value ,(prop ev 'SUMMARY)))))
-        (div
-         ,(let ((start (prop ev 'DTSTART))
-                 (end (prop ev 'DTEND)))
-            `(table
-              (tr (td "Heldag?")
-                  (td (input (@ (type "checkbox")
-                                ,@(when (date? start) '((checked)))))))
-              (tr (td "Start")
-                  (td (input (@ (type "date") (value ,(date->string (as-date start))))))
-                  (td
-                   (input (@ ,@(when (date? start)
-                                 '((style "display:none")))
-                             (type "time")
-                             (value ,(time->string (as-time start)))))))
-              (tr (td "Slut")
-                  (td (input (@ (type "date")
-                                ,@(when end `((value ,(date->string (as-date end))))))))
-                  (td (input (@ ,@(when (date? start)
-                                    '((style "display:none")))
-                                (type "time")
-                                ,@(when end `((value ,(time->string (as-time end)))))
-                                )))))))
+        (div (@ (class "edit-form"))
+             (h3 (input (@ (type "text") (class "summary")
+                           (placeholder "Sammanfattning")
+                           (name "summary") (required)
+                           (value ,(prop ev 'SUMMARY)))))
 
-        (div (b "Plats: ")
-             (input (@ (name "location")
-                       (value ,(or (prop ev 'LOCATION) "")))))
+             ,@(with-label "Heldag" `(input (@ (name "wholeday") (type "checkbox"))))
 
-        (div (@ (class "description"))
-             (textarea ,(prop ev 'DESCRIPTION)))
+             ,@(let ((start (prop ev 'DTSTART)))
+                 (with-label "Start"
+                             `(div (input (@ (type "date")
+                                             (name "dtstart-date")
+                                             (value ,(date->string (as-date start)))))
+                                   (input (@ ,@(when (date? start)
+                                                 '((style "display:none")))
+                                             (type "time")
+                                             (name "dtstart-end")
+                                             (value ,(time->string (as-time start))))))))
+             ,@(let ((end (prop ev 'DTEND)))
+                 (with-label "Slut"
+                             `(div (input (@ (type "date")
+                                             (name "dtend-date")
+                                             ,@(when end `((value ,(date->string (as-date end)))))))
+                                   (input (@ ,@(when (date? end)
+                                                 '((style "display:none")))
+                                             (type "time")
+                                             (name "dtend-time")
+                                             ,@(when end `((value ,(time->string (as-time end)))))
+                                             )))))
 
-        (div (@ (class "categories"))
-             ,@(awhen (prop ev 'CATEGORIES)
-                      (map (lambda (c) `(button (@ (class "category")) ,c))
-                           it))
+             ,@(with-label
+                "Plats"
+                `(input (@ (placeholder "Plats")
+                           (name "location")
+                           (type "text")
+                           (value ,(or (prop ev 'LOCATION) "")))))
 
-             (input (@ (class "category") (type "text") (placeholder "category"))))))
+             ,@(with-label
+                "Beskrivning"
+                `(textarea (@ (placeholder "Beskrivning")
+                              (name "description"))
+                           ,(prop ev 'DESCRIPTION)))
+
+             ,@(with-label
+                "Kategorier"
+                (awhen (prop ev 'CATEGORIES)
+                       (map (lambda (c) `(button (@ (class "category")) ,c))
+                            it))
+
+                `(input (@ (class "category")
+                           (type "text")
+                           (placeholder "category"))))
+             )))
 
 
 ;; Single event in side bar (text objects)
