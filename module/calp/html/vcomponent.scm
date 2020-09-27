@@ -98,16 +98,73 @@
                         ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                      (prop ev 'LOCATION)))))
           ,(awhen (prop ev 'DESCRIPTION)
-                  `(span (@ (class "description"))
+                  `(div (@ (class "description"))
                          ,(format-description ev it)))
+
+          ,(awhen (prop ev 'CATEGORIES)
+                  `(div (@ (class "categories"))
+                        ,@(map (lambda (c)
+                                 `(a (@ (class "category")
+                                        ;; TODO centralize search terms
+                                        ;; TODO propper stringifycation of sexp
+                                        (href ,(format #f "/search/?q=%28member+%22~a%22%0D%0A++%28or+%28prop+event+%27CATEGORIES%29+%27%28%29%29%0D%0A"
+                                                       c)))
+                                     ,c))
+                               it)))
           ,(awhen (prop ev 'RRULE)
-                  `(span (@ (class "rrule"))
-                         ,@(format-recurrence-rule ev)))
+                  `(div (@ (class "rrule"))
+                        ,@(format-recurrence-rule ev)))
+
           ,(when (prop ev 'LAST-MODIFIED)
-             `(span (@ (class "last-modified")) "Senast ändrad "
-                    ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
+             `(div (@ (class "last-modified")) "Senast ändrad "
+                   ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
 
          )))
+
+(define*-public (fmt-for-edit ev
+                              optional: (attributes '())
+                              key: (fmt-header list))
+  `(div (@ (class " eventtext "))
+        (h3 (input (@ (type "text") (class "summary")
+                      (placeholder "Sammanfattning")
+                      (name "summary") (required)
+                      (value ,(prop ev 'SUMMARY)))))
+        (div
+         ,(let ((start (prop ev 'DTSTART))
+                 (end (prop ev 'DTEND)))
+            `(table
+              (tr (td "Heldag?")
+                  (td (input (@ (type "checkbox")
+                                ,@(when (date? start) '((checked)))))))
+              (tr (td "Start")
+                  (td (input (@ (type "date") (value ,(date->string (as-date start))))))
+                  (td
+                   (input (@ ,@(when (date? start)
+                                 '((style "display:none")))
+                             (type "time")
+                             (value ,(time->string (as-time start)))))))
+              (tr (td "Slut")
+                  (td (input (@ (type "date")
+                                ,@(when end `((value ,(date->string (as-date end))))))))
+                  (td (input (@ ,@(when (date? start)
+                                    '((style "display:none")))
+                                (type "time")
+                                ,@(when end `((value ,(time->string (as-time end)))))
+                                )))))))
+
+        (div (b "Plats: ")
+             (input (@ (name "location")
+                       (value ,(or (prop ev 'LOCATION) "")))))
+
+        (div (@ (class "description"))
+             (textarea ,(prop ev 'DESCRIPTION)))
+
+        (div (@ (class "categories"))
+             ,@(awhen (prop ev 'CATEGORIES)
+                      (map (lambda (c) `(button (@ (class "category")) ,c))
+                           it))
+
+             (input (@ (class "category") (type "text") (placeholder "category"))))))
 
 
 ;; Single event in side bar (text objects)
@@ -238,6 +295,10 @@
              ,(tabset
                 `(("📅" title: "Översikt"
                    ,(fmt-single-event ev))
+
+                  ("📅" title: "Redigera"
+                   ,(fmt-for-edit ev))
+
                   ("⤓" title: "Nedladdning"
                    (div (@ (class "eventtext") (style "font-family:sans"))
                         (h2 "Ladda ner")
@@ -245,6 +306,7 @@
                                    "som iCal"))
                             (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
                                    "som xCal")))))
+
                   ,@(when (prop ev 'RRULE)
                       `(("↺" title: "Upprepningar" class: "repeating"
                          ,(repeat-info ev)))))))))
