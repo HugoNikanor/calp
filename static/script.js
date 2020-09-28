@@ -728,6 +728,10 @@ window.onload = function () {
                     }));
                     break;
 
+                case 'boolean':
+                    value.type = 'checkbox';
+                    break;
+
                 case 'period':
                     value.type = 'text';
                     // TODO validate /P\d*H/ typ
@@ -790,6 +794,7 @@ let all_types = [
     'utc-offset',
     'cal-address',
     'recur',
+    'boolean',
 ]
 
 
