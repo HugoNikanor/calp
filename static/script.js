@@ -628,6 +628,222 @@ window.onload = function () {
         el.oninput = update_inline_list;
     }
 
+
+    for (let el of document.getElementsByClassName("newfield")) {
+        let [name, type_selector, value_field] = el.children;
+
+        /* TODO list fields */
+        /* TODO add and remove fields. See update_inline_list */
+
+        function update_value_field (el) {
+            let [name_field, type_selector, value_field] = el.children;
+
+
+            let value = makeElement('input');
+            let values = [value];
+
+
+            switch (name_field.value.toUpperCase()) {
+            case 'GEO':
+                value.type = 'number';
+                values.push(makeElement('input', {
+                    type: 'number',
+                }));
+                break;
+
+            case 'CLASS':
+                // Add auto completion
+                break;
+
+            case 'ACTION':
+                // Add auto completion
+                break;
+
+            case 'TRANSP':
+                // Replace with toggle betwen OPAQUE and TRANSPARENT
+                break;
+
+            case 'PERCENT-COMPLETE':
+                value.min = 0;
+                value.max = 100;
+                break;
+
+            case 'PRIORITY':
+                value.min = 0;
+                value.max = 9;
+                break;
+
+            default:
+
+
+                switch (type_selector.options[type_selector.selectedIndex].value) {
+                case 'integer':
+                case 'float':
+                    value.type = 'number';
+                    break;
+
+                case 'uri':
+                    value.type = 'url';
+                    break;
+
+                case 'binary':
+                    value.type = 'file';
+                    break;
+
+                case 'date-time':
+                    values.push(makeElement('input', {
+                        type: 'time',
+                    }));
+                    /* fallthrough */
+                case 'date':
+                    value.type = 'date';
+                    break;
+
+                case 'cal-address':
+                    value.type = 'email';
+                    break;
+
+                case 'utc-offset':
+                    value.type = 'time';
+                    let lbl = makeElement('label');
+                    let id = gensym();
+
+                    lbl.setAttribute('for', id);
+
+                    /* TODO make these labels stand out more */
+                    lbl.appendChild(makeElement('span', {
+                        className: 'plus',
+                        innerText: '+',
+                    }));
+                    lbl.appendChild(makeElement('span', {
+                        className: 'minus',
+                        innerText: '-',
+                    }));
+                    values.splice(0,0,lbl);
+                    values.splice(0,0, makeElement('input', {
+                        type: 'checkbox',
+                        style: 'display:none',
+                        className: 'plusminuscheck',
+                        id: id,
+                    }));
+                    break;
+
+                case 'period':
+                    value.type = 'text';
+                    // TODO validate /P\d*H/ typ
+                    break;
+
+                case 'recur':
+                    // TODO
+                default:
+                    value.type = 'text';
+                }
+            }
+
+
+            value_field.innerHTML = '';
+            for (let v of values) {
+                console.log(v);
+                value_field.appendChild(v);
+            }
+        }
+
+        name.oninput = function () {
+            let types = valid_input_types[this.value.toUpperCase()];
+            type_selector.disabled = false;
+            if (types) {
+                type_selector.innerHTML = '';
+                for (let type of types) {
+                    type_selector.appendChild(
+                        makeElement('option', { value: type, innerText: type }))
+                }
+                if (types.length == 1) {
+                    type_selector.disabled = true;
+                }
+            } else {
+                type_selector.innerHTML = '';
+                for (let type of all_types) {
+                    type_selector.appendChild(
+                        makeElement('option', { value: type, innerText: type }))
+                }
+            }
+
+            update_value_field(el);
+        }
+        type_selector.onchange = function () {
+            update_value_field(el);
+        }
+    }
+
+}
+
+let all_types = [
+    'text',
+    'uri',
+    'binary',
+    'float',
+    'integer',
+    'date-time',
+    'date',
+    'duration',
+    'period',
+    'utc-offset',
+    'cal-address',
+    'recur',
+]
+
+
+/* TODO
+   Todo map for which properties are valid on which object types
+*/
+
+
+let valid_input_types = {
+    'CALSCALE': ['text'],
+    'METHOD': ['text'],
+    'PRODID': ['text'],
+    'VERSION': ['text'],
+    'ATTACH': ['uri', 'binary'],
+    'CATEGORIES': [['text']],
+    'CLASS': ['text'], // PUBLIC|PRIVATE|CONFIDENTIAL|*other*
+    'COMMENT': ['text'],
+    'DESCRIPTION': ['text'],
+    'GEO': ['float'], // pair of floats
+    'LOCATION': ['text'],
+    'PERCENT-COMPLETE': ['integer'], // 0-100
+    'PRIORITY': ['integer'], // 0-9
+    'RESOURCES': [['text']],
+    'STATUS': ['text'], // see 3.8.1.11
+    'SUMMARY': ['text'],
+    'COMPLETED': ['date-time'],
+    'DTEND': ['date', 'date-time'],
+    'DUE': ['date', 'date-time'],
+    'DTSTART': ['date', 'date-time'],
+    'DURATION': ['duration'],
+    'FREEBUSY': [['period']],
+    'TRANSP': ['text'], // OPAQUE|TRANSPARENT
+    'TZID': ['text'],
+    'TZNAME': ['text'],
+    'TZOFFSETFROM': ['utc-offset'],
+    'TZOFFSETTO': ['utc-offset'],
+    'TZURL': ['uri'],
+    'ATTENDEE': ['cal-address'],
+    'CONTACT': ['text'],
+    'ORGANIZER': ['cal-address'],
+    'RECURRENCE-ID': ['date', 'date-time'],
+    'RELATED-TO': ['text'],
+    'URL': ['uri'],
+    'EXDATE': [['date', 'date-time']],
+    'RDATE': [['date', 'date-time', 'period']],
+    'RRULE': ['recur'],
+    'ACTION': ['text'], // AUDIO|DISPLAY|EMAIL|*other*
+    'REPEAT': ['integer'],
+    'TRIGGER': ['duration', 'date-time'],
+    'CREATED': ['date-time'],
+    'DTSTAMP': ['date-time'],
+    'LAST-MODIFIED': ['date-time'],
+    'SEQUENCE': ['integer'],
+    'REQUEST-STATUS': ['text']
 }
 
 function close_popup(popup) {
@@ -754,7 +970,8 @@ class vcomponent {
 function bind_properties (el, wide_event=false) {
     el.properties = {}
     let popup = document.getElementById("popup" + el.id);
-    let children = el.getElementsByTagName("properties")[0].children;
+    // let children = el.getElementsByTagName("properties")[0].children;
+    let children = el.querySelector("vevent > properties").children;
 
     for (let child of children) {
         let field = child.tagName;
@@ -770,6 +987,26 @@ function bind_properties (el, wide_event=false) {
             let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
             lst.push([s, f]);
         }
+
+
+        /* edit tab */
+        for (let s of popup.querySelectorAll(`[name='${field}']`)) {
+            let f;
+            s.oninput = function () {
+                el.properties[s.name] = this.value;
+            }
+            switch (s.name) {
+            case 'description':
+                f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
+                lst.push([s, f]);
+                break;
+            default:
+                f = ((s, v) => s.value = v);
+                lst.push([s, f]);
+                break;
+            }
+        }
+
 
         /* Bind vcomponent fields for this event */
         for (let s of el.querySelectorAll(field + " > :not(parameters)")) {

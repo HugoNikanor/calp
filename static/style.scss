@@ -884,6 +884,18 @@ along with their colors.
 
 }
 
+.plusminuschecked label {
+    color: black;
+}
+
+.plusminuscheck:checked ~ label .plus {
+    color: green;
+}
+
+.plusminuscheck:not(:checked) ~ label .minus {
+    color: red;
+}
+
 .inline-edit {
     input {
         /* important since regular spec is much stronger...*/

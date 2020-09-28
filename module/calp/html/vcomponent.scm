@@ -192,10 +192,19 @@
                                  (type "text")
                                  ))))
 
-              #;
-              (input (@ (type "text")
-                        (list "known-fields")
-                        (placeholder "Nytt fält")))
+              (hr)
+
+              (div (@ (class "newfield"))
+                   (input (@ (type "text")
+                             (list "known-fields")
+                             (placeholder "Nytt fält")))
+                   (select (@ (name "TYPE"))
+                     (option (@ (value "TEXT")) "Text"))
+                   (span
+                    (input (@ (type "text")
+                              (placeholder "Värde")))))
+
+              (hr)
 
 
               (input (@ (type "submit")))
