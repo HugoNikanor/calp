@@ -150,18 +150,16 @@
                           `(input (@ (type "checkbox") (style "display:none")
                                      (name "wholeday"))))
 
-                       (input (@ ,@(when (date? start)
-                                     '((style "display:none")))
-                                 (type "time")
+                       (input (@ (type "time")
                                  (name "dtstart-end")
-                                 (style "grid-column:3;grid-row:2")
+                                 (style "grid-column:3;grid-row:2;"
+                                   ,(when (date? start) "display:none"))
                                  (value ,(time->string (as-time start)))))
 
-                       (input (@ ,@(when (date? end)
-                                     '((style "display:none")))
-                                 (type "time")
+                       (input (@ (type "time")
                                  (name "dtend-time")
-                                 (style "grid-column:3;grid-row:3")
+                                 (style "grid-column:3;grid-row:3;"
+                                   ,(when (date? end) "display:none"))
                                  ,@(when end `((value ,(time->string (as-time end)))))
                                  ))))
 
