@@ -928,7 +928,7 @@ function toggle_popup(popup_id) {
   default_value - default value when creating
   bind_to_ical - should this property be added to the icalendar subtree?
 */
-function get_property(el, field, default_value, bind_to_ical=true) {
+function get_property(el, field, default_value) {
     if (! el.properties) {
         el.properties = {};
     }
@@ -950,20 +950,6 @@ function get_property(el, field, default_value, bind_to_ical=true) {
                     }
                 }
             });
-    }
-
-    if (bind_to_ical) {
-        let ical_properties = el.querySelector("icalendar vevent properties");
-        if (! ical_properties.querySelector(field)) {
-            let text = document.createElementNS(xcal, 'text');
-            let element = document.createElementNS(xcal, field);
-            element.appendChild(text);
-            if (default_value) {text.innerHTML = default_value;}
-
-            ical_properties.appendChild(element);
-            el.properties["_slot_" + field].push(
-                [text, (s, v) => s.innerHTML = v]);
-        }
     }
 
     return el.properties["_slot_" + field];
@@ -1001,45 +987,61 @@ class vcomponent {
                   and binds the value to the slot.
  */
 function bind_properties (el, wide_event=false) {
+
     el.properties = {}
     let popup = document.getElementById("popup" + el.id);
     // let children = el.getElementsByTagName("properties")[0].children;
-    let children = el.querySelector("vevent > properties").children;
 
-    for (let child of children) {
+    /* actual component (not popup) */
+    for (let e of el.querySelectorAll(".bind")) {
+        let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
+        get_property(el, e.dataset.property).push([e, f]);
+    }
+
+    /* primary display tab */
+
+    for (let e of popup.querySelectorAll(".summary-tab .bind")) {
+        let f = (s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt);
+        get_property(el, e.dataset.property).push([e, f]);
+    }
+
+    /* edit tab */
+    for (let e of popup.querySelectorAll(".edit-tab .bind")) {
+        let p = get_property(el, e.dataset.property);
+        e.oninput = function () {
+            el.properties[e.dataset.property] = this.value;
+        }
+        let f;
+        switch (e.tagName) {
+        case 'input':
+            // TODO format depending on type
+            switch (e.type) {
+            case 'time': f = (s, v) => s.value = v.format("~H:~M:~S"); break;
+            case 'date': f = (s, v) => s.value = v.format("~Y-~m-~d"); break;
+            default: f = (s, v) => s.value = v;
+            }
+            p.push([e, f])
+            break;
+        case 'textarea':
+            f = (s, v) => s.innerHTML = v;
+            p.push([e, f])
+            break;
+        default:
+            alert("How did you get here??? " + e.tagName)
+            break;
+        }
+    }
+
+
+    /* TODO propagate `--dtstart-*' to `dtstart' */
+    get_property(el, 'dtstart').push(
+        [el, (el, v) => { el.properties['--dtstart-time'] = v;
+                         el.properties['--dtstart-date'] = v; }]);
+
+    for (let child of el.querySelector("vevent > properties").children) {
         let field = child.tagName;
 
         let lst = get_property(el, field);
-
-        /* Bind HTML fields for this event */
-        for (let s of el.getElementsByClassName(field)) {
-            let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
-            lst.push([s, f]);
-        }
-        for (let s of popup.getElementsByClassName(field)) {
-            let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
-            lst.push([s, f]);
-        }
-
-
-        /* edit tab */
-        for (let s of popup.querySelectorAll(`[name='${field}']`)) {
-            let f;
-            s.oninput = function () {
-                el.properties[s.name] = this.value;
-            }
-            switch (s.name) {
-            case 'description':
-                f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
-                lst.push([s, f]);
-                break;
-            default:
-                f = ((s, v) => s.value = v);
-                lst.push([s, f]);
-                break;
-            }
-        }
-
 
         /* Bind vcomponent fields for this event */
         for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
@@ -1055,6 +1057,7 @@ function bind_properties (el, wide_event=false) {
         }
     }
 
+    /* set up graphical display changes */
     let container = el.closest(".event-container");
     if (container === null) {
         console.log("No enclosing event container for", el);
@@ -1087,7 +1090,7 @@ function bind_properties (el, wide_event=false) {
         el.dataset.calendar = "Unknown";
     }
 
-    let calprop = get_property(el, 'calendar', el.dataset.calendar, false);
+    let calprop = get_property(el, 'calendar', el.dataset.calendar);
 
     const rplcs = (s, v) => {
         let [_, calclass] = s.classList.find(/^CAL_/);

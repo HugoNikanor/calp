@@ -56,18 +56,21 @@
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
   `(div (@ ,@(assq-merge
               attributes
-              `((class " eventtext "
+              `((class " eventtext summary-tab "
                   ,(when (and (prop ev 'PARTSTAT)
                               (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                      " tentative ")))))
         (h3 ,(fmt-header
               (when (prop ev 'RRULE)
                 `(span (@ (class "repeating")) "↺"))
-              `(span (@ (class "summary")) ,(prop ev 'SUMMARY))))
+              `(span (@ (class "bind summary")
+                        (data-property "summary"))
+                     ,(prop ev 'SUMMARY))))
         (div
          ,(call-with-values (lambda () (fmt-time-span ev))
             (case-lambda [(start)
-                          `(div (time (@ (class "dtstart")
+                          `(div (time (@ (class "bind dtstart")
+                                         (data-property "dtstart")
                                          (data-fmt ,(string-append "~L" start))
                                          (datetime ,(datetime->string
                                                      (as-datetime (prop ev 'DTSTART))
@@ -76,7 +79,8 @@
                                         (as-datetime (prop ev 'DTSTART))
                                         start)))]
                          [(start end)
-                          `(div (time (@ (class "dtstart")
+                          `(div (time (@ (class "bind dtstart")
+                                         (data-property "dtstart")
                                          (data-fmt ,(string-append "~L" start))
                                          (datetime ,(datetime->string
                                                      (as-datetime (prop ev 'DTSTART))
@@ -84,23 +88,30 @@
                                       ,(datetime->string (as-datetime (prop ev 'DTSTART))
                                                          start))
                                 " — "
-                                (time (@ (class "dtend")
+                                (time (@ (class "bind dtend")
+                                         (data-property "dtend")
                                          (data-fmt ,(string-append "~L" end))
                                          (datetime ,(datetime->string
                                                      (as-datetime (prop ev 'DTSTART))
                                                      "~1T~3")))
                                       ,(datetime->string (as-datetime (prop ev 'DTEND))
                                                          end)))]))
+
+         ;; TODO add optional fields when added in frontend
+         ;; Possibly by always having them here, just hidden.
+
          (div (@ (class "fields"))
           ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
              `(div (b "Plats: ")
-                   (div (@ (class "location"))
+                   (div (@ (class "bind location") (data-property "location"))
                         ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                      (prop ev 'LOCATION)))))
           ,(awhen (prop ev 'DESCRIPTION)
-                  `(div (@ (class "description"))
+                  `(div (@ (class "bind description")
+                           (data-property "description"))
                          ,(format-description ev it)))
 
+          ;; TODO add bind once I figure out how to bind lists
           ,(awhen (prop ev 'CATEGORIES)
                   `(div (@ (class "categories"))
                         ,@(map (lambda (c)
@@ -111,6 +122,8 @@
                                                        c)))
                                      ,c))
                                it)))
+
+          ;; TODO bind
           ,(awhen (prop ev 'RRULE)
                   `(div (@ (class "rrule"))
                         ,@(format-recurrence-rule ev)))
@@ -124,11 +137,12 @@
 (define*-public (fmt-for-edit ev
                               optional: (attributes '())
                               key: (fmt-header list))
-  `(div (@ (class " eventtext "))
+  `(div (@ (class " eventtext edit-tab "))
         (form (@ (class "edit-form"))
               (h3 (input (@ (type "text")
                             (placeholder "Sammanfattning")
                             (name "summary") (required)
+                            (class "bind") (data-property "summary")
                             (value ,(prop ev 'SUMMARY)))))
 
               ,(let ((start (prop ev 'DTSTART))
@@ -138,11 +152,15 @@
                        (input (@ (type "date")
                                  (name "dtstart-date")
                                  (style "grid-column:1;grid-row:2")
+                                 (class "bind")
+                                 (data-property "--dtstart-date")
                                  (value ,(date->string (as-date start)))))
 
                        (input (@ (type "date")
                                  (name "dtend-date")
                                  (style "grid-column:1;grid-row:3")
+                                 (class "bind")
+                                 (data-property "--dtend-date")
                                  ,@(when end `((value ,(date->string (as-date end)))))))
 
                        ,@(with-label
@@ -151,13 +169,17 @@
                                      (name "wholeday"))))
 
                        (input (@ (type "time")
-                                 (name "dtstart-end")
+                                 (name "dtstart-time")
+                                 (class "bind")
+                                 (data-property "--dtstart-time")
                                  (style "grid-column:3;grid-row:2;"
                                    ,(when (date? start) "display:none"))
                                  (value ,(time->string (as-time start)))))
 
                        (input (@ (type "time")
                                  (name "dtend-time")
+                                 (class "bind")
+                                 (data-property "--dtend-time")
                                  (style "grid-column:3;grid-row:3;"
                                    ,(when (date? end) "display:none"))
                                  ,@(when end `((value ,(time->string (as-time end)))))
@@ -168,11 +190,13 @@
                  `(input (@ (placeholder "Plats")
                             (name "location")
                             (type "text")
+                            (class "bind") (data-property "location")
                             (value ,(or (prop ev 'LOCATION) "")))))
 
               ,@(with-label
                  "Beskrivning"
                  `(textarea (@ (placeholder "Beskrivning")
+                               (class "bind") (data-property "description")
                                (name "description"))
                             ,(prop ev 'DESCRIPTION)))
 
@@ -189,6 +213,8 @@
                                  (size 2)
                                  (type "text")
                                  ))))
+
+              ;; TODO extra fields
 
               (hr)
 
@@ -275,10 +301,12 @@
             (div (@ (class "event-body"))
              ,(when (prop ev 'RRULE)
                 `(span (@ (class "repeating")) "↺"))
-             (span (@ (class "summary"))
+             (span (@ (class "bind summary")
+                      (data-property "summary"))
                    ,(format-summary  ev (prop ev 'SUMMARY)))
              ,(when (prop ev 'LOCATION)
-                `(span (@ (class "location"))
+                `(span (@ (class "bind location")
+                          (data-property "location"))
                        ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                     (prop ev 'LOCATION)))))
             (div (@ (style "display:none !important;"))
