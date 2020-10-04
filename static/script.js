@@ -916,10 +916,10 @@ function bind_properties (el, wide_event=false) {
         let f;
         switch (e.tagName) {
         case 'input':
-            // TODO format depending on type
             switch (e.type) {
             case 'time': f = (s, v) => s.value = v.format("~H:~M:~S"); break;
             case 'date': f = (s, v) => s.value = v.format("~Y-~m-~d"); break;
+            // TODO remaining types cases
             default: f = (s, v) => s.value = v;
             }
             p.push([e, f])
@@ -935,10 +935,37 @@ function bind_properties (el, wide_event=false) {
     }
 
 
-    /* TODO propagate `--dtstart-*' to `dtstart' */
-    get_property(el, 'dtstart').push(
-        [el, (el, v) => { el.properties['--dtstart-time'] = v;
-                         el.properties['--dtstart-date'] = v; }]);
+    for (let field of ['dtstart', 'dtend']) {
+        get_property(el, `--{field}-time`).push(
+            [el, (el, v) => { let date = el.properties.dtstart;
+                             let [h,m,s] = v.split(':')
+                             date.setHours(Number(h));
+                             date.setMinutes(Number(m));
+                             el.properties[field] = date; }])
+        get_property(el, `--{field}-date`).push(
+            [el, (el, v) => { let date = el.properties.dtstart;
+                             let [y,m,d] = v.split('-')
+                             date.setYear(Number(y) - 1900);
+                             date.setMinutes(Number(m) - 1);
+                             el.properties[field] = date; }])
+
+
+        /* Manual fetch of the fields instead of the general method,
+           to avoid an infinite loop of dtstart setting --dtstart-time,
+           and vice versa.
+           NOTE if many more fields require special treatment then a
+           general solution is required.
+        */
+        get_property(el, field).push(
+            [el, (el, v) => { popup
+                            .querySelector(`.edit-tab input[name='{field}-time']`)
+                            .value = v.format("~H:~M:~S");
+                            popup
+                            .querySelector(`.edit-tab input[name='{field}-date']`)
+                            .value = v.format("~Y-~m-~d");
+                            }]);
+    }
+
 
     for (let child of el.querySelector("vevent > properties").children) {
         let field = child.tagName;
