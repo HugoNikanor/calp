@@ -945,13 +945,13 @@ function bind_properties (el, wide_event=false) {
 
     for (let field of ['dtstart', 'dtend']) {
         get_property(el, `--${field}-time`).push(
-            [el, (el, v) => { let date = el.properties.dtstart;
+            [el, (el, v) => { let date = el.properties[field];
                              let [h,m,s] = v.split(':')
                              date.setHours(Number(h));
                              date.setMinutes(Number(m));
                              el.properties[field] = date; }])
         get_property(el, `--${field}-date`).push(
-            [el, (el, v) => { let date = el.properties.dtstart;
+            [el, (el, v) => { let date = el.properties[field];
                              let [y,m,d] = v.split('-')
                              date.setYear(Number(y) - 1900);
                              date.setMinutes(Number(m) - 1);
