@@ -936,13 +936,13 @@ function bind_properties (el, wide_event=false) {
 
 
     for (let field of ['dtstart', 'dtend']) {
-        get_property(el, `--{field}-time`).push(
+        get_property(el, `--${field}-time`).push(
             [el, (el, v) => { let date = el.properties.dtstart;
                              let [h,m,s] = v.split(':')
                              date.setHours(Number(h));
                              date.setMinutes(Number(m));
                              el.properties[field] = date; }])
-        get_property(el, `--{field}-date`).push(
+        get_property(el, `--${field}-date`).push(
             [el, (el, v) => { let date = el.properties.dtstart;
                              let [y,m,d] = v.split('-')
                              date.setYear(Number(y) - 1900);
@@ -958,10 +958,10 @@ function bind_properties (el, wide_event=false) {
         */
         get_property(el, field).push(
             [el, (el, v) => { popup
-                            .querySelector(`.edit-tab input[name='{field}-time']`)
+                            .querySelector(`.edit-tab input[name='${field}-time']`)
                             .value = v.format("~H:~M:~S");
                             popup
-                            .querySelector(`.edit-tab input[name='{field}-date']`)
+                            .querySelector(`.edit-tab input[name='${field}-date']`)
                             .value = v.format("~Y-~m-~d");
                             }]);
     }
@@ -973,7 +973,7 @@ function bind_properties (el, wide_event=false) {
         let lst = get_property(el, field);
 
         /* Bind vcomponent fields for this event */
-        for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
+        for (let s of el.querySelectorAll(`${field} > :not(parameters)`)) {
             switch (s.tagName) {
             case 'date':
                 lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~d")]); break;
