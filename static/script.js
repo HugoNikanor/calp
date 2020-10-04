@@ -575,6 +575,14 @@ window.onload = function () {
         */
         el.parentElement.removeAttribute("href");
 
+        /* TODO this doesn't yet apply to newly created events */
+        let popup = document.getElementById("popup" + el.id);
+        let form = popup.getElementsByClassName("edit-form")[0];
+        form.onsubmit = function () {
+            create_event(el);
+            return false; /* stop default */
+        }
+
         /* Bind all vcomponent properties into javascript. */
         if (el.closest(".longevents")) {
             bind_properties(el, true);
