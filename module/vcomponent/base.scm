@@ -169,14 +169,6 @@
                                     (copy-vline value))))
                     (get-component-properties component)))))
 
-;; updates target with all fields from source.
-;; fields in target but not in source left unchanged.
-;; parent and children unchanged
-(define-public (vcomponent-update! target source)
-  (for key in (property-keys source)
-       (set! (prop* target key)
-         (prop* source key))))
-
 (define-public (extract field)
   (lambda (e) (prop e field)))
 

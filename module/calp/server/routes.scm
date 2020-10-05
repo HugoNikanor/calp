@@ -218,55 +218,43 @@
               [(get-event-by-uid global-event-object (prop event 'UID))
                => (lambda (old-event)
 
-                    ;; procedure to run after save.
-                    ;; used as hook to remove old event from disk below
-                    (define after-save (const #f))
+                    ;; remove old instance of event from runtime
+                    ((@ (vcomponent instance methods) remove-event)
+                     global-event-object old-event)
 
-                    (if (eq? calendar (parent old-event))
-                        (begin (vcomponent-update! old-event event)
-                               ;; for save below
-                               (set! event old-event))
-
-                        ;; change calendar
-                        (begin
-
-                          (format (current-error-port)
-                                  "Calendar change~%")
-
-                          ;; remove from runtime
-                          ((@ (vcomponent instance methods) remove-event)
-                           global-event-object old-event)
-
-                          ;; Actually puring the old event should be safe,
-                          ;; since we first make sure we write the new event to disk.
-                          ;; Currently the whole transaction isn't atomic, so a duplicate
-                          ;; event can still be created.
-                          (set! after-save
-                            ;; remove from disk
-                            (lambda ()
-                              (format (current-error-port)
-                                      "Unlinking old event from ~a~%"
-                                      (prop old-event '-X-HNH-FILENAME))
-                              ((@ (vcomponent vdir save-delete) remove-event) old-event)))
-
-                          (parameterize ((warnings-are-errors #t))
-                            (catch 'warning
-                              (lambda () (add-event global-event-object calendar event))
-                              (lambda (err fmt args)
-                                (return (build-response code: 400)
-                                        (format #f "~?~%" fmt args)))))))
+                    ;; Add new event to runtime,
+                    ;; MUST be done after since the two events SHOULD share UID.
+                    (parameterize ((warnings-are-errors #t))
+                      (catch 'warning
+                        (lambda () (add-event global-event-object calendar event))
+                        (lambda (err fmt args)
+                          (return (build-response code: 400)
+                                  (format #f "~?~%" fmt args)))))
 
                     (set! (prop event 'LAST-MODIFIED)
                       (current-datetime))
 
-
                     ;; NOTE Posibly defer save to a later point.
                     ;; That would allow better asyncronous preformance.
+
+                    ;; save-event sets -X-HNH-FILENAME from the UID. This is fine
+                    ;; since the two events are guaranteed to have the same UID.
                     (unless ((@ (vcomponent vdir save-delete) save-event) event)
                       (return (build-response code: 500)
                               "Saving event to disk failed."))
 
-                    (after-save)
+
+                    (unless (eq? calendar (parent old-event))
+                        ;; change to a new calendar
+                        (format (current-error-port)
+                                "Unlinking old event from ~a~%"
+                                (prop old-event '-X-HNH-FILENAME))
+                        ;; NOTE that this may fail, leading to a duplicate event being
+                        ;; created (since we save beforehand). This is just a minor problem
+                        ;; which either a better atomic model, or a propper error
+                        ;; recovery log would solve.
+                        ((@ (vcomponent vdir save-delete) remove-event) old-event))
+
 
                     (format (current-error-port)
                             "Event updated ~a~%" (prop event 'UID)))]
