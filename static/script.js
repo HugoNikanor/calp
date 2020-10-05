@@ -994,6 +994,29 @@ function bind_properties (el, wide_event=false) {
         }
     }
 
+    /* Dynamicly add or remove the <location/> and <description/> elements
+       from the <vevent><properties/> list.
+
+       TODO generalize this to all fields, /especially/ those which are
+       dynamicly added.
+    */
+    for (let field of ['location', 'description']) {
+        get_property(el, field).push(
+            [el.querySelector('vevent > properties'),
+             (s, v) => {
+                 let slot = s.querySelector(field);
+                 if (v === '' && slot) {
+                     slot.remove();
+                 } else {
+                     if (! slot) {
+                         /* finns det verkligen inget bättre sätt... */
+                         s.innerHTML += `<${field}><text/></${field}>`;
+                     }
+                     s.querySelector(`${field} > text`).innerHTML = v;
+                 }
+             }]);
+    }
+
     /* set up graphical display changes */
     let container = el.closest(".event-container");
     if (container === null) {
