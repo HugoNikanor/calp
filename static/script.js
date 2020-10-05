@@ -64,6 +64,11 @@ class EventCreator {
         let event = document.getElementById("event-template").firstChild.cloneNode(true);
         let popup = document.getElementById("popup-template").firstChild.cloneNode(true);
 
+        popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
+            create_event(event);
+            return false; /* stop default */
+        }
+
         let id = gensym ("__js_event");
 
         // TODO remove button?
@@ -577,8 +582,7 @@ window.onload = function () {
 
         /* TODO this doesn't yet apply to newly created events */
         let popup = document.getElementById("popup" + el.id);
-        let form = popup.getElementsByClassName("edit-form")[0];
-        form.onsubmit = function () {
+        popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
             create_event(el);
             return false; /* stop default */
         }
