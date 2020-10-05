@@ -139,6 +139,7 @@
                               key: (fmt-header list))
   `(div (@ (class " eventtext edit-tab "))
         (form (@ (class "edit-form"))
+              (div (@ (class "dropdown-goes-here")))
               (h3 (input (@ (type "text")
                             (placeholder "Sammanfattning")
                             (name "summary") (required)

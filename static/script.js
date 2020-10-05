@@ -161,7 +161,7 @@ class EventCreator {
                 bind_properties(event, wide_element);
 
                 /* requires that dtstart and dtend properties are initialized */
-                place_in_edit_mode(event);
+                // place_in_edit_mode(event);
 
                 /* ---------------------------------------- */
 
@@ -221,6 +221,8 @@ class EventCreator {
             for (let e of that.event.parentElement.children) {
                 e.style.pointerEvents = "";
             }
+
+            place_in_edit_mode(that.event);
 
             let localevent = that.event;
             that.event = null;
@@ -350,126 +352,15 @@ async function create_event (event) {
     toggle_popup("popup" + event.id);
 }
 
+
+/* This incarnation of this function only adds the calendar switcher dropdown.
+   All events are already editable by switching to that tab.
+
+   TODO stop requiring a weird button press to change calendar.
+*/
 function place_in_edit_mode (event) {
     let popup = document.getElementById("popup" + event.id)
-    function replace_with_time_input(fieldname, event) {
-        let field = popup.getElementsByClassName(fieldname)[0];
-
-        let dt = new Date(field.dateTime);
-
-        let dateinput = makeElement ('input', {
-            type: 'date',
-            required: true,
-            value: dt.format("~Y-~m-~d"),
-
-            onchange: function (e) {
-                /* Only update datetime when the input is filled out */
-                if (! this.value) return;
-                let [year, month, day] = this.value.split("-").map(Number);
-                /* retain the hour and second information */
-                let d = copyDate(event.properties[fieldname]);
-                d.setYear(year);
-                d.setMonth(month - 1);
-                d.setDate(day);
-                event.properties[fieldname] = d;
-            }
-        });
-
-        let timeinput = makeElement ('input', {
-            type: "time",
-            required: true,
-	    value: dt.format("~H:~M"),
-
-            onchange: function (e) {
-                /* Only update datetime when the input is filled out */
-                if (! this.value) return;
-                let [hour, minute] = this.value.split(":").map(Number);
-                /* retain the year, month, and day information */
-                let d = copyDate(event.properties[fieldname]);
-                d.setHours(hour);
-                d.setMinutes(minute);
-                event.properties[fieldname] = d;
-            }
-        });
-        let slot = get_property(event, fieldname);
-        let idx = slot.findIndex(e => e[0] === field);
-        slot.splice(idx, 1, [timeinput, (s, v) => s.value = v.format("~H:~M")])
-        slot.splice(idx, 0, [dateinput, (s, v) => s.value = v.format("~Y-~m-~d")])
-
-        field.innerHTML = '';
-        field.appendChild(dateinput);
-        field.appendChild(timeinput);
-        // field.replaceWith(timeinput);
-
-    }
-
-    /* TODO ensure dtstart < dtend */
-    replace_with_time_input("dtstart", event);
-    replace_with_time_input("dtend", event);
-
-    /* ---------------------------------------- */
-
-    let summary = popup.getElementsByClassName("summary")[0];
-    let input = makeElement('input', {
-        name: "summary",
-        value: summary.innerText,
-        placeholder: "Sammanfattning",
-        required: true,
-    });
-
-    input.oninput = function () {
-        event.properties["summary"] = this.value;
-    }
-
-    let slot = get_property(event, "summary");
-    let idx = slot.findIndex(e => e[0] === summary);
-    slot.splice(idx, 1, [input, (s, v) => s.value = v])
-
-    summary.replaceWith(input);
-
-    /* ---------------------------------------- */
-
-    /* TODO add elements if the arent't already there
-     * Almost all should be direct children of '.event-body' (or
-         * '.eventtext'?).
-     * Biggest problem is generated fields relative order.
-     */
-    {
-        let descs = popup.getElementsByClassName("description");
-        let description;
-        if (descs.length === 1) {
-            description = descs[0];
-        } else {
-            let fields = popup.getElementsByClassName("fields")[0]
-            description = makeElement('span', {
-                class: 'description',
-            });
-            fields.appendChild(description);
-            let slot = get_property(event, "description");
-            slot.push([description, (s, v) => s.innerHTML = v]);
-        }
-
-        let textarea = makeElement('textarea', {
-            name: "description",
-            placeholder: "Description (optional)",
-            innerHTML: description.innerText,
-            required: false,
-        });
-
-        textarea.oninput = function () {
-            event.properties["description"] = this.value;
-        }
-
-        let slot = get_property(event, "description");
-        let idx = slot.findIndex(e => e[0] === description);
-        slot.splice(idx, 1, [input, (s, v) => s.innerHTML = v])
-
-        description.replaceWith(textarea);
-    }
-
-    /* ---------------------------------------- */
-
-    let evtext = popup.getElementsByClassName('eventtext')[0]
+    let container = popup.getElementsByClassName('dropdown-goes-here')[0]
     let calendar_dropdown = document.getElementById('calendar-dropdown-template').firstChild.cloneNode(true);
 
     let [_, calclass] = popup.classList.find(/^CAL_/);
@@ -494,32 +385,7 @@ function place_in_edit_mode (event) {
     calendar_dropdown.onchange = function () {
         event.properties.calendar = this.value;
     }
-    evtext.prepend(calendar_dropdown);
-
-    /* ---------------------------------------- */
-
-    let submit = makeElement( 'input', {
-        type: 'submit',
-        value: 'Skapa event',
-    });
-
-    let article = popup.getElementsByClassName("eventtext")[0];
-    article.appendChild(submit);
-
-
-    let wrappingForm = makeElement('form', {
-        onsubmit: function (e) {
-            create_event(event);
-            return false;
-        }});
-    article.replaceWith(wrappingForm);
-    wrappingForm.appendChild(article);
-
-	/* this is for existing events.
-	 * Newly created events aren't in the DOM tree yet, and can
-	 * therefore not yet be focused */
-	input.focus();
-
+    container.appendChild(calendar_dropdown);
 }
 
 window.onload = function () {
