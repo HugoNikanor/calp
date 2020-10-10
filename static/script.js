@@ -386,6 +386,11 @@ function place_in_edit_mode (event) {
         event.properties.calendar = this.value;
     }
     container.appendChild(calendar_dropdown);
+
+    let tab = popup.getElementsByClassName("tab")[1];
+    let radio = tab.getElementsByTagName("input")[0];
+    radio.click();
+    tab.querySelector("input[name='summary']").focus();
 }
 
 window.onload = function () {
