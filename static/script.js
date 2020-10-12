@@ -800,7 +800,7 @@ function bind_properties (el, wide_event=false) {
         switch (e.tagName) {
         case 'input':
             switch (e.type) {
-            case 'time': f = (s, v) => s.value = v.format("~H:~M:~S"); break;
+            case 'time': f = (s, v) => s.value = v.format("~H:~M"); break;
             case 'date': f = (s, v) => s.value = v.format("~Y-~m-~d"); break;
             // TODO remaining types cases
             default: f = (s, v) => s.value = v;
@@ -819,17 +819,22 @@ function bind_properties (el, wide_event=false) {
 
 
     for (let field of ['dtstart', 'dtend']) {
+
         get_property(el, `--${field}-time`).push(
             [el, (el, v) => { let date = el.properties[field];
+                             if (v == '') return;
                              let [h,m,s] = v.split(':')
                              date.setHours(Number(h));
                              date.setMinutes(Number(m));
+                             date.setSeconds(0);
                              el.properties[field] = date; }])
         get_property(el, `--${field}-date`).push(
             [el, (el, v) => { let date = el.properties[field];
+                             if (v == '') return;
                              let [y,m,d] = v.split('-')
-                             date.setYear(Number(y) - 1900);
-                             date.setMinutes(Number(m) - 1);
+                             date.setYear(Number(y)/* - 1900*/);
+                             date.setMonth(Number(m) - 1);
+                             date.setDate(d);
                              el.properties[field] = date; }])
 
 
@@ -842,7 +847,7 @@ function bind_properties (el, wide_event=false) {
         get_property(el, field).push(
             [el, (el, v) => { popup
                             .querySelector(`.edit-tab input[name='${field}-time']`)
-                            .value = v.format("~H:~M:~S");
+                            .value = v.format("~H:~M");
                             popup
                             .querySelector(`.edit-tab input[name='${field}-date']`)
                             .value = v.format("~Y-~m-~d");
@@ -861,7 +866,7 @@ function bind_properties (el, wide_event=false) {
             case 'date':
                 lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~d")]); break;
             case 'date-time':
-                lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~dT~H:~M:~S~Z")]); break;
+                lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~dT~H:~M:00~Z")]); break;
             default:
                 lst.push([s, (s, v) => s.innerHTML = v]);
             }
