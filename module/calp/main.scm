@@ -135,7 +135,10 @@
         [repl => repl-start])
 
 
-  ;; load config
+  ;; Load config
+  ;; Sandbox and "stuff" not for security from the user. The config script is
+  ;; assumed to be "safe". Instead it's so we can control the environment in
+  ;; which it is executed.
   (catch #t
     (lambda ()
       (eval
