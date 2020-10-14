@@ -52,6 +52,13 @@
 (define-public (prepare-string str)
   (call-with-input-string (close-parenthese str) read))
 
+;; TODO place this in a proper module
+(define (bindings-for module-name)
+  ;; Wrapping list so we can later export sub-modules.
+  (list (cons module-name
+              (module-map (lambda (a . _) a)
+                          (resolve-interface module-name)))))
+
 ;; Evaluates the given expression in a sandbox.
 ;; NOTE Should maybe be merged inte prepare-query. The argument against is that
 ;; eval-in-sandbox is possibly slow, and that would prevent easy caching by the
@@ -65,7 +72,7 @@
          `(
            ((vcomponent base) prop param children type)
            ((ice-9 regex) string-match)
-           ;; TODO datetime
+           ,@(bindings-for '(datetime))
            ,@all-pure-bindings)
          )))
 

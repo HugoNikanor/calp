@@ -101,12 +101,6 @@
   (if (null? a)
       b a))
 
-(define (bindings-for module-name)
-  ;; Wrapping list so we can later export sub-modules.
-  (list (cons module-name
-              (module-map (lambda (a . _) a)
-                          (resolve-interface module-name)))))
-
 (define (wrapped-main args)
   (define opts (getopt-long args (getopt-opt options) #:stop-at-first-non-option #t))
   (define stprof (option-ref opts 'statprof #f))
