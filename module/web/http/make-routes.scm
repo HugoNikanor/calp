@@ -71,6 +71,8 @@
            (r:port    ((@ (web request) request-port)    request)))
        (let ((r:scheme   ((@ (web uri) uri-scheme)   r:uri))
              (r:userinfo ((@ (web uri) uri-userinfo) r:uri))
+             ;; TODO can sometimes be a pair of host and port
+             ;; '("localhost" . 8080). It shouldn't...
              (r:host     (or ((@ (web uri) uri-host) r:uri)
                              ((@ (web request) request-host)
                               request)))
@@ -80,6 +82,11 @@
              (r:path     ((@ (web uri) uri-path)     r:uri))
              (r:query    ((@ (web uri) uri-query)    r:uri))
              (r:fragment ((@ (web uri) uri-fragment) r:uri)))
+         ;; TODO propper logging
+         (display (format #f "[~a] ~a ~a/~a?~a~%"
+                          (datetime->string (current-datetime))
+                          r:method r:host r:path (or r:query ""))
+                  (current-error-port))
          (call-with-values
              (lambda ()
                ((@ (ice-9 control) call/ec)
