@@ -162,8 +162,11 @@
                   (set-max-page! paginator (max page (get-max-page paginator)))
                   result))))
     (lambda (err proc fmt args data)
-      ;; TODO ensure the error actually is index out of range.
-      ;; (format (current-error-port) "~?~%" fmt args)
+      ;; NOTE This is mostly a hack to see that we
+      ;; actually check for the correct error.
+      (unless (string=? fmt "beyond end of stream")
+        (scm-error err proc fmt args data))
+
       (set-max-page! paginator (get-max-page paginator))
       (set-true-max-page! paginator)
       (throw 'max-page (get-max-page paginator))
