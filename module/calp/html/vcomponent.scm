@@ -203,7 +203,7 @@
 
               ,@(with-label
                  "Kategorier"
-                 `(div (@ (class "inline-edit"))
+                 `(div (@ (class "input-list"))
                        ,@(awhen (prop ev 'CATEGORIES)
                                 (map (lambda (c)
                                        `(input (@ (size 2)

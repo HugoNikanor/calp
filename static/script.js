@@ -491,7 +491,7 @@ window.onload = function () {
     */
 
 
-    for (let el of document.querySelectorAll(".inline-edit input")) {
+    for (let el of document.querySelectorAll(".input-list input")) {
         el.oninput = update_inline_list;
     }
 
@@ -969,7 +969,7 @@ function advance_final(li) {
         size: 2,
         oninput: li.oninput,
     });
-    li.closest(".inline-edit").appendChild(new_li);
+    li.closest(".input-list").appendChild(new_li);
 }
 
 function update_inline_list () {
