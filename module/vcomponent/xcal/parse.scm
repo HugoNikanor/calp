@@ -25,7 +25,10 @@
     ;; TODO possibly trim whitespace on text fields
     [(cal-address uri text unknown) (car value)]
 
-    [(date) (parse-iso-date (car value))]
+    [(date)
+     ;; TODO this is correct, but ensure remaining types
+     (hashq-set! props 'VALUE "DATE")
+     (parse-iso-date (car value))]
 
     [(date-time) (parse-iso-datetime (car value))]
 
@@ -108,6 +111,12 @@
                data '(AUDIO DISPLAY EMAIL NONE)))
     [else data]))
 
+;; Note
+;; This doesn't verify the inter-field validity of the object,
+;; meaning that value(DTSTART) == DATE and value(DTEND) == DATE-TIME
+;; are possibilities, which other parts of the code will crash on.
+;; TODO
+;; since we are feeding user input into this it really should be fixed.
 (define-public (sxcal->vcomponent sxcal)
   (define type (symbol-upcase (car sxcal)))
   (define component (make-vcomponent type))

@@ -817,6 +817,21 @@ function bind_properties (el, wide_event=false) {
         }
     }
 
+    /* checkbox for whole day */
+    let wholeday = popup.querySelector("input[name='wholeday']");
+    wholeday.addEventListener('click', function (event) {
+        for (let f of popup.querySelectorAll("input[type='time']")) {
+            f.disabled = wholeday.checked;
+        }
+
+        for (let f of ['dtstart', 'dtend']) {
+            let d = el.properties[f];
+            if (! d) continue; /* dtend optional */
+            d.isWholeDay = wholeday.checked;
+            el.properties[f] = d;
+        }
+    });
+
 
     for (let field of ['dtstart', 'dtend']) {
 
@@ -855,21 +870,29 @@ function bind_properties (el, wide_event=false) {
     }
 
 
+    /* icalendar properties */
     for (let child of el.querySelector("vevent > properties").children) {
-        let field = child.tagName;
+        /* child ≡ <dtstart><date-time>...</date-time></dtstart> */
 
+        let field = child.tagName;
         let lst = get_property(el, field);
 
         /* Bind vcomponent fields for this event */
         for (let s of el.querySelectorAll(`${field} > :not(parameters)`)) {
-            switch (s.tagName) {
-            case 'date':
-                lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~d")]); break;
-            case 'date-time':
-                lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~dT~H:~M:00~Z")]); break;
-            default:
-                lst.push([s, (s, v) => s.innerHTML = v]);
-            }
+            lst.push([s, (s, v) => {
+                if (v instanceof Date) {
+                    if (v.isWholeDay) {
+                        let str = v.format('~Y-~m-~d');
+                        child.innerHTML = `<date>${str}</date>`;
+                    } else {
+                        let str = v.format('~Y-~m-~dT~H:~M:00~Z');
+                        child.innerHTML = `<date-time>${str}</date-time>`;
+                    }
+                } else {
+                    /* assume that type already is correct */
+                    s.innerHTML = v;
+                }
+            }]);
             el.properties["_value_" + field] = s.innerHTML;
         }
     }
