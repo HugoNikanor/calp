@@ -10,6 +10,9 @@ let parser = new DOMParser();
 let start_time = new Date();
 let end_time = new Date();
 
+/*
+  Given the navbar of a popup, make it dragable.
+ */
 function bind_popup_control (nav) {
     nav.onmousedown = function (e) {
         /* Ignore mousedown on children */
@@ -36,20 +39,6 @@ function bind_popup_control (nav) {
     });
 }
 
-/*
- * Finds the first element of the DOMTokenList whichs value matches
- * the supplied regexp. Returns a pair of the index and the value.
- */
-DOMTokenList.prototype.find = function (regexp) {
-    let entries = this.entries();
-    let entry;
-    while (! (entry = entries.next()).done) {
-        if (entry.value[1].match(regexp)) {
-            return entry.value;
-        }
-    }
-}
-
 class EventCreator {
 
     /* dynamicly created event when dragging */
@@ -61,8 +50,10 @@ class EventCreator {
     }
 
     create_empty_event () {
-        let event = document.getElementById("event-template").firstChild.cloneNode(true);
-        let popup = document.getElementById("popup-template").firstChild.cloneNode(true);
+        let event = document.getElementById("event-template")
+            .firstChild.cloneNode(true);
+        let popup = document.getElementById("popup-template")
+            .firstChild.cloneNode(true);
 
         popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
             create_event(event);
@@ -294,12 +285,6 @@ function update_current_time_bar () {
         = (new Date).format("~Y-~m-~d") + ".html";
 }
 
-function close_all_popups () {
-    for (let popup of document.querySelectorAll(".popup-container.visible")) {
-        close_popup(popup);
-    }
-}
-
 async function create_event (event) {
 
     let xml = event.getElementsByTagName("icalendar")[0].outerHTML
@@ -325,7 +310,7 @@ async function create_event (event) {
 
     let body = await response.text();
 
-    /* servere is assumed to return an XML document on the form
+    /* server is assumed to return an XML document on the form
        <properties>
        **xcal property** ...
        </properties>
@@ -398,7 +383,6 @@ window.onload = function () {
     end_time.setTime(document.querySelector("meta[name='end-time']").content * 1000)
 
     update_current_time_bar()
-    // once a minute for now, could probably be slowed to every 10 minutes
     window.setInterval(update_current_time_bar, 1000 * 60)
 
     /* Is event creation active? */
@@ -666,6 +650,12 @@ window.onload = function () {
 
 function close_popup(popup) {
     popup.classList.remove("visible");
+}
+
+function close_all_popups () {
+    for (let popup of document.querySelectorAll(".popup-container.visible")) {
+        close_popup(popup);
+    }
 }
 
 function open_popup(popup) {

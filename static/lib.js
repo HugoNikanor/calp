@@ -131,4 +131,18 @@ function format_date(date, str) {
 Object.prototype.format = function () { return this; } /* any number of arguments */
 Date.prototype.format = function (str) { return format_date (this, str); }
 
+/*
+ * Finds the first element of the DOMTokenList whichs value matches
+ * the supplied regexp. Returns a pair of the index and the value.
+ */
+DOMTokenList.prototype.find = function (regexp) {
+    let entries = this.entries();
+    let entry;
+    while (! (entry = entries.next()).done) {
+        if (entry.value[1].match(regexp)) {
+            return entry.value;
+        }
+    }
+}
+
 const xcal = "urn:ietf:params:xml:ns:icalendar-2.0";
