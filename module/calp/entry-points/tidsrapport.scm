@@ -1,4 +1,41 @@
+;;; Commentary:
 ;;; pdftk <filename.pdf> dump_data_fields to get field names (including checkbox values)
+;;; Sample template file:
+;; ((Text1 förnamn)
+;;  (Text2 efternamn)
+;;  (Text3 personnummer)
+;;  (Text4 address)
+;;  (Text5 postnummer)
+;;  (Text6 postort)
+;;  (Text7 medborgarskap)
+;;  (Text8 telefonnummer)
+;;  (Text9 mailaddress)
+;;  (Text115 institution-enhet-kurs-program)
+;;  (Text176 namnförtydligande)
+;;  ("Check Box15" har-swedbank)
+
+;;  (groups
+;;    (group
+;;      (prefix Text)
+;;      (summary 16)
+;;      (days (- 17 47))
+;;      (sum 48))
+;;    (group
+;;      (prefix Text)
+;;      (summary 49)
+;;      (days (- 50 80))
+;;      (sum 81))
+;;    (group
+;;      (prefix Text)
+;;      (summary 82)
+;;      (days (- 83 113))
+;;      (sum 114))))
+
+;;; Sample from data file
+;; ((förnamn "Hugo"))
+
+;;; Code:
+
 
 (define-module (calp entry-points tidsrapport)
   :export (main)
