@@ -73,7 +73,7 @@
 ;; Returns a new stream which is the result of filtering the input set with the
 ;; query procedure.
 ;; (a → bool), (stream a) → (stream a)
-(define (execute-query query-proc event-set)
+(define-public (execute-query query-proc event-set)
   (stream-timeslice-limit
    (stream-filter query-proc event-set)
    ;; .5s, tested on my laptop. .1s sometimes doesn't get to events on

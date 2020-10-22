@@ -16,7 +16,7 @@
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
   :use-module (calp util config)
-  :re-export (locale-month)
+  :re-export (locale-month locale-month-short)
   )
 
 
