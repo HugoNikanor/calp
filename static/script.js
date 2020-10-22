@@ -490,10 +490,19 @@ window.onload = function () {
     serializer.serializeToString(xml);
     */
 
+    for (let lst of document.getElementsByClassName('input-list')) {
+        let unit = lst.querySelector('.final.unit').cloneNode(true);
+        lst.unit = unit;
+        for (let el of lst.getElementsByTagName('input')) {
+            el.addEventListener('input', update_inline_list);
+        }
+    }
 
+    /*
     for (let el of document.querySelectorAll(".input-list input")) {
         el.oninput = update_inline_list;
     }
+    */
 
 
     for (let el of document.getElementsByClassName("newfield")) {
@@ -619,7 +628,7 @@ window.onload = function () {
             }
         }
 
-        name.oninput = function () {
+        name.addEventListener('input', function () {
             let types = valid_input_types[this.value.toUpperCase()];
             type_selector.disabled = false;
             if (types) {
@@ -640,7 +649,7 @@ window.onload = function () {
             }
 
             update_value_field(el);
-        }
+        });
         type_selector.onchange = function () {
             update_value_field(el);
         }
@@ -783,9 +792,9 @@ function bind_properties (el, wide_event=false) {
     /* edit tab */
     for (let e of popup.querySelectorAll(".edit-tab .bind")) {
         let p = get_property(el, e.dataset.property);
-        e.oninput = function () {
+        e.addEventListener('input', function () {
             el.properties[e.dataset.property] = this.value;
-        }
+        });
         let f;
         switch (e.tagName) {
         case 'input':
@@ -961,26 +970,53 @@ function bind_properties (el, wide_event=false) {
 
 }
 
+/*
+  TODO document 'input-list'.
 
-function advance_final(li) {
-    li.classList.remove("final");
-    let new_li = makeElement ('input', {
-        className: 'final',
-        size: 2,
-        oninput: li.oninput,
-    });
-    li.closest(".input-list").appendChild(new_li);
+  ∀ children('.input-list') => 'unit' ∈ classList(child)
+
+  <div class="input-list">
+    <div class="unit"><input/></div>
+    <div class="unit final"><input/></div>
+  </div>
+
+*/
+
+
+function advance_final(input_list) {
+    let new_unit = input_list.unit.cloneNode(true);
+    new_unit.classList.add('final');
+
+    for (let i of new_unit.getElementsByTagName('input')) {
+        /* TODO eventual other listeners? */
+        /* TODO <option> elements */
+        i.addEventListener('input', update_inline_list);
+    }
+
+    input_list.appendChild(new_unit);
 }
 
 function update_inline_list () {
-    if (this.classList.contains("final")) {
+
+    /* can target self */
+    let unit = this.closest('.unit');
+
+    let lst = this.closest('.input-list');
+
+    console.log(this, unit, lst);
+
+    if (unit.classList.contains("final")) {
         if (this.value !== '') {
-            advance_final(this);
+            unit.classList.remove('final');
+            advance_final(lst);
         }
     } else {
+        /* TODO all significant fields empty, instead of just current */
         if (this.value === '') {
-            let sibling = this.previousElementSibling || this.nextElementSibling;
-            this.remove();
+            let sibling = unit.previousElementSibling || unit.nextElementSibling;
+            unit.remove();
+            if (sibling.tagName !== 'input')
+                sibling = sibling.querySelector('input');
             sibling.focus();
         }
     }

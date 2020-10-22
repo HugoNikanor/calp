@@ -207,27 +207,28 @@
                        ,@(awhen (prop ev 'CATEGORIES)
                                 (map (lambda (c)
                                        `(input (@ (size 2)
+                                                  (class "unit")
                                                   (value ,c))))
                                      it))
 
-                       (input (@ (class "final")
+                       (input (@ (class "unit final")
                                  (size 2)
                                  (type "text")
                                  ))))
 
-              ;; TODO extra fields
-
               (hr)
 
-              (div (@ (class "newfield"))
-                   (input (@ (type "text")
-                             (list "known-fields")
-                             (placeholder "Nytt fält")))
-                   (select (@ (name "TYPE"))
-                     (option (@ (value "TEXT")) "Text"))
-                   (span
+              ;; For custom user fields
+              (div (@ (class "input-list"))
+               (div (@ (class "unit final newfield"))
                     (input (@ (type "text")
-                              (placeholder "Värde")))))
+                              (list "known-fields")
+                              (placeholder "Nytt fält")))
+                    (select (@ (name "TYPE"))
+                      (option (@ (value "TEXT")) "Text"))
+                    (span
+                     (input (@ (type "text")
+                               (placeholder "Värde"))))))
 
               (hr)
 
