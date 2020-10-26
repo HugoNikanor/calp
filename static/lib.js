@@ -12,6 +12,16 @@ HTMLElement.prototype.addEventListener = function (name, proc) {
 };
 
 
+
+/* list of lists -> list of tuples */
+function zip(...args) {
+    // console.log(args);
+    if (args === []) return [];
+    return [...Array(Math.min(...args.map(x => x.length))).keys()]
+        .map((_, i) => args.map(lst => lst[i]));
+}
+
+
 /* ----- Date Extensions ---------------------------- */
 
 /*

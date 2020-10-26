@@ -106,6 +106,7 @@
 
     (script (@ (defer) (src "/static/types.js")))
     (script (@ (defer) (src "/static/lib.js")))
+    (script (@ (defer) (src "/static/input_list.js")))
     (script (@ (defer) (src "/static/script.js")))
     ,(calendar-styles calendars))
 
