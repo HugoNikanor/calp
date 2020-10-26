@@ -12,8 +12,8 @@
 
 
 function transferListeners(old_unit, new_unit) {
-    for (let [o, n] of zip(old_unit.querySelectorAll("*"),
-                           new_unit.querySelectorAll("*"))) {
+    for (let [o, n] of zip([old_unit, ...old_unit.querySelectorAll("*")],
+                           [new_unit, ...new_unit.querySelectorAll("*")])) {
         for (const key in o.listeners) {
             if (! o.listeners.hasOwnProperty(key)) continue;
             for (let proc of o.listeners[key]) {
@@ -62,12 +62,12 @@ function update_inline_list () {
 function init_input_list() {
 
     for (let lst of document.getElementsByClassName('input-list')) {
-        let oldUnit = lst.querySelector('.final.unit')
 
         for (let el of lst.getElementsByTagName('input')) {
             el.addEventListener('input', update_inline_list);
         }
 
+        let oldUnit = lst.querySelector('.final.unit')
         let unit = oldUnit.cloneNode(true);
 
         transferListeners(oldUnit, unit);
