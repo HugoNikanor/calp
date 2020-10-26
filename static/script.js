@@ -338,6 +338,15 @@ async function create_event (event) {
 }
 
 
+/* list of lists -> list of tuples */
+function zip(...args) {
+    // console.log(args);
+    if (args === []) return [];
+    return [...Array(Math.min(...args.map(x => x.length))).keys()]
+        .map((_, i) => args.map(lst => lst[i]));
+}
+
+
 /* This incarnation of this function only adds the calendar switcher dropdown.
    All events are already editable by switching to that tab.
 
@@ -490,14 +499,6 @@ window.onload = function () {
     serializer.serializeToString(xml);
     */
 
-    for (let lst of document.getElementsByClassName('input-list')) {
-        let unit = lst.querySelector('.final.unit').cloneNode(true);
-        lst.unit = unit;
-        for (let el of lst.getElementsByTagName('input')) {
-            el.addEventListener('input', update_inline_list);
-        }
-    }
-
     /*
     for (let el of document.querySelectorAll(".input-list input")) {
         el.oninput = update_inline_list;
@@ -628,8 +629,11 @@ window.onload = function () {
             }
         }
 
-        name.addEventListener('input', function () {
+        name.addEventListener('input', function setOptionDropdown () {
             let types = valid_input_types[this.value.toUpperCase()];
+            let el = this.parentElement;
+            let [_, type_selector, value_field] = el.children;
+
             type_selector.disabled = false;
             if (types) {
                 type_selector.innerHTML = '';
@@ -650,9 +654,28 @@ window.onload = function () {
 
             update_value_field(el);
         });
-        type_selector.onchange = function () {
-            update_value_field(el);
+
+        type_selector.addEventListener('change', function () {
+            update_value_field(this.parentElement);
+        });
+    }
+
+
+
+    /** Set up input-list **/
+
+    for (let lst of document.getElementsByClassName('input-list')) {
+        let oldUnit = lst.querySelector('.final.unit')
+
+        for (let el of lst.getElementsByTagName('input')) {
+            el.addEventListener('input', update_inline_list);
         }
+
+        let unit = oldUnit.cloneNode(true);
+
+        transferListeners(oldUnit, unit);
+
+        lst.unit = unit;
     }
 
 }
@@ -983,16 +1006,24 @@ function bind_properties (el, wide_event=false) {
 */
 
 
-function advance_final(input_list) {
-    let new_unit = input_list.unit.cloneNode(true);
-    new_unit.classList.add('final');
-
-    for (let i of new_unit.getElementsByTagName('input')) {
-        /* TODO eventual other listeners? */
-        /* TODO <option> elements */
-        i.addEventListener('input', update_inline_list);
+function transferListeners(old_unit, new_unit) {
+    for (let [o, n] of zip(old_unit.querySelectorAll("*"),
+                           new_unit.querySelectorAll("*"))) {
+        for (const key in o.listeners) {
+            if (! o.listeners.hasOwnProperty(key)) continue;
+            for (let proc of o.listeners[key]) {
+                n.addEventListener(key, proc);
+            }
+        }
     }
+}
 
+
+function advance_final(input_list) {
+    let old_unit = input_list.unit;
+    let new_unit = old_unit.cloneNode(true);
+    new_unit.classList.add('final');
+    transferListeners(old_unit, new_unit);
     input_list.appendChild(new_unit);
 }
 
@@ -1002,8 +1033,6 @@ function update_inline_list () {
     let unit = this.closest('.unit');
 
     let lst = this.closest('.input-list');
-
-    console.log(this, unit, lst);
 
     if (unit.classList.contains("final")) {
         if (this.value !== '') {

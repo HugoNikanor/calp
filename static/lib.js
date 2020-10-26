@@ -3,6 +3,15 @@
   General procedures which in theory could be used anywhere.
  */
 
+HTMLElement.prototype._addEventListener = HTMLElement.prototype.addEventListener;
+HTMLElement.prototype.addEventListener = function (name, proc) {
+    if (! this.listeners) this.listeners = {};
+    if (! this.listeners[name]) this.listeners[name] = [];
+    this.listeners[name].push(proc);
+    return this._addEventListener(name, proc);
+};
+
+
 /* ----- Date Extensions ---------------------------- */
 
 /*
