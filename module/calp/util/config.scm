@@ -106,10 +106,6 @@
 
 (export format-procedure)
 
-(define (->str any)
-  (with-output-to-string
-    (lambda () (display any))))
-
 (define-public (get-configuration-documentation)
   (define groups
     (group-by (compose source-module car)

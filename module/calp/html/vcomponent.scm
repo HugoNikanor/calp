@@ -5,6 +5,7 @@
   :use-module (srfi srfi-41)
   :use-module (datetime)
   :use-module ((text util) :select (add-enumeration-punctuation))
+  :use-module ((web uri-query) :select (encode-query-parameters))
   :use-module (calp html util)
   :use-module ((calp html config) :select (edit-mode))
   :use-module ((calp html components) :select (btn tabset form with-label))
@@ -117,9 +118,13 @@
                         ,@(map (lambda (c)
                                  `(a (@ (class "category")
                                         ;; TODO centralize search terms
-                                        ;; TODO propper stringifycation of sexp
-                                        (href ,(format #f "/search/?q=%28member+%22~a%22%0D%0A++%28or+%28prop+event+%27CATEGORIES%29+%27%28%29%29%0D%0A"
-                                                       c)))
+                                        (href
+                                         "/search/?"
+                                         ,(encode-query-parameters
+                                           `((q . (member
+                                                   ,(->quoted-string c)
+                                                   (or (prop event 'CATEGORIES)
+                                                       '())))))))
                                      ,c))
                                it)))
 
