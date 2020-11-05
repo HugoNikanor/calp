@@ -550,9 +550,6 @@ along with their colors.
         white-space: pre;
     }
 
-    .category {
-        display: inline-block;
-    }
 }
 
 .event-body {
@@ -737,6 +734,11 @@ along with their colors.
 
     .location {
         font-style: initial;
+    }
+
+    .category {
+        display: inline-block;
+        margin-right: 1ex;
     }
 
     .popup-control {
