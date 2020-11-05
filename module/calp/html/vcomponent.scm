@@ -208,7 +208,14 @@
 
               ,@(with-label
                  "Kategorier"
-                 `(div (@ (class "input-list"))
+                 ;; It would be better if these input-list's worked on the same
+                 ;; class=bind system as the fields above. The problem with that
+                 ;; is however that each input-list requires different search
+                 ;; and join procedures. Currently this is bound in the JS, see
+                 ;; [CATEGORIES_BIND].
+                 ;; It matches on ".input-list[data-property='categories']".
+                 `(div (@ (class "input-list")
+                          (data-property "categories"))
                        ,@(awhen (prop ev 'CATEGORIES)
                                 (map (lambda (c)
                                        `(input (@ (size 2)

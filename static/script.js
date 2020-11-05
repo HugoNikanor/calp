@@ -489,6 +489,30 @@ window.onload = function () {
     serializer.serializeToString(xml);
     */
 
+    /* needs to be called AFTER bind_properties, but BEFORE init_input_list
+       After bind_properties since that initializes categories to a possible field
+       Before init_input_list since we need this listener to be propagated to clones.
+       [CATEGORIES_BIND]
+    */
+    for (let lst of document.querySelectorAll(".input-list[data-property='categories']")) {
+        let f = function () {
+            console.log(lst, lst.closest('.popup-container'));
+            let event = event_from_popup(lst.closest('.popup-container'))
+            event.properties.categories = [...lst.querySelectorAll('input')]
+                .map(x => x.value)
+                .filter(x => x != '')
+                .join(',');
+
+        };
+
+        for (let inp of lst.querySelectorAll('input')) {
+            inp.addEventListener('input', f);
+        }
+    }
+
+
+    /* ---------------------------------------- */
+
 
     for (let el of document.getElementsByClassName("newfield")) {
         let [name, type_selector, value_field] = el.children;
@@ -903,7 +927,7 @@ function bind_properties (el, wide_event=false) {
        TODO generalize this to all fields, /especially/ those which are
        dynamicly added.
     */
-    for (let field of ['location', 'description']) {
+    for (let field of ['location', 'description', 'categories']) {
         get_property(el, field).push(
             [el.querySelector('vevent > properties'),
              (s, v) => {
