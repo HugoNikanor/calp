@@ -156,7 +156,11 @@
                           (set! (prop* component tag*)
                             (make-vline tag*
                                         (handle-tag
-                                          tag (handle-value type params value))
+                                         tag (let ((v (handle-value type params value)))
+                                               ;; TODO possibly more list fields
+                                               (if (eq? tag 'categories)
+                                                   (string-split v #\,)
+                                                   v)))
                                         params)))))])))
 
   ;; children
