@@ -650,6 +650,14 @@ window.onload = function () {
 
 }
 
+function event_from_popup(popup) {
+    return document.getElementById(popup.id.substr(5))
+}
+
+function popup_from_event(event) {
+    return document.getElementById("popup" + event.id);
+}
+
 function close_popup(popup) {
     popup.classList.remove("visible");
 }
@@ -662,7 +670,7 @@ function close_all_popups () {
 
 function open_popup(popup) {
     popup.classList.add("visible");
-    let element = document.getElementById(popup.id.substr(5))
+    let element = event_from_popup(popup);
     // let root = document.body;
     let root;
     switch (VIEW) {
@@ -766,7 +774,7 @@ class vcomponent {
 function bind_properties (el, wide_event=false) {
 
     el.properties = {}
-    let popup = document.getElementById("popup" + el.id);
+    let popup = popup_from_event(el);
     // let children = el.getElementsByTagName("properties")[0].children;
 
     /* actual component (not popup) */
