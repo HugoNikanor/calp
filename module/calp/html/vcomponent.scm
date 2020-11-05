@@ -231,6 +231,11 @@
               (hr)
 
               ;; For custom user fields
+              ;; TODO these are currently not bound to anything, so entering data
+              ;; here does nothing. Bigest hurdle to overcome is supporting arbitrary
+              ;; fields which will come and go in the JavaScript.
+              ;; TODO also, all (most? maybe not LAST-MODIFIED) remaining properties
+              ;; should be exposed here.
               (div (@ (class "input-list"))
                (div (@ (class "unit final newfield"))
                     (input (@ (type "text")
