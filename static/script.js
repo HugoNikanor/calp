@@ -10,6 +10,9 @@ let parser = new DOMParser();
 let start_time = new Date();
 let end_time = new Date();
 
+/*
+  Given the navbar of a popup, make it dragable.
+ */
 function bind_popup_control (nav) {
     nav.onmousedown = function (e) {
         /* Ignore mousedown on children */
@@ -36,20 +39,6 @@ function bind_popup_control (nav) {
     });
 }
 
-/*
- * Finds the first element of the DOMTokenList whichs value matches
- * the supplied regexp. Returns a pair of the index and the value.
- */
-DOMTokenList.prototype.find = function (regexp) {
-    let entries = this.entries();
-    let entry;
-    while (! (entry = entries.next()).done) {
-        if (entry.value[1].match(regexp)) {
-            return entry.value;
-        }
-    }
-}
-
 class EventCreator {
 
     /* dynamicly created event when dragging */
@@ -61,8 +50,15 @@ class EventCreator {
     }
 
     create_empty_event () {
-        let event = document.getElementById("event-template").firstChild.cloneNode(true);
-        let popup = document.getElementById("popup-template").firstChild.cloneNode(true);
+        let event = document.getElementById("event-template")
+            .firstChild.cloneNode(true);
+        let popup = document.getElementById("popup-template")
+            .firstChild.cloneNode(true);
+
+        popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
+            create_event(event);
+            return false; /* stop default */
+        }
 
         let id = gensym ("__js_event");
 
@@ -156,7 +152,7 @@ class EventCreator {
                 bind_properties(event, wide_element);
 
                 /* requires that dtstart and dtend properties are initialized */
-                place_in_edit_mode(event);
+                // place_in_edit_mode(event);
 
                 /* ---------------------------------------- */
 
@@ -216,6 +212,8 @@ class EventCreator {
             for (let e of that.event.parentElement.children) {
                 e.style.pointerEvents = "";
             }
+
+            place_in_edit_mode(that.event);
 
             let localevent = that.event;
             that.event = null;
@@ -287,12 +285,6 @@ function update_current_time_bar () {
         = (new Date).format("~Y-~m-~d") + ".html";
 }
 
-function close_all_popups () {
-    for (let popup of document.querySelectorAll(".popup-container.visible")) {
-        close_popup(popup);
-    }
-}
-
 async function create_event (event) {
 
     let xml = event.getElementsByTagName("icalendar")[0].outerHTML
@@ -318,7 +310,7 @@ async function create_event (event) {
 
     let body = await response.text();
 
-    /* servere is assumed to return an XML document on the form
+    /* server is assumed to return an XML document on the form
        <properties>
        **xcal property** ...
        </properties>
@@ -345,142 +337,30 @@ async function create_event (event) {
     toggle_popup("popup" + event.id);
 }
 
+/* This incarnation of this function only adds the calendar switcher dropdown.
+   All events are already editable by switching to that tab.
+
+   TODO stop requiring a weird button press to change calendar.
+*/
 function place_in_edit_mode (event) {
     let popup = document.getElementById("popup" + event.id)
-    function replace_with_time_input(fieldname, event) {
-        let field = popup.getElementsByClassName(fieldname)[0];
-
-        let dt = new Date(field.dateTime);
-
-        let dateinput = makeElement ('input', {
-            type: 'date',
-            required: true,
-            value: dt.format("~Y-~m-~d"),
-
-            onchange: function (e) {
-                /* Only update datetime when the input is filled out */
-                if (! this.value) return;
-                let [year, month, day] = this.value.split("-").map(Number);
-                /* retain the hour and second information */
-                let d = copyDate(event.properties[fieldname]);
-                d.setYear(year);
-                d.setMonth(month - 1);
-                d.setDate(day);
-                event.properties[fieldname] = d;
-            }
-        });
-
-        let timeinput = makeElement ('input', {
-            type: "time",
-            required: true,
-	    value: dt.format("~H:~M"),
-
-            onchange: function (e) {
-                /* Only update datetime when the input is filled out */
-                if (! this.value) return;
-                let [hour, minute] = this.value.split(":").map(Number);
-                /* retain the year, month, and day information */
-                let d = copyDate(event.properties[fieldname]);
-                d.setHours(hour);
-                d.setMinutes(minute);
-                event.properties[fieldname] = d;
-            }
-        });
-        let slot = get_property(event, fieldname);
-        let idx = slot.findIndex(e => e[0] === field);
-        slot.splice(idx, 1, [timeinput, (s, v) => s.value = v.format("~H:~M")])
-        slot.splice(idx, 0, [dateinput, (s, v) => s.value = v.format("~Y-~m-~d")])
-
-        field.innerHTML = '';
-        field.appendChild(dateinput);
-        field.appendChild(timeinput);
-        // field.replaceWith(timeinput);
-
-    }
-
-    /* TODO ensure dtstart < dtend */
-    replace_with_time_input("dtstart", event);
-    replace_with_time_input("dtend", event);
-
-    /* ---------------------------------------- */
-
-    let summary = popup.getElementsByClassName("summary")[0];
-    let input = makeElement('input', {
-        name: "summary",
-        value: summary.innerText,
-        placeholder: "Sammanfattning",
-        required: true,
-    });
-
-    input.oninput = function () {
-        event.properties["summary"] = this.value;
-    }
-
-    let slot = get_property(event, "summary");
-    let idx = slot.findIndex(e => e[0] === summary);
-    slot.splice(idx, 1, [input, (s, v) => s.value = v])
-
-    summary.replaceWith(input);
-
-    /* ---------------------------------------- */
-
-    /* TODO add elements if the arent't already there
-     * Almost all should be direct children of '.event-body' (or
-         * '.eventtext'?).
-     * Biggest problem is generated fields relative order.
-     */
-    {
-        let descs = popup.getElementsByClassName("description");
-        let description;
-        if (descs.length === 1) {
-            description = descs[0];
-        } else {
-            let fields = popup.getElementsByClassName("fields")[0]
-            description = makeElement('span', {
-                class: 'description',
-            });
-            fields.appendChild(description);
-            let slot = get_property(event, "description");
-            slot.push([description, (s, v) => s.innerHTML = v]);
-        }
-
-        let textarea = makeElement('textarea', {
-            name: "description",
-            placeholder: "Description (optional)",
-            innerHTML: description.innerText,
-            required: false,
-        });
-
-        textarea.oninput = function () {
-            event.properties["description"] = this.value;
-        }
-
-        let slot = get_property(event, "description");
-        let idx = slot.findIndex(e => e[0] === description);
-        slot.splice(idx, 1, [input, (s, v) => s.innerHTML = v])
-
-        description.replaceWith(textarea);
-    }
-
-    /* ---------------------------------------- */
-
-    let evtext = popup.getElementsByClassName('eventtext')[0]
+    let container = popup.getElementsByClassName('dropdown-goes-here')[0]
     let calendar_dropdown = document.getElementById('calendar-dropdown-template').firstChild.cloneNode(true);
 
     let [_, calclass] = popup.classList.find(/^CAL_/);
-	label: {
-		for (let [i, option] of calendar_dropdown.childNodes.entries()) {
-			if (option.value === calclass.substr(4)) {
-				calendar_dropdown.selectedIndex = i;
-				break label;
-			}
-		}
-		/* no match, try find default calendar */
-		let t;
-		if ((t = calendar_dropdown.querySelector("[selected]"))) {
-			event.properties.calendar = t.value;
-		}
+    label: {
+	for (let [i, option] of calendar_dropdown.childNodes.entries()) {
+	    if (option.value === calclass.substr(4)) {
+		calendar_dropdown.selectedIndex = i;
+		break label;
+	    }
 	}
+	/* no match, try find default calendar */
+	let t;
+	if ((t = calendar_dropdown.querySelector("[selected]"))) {
+	    event.properties.calendar = t.value;
+	}
+    }
 
 
     /* Instant change while user is stepping through would be
@@ -489,32 +369,12 @@ function place_in_edit_mode (event) {
     calendar_dropdown.onchange = function () {
         event.properties.calendar = this.value;
     }
-    evtext.prepend(calendar_dropdown);
+    container.appendChild(calendar_dropdown);
 
-    /* ---------------------------------------- */
-
-    let submit = makeElement( 'input', {
-        type: 'submit',
-        value: 'Skapa event',
-    });
-
-    let article = popup.getElementsByClassName("eventtext")[0];
-    article.appendChild(submit);
-
-
-    let wrappingForm = makeElement('form', {
-        onsubmit: function (e) {
-            create_event(event);
-            return false;
-        }});
-    article.replaceWith(wrappingForm);
-    wrappingForm.appendChild(article);
-
-	/* this is for existing events.
-	 * Newly created events aren't in the DOM tree yet, and can
-	 * therefore not yet be focused */
-	input.focus();
-
+    let tab = popup.getElementsByClassName("tab")[1];
+    let radio = tab.getElementsByTagName("input")[0];
+    radio.click();
+    tab.querySelector("input[name='summary']").focus();
 }
 
 window.onload = function () {
@@ -522,7 +382,6 @@ window.onload = function () {
     end_time.setTime(document.querySelector("meta[name='end-time']").content * 1000)
 
     update_current_time_bar()
-    // once a minute for now, could probably be slowed to every 10 minutes
     window.setInterval(update_current_time_bar, 1000 * 60)
 
     /* Is event creation active? */
@@ -575,6 +434,13 @@ window.onload = function () {
         */
         el.parentElement.removeAttribute("href");
 
+        /* TODO this doesn't yet apply to newly created events */
+        let popup = document.getElementById("popup" + el.id);
+        popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
+            create_event(el);
+            return false; /* stop default */
+        }
+
         /* Bind all vcomponent properties into javascript. */
         if (el.closest(".longevents")) {
             bind_properties(el, true);
@@ -623,15 +489,212 @@ window.onload = function () {
     serializer.serializeToString(xml);
     */
 
+    /* needs to be called AFTER bind_properties, but BEFORE init_input_list
+       After bind_properties since that initializes categories to a possible field
+       Before init_input_list since we need this listener to be propagated to clones.
+       [CATEGORIES_BIND]
+    */
+    for (let lst of document.querySelectorAll(".input-list[data-property='categories']")) {
+        let f = function () {
+            console.log(lst, lst.closest('.popup-container'));
+            let event = event_from_popup(lst.closest('.popup-container'))
+            event.properties.categories = [...lst.querySelectorAll('input')]
+                .map(x => x.value)
+                .filter(x => x != '')
+                .join(',');
+
+        };
+
+        for (let inp of lst.querySelectorAll('input')) {
+            inp.addEventListener('input', f);
+        }
+    }
+
+
+    /* ---------------------------------------- */
+
+
+    for (let el of document.getElementsByClassName("newfield")) {
+        let [name, type_selector, value_field] = el.children;
+
+        /* TODO list fields */
+        /* TODO add and remove fields. See update_inline_list */
+
+        function update_value_field (el) {
+            let [name_field, type_selector, value_field] = el.children;
+
+
+            let value = makeElement('input');
+            let values = [value];
+
+
+            switch (name_field.value.toUpperCase()) {
+            case 'GEO':
+                value.type = 'number';
+                values.push(makeElement('input', {
+                    type: 'number',
+                }));
+                break;
+
+            case 'CLASS':
+                // Add auto completion
+                break;
+
+            case 'ACTION':
+                // Add auto completion
+                break;
+
+            case 'TRANSP':
+                // Replace with toggle betwen OPAQUE and TRANSPARENT
+                break;
+
+            case 'PERCENT-COMPLETE':
+                value.min = 0;
+                value.max = 100;
+                break;
+
+            case 'PRIORITY':
+                value.min = 0;
+                value.max = 9;
+                break;
+
+            default:
+
+
+                switch (type_selector.options[type_selector.selectedIndex].value) {
+                case 'integer':
+                case 'float':
+                    value.type = 'number';
+                    break;
+
+                case 'uri':
+                    value.type = 'url';
+                    break;
+
+                case 'binary':
+                    value.type = 'file';
+                    break;
+
+                case 'date-time':
+                    values.push(makeElement('input', {
+                        type: 'time',
+                    }));
+                    /* fallthrough */
+                case 'date':
+                    value.type = 'date';
+                    break;
+
+                case 'cal-address':
+                    value.type = 'email';
+                    break;
+
+                case 'utc-offset':
+                    value.type = 'time';
+                    let lbl = makeElement('label');
+                    let id = gensym();
+
+                    lbl.setAttribute('for', id);
+
+                    /* TODO make these labels stand out more */
+                    lbl.appendChild(makeElement('span', {
+                        className: 'plus',
+                        innerText: '+',
+                    }));
+                    lbl.appendChild(makeElement('span', {
+                        className: 'minus',
+                        innerText: '-',
+                    }));
+                    values.splice(0,0,lbl);
+                    values.splice(0,0, makeElement('input', {
+                        type: 'checkbox',
+                        style: 'display:none',
+                        className: 'plusminuscheck',
+                        id: id,
+                    }));
+                    break;
+
+                case 'boolean':
+                    value.type = 'checkbox';
+                    break;
+
+                case 'period':
+                    value.type = 'text';
+                    // TODO validate /P\d*H/ typ
+                    break;
+
+                case 'recur':
+                    // TODO
+                default:
+                    value.type = 'text';
+                }
+            }
+
+
+            value_field.innerHTML = '';
+            for (let v of values) {
+                console.log(v);
+                value_field.appendChild(v);
+            }
+        }
+
+        name.addEventListener('input', function setOptionDropdown () {
+            let types = valid_input_types[this.value.toUpperCase()];
+            let el = this.parentElement;
+            let [_, type_selector, value_field] = el.children;
+
+            type_selector.disabled = false;
+            if (types) {
+                type_selector.innerHTML = '';
+                for (let type of types) {
+                    type_selector.appendChild(
+                        makeElement('option', { value: type, innerText: type }))
+                }
+                if (types.length == 1) {
+                    type_selector.disabled = true;
+                }
+            } else {
+                type_selector.innerHTML = '';
+                for (let type of all_types) {
+                    type_selector.appendChild(
+                        makeElement('option', { value: type, innerText: type }))
+                }
+            }
+
+            update_value_field(el);
+        });
+
+        type_selector.addEventListener('change', function () {
+            update_value_field(this.parentElement);
+        });
+    }
+
+
+
+    init_input_list();
+
+}
+
+function event_from_popup(popup) {
+    return document.getElementById(popup.id.substr(5))
+}
+
+function popup_from_event(event) {
+    return document.getElementById("popup" + event.id);
 }
 
 function close_popup(popup) {
     popup.classList.remove("visible");
 }
 
+function close_all_popups () {
+    for (let popup of document.querySelectorAll(".popup-container.visible")) {
+        close_popup(popup);
+    }
+}
+
 function open_popup(popup) {
     popup.classList.add("visible");
-    let element = document.getElementById(popup.id.substr(5))
+    let element = event_from_popup(popup);
     // let root = document.body;
     let root;
     switch (VIEW) {
@@ -674,7 +737,7 @@ function toggle_popup(popup_id) {
   default_value - default value when creating
   bind_to_ical - should this property be added to the icalendar subtree?
 */
-function get_property(el, field, default_value, bind_to_ical=true) {
+function get_property(el, field, default_value) {
     if (! el.properties) {
         el.properties = {};
     }
@@ -698,23 +761,28 @@ function get_property(el, field, default_value, bind_to_ical=true) {
             });
     }
 
-    if (bind_to_ical) {
-        let ical_properties = el.querySelector("icalendar vevent properties");
-        if (! ical_properties.querySelector(field)) {
-            let text = document.createElementNS(xcal, 'text');
-            let element = document.createElementNS(xcal, field);
-            element.appendChild(text);
-            if (default_value) {text.innerHTML = default_value;}
-
-            ical_properties.appendChild(element);
-            el.properties["_slot_" + field].push(
-                [text, (s, v) => s.innerHTML = v]);
-        }
-    }
-
     return el.properties["_slot_" + field];
 }
 
+
+
+/*
+class display_tab {
+}
+
+class edit_tab {
+}
+
+class vcomponent {
+    set_value(field, value) {
+        if (value === '') {
+            remove_property(field);
+        }
+    }
+}
+
+
+*/
 
 /*
   Properties are icalendar properties.
@@ -728,39 +796,155 @@ function get_property(el, field, default_value, bind_to_ical=true) {
                   and binds the value to the slot.
  */
 function bind_properties (el, wide_event=false) {
+
     el.properties = {}
-    let popup = document.getElementById("popup" + el.id);
-    let children = el.getElementsByTagName("properties")[0].children;
+    let popup = popup_from_event(el);
+    // let children = el.getElementsByTagName("properties")[0].children;
 
-    for (let child of children) {
+    /* actual component (not popup) */
+    for (let e of el.querySelectorAll(".bind")) {
+        let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
+        get_property(el, e.dataset.property).push([e, f]);
+    }
+
+    /* primary display tab */
+
+    for (let e of popup.querySelectorAll(".summary-tab .bind")) {
+        let f = (s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt);
+        get_property(el, e.dataset.property).push([e, f]);
+    }
+
+    /* edit tab */
+    for (let e of popup.querySelectorAll(".edit-tab .bind")) {
+        let p = get_property(el, e.dataset.property);
+        e.addEventListener('input', function () {
+            el.properties[e.dataset.property] = this.value;
+        });
+        let f;
+        switch (e.tagName) {
+        case 'input':
+            switch (e.type) {
+            case 'time': f = (s, v) => s.value = v.format("~H:~M"); break;
+            case 'date': f = (s, v) => s.value = v.format("~Y-~m-~d"); break;
+            // TODO remaining types cases
+            default: f = (s, v) => s.value = v;
+            }
+            p.push([e, f])
+            break;
+        case 'textarea':
+            f = (s, v) => s.innerHTML = v;
+            p.push([e, f])
+            break;
+        default:
+            alert("How did you get here??? " + e.tagName)
+            break;
+        }
+    }
+
+    /* checkbox for whole day */
+    let wholeday = popup.querySelector("input[name='wholeday']");
+    wholeday.addEventListener('click', function (event) {
+        for (let f of popup.querySelectorAll("input[type='time']")) {
+            f.disabled = wholeday.checked;
+        }
+
+        for (let f of ['dtstart', 'dtend']) {
+            let d = el.properties[f];
+            if (! d) continue; /* dtend optional */
+            d.isWholeDay = wholeday.checked;
+            el.properties[f] = d;
+        }
+    });
+
+
+    for (let field of ['dtstart', 'dtend']) {
+
+        get_property(el, `--${field}-time`).push(
+            [el, (el, v) => { let date = el.properties[field];
+                             if (v == '') return;
+                             let [h,m,s] = v.split(':')
+                             date.setHours(Number(h));
+                             date.setMinutes(Number(m));
+                             date.setSeconds(0);
+                             el.properties[field] = date; }])
+        get_property(el, `--${field}-date`).push(
+            [el, (el, v) => { let date = el.properties[field];
+                             if (v == '') return;
+                             let [y,m,d] = v.split('-')
+                             date.setYear(Number(y)/* - 1900*/);
+                             date.setMonth(Number(m) - 1);
+                             date.setDate(d);
+                             el.properties[field] = date; }])
+
+
+        /* Manual fetch of the fields instead of the general method,
+           to avoid an infinite loop of dtstart setting --dtstart-time,
+           and vice versa.
+           NOTE if many more fields require special treatment then a
+           general solution is required.
+        */
+        get_property(el, field).push(
+            [el, (el, v) => { popup
+                            .querySelector(`.edit-tab input[name='${field}-time']`)
+                            .value = v.format("~H:~M");
+                            popup
+                            .querySelector(`.edit-tab input[name='${field}-date']`)
+                            .value = v.format("~Y-~m-~d");
+                            }]);
+    }
+
+
+    /* icalendar properties */
+    for (let child of el.querySelector("vevent > properties").children) {
+        /* child ≡ <dtstart><date-time>...</date-time></dtstart> */
+
         let field = child.tagName;
-
         let lst = get_property(el, field);
 
-        /* Bind HTML fields for this event */
-        for (let s of el.getElementsByClassName(field)) {
-            let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
-            lst.push([s, f]);
-        }
-        for (let s of popup.getElementsByClassName(field)) {
-            let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
-            lst.push([s, f]);
-        }
-
         /* Bind vcomponent fields for this event */
-        for (let s of el.querySelectorAll(field + " > :not(parameters)")) {
-            switch (s.tagName) {
-            case 'date':
-                lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~d")]); break;
-            case 'date-time':
-                lst.push([s, (s, v) => s.innerHTML = v.format("~Y-~m-~dT~H:~M:~S~Z")]); break;
-            default:
-                lst.push([s, (s, v) => s.innerHTML = v]);
-            }
+        for (let s of el.querySelectorAll(`${field} > :not(parameters)`)) {
+            lst.push([s, (s, v) => {
+                if (v instanceof Date) {
+                    if (v.isWholeDay) {
+                        let str = v.format('~Y-~m-~d');
+                        child.innerHTML = `<date>${str}</date>`;
+                    } else {
+                        let str = v.format('~Y-~m-~dT~H:~M:00~Z');
+                        child.innerHTML = `<date-time>${str}</date-time>`;
+                    }
+                } else {
+                    /* assume that type already is correct */
+                    s.innerHTML = v;
+                }
+            }]);
             el.properties["_value_" + field] = s.innerHTML;
         }
     }
 
+    /* Dynamicly add or remove the <location/> and <description/> elements
+       from the <vevent><properties/> list.
+
+       TODO generalize this to all fields, /especially/ those which are
+       dynamicly added.
+    */
+    for (let field of ['location', 'description', 'categories']) {
+        get_property(el, field).push(
+            [el.querySelector('vevent > properties'),
+             (s, v) => {
+                 let slot = s.querySelector(field);
+                 if (v === '' && slot) {
+                     slot.remove();
+                 } else {
+                     if (! slot) {
+                         /* finns det verkligen inget bättre sätt... */
+                         s.innerHTML += `<${field}><text/></${field}>`;
+                     }
+                     s.querySelector(`${field} > text`).innerHTML = v;
+                 }
+             }]);
+    }
+
+    /* set up graphical display changes */
     let container = el.closest(".event-container");
     if (container === null) {
         console.log("No enclosing event container for", el);
@@ -793,7 +977,7 @@ function bind_properties (el, wide_event=false) {
         el.dataset.calendar = "Unknown";
     }
 
-    let calprop = get_property(el, 'calendar', el.dataset.calendar, false);
+    let calprop = get_property(el, 'calendar', el.dataset.calendar);
 
     const rplcs = (s, v) => {
         let [_, calclass] = s.classList.find(/^CAL_/);
@@ -804,4 +988,7 @@ function bind_properties (el, wide_event=false) {
     calprop.push([el, rplcs]);
     calprop.push([el, (s, v) => s.dataset.calendar = v]);
 
+
+
+    /* ---------- Calendar ------------------------------ */
 }

@@ -2,22 +2,13 @@
 ;;; Currently loaded by main, and requires that `calendar-files`
 ;;; is set to a list of files (or directories).
 
-(use-modules (vcomponent))
-
-(use-modules (srfi srfi-88)
-             (ice-9 regex)
-             ;; (ice-9 rdelim)
+(use-modules (ice-9 regex)
              (sxml simple)
-             (glob)
-
-             (calp util config)
-
-             (datetime)
 
              ;; TODO this module introduces description-filter. It should be
              ;; possible to use set-config! before the declaration point is
              ;; known. But I currently get a config error.
-             (vcomponent datetime output)
+             ;; (vcomponent datetime output)
              )
 
 (set-config! 'calendar-files (glob "~/.local/var/cal/*"))

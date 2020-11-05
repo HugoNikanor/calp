@@ -15,6 +15,8 @@
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 regex)
   :use-module ((ice-9 popen) :select (open-input-pipe))
+  :use-module ((ice-9 sandbox) :select
+               (make-sandbox-module all-pure-and-impure-bindings))
 
   :use-module (statprof)
   :use-module (calp repl)
@@ -99,12 +101,25 @@
   (if (null? a)
       b a))
 
-
 (define (wrapped-main args)
   (define opts (getopt-long args (getopt-opt options) #:stop-at-first-non-option #t))
   (define stprof (option-ref opts 'statprof #f))
   (define repl (option-ref opts 'repl #f))
   (define altconfig (option-ref opts 'config #f))
+
+  (define config-file
+    (cond [altconfig
+           (if (file-exists? altconfig)
+               altconfig
+               (throw 'option-error
+                      "Configuration file ~a missing" altconfig))]
+         ;; altconfig could be placed in the list below. But I want to raise an error
+         ;; if an explicitly given config is missing.
+         [(find file-exists?
+                (list
+                 (path-append (xdg-config-home) "/calp/config.scm")
+                 (path-append (xdg-sysconfdir) "/calp/config.scm")))
+          => identity]))
 
   (when stprof (statprof-start))
 
@@ -113,18 +128,40 @@
                                             (getpid)))]
         [repl => repl-start])
 
-  (if altconfig
-      (begin
-        (if (file-exists? altconfig)
-            (primitive-load altconfig)
-            (throw 'option-error "Configuration file ~a missing" altconfig)))
-      ;; if not altconfig, then regular config
 
-      (awhen (find file-exists?
-                   (list
-                     (path-append (xdg-config-home) "/calp/config.scm")
-                     (path-append (xdg-sysconfdir) "/calp/config.scm")))
-             (primitive-load it)))
+  ;; Load config
+  ;; Sandbox and "stuff" not for security from the user. The config script is
+  ;; assumed to be "safe". Instead it's so we can control the environment in
+  ;; which it is executed.
+  (catch #t
+    (lambda ()
+      (eval
+       `(begin
+          (use-modules (srfi srfi-1)
+                       (srfi srfi-88)
+                       (datetime)
+                       (vcomponent)
+                       (calp util config)
+                       (glob))
+          ,@(with-input-from-file config-file
+              (lambda ()
+                (let loop ((done '()))
+                  (let ((form (read)))
+                    (if (eof-object? form)
+                        (reverse done)
+                        (loop (cons form done))))))))
+       (make-sandbox-module
+        `(((guile) use-modules)
+          ,@all-pure-and-impure-bindings
+          ))
+       ))
+    (lambda args
+      (format (current-error-port)
+              "Failed loading config file ~a~%~s~%"
+              config-file
+              args
+              )))
+
 
 
   ;; NOTE this doesn't stop at first non-option, meaning that -o flags

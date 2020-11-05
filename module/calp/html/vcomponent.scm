@@ -5,9 +5,10 @@
   :use-module (srfi srfi-41)
   :use-module (datetime)
   :use-module ((text util) :select (add-enumeration-punctuation))
+  :use-module ((web uri-query) :select (encode-query-parameters))
   :use-module (calp html util)
   :use-module ((calp html config) :select (edit-mode))
-  :use-module ((calp html components) :select (btn tabset))
+  :use-module ((calp html components) :select (btn tabset form with-label))
   :use-module ((calp util color) :select (calculate-fg-color))
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
@@ -56,18 +57,21 @@
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
   `(div (@ ,@(assq-merge
               attributes
-              `((class " eventtext "
+              `((class " eventtext summary-tab "
                   ,(when (and (prop ev 'PARTSTAT)
                               (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                      " tentative ")))))
         (h3 ,(fmt-header
               (when (prop ev 'RRULE)
                 `(span (@ (class "repeating")) "↺"))
-              `(span (@ (class "summary")) ,(prop ev 'SUMMARY))))
+              `(span (@ (class "bind summary")
+                        (data-property "summary"))
+                     ,(prop ev 'SUMMARY))))
         (div
          ,(call-with-values (lambda () (fmt-time-span ev))
             (case-lambda [(start)
-                          `(div (time (@ (class "dtstart")
+                          `(div (time (@ (class "bind dtstart")
+                                         (data-property "dtstart")
                                          (data-fmt ,(string-append "~L" start))
                                          (datetime ,(datetime->string
                                                      (as-datetime (prop ev 'DTSTART))
@@ -76,7 +80,8 @@
                                         (as-datetime (prop ev 'DTSTART))
                                         start)))]
                          [(start end)
-                          `(div (time (@ (class "dtstart")
+                          `(div (time (@ (class "bind dtstart")
+                                         (data-property "dtstart")
                                          (data-fmt ,(string-append "~L" start))
                                          (datetime ,(datetime->string
                                                      (as-datetime (prop ev 'DTSTART))
@@ -84,30 +89,169 @@
                                       ,(datetime->string (as-datetime (prop ev 'DTSTART))
                                                          start))
                                 " — "
-                                (time (@ (class "dtend")
+                                (time (@ (class "bind dtend")
+                                         (data-property "dtend")
                                          (data-fmt ,(string-append "~L" end))
                                          (datetime ,(datetime->string
                                                      (as-datetime (prop ev 'DTSTART))
                                                      "~1T~3")))
                                       ,(datetime->string (as-datetime (prop ev 'DTEND))
                                                          end)))]))
+
+         ;; TODO add optional fields when added in frontend
+         ;; Possibly by always having them here, just hidden.
+
          (div (@ (class "fields"))
           ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
              `(div (b "Plats: ")
-                   (div (@ (class "location"))
+                   (div (@ (class "bind location") (data-property "location"))
                         ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                      (prop ev 'LOCATION)))))
           ,(awhen (prop ev 'DESCRIPTION)
-                  `(span (@ (class "description"))
+                  `(div (@ (class "bind description")
+                           (data-property "description"))
                          ,(format-description ev it)))
+
+          ;; TODO add bind once I figure out how to bind lists
+          ,(awhen (prop ev 'CATEGORIES)
+                  `(div (@ (class "categories"))
+                        ,@(map (lambda (c)
+                                 `(a (@ (class "category")
+                                        ;; TODO centralize search terms
+                                        (href
+                                         "/search/?"
+                                         ,(encode-query-parameters
+                                           `((q . (member
+                                                   ,(->quoted-string c)
+                                                   (or (prop event 'CATEGORIES)
+                                                       '())))))))
+                                     ,c))
+                               it)))
+
+          ;; TODO bind
           ,(awhen (prop ev 'RRULE)
-                  `(span (@ (class "rrule"))
-                         ,@(format-recurrence-rule ev)))
+                  `(div (@ (class "rrule"))
+                        ,@(format-recurrence-rule ev)))
+
           ,(when (prop ev 'LAST-MODIFIED)
-             `(span (@ (class "last-modified")) "Senast ändrad "
-                    ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
+             `(div (@ (class "last-modified")) "Senast ändrad "
+                   ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
 
          )))
+
+(define*-public (fmt-for-edit ev
+                              optional: (attributes '())
+                              key: (fmt-header list))
+  `(div (@ (class " eventtext edit-tab "))
+        (form (@ (class "edit-form"))
+              (div (@ (class "dropdown-goes-here")))
+              (h3 (input (@ (type "text")
+                            (placeholder "Sammanfattning")
+                            (name "summary") (required)
+                            (class "bind") (data-property "summary")
+                            (value ,(prop ev 'SUMMARY)))))
+
+              ,(let ((start (prop ev 'DTSTART))
+                     (end (prop ev 'DTEND)))
+                 `(div (@ (class "timeinput"))
+
+                       (input (@ (type "date")
+                                 (name "dtstart-date")
+                                 (style "grid-column:1;grid-row:2")
+                                 (class "bind")
+                                 (data-property "--dtstart-date")
+                                 (value ,(date->string (as-date start)))))
+
+                       (input (@ (type "date")
+                                 (name "dtend-date")
+                                 (style "grid-column:1;grid-row:3")
+                                 (class "bind")
+                                 (data-property "--dtend-date")
+                                 ,@(when end `((value ,(date->string (as-date end)))))))
+
+                       ,@(with-label
+                          "Heldag?"
+                          `(input (@ (type "checkbox") (style "display:none")
+                                     (name "wholeday"))))
+
+                       (input (@ (type "time")
+                                 (name "dtstart-time")
+                                 (class "bind")
+                                 (data-property "--dtstart-time")
+                                 (style "grid-column:3;grid-row:2;"
+                                   ,(when (date? start) "display:none"))
+                                 (value ,(time->string (as-time start)))))
+
+                       (input (@ (type "time")
+                                 (name "dtend-time")
+                                 (class "bind")
+                                 (data-property "--dtend-time")
+                                 (style "grid-column:3;grid-row:3;"
+                                   ,(when (date? end) "display:none"))
+                                 ,@(when end `((value ,(time->string (as-time end)))))
+                                 ))))
+
+              ,@(with-label
+                 "Plats"
+                 `(input (@ (placeholder "Plats")
+                            (name "location")
+                            (type "text")
+                            (class "bind") (data-property "location")
+                            (value ,(or (prop ev 'LOCATION) "")))))
+
+              ,@(with-label
+                 "Beskrivning"
+                 `(textarea (@ (placeholder "Beskrivning")
+                               (class "bind") (data-property "description")
+                               (name "description"))
+                            ,(prop ev 'DESCRIPTION)))
+
+              ,@(with-label
+                 "Kategorier"
+                 ;; It would be better if these input-list's worked on the same
+                 ;; class=bind system as the fields above. The problem with that
+                 ;; is however that each input-list requires different search
+                 ;; and join procedures. Currently this is bound in the JS, see
+                 ;; [CATEGORIES_BIND].
+                 ;; It matches on ".input-list[data-property='categories']".
+                 `(div (@ (class "input-list")
+                          (data-property "categories"))
+                       ,@(awhen (prop ev 'CATEGORIES)
+                                (map (lambda (c)
+                                       `(input (@ (size 2)
+                                                  (class "unit")
+                                                  (value ,c))))
+                                     it))
+
+                       (input (@ (class "unit final")
+                                 (size 2)
+                                 (type "text")
+                                 ))))
+
+              (hr)
+
+              ;; For custom user fields
+              ;; TODO these are currently not bound to anything, so entering data
+              ;; here does nothing. Bigest hurdle to overcome is supporting arbitrary
+              ;; fields which will come and go in the JavaScript.
+              ;; TODO also, all (most? maybe not LAST-MODIFIED) remaining properties
+              ;; should be exposed here.
+              (div (@ (class "input-list"))
+               (div (@ (class "unit final newfield"))
+                    (input (@ (type "text")
+                              (list "known-fields")
+                              (placeholder "Nytt fält")))
+                    (select (@ (name "TYPE"))
+                      (option (@ (value "TEXT")) "Text"))
+                    (span
+                     (input (@ (type "text")
+                               (placeholder "Värde"))))))
+
+              (hr)
+
+
+              (input (@ (type "submit")))
+              )))
 
 
 ;; Single event in side bar (text objects)
@@ -176,10 +320,12 @@
             (div (@ (class "event-body"))
              ,(when (prop ev 'RRULE)
                 `(span (@ (class "repeating")) "↺"))
-             (span (@ (class "summary"))
+             (span (@ (class "bind summary")
+                      (data-property "summary"))
                    ,(format-summary  ev (prop ev 'SUMMARY)))
              ,(when (prop ev 'LOCATION)
-                `(span (@ (class "location"))
+                `(span (@ (class "bind location")
+                          (data-property "location"))
                        ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                     (prop ev 'LOCATION)))))
             (div (@ (style "display:none !important;"))
@@ -238,6 +384,10 @@
              ,(tabset
                 `(("📅" title: "Översikt"
                    ,(fmt-single-event ev))
+
+                  ("📅" title: "Redigera"
+                   ,(fmt-for-edit ev))
+
                   ("⤓" title: "Nedladdning"
                    (div (@ (class "eventtext") (style "font-family:sans"))
                         (h2 "Ladda ner")
@@ -245,6 +395,7 @@
                                    "som iCal"))
                             (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
                                    "som xCal")))))
+
                   ,@(when (prop ev 'RRULE)
                       `(("↺" title: "Upprepningar" class: "repeating"
                          ,(repeat-info ev)))))))))

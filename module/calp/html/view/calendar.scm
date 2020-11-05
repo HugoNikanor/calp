@@ -104,7 +104,9 @@
     ,(include-alt-css "/static/dark.css"  '(title "Dark"))
     ,(include-alt-css "/static/light.css" '(title "Light"))
 
+    (script (@ (defer) (src "/static/types.js")))
     (script (@ (defer) (src "/static/lib.js")))
+    (script (@ (defer) (src "/static/input_list.js")))
     (script (@ (defer) (src "/static/script.js")))
     ,(calendar-styles calendars))
 
@@ -296,4 +298,27 @@
           ;; TODO merge this into the event-set, add attribute
           ;; for non-displaying elements.
           (div (@ (class "template") (id "popup-template"))
-               ,(popup event (string-append "popup" (html-id event)))))))))
+               ,(popup event (string-append "popup" (html-id event))))))
+
+    ;; Auto-complets when adding new fields to a component
+    ;; Any string is however still valid.
+    (datalist (@ (id "known-fields"))
+              ,@(map (lambda (f)
+                       `(option (@ (value ,f))))
+                     '(CALSCALE
+                       METHOD PRODID VERSION ATTACH
+                       CATEGORIES CLASS COMMENT
+                       DESCRIPTION GEO LOCATION
+                       PERCENT-COMPLETE PRIORITY
+                       RESOURCES STATUS SUMMARY
+                       COMPLETED DTEND DUE DTSTART
+                       DURATION FREEBUSY
+                       TRANSP TZID TZNAME
+                       TZOFFSETFROM TZOFFSETTO
+                       TZURL ATTENDEE CONTACT
+                       ORGANIZER RECURRENCE-ID
+                       RELATED-TO URL EXDATE
+                       RDATE RRULE ACTION REPEAT
+                       TRIGGER CREATED DTSTAMP LAST-MODIFIED
+                       SEQUENCE REQUEST-STATUS
+                       ))))))

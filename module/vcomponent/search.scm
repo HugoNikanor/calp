@@ -52,6 +52,13 @@
 (define-public (prepare-string str)
   (call-with-input-string (close-parenthese str) read))
 
+;; TODO place this in a proper module
+(define (bindings-for module-name)
+  ;; Wrapping list so we can later export sub-modules.
+  (list (cons module-name
+              (module-map (lambda (a . _) a)
+                          (resolve-interface module-name)))))
+
 ;; Evaluates the given expression in a sandbox.
 ;; NOTE Should maybe be merged inte prepare-query. The argument against is that
 ;; eval-in-sandbox is possibly slow, and that would prevent easy caching by the
@@ -63,9 +70,9 @@
   (eval `(lambda (event) ,@expressions)
         (make-sandbox-module
          `(
-           ((vcomponent base) prop param children type)
+           ((vcomponent base) prop param children type parent)
            ((ice-9 regex) string-match)
-           ;; TODO datetime
+           ,@(bindings-for '(datetime))
            ,@all-pure-bindings)
          )))
 
@@ -155,8 +162,11 @@
                   (set-max-page! paginator (max page (get-max-page paginator)))
                   result))))
     (lambda (err proc fmt args data)
-      ;; TODO ensure the error actually is index out of range.
-      ;; (format (current-error-port) "~?~%" fmt args)
+      ;; NOTE This is mostly a hack to see that we
+      ;; actually check for the correct error.
+      (unless (string=? fmt "beyond end of stream")
+        (scm-error err proc fmt args data))
+
       (set-max-page! paginator (get-max-page paginator))
       (set-true-max-page! paginator)
       (throw 'max-page (get-max-page paginator))

@@ -135,7 +135,7 @@
              (let ((v ((get-parser 'TEXT) params value)))
                (unless (= 1 (length v))
                  (warning "List in non-list field: ~s" v))
-               (car v)))]
+               (string-join v ",")))]
 
           ;; TEXT, but allow a list
           [(memv key '(CATEGORIES RESOURCES))
