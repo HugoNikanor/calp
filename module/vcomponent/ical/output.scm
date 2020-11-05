@@ -44,11 +44,15 @@
      [(memv key '(FREEBUSY))
       (get-writer 'PERIOD)]
 
+     [(memv key '(CATEGORIES RESOURCES))
+      (lambda (p v)
+        (string-join (map (lambda (v) ((get-writer 'TEXT) p v))
+                          v)
+                     ","))]
+
      [(memv key '(CALSCALE METHOD PRODID COMMENT DESCRIPTION
                         LOCATION SUMMARY TZID TZNAME
                         CONTACT RELATED-TO UID
-
-                        CATEGORIES RESOURCES
 
                         VERSION))
       (get-writer 'TEXT)]
