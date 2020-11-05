@@ -167,7 +167,7 @@ trailer
 (define opt-spec
   '((pdf (value #t)
          (description "Input pdf fill"))
-    (output (single-char #\o) (value 'optional)
+    (output (single-char #\o) (value optional)
             (description "Output file"))
 
     (data (value optional)
