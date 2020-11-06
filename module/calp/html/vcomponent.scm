@@ -37,13 +37,15 @@
                             (if (datetime? dt)
                                 (datetime->string dt "~Y-~m-~d ~H:~M")
                                 (date->string dt "~Y-~m-~d" ))))
+                   (a (@ (href ,(date->string (as-date (prop event 'DTSTART)) "/week/~Y-~m-~d.html")))
+                      "View 📅")
                    (span ,(prop event 'SUMMARY)))))
   (cons
    (calendar-styles calendars)
    (for event in list
         `(details
           ,(summary event)
-          ;; TODO better format, add show in calendar button
+          ;; TODO better format
           ,(fmt-single-event event)))))
 
 ;; Format event as text.
