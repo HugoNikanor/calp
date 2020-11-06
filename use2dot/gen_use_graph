@@ -3,7 +3,7 @@
 dir=$(mktemp -d)
 here=$(dirname $(realpath $0))
 
-guild use2dot -m '(main)' -- `find module -name \*.scm` > $dir/use.dot
+guild use2dot -m '(calp main)' -- `find module -name \*.scm` > $dir/use.dot
 $here/change_graph.py $dir/use.dot $dir/use2.dot
 grep -v '\(srfi\|ice-9\|(util)\)' $dir/use2.dot > $dir/use3.dot
 
