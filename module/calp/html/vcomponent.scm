@@ -10,6 +10,7 @@
   :use-module ((calp html config) :select (edit-mode))
   :use-module ((calp html components) :select (btn tabset form with-label))
   :use-module ((calp util color) :select (calculate-fg-color))
+  :use-module ((vcomponent recurrence internal) :prefix #{rrule:}#)
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
                         format-description
@@ -360,6 +361,111 @@
                              (else (->string value))))))
                   (prop event 'RRULE)))))
 
+;; TODO bind this into the xcal
+(define (editable-repeat-info event)
+  `(div (@ (class "eventtext"))
+        (h2 "Upprepningar")
+        (table (@ (class "recur-components"))
+               ,@(map ; (@@ (vcomponent recurrence internal) map-fields)
+                  (lambda (key )
+                    `(tr (@ (class ,key)) (th ,key)
+                         (td
+                          ,(case key
+                             ((freq)
+                              `(select (option "-")
+                                 ,@(map (lambda (x) `(option (@ (value ,x))
+                                                        ,(string-titlecase
+                                                          (symbol->string x))))
+                                        ;; TODO selected
+                                        '(SECONDLY MINUTELY HOURLY
+                                                   DAILY WEEKLY
+                                                   MONTHLY YEARLY))))
+                             ((until)
+                              (if (date? (prop event 'DTSTART))
+                                  `(input (@ (type "date")
+                                             (value ,(awhen (prop event 'RRULE)
+                                                            (awhen (rrule:until it)
+                                                                   (date->string it))))))
+                                  `(span
+                                    (input (@ (type "date")
+                                              (value ,(awhen (prop event 'RRULE)
+                                                             (awhen (rrule:until it)
+                                                                    (date->string
+                                                                     (as-date it)))))))
+                                    (input (@ (type "time")
+                                              (value ,(awhen (prop event 'RRULE)
+                                                             (awhen (rrule:until it)
+                                                                    (time->string
+                                                                     (as-time it))))))))))
+                             ((count)
+                              `(input (@ (type number) (min 0) (size 4)
+                                         (value ,(awhen (prop event 'RRULE)
+                                                        (or (rrule:count it) "")))
+                                         )))
+                             ((interval)
+                              `(input (@ (type number) (min 0) (size 4)
+                                         (value ,(awhen (prop event 'RRULE)
+                                                        (or (rrule:interval it) ""))))))
+                             ((wkst)
+                              ;; TODO selected
+                              `(select (option "-")
+                                 ,@(map (lambda (i)
+                                          `(option (@ (value ,i))
+                                                   ,(week-day-name i)))
+                                        (iota 7))))
+                             ((byday) 1 #| TODO |#)
+                             ((bysecond byminute byhour
+                                        bymonthday byyearday
+                                        byweekno bymonth bysetpos)
+                              (let ((input
+                                     (lambda (value final)
+                                       `(input (@ (class "unit " (or final ""))
+                                                  (type "number")
+                                                  (size 2)
+                                                  (value ,value)
+                                                  (min ,(case key
+                                                          ((bysecond byminute byhour)  0)
+                                                          ((bymonthday)              -31)
+                                                          ((byyearday)              -366)
+                                                          ((byweekno)                -53)
+                                                          ((bymonth)                 -12)
+                                                          ((bysetpos)               -366)
+                                                          ))
+                                                  (max ,(case key
+                                                          ((bysecond)    60)
+                                                          ((byminute)    59)
+                                                          ((byhour)      23)
+                                                          ((bymonthday)  31)
+                                                          ((byyearday)  366)
+                                                          ((byweekno)    53)
+                                                          ((bymonth)     12)
+                                                          ((bysetpos)   366))))))))
+                                `(div (@ (class "input-list"))
+                                      ,@(map input
+                                             (awhen (prop event 'RRULE)
+                                                    (or ((case key
+                                                           ((bysecond)   rrule:bysecond)
+                                                           ((byminute)   rrule:byminute)
+                                                           ((byhour)     rrule:byhour)
+                                                           ((bymonthday) rrule:bymonthday)
+                                                           ((byyearday)  rrule:byyearday)
+                                                           ((byweekno)   rrule:byweekno)
+                                                           ((bymonth)    rrule:bymonth)
+                                                           ((bysetpos)   rrule:bysetpos))
+                                                         it)
+                                                        '())))
+                                      (input '()  "final"))))
+                             (else (error "Unknown field, " key))))
+
+                         ;; TODO enable this button
+                         (td (button (@ (class "clear-input") (title "Rensa input")) "X"))
+                         ))
+                  '(freq until count interval bysecond byminute byhour
+                         byday bymonthday byyearday byweekno bymonth bysetpos
+                         wkst)
+                  ; (prop event 'RRULE)
+                  ))))
+
 
 (define-public (popup ev id)
   `(div (@ (id ,id) (class "popup-container CAL_" 
@@ -400,4 +506,4 @@
 
                   ,@(when (prop ev 'RRULE)
                       `(("↺" title: "Upprepningar" class: "repeating"
-                         ,(repeat-info ev)))))))))
+                         ,(editable-repeat-info ev)))))))))

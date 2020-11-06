@@ -574,6 +574,18 @@ along with their colors.
     color: red;
 }
 
+.clear-input {
+    font-family: arial;
+    font-size: 200%;
+    color: grey;
+
+    padding: 0;
+    background: none;
+    border: none;
+
+    cursor: pointer;
+}
+
 .eventtext {
     white-space: pre-line;
     font-size: 10pt;
