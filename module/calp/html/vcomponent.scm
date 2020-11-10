@@ -373,10 +373,13 @@
                           ,(case key
                              ((freq)
                               `(select (option "-")
-                                 ,@(map (lambda (x) `(option (@ (value ,x))
+                                 ,@(map (lambda (x) `(option (@ (value ,x)
+                                                           ,@(awhen (prop event 'RRULE)
+                                                                    (awhen (rrule:freq it)
+                                                                           (awhen (eq? it x)
+                                                                                  '((selected))))))
                                                         ,(string-titlecase
                                                           (symbol->string x))))
-                                        ;; TODO selected
                                         '(SECONDLY MINUTELY HOURLY
                                                    DAILY WEEKLY
                                                    MONTHLY YEARLY))))
@@ -407,10 +410,13 @@
                                          (value ,(awhen (prop event 'RRULE)
                                                         (or (rrule:interval it) ""))))))
                              ((wkst)
-                              ;; TODO selected
                               `(select (option "-")
                                  ,@(map (lambda (i)
-                                          `(option (@ (value ,i))
+                                          `(option (@ (value ,i)
+                                                      ,@(awhen (prop event 'RRULE)
+                                                               (awhen (rrule:wkst it)
+                                                                      (awhen (eqv? it i)
+                                                                             '((selected))))))
                                                    ,(week-day-name i)))
                                         (iota 7))))
                              ((byday) 1 #| TODO |#)
