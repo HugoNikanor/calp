@@ -419,7 +419,29 @@
                                                                              '((selected))))))
                                                    ,(week-day-name i)))
                                         (iota 7))))
-                             ((byday) 1 #| TODO |#)
+
+                             ((byday)
+                              (let ((input (lambda* (optional: (byday '(#f . #f)) key: final?)
+                                             `(div (@ (class "unit" ,(if final? " final" "")))
+                                                   ;; TODO make this thiner, and clearer that
+                                                   ;; it belongs to the following dropdown
+                                                   (input (@ (type number)
+                                                             (value ,(awhen (car byday) it))))
+                                                   (select (option "-")
+                                                     ,@(map (lambda (i)
+                                                              `(option (@ (value ,i)
+                                                                          ,@(if (eqv? i (cdr byday))
+                                                                                '((selected)) '()))
+                                                                       ,(week-day-name i)))
+                                                            (iota 7)))))))
+                                `(div (@ (class "input-list"))
+                                      ,@(cond ((and=> (prop event 'RRULE)
+                                                      rrule:byday)
+                                               => (lambda (it) (map input it)))
+                                              (else '()))
+
+                                      ,(input final?: #t))))
+
                              ((bysecond byminute byhour
                                         bymonthday byyearday
                                         byweekno bymonth bysetpos)
