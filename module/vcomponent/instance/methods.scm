@@ -49,8 +49,9 @@
 (define-method (initialize (this <events>) args)
   (next-method)
 
-  (format (current-error-port) "Building <events> from ~a~%"
-          (slot-ref this 'calendar-files))
+  (format (current-error-port) "Building <events> from~%")
+  (for calendar in (slot-ref this 'calendar-files)
+       (format (current-error-port) "  - ~a~%" calendar))
 
   (slot-set! this 'calendars (load-calendars (slot-ref this 'calendar-files)))
 
