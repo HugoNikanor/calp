@@ -446,8 +446,8 @@
                                         bymonthday byyearday
                                         byweekno bymonth bysetpos)
                               (let ((input
-                                     (lambda (value final)
-                                       `(input (@ (class "unit " (or final ""))
+                                     (lambda* (value optional: (final ""))
+                                       `(input (@ (class "unit " ,final)
                                                   (type "number")
                                                   (size 2)
                                                   (value ,value)
@@ -482,7 +482,7 @@
                                                            ((bysetpos)   rrule:bysetpos))
                                                          it)
                                                         '())))
-                                      (input '()  "final"))))
+                                      ,(input '() "final"))))
                              (else (error "Unknown field, " key))))
 
                          ;; TODO enable this button
