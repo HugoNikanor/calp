@@ -45,14 +45,14 @@ class SmallcalCellHighlight extends Clock {
     }
 
     update(now) {
-        if (current_cell) {
-            current_cell.style.border = "";
+        if (this.current_cell) {
+            this.current_cell.style.border = "";
         }
 
-        current_cell = this.small_cal.querySelector(
+        this.current_cell = this.small_cal.querySelector(
             "time[datetime='" + now.format("~Y-~m-~d") + "']");
 
-        current_cell.style.border = "1px solid black";
+        this.current_cell.style.border = "1px solid black";
     }
 }
 
@@ -65,6 +65,6 @@ class ButtonUpdater extends Clock {
     }
 
     update(now) {
-        this.proc(e, now);
+        this.proc(this.el, now);
     }
 }

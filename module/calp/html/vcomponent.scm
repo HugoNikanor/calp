@@ -60,7 +60,8 @@
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
   `(div (@ ,@(assq-merge
               attributes
-              `((class " eventtext summary-tab "
+              `((data-bindby "bind_view")
+                (class " eventtext summary-tab "
                   ,(when (and (prop ev 'PARTSTAT)
                               (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                      " tentative ")))))
@@ -145,7 +146,8 @@
 (define*-public (fmt-for-edit ev
                               optional: (attributes '())
                               key: (fmt-header list))
-  `(div (@ (class " eventtext edit-tab "))
+  `(div (@ (class " eventtext edit-tab ")
+           (data-bindby "bind_edit"))
         (form (@ (class "edit-form"))
               (div (@ (class "dropdown-goes-here")))
               (h3 (input (@ (type "text")
@@ -174,7 +176,10 @@
 
                        ,@(with-label
                           "Heldag?"
-                          `(input (@ (type "checkbox") (style "display:none")
+                          `(input (@ (type "checkbox")
+                                     (class "bind")
+                                     (data-bindby "bind_wholeday")
+                                     (style "display:none")
                                      (name "wholeday"))))
 
                        (input (@ (type "time")
@@ -306,6 +311,7 @@
                   extra-attributes
                   `((id ,(html-id ev))
                     (data-calendar ,(html-attr (or (prop (parent ev) 'NAME) "unknown")))
+                    ;; (data-bindon "bind_view")
                     (class "event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
                                                         "unknown"))
                       ,(when (and (prop ev 'PARTSTAT)
@@ -365,7 +371,9 @@
 (define (editable-repeat-info event)
   `(div (@ (class "eventtext"))
         (h2 "Upprepningar")
-        (table (@ (class "recur-components"))
+        (table (@ (class "recur-components bind")
+                  (name "rrule")
+                  (data-bindby "bind_recur"))
                ,@(map ; (@@ (vcomponent recurrence internal) map-fields)
                   (lambda (key )
                     `(tr (@ (class ,key)) (th ,key)

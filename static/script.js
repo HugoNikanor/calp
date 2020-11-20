@@ -426,85 +426,63 @@ function bind_properties (el, wide_event=false) {
     // let children = el.getElementsByTagName("properties")[0].children;
 
     /* actual component (not popup) */
+    /*
     for (let e of el.querySelectorAll(".bind")) {
-        let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
-        get_property(el, e.dataset.property).push([e, f]);
     }
+    */
 
-    get_property(el, 'rrule');
-    /* aside for rrule */
-    for (let e of el.querySelectorAll('.recur-components .bind-rr')) {
-
-        // e.name
-
-        switch (e.tagName) {
-        case 'input':
-            e.value;
-            break;
-        case 'select':
-            e.options[e.selectedIndex].value;
-            break;
-        default:
-            if (e.classList.contains("date-time")) {
-                let date = e.querySelector('input[type=date]');
-                let time = e.querySelector('input[type=time]');
-            } else if (e.classList.contains("input-list")) {
-                e.get_value()
-            } else {
-                error();
-            }
-        }
-    }
+    /* bind_recur */
 
     /* primary display tab */
 
-    for (let e of popup.querySelectorAll(".summary-tab .bind")) {
-        let f = (s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt);
-        get_property(el, e.dataset.property).push([e, f]);
+    let p;
+    for (let e of [...popup.querySelectorAll(".bind"),
+                   ...el.querySelectorAll('.bind')]) {
+        if ((p = e.closest('[data-bindby=*]'))) {
+            p.dataset.bindby(el, e);
+        } else {
+            let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
+            get_property(el, e.dataset.property).push([e, f]);
+        }
     }
+
+    // for (let e of popup.querySelectorAll(".summary-tab .bind")) {
+    //     /* bind_view
+    //     let f = (s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt);
+    //     get_property(el, e.dataset.property).push([e, f]);
+    //     */
+    // }
 
     /* edit tab */
-    for (let e of popup.querySelectorAll(".edit-tab .bind")) {
-        let p = get_property(el, e.dataset.property);
-        e.addEventListener('input', function () {
-            el.properties[e.dataset.property] = this.value;
-        });
-        let f;
-        switch (e.tagName) {
-        case 'input':
-            switch (e.type) {
-            case 'time': f = (s, v) => s.value = v.format("~H:~M"); break;
-            case 'date': f = (s, v) => s.value = v.format("~Y-~m-~d"); break;
-            // TODO remaining types cases
-            default: f = (s, v) => s.value = v;
-            }
-            p.push([e, f])
-            break;
-        case 'textarea':
-            f = (s, v) => s.innerHTML = v;
-            p.push([e, f])
-            break;
-        default:
-            alert("How did you get here??? " + e.tagName)
-            break;
-        }
-    }
+    // for (let e of popup.querySelectorAll(".edit-tab .bind")) {
+    //     /* bind-edit
+    //     let p = get_property(el, e.dataset.property);
+    //     e.addEventListener('input', function () {
+    //         el.properties[e.dataset.property] = this.value;
+    //     });
+    //     let f;
+    //     switch (e.tagName) {
+    //     case 'input':
+    //         switch (e.type) {
+    //         case 'time': f = (s, v) => s.value = v.format("~H:~M"); break;
+    //         case 'date': f = (s, v) => s.value = v.format("~Y-~m-~d"); break;
+    //         // TODO remaining types cases
+    //         default: f = (s, v) => s.value = v;
+    //         }
+    //         p.push([e, f])
+    //         break;
+    //     case 'textarea':
+    //         f = (s, v) => s.innerHTML = v;
+    //         p.push([e, f])
+    //         break;
+    //     default:
+    //         alert("How did you get here??? " + e.tagName)
+    //         break;
+    //     }
+    //     */
+    // }
 
     /* checkbox for whole day */
-    let wholeday = popup.querySelector("input[name='wholeday']");
-    wholeday.addEventListener('click', function (event) {
-        for (let f of popup.querySelectorAll("input[type='time']")) {
-            f.disabled = wholeday.checked;
-        }
-
-        for (let f of ['dtstart', 'dtend']) {
-            let d = el.properties[f];
-            if (! d) continue; /* dtend optional */
-            d.isWholeDay = wholeday.checked;
-            el.properties[f] = d;
-        }
-    });
-
 
     for (let field of ['dtstart', 'dtend']) {
 
@@ -561,6 +539,9 @@ function bind_properties (el, wide_event=false) {
                         let str = v.format('~Y-~m-~dT~H:~M:00~Z');
                         child.innerHTML = `<date-time>${str}</date-time>`;
                     }
+                } else if (v instanceof RRule) {
+                    /* TODO also recalculate whenever any field changes */
+                    child.innerHTML = v.asXcal();
                 } else {
                     /* assume that type already is correct */
                     s.innerHTML = v;
