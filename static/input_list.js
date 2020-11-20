@@ -73,5 +73,26 @@ function init_input_list() {
         transferListeners(oldUnit, unit);
 
         lst.unit = unit;
+
+        if (lst.dataset.bindby) {
+            lst.get_value = lst.dataset.bindby;
+        } else if (lst.dataset.joinby) {
+            lst.get_value = get_value(lst.dataset.joinby);
+        }
+        } else {
+            lst.get_value = get_get_value();
+        }
     }
 }
+
+/* -------------------------------------------------- */
+
+/* different function forms since we want to capture one self */
+const get_get_value(join=',') => function () {
+    return [...self.querySelectorAll('input')]
+        .map(x => x.value)
+        .filter(x => x != '')
+        .join(join);
+}
+
+/* -------------------------------------------------- */
