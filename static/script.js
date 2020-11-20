@@ -807,6 +807,31 @@ function bind_properties (el, wide_event=false) {
         get_property(el, e.dataset.property).push([e, f]);
     }
 
+    get_property(el, 'rrule');
+    /* aside for rrule */
+    for (let e of el.querySelectorAll('.recur-components .bind-rr')) {
+
+        // e.name
+
+        switch (e.tagName) {
+        case 'input':
+            e.value;
+            break;
+        case 'select':
+            e.options[e.selectedIndex].value;
+            break;
+        default:
+            if (e.classList.contains("date-time")) {
+                let date = e.querySelector('input[type=date]');
+                let time = e.querySelector('input[type=time]');
+            } else if (e.classList.contains("input-list")) {
+                e.get_value()
+            } else {
+                error();
+            }
+        }
+    }
+
     /* primary display tab */
 
     for (let e of popup.querySelectorAll(".summary-tab .bind")) {
