@@ -1,6 +1,4 @@
 /*
-  TODO document 'input-list'.
-
   ∀ children('.input-list') => 'unit' ∈ classList(child)
 
   <div class="input-list">
@@ -78,7 +76,6 @@ function init_input_list() {
             lst.get_value = lst.dataset.bindby;
         } else if (lst.dataset.joinby) {
             lst.get_value = get_value(lst.dataset.joinby);
-        }
         } else {
             lst.get_value = get_get_value();
         }
@@ -88,7 +85,7 @@ function init_input_list() {
 /* -------------------------------------------------- */
 
 /* different function forms since we want to capture one self */
-const get_get_value(join=',') => function () {
+const get_get_value = (join=',') => function () {
     return [...self.querySelectorAll('input')]
         .map(x => x.value)
         .filter(x => x != '')

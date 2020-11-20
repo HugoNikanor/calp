@@ -1,0 +1,24 @@
+** Javascript "components"
+
+*** input-list
+file:../static/input_list.js
+
+All elements having 'input-list' ∈ =class=
+
+Direct children must all have 'unit' ∈ =class=
+One direct child must have 'final' ∈ =class=
+
+binds =get_value= on instances, by default returning the value
+of all =<input/>= tags joined by =,=. This can be overwritten with
+- =data-joinby= :: Alternative character to join by
+- =data-bindby= :: replacement for get_value
+
+*** Popup
+Handles popup. Currently rather specific
+
+*** Dragable
+file:../static/dragable.js
+
+Manually apply =bind_popup_control= to the statusbar of a floating "window".
+Nothing is required from the component, but the "window" must have
+'popup-container' ∈ =class=
