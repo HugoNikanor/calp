@@ -175,3 +175,26 @@
             (rel "alternate stylesheet")
             (href ,path)
             ,@extra-attributes)))
+
+
+(define-public (input-plus-minus positive?)
+  (define id (gensym "id"))
+  `(span (@ (class "input-timespan"))
+         (input (@ (type "checkbox")
+                   (style "display:none")
+                   (class "plusminuscheck")
+                   ,@(if positive? '((checked)) '())
+                   (id ,id)))
+         (label
+          (@ (for ,id))
+          (span (@ (class "plus"))  "+")
+          (span (@ (class "minus")) "-"))))
+
+;; (define-once timespan-generator-id (gensym "timespan-generator"))
+;; (define-public (input-timespan-generator)
+;;   `((div (@ (class "template")
+;;             (id ,timespan-generator-id))
+;;          ,(input-timespan))
+;;     (script
+;;      "function make_timespan_input() {\n"
+;;      "return document.getElementsById(" ,timespan-generator-id ").cloneNode(true);")))
