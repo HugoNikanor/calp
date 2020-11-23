@@ -10,17 +10,19 @@ function bind_recur(el, e) {
     let p = get_property(el, 'rrule');
     // let rrule = el.rrule;
 
+    /* add listeners to bind-rr tags */
     for (let rr of e.querySelectorAll('.bind-rr')) {
         if (rr.classList.contains('input-list')) {
             rr.addEventListener('input', function () {
                 let name = rr.attributes.name.value;
                 el.properties.rrule[name] = this.get_value();
             });
-        } else if (rr.tagName === 'input') {
+        } else if (rr.tagName === 'input' || rr.classList.contains('date-time')) {
             rr.addEventListener('input', function () {
+                console.log(this);
                 el.properties.rrule[rr.name] = this.value;
             });
-        } else if (rr.tagName === 'option') {
+        } else if (rr.tagName === 'select') {
             console.log("TODO");
         }
     }
@@ -35,6 +37,7 @@ function bind_recur(el, e) {
                 break;
             case 'select':
                 /* TODO */
+                console.log("Implement me!");
                 break;
             default:
                 if (input_field.classList.contains('date-time')) {
