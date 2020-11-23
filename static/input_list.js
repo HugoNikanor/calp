@@ -79,6 +79,19 @@ function init_input_list() {
         } else {
             lst.get_value = get_get_value();
         }
+
+        /* Propagate add event listener downwards */
+        lst._addEventListener = lst.addEventListener;
+        lst.addEventListener = function(type, proc) {
+            switch (type) {
+            case 'input':
+                for (let el of lst.getElementsByTagName('input')) {
+                    el.addEventListener('input', proc);
+                }
+            default:
+                lst._addEventListener(type, proc);
+            }
+        };
     }
 }
 
@@ -86,7 +99,7 @@ function init_input_list() {
 
 /* different function forms since we want to capture one self */
 const get_get_value = (join=',') => function () {
-    return [...self.querySelectorAll('input')]
+    return [...this.querySelectorAll('input')]
         .map(x => x.value)
         .filter(x => x != '')
         .join(join);
