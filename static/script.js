@@ -436,10 +436,12 @@ function bind_properties (el, wide_event=false) {
     /* primary display tab */
 
     let p;
-    for (let e of [...popup.querySelectorAll(".bind"),
-                   ...el.querySelectorAll('.bind')]) {
-        if ((p = e.closest('[data-bindby=*]'))) {
-            p.dataset.bindby(el, e);
+    let lst = [...popup.querySelectorAll(".bind"),
+               ...el.querySelectorAll('.bind')];
+    for (let e of lst) {
+        if ((p = e.closest('[data-bindby]'))) {
+            // console.log(p.dataset.bindby);
+            eval(p.dataset.bindby)(el, e);
         } else {
             let f = ((s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt));
             get_property(el, e.dataset.property).push([e, f]);
@@ -528,8 +530,10 @@ function bind_properties (el, wide_event=false) {
         let field = child.tagName;
         let lst = get_property(el, field);
 
+
         /* Bind vcomponent fields for this event */
         for (let s of el.querySelectorAll(`${field} > :not(parameters)`)) {
+
             lst.push([s, (s, v) => {
                 if (v instanceof Date) {
                     if (v.isWholeDay) {
@@ -540,14 +544,23 @@ function bind_properties (el, wide_event=false) {
                         child.innerHTML = `<date-time>${str}</date-time>`;
                     }
                 } else if (v instanceof RRule) {
-                    /* TODO also recalculate whenever any field changes */
                     child.innerHTML = v.asXcal();
                 } else {
                     /* assume that type already is correct */
                     s.innerHTML = v;
                 }
             }]);
-            el.properties["_value_" + field] = s.innerHTML;
+
+            /* Binds value from XML-tree to javascript object
+               [parsedate]
+            */
+            switch (field) {
+            case 'rrule':
+                el.properties['_value_rrule'] = recur_xml_to_rrule(s);
+                break;
+            default:
+                el.properties["_value_" + field] = s.innerHTML;
+            }
         }
     }
 
@@ -584,6 +597,7 @@ function bind_properties (el, wide_event=false) {
     let end = parseDate(container.dataset.end);
 
     if (el.properties.dtstart) {
+        /* [parsedate] */
         el.properties.dtstart = parseDate(el.properties.dtstart);
         get_property(el, 'dtstart').push(
             [el.style, (s, v) =>
@@ -600,6 +614,29 @@ function bind_properties (el, wide_event=false) {
             [el.style,
              (s, v) => s[wide_event?'right':'bottom'] = 100 * (1 - (to_local(v)-start)/(end-start)) + "%"]);
     }
+
+
+    /* Update XML on rrule field change */
+    if (el.properties.rrule) {
+        for (let f of el.properties.rrule.fields) {
+            el.properties.rrule.addListener(
+                f, v => {
+                    console.log(v);
+                    let recur = el.querySelector('rrule recur');
+                    let field = recur.querySelector(f);
+                    if (field) {
+                        if (! v) {
+                            field.remove();
+                        } else {
+                            field.innerHTML = v;
+                        }
+                    } else {
+                        if (v) recur.innerHTML += `<${f}>${v}</${f}>`;
+                    }
+                });
+        }
+    }
+
 
     /* ---------- Calendar ------------------------------ */
 

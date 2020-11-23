@@ -1,22 +1,28 @@
+/*
+  bind (event_component, field_to_bind)
+*/
 
 /* vcalendar element */
 
 function bind_recur(el, e) {
     /* todo bind default slots of rrule */
 
-    let p = get_property(el, 'rrule', new rrule);
-    let rrule = el.rrule;
+    let p = get_property(el, 'rrule');
+    // let rrule = el.rrule;
 
     for (let rr of e.querySelectorAll('.bind-rr')) {
-        rrule.addListener(rr.dataset.name, v => {
-            /* TODO Different depending on tag type */
-            /* TODO scoope of rr? */
-            if (! v) {
-                rr.value = '';
-            } else {
-                rr.vaule = v;
-            }
-        });
+        if (rr.classList.contains('input-list')) {
+            rr.addEventListener('input', function () {
+                let name = rr.attributes.name.value;
+                el.properties.rrule[name] = this.get_value();
+            });
+        } else if (rr.tagName === 'input') {
+            rr.addEventListener('input', function () {
+                el.properties.rrule[rr.name] = this.value;
+            });
+        } else if (rr.tagName === 'option') {
+            console.log("TODO");
+        }
     }
 
     p.push([e, function (s, v) {
@@ -34,8 +40,9 @@ function bind_recur(el, e) {
                 if (input_field.classList.contains('date-time')) {
                     let date = input_field.querySelector('input[type=date]');
                     let time = input_field.querySelector('input[type=time]');
-                } else if (e.classList.contains('input-list')) {
+                } else if (input_field.classList.contains('input-list')) {
                 } else {
+                    console.log(input_field);
                     throw Error();
                 }
             }
@@ -79,8 +86,8 @@ function bind_view(el, e) {
 
 
 function bind_wholeday(el, e) {
-    // let wholeday = popup.querySelector("input[name='wholeday']");
     let popup = popup_from_event(el);
+    let wholeday = popup.querySelector("input[name='wholeday']");
     wholeday.addEventListener('click', function (event) {
         for (let f of popup.querySelectorAll("input[type='time']")) {
             f.disabled = wholeday.checked;

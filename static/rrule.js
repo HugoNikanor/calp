@@ -1,13 +1,23 @@
+function recur_xml_to_rrule(dom_element) {
+    let rr = new RRule;
+    for (let child of dom_element.children) {
+        let key = child.tagName; /* freq */
+        let val = child.innerHTML; /* weekly */
+        rr[key] = val;
+    }
+    return rr;
+}
+
 class RRule {
 
     /* direct access to fields is fine */
     /* setting them however requires methods, since there might
        be listeners */
 
-    const fields = ['freq', 'until', 'count', 'interval',
-                    'bysecond', 'byminute', 'byhour',
-                    'bymonthday', 'byyearday', 'byweekno',
-                    'bymonth', 'bysetpos', 'wkst']
+    fields = ['freq', 'until', 'count', 'interval',
+              'bysecond', 'byminute', 'byhour',
+              'bymonthday', 'byyearday', 'byweekno',
+              'bymonth', 'bysetpos', 'wkst']
 
     constructor() {
 
@@ -17,7 +27,7 @@ class RRule {
             this[f] = false;
             Object.defineProperty(
                 this, f, {
-                    get: () => this['_' + f];
+                    get: () => this['_' + f],
                     set: (v) => {
                         this['_' + f] = v
                         for (let l of this.listeners[f]) {
@@ -30,7 +40,7 @@ class RRule {
     }
 
     addListener(field, proc) {
-        this.listeners[field].append(proc);
+        this.listeners[field].push(proc);
     }
 
     asXcal() {
