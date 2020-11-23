@@ -13,6 +13,11 @@ of all =<input/>= tags joined by =,=. This can be overwritten with
 - =data-joinby= :: Alternative character to join by
 - =data-bindby= :: replacement for get_value
 
+TODO: instead, override value?
+
+=addEventList('input',= is overwritten, registering the listener for all input
+elements.
+
 *** Popup
 Handles popup. Currently rather specific
 
