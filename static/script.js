@@ -367,6 +367,7 @@ window.onload = function () {
 
     // init_arbitary_kv();
 
+    init_date_time();
     init_input_list();
 
 }
