@@ -229,6 +229,7 @@
        ((text)   (@ (calp entry-points     text) main))
        ((ical)   (@ (calp entry-points     ical) main))
        ((server) (@ (calp entry-points   server) main))
+       ((convert) (@ (calp entry-points convert) main))
        ((tidsrapport) (@ (calp entry-points   tidsrapport) main))
        ((benchmark) (@ (calp entry-points benchmark) main))
        (else => (lambda (s)
