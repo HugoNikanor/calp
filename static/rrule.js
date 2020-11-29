@@ -19,12 +19,6 @@ class RRule {
               'bymonthday', 'byyearday', 'byweekno',
               'bymonth', 'bysetpos', 'wkst']
 
-    /*
-      TODO multi valued byhour should be represented as
-      <byhour>1</byhour><byhour>2</byhour>
-      NOT as <byhour>1,2</byhour> as it currently does.
-     */
-
     constructor() {
 
         this.listeners = {}
@@ -37,6 +31,7 @@ class RRule {
                       TODO many of the fields should be wrapped
                       in type tags. e.g. <until> elements are either
                       <date> or <date-time>, NOT a raw date.
+                      by* fields should be wrapped with multiple values.
                      */
                     get: () => this['_' + f],
                     set: (v) => {

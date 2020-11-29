@@ -88,8 +88,8 @@
      (string-upcase
       (week-day-name value 2
                      locale: (make-locale (list LC_TIME) "C")))]
-    [(byday)
-     (string-join (map byday->string value) ",")]
+    ;; [(byday)
+    ;;  (string-join (map byday->string value) ",")]
     [(freq count interval)
      (format #f "~a" value)]
     [(until)
@@ -120,14 +120,27 @@
 (define-public (recur-rule->rrule-sxml rrule)
   (map-fields
    (lambda (field value)
-     (if (string-ci=? "UNTIL" (symbol->string field))
-         `(until
-           ,(if (date? value)
-                (date->string value "~Y-~m-~d")
-                (datetime->string
-                 value "~Y-~m-~dT~H:~M:~S~Z")))
-         `(,(downcase-symbol field)
-           ,(field->string field value))))
+     (cond [(string-ci=? "UNTIL" (symbol->string field))
+            `(until
+              ,(if (date? value)
+                   (date->string value "~Y-~m-~d")
+                   (datetime->string
+                    value "~Y-~m-~dT~H:~M:~S~Z")))]
+           [(string-ci=? "BYDAY" (symbol->string field))
+            (map (lambda (v)
+                   `(,(downcase-symbol field)
+                     ,(byday->string v)))
+                 value)
+            ]
+           [(string-ci=? "BY" (substring (symbol->string field)
+                                         0 2))
+            (map (lambda (v)
+                   `(,(downcase-symbol field)
+                     ,v))
+                 value)]
+           [else
+            `(,(downcase-symbol field)
+              ,(field->string field value))]))
    rrule))
 
 
