@@ -9,9 +9,15 @@
          (cons (car optline)
                (map (lambda (opt-field)
                       (cons (car opt-field)
-                            (cond [(and (eq? 'value (car opt-field))
-                                        (symbol? (cadr opt-field)))
-                                   '(optional)]
+                            (cond [(eq? 'value (car opt-field))
+                                   (cond [(cadr opt-field)
+                                          list? => (lambda (opts)
+                                                     (case (car opts)
+                                                       ;; TODO this should also generate a validator
+                                                       ((options) '(#t))
+                                                       (else '(#t))))]
+                                         [(symbol? (cadr opt-field)) '(optional)]
+                                         [else (cdr opt-field)])]
                                   [else (cdr opt-field)])))
                     (lset-intersection (lambda (a b) (eqv? b (car a)))
                                        (cdr optline)
@@ -28,7 +34,12 @@
     (let ((valuefmt (case (and=> (assoc-ref args 'value) car)
                       [(#t) '(" " (i value))]
                       [(#f) '()]
-                      [else => (lambda (s) `(" [" (i ,s) "]"))])))
+                      [else => (lambda (s)
+                                 (if (list? s)
+                                     (case (car s)
+                                       [(options)
+                                        `(" {" ,(string-join (cdr s) "|") "}")])
+                                     `(" [" (i ,s) "]")))])))
       `(*TOP* (b "--" ,name) ,@valuefmt
               ,@(awhen (assoc-ref args 'single-char)
                        `("," (ws)
