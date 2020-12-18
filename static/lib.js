@@ -117,6 +117,14 @@ function setVar(str, val) {
 }
 
 
+function asList(thing) {
+    if (thing instanceof Array) {
+        return thing;
+    } else {
+        return [thing];
+    }
+}
+
 
 function datepad(thing, width=2) {
     return (thing + "").padStart(width, "0");

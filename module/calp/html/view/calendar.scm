@@ -106,6 +106,7 @@
 
     (script (@ (defer) (src "/static/types.js")))
     (script (@ (defer) (src "/static/lib.js")))
+    (script (@ (defer) (src "/static/jcal.js")))
     (script (@ (defer) (src "/static/dragable.js")))
     (script (@ (defer) (src "/static/clock.js")))
     (script (@ (defer) (src "/static/popup.js")))

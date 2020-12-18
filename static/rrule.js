@@ -8,6 +8,14 @@ function recur_xml_to_rrule(dom_element) {
     return rr;
 }
 
+function recur_jcal_to_rrule(jcal) {
+    let rr = new RRule;
+    for (var key in jcal) {
+        rr[key] = jcal[key];
+    }
+    return rr;
+}
+
 class RRule {
 
     /* direct access to fields is fine */
@@ -17,7 +25,9 @@ class RRule {
     fields = ['freq', 'until', 'count', 'interval',
               'bysecond', 'byminute', 'byhour',
               'bymonthday', 'byyearday', 'byweekno',
-              'bymonth', 'bysetpos', 'wkst']
+              'bymonth', 'bysetpos', 'wkst',
+              'byday'
+             ]
 
     constructor() {
 
@@ -49,16 +59,30 @@ class RRule {
         this.listeners[field].push(proc);
     }
 
-    asXcal() {
+    asXcal(doc) {
         /* TODO empty case */
-        let str = "<recur>";
+        // let str = "<recur>";
+        let root = doc.createElementNS(xcal, 'recur');
         for (let f of this.fields) {
             let v = this.fields[f];
             if (! v) continue;
-            str += `<${f}>${v}</${f}>`;
+            let tag = doc.createElementNS(xcal, f);
+            /* TODO type formatting */
+            tag.innerHTML = `${v}`;
+            root.appendChild(tag);
         }
-        str += "</recur>";
-        return str;
+        return root;
+    }
+
+    asJcal() {
+        let obj = {};
+        for (let f of this.fields) {
+            let v = this.fields[f];
+            if (! v) continue;
+            /* TODO special formatting for some types */
+            obj[f] = v;
+        }
+        return obj;
     }
 
     /*

@@ -382,7 +382,9 @@ window.onload = function () {
 */
 function get_property(el, field, default_value) {
     if (! el.properties) {
+        /* TODO only have construction once */
         el.properties = {};
+        el.properties.ical_properties = new Set()
     }
 
     if (! el.properties["_slot_" + field]) {
@@ -423,6 +425,7 @@ function get_property(el, field, default_value) {
 function bind_properties (el, wide_event=false) {
 
     el.properties = {}
+    el.properties.ical_properties = new Set()
     let popup = popup_from_event(el);
     // let children = el.getElementsByTagName("properties")[0].children;
 
@@ -523,6 +526,9 @@ function bind_properties (el, wide_event=false) {
                             }]);
     }
 
+    for (let property of property_names) {
+        el.properties.ical_properties.add(property)
+    }
 
     /* icalendar properties */
     for (let child of el.querySelector("vevent > properties").children) {
@@ -531,29 +537,15 @@ function bind_properties (el, wide_event=false) {
         let field = child.tagName;
         let lst = get_property(el, field);
 
+        el.properties.ical_properties.add(field)
 
         /* Bind vcomponent fields for this event */
         for (let s of el.querySelectorAll(`${field} > :not(parameters)`)) {
 
-            lst.push([s, (s, v) => {
-                if (v instanceof Date) {
-                    if (v.isWholeDay) {
-                        let str = v.format('~Y-~m-~d');
-                        child.innerHTML = `<date>${str}</date>`;
-                    } else {
-                        let str = v.format('~Y-~m-~dT~H:~M:00~Z');
-                        child.innerHTML = `<date-time>${str}</date-time>`;
-                    }
-                } else if (v instanceof RRule) {
-                    child.innerHTML = v.asXcal();
-                } else {
-                    /* assume that type already is correct */
-                    s.innerHTML = v;
-                }
-            }]);
-
             /* Binds value from XML-tree to javascript object
                [parsedate]
+
+               TODO capture xcal type here, to enable us to output it to jcal later.
             */
             switch (field) {
             case 'rrule':
@@ -563,29 +555,6 @@ function bind_properties (el, wide_event=false) {
                 el.properties["_value_" + field] = s.innerHTML;
             }
         }
-    }
-
-    /* Dynamicly add or remove the <location/> and <description/> elements
-       from the <vevent><properties/> list.
-
-       TODO generalize this to all fields, /especially/ those which are
-       dynamicly added.
-    */
-    for (let field of ['location', 'description', 'categories']) {
-        get_property(el, field).push(
-            [el.querySelector('vevent > properties'),
-             (s, v) => {
-                 let slot = s.querySelector(field);
-                 if (v === '' && slot) {
-                     slot.remove();
-                 } else {
-                     if (! slot) {
-                         /* finns det verkligen inget bättre sätt... */
-                         s.innerHTML += `<${field}><text/></${field}>`;
-                     }
-                     s.querySelector(`${field} > text`).innerHTML = v;
-                 }
-             }]);
     }
 
     /* set up graphical display changes */
@@ -614,28 +583,6 @@ function bind_properties (el, wide_event=false) {
             // Normalize so all use the same, or find a way to convert between.
             [el.style,
              (s, v) => s[wide_event?'right':'bottom'] = 100 * (1 - (to_local(v)-start)/(end-start)) + "%"]);
-    }
-
-
-    /* Update XML on rrule field change */
-    if (el.properties.rrule) {
-        for (let f of el.properties.rrule.fields) {
-            el.properties.rrule.addListener(
-                f, v => {
-                    console.log(v);
-                    let recur = el.querySelector('rrule recur');
-                    let field = recur.querySelector(f);
-                    if (field) {
-                        if (! v) {
-                            field.remove();
-                        } else {
-                            field.innerHTML = v;
-                        }
-                    } else {
-                        if (v) recur.innerHTML += `<${f}>${v}</${f}>`;
-                    }
-                });
-        }
     }
 
 

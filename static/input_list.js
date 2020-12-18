@@ -75,7 +75,7 @@ function init_input_list() {
         if (lst.dataset.bindby) {
             lst.get_value = lst.dataset.bindby;
         } else if (lst.dataset.joinby) {
-            lst.get_value = get_value(lst.dataset.joinby);
+            lst.get_value = get_get_value(lst.dataset.joinby);
         } else {
             lst.get_value = get_get_value();
         }
@@ -101,8 +101,8 @@ function init_input_list() {
 const get_get_value = (join=',') => function () {
     return [...this.querySelectorAll('input')]
         .map(x => x.value)
-        .filter(x => x != '')
-        .join(join);
+        .filter(x => x != '');
+        // .join(join);
 }
 
 /* -------------------------------------------------- */

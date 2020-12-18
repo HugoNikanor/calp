@@ -15,6 +15,17 @@ let all_types = [
     'boolean',
 ]
 
+let property_names = [
+    'calscale', 'method', 'prodid', 'version', 'attach', 'categories',
+    'class', 'comment', 'description', 'geo', 'location', 'percent-complete',
+    'priority', 'resources', 'status', 'summary', 'completed', 'dtend', 'due',
+    'dtstart', 'duration', 'freebusy', 'transp', 'tzid', 'tzname', 'tzoffsetfrom',
+    'tzoffsetto', 'tzurl', 'attendee', 'contact', 'organizer', 'recurrence-id',
+    'related-to', 'url', 'uid', 'exdate', 'exrule', 'rdate', 'rrule', 'action',
+    'repeat', 'trigger', 'created', 'dtstamp', 'last-modified', 'sequence', 'request-status'
+];
+
+
 let valid_fields = {
     'VCALENDAR': ['PRODID', 'VERSION', 'CALSCALE', 'METHOD'],
     'VEVENT': ['DTSTAMP', 'UID', 'DTSTART', 'CLASS', 'CREATED',
