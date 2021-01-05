@@ -32,6 +32,9 @@ function zip(...args) {
   NOTE that only the raw `get' (and NOT the `getUTC') methods
   should be used on these objects, and that the reported timezone
   is quite often wrong.
+
+  TODO The years between 0 and 100 (inclusive) gives dates in the twentieth
+  century, due to how javascript works (...).
  */
 
 function parseDate(str) {
@@ -126,6 +129,7 @@ function asList(thing) {
 }
 
 
+/* internal */
 function datepad(thing, width=2) {
     return (thing + "").padStart(width, "0");
 }
