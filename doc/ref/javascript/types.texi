@@ -1,0 +1,39 @@
+@node types
+@section types.js
+
+Collection of type information for calendar data.
+
+@defvar all_types
+Name of all valid icalendar types.
+
+    text, uri, binary, float, integer, date-time, date, duration,
+    period, utc-offset, cal-address, recur, boolean,
+@end defvar
+
+@defvar property_names
+All known names properties (top level keys) can have.
+Such as ``calscale'', ``dtstart'', ...
+@end defvar
+
+@defvar valid_fields
+Which property fields each component can hold.
+
+@verbatim
+{ 'VCALENDAR': ['PRODID', 'VERSION', 'CALSCALE', 'METHOD'],
+    ...
+}
+@end verbatim
+@end defvar
+
+@defvar valid_input_types
+Which types are valid to store under each property.
+If multiple values are an option for that property, then
+the list of possibilities will contain a sub-list (see example).
+
+@verbatim
+{ 'DTSTART': ['date', 'date-time'],
+  'CATEGORIES': [['text']],
+  ...
+}
+@end verbatim
+@end defvar
