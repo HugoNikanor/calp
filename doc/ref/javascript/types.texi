@@ -1,5 +1,5 @@
 @node types
-@section types.js
+@subsection types.js
 
 Collection of type information for calendar data.
 

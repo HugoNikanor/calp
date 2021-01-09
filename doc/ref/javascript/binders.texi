@@ -1,4 +1,4 @@
 
 @node binders
-@section binders.js
+@subsection binders.js
 

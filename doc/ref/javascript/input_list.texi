@@ -1,5 +1,5 @@
 @node input_list
-@section input_list.js
+@subsection input_list.js
 @cindex dummy component
 
 All elements with the class @code{input-list} are treated as a

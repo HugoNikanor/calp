@@ -1,6 +1,11 @@
 @node Javascript
 @chapter Javascript
 
+@node Concepts
+@section Concepts
+
+@node Reference
+@section Reference
 @include javascript/arbitary_kv.texi
 @include javascript/binders.texi
 @include javascript/clock.texi

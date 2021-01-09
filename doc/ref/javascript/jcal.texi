@@ -1,4 +1,4 @@
 
 @node jcal
-@section jcal.js
+@subsection jcal.js
 

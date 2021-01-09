@@ -1,5 +1,5 @@
 @node clock
-@section clock.js
+@subsection clock.js
 
 @deftp {(abstract) class} Clock
 Interface for ``things'' which wants to get updated on a human timescale.

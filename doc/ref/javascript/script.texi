@@ -1,6 +1,6 @@
 
 @node script
-@section script.js
+@subsection script.js
 
 @dfn{Main} for my javascript, and also currently dumping ground for stuff.
 

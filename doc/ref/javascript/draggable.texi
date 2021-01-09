@@ -1,5 +1,5 @@
 @node dragable
-@section dragable.js
+@subsection dragable.js
 
 @c TODO This text is just yanked from the old org file, along with the
 @c source codes header. It should probably be rewritten.

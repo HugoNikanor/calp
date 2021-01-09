@@ -1,5 +1,5 @@
 @node date_time
-@section date_time.js
+@subsection date_time.js
 
 @defun init_date_time
 @c possibly have special index for these

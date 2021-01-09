@@ -1,2 +1,2 @@
 @node server_connect
-@section server_connect.js
+@subsection server_connect.js

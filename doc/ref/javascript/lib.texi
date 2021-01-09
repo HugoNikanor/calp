@@ -1,6 +1,6 @@
 
 @node lib
-@section lib.js
+@subsection lib.js
 
 General procedures which in theory could be used anywhere.
 
@@ -11,7 +11,7 @@ The xml namespace name for xcalendar, which is
 
 
 @node Default prototype extensions
-@subsection Default prototype extensions
+@subsubsection Default prototype extensions
 
 HTMLElement extensions
 
@@ -37,7 +37,7 @@ Allows extending for custom types,
 @end defmethod
 
 @node General
-@subsection General
+@subsubsection General
 
 @defun zip args ...
 Takes a list of lists, and returns a single list of tuples.
@@ -86,7 +86,7 @@ already is one, otherwise wrapping it in a list.
 @end defun
 
 @node Date
-@subsection Date
+@subsubsection Date
 
 Some extensions to the builtin class ``Date'' is made.
 

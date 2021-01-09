@@ -1,5 +1,5 @@
 
 
 @node popup
-@section popup.js
+@subsection popup.js
 
