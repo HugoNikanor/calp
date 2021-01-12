@@ -815,8 +815,14 @@ along with their colors.
 
         max-height: 5ex;
         min-height: 5ex;
+
         min-width: 5ex;
-        max-width: 5ex;
+        width: 5ex;
+
+        transition: width 0.1s ease-in-out;
+        &:hover {
+            width: 10ex;
+        }
 
         border: 1px solid #ccc;
         border-radius: 0 5px 5px 0;
