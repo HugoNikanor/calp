@@ -4,6 +4,20 @@
 @node Concepts
 @section Concepts
 
+@subsection ``Componenents''
+
+@deftp {} date_time
+@cindex date-time
+
+@ref{date_time}
+@end deftp
+
+@deftp {} draggable
+@end deftp
+
+@deftp {} input_list
+@end deftp
+
 @node Reference
 @section Reference
 @include javascript/arbitary_kv.texi
