@@ -59,6 +59,9 @@ class RRule {
         this.listeners[field].push(proc);
     }
 
+    /* NOTE this function is probably never used.
+       Deperate it and refer to RRule.asJcal 
+       together with jcal_to_xcal */
     asXcal(doc) {
         /* TODO empty case */
         // let str = "<recur>";
@@ -77,7 +80,7 @@ class RRule {
     asJcal() {
         let obj = {};
         for (let f of this.fields) {
-            let v = this.fields[f];
+            let v = this[f];
             if (! v) continue;
             /* TODO special formatting for some types */
             obj[f] = v;

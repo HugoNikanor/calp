@@ -26,7 +26,12 @@ function jcal_type_to_xcal(doc, type, value) {
         break;
 
     case 'recur':
-        el.appendChild(recur_jcal_to_rrule(value).asXcal(doc));
+        for (var key in value) {
+            if (! value.hasOwnProperty(key)) continue;
+            let e = doc.createElementNS(xcal, key);
+            e.innerHTML = value[key];
+            el.appendChild(e);
+        }
         break;
 
     case 'date':
