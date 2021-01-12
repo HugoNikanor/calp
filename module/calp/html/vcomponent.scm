@@ -531,10 +531,10 @@
                      (list
                       (btn "🖊️"
                            title: "Redigera"
-                           onclick: "place_in_edit_mode(document.getElementById(this.closest('.popup-container').id.substr(5)))")
+                           onclick: "place_in_edit_mode(event_from_popup(this.closest('.popup-container')))")
                       (btn "🗑"
                            title: "Ta bort"
-                           onclick: "remove_event(document.getElementById(this.closest('.popup-container').id.substr(5)))"))))
+                           onclick: "remove_event(event_from_popup(this.closest('.popup-container')))"))))
 
              ,(tabset
                 `(("📅" title: "Översikt"
