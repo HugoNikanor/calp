@@ -54,23 +54,36 @@ function jcal_property_to_xcal_property(doc, jcal) {
 
     let tag = doc.createElementNS(xcal, propertyName);
 
-    if (params !== {}) {
-        let params = doc.createElementNS(xcal, params);
-        for (var key in params) {
-            let el = doc.createElementNS(xcal, key);
+    /* setup parameters */
+    let paramEl = doc.createElementNS(xcal, 'params');
+    for (var key in params) {
+        /* Check if the key actually belongs to us.
+           At least (my) format also appears when iterating
+           over the parameters. Probably a case of builtins
+           vs user defined.
 
-            for (let v of asList(params[key])) {
-                let text = doc.createElementNS(xcal, 'text');
-                text.innerHTML = '' + v;
-                el.appendChild(text);
-            }
+           This is also the reason we can't check if params
+           is empty beforehand, and instead check the
+           number of children of paramEl below.
+        */
+        if (! params.hasOwnProperty(key)) continue;
 
-            params.appendChild(el);
+        let el = doc.createElementNS(xcal, key);
+
+        for (let v of asList(params[key])) {
+            let text = doc.createElementNS(xcal, 'text');
+            text.innerHTML = '' + v;
+            el.appendChild(text);
         }
 
-        tag.appendChild(params);
+        paramEl.appendChild(el);
     }
 
+    if (paramEl.childCount > 0) {
+        tag.appendChild(paramEl);
+    }
+
+    /* setup value (and type) */
     // let typeEl = doc.createElementNS(xcal, type);
 
     switch (propertyName) {
@@ -140,7 +153,7 @@ function jcal_to_xcal_inner(doc, jcal) {
 
     let xcal_properties = doc.createElementNS(xcal, 'properties');
     for (let property of properties) {
-        xcal_properties.appendChild(jcal_property_to_xcal_property(property));
+        xcal_properties.appendChild(jcal_property_to_xcal_property(doc, property));
     }
 
     let xcal_children = doc.createElementNS(xcal, 'components');
