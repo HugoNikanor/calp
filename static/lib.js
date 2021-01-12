@@ -159,7 +159,7 @@ function format_date(date, str) {
     }
     return outstr;
 }
-Object.prototype.format = function () { return this; } /* any number of arguments */
+Object.prototype.format = function () { return "" + this; } /* any number of arguments */
 Date.prototype.format = function (str) { return format_date (this, str); }
 
 /*
