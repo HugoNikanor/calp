@@ -50,8 +50,9 @@
 
     [(recur)
      (apply (@ (vcomponent recurrence internal) make-recur-rule)
-            (for (k v) in value
-                 (list (symbol->keyword k) v)))]
+            (concatenate
+             (for (k v) in value
+                  (list (symbol->keyword k) v))))]
 
     [(time) (parse-iso-time (car value))]
 
