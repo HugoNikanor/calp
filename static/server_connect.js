@@ -32,11 +32,13 @@ async function create_event (event) {
     data.append("cal", calendar);
     // data.append("data", xml);
 
+    console.log(event);
+
+    let properties = [];
+
     for (let prop of event.properties.ical_properties) {
         let v = event.properties[prop];
         if (v !== undefined) {
-            [prop, {}, /*type*/, v];
-            /* TODO , here */
 
             let type = 'text';
             let value;
@@ -49,7 +51,7 @@ async function create_event (event) {
                 } else {
                     type = 'date-time';
                     /* TODO TZ */
-                    value = v.format("~Y-~m~dT~H:~M:~S");
+                    value = v.format("~Y-~m-~dT~H:~M:~S");
                 }
             } else if (v === true || v === false) {
                 type = 'boolean';
@@ -58,33 +60,46 @@ async function create_event (event) {
                 /* TODO float or integer */
                 type = 'integer';
                 value = v;
+            } else if (v instanceof RRule) {
+                type = 'recur';
+                value = v.asJcal();
             }
             /* TODO period */
-            /* TODO recur */
             else {
                 /* text types */
+                value = v;
             }
 
+            properties.push([prop, {}, type, value]);
         }
     }
 
 
     let jcal =
         ['vcalendar',
-         ['vevent',
-          [
-              ['summary', {}, 'text', 'Example summary'],
-          ],
-          []
-         ]
+         [
+             /*
+               'prodid' and 'version' are technically both required (RFC 5545,
+               3.6 Calendar Components).
+              */
+         ],
+         [
+             /* vtimezone goes here */
+             ['vevent', properties, [/* alarms go here */]],]
         ];
+
+    console.log(jcal);
+    console.log(properties);
 
     let doc = jcal_to_xcal(jcal);
     console.log(doc);
+    let str = doc.childNodes[0].outerHTML;
+    console.log(str);
+    data.append("data", str);
 
-    console.log(event.properties);
+    // console.log(event.properties);
 
-    return;
+    // return;
 
     let response = await fetch ( '/insert', {
         method: 'POST',
@@ -108,12 +123,12 @@ async function create_event (event) {
     */
 
     let parser = new DOMParser();
-    let properties = parser
+    let return_properties = parser
         .parseFromString(body, 'text/xml')
         .children[0];
 
     let child;
-    while ((child = properties.firstChild)) {
+    while ((child = return_properties.firstChild)) {
         let target = event.querySelector(
             "vevent properties " + child.tagName);
         if (target) {

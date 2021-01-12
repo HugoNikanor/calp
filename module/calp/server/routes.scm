@@ -185,6 +185,8 @@
            ;;   (vcalendar
            ;;    (vevent ...))))
            ;; @end example
+
+           ;; TODO
            ;; However, *PI* will probably be omited, and currently events
            ;; are sent without the vcalendar part. Earlier versions
            ;; Also omitted the icalendar part. And I'm not sure if the
@@ -197,7 +199,8 @@
                         (move-to-namespace
                          ;; TODO Multiple event components
                          (car ((sxpath '(// IC:vevent))
-                               (xml->sxml data namespaces: '((IC . "urn:ietf:params:xml:ns:icalendar-2.0")))))
+                               (xml->sxml data namespaces:
+                                          '((IC . "urn:ietf:params:xml:ns:icalendar-2.0")))))
                          #f))
                       (lambda (err port . args)
                         (return (build-response code: 400)
