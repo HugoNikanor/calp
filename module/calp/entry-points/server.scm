@@ -78,7 +78,7 @@
 
   (catch 'system-error
     (lambda ()
-      (start-server `(family: ,family port: ,port host: ,addr)))
+      (start-server (list family: family port: port host: addr)))
 
     ;; probably address already in use
     (lambda (err proc fmt args errno)
