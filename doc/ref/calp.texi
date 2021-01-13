@@ -58,6 +58,7 @@ text @footnote{Improvements welcome}
 @c * Index::
 @c @end menu
 
+@include guile.texi
 @include javascript.texi
 
 @node Index
