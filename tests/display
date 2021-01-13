@@ -1,0 +1,2 @@
+#!/bin/bash
+guild display-commentary *.scm | sed -e 's/^ /    /' -e 's/^\S/\n&/g'
