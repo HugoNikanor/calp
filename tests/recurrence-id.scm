@@ -12,6 +12,23 @@
 
 (define uid (symbol->string (gensym "areallyuniqueid")))
 
+;; TODO standardize vcomponents for tests as xcal, for example:
+`(vcalendar
+   (children
+     (vevent
+       (properties
+         (summary (text "Changing type on Recurrence-id."))
+         (uid (text ,uid))
+         (dtstart (date "20090127"))))
+     (vevent
+       (properties
+         (summary (text "Changing type on Recurrence-id."))
+         (uid (text ,uid))
+         (dtstart (params (TZID "Europe/Stockholm")) 
+                  (date-time "20100127T120000"))
+         (recurrence-id (date "20100127"))
+         (summary "This instance only has a time component")))))
+
 (define ev
  (call-with-input-string
      (format #f "BEGIN:VCALENDAR
