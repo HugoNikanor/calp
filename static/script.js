@@ -228,8 +228,8 @@ function place_in_edit_mode (event) {
 }
 
 window.onload = function () {
-    let start_time = document.querySelector("meta[name='start-time']").content;
-    let end_time = document.querySelector("meta[name='end-time']").content;
+    // let start_time = document.querySelector("meta[name='start-time']").content;
+    // let end_time = document.querySelector("meta[name='end-time']").content;
 
     const button_updater = new ButtonUpdater(
         document.getElementById("today-button"),
@@ -239,9 +239,10 @@ window.onload = function () {
     const sch = new SmallcalCellHighlight(
         document.querySelector('.small-calendar'))
 
-    const timebar = new Timebar(start_time, end_time);
+    const timebar = new Timebar(/*start_time, end_time*/);
 
     timebar.update(new Date);
+    sch.update(new Date);
     window.setInterval(() => {
         let d = new Date;
         timebar.update(d);

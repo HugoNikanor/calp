@@ -1,3 +1,7 @@
+;;; Commentary:
+;; Checks some prodecuders from (calp util)
+;;; Code:
+
 (((calp util) filter-sorted set/r!))
 
 (test-equal "Filter sorted"

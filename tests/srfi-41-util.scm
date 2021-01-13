@@ -1,3 +1,8 @@
+;;; Commentary:
+;; Tests (srfi srfi-41 util).
+;; Currently only tests stream-paginate.
+;;; Code:
+
 (((srfi srfi-41 util) stream-paginate)
  ((srfi srfi-41) stream->list stream-ref stream-from
   stream-filter stream-car stream)

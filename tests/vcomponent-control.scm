@@ -1,3 +1,7 @@
+;;; Commentary:
+;; Tests that with-replaced-properties work.
+;;; Code:
+
 (((vcomponent control) with-replaced-properties)
  ((vcomponent) parse-calendar)
  ((vcomponent base) prop))

@@ -1,3 +1,9 @@
+;;; Commentary:
+;; Tests timespan overlaps and month-streams.
+;; Separate from tests/datetime.scm since 
+;; (datetime util) originally was its own module.
+;;; Code:
+
 (((datetime) date time datetime
   month-stream in-date-range? timespan-overlaps?)
  ((srfi srfi-41) stream->list stream-take

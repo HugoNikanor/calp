@@ -1,0 +1,51 @@
+@node input_list
+@subsection input_list.js
+@cindex dummy component
+
+All elements with the class @code{input-list} are treated as a
+collection of input fields. Uses including setting tags on calendar
+entries.
+
+All direct children of the ``input-list'' @emph{must} have the class
+@code{unit}, and one direct child @code{unit} have the class @code{final}.
+
+@c All elements having 'input-list' ∈ =class=
+
+@c Direct children must all have 'unit' ∈ =class=
+@c One direct child must have 'final' ∈ =class=
+
+@defmethod input_list get_value
+
+@example
+querySelectorAll('input')
+        .map(x => x.value)
+        .join(@var{joinby})
+@end example
+@end defmethod
+
+@defivar input_list [data-]joinby
+ Alternative character to join by
+@end defivar
+
+@defivar input_list [data-]bindby
+ replacement for get_value
+@end defivar
+
+binds =get_value= on instances, by default returning the value
+of all =<input/>= tags joined by =,=. This can be overwritten with
+
+TODO: instead, override value?
+
+=addEventList('input',= is overwritten, registering the listener for all input
+elements.
+
+
+  ∀ children('.input-list') => 'unit' ∈ classList(child)
+
+  <div class="input-list">
+    <div class="unit"><input/></div>
+    <div class="unit final"><input/></div>
+  </div>
+
+@defun init_input_list
+@end defun

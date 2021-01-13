@@ -1,3 +1,8 @@
+;;; Commentary:
+;; Checks that HTTP server can start correctly, and that at least some
+;; endpoints return correct information.
+;;; Code:
+
 (((calp server routes) make-make-routes)
  ((web server) run-server)
  ((ice-9 threads) call-with-new-thread cancel-thread)

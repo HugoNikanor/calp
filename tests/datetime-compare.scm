@@ -1,3 +1,8 @@
+;;; Commentary:
+;; Tests that all ordering predicates for dates, 
+;; times, and datetimes hold.
+;;; Code:
+
 (((datetime)
   date
   datetime time

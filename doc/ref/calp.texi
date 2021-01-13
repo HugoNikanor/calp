@@ -1,0 +1,71 @@
+\input texinfo
+@settitle Calp
+
+@copying
+Copyright @copyright{} 2020 Hugo Hörnquist
+@end copying
+
+@c Borrowed from guile.texi
+@c  @nicode{S} is plain S in info, or @code{S} elsewhere.  This can be used
+@c  when the quotes that @code{} gives in info aren't wanted, but the
+@c  fontification in tex or html is wanted.  @alias is used rather
+@c  than @macro because backslashes don't work properly in an @macro.
+@ifinfo
+@alias nicode=asis
+@end ifinfo
+@ifnotinfo
+@alias nicode=code
+@end ifnotinfo
+
+@c @ifinfo
+@c @macro i{text}
+@c [3m\text\[0m
+@c @end macro
+@c @end ifinfo
+
+@c for use with deftp for extended classes
+@macro extends{class}
+@w{@i{extends} \class\}
+@end macro
+
+@c For things that should be fixed in the (actual) code.
+@c An ``invitation'' to the reader
+@macro TODO{text}
+text @footnote{Improvements welcome}
+@end macro
+
+@macro githash{hash,path,line}
+@url{https://git.hornquist.se/calp/tree/\path\?id=\hash\#n\line\,\hash\}
+@end macro
+
+@titlepage
+@title Calp
+@author Hugo Hörnquist
+
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top Calp
+@end ifnottex
+
+@c @menu
+@c * Index::
+@c @end menu
+
+@include guile.texi
+@include javascript.texi
+
+@node Index
+@unnumbered Index
+@printindex cp
+@printindex fn
+@printindex tp
+@printindex vr
+
+@bye

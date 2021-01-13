@@ -1,3 +1,8 @@
+;;; Commentary:
+;; Basic tests of xcal convertion.
+;; Currently only checks that events survive a round trip.
+;;; Code:
+
 (((vcomponent xcal parse) sxcal->vcomponent)
  ((vcomponent xcal output) vcomponent->sxcal)
  ((vcomponent ical parse) parse-calendar)

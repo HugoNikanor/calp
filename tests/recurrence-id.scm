@@ -1,3 +1,9 @@
+;;; Commentary:
+;; Tests that exceptions (in the recurrence-id meaning) 
+;; in recurrence sets are handled correctly.
+;; TODO Is however far from done.
+;;; Code:
+
 (((srfi srfi-41) stream->list)
  ((vcomponent) parse-calendar)
  ((vcomponent recurrence) generate-recurrence-set)
@@ -5,6 +11,23 @@
  )
 
 (define uid (symbol->string (gensym "areallyuniqueid")))
+
+;; TODO standardize vcomponents for tests as xcal, for example:
+`(vcalendar
+   (children
+     (vevent
+       (properties
+         (summary (text "Changing type on Recurrence-id."))
+         (uid (text ,uid))
+         (dtstart (date "20090127"))))
+     (vevent
+       (properties
+         (summary (text "Changing type on Recurrence-id."))
+         (uid (text ,uid))
+         (dtstart (params (TZID "Europe/Stockholm")) 
+                  (date-time "20100127T120000"))
+         (recurrence-id (date "20100127"))
+         (summary "This instance only has a time component")))))
 
 (define ev
  (call-with-input-string

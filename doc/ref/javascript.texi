@@ -1,0 +1,35 @@
+@node Javascript
+@chapter Javascript
+
+@node Concepts
+@section Concepts
+
+@subsection ``Componenents''
+
+@deftp {} date_time
+@cindex date-time
+
+@ref{date_time}
+@end deftp
+
+@deftp {} draggable
+@end deftp
+
+@deftp {} input_list
+@end deftp
+
+@node Reference
+@section Reference
+@include javascript/arbitary_kv.texi
+@include javascript/binders.texi
+@include javascript/clock.texi
+@include javascript/date_time.texi
+@include javascript/draggable.texi
+@include javascript/input_list.texi
+@include javascript/jcal.texi
+@include javascript/lib.texi
+@include javascript/popup.texi
+@include javascript/rrule.texi
+@include javascript/script.texi
+@include javascript/server_connect.texi
+@include javascript/types.texi
