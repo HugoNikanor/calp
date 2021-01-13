@@ -22,6 +22,7 @@
                          (set! (prop component key) val))))
               keys)))
 
+;; TODO what is this even used for?
 (define-syntax with-replaced-properties
   (syntax-rules ()
     [(_ (component (key val) ...)

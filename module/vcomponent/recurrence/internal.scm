@@ -51,6 +51,10 @@
                  freq until count interval bysecond byminute byhour
                  byday bymonthday byyearday byweekno bymonth bysetpos
                  wkst)
+  ;; TODO possibly validate fields here
+  ;; to prevent creation of invalid rules.
+  ;; This was made apparent when wkst was (incorrectly) set to MO,
+  ;; which later crashed generate-recurrence-set.
   (make-recur-rule% freq until count interval bysecond byminute byhour
                     byday bymonthday byyearday byweekno bymonth bysetpos
                     wkst))

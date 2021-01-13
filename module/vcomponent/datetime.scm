@@ -68,6 +68,13 @@ Event must have the DTSTART and DTEND protperty set."
            date-difference datetime-difference)
        (prop e 'DTEND) (prop e 'DTSTART))))
 
+;;
+;; |-----|      extent of event
+;;     |-----|  time we are interested in,
+;;              defined through @var{start-date} and @var{end-date}
+;;     |X|      part of event within that time (X)
+;; 
+;; Returns the length of the interval (X).
 (define-public (event-length/clamped start-date end-date e)
   (let ((end (or (prop e 'DTEND)
                  (if (date? (prop e 'DTSTART))
