@@ -23,7 +23,12 @@ function bind_recur(el, e) {
                 el.properties.rrule[rr.name] = this.value;
             });
         } else if (rr.tagName === 'select') {
-            console.log("TODO");
+            rr.addEventListener('change', function () {
+                let opt = this.options[this.selectedIndex];
+                let v = opt.value;
+                // console.log(v);
+                el.properties.rrule[rr.name] = v;
+            });
         }
     }
 
