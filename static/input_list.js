@@ -9,6 +9,7 @@
 */
 
 
+/* private */
 function transferListeners(old_unit, new_unit) {
     for (let [o, n] of zip([old_unit, ...old_unit.querySelectorAll("*")],
                            [new_unit, ...new_unit.querySelectorAll("*")])) {
@@ -22,6 +23,7 @@ function transferListeners(old_unit, new_unit) {
 }
 
 
+/* private */
 function advance_final(input_list) {
     let old_unit = input_list.unit;
     let new_unit = old_unit.cloneNode(true);
@@ -31,7 +33,7 @@ function advance_final(input_list) {
 }
 
 
-
+/* private */
 function update_inline_list () {
 
     /* can target self */
