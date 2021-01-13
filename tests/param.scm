@@ -1,3 +1,8 @@
+;;; Commentary:
+;; Checks that parameters (1) are correctly parsed and stored.
+;; (1): 'A', and 'B' in the line "KEY;A=1;B=2:Some text"
+;;; Code:
+
 (((vcomponent base) param prop* parameters)
  ((vcomponent parse) parse-calendar)
  ((calp util) sort*))

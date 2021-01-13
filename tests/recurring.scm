@@ -1,3 +1,7 @@
+;;; Commentary:
+;; General tests of "generate-recurrence-set".
+;;; Code:
+
 (((srfi srfi-41) stream-take stream-map stream->list stream-car)
  ((datetime) day-stream)
  ((vcomponent base) extract prop)

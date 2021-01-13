@@ -1,3 +1,8 @@
+;;; Commentary:
+;; Basic tests that recurrence rule parsing works.
+;; Including that it fails on invalid output.
+;;; Code:
+
 (((vcomponent recurrence parse)
   parse-recurrence-rule)
  ((vcomponent recurrence) make-recur-rule)

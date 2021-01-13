@@ -1,3 +1,7 @@
+;;; Commentary:
+;; Tests my custom let*.
+;;; Code:
+
 (((calp util) let*)
  ((guile) set!))
 

@@ -1,3 +1,9 @@
+;;; Commentary:
+;; Tests that exceptions (in the recurrence-id meaning) 
+;; in recurrence sets are handled correctly.
+;; TODO Is however far from done.
+;;; Code:
+
 (((srfi srfi-41) stream->list)
  ((vcomponent) parse-calendar)
  ((vcomponent recurrence) generate-recurrence-set)

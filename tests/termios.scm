@@ -1,10 +1,8 @@
 ;;; Commentary:
-
 ;; Tests that my termios function works, at least somewhat.
-;; Note that this actually modifies the terminal it's run on, and might fail if
-;; the terminal doesn't support the wanted modes. See termios(3).
+;; Note that this actually modifies the terminal it's run on, and might fail 
+;; if the terminal doesn't support the wanted modes. See termios(3).
 ;; It might also leave the terminal in a broken state if exited prematurely.
-
 ;;; Code:
 
 (((calp util) set!)

@@ -1,3 +1,7 @@
+;;; Commentary:
+;; Test that vcomponent parsing works at all.
+;;; Code:
+
 (((vcomponent base) prop)
  ((vcomponent) parse-calendar))
 

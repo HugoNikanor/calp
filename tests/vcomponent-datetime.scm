@@ -1,3 +1,8 @@
+;;; Commentary:
+;; Tests that event-clamping (checking how long part of an event
+;; overlaps another time span) works.
+;;; Code:
+
 (((datetime)
   date time
   datetime)

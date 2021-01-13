@@ -1,9 +1,17 @@
 ;;; Commentary:
+;; Advanced tests of "generate-recurrence-set", along with 
+;; format-recurrence-rule which checks that human readable
+;; representations of the RRULES work.
+;;
+;; Also contains the tests for EXDATE.
+;;
+;; Examples copied from RFC5545
+;;; Code:
+
 ;; The human readable tests are expected to fail with any change to the
 ;; text creator. Proof-read them manually, and update the test cases
 ;; to match. `x-summary' used for target string. Target strings should
 ;; be in swedish.
-;;; Code:
 
 (((vcomponent recurrence parse) parse-recurrence-rule)
  ((vcomponent recurrence generate) generate-recurrence-set)
@@ -15,8 +23,6 @@
  ((calp util) -> set!)
  ((srfi srfi-41) stream->list)
  ((srfi srfi-88) keyword->string))
-
-;; Examples copied from RFC5545
 
 (define (run-test comp)
 

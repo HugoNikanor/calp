@@ -1,3 +1,11 @@
+;;; Commentary:
+;; Tests that datetime->unix-time correctly converts between Olssen
+;; timezone definitions (e.g. Europe/Stockholm), into correct times
+;; and offsets (in unix time).
+;; Also indirectly tests the Zone Info Compiler (datetime zic), since
+;; the zoneinfo comes from there.
+;;; Code:
+
 (((datetime)
   parse-ics-datetime
   datetime date time

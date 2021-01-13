@@ -1,6 +1,10 @@
+;;; Commentary:
+;; Test that Base64 encoding and decoding works
+;; Examples from RFC4648
+;;; Code:
+
 (((base64) base64encode base64decode))
 
-;; Examples from RFC4648
 
 (test-equal "" (base64encode ""))
 (test-equal "Zg==" (base64encode "f"))

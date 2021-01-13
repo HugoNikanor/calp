@@ -1,3 +1,8 @@
+;;; Commentary:
+;; Tests date, time, and datetime creation, 
+;; (output) formatting, and arithmetic.
+;;; Code:
+
 (((datetime) date+ date-
   time+ time-
   year month day

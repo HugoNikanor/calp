@@ -1,3 +1,7 @@
+;;; Commentary:
+;; Tests my parser for a subset of the C programming language.
+;;; Code:
+
 (((c lex) lex)
  ((c parse) parse-lexeme-tree))
 
