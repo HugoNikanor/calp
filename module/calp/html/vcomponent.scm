@@ -550,10 +550,16 @@
                   ("⤓" title: "Nedladdning"
                    (div (@ (class "eventtext") (style "font-family:sans"))
                         (h2 "Ladda ner")
-                        (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
-                                   "som iCal"))
-                            (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
-                                   "som xCal")))))
+                        (div (@ (class "side-by-side"))
+                             (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
+                                        "som iCal"))
+                                 (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
+                                        "som xCal")))
+                             ,@(when (debug)
+                                 `((ul
+                                    (li (button (@ (onclick "console.log(event_to_jcal(event_from_popup(this.closest('.popup-container'))));")) "js"))
+                                    (li (button (@ (onclick "console.log(jcal_to_xcal(event_to_jcal(event_from_popup(this.closest('.popup-container')))));")) "xml"))))))
+                        ))
 
                   ,@(when (prop ev 'RRULE)
                       `(("↺" title: "Upprepningar" class: "repeating"

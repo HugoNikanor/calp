@@ -173,6 +173,10 @@ html, body {
     }
 }
 
+li > button {
+    width: 100%;
+}
+
 /* Eventlist
 ----------------------------------------
 The sidebar with all the events
@@ -942,6 +946,10 @@ along with their colors.
     width: 1em;
     height: 1em;
     background-color: var(--color);
+}
+
+.side-by-side {
+    display: flex;
 }
 
 /* Icalendar
