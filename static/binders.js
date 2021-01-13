@@ -12,6 +12,7 @@ function bind_recur(el, e) {
 
     /* add listeners to bind-rr tags */
     for (let rr of e.querySelectorAll('.bind-rr')) {
+		/* TODO handle byday */
         if (rr.classList.contains('input-list')) {
             rr.addEventListener('input', function () {
                 let name = rr.attributes.name.value;
