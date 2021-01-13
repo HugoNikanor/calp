@@ -717,6 +717,16 @@
 (define*-public (string->date str optional: (fmt "~Y-~m-~d"))
   (get-date (string->datetime str fmt)))
 
+;; Parse @var{string} as either a date, time, or date-time.
+;; String MUST be on iso-8601 format.
+(define-public (string->date/-time string)
+  (define (contains symb)
+    (lambda (string) (string-contains string symb)))
+
+  (cond [string (contains "T") => string->datetime]
+        [string (contains ":") => string->time]
+        [string (contains "-") => string->date]))
+
 
 (define-public (parse-ics-date str)
   (string->date str "~Y~m~d"))
@@ -757,15 +767,14 @@
              time: ,(if verbose (time->sexp (get-time% dt)) (get-time% dt))
              tz: ,(tz dt)))
 
+
 (define (date-reader chr port)
+  (define (dt->sexp dt) (datetime->sexp dt #t) )
   (unread-char chr port)
-  (let ((line (symbol->string (read port))))
-    (cond [(string-contains line "T")
-           (-> line string->datetime (datetime->sexp #t))]
-          [(string-contains line ":")
-           (-> line string->time time->sexp)]
-          [(string-contains line "-")
-           (-> line string->date date->sexp)])))
+  (let ((data (string->date/-time (symbol->string (read port)))))
+    (cond [data datetime? => dt->sexp]
+          [data time? => time->sexp]
+          [data date? => date->sexp])))
 
 (read-hash-extend #\0 date-reader)
 (read-hash-extend #\1 date-reader)
