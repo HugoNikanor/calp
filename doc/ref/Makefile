@@ -1,4 +1,4 @@
-TEXI_FILES := $(wildcard *.texi)
+TEXI_FILES := $(shell find . -type f -name \*.texi)
 INFOFLAGS :=
 
 all: calp.info

@@ -1,4 +1,84 @@
-
 @node clock
 @section clock.js
 
+@deftp {(abstract) class} Clock
+Interface for ``things'' which wants to get updated on a human timescale.
+
+@defmethod Clock update now
+Called every now and then, with @var{now} being the current time.
+@end defmethod
+
+All instances are expected to implement @code{update}, but are free to
+implement any other methods they see fit.
+@end deftp
+
+Below, only the methods (including @code{constructor} and
+@code{update} which do something of note (excluding the expected))
+are noted.
+
+@deftp {class} Timebar @extends{Clock}
+The (blue) vertical line which show the current time in the current day.
+
+@c @defmethod Timebar constructor ∅
+@c @end defmethod
+@c 
+@c @defmethod Timebar update now
+@c @end defmethod
+@end deftp
+
+@deftp {class} SmallcalCellHighlight @extends{Clock}
+Highlights the current date in the small calendar to the side.
+Currently directly sets a border
+@TODO{but should preferably set a class instead}.
+
+@defmethod SmallcalCellHighlight constructor small_cal
+@var{small_cal} is the DOM-node of the calendar.
+(it should support querySelector).
+@end defmethod
+
+@c @defmethod SmallcalCellHighlight update now
+@c @end defmethod
+@end deftp
+
+@deftp {class} ButtonUpdater @extends{Clock}
+Updates the ``Today'' link in the side panel to point directly to the
+correct web-address. The link works without JavaScript, but then
+requires a redirect from the server.
+
+All actual updating logic is already abstracted away. It would be
+desirable if something more was done with this.
+
+@defmethod ButtonUpdater el proc
+Takes the element @var{el} to be updated, and the procedure @var{proc}
+which will be called with the element, and the current time.
+@end defmethod
+@end deftp
+
+
+As of commit
+@githash{c9719ce7937f0f0f2aa371ced1d585f67af22457,static/script.js,231} 
+all objects required manual setup. See static/script.js:
+
+@verbatim
+   231	    let start_time = document.querySelector("meta[name='start-time']").content;
+   232	    let end_time = document.querySelector("meta[name='end-time']").content;
+   233	
+   234	    const button_updater = new ButtonUpdater(
+   235	        document.getElementById("today-button"),
+   236	        (e, d) => e.href = d.format('~Y-~m-~d') + ".html"
+   237	    );
+   238	
+   239	    const sch = new SmallcalCellHighlight(
+   240	        document.querySelector('.small-calendar'))
+   241	
+   242	    const timebar = new Timebar(start_time, end_time);
+   243	
+   244	    timebar.update(new Date);
+   245	    window.setInterval(() => {
+   246	        let d = new Date;
+   247	        timebar.update(d);
+   248	        button_updater.update(d);
+   249	        sch.update(d);
+   250	    }, 1000 * 60);
+   251	
+@end verbatim

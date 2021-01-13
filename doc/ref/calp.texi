@@ -17,6 +17,27 @@ Copyright @copyright{} 2020 Hugo Hörnquist
 @alias nicode=code
 @end ifnotinfo
 
+@c @ifinfo
+@c @macro i{text}
+@c [3m\text\[0m
+@c @end macro
+@c @end ifinfo
+
+@c for use with deftp for extended classes
+@macro extends{class}
+@w{@i{extends} \class\}
+@end macro
+
+@c For things that should be fixed in the (actual) code.
+@c An ``invitation'' to the reader
+@macro TODO{text}
+text @footnote{Improvements welcome}
+@end macro
+
+@macro githash{hash,path,line}
+@url{https://git.hornquist.se/calp/tree/\path\?id=\hash\#n\line\,\hash\}
+@end macro
+
 @titlepage
 @title Calp
 @author Hugo Hörnquist

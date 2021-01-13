@@ -1,4 +1,39 @@
-
 @node date_time
 @section date_time.js
 
+@defun init_date_time
+@c possibly have special index for these
+@cindex dummy component
+Procedure which initializes the dummy component for date-time input.
+When called, finds all elements with class ``date-time'', and makes
+them date-time inputs.
+
+@c <input type='date-time'/>
+
+The expected HTML form is
+@example
+<div class="date-time" name="@var{name}">
+    <input type="date"/>
+    <input type="time"/>
+</div>
+@end example
+
+Each date-time gets the following fields:
+
+@defivar date_time value
+The current date-time value as a string,
+on the form @code{YYYY-mm-ddTHH:MM[:SS]}
+(@code{SS} if the underlying time input has it).
+
+A new date-time can also be set to the field, the same format as above
+is expected.
+@end defivar
+
+@defivar date_time name
+The ``name'' field of the date-time input. Since @code{name} note that
+this is an addition, since name is actually invalid on non-input
+components. We nevertheless use it here since we are emulating an
+input element.
+@end defivar
+
+@end defun
