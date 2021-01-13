@@ -10,7 +10,7 @@
 
 ;; Checks that parsing produces correct results
 (let* ((path args (parse-endpoint-string "/static/:dir/:file")))
-  (test-equal "/static/([^/]+)/([^/]+)" path)
+  (test-equal "/static/([^/.]+)/([^/.]+)" path)
   (test-equal '(dir file) args))
 
 
