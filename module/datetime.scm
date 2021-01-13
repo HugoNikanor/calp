@@ -37,13 +37,13 @@
   (dec december  ) 12)
 
 (define-many define-public
-  (sun) 0
-  (mon) 1
-  (tue) 2
-  (wed) 3
-  (thu) 4
-  (fri) 5
-  (sat) 6)
+  (sun sunday)    0
+  (mon monday)    1
+  (tue tuesday)   2
+  (wed wednesday) 3
+  (thu thursday)  4
+  (fri friday)    5
+  (sat saturday)  6)
 
 
 ;;; Configuration
