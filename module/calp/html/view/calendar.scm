@@ -39,7 +39,7 @@
 ;;; All this filtering is probably slow, and should be looked into.
 
 ;; TODO place this somewhere proper
-(define repo-url (make-parameter "https://git.hornquist.se"))
+(define repo-url (make-parameter "https://git.hornquist.se/calp"))
 
 
 ;; TODO document what @var{render-calendar} is supposed to take and return.
@@ -141,7 +141,7 @@
          (footer
           (@ (style "grid-area: footer"))
           (span "Page generated " ,(date->string (current-date)))
-          (span (a (@ (href ,(repo-url) "/calparse"))
+          (span (a (@ (href ,(repo-url)))
                    "Source Code")))
 
          ;; Small calendar and navigation
