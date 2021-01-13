@@ -44,6 +44,8 @@ Returns the @emph{value} slot of given field in @var{event}, creating it if need
 @end defun
 
 @defun bind_properties el [wide_event=false]
+@anchor{bind_properties}
+@ref{binders}
   Properties are icalendar properties.
 
   p['name'] to get and set value (also updates any connected slots)
