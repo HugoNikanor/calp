@@ -2,6 +2,13 @@
 -s
 !#
 
+;;; Commentary:
+;; Not a test, but a script that runs tests.
+;; Assumes that all other .scm files in this directory are test files,
+;; and should thereby follow the test-file syntax.
+;; TODO document the testfile syntax.
+;;; Code:
+
 (eval-when (compile load)
  (define here (dirname (current-filename))))
 
