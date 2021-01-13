@@ -85,9 +85,13 @@
   (make-routes
 
    ;; Manual redirect to not reserve root.
+   ;; Also reason for really ugly frontend redirect.
    (GET "/" ()
         (return '((content-type text/html))
-                (sxml->html-string '(a (@ (href "/today")) "Gå till idag"))))
+                (sxml->html-string
+                 '(body (a (@ (href "/today")) "Gå till idag")
+                        (script "window.onload = function() {
+  document.getElementsByTagName('a')[0].click();}")))))
 
    (GET "/favicon.ico" ()
         (return
