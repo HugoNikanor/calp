@@ -13,7 +13,7 @@
 
 
 ;; transform into weekday objects from
-(define (rfc->datetime-weekday symbol)
+(define-public (rfc->datetime-weekday symbol)
   (case symbol
     [(SU) sun]
     [(MO) mon]

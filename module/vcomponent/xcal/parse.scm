@@ -52,7 +52,13 @@
      (apply (@ (vcomponent recurrence internal) make-recur-rule)
             (concatenate
              (for (k v) in value
-                  (list (symbol->keyword k) v))))]
+                  (list (symbol->keyword k)
+                        (case k
+                          ((wkst)
+                           ((@ (vcomponent recurrence parse)
+                               rfc->datetime-weekday)
+                            (string->symbol v)))
+                          (else v))))))]
 
     [(time) (parse-iso-time (car value))]
 
