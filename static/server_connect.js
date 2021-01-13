@@ -21,19 +21,7 @@ async function remove_event (element) {
     }
 }
 
-async function create_event (event) {
-
-    // let xml = event.getElementsByTagName("icalendar")[0].outerHTML
-    let calendar = event.properties.calendar;
-
-    console.log(calendar/*, xml*/);
-
-    let data = new URLSearchParams();
-    data.append("cal", calendar);
-    // data.append("data", xml);
-
-    console.log(event);
-
+function event_to_jcal (event) {
     let properties = [];
 
     for (let prop of event.properties.ical_properties) {
@@ -74,6 +62,23 @@ async function create_event (event) {
         }
     }
 
+    return ['vevent', properties, [/* alarms go here */]]
+}
+
+async function create_event (event) {
+
+    // let xml = event.getElementsByTagName("icalendar")[0].outerHTML
+    let calendar = event.properties.calendar;
+
+    console.log(calendar/*, xml*/);
+
+    let data = new URLSearchParams();
+    data.append("cal", calendar);
+    // data.append("data", xml);
+
+    console.log(event);
+
+
 
     let jcal =
         ['vcalendar',
@@ -85,11 +90,11 @@ async function create_event (event) {
          ],
          [
              /* vtimezone goes here */
-             ['vevent', properties, [/* alarms go here */]],]
+             event_to_jcal(event),
+         ]
         ];
 
     console.log(jcal);
-    console.log(properties);
 
     let doc = jcal_to_xcal(jcal);
     console.log(doc);
