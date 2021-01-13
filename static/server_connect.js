@@ -98,7 +98,7 @@ async function create_event (event) {
 
     let doc = jcal_to_xcal(jcal);
     console.log(doc);
-    let str = doc.childNodes[0].outerHTML;
+    let str = doc.documentElement.outerHTML;
     console.log(str);
     data.append("data", str);
 
