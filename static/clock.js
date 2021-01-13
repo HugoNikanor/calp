@@ -16,14 +16,14 @@ class Timebar extends Clock {
 
 
     update(now) {
-        if (! (this.start_time <= now.getTime() && now.getTime() < this.end_time))
-            return;
+        // if (! (this.start_time <= now.getTime() && now.getTime() < this.end_time))
+        //     return;
 
         var event_area = document.getElementById(now.format("~Y-~m-~d"))
 
         if (event_area) {
             if (this.bar_object) {
-                this.bar_object.parentNode.removeChild(bar_object)
+                this.bar_object.parentNode.removeChild(this.bar_object)
             } else {
                 this.bar_object = makeElement ('div', {
                     id: 'bar',
