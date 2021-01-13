@@ -1,13 +1,45 @@
 ;;; Commentary:
+;; Basic tests that recurrence rule parsing works.
+;; Including that it fails on invalid output.
+;;
+;;
 ;; General tests of "generate-recurrence-set".
 ;;; Code:
 
 (((srfi srfi-41) stream-take stream-map stream->list stream-car)
- ((datetime) day-stream)
+ ((datetime) day-stream mon)
  ((vcomponent base) extract prop)
 
+ ((calp util exceptions) warnings-are-errors warning-handler)
+ ((guile) format)
+
  ((vcomponent) parse-calendar)
- ((vcomponent recurrence) generate-recurrence-set))
+ ((vcomponent recurrence) 
+  parse-recurrence-rule
+  make-recur-rule
+  generate-recurrence-set))
+
+;;; Test that basic parsing or recurrence rules work.
+
+(test-equal (make-recur-rule freq: 'HOURLY wkst: mon interval: 1)
+  (parse-recurrence-rule "FREQ=HOURLY"))
+
+(test-equal (make-recur-rule freq: 'HOURLY count: 3 interval: 1 wkst: mon)
+    (parse-recurrence-rule "FREQ=HOURLY;COUNT=3"))
+
+;;; Test that recurrence rule parsing fails where appropriate
+
+(parameterize ((warnings-are-errors #t)
+               (warning-handler identity))  ; silence warnings
+  (test-error "Invalid FREQ" 'warning
+              (parse-recurrence-rule "FREQ=ERR;COUNT=3"))
+
+  (test-error "Negative COUNT" 'warning
+              (parse-recurrence-rule "FREQ=HOURLY;COUNT=-1"))
+
+  (test-error "Invalid COUNT"
+              'wrong-type-argument
+              (parse-recurrence-rule "FREQ=HOURLY;COUNT=err")) )
 
 ;;; Test that basic recurrence works
 ;;; also see the neighbour test file recurrence.scm for more tests.
@@ -162,3 +194,49 @@ END:VEVENT"
 
 (test-assert "Full test"
   (stream-car (generate-recurrence-set ev)))
+
+;;; Tests that exceptions (in the recurrence-id meaning) 
+;;; in recurrence sets are handled correctly.
+;;; TODO Is however far from done.
+
+(define uid (symbol->string (gensym "areallyuniqueid")))
+
+;; TODO standardize vcomponents for tests as xcal, for example:
+`(vcalendar
+   (children
+     (vevent
+       (properties
+         (summary (text "Changing type on Recurrence-id."))
+         (uid (text ,uid))
+         (dtstart (date "20090127"))))
+     (vevent
+       (properties
+         (summary (text "Changing type on Recurrence-id."))
+         (uid (text ,uid))
+         (dtstart (params (TZID "Europe/Stockholm")) 
+                  (date-time "20100127T120000"))
+         (recurrence-id (date "20100127"))
+         (summary "This instance only has a time component")))))
+
+(define ev
+ (call-with-input-string
+     (format #f "BEGIN:VCALENDAR
+BEGIN:VEVENT
+SUMMARY:Changing type on Recurrence-id.
+UID:~a
+DTSTART;VALUE=DATE:20090127
+END:VEVENT
+BEGIN:VEVENT
+UID:~a
+SUMMARY:Changing type on Recurrence-id.
+DTSTART;TZID=Europe/Stockholm:20100127T120000
+RECURRENCE-ID;VALUE=DATE:20100127
+SUMMARY:This instance only has a time component
+END:VEVENT
+END:VCALENDAR"
+             uid uid)
+   parse-calendar))
+
+
+(test-assert "Changing type on Recurrence id."
+  (stream->list 10 (generate-recurrence-set ev)))
