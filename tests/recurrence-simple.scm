@@ -1,9 +1,7 @@
 ;;; Commentary:
-;; Basic tests that recurrence rule parsing works.
-;; Including that it fails on invalid output.
-;;
-;;
-;; General tests of "generate-recurrence-set".
+;; Simples tests of recurrence system, ensuring that all parsers and
+;; basic generators work. Some more fully-featured tests are here, but
+;; most are instead in recurrence-advanced.scm.
 ;;; Code:
 
 (((srfi srfi-41) stream-take stream-map stream->list stream-car)

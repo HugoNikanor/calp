@@ -1,11 +1,14 @@
 ;;; Commentary:
-;; Advanced tests of "generate-recurrence-set", along with 
-;; format-recurrence-rule which checks that human readable
-;; representations of the RRULES work.
+;; Tests of recurrence rule generation with focus on correct instances
+;; being generated. For tests of basic recurrence functionallity, see
+;; recurrence-simple.scm.
+;;
+;; This file also tests format-recurrence-rule, which checks that human
+;; readable representations of the RRULES work.
 ;;
 ;; Also contains the tests for EXDATE.
 ;;
-;; Examples copied from RFC5545
+;; Most examples copied from RFC5545, some home written.
 ;;; Code:
 
 ;; The human readable tests are expected to fail with any change to the
