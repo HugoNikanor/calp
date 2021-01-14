@@ -58,7 +58,31 @@
                            ((@ (vcomponent recurrence parse)
                                rfc->datetime-weekday)
                             (string->symbol v)))
-                          (else v))))))]
+                          ((freq) (string->symbol v))
+                          ((until)
+                           ;; RFC 6321 (xcal), p. 30 specifies type-until as
+                           ;;     type-until = element until {
+                           ;;         type-date |
+                           ;;         type-date-time
+                           ;;     }
+                           ;; but doesn't bother defining type-date[-time]...
+                           ;; This is acknowledged in errata 3315 [1], but
+                           ;; it lacks a solution...
+                           ;; Seeing as RFC 7265 (jcal) in Example 2 (p. 16)
+                           ;; show the date as a direct string we will roll
+                           ;; with that here to.
+                           ;; [1]: https://www.rfc-editor.org/errata/eid3315
+                           (string->date/-time v))
+                        ((byday) #|TODO|#
+                         (throw 'not-yet-implemented))
+                        ((count interval bysecond bymunite byhour
+                                bymonthday byyearday byweekno
+                                bymonth bysetpos)
+                         (string->number v))
+                        (else (throw
+                               'key-error
+                               "Invalid key ~a, with value ~a"
+                               k v)))))))]
 
     [(time) (parse-iso-time (car value))]
 
