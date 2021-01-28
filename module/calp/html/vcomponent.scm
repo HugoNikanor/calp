@@ -544,8 +544,9 @@
                 `(("📅" title: "Översikt"
                    ,(fmt-single-event ev))
 
-                  ("📅" title: "Redigera"
-                   ,(fmt-for-edit ev))
+                  ,@(when (edit-mode)
+                     `(("📅" title: "Redigera"
+                        ,(fmt-for-edit ev))))
 
                   ("⤓" title: "Nedladdning"
                    (div (@ (class "eventtext") (style "font-family:sans"))
