@@ -542,19 +542,74 @@ function bind_properties (el, wide_event=false) {
 
         /* Bind vcomponent fields for this event */
         for (let s of el.querySelectorAll(`${field} > :not(parameters)`)) {
+            /* s ≡ <date-time>...</date-time> */
 
             /* Binds value from XML-tree to javascript object
                [parsedate]
 
                TODO capture xcal type here, to enable us to output it to jcal later.
             */
-            switch (field) {
-            case 'rrule':
-                el.properties['_value_rrule'] = recur_xml_to_rrule(s);
+            let parsedValue;
+            let type = s.tagName.toLowerCase();
+            switch (type) {
+            case 'float':
+            case 'integer':
+                parsedValue = new Number(s.innerHTML);
+                parsedValue.type = type;
                 break;
+
+            case 'date-time':
+            case 'date':
+                parsedValue = parseDate(s.innerHTML);
+                break;
+
+                /* TODO */
+            case 'duration':
+                let start = s.getElementsByTagName('start');
+                let end = s.getElementsByTagName('end, duration');
+                if (end.tagName === 'period') {
+                    parsePeriod(end.innerHTML);
+                }
+                break;
+                /* TODO */
+            case 'period':
+                parsePeriod(s.innerHTML);
+                break;
+                /* TODO */
+            case 'utc-offset':
+                break;
+
+            case 'recur':
+                parsedValue = recur_xml_to_rrule(s);
+                break;
+
+            case 'boolean':
+                switch (s.innerHTML) {
+                case 'true':  parsedValue = true; break;
+                case 'false': parsedValue = false; break;
+                default: throw "Value error"
+                }
+                break;
+
+
+            case 'binary':
+                /* Binary is going to be BASE64 decoded, allowing us to ignore
+                   it and handle it as a string for the time being */
+            case 'cal-address':
+            case 'text':
+            case 'uri':
+                /* TODO Attributes on strings doesn't work 
+                   They do however work on String:s
+                */
+                parsedValue = s.innerHTML;
+                // parsedValue.type = type;
+                break;
+
             default:
-                el.properties["_value_" + field] = s.innerHTML;
+                parsedValue.type = 'unknown';
+                parsedValue = s.innerHTML;
             }
+            el.properties['_value_rrule'] = parsedValue;
         }
     }
 
@@ -569,7 +624,7 @@ function bind_properties (el, wide_event=false) {
 
     if (el.properties.dtstart) {
         /* [parsedate] */
-        el.properties.dtstart = parseDate(el.properties.dtstart);
+        // el.properties.dtstart = parseDate(el.properties.dtstart);
         get_property(el, 'dtstart').push(
             [el.style, (s, v) =>
              s[wide_event?'left':'top'] = 100 * (to_local(v) - start)/(end - start) + "%"]);
@@ -577,7 +632,7 @@ function bind_properties (el, wide_event=false) {
 
 
     if (el.properties.dtend) {
-        el.properties.dtend = parseDate(el.properties.dtend);
+        // el.properties.dtend = parseDate(el.properties.dtend);
         get_property(el, 'dtend').push(
             // TODO right and bottom only works if used from the start. However,
             // events from the backend instead use top/left and width/height.

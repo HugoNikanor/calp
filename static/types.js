@@ -3,16 +3,16 @@ let all_types = [
     'text',
     'uri',
     'binary',
-    'float',
-    'integer',
-    'date-time',
-    'date',
+    'float',        /* Number.type = 'float' */
+    'integer',      /* Number.type = 'integer' */
+    'date-time',    /* Date */
+    'date',         /* Date.dateonly = true */
     'duration',
     'period',
     'utc-offset',
     'cal-address',
-    'recur',
-    'boolean',
+    'recur',        /* RRule */
+    'boolean',      /* boolean */
 ]
 
 let property_names = [

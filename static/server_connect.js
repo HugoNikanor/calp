@@ -52,6 +52,7 @@ function event_to_jcal (event) {
                 type = 'recur';
                 value = v.asJcal();
             }
+
             /* TODO period */
             else {
                 /* text types */
