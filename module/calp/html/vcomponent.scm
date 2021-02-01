@@ -509,7 +509,7 @@
                              (else (error "Unknown field, " key))))
 
                          ;; TODO enable this button
-                         (td (button (@ (class "clear-input") (title "Rensa input")) "X"))
+                         (td (button (@ (class "clear-input") (title "Rensa input")) "🗙"))
                          ))
                   '(freq until count interval bysecond byminute byhour
                          byday bymonthday byyearday byweekno bymonth bysetpos
