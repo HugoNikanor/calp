@@ -24,6 +24,8 @@
                     ,(when has-query?
                        (with-output-to-string
                          (lambda () (pretty-print search-term))))))
+     (label (@ (for "onlyfuture")) "limit to future occurences")
+     (input (@ (name "onlyfuture") (id "onlyfuture") (type checkbox)))
      (input (@ (type submit))))
     ,@(if errors
           `((h2 "Error searching")

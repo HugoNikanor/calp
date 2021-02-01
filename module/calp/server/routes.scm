@@ -361,8 +361,12 @@
                                  (prop event 'SUMMARY)))))
                         ))))))
 
-   (GET "/search" (q p)
-        (define search-term (and=> q prepare-string))
+   (GET "/search" (q p onlyfuture)
+        (define search-term
+          (if onlyfuture
+              `(and (date/-time<=? ,(current-datetime) (prop event 'DTSTART))
+                    ,(and=> q prepare-string))
+              (and=> q prepare-string)))
 
         ;; keep original string for links below. Should guarantee that it's correct.
         (define q= (if (not q)
