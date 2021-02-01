@@ -49,10 +49,14 @@ class SmallcalCellHighlight extends Clock {
             this.current_cell.style.border = "";
         }
 
+        /* This is expeced to fail if the current date is not
+           currently on screen. */
         this.current_cell = this.small_cal.querySelector(
             "time[datetime='" + now.format("~Y-~m-~d") + "']");
 
-        this.current_cell.style.border = "1px solid black";
+        if (this.current_cell) {
+            this.current_cell.style.border = "1px solid black";
+        }
     }
 }
 
