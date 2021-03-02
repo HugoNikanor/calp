@@ -21,51 +21,6 @@ async function remove_event (element) {
     }
 }
 
-function event_to_jcal (event) {
-    let properties = [];
-
-    for (let prop of event.properties.ical_properties) {
-        let v = event.properties[prop];
-        if (v !== undefined) {
-
-            let type = 'text';
-            let value;
-
-            if (v instanceof Array) {
-            } else if (v instanceof Date) {
-                if (v.isWholeDay) {
-                    type = 'date';
-                    value = v.format("~Y-~m-~d");
-                } else {
-                    type = 'date-time';
-                    /* TODO TZ */
-                    value = v.format("~Y-~m-~dT~H:~M:~S");
-                }
-            } else if (v === true || v === false) {
-                type = 'boolean';
-                value = v;
-            } else if (typeof(v) == 'number') {
-                /* TODO float or integer */
-                type = 'integer';
-                value = v;
-            } else if (v instanceof RRule) {
-                type = 'recur';
-                value = v.asJcal();
-            }
-
-            /* TODO period */
-            else {
-                /* text types */
-                value = v;
-            }
-
-            properties.push([prop, {}, type, value]);
-        }
-    }
-
-    return ['vevent', properties, [/* alarms go here */]]
-}
-
 async function create_event (event) {
 
     // let xml = event.getElementsByTagName("icalendar")[0].outerHTML
@@ -91,7 +46,7 @@ async function create_event (event) {
          ],
          [
              /* vtimezone goes here */
-             event_to_jcal(event),
+             event.properties.to_jcal()
          ]
         ];
 

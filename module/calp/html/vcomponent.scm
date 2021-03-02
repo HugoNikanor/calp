@@ -559,7 +559,9 @@
                              ,@(when (debug)
                                  `((ul
                                     (li (button (@ (onclick "console.log(event_to_jcal(event_from_popup(this.closest('.popup-container'))));")) "js"))
-                                    (li (button (@ (onclick "console.log(jcal_to_xcal(event_to_jcal(event_from_popup(this.closest('.popup-container')))));")) "xml"))))))
+                                    (li (button (@ (onclick "console.log(jcal_to_xcal(event_to_jcal(event_from_popup(this.closest('.popup-container')))));")) "xml"))
+                                    (li (button (@ (onclick "console.log(event_from_popup(this.closest('.popup-container')))")) "this"))
+                                    ))))
                         ))
 
                   ,@(when (prop ev 'RRULE)
