@@ -439,6 +439,23 @@ along with their colors.
         grid-column-start: 2;
         position: relative;
     }
+
+    .week-indicator {
+        grid-row: 1 / span 2;
+    }
+
+    .sideclock {
+        grid-row: 3;
+    }
+}
+
+.week-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 200%;
+    color: $gray;
 }
 
 .events {

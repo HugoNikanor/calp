@@ -25,6 +25,12 @@
     `((script "const VIEW='week';")
       (div (@ (class "calendar"))
            (div (@ (class "days"))
+                ;; Top left area
+                (div (@ (class "week-indicator"))
+                     (span (@ (style "font-size: 50%")) "v.")  ; figure out if we want this...
+                     ,@(->> (week-number start-date)
+                            number->string string->list
+                            (map (lambda (c) `(span ,(string c))))))
                 ,@(time-marker-div)
                 (div (@ (class "longevents event-container")
                         (data-start ,(date->string start-date) )
@@ -53,10 +59,7 @@
 
 
 (define (time-marker-div)
-  ;; element to make rest of grid align correct.
-  ;; Could be extended to contain something fun.
-  `((div (@ (style "grid-row: 1 / span 2")))
-    (div (@ (class "sideclock"))
+  `((div (@ (class "sideclock"))
          ,@(map (lambda (time)
                   `(div (@ (class "clock clock-" ,time))
                         (span (@ (class "clocktext"))
