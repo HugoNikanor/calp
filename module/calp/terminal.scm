@@ -188,6 +188,7 @@
      ;; TODO this should be local time
      ;; currently it's UTC (maybe?)
      (set! (current-page this) (current-date)
+           (cached-events this) #f
            (active-element this) 0))
 
     ((#\/) (set-cursor-pos 0 (1- height))
