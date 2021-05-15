@@ -15,9 +15,26 @@ class VComponent {
         el.properties = this;
         this.html_element = el;
 
+        /*
+          List of field listeners, which are all notified whenever
+          the listened for field is updated.
+          - keys are field names
+          - values MUST be a pair of
+            + a javascript object to update
+            + a prodecude taking that object, and the new value
+         */
         this._slots = {}
+
+        /* VCalParameter objects */
         this._values = {}
 
+        /*
+          All properties on this object which are part of the vcomponent.
+          Ideally simply looping through all javascript fields would be nice,
+          but we only want to export some.
+
+          Popuplated by iCalendars built in types per default, and extended
+         */
         this.ical_properties = new Set();
 
         let popup = popup_from_event(el);
@@ -46,6 +63,7 @@ class VComponent {
                 eval(p.dataset.bindby)(el, e);
             } else {
                 if (e.classList.contains('summary')) {
+                    /* TODO transfer data from backend to frontend in a better manner */
                     console.log (this.get(e.dataset.property));
                 }
                 let f = (s, v) => {
@@ -98,6 +116,7 @@ class VComponent {
                                }]);
         }
 
+        /* Popuplate default types, see types.js for property_names */
         for (let property of property_names) {
             this.ical_properties.add(property)
             // console.log("prop", property)
@@ -105,12 +124,14 @@ class VComponent {
                 this, property,
                 {
                     get: function() {
-                        return this._values[property].value;
+                        return this._values[property];
                     },
                     set: function (value) {
                         console.log("set", property, value);
                         this._values[property].value = value;
                         console.log(this._slots[property]);
+                        /* TODO validate type */
+                        /* See valid_input_types and all_types */
                         for (let [slot,updater] of this._slots[property]) {
                             console.log(updater, slot);
                             updater(slot, value);
@@ -215,8 +236,10 @@ class VComponent {
             /* [parsedate] */
             // el.properties.dtstart = parseDate(el.properties.dtstart);
             this.get('dtstart').push(
-                [el.style, (s, v) =>
-                    s[wide_event?'left':'top'] = 100 * (to_local(v.value) - start)/(end - start) + "%"]);
+                [el.style, (s, v) => {
+                    console.log(v);
+                    s[wide_event?'left':'top'] = 100 * (to_local(v.value) - start)/(end - start) + "%";
+                } ]);
         }
 
 
@@ -279,9 +302,12 @@ class VComponent {
         /* ??? */
         // for (let prop of event.properties.ical_properties) {
         for (let prop of this.ical_properties) {
+            console.log(prop);
             let v = this[prop];
             if (v !== undefined) {
-                properties.push([prop] + v.to_jcal());
+                let sub = v.to_jcal();
+                sub.unshift(prop);
+                properties.push(sub);
             }
         }
 
@@ -289,6 +315,20 @@ class VComponent {
     }
 }
 
+
+
+/* "Body" of a vcomponent field.
+   For example, given the JCal
+   ["dtstamp", {}, "date-time", "2006-02-06T00:11:21Z"],
+   this class would have
+   VCalParameter {
+       type = "date-time",
+       properties = {},
+       _value = new Date(2006,1,6,0,11,21)
+    }
+    And returns [{}, "date-time", "2006-02-06T00:11:21Z"]
+    when serialized
+   */
 class VCalParameter {
     constructor (type, value, properties={}) {
         this.type = type;
@@ -306,6 +346,7 @@ class VCalParameter {
 
     to_jcal() {
         let value;
+        let v = this._value;
         switch (this.type) {
         case 'binary':
             /* TOOD */

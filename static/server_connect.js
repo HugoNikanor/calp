@@ -21,6 +21,23 @@ async function remove_event (element) {
     }
 }
 
+function event_to_jcal (event) {
+    /* encapsulate event in a shim calendar, to ensure that
+       we always send correct stuff */
+    return ['vcalendar',
+            [
+                /*
+                  'prodid' and 'version' are technically both required (RFC 5545,
+                  3.6 Calendar Components).
+                */
+            ],
+            [
+                /* vtimezone goes here */
+                event.properties.to_jcal()
+            ]
+           ];
+}
+
 async function create_event (event) {
 
     // let xml = event.getElementsByTagName("icalendar")[0].outerHTML
@@ -34,23 +51,9 @@ async function create_event (event) {
 
     console.log(event);
 
+    let jcal = event_to_jcal(event);
 
 
-    let jcal =
-        ['vcalendar',
-         [
-             /*
-               'prodid' and 'version' are technically both required (RFC 5545,
-               3.6 Calendar Components).
-              */
-         ],
-         [
-             /* vtimezone goes here */
-             event.properties.to_jcal()
-         ]
-        ];
-
-    console.log(jcal);
 
     let doc = jcal_to_xcal(jcal);
     console.log(doc);
