@@ -64,15 +64,15 @@ class VComponent {
             } else {
                 if (e.classList.contains('summary')) {
                     /* TODO transfer data from backend to frontend in a better manner */
-                    console.log (this.get(e.dataset.property));
+                    console.log (this.get_callback_list(e.dataset.property));
                 }
                 let f = (s, v) => {
                     console.log(s, v);
                     s.innerHTML = v.format(s.dataset && s.dataset.fmt);
                 };
-                this.get(e.dataset.property).push([e, f]);
+                this.get_callback_list(e.dataset.property).push([e, f]);
                 if (e.classList.contains('summary')) {
-                    console.log (this.get(e.dataset.property));
+                    console.log (this.get_callback_list(e.dataset.property));
                 }
                 // console.log("registreing", e, e.dataset.property, this);
             }
@@ -82,7 +82,7 @@ class VComponent {
 
         for (let field of ['dtstart', 'dtend']) {
 
-            this.get(`--${field}-time`).push(
+            this.get_callback_list(`--${field}-time`).push(
                 [el, (el, v) => { let date = this[field];
                                  if (v == '') return;
                                  let [h,m,s] = v.split(':')
@@ -90,7 +90,7 @@ class VComponent {
                                  date.setMinutes(Number(m));
                                  date.setSeconds(0);
                                  this[field] = date; }])
-            this.get(`--${field}-date`).push(
+            this.get_callback_list(`--${field}-date`).push(
                 [el, (el, v) => { let date = this[field];
                                  if (v == '') return;
                                  let [y,m,d] = v.split('-')
@@ -106,7 +106,7 @@ class VComponent {
                NOTE if many more fields require special treatment then a
                general solution is required.
             */
-            this.get(field).push(
+            this.get_callback_list(field).push(
                 [el, (el, v) => { popup
                                  .querySelector(`.edit-tab input[name='${field}-time']`)
                                  .value = v.format("~H:~M");
@@ -235,7 +235,7 @@ class VComponent {
         if (this.dtstart) {
             /* [parsedate] */
             // el.properties.dtstart = parseDate(el.properties.dtstart);
-            this.get('dtstart').push(
+            this.get_callback_list('dtstart').push(
                 [el.style, (s, v) => {
                     console.log(v);
                     s[wide_event?'left':'top'] = 100 * (to_local(v.value) - start)/(end - start) + "%";
@@ -245,7 +245,7 @@ class VComponent {
 
         if (this.dtend) {
             // el.properties.dtend = parseDate(el.properties.dtend);
-            this.get('dtend').push(
+            this.get_callback_list('dtend').push(
                 // TODO right and bottom only works if used from the start. However,
                 // events from the backend instead use top/left and width/height.
                 // Normalize so all use the same, or find a way to convert between.
@@ -261,7 +261,7 @@ class VComponent {
         }
 
         // let calprop = get_property(el, 'calendar', el.dataset.calendar);
-        let calprop = this.get('calendar', el.dataset.calendar);
+        let calprop = this.get_callback_list('calendar', el.dataset.calendar);
 
         const rplcs = (s, v) => {
             let [_, calclass] = s.classList.find(/^CAL_/);
@@ -285,7 +285,7 @@ class VComponent {
       default_value - default value when creating
       bind_to_ical - should this property be added to the icalendar subtree?
     */
-    get(field, default_value) {
+    get_callback_list(field, default_value) {
         // let el = this.html_element;
         if (! this._slots[field]) {
             this._slots[field] = [];

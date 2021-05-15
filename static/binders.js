@@ -7,7 +7,7 @@
 function bind_recur(el, e) {
     /* todo bind default slots of rrule */
 
-    let p = el.properties.get('rrule');
+    let p = el.properties.get_callback_list('rrule');
     // let rrule = el.rrule;
 
     /* add listeners to bind-rr tags */
@@ -62,7 +62,7 @@ function bind_recur(el, e) {
 }
 
 function bind_edit(el, e) {
-    let p = el.properties.get(e.dataset.property);
+    let p = el.properties.get_callback_list(e.dataset.property);
     e.addEventListener('input', function () {
         el.properties[e.dataset.property] = this.value;
     });
@@ -90,7 +90,7 @@ function bind_edit(el, e) {
 
 function bind_view(el, e) {
     let f = (s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt);
-    el.properties.get(e.dataset.property).push([e, f]);
+    el.properties.get_callback_list(e.dataset.property).push([e, f]);
 }
 
 
