@@ -117,7 +117,10 @@
     (script (@ (defer) (src "/static/date_time.js")))
     (script (@ (defer) (src "/static/vcal.js")))
     (script (@ (defer) (src "/static/script.js")))
-    ,(calendar-styles calendars))
+    ,(calendar-styles calendars)
+
+    ,@(when (debug)
+        '((style ".root { background-color: pink; }"))))
 
    (body
     (div (@ (class "root"))
