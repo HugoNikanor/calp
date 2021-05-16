@@ -314,6 +314,12 @@ window.onload = function () {
 
 		    popupElement.querySelector("input[name='summary']").focus();
 
+                    /* This assumes that it's unchecked beforehand.
+                       Preferably we would just ensure that it's checked here,
+                       But we also need to make sure that the proper handlers
+                       are run then */
+                    popupElement.querySelector("input[name='wholeday']").click();
+
                 });
         }
     }
