@@ -68,7 +68,7 @@ class VComponent {
                 // }
                 let f = (s, v) => {
                     console.log(s, v);
-                    s.innerHTML = v.format(s.dataset && s.dataset.fmt);
+                    s.innerText = v.format(s.dataset && s.dataset.fmt);
                 };
                 this.get_callback_list(e.dataset.property).push([e, f]);
                 // if (e.classList.contains('summary')) {

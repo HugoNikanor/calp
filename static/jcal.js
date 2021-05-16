@@ -2,25 +2,25 @@ function jcal_type_to_xcal(doc, type, value) {
     let el = doc.createElementNS(xcal, type);
     switch (type) {
     case 'boolean':
-        el.innerHTML = value ? "true" : "false";
+        el.textContent = value ? "true" : "false";
         break;
 
     case 'float':
     case 'integer':
-        el.innerHTML = '' + value;
+        el.textContent = '' + value;
         break;
 
     case 'period':
         let [start, end] = value;
         let startEl = doc.createElementNS(xcal, 'start');
-        startEl.innerHTML = start;
+        startEl.textContent = start;
         let endEL;
         if (end.find('P')) {
             endEl = doc.createElementNS(xcal, 'duration');
         } else {
             endEl = doc.createElementNS(xcal, 'end');
         }
-        endEl.innerHTML = end;
+        endEl.textContent = end;
         el.appendChild(startEl);
         el.appendChild(endEl);
         break;
@@ -29,7 +29,7 @@ function jcal_type_to_xcal(doc, type, value) {
         for (var key in value) {
             if (! value.hasOwnProperty(key)) continue;
             let e = doc.createElementNS(xcal, key);
-            e.innerHTML = value[key];
+            e.textContent = value[key];
             el.appendChild(e);
         }
         break;
@@ -45,7 +45,7 @@ function jcal_type_to_xcal(doc, type, value) {
     case 'uri':
     case 'cal-address':
     case 'utc-offset':
-        el.innerHTML = value;
+        el.textContent = value;
         break;
 
     default:
@@ -77,7 +77,7 @@ function jcal_property_to_xcal_property(doc, jcal) {
 
         for (let v of asList(params[key])) {
             let text = doc.createElementNS(xcal, 'text');
-            text.innerHTML = '' + v;
+            text.textContent = '' + v;
             el.appendChild(text);
         }
 
@@ -98,8 +98,8 @@ function jcal_property_to_xcal_property(doc, jcal) {
             let [x, y] = values[0];
             let lat = doc.createElementNS(xcal, 'latitude')
             let lon = doc.createElementNS(xcal, 'longitude')
-            lat.innerHTML = x;
-            lon.innerHTML = y;
+            lat.textContent = x;
+            lon.textContent = y;
             tag.appendChild(lat);
             tag.appendChild(lon);
         } else {
@@ -111,18 +111,18 @@ function jcal_property_to_xcal_property(doc, jcal) {
             // assert values[0] instanceof Array
             let [code, desc, ...data] = values[0];
             let codeEl = doc.createElementNS(xcal, 'code')
-            code.innerHTML = code;
+            code.textContent = code;
             tag.appendChild(codeEl);
 
 
             let descEl = doc.createElementNS(xcal, 'description')
-            desc.innerHTML = desc;
+            desc.textContent = desc;
             tag.appendChild(descEl);
 
             if (data !== []) {
                 data = data[0];
                 let dataEl = doc.createElementNS(xcal, 'data')
-                data.innerHTML = data;
+                data.textContent = data;
                 tag.appendChild(dataEl);
             }
         } else {

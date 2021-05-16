@@ -89,7 +89,7 @@ function bind_edit(el, e) {
 }
 
 function bind_view(el, e) {
-    let f = (s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt);
+    let f = (s, v) => s.innerText = v.format(s.dataset && s.dataset.fmt);
     el.properties.get_callback_list(e.dataset.property).push([e, f]);
 }
 
