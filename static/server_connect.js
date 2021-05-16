@@ -1,6 +1,6 @@
 
 async function remove_event (element) {
-    let uid = element.querySelector("icalendar uid text").innerHTML;
+    let uid = element.querySelector("icalendar uid text").textContent;
 
     let data = new URLSearchParams();
     data.append('uid', uid);

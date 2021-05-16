@@ -78,7 +78,7 @@ function bind_edit(el, e) {
         p.push([e, f])
         break;
     case 'textarea':
-        f = (s, v) => s.innerHTML = v;
+        f = (s, v) => s.textContent = v;
         p.push([e, f])
         break;
     default:

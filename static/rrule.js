@@ -2,7 +2,7 @@ function recur_xml_to_rrule(dom_element) {
     let rr = new RRule;
     for (let child of dom_element.children) {
         let key = child.tagName; /* freq */
-        let val = child.innerHTML; /* weekly */
+        let val = child.textContent; /* weekly */
         rr[key] = val;
     }
     return rr;
@@ -71,7 +71,7 @@ class RRule {
             if (! v) continue;
             let tag = doc.createElementNS(xcal, f);
             /* TODO type formatting */
-            tag.innerHTML = `${v}`;
+            tag.textContent = `${v}`;
             root.appendChild(tag);
         }
         return root;
