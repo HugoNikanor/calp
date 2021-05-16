@@ -110,3 +110,37 @@ function bind_wholeday(el, e) {
         }
     });
 }
+
+
+/* used for dtstart and dtend input boxes
+   init_date_time MUST be called beforehand
+*/
+function bind_date_time(el, e) {
+    e.addEventListener('input', function () {
+        let dt = el.properties[e.name].value;
+        if (e.value == '') return;
+        let y, m, d, h, s;
+        switch (this.type) {
+        case 'date':
+            [y,m,d] = this.value.split('-')
+            dt.setYear(Number(y)/* - 1900 */);
+            dt.setMonth(Number(m) - 1);
+            dt.setDate(d);
+            break;
+        case 'time':
+            [h,m,s] = this.value.split(':')
+            dt.setHours(Number(h));
+            dt.setMinutes(Number(m));
+            dt.setSeconds(0);
+            break;
+        default:
+            console.log("How did you get here??? ", e);
+        }
+
+        el.properties[e.name] = dt;
+    });
+
+    el.properties.get_callback_list(e.name).push(
+        [e, (s, v) => s.value = v.format("~Y-~m-~dT~H:~M")]);
+
+}

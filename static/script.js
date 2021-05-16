@@ -14,17 +14,29 @@ class EventCreator {
     }
 
     create_empty_event () {
+        /* TODO this doesn't clone JS attributes */
+
         let event = document.getElementById("event-template")
             .firstChild.cloneNode(true);
         let popup = document.getElementById("popup-template")
             .firstChild.cloneNode(true);
 
-        /* TODO shouldn't this use transferListeners (or similar)?
+        /* -------------------- */
+        /* Manually transfer or recreate attributes which we still need */
+        /* TODO shouldn't these use transferListeners (or similar)?
            See input_list.js:transferListeners */
+
+        for (let dt of popup.getElementsByClassName("date-time")) {
+            init_date_time_single(dt);
+        }
+
         popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
             create_event(event);
             return false; /* stop default */
         }
+
+        /* -------------------- */
+        /* Fix tabs for newly created popup */
 
         let id = gensym ("__js_event");
 
@@ -43,7 +55,11 @@ class EventCreator {
         let nav = popup.getElementsByClassName("popup-control")[0];
         bind_popup_control(nav);
 
+        /* -------------------- */
+
         // TODO download links
+
+        /* -------------------- */
 
         event.id = id;
         popup.id = "popup" + id;
@@ -261,6 +277,8 @@ window.onload = function () {
         sch.update(d);
     }, 1000 * 60);
 
+    init_date_time();
+
     /* Is event creation active? */
     if (EDIT_MODE) {
         let eventCreator = new EventCreator;
@@ -294,7 +312,7 @@ window.onload = function () {
                     let popupElement = document.getElementById("popup" + event.id);
                     open_popup(popupElement);
 
-					popupElement.querySelector("input[name='summary']").focus();
+		    popupElement.querySelector("input[name='summary']").focus();
 
                 });
         }
@@ -311,7 +329,6 @@ window.onload = function () {
         */
         el.parentElement.removeAttribute("href");
 
-        /* TODO this doesn't yet apply to newly created events */
         let popup = document.getElementById("popup" + el.id);
         popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
             create_event(el);
@@ -322,7 +339,7 @@ window.onload = function () {
         if (el.closest(".longevents")) {
             new VComponent(el, true);
         } else {
-            new VComponent(el, true);
+            new VComponent(el, false);
         }
 
     }
@@ -379,7 +396,6 @@ window.onload = function () {
 
     // init_arbitary_kv();
 
-    init_date_time();
     init_input_list();
 
 }

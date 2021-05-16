@@ -160,44 +160,35 @@
                      (end (prop ev 'DTEND)))
                  `(div (@ (class "timeinput"))
 
-                       (input (@ (type "date")
-                                 (name "dtstart-date")
-                                 (style "grid-column:1;grid-row:2")
-                                 (class "bind")
-                                 (data-property "--dtstart-date")
-                                 (value ,(date->string (as-date start)))))
-
-                       (input (@ (type "date")
-                                 (name "dtend-date")
-                                 (style "grid-column:1;grid-row:3")
-                                 (class "bind")
-                                 (data-property "--dtend-date")
-                                 ,@(when end `((value ,(date->string (as-date end)))))))
+                       ,@(with-label
+                          "Starttid"
+                          `(div (@ (class "date-time bind")
+                                   (data-bindby "bind_date_time")
+                                   (name "dtstart"))
+                                (input (@ (type "date")
+                                          (value ,(date->string (as-date start)))))
+                                (input (@ (type "time")
+                                          (value ,(time->string (as-time start)))))))
 
                        ,@(with-label
-                          "Heldag?"
-                          `(input (@ (type "checkbox")
-                                     (class "bind")
-                                     (data-bindby "bind_wholeday")
-                                     (style "display:none")
-                                     (name "wholeday"))))
+                          "Sluttid"
+                          `(div (@ (class "date-time bind")
+                                   (data-bindby "bind_date_time")
+                                   (name "dtend"))
+                                (input (@ (type "date")
+                                          ,@(when end `((value ,(date->string (as-date end)))))))
+                                (input (@ (type "time")
+                                          ,@(when end `((value ,(time->string (as-time end)))))))))
 
-                       (input (@ (type "time")
-                                 (name "dtstart-time")
-                                 (class "bind")
-                                 (data-property "--dtstart-time")
-                                 (style "grid-column:3;grid-row:2;"
-                                   ,(when (date? start) "display:none"))
-                                 (value ,(time->string (as-time start)))))
+                       (div
+                        ,@(with-label
+                           "Heldag?"
+                           `(input (@ (type "checkbox")
+                                      (class "bind")
+                                      (data-bindby "bind_wholeday")
+                                      (name "wholeday")))))
 
-                       (input (@ (type "time")
-                                 (name "dtend-time")
-                                 (class "bind")
-                                 (data-property "--dtend-time")
-                                 (style "grid-column:3;grid-row:3;"
-                                   ,(when (date? end) "display:none"))
-                                 ,@(when end `((value ,(time->string (as-time end)))))
-                                 ))))
+                       ))
 
               ,@(with-label
                  "Plats"

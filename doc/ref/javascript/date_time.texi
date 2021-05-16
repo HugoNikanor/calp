@@ -36,4 +36,6 @@ components. We nevertheless use it here since we are emulating an
 input element.
 @end defivar
 
+See also @pxref{bind_date_time}
+
 @end defun

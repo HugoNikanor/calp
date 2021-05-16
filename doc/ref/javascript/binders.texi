@@ -1,5 +1,7 @@
 
 @node binders
+@cindex binder
+@cindex binders
 @subsection binders.js
 
 The bind system allows HTML-elements to specify that they want to be
@@ -44,4 +46,12 @@ The same as the default binder????
 Binder for the wholeday toggle button.
 While CSS would suffice, this sets the disabled flags on the time
 inputs, giving a better user experience.
+@end defun
+
+@defun bind_date_time el e
+@anchor{bind_date_time}
+For @code{date_time} dummy component. Propagates gets and sets to
+underlying input fields.
+
+Note: @emph{Must} be called @emph{after} @code{init_date_time}.
 @end defun

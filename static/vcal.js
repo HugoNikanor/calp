@@ -80,45 +80,6 @@ class VComponent {
 
         /* checkbox for whole day */
 
-        for (let field of ['dtstart', 'dtend']) {
-
-            this.get_callback_list(`--${field}-time`).push(
-                [el, (el, v) => { let date = this[field];
-                                 if (v == '') return;
-                                 let [h,m,s] = v.split(':')
-                                 date.setHours(Number(h));
-                                 date.setMinutes(Number(m));
-                                 date.setSeconds(0);
-                                 this[field] = date; }])
-            this.get_callback_list(`--${field}-date`).push(
-                [el, (el, v) => { let date = this[field];
-                                 if (v == '') return;
-                                 let [y,m,d] = v.split('-')
-                                 date.setYear(Number(y)/* - 1900*/);
-                                 date.setMonth(Number(m) - 1);
-                                 date.setDate(d);
-                                 this[field] = date; }])
-
-
-            /* Manual fetch of the fields instead of the general method,
-               to avoid an infinite loop of dtstart setting --dtstart-time,
-               and vice versa.
-               NOTE if many more fields require special treatment then a
-               general solution is required.
-            */
-            let l = this.get_callback_list(field);
-            console.log(l);
-            l.push(
-                [el, (el, v) => { popup
-                                 .querySelector(`.edit-tab input[name='${field}-time']`)
-                                 .value = v.format("~H:~M");
-                                 popup
-                                 .querySelector(`.edit-tab input[name='${field}-date']`)
-                                 .value = v.format("~Y-~m-~d");
-                               }]);
-            console.log(l);
-        }
-
         /* Popuplate default types, see types.js for property_names */
         for (let property of property_names) {
             this.ical_properties.add(property)
