@@ -112,12 +112,12 @@ class VComponent {
                 switch (type) {
                 case 'float':
                 case 'integer':
-                    parsedValue = Number(s.innerHTML);
+                    parsedValue = Number(s.textContent);
                     break;
 
                 case 'date-time':
                 case 'date':
-                    parsedValue = parseDate(s.innerHTML);
+                    parsedValue = parseDate(s.textContent);
                     break;
 
                     /* TODO */
@@ -125,12 +125,12 @@ class VComponent {
                     let start = s.getElementsByTagName('start');
                     let end = s.getElementsByTagName('end, duration');
                     if (end.tagName === 'period') {
-                        parsePeriod(end.innerHTML);
+                        parsePeriod(end.textContent);
                     }
                     break;
                     /* TODO */
                 case 'period':
-                    parsedValue = parsePeriod(s.innerHTML);
+                    parsedValue = parsePeriod(s.textContent);
                     break;
                     /* TODO */
                 case 'utc-offset':
@@ -141,7 +141,7 @@ class VComponent {
                     break;
 
                 case 'boolean':
-                    switch (s.innerHTML) {
+                    switch (s.textContent) {
                     case 'true':  parsedValue = true; break;
                     case 'false': parsedValue = false; break;
                     default: throw "Value error"
@@ -155,12 +155,12 @@ class VComponent {
                 case 'cal-address':
                 case 'text':
                 case 'uri':
-                    parsedValue = s.innerHTML;
+                    parsedValue = s.textContent;
                     // parsedValue.type = type;
                     break;
 
                 default:
-                    parsedValue = s.innerHTML;
+                    parsedValue = s.textContent;
                 }
 
 
