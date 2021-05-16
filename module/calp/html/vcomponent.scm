@@ -168,17 +168,23 @@
                                 (input (@ (type "date")
                                           (value ,(date->string (as-date start)))))
                                 (input (@ (type "time")
-                                          (value ,(time->string (as-time start)))))))
+                                          (value ,(time->string (as-time start) "~H:~M"))
+                                          ,@(when (date? start) '((disabled)))
+                                          ))))
 
-                       ,@(with-label
-                          "Sluttid"
-                          `(div (@ (class "date-time bind")
-                                   (data-bindby "bind_date_time")
-                                   (name "dtend"))
-                                (input (@ (type "date")
-                                          ,@(when end `((value ,(date->string (as-date end)))))))
-                                (input (@ (type "time")
-                                          ,@(when end `((value ,(time->string (as-time end)))))))))
+                       ;; TODO some way to add an endtime if missing beforehand
+                       ;; TODO, actually proper support for event without end times
+                       ,@(when end
+                           (with-label
+                           "Sluttid"
+                           `(div (@ (class "date-time bind")
+                                    (data-bindby "bind_date_time")
+                                    (name "dtend"))
+                                 (input (@ (type "date")
+                                           (value ,(date->string (as-date end)))))
+                                 (input (@ (type "time")
+                                           (value ,(time->string (as-time end) "~H:~M"))
+                                           ,@(when (date? end) '((disabled))))))))
 
                        (div
                         ,@(with-label
@@ -186,7 +192,8 @@
                            `(input (@ (type "checkbox")
                                       (class "bind")
                                       (data-bindby "bind_wholeday")
-                                      (name "wholeday")))))
+                                      (name "wholeday")
+                                      ,@(when (date? start) '((checked)))))))
 
                        ))
 

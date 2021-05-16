@@ -269,6 +269,10 @@ class VComponent {
         Object.defineProperty(
             this, property_name,
             {
+                /* TODO there is an assymetry here with .value needing to be called for
+                   get:ed stuff, but set MUST be an unwrapped item.
+                   Fix this.
+                   */
                 get: function() {
                     return this._values[property_name];
                 },

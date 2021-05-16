@@ -103,8 +103,14 @@ function bind_wholeday(el, e) {
         }
 
         for (let f of ['dtstart', 'dtend']) {
-            let d = el.properties[f];
-            if (! d) continue; /* dtend optional */
+            let param = el.properties[f];
+            if (! param) continue; /* dtend optional */
+            let d = param.value;
+            if (wholeday.checked) {
+                param.type = 'date';
+            } else {
+                param.type = 'date-time';
+            }
             d.isWholeDay = wholeday.checked;
             el.properties[f] = d;
         }
