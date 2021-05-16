@@ -43,7 +43,7 @@ async function create_event (event) {
     // let xml = event.getElementsByTagName("icalendar")[0].outerHTML
     let calendar = event.properties.calendar;
 
-    console.log(calendar/*, xml*/);
+    console.log('calendar=', calendar/*, xml*/);
 
     let data = new URLSearchParams();
     data.append("cal", calendar);

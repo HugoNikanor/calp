@@ -54,26 +54,26 @@ class VComponent {
         let lst = [...popup.querySelectorAll(".bind"),
                    ...el.querySelectorAll('.bind')];
         for (let e of lst) {
-            if (e.classList.contains('summary')) {
-                console.log(e, e.closest('[data-bindby]'));
-            }
+            // if (e.classList.contains('summary')) {
+            //     console.log(e, e.closest('[data-bindby]'));
+            // }
             if ((p = e.closest('[data-bindby]'))) {
                 // console.log(p);
                 // console.log(p.dataset.bindby);
                 eval(p.dataset.bindby)(el, e);
             } else {
-                if (e.classList.contains('summary')) {
-                    /* TODO transfer data from backend to frontend in a better manner */
-                    console.log (this.get_callback_list(e.dataset.property));
-                }
+                // if (e.classList.contains('summary')) {
+                //     /* TODO transfer data from backend to frontend in a better manner */
+                //     console.log (this.get_callback_list(e.dataset.property));
+                // }
                 let f = (s, v) => {
                     console.log(s, v);
                     s.innerHTML = v.format(s.dataset && s.dataset.fmt);
                 };
                 this.get_callback_list(e.dataset.property).push([e, f]);
-                if (e.classList.contains('summary')) {
-                    console.log (this.get_callback_list(e.dataset.property));
-                }
+                // if (e.classList.contains('summary')) {
+                //     console.log (this.get_callback_list(e.dataset.property));
+                // }
                 // console.log("registreing", e, e.dataset.property, this);
             }
         }
@@ -106,7 +106,9 @@ class VComponent {
                NOTE if many more fields require special treatment then a
                general solution is required.
             */
-            this.get_callback_list(field).push(
+            let l = this.get_callback_list(field);
+            console.log(l);
+            l.push(
                 [el, (el, v) => { popup
                                  .querySelector(`.edit-tab input[name='${field}-time']`)
                                  .value = v.format("~H:~M");
@@ -114,6 +116,7 @@ class VComponent {
                                  .querySelector(`.edit-tab input[name='${field}-date']`)
                                  .value = v.format("~Y-~m-~d");
                                }]);
+            console.log(l);
         }
 
         /* Popuplate default types, see types.js for property_names */
@@ -129,11 +132,12 @@ class VComponent {
                     set: function (value) {
                         console.log("set", property, value);
                         this._values[property].value = value;
-                        console.log(this._slots[property]);
+                        console.log(this._slots[property].length,
+                                    this._slots[property]);
                         /* TODO validate type */
                         /* See valid_input_types and all_types */
                         for (let [slot,updater] of this._slots[property]) {
-                            console.log(updater, slot);
+                            // console.log(updater, slot);
                             updater(slot, value);
                         }
                     },
@@ -219,7 +223,9 @@ class VComponent {
                 // this['_value_rrule'] = new VCalParameter(type, parsedValue);
                 // console.log("set", field, type, parsedValue);
                 this._values[field] = new VCalParameter(type, parsedValue);
-                this._slots[field] = [];
+                if (! this._slots[field]) {
+                    this._slots[field] = [];
+                }
             }
         }
 
@@ -238,7 +244,7 @@ class VComponent {
             this.get_callback_list('dtstart').push(
                 [el.style, (s, v) => {
                     console.log(v);
-                    s[wide_event?'left':'top'] = 100 * (to_local(v.value) - start)/(end - start) + "%";
+                    s[wide_event?'left':'top'] = 100 * (to_local(v) - start)/(end - start) + "%";
                 } ]);
         }
 
@@ -250,7 +256,7 @@ class VComponent {
                 // events from the backend instead use top/left and width/height.
                 // Normalize so all use the same, or find a way to convert between.
                 [el.style,
-                 (s, v) => s[wide_event?'right':'bottom'] = 100 * (1 - (to_local(v.value)-start)/(end-start)) + "%"]);
+                 (s, v) => s[wide_event?'right':'bottom'] = 100 * (1 - (to_local(v)-start)/(end-start)) + "%"]);
         }
 
 
@@ -261,6 +267,12 @@ class VComponent {
         }
 
         // let calprop = get_property(el, 'calendar', el.dataset.calendar);
+        /*
+          TODO this is the only location where default_value of
+          get_callback_list is used. The option should be removed,
+          since we lack type information now that everything is encapsulated
+          in VCalParameter objects.
+         */
         let calprop = this.get_callback_list('calendar', el.dataset.calendar);
 
         const rplcs = (s, v) => {
@@ -302,7 +314,7 @@ class VComponent {
         /* ??? */
         // for (let prop of event.properties.ical_properties) {
         for (let prop of this.ical_properties) {
-            console.log(prop);
+            // console.log(prop);
             let v = this[prop];
             if (v !== undefined) {
                 let sub = v.to_jcal();

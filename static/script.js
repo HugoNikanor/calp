@@ -115,7 +115,7 @@ class EventCreator {
                 this.appendChild(event);
 
                 /* requires that event is child of an '.event-container'. */
-                event.properties = new VComponent(
+                new VComponent(
                     event,
                     wide_element=wide_element);
                 // bind_properties(event, wide_element);
@@ -320,9 +320,9 @@ window.onload = function () {
 
         /* Bind all vcomponent properties into javascript. */
         if (el.closest(".longevents")) {
-            el.properties = new VComponent(el, true);
+            new VComponent(el, true);
         } else {
-            el.properties = new VComponent(el, true);
+            new VComponent(el, true);
         }
 
     }
