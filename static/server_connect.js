@@ -41,7 +41,7 @@ function event_to_jcal (event) {
 async function create_event (event) {
 
     // let xml = event.getElementsByTagName("icalendar")[0].outerHTML
-    let calendar = event.properties.calendar;
+    let calendar = event.properties.calendar.value;
 
     console.log('calendar=', calendar/*, xml*/);
 

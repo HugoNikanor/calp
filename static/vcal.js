@@ -123,25 +123,8 @@ class VComponent {
         for (let property of property_names) {
             this.ical_properties.add(property)
             // console.log("prop", property)
-            Object.defineProperty(
-                this, property,
-                {
-                    get: function() {
-                        return this._values[property];
-                    },
-                    set: function (value) {
-                        console.log("set", property, value);
-                        this._values[property].value = value;
-                        console.log(this._slots[property].length,
-                                    this._slots[property]);
-                        /* TODO validate type */
-                        /* See valid_input_types and all_types */
-                        for (let [slot,updater] of this._slots[property]) {
-                            // console.log(updater, slot);
-                            updater(slot, value);
-                        }
-                    },
-                });
+
+            this.create_property(property);
         }
 
         /* icalendar properties */
@@ -266,14 +249,10 @@ class VComponent {
             el.dataset.calendar = "Unknown";
         }
 
-        // let calprop = get_property(el, 'calendar', el.dataset.calendar);
-        /*
-          TODO this is the only location where default_value of
-          get_callback_list is used. The option should be removed,
-          since we lack type information now that everything is encapsulated
-          in VCalParameter objects.
-         */
-        let calprop = this.get_callback_list('calendar', el.dataset.calendar);
+        let calprop = this.get_callback_list('calendar');
+        this.create_property('calendar');
+        this._values['calendar'] =
+            new VCalParameter('INVALID', el.dataset.calendar);
 
         const rplcs = (s, v) => {
             let [_, calclass] = s.classList.find(/^CAL_/);
@@ -286,7 +265,7 @@ class VComponent {
 
 
 
-        /* ---------- Calendar ------------------------------ */
+        /* ---------- /Calendar ------------------------------ */
     }
 
 
@@ -297,11 +276,10 @@ class VComponent {
       default_value - default value when creating
       bind_to_ical - should this property be added to the icalendar subtree?
     */
-    get_callback_list(field, default_value) {
+    get_callback_list(field) {
         // let el = this.html_element;
         if (! this._slots[field]) {
             this._slots[field] = [];
-            this._values[field] = default_value;
         }
 
         // console.log("get", field);
@@ -325,6 +303,29 @@ class VComponent {
 
         return ['vevent', properties, [/* alarms go here */]]
     }
+
+    create_property(property_name) {
+        Object.defineProperty(
+            this, property_name,
+            {
+                get: function() {
+                    return this._values[property_name];
+                },
+                set: function (value) {
+                    console.log("set", property_name, value);
+                    this._values[property_name].value = value;
+                    console.log(this._slots[property_name].length,
+                                this._slots[property_name]);
+                    /* TODO validate type */
+                    /* See valid_input_types and all_types */
+                    for (let [slot,updater] of this._slots[property_name]) {
+                        // console.log(updater, slot);
+                        updater(slot, value);
+                    }
+                },
+            });
+    }
+
 }
 
 
