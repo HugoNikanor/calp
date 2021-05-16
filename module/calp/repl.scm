@@ -31,4 +31,9 @@
                       [(address port) (make-tcp-server-socket host: address port: port)])
                     (string-split address #\:))]
      ;; currently impossible
-     [(IPv6) (error "How did you get here?")])))
+     [(IPv6) (error "How did you get here?")]))
+
+  ;; TODO setup repl environment here
+
+
+  )

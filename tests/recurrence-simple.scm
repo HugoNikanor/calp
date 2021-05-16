@@ -12,7 +12,8 @@
  ((guile) format)
 
  ((vcomponent) parse-calendar)
- ((vcomponent recurrence) 
+ ((vcomponent xcal parse) sxcal->vcomponent)
+ ((vcomponent recurrence)
   parse-recurrence-rule
   make-recur-rule
   generate-recurrence-set))
@@ -238,3 +239,24 @@ END:VCALENDAR"
 
 (test-assert "Changing type on Recurrence id."
   (stream->list 10 (generate-recurrence-set ev)))
+
+;;; Earlier I failed to actually parse the recurrence parts, in short, 1 ≠ "1".
+
+(define ev
+  (sxcal->vcomponent
+   '(vevent
+     (properties
+      (summary (text "reptest"))
+      (dtend (date-time "2021-01-13T02:00:00"))
+      (dtstart (date-time "2021-01-13T01:00:00"))
+      (uid (text "RNW198S6QANQPV1C4FDNFH6ER1VZX6KXEYNB"))
+      (rrule (recur (freq "WEEKLY")
+                    (interval "1")
+                    (wkst "MO")))
+      (dtstamp (date-time "2021-01-13T01:42:20Z"))
+      (sequence (integer "0")))
+     (components))))
+
+(test-assert
+    "Check that recurrence rule commint from xcal also works"
+  (generate-recurrence-set ev))

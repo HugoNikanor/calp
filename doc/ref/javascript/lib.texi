@@ -102,6 +102,9 @@ Boolean indicating if the time component of the Date object should be disregarde
 @defun parseDate str
 Takes a string @var{str}, which should be in ISO-8601 date-format, and
 returns a javascript Date object.
+Handles date-times, with and without seconds, trailing `Z' for
+time-zones, and dates without times.
+If no time is given the @code{dateonly} attribute is set to yes.
 @end defun
 
 @defun copyDate date

@@ -36,6 +36,7 @@ Standards and specifications
 ----------------------------
 - RFC 5545 (iCalendar)
 - RFC 6321 (xCal)
+- RFC 7265 (jCal)
 - Vdir Storage Format [VDIR]
 
 Building

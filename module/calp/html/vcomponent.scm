@@ -160,44 +160,42 @@
                      (end (prop ev 'DTEND)))
                  `(div (@ (class "timeinput"))
 
-                       (input (@ (type "date")
-                                 (name "dtstart-date")
-                                 (style "grid-column:1;grid-row:2")
-                                 (class "bind")
-                                 (data-property "--dtstart-date")
-                                 (value ,(date->string (as-date start)))))
-
-                       (input (@ (type "date")
-                                 (name "dtend-date")
-                                 (style "grid-column:1;grid-row:3")
-                                 (class "bind")
-                                 (data-property "--dtend-date")
-                                 ,@(when end `((value ,(date->string (as-date end)))))))
-
                        ,@(with-label
-                          "Heldag?"
-                          `(input (@ (type "checkbox")
-                                     (class "bind")
-                                     (data-bindby "bind_wholeday")
-                                     (style "display:none")
-                                     (name "wholeday"))))
+                          "Starttid"
+                          `(div (@ (class "date-time bind")
+                                   (data-bindby "bind_date_time")
+                                   (name "dtstart"))
+                                (input (@ (type "date")
+                                          (value ,(date->string (as-date start)))))
+                                (input (@ (type "time")
+                                          (value ,(time->string (as-time start) "~H:~M"))
+                                          ,@(when (date? start) '((disabled)))
+                                          ))))
 
-                       (input (@ (type "time")
-                                 (name "dtstart-time")
-                                 (class "bind")
-                                 (data-property "--dtstart-time")
-                                 (style "grid-column:3;grid-row:2;"
-                                   ,(when (date? start) "display:none"))
-                                 (value ,(time->string (as-time start)))))
+                       ;; TODO some way to add an endtime if missing beforehand
+                       ;; TODO, actually proper support for event without end times
+                       ,@(when end
+                           (with-label
+                           "Sluttid"
+                           `(div (@ (class "date-time bind")
+                                    (data-bindby "bind_date_time")
+                                    (name "dtend"))
+                                 (input (@ (type "date")
+                                           (value ,(date->string (as-date end)))))
+                                 (input (@ (type "time")
+                                           (value ,(time->string (as-time end) "~H:~M"))
+                                           ,@(when (date? end) '((disabled))))))))
 
-                       (input (@ (type "time")
-                                 (name "dtend-time")
-                                 (class "bind")
-                                 (data-property "--dtend-time")
-                                 (style "grid-column:3;grid-row:3;"
-                                   ,(when (date? end) "display:none"))
-                                 ,@(when end `((value ,(time->string (as-time end)))))
-                                 ))))
+                       (div
+                        ,@(with-label
+                           "Heldag?"
+                           `(input (@ (type "checkbox")
+                                      (class "bind")
+                                      (data-bindby "bind_wholeday")
+                                      (name "wholeday")
+                                      ,@(when (date? start) '((checked)))))))
+
+                       ))
 
               ,@(with-label
                  "Plats"
@@ -544,8 +542,9 @@
                 `(("📅" title: "Översikt"
                    ,(fmt-single-event ev))
 
-                  ("📅" title: "Redigera"
-                   ,(fmt-for-edit ev))
+                  ,@(when (edit-mode)
+                     `(("📅" title: "Redigera"
+                        ,(fmt-for-edit ev))))
 
                   ("⤓" title: "Nedladdning"
                    (div (@ (class "eventtext") (style "font-family:sans"))
@@ -558,7 +557,9 @@
                              ,@(when (debug)
                                  `((ul
                                     (li (button (@ (onclick "console.log(event_to_jcal(event_from_popup(this.closest('.popup-container'))));")) "js"))
-                                    (li (button (@ (onclick "console.log(jcal_to_xcal(event_to_jcal(event_from_popup(this.closest('.popup-container')))));")) "xml"))))))
+                                    (li (button (@ (onclick "console.log(jcal_to_xcal(event_to_jcal(event_from_popup(this.closest('.popup-container')))));")) "xml"))
+                                    (li (button (@ (onclick "console.log(event_from_popup(this.closest('.popup-container')))")) "this"))
+                                    ))))
                         ))
 
                   ,@(when (prop ev 'RRULE)

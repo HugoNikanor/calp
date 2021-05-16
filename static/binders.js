@@ -7,7 +7,7 @@
 function bind_recur(el, e) {
     /* todo bind default slots of rrule */
 
-    let p = get_property(el, 'rrule');
+    let p = el.properties.get_callback_list('rrule');
     // let rrule = el.rrule;
 
     /* add listeners to bind-rr tags */
@@ -62,7 +62,7 @@ function bind_recur(el, e) {
 }
 
 function bind_edit(el, e) {
-    let p = get_property(el, e.dataset.property);
+    let p = el.properties.get_callback_list(e.dataset.property);
     e.addEventListener('input', function () {
         el.properties[e.dataset.property] = this.value;
     });
@@ -89,8 +89,8 @@ function bind_edit(el, e) {
 }
 
 function bind_view(el, e) {
-        let f = (s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt);
-        get_property(el, e.dataset.property).push([e, f]);
+    let f = (s, v) => s.innerHTML = v.format(s.dataset && s.dataset.fmt);
+    el.properties.get_callback_list(e.dataset.property).push([e, f]);
 }
 
 
@@ -103,10 +103,50 @@ function bind_wholeday(el, e) {
         }
 
         for (let f of ['dtstart', 'dtend']) {
-            let d = el.properties[f];
-            if (! d) continue; /* dtend optional */
+            let param = el.properties[f];
+            if (! param) continue; /* dtend optional */
+            let d = param.value;
+            if (wholeday.checked) {
+                param.type = 'date';
+            } else {
+                param.type = 'date-time';
+            }
             d.isWholeDay = wholeday.checked;
             el.properties[f] = d;
         }
     });
+}
+
+
+/* used for dtstart and dtend input boxes
+   init_date_time MUST be called beforehand
+*/
+function bind_date_time(el, e) {
+    e.addEventListener('input', function () {
+        let dt = el.properties[e.name].value;
+        if (e.value == '') return;
+        let y, m, d, h, s;
+        switch (this.type) {
+        case 'date':
+            [y,m,d] = this.value.split('-')
+            dt.setYear(Number(y)/* - 1900 */);
+            dt.setMonth(Number(m) - 1);
+            dt.setDate(d);
+            break;
+        case 'time':
+            [h,m,s] = this.value.split(':')
+            dt.setHours(Number(h));
+            dt.setMinutes(Number(m));
+            dt.setSeconds(0);
+            break;
+        default:
+            console.log("How did you get here??? ", e);
+        }
+
+        el.properties[e.name] = dt;
+    });
+
+    el.properties.get_callback_list(e.name).push(
+        [e, (s, v) => s.value = v.format("~Y-~m-~dT~H:~M")]);
+
 }
