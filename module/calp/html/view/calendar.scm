@@ -210,6 +210,7 @@
 
          (div (@ (style "grid-area: details"))
 
+              ;; TODO Style this from as all other input forms in the sidebar.
               (form (@ (class "simplesearch")
                        (action "/search/text"))
                     (input (@ (type "text")
