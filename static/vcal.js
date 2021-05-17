@@ -278,7 +278,23 @@ class VComponent {
                 },
                 set: function (value) {
                     console.log("set", property_name, value);
-                    this._values[property_name].value = value;
+                    /* Semi dirty hack to add properties which are missing.
+                       Since we initialize without a type just guess depending
+                       on the field name */
+                    if (! this._values[property_name]) {
+                        let type_arr
+                            = valid_input_types[property_name.toUpperCase()]
+                            || ['unknown'];
+                        let type = type_arr[0];
+                        /* Types which can take arrays are interesting */
+                        if (type instanceof Array) {
+                            type = type[0];
+                        }
+                        this._values[property_name]
+                            = new VCalParameter(type, value)
+                    } else {
+                        this._values[property_name].value = value;
+                    }
                     console.log(this._slots[property_name].length,
                                 this._slots[property_name]);
                     /* TODO validate type */
