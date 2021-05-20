@@ -404,5 +404,14 @@ window.onload = function () {
 
     init_input_list();
 
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key == '/') {
+            let searchbox = document.querySelector('.simplesearch [name=q]')
+            // focuses the input, and selects all the text in it
+            searchbox.select();
+            event.preventDefault();
+        }
+    });
 }
 
