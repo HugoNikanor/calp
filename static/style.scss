@@ -579,6 +579,17 @@ along with their colors.
     width: 100%;
     height: 100%;
     overflow: hidden;
+
+    /* TODO
+       This gets to large for really short events, placing the marker halfway
+       outside the event body.
+     */
+    .description {
+        position: absolute;
+        right: 1ex;
+        bottom: 0;
+        font-size: 200%;
+    }
 }
 
 .zero-width-events .event {

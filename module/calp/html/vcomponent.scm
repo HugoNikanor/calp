@@ -334,7 +334,11 @@
                 `(span (@ (class "bind location")
                           (data-property "location"))
                        ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                    (prop ev 'LOCATION)))))
+                                    (prop ev 'LOCATION))))
+             ;; Document symbol when we have text
+             ,(when (and=> (prop ev 'DESCRIPTION) (negate string-null?))
+                `(span (@ (class "description"))
+                       "🗎")))
             (div (@ (style "display:none !important;"))
                  ,((@ (vcomponent xcal output) ns-wrap)
                    ((@ (vcomponent xcal output) vcomponent->sxcal)
