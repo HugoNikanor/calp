@@ -57,8 +57,6 @@ function bind_recur(el, e) {
             }
         }
     }]);
-
-
 }
 
 function bind_edit(el, e) {
