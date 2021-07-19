@@ -57,6 +57,32 @@
                  (a (match:substring m))
                  (recur (match:suffix m)))))))
 
+(define (parse-teams-description str)
+  (map (lambda (line)
+         (let loop ((line line))
+           (cond [(string-match "^_+$" line)
+                  '((hr) (br))]
+                 ;; hyperlinks go from start of line,
+                 ;; or from last pipe character
+                 [(string-match "([^|<]*)<([^>]*)>" line)
+                  => (lambda (m)
+                       (cons*
+                        (match:prefix m)
+                        `(a (@ (href ,(match:substring m 2)))
+                            ,(match:substring m 1))
+                        (loop (match:suffix m))))]
+                 ;; square brackets are images
+                 [(string-match "\\[([^]]+)\\]" line)
+                  => (lambda (m)
+                       (cons*
+                        (match:prefix m)
+                        `(img (@ (src ,(match:substring m 1))))
+                        (loop (match:suffix m))))]
+                 ;; Either the full line, or the remainder
+                 ;; after hyperlink and img match.
+                 [else (list line '(br))])))
+       (string-split str #\newline)))
+
 (define html-cals
   '("D-sektionens officiella kalender"
     "LiTHe kod"
@@ -70,6 +96,8 @@
           (parse-html (regexp-substitute/global
                         #f "<br>" str
                         'pre "<br/>" 'post))]
+         [(prop ev 'X-MICROSOFT-SKYPETEAMSMEETINGURL)
+          (parse-teams-description str)]
          [else (parse-links str)])))
 
 (set-config! 'week-start mon)
