@@ -383,9 +383,6 @@
         (rrule-instances base-event)
         stream-null))
 
-  ;; NOTE Others have interpreted the standard to allow RECURRENCE-ID:s to
-  ;; create new instances. While I thought that you needed to specifie them
-  ;; through RDATE components.
   (define alternative-times
     (awhen (prop base-event '-X-HNH-ALTERNATIVES)
            (list (list->stream

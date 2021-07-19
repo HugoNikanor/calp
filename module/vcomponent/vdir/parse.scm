@@ -65,11 +65,24 @@
 
                 ;; two or more
                 [else
+                 ;; Sequence numbers on their own specifies revisions of a
+                 ;; single compenent, incremented by a central authorative
+                 ;; source. In that case simply picking the version with the
+                 ;; highest SEQUENCE number would suffice. However, for
+                 ;; recurring events where each instance is its own VEVENT
+                 ;; they also signify something.
+                 ;; TODO Neither version is handled here (or anywhere else).
 
-                 ;; Sorting on SEQUENCE here would have been nice.
-                 ;; But the patches can apparently share a sequence number
-                 ;; of 0 with the original event!
-                 ;; (╯°□°）╯ ┻━┻
+
+                 ;; Multiple VEVENT objects can share a UID if they have
+                 ;; different RECURRENCE-ID fields. This signifies that they
+                 ;; are instances of the same event, similar to RDATE.
+                 ;; Here we first check if we have a component which contains
+                 ;; an RRULE or lacks a RECURRENCE-ID, and uses that as base.
+                 ;; Otherwise we just take the first component as base.
+                 ;; 
+                 ;; All alternatives (and the base) is added the the -X-HNH-ALTERNATIVES
+                 ;; property of the base object, to be extracted where needed.
                  (let* ((head (or (find (extract 'RRULE) events)
                                   (find (negate (extract 'RECURRENCE-ID)) events)
                                   (car events)))
@@ -78,11 +91,18 @@
                    (set! (prop head '-X-HNH-ALTERNATIVES)
                      (alist->hash-table
                       (map cons
-                           (map (extract 'RECURRENCE-ID) rest)
-                           rest))
-                     #;
-                     (sort*! rest ;; HERE
-                     date/-time< (extract 'RECURRENCE-ID)))
+                           ;; head is added back to the collection to simplify
+                           ;; generation of recurrences. The recurrence
+                           ;; generation assumes that the base event either
+                           ;; contains an RRULE property, OR is in the
+                           ;; -X-HNH-ALTERNATIVES set. This might produce
+                           ;; duplicates, since the base event might also
+                           ;; get included through an RRULE. This however
+                           ;; is almost a non-problem, since RDATES and RRULES
+                           ;; can already produce duplicates, meaning that
+                           ;; we need to filter duplicates either way.
+                           (map (extract 'RECURRENCE-ID) (cons head rest))
+                           (cons head rest))))
                    (add-child! calendar head))])
 
               ;; return
