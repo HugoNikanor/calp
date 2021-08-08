@@ -250,7 +250,14 @@
                               (lambda (calendar)
                                 `(li (@ (class "CAL_"
                                           ,(html-attr (prop calendar 'NAME))))
-                                     ,(prop calendar 'NAME)))
+                                     (a (@ (href "/search?"
+                                            ,((@ (web uri-query) encode-query-parameters)
+                                              `((q . (and (date/-time<=?
+                                                           ,(current-datetime)
+                                                           (prop event 'DTSTART))
+                                                          (string=? ,(->string (prop calendar 'NAME))
+                                                                    (or (prop (parent event) 'NAME) ""))))))))
+                                        ,(prop calendar 'NAME))))
                               calendars))
                        (div (@ (id "calendar-dropdown-template") (class "template"))
                             (select
