@@ -1,5 +1,5 @@
 (define-module (web uri-query)
-  :use-module ((calp util) :select (->string))
+  :use-module ((calp util) :select (->quoted-string))
   :use-module ((web uri) :select (uri-encode))
   )
 
@@ -9,5 +9,6 @@
    (map (lambda (p)
           (format #f "~a=~a"
                   (car p)
-                  (uri-encode (->string (cdr p)))))
+                  (uri-encode (->quoted-string (cdr p)))))
         parameters)))
+

@@ -356,7 +356,7 @@
                         query:
                         (encode-query-parameters
                          `((q . (regexp-exec
-                                 (make-regexp ,(->quoted-string q)
+                                 (make-regexp ,(->string q)
                                               regexp/icase)
                                  (prop event 'SUMMARY)))))
                         ))))))
