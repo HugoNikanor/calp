@@ -31,7 +31,7 @@
   (source get-source set-source!)
   )
 
-(export vline-key)
+(export vline? vline-key)
 
 (set-record-type-printer!
  <vline>
