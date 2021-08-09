@@ -255,6 +255,9 @@
                                               `((q . (and (date/-time<=?
                                                            ,(current-datetime)
                                                            (prop event 'DTSTART))
+                                                          ;; TODO this seems to miss some calendars,
+                                                          ;; I belive it's due to some setting X-WR-CALNAME,
+                                                          ;; which is only transfered /sometimes/ into NAME.
                                                           (string=? ,(->string (prop calendar 'NAME))
                                                                     (or (prop (parent event) 'NAME) ""))))))))
                                         ,(prop calendar 'NAME))))
