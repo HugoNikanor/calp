@@ -17,6 +17,8 @@
   :use-module (sxml xpath)
   :use-module (sxml namespace)
 
+  :use-module ((rnrs io ports) :select (get-bytevector-all))
+  :use-module ((xdg basedir) :prefix xdg-)
 
   :use-module ((calp html util) :select (html-unattr))
 
@@ -435,6 +437,25 @@
          '((content-type text/html))
          (sxml->html-string
           (directory-table (path-append "static" *)))))
+
+   ;; This is almost the same as /static/, but with the difference that
+   ;; we produce these images during runtime
+   (GET "/tmpfiles/:*{.*}.:ext" (* ext)
+        ;; Actually parsing /etc/mime.types would be better.
+        (define mime
+          (case (string->symbol (string-downcase ext))
+            [(png) "png"]
+            [(jpg jpeg) "jpeg"]
+            [(gif) "gif"]
+            [else ext]))
+
+        (return
+         `((content-type ,(string->symbol (string-append "image/" mime))))
+         ;; TODO handle tmp directory globaly
+         (call-with-input-file (path-append (xdg-runtime-dir)
+                                            "calp-data" "images"
+                                            (string-append * "." ext))
+           get-bytevector-all)))
 
 
    (GET "/count" ()

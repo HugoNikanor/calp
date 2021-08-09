@@ -529,6 +529,7 @@ along with their colors.
     }
 }
 
+/* graphical block in the calendar */
 .event {
     transition: 0.3s;
     font-size: var(--event-font-size);
@@ -643,6 +644,11 @@ along with their colors.
         color: $gray;
         padding-right: 1em;
     }
+}
+
+.attach {
+    max-width: 100%;
+    max-height: 3cm;
 }
 
 /* */

@@ -2,7 +2,9 @@
   :use-module (calp util)
   :use-module (vcomponent)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
+  :use-module ((rnrs io ports) :select (put-bytevector))
   :use-module (datetime)
   :use-module ((text util) :select (add-enumeration-punctuation))
   :use-module ((web uri-query) :select (encode-query-parameters))
@@ -10,6 +12,8 @@
   :use-module ((calp html config) :select (edit-mode debug))
   :use-module ((calp html components) :select (btn tabset form with-label))
   :use-module ((calp util color) :select (calculate-fg-color))
+  :use-module ((crypto) :select (sha256 checksum->string))
+  :use-module ((xdg basedir) :prefix xdg-)
   :use-module ((vcomponent recurrence internal) :prefix #{rrule:}#)
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
@@ -115,6 +119,54 @@
                   `(div (@ (class "bind description")
                            (data-property "description"))
                          ,(format-description ev it)))
+
+          ,@(awhen (prop* ev 'ATTACH)
+                   ;; attach satisfies @code{vline?}
+                   (for attach in it
+                        (if (and=> (param attach 'VALUE)
+                                   (lambda (p) (string=? "BINARY" (car p))))
+                            ;; Binary data
+                            ;; TODO guess datatype if FMTTYPE is missing
+                            (awhen (and=> (param attach 'FMTTYPE)
+                                          (lambda (it) (string-split
+                                                   (car it) #\/)))
+                                   ;; TODO other file formats
+                                   (when (string=? "image" (car it))
+                                     (let* ((chk (-> (value attach)
+                                                     sha256
+                                                     checksum->string))
+                                            (dname
+                                             (path-append (xdg-runtime-dir)
+                                                          "calp-data" "images"))
+                                            (filename (-> dname
+                                                          (path-append chk)
+                                                          ;; TODO second part of mimetypes
+                                                          ;; doesn't always result in a valid
+                                                          ;; file extension.
+                                                          ;; Take a look in mime.types.
+                                                          (string-append "." (cadr it)))))
+                                       (unless (file-exists? filename)
+                                         ;; TODO handle tmp directory globaly
+                                         (mkdir (dirname dname))
+                                         (mkdir dname)
+                                         (call-with-output-file filename
+                                           (lambda (port)
+                                             (put-bytevector port (value attach)))))
+                                       (let ((link (path-append
+                                                    "/tmpfiles"
+                                                    ;; TODO better mimetype to extension
+                                                    (string-append chk "." (cadr it)))))
+                                         `(a (@ (href ,link))
+                                             (img (@ (class "attach")
+                                                     (src ,link))))))))
+                            ;; URI
+                            (cond ((and=> (param attach 'FMTTYPE)
+                                          (compose (cut string= <> "image" 0 5) car))
+                                   `(img (@ (class "attach")
+                                            (src ,(value attach)))))
+                                  (else `(a (@ (class "attach")
+                                               (href ,(value attach)))
+                                            ,(value attach)))))))
 
           ;; TODO add bind once I figure out how to bind lists
           ,(awhen (prop ev 'CATEGORIES)
