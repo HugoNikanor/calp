@@ -47,6 +47,13 @@
                  ;; then this produces multiple broken unicode characters.
                  ;; It could be solved by checking the start of the new line,
                  ;; and the tail of the old line for broken char
+                 ;; 
+                 ;; TODO This gets really slow when concatenating huge
+                 ;; numbers of strings (31862 lines gave ~100s runtime).
+                 ;; Almost all which was spent in repaing pipes in the GC.
+                 ;; Possible solution would be to instead write to output-strings.
+                 ;; Those should be faster since Guile then controlls the memory
+                 ;; of the buffer manually, allowing efficient C memory operations.
                  (cons (make-line (string-append (get-string (car done))
                                                  (string-drop line 1))
                                   fname
