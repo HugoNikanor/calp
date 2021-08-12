@@ -35,32 +35,46 @@
 (define (read-file port)
   (define fname (port-filename port))
   (let loop ((line-number 1) (done '()))
-    (let ((line (read-line port)))
-      (if (eof-object? line)
-          (reverse! done)
-          (let ((line (string-trim-right line)))
-            (loop
-             (1+ line-number)
-             (if (char=? #\space (string-ref line 0))
-                 ;; Line Wrapping
-                 ;; TODO if the line is split inside a unicode character
-                 ;; then this produces multiple broken unicode characters.
-                 ;; It could be solved by checking the start of the new line,
-                 ;; and the tail of the old line for broken char
-                 ;; 
-                 ;; TODO This gets really slow when concatenating huge
-                 ;; numbers of strings (31862 lines gave ~100s runtime).
-                 ;; Almost all which was spent in repaing pipes in the GC.
-                 ;; Possible solution would be to instead write to output-strings.
-                 ;; Those should be faster since Guile then controlls the memory
-                 ;; of the buffer manually, allowing efficient C memory operations.
-                 (cons (make-line (string-append (get-string (car done))
-                                                 (string-drop line 1))
-                                  fname
-                                  (get-line (car done)))
-                       (cdr done))
-                 (cons (make-line line fname line-number)
-                       done))))))))
+    (let ((ostr (open-output-string)))
+      (define ret
+        (let loop ((line (read-line port)))
+          (if (eof-object? line)
+              'eof
+              (let ((line (string-trim-right line #\return)))
+               (let ((next (peek-char port)))
+                 (display line ostr)
+                 (cond ((eof-object? next)
+                        'final-line)
+                       ;; Line Wrapping
+                       ;; If the first character on a line is space (whitespace?)
+                       ;; then it's a continuation line, and should be merged
+                       ;; with the one preceeding it.
+                       ;; TODO if the line is split inside a unicode character
+                       ;; then this produces multiple broken unicode characters.
+                       ;; It could be solved by checking the start of the new line,
+                       ;; and the tail of the old line for broken char
+                       ;; TODO what about other leading whitespace?
+                       ((char=? next #\space)
+                        (read-char port) ; discard leading whitespace
+                        (loop (read-line port)))
+                       (else
+                        ;; (unread-char next)
+                        'line)))))))
+      (case ret
+        ((line)
+         (let ((str (get-output-string ostr)))
+           (close-port ostr)
+           (loop (1+ line-number)
+                 (cons (make-line str fname line-number)
+                       done))))
+        ((eof)
+         (close-port ostr)
+         (reverse! done))
+        ((final-line)
+         (let ((str (get-output-string ostr)))
+           (close-port ostr)
+           (reverse! (cons (make-line str fname line-number)
+                           done))))))))
 
 (define-immutable-record-type <tokens>
   (make-tokens metadata data)
