@@ -3,15 +3,25 @@
   :use-module (vcomponent)
   :use-module (vcomponent search)
   :use-module ((ice-9 pretty-print) :select (pretty-print))
+  :use-module ((web uri-query) :select (encode-query-parameters))
   :use-module ((calp html components)
                :select (xhtml-doc include-css))
   :use-module ((calp html vcomponent)
                :select (compact-event-list))
   )
 
+;; Display the result of a search term, but doesn't do any searching
+;; on its own.
+;; 
+;; @var{errors} : #f or SXML object to display instead of search result
+;; @var{has-query?} : Does search-term actually contain anything, or should
+;;         it be handled as a blank query?
+;; @var{search-term} : What was searched, as an SEXP
+;; @var{search-result} : The list of matched events
+;; @var{page} : Which page we are on
+;; @var{paginator} : A paginator object
 (define-public (search-result-page
-                errors
-                has-query? search-term search-result page paginator q=)
+                errors has-query? search-term search-result page paginator)
   (xhtml-doc
    (@ (lang sv))
    (head (title "Search results")
@@ -38,5 +48,15 @@
                     paginator
                     (lambda (p) (if (= p page)
                                `(span ,p)
-                               `(a (@ (href "?" ,q= "&p=" ,p)) ,p)))
-                    (lambda (p) `(a (@ (href "?" ,q= "&p=" ,p)) "»")))))))))
+                               `(a (@ (href
+                                       "?"
+                                       ,(encode-query-parameters
+                                         `((p . ,p)
+                                           (q . ,search-term)))))
+                                   ,p)))
+                    (lambda (p) `(a (@ (href
+                                   "?"
+                                   ,(encode-query-parameters
+                                     `((p . ,p)
+                                       (q . ,search-term)))))
+                               "»")))))))))

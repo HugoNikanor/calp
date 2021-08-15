@@ -363,18 +363,17 @@
 
    (GET "/search" (q p onlyfuture)
         (define search-term
-          (if onlyfuture
-              `(and (date/-time<=? ,(current-datetime) (prop event 'DTSTART))
-                    ,(and=> q prepare-string))
-              (and=> q prepare-string)))
+          (if (and q (not (string-null? q)))
+              (if onlyfuture
+                  `(and (date/-time<=? ,(current-datetime) (prop event 'DTSTART))
+                        ,(and=> q prepare-string))
+                  (and=> q prepare-string))
+              ;; NOTE This causes the paginator buttons to search for literally two quote marks,
+              ;; But oh well.
+              ""))
 
-        ;; keep original string for links below. Should guarantee that it's correct.
-        (define q= (if (not q)
-                       "" (find (lambda (s)
-                                  (and (<= 2 (string-length s))
-                                       (string=? "q=" (string-take s 2))))
-                                (string-split r:query #\&))))
-
+        ;; get-query-page handles paginator cache, meaning that
+        ;; a new one is only allocated when needed
         (define paginator (get-query-page search-term))
 
         (define page (string->number (or p "0")))
@@ -395,7 +394,9 @@
                  (define location
                    (build-relative-ref
                     path: r:path        ; host: r:host port: r:port
-                    query: (format #f "~a&p=~a" q= page-number)))
+                    query: (encode-query-parameters
+                            `((p . ,page-number)
+                              (q . ,search-term)))))
                  (return (build-response
                           code: 307
                           headers: `((location . ,location)))))))
@@ -409,7 +410,8 @@
                     (sxml->xml
                      (search-result-page
                       error
-                      q search-term search-result page paginator q=))))))
+                      (and=> q (negate string-null?))
+                      search-term search-result page paginator))))))
 
    ;; NOTE this only handles files with extensions. Limited, but since this
    ;; is mostly for development, and something like nginx should be used in
