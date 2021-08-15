@@ -126,7 +126,7 @@
                                          "/search/?"
                                          ,(encode-query-parameters
                                            `((q . (member
-                                                   ,(->quoted-string c)
+                                                   ,(->string c)
                                                    (or (prop event 'CATEGORIES)
                                                        '())))))))
                                      ,c))

@@ -10,5 +10,6 @@
           (format #f "~a=~a"
                   (car p)
                   (uri-encode (->quoted-string (cdr p)))))
-        parameters)))
+        parameters)
+   "&"))
 
