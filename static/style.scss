@@ -469,6 +469,11 @@ along with their colors.
             width: calc(100% * var(--editmode));
         }
 
+        &.zero-length {
+            border-radius: 0 1cm 1cm 0;
+            height: calc(100% * 1/24) !important;
+        }
+
         &.continuing {
             border-bottom: none;
             background-image: linear-gradient(to top, #0007 0%,#FFF0 2em);
@@ -593,6 +598,7 @@ along with their colors.
     }
 }
 
+/*
 .zero-width-events .event {
     width: initial;
     padding: 0.5em;
@@ -601,6 +607,7 @@ along with their colors.
     position: relative;
     float: left;
 }
+*/
 
 
 .repeating {

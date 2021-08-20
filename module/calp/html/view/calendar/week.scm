@@ -71,11 +71,17 @@
 (define (lay-out-day day)
   (let* (((day-date . events) day)
          (time-obj (datetime date: day-date))
+         (short-events (stream->list events))
+         #;
          (zero-length-events short-events
                              (partition event-zero-length? (stream->list events))))
 
-    (fix-event-widths! short-events event-length-key:
-                       (lambda (e) (event-length/day day-date e)))
+    (fix-event-widths!
+     short-events
+     event-length-key: (lambda (e)
+                         (if (event-zero-length? e)
+                             (time hour: 1)
+                             (event-length/day day-date e))))
 
     `(div (@ (class "events event-container") (id ,(date-link day-date))
              (data-start ,(date->string day-date))
@@ -83,6 +89,7 @@
           ,@(map (lambda (time)
                    `(div (@ (class "clock clock-" ,time))))
                  (iota 12 0 2))
+          #;
           (div (@ (class "zero-width-events"))
                ,(map make-block zero-length-events))
           ,@(map (lambda (e) (create-block day-date e)) short-events))))
@@ -117,6 +124,8 @@
 
   (make-block
    ev `((class
+          ,(when (event-zero-length? ev)
+             " zero-length")
           ,(when (date<? (as-date (prop ev 'DTSTART)) date)
              " continued")
           ,(when (and (prop ev 'DTEND) (date<? date (as-date (prop ev 'DTEND))))
