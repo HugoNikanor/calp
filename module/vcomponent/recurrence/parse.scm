@@ -22,7 +22,11 @@
     [(TH) thu]
     [(FR) fri]
     [(SA) sat]
-    [else => (lambda (d) (error "No such day ~a" d))]))
+    [else => (lambda (d)
+               (scm-error 'misc-error "rfc->datetime-weekday"
+                          "No such day ~a (~s)"
+                          (list d (symbol->string d))
+                          #f))]))
 
 ;; @example
 ;; <weekday> ∈ weekdays
