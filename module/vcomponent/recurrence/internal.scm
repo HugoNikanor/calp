@@ -92,8 +92,8 @@
      (string-upcase
       (week-day-name value 2
                      locale: (make-locale (list LC_TIME) "C")))]
-    ;; [(byday)
-    ;;  (string-join (map byday->string value) ",")]
+    [(byday)
+     (string-join (map byday->string value) ",")]
     [(freq count interval)
      (format #f "~a" value)]
     [(until)
