@@ -90,8 +90,17 @@
                                      ((guile) make-struct/no-tail)
                                      )
                                    all-pure-bindings)))))))
-        (lambda args (format (current-error-port)
-                        "Test unexpectedly crashed: ~a~%" args) ))))
+        (lambda (err . args)
+          (case err
+            ((misc-error)
+             (display-error #f (current-error-port)
+                            (car args)
+                            (cadr args)
+                            (caddr args)
+                            #f))
+            (else
+             (format (current-error-port)
+                     "Test unexpectedly crashed: ~a~%" args))) ))))
 (test-end "tests")
 
 
