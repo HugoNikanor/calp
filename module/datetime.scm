@@ -648,10 +648,13 @@
             [else dt]))
 
     (cond [(null? str)
-           ;; (warning  "Premature end of string")
+           ;; ((@ (calp util exceptions) warning)
+           ;;  "Premature end of string, still got fmt = ~s"
+           ;;  fmt)
            dt]
           [(null? fmt)
-           ;; (warning "Unsparsed characters at end of string")
+           ;; ((@ (calp util exceptions) warning)
+           ;;  "Unsparsed characters at end of string")
            dt]
           [(eq? #\~ (car fmt))
            (case (cadr fmt)
