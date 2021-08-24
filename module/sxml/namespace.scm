@@ -34,8 +34,9 @@
   (define (nssymb key)
     (define namespace
       (if (list? namespace-map)
-          (or (assoc-ref namespace-map key)
-              (error "No mapping for namespace" key))
+          (cond ((assoc key namespace-map)
+                 => cdr)
+                (else key))
           namespace-map))
 
     (cond
