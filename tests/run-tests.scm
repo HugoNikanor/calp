@@ -68,6 +68,9 @@
 ;; but is initially bound to #f.
 (test-begin "tests")
 
+;; Forces all warnings to be explicitly handled by tests
+((@ (calp util exceptions) warnings-are-errors) #t)
+
 (for fname in files
      (format (current-error-port) "Running test ~a~%" fname)
      (test-group

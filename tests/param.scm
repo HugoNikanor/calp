@@ -9,14 +9,14 @@
 
 (define v (call-with-input-string
               "BEGIN:DUMMY
-KEY;A=1;B=2:Some text
+X-KEY;A=1;B=2:Some text
 END:DUMMY"
               parse-calendar))
 
-(test-equal '("1") (param (prop* v 'KEY) 'A))
-(test-equal '("2") (param (prop* v 'KEY) 'B))
-(test-equal #f (param (prop* v 'KEY) 'C))
+(test-equal '("1") (param (prop* v 'X-KEY) 'A))
+(test-equal '("2") (param (prop* v 'X-KEY) 'B))
+(test-equal #f (param (prop* v 'X-KEY) 'C))
 
-(test-equal '(A B) (sort* (map car (parameters (prop* v 'KEY)))
+(test-equal '(A B) (sort* (map car (parameters (prop* v 'X-KEY)))
                           string<?
                           symbol->string))

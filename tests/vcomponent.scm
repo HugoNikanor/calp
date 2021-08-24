@@ -7,10 +7,10 @@
 
 (define ev (call-with-input-string
                "BEGIN:DUMMY
-KEY:value
+X-KEY:value
 END:DUMMY"
              parse-calendar))
 
 (test-assert (eq? #f (prop ev 'MISSING)))
-(test-assert (prop ev 'KEY))
-(test-equal "value" (prop ev 'KEY))
+(test-assert (prop ev 'X-KEY))
+(test-equal "value" (prop ev 'X-KEY))
