@@ -194,7 +194,7 @@
 
 ;; only evaluates the final form once
 (define-syntax set/r!
-  (syntax-rules ()
+  (syntax-rules (=)
     ((_ args ... v = something)
      (begin
        (set! args ... v = something)
