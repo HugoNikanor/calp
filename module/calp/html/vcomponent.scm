@@ -602,6 +602,11 @@
                      `(("📅" title: "Redigera"
                         ,(fmt-for-edit ev))))
 
+                  ,@(when (debug)
+                      `(("🐸" title: "Debug"
+                         (div
+                          (pre ,(prop ev 'UID))))))
+
                   ("⤓" title: "Nedladdning"
                    (div (@ (class "eventtext") (style "font-family:sans"))
                         (h2 "Ladda ner")
