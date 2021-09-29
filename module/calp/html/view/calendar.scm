@@ -111,12 +111,16 @@
     (script (@ (defer) (src "/static/clock.js")))
     (script (@ (defer) (src "/static/popup.js")))
     (script (@ (defer) (src "/static/rrule.js")))
-    (script (@ (defer) (src "/static/binders.js")))
+    ;; (script (@ (defer) (src "/static/binders.js")))
     (script (@ (defer) (src "/static/server_connect.js")))
-    (script (@ (defer) (src "/static/input_list.js")))
+    ;; (script (@ (defer) (src "/static/input_list.js")))
     (script (@ (defer) (src "/static/date_time.js")))
-    (script (@ (defer) (src "/static/vcal.js")))
+    ;; (script (@ (defer) (src "/static/vcal.js")))
     (script (@ (defer) (src "/static/script.js")))
+    (script (@ (defer) (src "/static/globals.js")))
+
+    ;; on load
+
     ,(calendar-styles calendars)
 
     ,@(when (debug)
@@ -251,15 +255,15 @@
                                 `(li (@ (class "CAL_"
                                           ,(html-attr (prop calendar 'NAME))))
                                      (a (@ (href "/search?"
-                                            ,((@ (web uri-query) encode-query-parameters)
-                                              `((q . (and (date/-time<=?
-                                                           ,(current-datetime)
-                                                           (prop event 'DTSTART))
-                                                          ;; TODO this seems to miss some calendars,
-                                                          ;; I belive it's due to some setting X-WR-CALNAME,
-                                                          ;; which is only transfered /sometimes/ into NAME.
-                                                          (string=? ,(->string (prop calendar 'NAME))
-                                                                    (or (prop (parent event) 'NAME) ""))))))))
+                                                 ,((@ (web uri-query) encode-query-parameters)
+                                                   `((q . (and (date/-time<=?
+                                                                ,(current-datetime)
+                                                                (prop event 'DTSTART))
+                                                               ;; TODO this seems to miss some calendars,
+                                                               ;; I belive it's due to some setting X-WR-CALNAME,
+                                                               ;; which is only transfered /sometimes/ into NAME.
+                                                               (string=? ,(->string (prop calendar 'NAME))
+                                                                         (or (prop (parent event) 'NAME) ""))))))))
                                         ,(prop calendar 'NAME))))
                               calendars))
                        (div (@ (id "calendar-dropdown-template") (class "template"))
@@ -311,17 +315,19 @@
                                     ;; it.
                                     description: ""))))
              (event (car (children cal))))
-        `((div (@ (class "template event-container") (id "event-template")
-                  ;; Only needed to create a duration. So actual dates
-                  ;; dosen't matter
-                  (data-start "2020-01-01")
-                  (data-end "2020-01-02"))
-               ,(caddar          ; strip <a> tag
-                 (make-block event `((class " generated ")))))
+        `(
+          ;; (div (@ (class "template event-container") (id "event-template")
+          ;;         ;; Only needed to create a duration. So actual dates
+          ;;         ;; dosen't matter
+          ;;         (data-start "2020-01-01")
+          ;;         (data-end "2020-01-02"))
+          ;;      ,(caddar          ; strip <a> tag
+          ;;        (make-block event `((class " generated ")))))
           ;; TODO merge this into the event-set, add attribute
           ;; for non-displaying elements.
-          (div (@ (class "template") (id "popup-template"))
-               ,(popup event (string-append "popup" (html-id event))))))
+          ;; (div (@ (class "template") (id "popup-template"))
+          ;;      ,(popup event (string-append "popup" (html-id event))))
+          ))
 
     ;; Auto-complets when adding new fields to a component
     ;; Any string is however still valid.
@@ -344,4 +350,18 @@
                        RDATE RRULE ACTION REPEAT
                        TRIGGER CREATED DTSTAMP LAST-MODIFIED
                        SEQUENCE REQUEST-STATUS
-                       ))))))
+                       )))
+
+    (div (@ (style "display:none !important;")
+            (id "xcal-data"))
+         ,((@ (vcomponent xcal output) ns-wrap)
+           (map (@ (vcomponent xcal output) vcomponent->sxcal)
+                (stream->list
+                 (filter-sorted-stream
+                  (lambda (ev)
+                    ((@ (vcomponent datetime) event-overlaps?)
+                     ev start-date
+                     (date+ end-date (date day: 1))))
+                  events))))))
+
+    ))

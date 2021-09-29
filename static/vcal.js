@@ -9,6 +9,8 @@
                   cdr a procedure which takes a slot and a value
                   and binds the value to the slot.
  */
+
+/* DEPRECATED */
 class VComponent {
 
     constructor(el, wide_event=false) {

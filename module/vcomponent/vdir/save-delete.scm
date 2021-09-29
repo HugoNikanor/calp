@@ -11,7 +11,7 @@
 
 (define-module (vcomponent vdir save-delete)
   :use-module (calp util)
-  :use-module ((calp util exceptions) :select (assert)) 
+  :use-module ((calp util exceptions) :select (assert))
   :use-module (vcomponent ical output)
   :use-module (vcomponent)
   :use-module ((calp util io) :select (with-atomic-output-to-file))

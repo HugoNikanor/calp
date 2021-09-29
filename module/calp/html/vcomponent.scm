@@ -62,54 +62,56 @@
                                   optional: (attributes '())
                                   key: (fmt-header list))
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
-  `(div (@ ,@(assq-merge
-              attributes
-              `((data-bindby "bind_view")
-                (class " eventtext summary-tab "
-                  ,(when (and (prop ev 'PARTSTAT)
-                              (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                     " tentative ")))))
-        (h3 ,(fmt-header
-              (when (prop ev 'RRULE)
-                `(span (@ (class "repeating")) "↺"))
-              `(span (@ (class "bind summary")
-                        (data-property "summary"))
-                     ,(prop ev 'SUMMARY))))
-        (div
-         ,(call-with-values (lambda () (fmt-time-span ev))
-            (case-lambda [(start)
-                          `(div (time (@ (class "bind dtstart")
-                                         (data-property "dtstart")
-                                         (data-fmt ,(string-append "~L" start))
-                                         (datetime ,(datetime->string
-                                                     (as-datetime (prop ev 'DTSTART))
-                                                     "~1T~3")))
-                                      ,(datetime->string
-                                        (as-datetime (prop ev 'DTSTART))
-                                        start)))]
-                         [(start end)
-                          `(div (time (@ (class "bind dtstart")
-                                         (data-property "dtstart")
-                                         (data-fmt ,(string-append "~L" start))
-                                         (datetime ,(datetime->string
-                                                     (as-datetime (prop ev 'DTSTART))
-                                                     "~1T~3")))
-                                      ,(datetime->string (as-datetime (prop ev 'DTSTART))
-                                                         start))
-                                " — "
-                                (time (@ (class "bind dtend")
-                                         (data-property "dtend")
-                                         (data-fmt ,(string-append "~L" end))
-                                         (datetime ,(datetime->string
-                                                     (as-datetime (prop ev 'DTSTART))
-                                                     "~1T~3")))
-                                      ,(datetime->string (as-datetime (prop ev 'DTEND))
-                                                         end)))]))
+  `(vevent-description
+    (@ ,@(assq-merge
+          attributes
+          `(
+            (class " vevent eventtext summary-tab "
+              ,(when (and (prop ev 'PARTSTAT)
+                          (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+                 " tentative "))
+            (data-uid ,(prop ev 'UID)))))
+    (h3 ,(fmt-header
+          (when (prop ev 'RRULE)
+            `(span (@ (class "repeating")) "↺"))
+          `(span (@ (class "bind summary")
+                    (data-property "summary"))
+                 ,(prop ev 'SUMMARY))))
+    (div
+     ,(call-with-values (lambda () (fmt-time-span ev))
+        (case-lambda [(start)
+                      `(div (time (@ (class "bind dtstart")
+                                     (data-property "dtstart")
+                                     (data-fmt ,(string-append "~L" start))
+                                     (datetime ,(datetime->string
+                                                 (as-datetime (prop ev 'DTSTART))
+                                                 "~1T~3")))
+                                  ,(datetime->string
+                                    (as-datetime (prop ev 'DTSTART))
+                                    start)))]
+                     [(start end)
+                      `(div (time (@ (class "bind dtstart")
+                                     (data-property "dtstart")
+                                     (data-fmt ,(string-append "~L" start))
+                                     (datetime ,(datetime->string
+                                                 (as-datetime (prop ev 'DTSTART))
+                                                 "~1T~3")))
+                                  ,(datetime->string (as-datetime (prop ev 'DTSTART))
+                                                     start))
+                            " — "
+                            (time (@ (class "bind dtend")
+                                     (data-property "dtend")
+                                     (data-fmt ,(string-append "~L" end))
+                                     (datetime ,(datetime->string
+                                                 (as-datetime (prop ev 'DTSTART))
+                                                 "~1T~3")))
+                                  ,(datetime->string (as-datetime (prop ev 'DTEND))
+                                                     end)))]))
 
-         ;; TODO add optional fields when added in frontend
-         ;; Possibly by always having them here, just hidden.
+     ;; TODO add optional fields when added in frontend
+     ;; Possibly by always having them here, just hidden.
 
-         (div (@ (class "fields"))
+     (div (@ (class "fields"))
           ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
              `(div (b "Plats: ")
                    (div (@ (class "bind location") (data-property "location"))
@@ -118,7 +120,7 @@
           ,(awhen (prop ev 'DESCRIPTION)
                   `(div (@ (class "bind description")
                            (data-property "description"))
-                         ,(format-description ev it)))
+                        ,(format-description ev it)))
 
           ,@(awhen (prop* ev 'ATTACH)
                    ;; attach satisfies @code{vline?}
@@ -193,123 +195,127 @@
              `(div (@ (class "last-modified")) "Senast ändrad "
                    ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
 
-         )))
+     )))
 
 (define*-public (fmt-for-edit ev
                               optional: (attributes '())
                               key: (fmt-header list))
-  `(div (@ (class " eventtext edit-tab ")
-           (data-bindby "bind_edit"))
-        (form (@ (class "edit-form"))
-              (div (@ (class "dropdown-goes-here")))
-              (h3 (input (@ (type "text")
-                            (placeholder "Sammanfattning")
-                            (name "summary") (required)
-                            (class "bind") (data-property "summary")
-                            (value ,(prop ev 'SUMMARY)))))
+  `(vevent-edit (@ (class "vevent")
+                   (data-uid ,(prop ev 'UID)))))
 
-              ,(let ((start (prop ev 'DTSTART))
-                     (end (prop ev 'DTEND)))
-                 `(div (@ (class "timeinput"))
+(define-public (edit-template)
+ `(div (@ (class " eventtext edit-tab "))
+       (form (@ (class "edit-form"))
+             (div (@ (class "dropdown-goes-here")))
+             (h3 (input (@ (type "text")
+                           (placeholder "Sammanfattning")
+                           (name "summary") (required)
+                           (class "bind") (data-property "summary")
+                           ; (value ,(prop ev 'SUMMARY))
+                           )))
 
-                       ,@(with-label
-                          "Starttid"
-                          `(div (@ (class "date-time bind")
-                                   (data-bindby "bind_date_time")
-                                   (name "dtstart"))
-                                (input (@ (type "date")
-                                          (value ,(date->string (as-date start)))))
-                                (input (@ (type "time")
-                                          (value ,(time->string (as-time start) "~H:~M"))
-                                          ,@(when (date? start) '((disabled)))
-                                          ))))
+             (div (@ (class "timeinput"))
 
-                       ;; TODO some way to add an endtime if missing beforehand
-                       ;; TODO, actually proper support for event without end times
-                       ,@(when end
-                           (with-label
-                           "Sluttid"
-                           `(div (@ (class "date-time bind")
-                                    (data-bindby "bind_date_time")
-                                    (name "dtend"))
-                                 (input (@ (type "date")
-                                           (value ,(date->string (as-date end)))))
-                                 (input (@ (type "time")
-                                           (value ,(time->string (as-time end) "~H:~M"))
-                                           ,@(when (date? end) '((disabled))))))))
+                  ,@(with-label
+                     "Starttid"
+                     `(div (@ (class "date-time")
+                              (name "dtstart"))
+                           (input (@ (type "date")
+                                     ; (value ,(date->string (as-date start)))
+                                     ))
+                           (input (@ (type "time")
+                                     ; (value ,(time->string (as-time start) "~H:~M"))
+                                     ; ,@(when (date? start) '((disabled)))
+                                     ))))
 
-                       (div
-                        ,@(with-label
-                           "Heldag?"
-                           `(input (@ (type "checkbox")
-                                      (class "bind")
-                                      (data-bindby "bind_wholeday")
-                                      (name "wholeday")
-                                      ,@(when (date? start) '((checked)))))))
+                  ;; TODO some way to add an endtime if missing beforehand
+                  ;; TODO, actually proper support for event without end times
+                  ,@(with-label
+                     "Sluttid"
+                     `(div (@ (class "date-time")
+                              (name "dtend"))
+                           (input (@ (type "date")
+                                     ; (value ,(date->string (as-date end)))
+                                     ))
+                           (input (@ (type "time")
+                                     ; (value ,(time->string (as-time end) "~H:~M"))
+                                     ; ,@(when (date? end) '((disabled)))
+                                     ))))
 
-                       ))
-
-              ,@(with-label
-                 "Plats"
-                 `(input (@ (placeholder "Plats")
-                            (name "location")
-                            (type "text")
-                            (class "bind") (data-property "location")
-                            (value ,(or (prop ev 'LOCATION) "")))))
-
-              ,@(with-label
-                 "Beskrivning"
-                 `(textarea (@ (placeholder "Beskrivning")
-                               (class "bind") (data-property "description")
-                               (name "description"))
-                            ,(prop ev 'DESCRIPTION)))
-
-              ,@(with-label
-                 "Kategorier"
-                 ;; It would be better if these input-list's worked on the same
-                 ;; class=bind system as the fields above. The problem with that
-                 ;; is however that each input-list requires different search
-                 ;; and join procedures. Currently this is bound in the JS, see
-                 ;; [CATEGORIES_BIND].
-                 ;; It matches on ".input-list[data-property='categories']".
-                 `(div (@ (class "input-list")
-                          (data-property "categories"))
-                       ,@(awhen (prop ev 'CATEGORIES)
-                                (map (lambda (c)
-                                       `(input (@ (size 2)
-                                                  (class "unit")
-                                                  (value ,c))))
-                                     it))
-
-                       (input (@ (class "unit final")
-                                 (size 2)
-                                 (type "text")
+                  (div
+                   ,@(with-label
+                      "Heldag?"
+                      `(input (@ (type "checkbox")
+                                 (name "wholeday")
+                                 ; ,@(when (date? start) '((checked)))
                                  ))))
 
-              (hr)
+                  )
 
-              ;; For custom user fields
-              ;; TODO these are currently not bound to anything, so entering data
-              ;; here does nothing. Bigest hurdle to overcome is supporting arbitrary
-              ;; fields which will come and go in the JavaScript.
-              ;; TODO also, all (most? maybe not LAST-MODIFIED) remaining properties
-              ;; should be exposed here.
-              (div (@ (class "input-list"))
-               (div (@ (class "unit final newfield"))
-                    (input (@ (type "text")
-                              (list "known-fields")
-                              (placeholder "Nytt fält")))
-                    (select (@ (name "TYPE"))
-                      (option (@ (value "TEXT")) "Text"))
-                    (span
-                     (input (@ (type "text")
-                               (placeholder "Värde"))))))
+             ,@(with-label
+                "Plats"
+                `(input (@ (placeholder "Plats")
+                           (name "location")
+                           (type "text")
+                           (data-property "location")
+                           ; (value ,(or (prop ev 'LOCATION) ""))
+                           )))
 
-              (hr)
+             ,@(with-label
+                "Beskrivning"
+                `(textarea (@ (placeholder "Beskrivning")
+                              (data-property "description")
+                              (name "description"))
+                           ; ,(prop ev 'DESCRIPTION)
+                           ))
+
+             ,@(with-label
+                "Kategorier"
+                ;; It would be better if these input-list's worked on the same
+                ;; class=bind system as the fields above. The problem with that
+                ;; is however that each input-list requires different search
+                ;; and join procedures. Currently this is bound in the JS, see
+                ;; [CATEGORIES_BIND].
+                ;; It matches on ".input-list[data-property='categories']".
+                `(div (@ (class "input-list")
+                         (data-property "categories"))
+                      #;
+                      ,@(awhen (prop ev 'CATEGORIES)
+                               (map (lambda (c)
+                                      `(input (@ (size 2)
+                                                 (class "unit")
+                                                 (value ,c))))
+                                    it))
+
+                      (input (@ (class "unit final")
+                                (size 2)
+                                (type "text")
+                                ))))
+
+             (hr)
+
+             ;; For custom user fields
+             ;; TODO these are currently not bound to anything, so entering data
+             ;; here does nothing. Bigest hurdle to overcome is supporting arbitrary
+             ;; fields which will come and go in the JavaScript.
+             ;; TODO also, all (most? maybe not LAST-MODIFIED) remaining properties
+             ;; should be exposed here.
+             (div (@ (class "input-list"))
+                  (div (@ (class "unit final newfield"))
+                       (input (@ (type "text")
+                                 (list "known-fields")
+                                 (placeholder "Nytt fält")))
+                       (select (@ (name "TYPE"))
+                         (option (@ (value "TEXT")) "Text"))
+                       (span
+                        (input (@ (type "text")
+                                  (placeholder "Värde"))))))
+
+             (hr)
 
 
-              (input (@ (type "submit")))
-              )))
+             (input (@ (type "submit")))
+             )))
 
 
 ;; Single event in side bar (text objects)
@@ -357,12 +363,12 @@
 
   `((a (@ (href "#" ,(html-id ev))
           (class "hidelink"))
-       (div (@ ,@(assq-merge
+       (vevent-block (@ ,@(assq-merge
                   extra-attributes
                   `((id ,(html-id ev))
                     (data-calendar ,(html-attr (or (prop (parent ev) 'NAME) "unknown")))
                     ;; (data-bindon "bind_view")
-                    (class "event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
+                    (class "vevent event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
                                                         "unknown"))
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
@@ -371,6 +377,7 @@
                                   (eq? 'TRANSPARENT (prop ev 'TRANSP)))
                          " transparent")
                       )
+                    (data-uid ,(prop ev 'UID))
                     (onclick "toggle_popup('popup' + this.id)")
                     )))
             ;; Inner div to prevent overflow. Previously "overflow: none"
@@ -391,10 +398,12 @@
              ,(when (and=> (prop ev 'DESCRIPTION) (negate string-null?))
                 `(span (@ (class "description"))
                        "🗎")))
+            #;
             (div (@ (style "display:none !important;"))
                  ,((@ (vcomponent xcal output) ns-wrap)
                    ((@ (vcomponent xcal output) vcomponent->sxcal)
-                    ev)))))))
+            ev)))
+            ))))
 
 
 (define (repeat-info event)
