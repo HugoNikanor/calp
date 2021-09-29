@@ -150,6 +150,7 @@
          (footer
           (@ (style "grid-area: footer"))
           (span "Page generated " ,(date->string (current-date)))
+          (span "Current time " (current-time (@ (interval 1))))
           (span (a (@ (href ,(repo-url)))
                    "Source Code")))
 
@@ -166,13 +167,14 @@
                    ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
                          "månadsvy")
 
-                   ,(btn id: "today-button"
-                         href: (string-append
-                                "/today?" (case intervaltype
-                                            [(month) "view=month"]
-                                            [(week) "view=week"]
-                                            [else ""]))
-                         "idag"))
+                   (today-button
+                    (a (@ (class "btn")
+                          (href ,(string-append
+                                  "/today?" (case intervaltype
+                                              [(month) "view=month"]
+                                              [(week) "view=week"]
+                                              [else ""]))))
+                       (div "idag"))))
 
               (div (@ (id "jump-to"))
                    ;; Firefox's accessability complain about each date

@@ -82,7 +82,7 @@
 //     }
 // 
 //     /*
-//       round_to: what start and end times should round to when dragging, in fractions
+//       round_to: what start and end times should round to when dragging, in fractionsb
 //       of the width of the containing container.
 // 
 //       TODO limit this to only continue when on the intended event_container.
@@ -258,11 +258,6 @@ window.addEventListener('load', function () {
     // let start_time = document.querySelector("meta[name='start-time']").content;
     // let end_time = document.querySelector("meta[name='end-time']").content;
 
-    const button_updater = new ButtonUpdater(
-        document.getElementById("today-button"),
-        (e, d) => e.href = d.format('~Y-~m-~d') + ".html"
-    );
-
     const sch = new SmallcalCellHighlight(
         document.querySelector('.small-calendar'))
 
@@ -273,7 +268,6 @@ window.addEventListener('load', function () {
     window.setInterval(() => {
         let d = new Date;
         timebar.update(d);
-        button_updater.update(d);
         sch.update(d);
     }, 1000 * 60);
 
@@ -372,7 +366,6 @@ window.addEventListener('load', function () {
         href: target_href,
         innerHTML: gotodatebtn.innerHTML,
     });
-    document.getElementById("today-button").href = target_href;
     gotodatebtn.replaceWith(golink);
 
     document.querySelector("#jump-to input[name='date']").onchange = function () {

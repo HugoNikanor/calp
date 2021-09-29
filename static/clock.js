@@ -60,15 +60,39 @@ class SmallcalCellHighlight extends Clock {
     }
 }
 
-/* Update [today] button */
-class ButtonUpdater extends Clock {
-    constructor(el, proc) {
+/* -------------------------------------------------- */
+
+class ClockElement extends HTMLElement {
+    constructor () {
         super();
-        this.el = el;
-        this.proc = proc;
     }
 
-    update(now) {
-        this.proc(this.el, now);
+    connectedCallback () {
+        let interval = this.hasAttribute('interval') ? +this.getAttribute('img') : 60;
+        interval *= 1000 /* ms */
+
+        this.timer_id = window.setInterval(() => this.update(new Date), interval)
+        this.update(new Date)
+    }
+
+    static get observerAttributes () {
+        return ['timer_id']
+    }
+
+    update (now) { /* noop */ }
+}
+
+class TodayButton extends ClockElement {
+    update (now) {
+        this.querySelector('a').href = now.format("~Y-~m-~d.html")
     }
 }
+customElements.define('today-button', TodayButton)
+
+
+class CurrentTime extends ClockElement {
+    update (now) {
+        this.innerHTML = now.format('~H:~M:~S')
+    }
+}
+customElements.define('current-time', CurrentTime)
