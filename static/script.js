@@ -271,8 +271,6 @@ window.addEventListener('load', function () {
         sch.update(d);
     }, 1000 * 60);
 
-    init_date_time();
-
     /* Is event creation active? */
     if (false && EDIT_MODE) {
         let eventCreator = new EventCreator;

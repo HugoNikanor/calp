@@ -114,7 +114,7 @@
     ;; (script (@ (defer) (src "/static/binders.js")))
     (script (@ (defer) (src "/static/server_connect.js")))
     ;; (script (@ (defer) (src "/static/input_list.js")))
-    (script (@ (defer) (src "/static/date_time.js")))
+    ;; (script (@ (defer) (src "/static/date_time.js")))
     ;; (script (@ (defer) (src "/static/vcal.js")))
     (script (@ (defer) (src "/static/script.js")))
     (script (@ (defer) (src "/static/globals.js")))
