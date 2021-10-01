@@ -90,27 +90,3 @@ function bind_view(el, e) {
     let f = (s, v) => s.innerText = v.format(s.dataset && s.dataset.fmt);
     el.properties.get_callback_list(e.dataset.property).push([e, f]);
 }
-
-
-function bind_wholeday(el, e) {
-    let popup = popup_from_event(el);
-    let wholeday = popup.querySelector("input[name='wholeday']");
-    wholeday.addEventListener('click', function (event) {
-        for (let f of popup.querySelectorAll("input[type='time']")) {
-            f.disabled = wholeday.checked;
-        }
-
-        for (let f of ['dtstart', 'dtend']) {
-            let param = el.properties[f];
-            if (! param) continue; /* dtend optional */
-            let d = param.value;
-            if (wholeday.checked) {
-                param.type = 'date';
-            } else {
-                param.type = 'date-time';
-            }
-            d.isWholeDay = wholeday.checked;
-            el.properties[f] = d;
-        }
-    });
-}

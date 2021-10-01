@@ -235,6 +235,7 @@
                       "Heldag?"
                       `(input (@ (type "checkbox")
                                  (name "wholeday")
+                                 (onclick "wholeday_checkbox(this)")
                                  ))))
 
                   )

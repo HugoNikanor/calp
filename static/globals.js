@@ -318,10 +318,40 @@ class DateTimeInput extends HTMLElement {
         this.innerHTML = '<input type="date" /><input type="time" />'
     }
 
+    static get observedAttributes () {
+        return [ 'dateonly' ]
+    }
+
+    attributeChangedCallback (name, from, to) {
+        console.log(this, name, boolean(from), boolean(to));
+        switch (name) {
+        case 'dateonly':
+            this.querySelector('[type="time"]').disabled = boolean(to)
+            break;
+        }
+    }
+
+    get dateonly () {
+        return boolean(this.getAttribute('dateonly'));
+    }
+
+    set dateonly (bool) {
+        this.setAttribute ('dateonly', bool);
+    }
+
     get value () {
+
+        let dt;
         let date = this.querySelector("[type='date']").value;
-        let time = this.querySelector("[type='time']").value;
-        return parseDate(date + 'T' + time)
+        if (boolean(this.getAttribute('dateonly'))) {
+            dt = parseDate(date);
+            dt.type = 'date';
+        } else {
+            let time = this.querySelector("[type='time']").value;
+            dt = parseDate(date + 'T' + time)
+            dt.type = 'date-time';
+        }
+        return dt;
     }
 
     set value (new_value) {
@@ -345,3 +375,9 @@ class DateTimeInput extends HTMLElement {
 }
 
 customElements.define('date-time-input', DateTimeInput)
+
+function wholeday_checkbox (box) {
+    box.closest('.timeinput')
+        .getElementsByTagName('date-time-input')
+        .forEach(el => el.dateonly = box.checked);
+}

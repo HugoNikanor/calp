@@ -129,6 +129,24 @@ function asList(thing) {
 }
 
 
+function boolean (value) {
+    switch (typeof value) {
+    case 'string':
+        switch (value) {
+        case 'true': return true;
+        case 'false': return false;
+        case '': return false;
+        default: return true;
+        }
+    case 'boolean':
+        return value;
+    default:
+        return !! value;
+    }
+}
+
+
+
 /* internal */
 function datepad(thing, width=2) {
     return (thing + "").padStart(width, "0");
@@ -159,7 +177,8 @@ function format_date(date, str) {
     }
     return outstr;
 }
-Object.prototype.format = function () { return "" + this; } /* any number of arguments */
+
+Object.prototype.format = function (/* any number of arguments */) { return "" + this; }
 Date.prototype.format = function (str) { return format_date (this, str); }
 
 /*
@@ -173,6 +192,13 @@ DOMTokenList.prototype.find = function (regexp) {
         if (entry.value[1].match(regexp)) {
             return entry.value;
         }
+    }
+}
+
+/* HTMLCollection is the result of a querySelectorAll */
+HTMLCollection.prototype.forEach = function (proc) {
+    for (let el of this) {
+        proc(el);
     }
 }
 
