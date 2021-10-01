@@ -35,6 +35,7 @@ class VEvent {
             e.value = value;
         }
         for (let el of this.registered) {
+            /* TODO update correct fields, allow component to redraw themselves */
             el.redraw(this);
         }
     }
@@ -188,10 +189,13 @@ class ComponentVEvent extends HTMLElement {
 
         for (let el of body.getElementsByClassName("bind")) {
             let p = el.dataset.property;
-            let d;
+            let d, fmt;
             if ((d = data.getProperty(p))) {
-                /* TODO format */
-                el.innerHTML = d;
+                if ((fmt = el.dataset.fmt)) {
+                    el.innerHTML = d.format(fmt);
+                } else {
+                    el.innerHTML = d;
+                }
             }
         }
 
@@ -211,10 +215,61 @@ class ComponentEdit extends ComponentVEvent {
     constructor () {
         super();
 
+        this.firstTime = true;
+    }
+
+    connectedCallback() {
+
         /* Edit tab is rendered here. It's left blank server-side, since
            it only makes sense to have something here if we have javascript */
         this.redraw(vcal_objects[this.dataset.uid]);
+
+        for (let el of this.getElementsByClassName("interactive")) {
+            el.addEventListener('input', () => {
+                vcal_objects[this.dataset.uid].setProperty(
+                    el.dataset.property,
+                    el.value)
+            });
+        }
     }
+
+    redraw (data) {
+        // update ourselves from template
+
+        if (! this.template) {
+            throw "Something";
+        }
+
+        let body;
+        if (this.firstTime) {
+            body = this.template.content.cloneNode(true).firstElementChild;
+        } else {
+            body = this;
+        }
+
+        for (let el of body.getElementsByClassName("interactive")) {
+            let p = el.dataset.property;
+            let d;
+            if ((d = data.getProperty(p))) {
+                /*
+                  https://stackoverflow.com/questions/57157830/how-can-i-specify-the-sequence-of-running-nested-web-components-constructors
+                */
+                window.setTimeout (() => {
+                    /* NOTE Some specific types might require special formatting
+                    here. But due to my custom components implementing custom
+                    `.value' procedures, we might not need any special cases
+                    here */
+                    el.value = d;
+                });
+            }
+        }
+
+        if (this.firstTime) {
+            this.replaceChildren(body);
+            this.firstTime = false;
+        }
+    }
+
 }
 
 class ComponentBlock extends ComponentVEvent {
@@ -255,3 +310,38 @@ window.addEventListener('load', function () {
     customElements.define('vevent-block', ComponentBlock);
 })
 
+
+
+class DateTimeInput extends HTMLElement {
+    constructor () {
+        super();
+        this.innerHTML = '<input type="date" /><input type="time" />'
+    }
+
+    get value () {
+        let date = this.querySelector("[type='date']").value;
+        let time = this.querySelector("[type='time']").value;
+        return parseDate(date + 'T' + time)
+    }
+
+    set value (new_value) {
+        let date, time;
+        if (new_value instanceof Date) {
+            date = new_value.format("~L~Y-~m-~d");
+            time = new_value.format("~L~H:~M:~S");
+        } else {
+            [date, time] = new_value.split('T')
+        }
+        this.querySelector("[type='date']").value = date;
+        this.querySelector("[type='time']").value = time;
+    }
+
+    addEventListener(type, proc) {
+        if (type != 'input') throw "Only input supported";
+
+        this.querySelector("[type='date']").addEventListener(type, proc);
+        this.querySelector("[type='time']").addEventListener(type, proc);
+    }
+}
+
+customElements.define('date-time-input', DateTimeInput)

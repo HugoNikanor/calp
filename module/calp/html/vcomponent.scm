@@ -206,11 +206,12 @@
 (define-public (edit-template)
  `(div (@ (class " eventtext edit-tab "))
        (form (@ (class "edit-form"))
+             ;; TODO actually have calendar list here, since we are just a template
              (div (@ (class "dropdown-goes-here")))
              (h3 (input (@ (type "text")
                            (placeholder "Sammanfattning")
                            (name "summary") (required)
-                           (class "bind") (data-property "summary")
+                           (class "interactive") (data-property "summary")
                            ; (value ,(prop ev 'SUMMARY))
                            )))
 
@@ -218,36 +219,22 @@
 
                   ,@(with-label
                      "Starttid"
-                     `(div (@ (class "date-time")
-                              (name "dtstart"))
-                           (input (@ (type "date")
-                                     ; (value ,(date->string (as-date start)))
-                                     ))
-                           (input (@ (type "time")
-                                     ; (value ,(time->string (as-time start) "~H:~M"))
-                                     ; ,@(when (date? start) '((disabled)))
-                                     ))))
+                     '(date-time-input (@ (name "dtstart")
+                                          (class "interactive")
+                                          (data-property "dtstart")
+                                          )))
 
-                  ;; TODO some way to add an endtime if missing beforehand
-                  ;; TODO, actually proper support for event without end times
                   ,@(with-label
                      "Sluttid"
-                     `(div (@ (class "date-time")
-                              (name "dtend"))
-                           (input (@ (type "date")
-                                     ; (value ,(date->string (as-date end)))
-                                     ))
-                           (input (@ (type "time")
-                                     ; (value ,(time->string (as-time end) "~H:~M"))
-                                     ; ,@(when (date? end) '((disabled)))
-                                     ))))
+                     '(date-time-input (@ (name "dtend")
+                                          (class "interactive")
+                                          (data-property "dtend"))))
 
                   (div
                    ,@(with-label
                       "Heldag?"
                       `(input (@ (type "checkbox")
                                  (name "wholeday")
-                                 ; ,@(when (date? start) '((checked)))
                                  ))))
 
                   )
@@ -257,6 +244,7 @@
                 `(input (@ (placeholder "Plats")
                            (name "location")
                            (type "text")
+                           (class "interactive")
                            (data-property "location")
                            ; (value ,(or (prop ev 'LOCATION) ""))
                            )))
@@ -264,54 +252,55 @@
              ,@(with-label
                 "Beskrivning"
                 `(textarea (@ (placeholder "Beskrivning")
+                              (class "interactive")
                               (data-property "description")
                               (name "description"))
                            ; ,(prop ev 'DESCRIPTION)
                            ))
 
-             ,@(with-label
-                "Kategorier"
-                ;; It would be better if these input-list's worked on the same
-                ;; class=bind system as the fields above. The problem with that
-                ;; is however that each input-list requires different search
-                ;; and join procedures. Currently this is bound in the JS, see
-                ;; [CATEGORIES_BIND].
-                ;; It matches on ".input-list[data-property='categories']".
-                `(div (@ (class "input-list")
-                         (data-property "categories"))
-                      #;
-                      ,@(awhen (prop ev 'CATEGORIES)
-                               (map (lambda (c)
-                                      `(input (@ (size 2)
-                                                 (class "unit")
-                                                 (value ,c))))
-                                    it))
+             ;; ,@(with-label
+             ;;    "Kategorier"
+             ;;    ;; It would be better if these input-list's worked on the same
+             ;;    ;; class=bind system as the fields above. The problem with that
+             ;;    ;; is however that each input-list requires different search
+             ;;    ;; and join procedures. Currently this is bound in the JS, see
+             ;;    ;; [CATEGORIES_BIND].
+             ;;    ;; It matches on ".input-list[data-property='categories']".
+             ;;    `(div (@ (class "input-list")
+             ;;             (data-property "categories"))
+             ;;          #;
+             ;;          ,@(awhen (prop ev 'CATEGORIES)
+             ;;                   (map (lambda (c)
+             ;;                          `(input (@ (size 2)
+             ;;                                     (class "unit")
+             ;;                                     (value ,c))))
+             ;;                        it))
 
-                      (input (@ (class "unit final")
-                                (size 2)
-                                (type "text")
-                                ))))
+             ;;          (input (@ (class "unit final")
+             ;;                    (size 2)
+             ;;                    (type "text")
+             ;;                    ))))
 
-             (hr)
+             ;; (hr)
 
-             ;; For custom user fields
-             ;; TODO these are currently not bound to anything, so entering data
-             ;; here does nothing. Bigest hurdle to overcome is supporting arbitrary
-             ;; fields which will come and go in the JavaScript.
-             ;; TODO also, all (most? maybe not LAST-MODIFIED) remaining properties
-             ;; should be exposed here.
-             (div (@ (class "input-list"))
-                  (div (@ (class "unit final newfield"))
-                       (input (@ (type "text")
-                                 (list "known-fields")
-                                 (placeholder "Nytt fält")))
-                       (select (@ (name "TYPE"))
-                         (option (@ (value "TEXT")) "Text"))
-                       (span
-                        (input (@ (type "text")
-                                  (placeholder "Värde"))))))
+             ;; ;; For custom user fields
+             ;; ;; TODO these are currently not bound to anything, so entering data
+             ;; ;; here does nothing. Bigest hurdle to overcome is supporting arbitrary
+             ;; ;; fields which will come and go in the JavaScript.
+             ;; ;; TODO also, all (most? maybe not LAST-MODIFIED) remaining properties
+             ;; ;; should be exposed here.
+             ;; (div (@ (class "input-list"))
+             ;;      (div (@ (class "unit final newfield"))
+             ;;           (input (@ (type "text")
+             ;;                     (list "known-fields")
+             ;;                     (placeholder "Nytt fält")))
+             ;;           (select (@ (name "TYPE"))
+             ;;             (option (@ (value "TEXT")) "Text"))
+             ;;           (span
+             ;;            (input (@ (type "text")
+             ;;                      (placeholder "Värde"))))))
 
-             (hr)
+             ;; (hr)
 
 
              (input (@ (type "submit")))

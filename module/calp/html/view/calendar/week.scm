@@ -75,46 +75,53 @@
 ;; based on the output of fmt-single-event
 (define (description-template)
   '(div (@ (class " eventtext summary-tab " ()))
-        (h3 ((span (@ (class "repeating")) "↺")
+        (h3 ((span (@ (class "repeating")) ; "↺"
+                   )
              (span (@ (class "bind summary")
-                      (data-property "summary"))
-                   "Test")))
+                      (data-property "summary")))))
         (div (div (time (@ (class "bind dtstart")
                            (data-property "dtstart")
                            (data-fmt "~L~H:~M")
-                           (datetime "2021-09-29T19:56:46"))
-                        "19:56")
+                           (datetime ; "2021-09-29T19:56:46"
+                            ))
+                        ; "19:56"
+                        )
                   "\xa0—\xa0"
                   (time (@ (class "bind dtend")
                            (data-property "dtend")
                            (data-fmt "~L~H:~M")
-                           (datetime "2021-09-29T19:56:46"))
-                        "20:56"))
+                           (datetime ; "2021-09-29T19:56:46"
+                            ))
+                        ; "20:56"
+                        ))
              (div (@ (class "fields"))
                   (div (b "Plats: ")
                        (div (@ (class "bind location")
                                (data-property "location"))
-                            "Alsättersgatan 13"))
+                            ; "Alsättersgatan 13"
+                            ))
                   (div (@ (class "bind description")
                           (data-property "description"))
-                       ("With a description"))
-                  (div (@ (class "categories"))
-                       (a (@ (class "category")
-                             (href "/search/?"
-                                   "q=%28member%20%22test%22%20%28or%20%28prop%20event%20%28quote%20CATEGORIES%29%29%20%28quote%20%28%29%29%29%29"))
-                          test))
-                  (div (@ (class "rrule"))
-                       "Upprepas "
-                       "varje vecka"
-                       ".")
+                       ; "With a description"
+                       )
+                  ;; (div (@ (class "categories"))
+                  ;;      (a (@ (class "category")
+                  ;;            (href "/search/?"
+                  ;;                  "q=%28member%20%22test%22%20%28or%20%28prop%20event%20%28quote%20CATEGORIES%29%29%20%28quote%20%28%29%29%29%29"))
+                  ;;         test))
+                  ;; (div (@ (class "rrule"))
+                  ;;      "Upprepas "
+                  ;;      "varje vecka"
+                  ;;      ".")
                   (div (@ (class "last-modified"))
-                       "Senast ändrad "
-                       "2021-09-29 19:56")))))
+                       "Senast ändrad -"
+                       ; "2021-09-29 19:56"
+                       )))))
 
 (define (block-template)
   `(div (@ ; (id ,(html-id ev))
            (data-calendar "unknown")
-           (class "event CAL_unknown" 
+           (class "event CAL_unknown"
              ;; ,(when (and (prop ev 'PARTSTAT)
              ;;             (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
              ;;    " tentative")

@@ -75,7 +75,7 @@ class ClockElement extends HTMLElement {
         this.update(new Date)
     }
 
-    static get observerAttributes () {
+    static get observedAttributes () {
         return ['timer_id']
     }
 
