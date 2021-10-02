@@ -6,6 +6,44 @@ class VEventValue {
         this.value = value;
         this.parameters = parameters;
     }
+
+    to_jcal () {
+        let value;
+        let v = this.value;
+        switch (this.type) {
+        case 'binary':
+            /* TOOD */
+            break;
+        case 'date-time':
+            value = v.format("~Y-~m-~dT~H:~M:~S");
+            // TODO TZ
+            break;
+        case 'date':
+            value = v.format("~Y-~m-~d");
+            break;
+        case 'duration':
+            /* TODO */
+            break;
+        case 'period':
+            /* TODO */
+            break;
+        case 'utc-offset':
+            /* TODO */
+            break;
+        case 'recur':
+            value = v.asJcal();
+            break;
+
+        case 'float':
+        case 'integer':
+        case 'text':
+        case 'uri':
+        case 'cal-address':
+        case 'boolean':
+            value = v;
+        }
+        return [this.parameters, this.type, value];
+    }
 }
 
 /* maybe ... */
@@ -42,6 +80,16 @@ class VEvent {
 
     register (htmlNode) {
         this.registered.push(htmlNode);
+    }
+
+    to_jcal () {
+        let out_properties = []
+        for (let [key, value] of Object.entries(this.properties)) {
+            let sub = value.to_jcal();
+            sub.unshift(key)
+            out_properties.push(sub);
+        }
+        return ['vevent', out_properties, [/* alarms go here*/]]
     }
 }
 
