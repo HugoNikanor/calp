@@ -616,9 +616,13 @@
                                         "som xCal")))
                              ,@(when (debug)
                                  `((ul
-                                    (li (button (@ (onclick "console.log(event_to_jcal(event_from_popup(this.closest('.popup-container'))));")) "js"))
-                                    (li (button (@ (onclick "console.log(jcal_to_xcal(event_to_jcal(event_from_popup(this.closest('.popup-container')))));")) "xml"))
-                                    (li (button (@ (onclick "console.log(event_from_popup(this.closest('.popup-container')))")) "this"))
+                                    ;; this.closest('.vevent').dataset['uid']
+                                    (li (button (@ (onclick ,(format #f "console.log(vcal_objects['~a'].to_jcal())"
+                                                                     (prop ev 'UID)))) "js"))
+                                    (li (button (@ (onclick ,(format #f "console.log(jcal_to_xcal(vcal_objects['~a'].to_jcal()))"
+                                                                     (prop ev 'UID)))) "xml"))
+                                    (li (button (@ (onclick ,(format #f "console.log(vcal_objects['~a'])"
+                                                                     (prop ev 'UID)))) "this"))
                                     ))))
                         ))
 
