@@ -324,6 +324,21 @@ class ComponentBlock extends ComponentVEvent {
     constructor () {
         super();
     }
+
+    redraw (data) {
+        super.redraw(data);
+
+        let p;
+        if ((p = data.getProperty('dtstart'))) {
+            this.style.top = date_to_percent(p, 1) + "%";
+            console.log('dtstart', p);
+        }
+        if ((p = data.getProperty('dtend'))) {
+            this.style.height = 'unset';
+            console.log('dtend', p);
+            this.style.bottom = (100 - date_to_percent(p, 1)) + "%";
+        }
+    }
 }
 
 window.addEventListener('load', function () {
