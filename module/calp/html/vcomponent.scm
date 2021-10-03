@@ -1,5 +1,6 @@
 (define-module (calp html vcomponent)
   :use-module (calp util)
+  :use-module ((calp util exceptions) :select (warning))
   :use-module (vcomponent)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
@@ -66,10 +67,9 @@
     (@ ,@(assq-merge
           attributes
           `(
-            (class " vevent eventtext summary-tab "
-              ,(when (and (prop ev 'PARTSTAT)
-                          (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                 " tentative "))
+            (class ,(when (and (prop ev 'PARTSTAT)
+                               (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+                      " tentative "))
             (data-uid ,(prop ev 'UID)))))
     (h3 ,(fmt-header
           (when (prop ev 'RRULE)
@@ -368,7 +368,8 @@
                          " transparent")
                       )
                     (data-uid ,(prop ev 'UID))
-                    (onclick "toggle_popup('popup' + this.id)")
+                    ;; TODO figure out stable way to get popup for element
+                    ;; (onclick "toggle_popup('popup' + this.id)")
                     )))
             ;; Inner div to prevent overflow. Previously "overflow: none"
             ;; was set on the surounding div, but the popup /needs/ to
@@ -571,10 +572,13 @@
                   ))))
 
 
+
+
 (define-public (popup ev id)
-  `(div (@ (id ,id) (class "popup-container CAL_" 
+  (warning "popup is deprecated")
+  `(div (@ (id ,id) (class "popup-container CAL_"
                            ,(html-attr (or (prop (parent ev) 'NAME)
-                                           "unknown"))) 
+                                           "unknown")))
            (onclick "event.stopPropagation()"))
         ;; TODO all (?) code uses .popup-container as the popup, while .popup sits and does nothing.
         ;; Do something about this?

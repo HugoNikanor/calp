@@ -117,6 +117,7 @@
     ;; (script (@ (defer) (src "/static/date_time.js")))
     ;; (script (@ (defer) (src "/static/vcal.js")))
     (script (@ (defer) (src "/static/script.js")))
+    (script (@ (defer) (src "/static/vevent.js")))
     (script (@ (defer) (src "/static/globals.js")))
 
     ;; on load

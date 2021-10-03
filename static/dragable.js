@@ -21,14 +21,16 @@ function bind_popup_control (nav) {
         nav.style.cursor = "grabbing";
         nav.dataset.grabbed = "true";
         nav.dataset.grabPoint = e.clientX + ";" + e.clientY;
-        let popup = nav.closest(".popup-container");
+        // let popup = nav.closest(".popup-container");
+        let popup = nav.closest("popup-element");
         nav.dataset.startPoint = popup.offsetLeft + ";" + popup.offsetTop;
     }
     window.addEventListener('mousemove', function (e) {
         if (nav.dataset.grabbed) {
             let [x, y] = nav.dataset.grabPoint.split(";").map(Number);
             let [startX, startY] = nav.dataset.startPoint.split(";").map(Number);
-            let popup = nav.closest(".popup-container");
+            // let popup = nav.closest(".popup-container");
+            let popup = nav.closest("popup-element");
 
             popup.style.left = startX + (e.clientX - x) + "px";
             popup.style.top = startY + (e.clientY - y) + "px";

@@ -744,6 +744,21 @@ along with their colors.
 ----------------------------------------
 */
 
+popup-element {
+    display: none;
+    position: absolute;
+    z-index: 1000;
+
+    /* ??? */
+    left: 10px;
+    top: -50px;
+
+    box-shadow: gray 10px 10px 10px;
+
+    &.visible {
+        display: block;
+    }
+}
 
 .popup {
     display: flex;
@@ -757,21 +772,6 @@ along with their colors.
     min-width: 60ch;
     min-height: 30ch;
 
-    &-container {
-        display: none;
-        position: absolute;
-        z-index: 1000;
-
-        /* ??? */
-        left: 10px;
-        top: -50px;
-
-        box-shadow: gray 10px 10px 10px;
-
-        &.visible {
-            display: block;
-        }
-    }
 
     input {
         white-space: initial;

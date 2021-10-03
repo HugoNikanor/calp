@@ -4,211 +4,216 @@
   calp specific stuff
 */
 
-// class EventCreator {
-// 
-//     /* dynamicly created event when dragging */
-//     constructor() {
-//         this.event = false;
-//         this.event_start = { x: NaN, y: NaN };
-//         this.down_on_event = false;
-//     }
-// 
-//     create_empty_event () {
-//         /* TODO this doesn't clone JS attributes */
-// 
-//         let event = document.getElementById("event-template")
-//             .firstChild.cloneNode(true);
-//         let popup = document.getElementById("popup-template")
-//             .firstChild.cloneNode(true);
-// 
-//         /* -------------------- */
-//         /* Manually transfer or recreate attributes which we still need */
-//         /* TODO shouldn't these use transferListeners (or similar)?
-//            See input_list.js:transferListeners */
-// 
-//         for (let dt of popup.getElementsByClassName("date-time")) {
-//             init_date_time_single(dt);
-//         }
-// 
-//         popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
-//             create_event(event);
-//             return false; /* stop default */
-//         }
-// 
-//         /* -------------------- */
-//         /* Fix tabs for newly created popup */
-// 
-//         let id = gensym ("__js_event");
-// 
-//         // TODO remove button?
-//         // $("button 2??").onclick = `remove_event(document.getElementById('${id}'))`
-// 
-//         let tabgroup_id = gensym();
-//         for (let tab of popup.querySelectorAll(".tabgroup .tab")) {
-//             let new_id = gensym();
-//             let input = tab.querySelector("input");
-//             input.id = new_id;
-//             input.name = tabgroup_id;
-//             tab.querySelector("label").setAttribute('for', new_id);
-//         }
-// 
-//         let nav = popup.getElementsByClassName("popup-control")[0];
-//         bind_popup_control(nav);
-// 
-//         /* -------------------- */
-// 
-//         // TODO download links
-// 
-//         /* -------------------- */
-// 
-//         event.id = id;
-//         popup.id = "popup" + id;
-// 
-//         return [popup, event];
-//     }
-// 
-//     create_event_down (intended_target) {
-//         let that = this;
-//         return function (e) {
-//             /* Only trigger event creation stuff on actuall events background,
-//                NOT on its children */
-//             that.down_on_event = false;
-//             if (e.target != intended_target) return;
-//             that.down_on_event = true;
-// 
-//             that.event_start.x = e.clientX;
-//             that.event_start.y = e.clientY;
-//         }
-//     }
-// 
-//     /*
-//       round_to: what start and end times should round to when dragging, in fractionsb
-//       of the width of the containing container.
-// 
-//       TODO limit this to only continue when on the intended event_container.
-// 
-//       (event → [0, 1)), 𝐑, bool → event → ()
-//      */
-//     create_event_move(pos_in, round_to=1, wide_element=false) {
-//         let that = this;
-//         return function (e) {
-//             if (e.buttons != 1 || ! that.down_on_event) return;
-// 
-//             /* Create event when we start moving the mouse. */
-//             if (! that.event) {
-//                 /* Small deadzone so tiny click and drags aren't registered */
-//                 if (Math.abs(that.event_start.x - e.clientX) < 10
-//                     && Math.abs(that.event_start.y - e.clientY) < 5)
-//                 { return; }
-// 
-//                 /* only allow start of dragging on background */
-//                 if (e.target != this) return;
-// 
-//                 /* only on left click */
-//                 if (e.buttons != 1) return;
-// 
-//                 let [popup, event] = that.create_empty_event();
-//                 that.event = event;
-// 
-//                 /* TODO better solution to add popup to DOM */
-//                 document.getElementsByTagName("main")[0].append(popup);
-// 
-//                 /* [0, 1) -- where are we in the container */
-//                 /* Ronud to force steps of quarters */
-//                 /* NOTE for in-day events a floor here work better, while for
-//                    all day events I want a round, but which has the tip over point
-//                    around 0.7 instead of 0.5.
-//                    It might also be an idea to subtract a tiny bit from the short events
-//                    mouse position, since I feel I always get to late starts.
-//                 */
-//                 let time = round_time(pos_in(this, e), round_to);
-// 
-//                 event.dataset.time1 = time;
-//                 event.dataset.time2 = time;
-// 
-//                 /* ---------------------------------------- */
-// 
-//                 this.appendChild(event);
-// 
-//                 /* requires that event is child of an '.event-container'. */
-//                 new VComponent(
-//                     event,
-//                     wide_element=wide_element);
-//                 // bind_properties(event, wide_element);
-// 
-//                 /* requires that dtstart and dtend properties are initialized */
-// 
-//                 /* ---------------------------------------- */
-// 
-//                 /* Makes all current events transparent when dragging over them.
-//                    Without this weird stuff happens when moving over them
-// 
-//                    This includes ourselves.
-//                 */
-//                 for (let e of this.children) {
-//                     e.style.pointerEvents = "none";
-//                 }
-// 
-//             }
-// 
-//             let time1 = Number(that.event.dataset.time1);
-//             let time2 = that.event.dataset.time2 =
-//                 round_time(pos_in(that.event.parentElement, e),
-//                            round_to);
-// 
-//             /* ---------------------------------------- */
-// 
-//             let event_container = that.event.closest(".event-container");
-// 
-//             /* These two are in UTC */
-//             let container_start = parseDate(event_container.dataset.start);
-//             let container_end = parseDate(event_container.dataset.end);
-// 
-//             /* ---------------------------------------- */
-// 
-//             /* ms */
-//             let duration = container_end - container_start;
-// 
-//             let start_in_duration = duration * Math.min(time1,time2);
-//             let end_in_duration   = duration * Math.max(time1,time2);
-// 
-//             /* Notice that these are converted to UTC, since the intervals are given
-//                in utc, and I only really care about local time (which a specific local
-//                timezone doesn't give me)
-//             */
-//             /* TODO Should these inherit UTC from container_*? */
-//             let d1 = new Date(container_start.getTime() + start_in_duration)
-//             let d2 = new Date(container_start.getTime() + end_in_duration)
-// 
-//             // console.log(that.event);
-//             console.log(d1, d2);
-//             that.event.properties.dtstart = d1;
-//             that.event.properties.dtend = d2;
-//         }
-//     }
-// 
-//     create_event_finisher (callback) {
-//         let that = this;
-//         return function create_event_up (e) {
-//             if (! that.event) return;
-// 
-//             /* Restore pointer events for all existing events.
-//                Allow pointer events on our new event
-//             */
-//             for (let e of that.event.parentElement.children) {
-//                 e.style.pointerEvents = "";
-//             }
-// 
-//             place_in_edit_mode(that.event);
-// 
-//             let localevent = that.event;
-//             that.event = null;
-// 
-//             callback (localevent);
-// 
-//         }
-//     }
-// }
+class EventCreator {
+
+    /* dynamicly created event when dragging */
+    constructor() {
+        this.event = false;
+        this.event_start = { x: NaN, y: NaN };
+        this.down_on_event = false;
+    }
+
+    create_empty_event () {
+        /* TODO this doesn't clone JS attributes */
+
+        // let event = document.getElementById("event-template")
+        //     .firstChild.cloneNode(true);
+        // let popup = document.getElementById("popup-template")
+        //     .firstChild.cloneNode(true);
+
+        // document.createElement('vevent-block');
+
+        /* -------------------- */
+        /* Manually transfer or recreate attributes which we still need */
+        /* TODO shouldn't these use transferListeners (or similar)?
+           See input_list.js:transferListeners */
+
+        for (let dt of popup.getElementsByClassName("date-time")) {
+            init_date_time_single(dt);
+        }
+
+        popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
+            create_event(event);
+            return false; /* stop default */
+        }
+
+        /* -------------------- */
+        /* Fix tabs for newly created popup */
+
+        let id = gensym ("__js_event");
+
+        // TODO remove button?
+        // $("button 2??").onclick = `remove_event(document.getElementById('${id}'))`
+
+        /*
+        let tabgroup_id = gensym();
+        for (let tab of popup.querySelectorAll(".tabgroup .tab")) {
+            let new_id = gensym();
+            let input = tab.querySelector("input");
+            input.id = new_id;
+            input.name = tabgroup_id;
+            tab.querySelector("label").setAttribute('for', new_id);
+        }
+
+        let nav = popup.getElementsByClassName("popup-control")[0];
+        bind_popup_control(nav);
+        */
+
+        /* -------------------- */
+
+        // TODO download links
+
+        /* -------------------- */
+
+        event.id = id;
+        popup.id = "popup" + id;
+
+        return [popup, event];
+    }
+
+    create_event_down (intended_target) {
+        let that = this;
+        return function (e) {
+            /* Only trigger event creation stuff on actuall events background,
+               NOT on its children */
+            that.down_on_event = false;
+            if (e.target != intended_target) return;
+            that.down_on_event = true;
+
+            that.event_start.x = e.clientX;
+            that.event_start.y = e.clientY;
+        }
+    }
+
+    /*
+      round_to: what start and end times should round to when dragging, in fractionsb
+      of the width of the containing container.
+
+      TODO limit this to only continue when on the intended event_container.
+
+      (event → [0, 1)), 𝐑, bool → event → ()
+     */
+    create_event_move(pos_in, round_to=1, wide_element=false) {
+        let that = this;
+        return function (e) {
+            if (e.buttons != 1 || ! that.down_on_event) return;
+
+            /* Create event when we start moving the mouse. */
+            if (! that.event) {
+                /* Small deadzone so tiny click and drags aren't registered */
+                if (Math.abs(that.event_start.x - e.clientX) < 10
+                    && Math.abs(that.event_start.y - e.clientY) < 5)
+                { return; }
+
+                /* only allow start of dragging on background */
+                if (e.target != this) return;
+
+                /* only on left click */
+                if (e.buttons != 1) return;
+
+                // let [popup, event] = that.create_empty_event();
+                // that.event = event;
+                that.event = document.createElement('vevent-block');
+
+                /* TODO better solution to add popup to DOM */
+                // document.getElementsByTagName("main")[0].append(popup);
+
+                /* [0, 1) -- where are we in the container */
+                /* Ronud to force steps of quarters */
+                /* NOTE for in-day events a floor here work better, while for
+                   all day events I want a round, but which has the tip over point
+                   around 0.7 instead of 0.5.
+                   It might also be an idea to subtract a tiny bit from the short events
+                   mouse position, since I feel I always get to late starts.
+                */
+                let time = round_time(pos_in(this, e), round_to);
+
+                event.dataset.time1 = time;
+                event.dataset.time2 = time;
+
+                /* ---------------------------------------- */
+
+                this.appendChild(event);
+
+                /* requires that event is child of an '.event-container'. */
+                // new VComponent(
+                //     event,
+                //     wide_element=wide_element);
+                // bind_properties(event, wide_element);
+
+                /* requires that dtstart and dtend properties are initialized */
+
+                /* ---------------------------------------- */
+
+                /* Makes all current events transparent when dragging over them.
+                   Without this weird stuff happens when moving over them
+
+                   This includes ourselves.
+                */
+                for (let e of this.children) {
+                    e.style.pointerEvents = "none";
+                }
+
+            }
+
+            let time1 = Number(that.event.dataset.time1);
+            let time2 = that.event.dataset.time2 =
+                round_time(pos_in(that.event.parentElement, e),
+                           round_to);
+
+            /* ---------------------------------------- */
+
+            let event_container = that.event.closest(".event-container");
+
+            /* These two are in UTC */
+            let container_start = parseDate(event_container.dataset.start);
+            let container_end = parseDate(event_container.dataset.end);
+
+            /* ---------------------------------------- */
+
+            /* ms */
+            let duration = container_end - container_start;
+
+            let start_in_duration = duration * Math.min(time1,time2);
+            let end_in_duration   = duration * Math.max(time1,time2);
+
+            /* Notice that these are converted to UTC, since the intervals are given
+               in utc, and I only really care about local time (which a specific local
+               timezone doesn't give me)
+            */
+            /* TODO Should these inherit UTC from container_*? */
+            let d1 = new Date(container_start.getTime() + start_in_duration)
+            let d2 = new Date(container_start.getTime() + end_in_duration)
+
+            // console.log(that.event);
+            console.log(d1, d2);
+            that.event.properties.dtstart = d1;
+            that.event.properties.dtend = d2;
+        }
+    }
+
+    create_event_finisher (callback) {
+        let that = this;
+        return function create_event_up (e) {
+            if (! that.event) return;
+
+            /* Restore pointer events for all existing events.
+               Allow pointer events on our new event
+            */
+            for (let e of that.event.parentElement.children) {
+                e.style.pointerEvents = "";
+            }
+
+            place_in_edit_mode(that.event);
+
+            let localevent = that.event;
+            that.event = null;
+
+            callback (localevent);
+
+        }
+    }
+}
 
 
 
@@ -316,9 +321,9 @@ window.addEventListener('load', function () {
         }
     }
 
-    for (let nav of document.getElementsByClassName("popup-control")) {
-        bind_popup_control(nav);
-    }
+    // for (let nav of document.getElementsByClassName("popup-control")) {
+    //     bind_popup_control(nav);
+    // }
 
     for (let el of document.getElementsByClassName("event")) {
         /* Popup script replaces need for anchors to events.

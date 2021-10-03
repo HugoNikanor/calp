@@ -2,12 +2,14 @@
 
 /* event component => coresponding popup component */
 function event_from_popup(popup) {
-    return document.getElementById(popup.id.substr(5))
+    // return document.getElementById(popup.id.substr(5))
+    return find_block(popup.closest('[data-uid]').dataset.uid)
 }
 
 /* popup component => coresponding event component */
 function popup_from_event(event) {
-    return document.getElementById("popup" + event.id);
+    // return document.getElementById("popup" + event.id);
+    return find_popup(event.closest('[data-uid]').dataset.uid)
 }
 
 /* hides given popup */
@@ -17,7 +19,7 @@ function close_popup(popup) {
 
 /* hides all popups */
 function close_all_popups () {
-    for (let popup of document.querySelectorAll(".popup-container.visible")) {
+    for (let popup of document.querySelectorAll("popup-element.visible")) {
         close_popup(popup);
     }
 }
@@ -51,8 +53,8 @@ function open_popup(popup) {
 }
 
 /* toggles open/closed status of popup given by id */
-function toggle_popup(popup_id) {
-    let popup = document.getElementById(popup_id);
+function toggle_popup(popup) {
+    // let popup = document.getElementById(popup_id);
     if (popup.classList.contains("visible")) {
         close_popup(popup);
     } else {

@@ -14,6 +14,9 @@
                         events-between))
   :use-module ((calp html vcomponent)
                :select (make-block) )
+  :use-module ((calp html components)
+               :select (btn tabset #; #; form with-label
+                            ))
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
   )
@@ -52,10 +55,16 @@
 
                 ,@(for event in (stream->list
                                  (events-between start-date end-date events))
-                       ((@ (calp html vcomponent ) popup)
-                        event (string-append "popup" (html-id event))))
+                       `(popup-element
+                         (@ (class "vevent")
+                            (data-uid ,(prop event 'UID)))
+                         )
+                       #;
+                       ((@ (calp html vcomponent ) popup) ;
+                       event (string-append "popup" (html-id event))))
 
                 ))
+
       ;; description in sidebar / tab of popup
       (template (@ (id "vevent-description"))
                 ,(description-template)
@@ -70,11 +79,38 @@
                 ,(block-template)
                 )
 
+      ;; Based on popup:s output
+      (template
+       (@ (id "popup-template"))
+       (div (@ ; (id ,id)
+               (class "popup-container CAL_"
+                 #; 
+                 ,(html-attr (or (prop (parent ev) 'NAME) ;
+                 "unknown")))
+               (onclick "event.stopPropagation()"))
+            (div (@ (class "popup"))
+                 (nav (@ (class "popup-control"))
+                      ,(btn "×"
+                            title: "Stäng"
+                            onclick: ""
+                            ;; onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
+                            class: '("close-tooltip")))
+
+                 ,(tabset
+                   `(("📅" title: "Översikt"
+                      (vevent-description (@ (class "populate-with-uid")))
+                      )
+
+                     ,@(when (edit-mode)
+                         `(("📅" title: "Redigera"
+                            (vevent-edit (@ (class "populate-with-uid"))))))))))
+       )
+
       )))
 
 ;; based on the output of fmt-single-event
 (define (description-template)
-  '(div (@ (class " eventtext summary-tab " ()))
+  '(div (@ (class " vevent eventtext summary-tab " ()))
         (h3 ((span (@ (class "repeating")) ; "↺"
                    )
              (span (@ (class "bind summary")
