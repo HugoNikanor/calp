@@ -28,14 +28,14 @@ class EventCreator {
         /* TODO shouldn't these use transferListeners (or similar)?
            See input_list.js:transferListeners */
 
-        for (let dt of popup.getElementsByClassName("date-time")) {
-            init_date_time_single(dt);
-        }
+        // for (let dt of popup.getElementsByClassName("date-time")) {
+        //     init_date_time_single(dt);
+        // }
 
-        popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
-            create_event(event);
-            return false; /* stop default */
-        }
+        // popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
+        //     create_event(event);
+        //     return false; /* stop default */
+        // }
 
         /* -------------------- */
         /* Fix tabs for newly created popup */
@@ -128,12 +128,12 @@ class EventCreator {
                 */
                 let time = round_time(pos_in(this, e), round_to);
 
-                event.dataset.time1 = time;
-                event.dataset.time2 = time;
+                that.event.dataset.time1 = time;
+                that.event.dataset.time2 = time;
 
                 /* ---------------------------------------- */
 
-                this.appendChild(event);
+                this.appendChild(that.event);
 
                 /* requires that event is child of an '.event-container'. */
                 // new VComponent(
@@ -186,9 +186,11 @@ class EventCreator {
             let d2 = new Date(container_start.getTime() + end_in_duration)
 
             // console.log(that.event);
-            console.log(d1, d2);
-            that.event.properties.dtstart = d1;
-            that.event.properties.dtend = d2;
+            console.log(d1.format("~L~H:~M"), d2.format("~L~H:~M"));
+            that.event.redraw({ getProperty: (name) =>
+                ({ dtstart: d1, dtend: d2 })[name]});
+            // that.event.properties.dtstart = d1;
+            // that.event.properties.dtend = d2;
         }
     }
 
@@ -204,7 +206,7 @@ class EventCreator {
                 e.style.pointerEvents = "";
             }
 
-            place_in_edit_mode(that.event);
+            // place_in_edit_mode(that.event);
 
             let localevent = that.event;
             that.event = null;
@@ -222,40 +224,40 @@ class EventCreator {
 
    TODO stop requiring a weird button press to change calendar.
 */
-function place_in_edit_mode (event) {
-    let popup = document.getElementById("popup" + event.id)
-    let container = popup.getElementsByClassName('dropdown-goes-here')[0]
-    let calendar_dropdown = document.getElementById('calendar-dropdown-template').firstChild.cloneNode(true);
-
-    let [_, calclass] = popup.classList.find(/^CAL_/);
-    label: {
-	for (let [i, option] of calendar_dropdown.childNodes.entries()) {
-	    if (option.value === calclass.substr(4)) {
-		calendar_dropdown.selectedIndex = i;
-		break label;
-	    }
-	}
-	/* no match, try find default calendar */
-	let t;
-	if ((t = calendar_dropdown.querySelector("[selected]"))) {
-	    event.properties.calendar = t.value;
-	}
-    }
-
-
-    /* Instant change while user is stepping through would be
-     * preferable. But I believe that <option> first gives us the
-     * input once selected */
-    calendar_dropdown.onchange = function () {
-        event.properties.calendar = this.value;
-    }
-    container.appendChild(calendar_dropdown);
-
-    let tab = popup.getElementsByClassName("tab")[1];
-    let radio = tab.getElementsByTagName("input")[0];
-    radio.click();
-    tab.querySelector("input[name='summary']").focus();
-}
+// function place_in_edit_mode (event) {
+//     let popup = document.getElementById("popup" + event.id)
+//     let container = popup.getElementsByClassName('dropdown-goes-here')[0]
+//     let calendar_dropdown = document.getElementById('calendar-dropdown-template').firstChild.cloneNode(true);
+// 
+//     let [_, calclass] = popup.classList.find(/^CAL_/);
+//     label: {
+// 	for (let [i, option] of calendar_dropdown.childNodes.entries()) {
+// 	    if (option.value === calclass.substr(4)) {
+// 		calendar_dropdown.selectedIndex = i;
+// 		break label;
+// 	    }
+// 	}
+// 	/* no match, try find default calendar */
+// 	let t;
+// 	if ((t = calendar_dropdown.querySelector("[selected]"))) {
+// 	    event.properties.calendar = t.value;
+// 	}
+//     }
+// 
+// 
+//     /* Instant change while user is stepping through would be
+//      * preferable. But I believe that <option> first gives us the
+//      * input once selected */
+//     calendar_dropdown.onchange = function () {
+//         event.properties.calendar = this.value;
+//     }
+//     container.appendChild(calendar_dropdown);
+// 
+//     let tab = popup.getElementsByClassName("tab")[1];
+//     let radio = tab.getElementsByTagName("input")[0];
+//     radio.click();
+//     tab.querySelector("input[name='summary']").focus();
+// }
 
 
 
@@ -277,7 +279,7 @@ window.addEventListener('load', function () {
     }, 1000 * 60);
 
     /* Is event creation active? */
-    if (false && EDIT_MODE) {
+    if (true && EDIT_MODE) {
         let eventCreator = new EventCreator;
         for (let c of document.getElementsByClassName("events")) {
             c.onmousedown = eventCreator.create_event_down(c);

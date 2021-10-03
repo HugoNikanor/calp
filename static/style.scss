@@ -772,6 +772,9 @@ popup-element {
     min-width: 60ch;
     min-height: 30ch;
 
+    select {
+        max-width: 100%;
+    }
 
     input {
         white-space: initial;

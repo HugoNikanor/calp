@@ -7,6 +7,11 @@ class ComponentVEvent extends HTMLElement {
         super ();
         this.template = document.getElementById(this.tagName);
 
+        let uid;
+        if ((uid = this.dataset.uid)) {
+            vcal_objects[uid].register(this);
+        }
+
         /* We DON'T have a redraw here in the general case, since the
            HTML rendered server-side should be fine enough for us.
            Those that need a direct rerendering (such as the edit tabs)
@@ -122,12 +127,13 @@ class ComponentEdit extends ComponentVEvent {
 }
 
 function find_popup (uid) {
-    for (let el of vcal_objects[uid].registered) {
-        if (el.tagName === 'popup-element') {
-            return el;
-        }
-    }
-    throw 'Popup not fonud';
+    // for (let el of vcal_objects[uid].registered) {
+    //     if (el.tagName === 'popup-element') {
+    //         return el;
+    //     }
+    // }
+    // throw 'Popup not fonud';
+    return document.querySelector(`popup-element[data-uid="${uid}"]`)
 }
 
 function find_block (uid) {
@@ -180,6 +186,7 @@ window.addEventListener('load', function () {
       - .block
       - .list
      */
+    /*
     let vevent_els = document.getElementsByClassName('vevent')
     for (let el of vevent_els) {
         try {
@@ -190,6 +197,7 @@ window.addEventListener('load', function () {
                          );
         }
     }
+    */
 
     customElements.define('vevent-description', ComponentDescription);
     customElements.define('vevent-edit', ComponentEdit);
@@ -305,6 +313,16 @@ class PopupElement extends HTMLElement {
         /* end nav bar */
 
         this.replaceChildren(body);
+
+        let that = this;
+        this.getElementsByClassName("calendar-selection")
+            .addEventListener('change', function () {
+                let uid = that.closest('[data-uid]').dataset.uid
+                let obj = vcal_objects[uid]
+                this.value;
+                // event.properties.calendar = this.value;
+            });
+
     }
 }
 

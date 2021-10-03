@@ -269,18 +269,9 @@
                                                                          (or (prop (parent event) 'NAME) ""))))))))
                                         ,(prop calendar 'NAME))))
                               calendars))
-                       (div (@ (id "calendar-dropdown-template") (class "template"))
-                            (select
-                                (option "- Choose a Calendar -")
-                              ,@(let ((dflt (get-config 'default-calendar)))
-                                  (map (lambda (calendar)
-                                         (define name (prop calendar 'NAME))
-                                         `(option (@ (value ,(html-attr name))
-                                                     ,@(when (string=? name dflt)
-                                                         '((selected))))
-                                                  ,name))
-                                       calendars)))
-                            )))
+                       ;; (div (@ (id "calendar-dropdown-template") (class "template"))
+                       ;;      )
+                       ))
 
          ;; List of events
          (div (@ (class "eventlist")

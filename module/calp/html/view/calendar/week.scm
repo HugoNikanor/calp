@@ -22,7 +22,7 @@
   )
 
 
-(define*-public (render-calendar key: events start-date end-date #:allow-other-keys)
+(define*-public (render-calendar key: calendars events start-date end-date #:allow-other-keys)
   (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))
          (range (date-range start-date end-date)))
     `((script "const VIEW='week';")
@@ -56,6 +56,7 @@
                 ,@(for event in (stream->list
                                  (events-between start-date end-date events))
                        `(popup-element
+                         ;; TODO
                          (@ (class "vevent")
                             (data-uid ,(prop event 'UID)))
                          )
@@ -72,7 +73,9 @@
 
       ;; edit tab of popup
       (template (@ (id "vevent-edit"))
-                ,((@ (calp html vcomponent) edit-template)))
+                ,((@ (calp html vcomponent) edit-template)
+                  calendars
+                  ))
 
       ;; "physical" block
       (template (@ (id "vevent-block"))
@@ -83,11 +86,11 @@
       (template
        (@ (id "popup-template"))
        (div (@ ; (id ,id)
-               (class "popup-container CAL_"
-                 #; 
-                 ,(html-attr (or (prop (parent ev) 'NAME) ;
-                 "unknown")))
-               (onclick "event.stopPropagation()"))
+             (class "popup-container CAL_"
+               #; 
+               ,(html-attr (or (prop (parent ev) 'NAME) ;
+               "unknown")))
+             (onclick "event.stopPropagation()"))
             (div (@ (class "popup"))
                  (nav (@ (class "popup-control"))
                       ,(btn "×"
@@ -98,13 +101,15 @@
 
                  ,(tabset
                    `(("📅" title: "Översikt"
-                      (vevent-description (@ (class "populate-with-uid")))
+                      (vevent-description
+                       (@ (class "vevent populate-with-uid")))
                       )
 
                      ,@(when (edit-mode)
                          `(("📅" title: "Redigera"
-                            (vevent-edit (@ (class "populate-with-uid"))))))))))
-       )
+                            (vevent-edit (@ (class "populate-with-uid"))))))
+
+                     )))))
 
       )))
 

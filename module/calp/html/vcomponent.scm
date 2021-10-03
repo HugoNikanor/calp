@@ -22,6 +22,7 @@
                         format-summary
                         format-recurrence-rule
                                       ))
+  :use-module ((calp util config) :select (get-config))
   )
 
 (define-public (compact-event-list list)
@@ -203,11 +204,19 @@
   `(vevent-edit (@ (class "vevent")
                    (data-uid ,(prop ev 'UID)))))
 
-(define-public (edit-template)
+(define-public (edit-template calendars)
  `(div (@ (class " eventtext edit-tab "))
        (form (@ (class "edit-form"))
-             ;; TODO actually have calendar list here, since we are just a template
-             (div (@ (class "dropdown-goes-here")))
+             (select (@ (class "calendar-selection"))
+                 (option "- Choose a Calendar -")
+               ,@(let ((dflt (get-config 'default-calendar)))
+                   (map (lambda (calendar)
+                          (define name (prop calendar 'NAME))
+                          `(option (@ (value ,(html-attr name))
+                                      ,@(when (string=? name dflt)
+                                          '((selected))))
+                                   ,name))
+                        calendars)))
              (h3 (input (@ (type "text")
                            (placeholder "Sammanfattning")
                            (name "summary") (required)
@@ -605,10 +614,6 @@
                      `(("📅" title: "Redigera"
                         ,(fmt-for-edit ev))))
 
-                  ,@(when (debug)
-                      `(("🐸" title: "Debug"
-                         (div
-                          (pre ,(prop ev 'UID))))))
 
                   ("⤓" title: "Nedladdning"
                    (div (@ (class "eventtext") (style "font-family:sans"))
