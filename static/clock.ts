@@ -1,31 +1,35 @@
 
 class Clock {
-    update(now) {
+    update(now: Date) {
     }
 }
 
 
 class Timebar extends Clock {
 
-    constructor(start_time, end_time) {
+    // start_time: Date
+    // end_time: Date
+    bar_object: HTMLElement | null
+
+    constructor(/*start_time: Date, end_time: Date*/) {
         super();
-        this.start_time = start_time;
-        this.end_time = end_time;
-        this.bar_object = false
+        // this.start_time = start_time;
+        // this.end_time = end_time;
+        this.bar_object = null
     }
 
 
-    update(now) {
+    update(now: Date) {
         // if (! (this.start_time <= now.getTime() && now.getTime() < this.end_time))
         //     return;
 
         var event_area = document.getElementById(now.format("~Y-~m-~d"))
 
         if (event_area) {
-            if (this.bar_object) {
+            if (this.bar_object !== null && this.bar_object.parentNode !== null) {
                 this.bar_object.parentNode.removeChild(this.bar_object)
             } else {
-                this.bar_object = makeElement ('div', {
+                this.bar_object = makeElement('div', {
                     id: 'bar',
                     className: 'eventlike current-time',
                 });
@@ -38,13 +42,17 @@ class Timebar extends Clock {
 }
 
 class SmallcalCellHighlight extends Clock {
-    constructor(small_cal) {
+
+    small_cal: HTMLElement
+    current_cell: HTMLElement | null
+
+    constructor(small_cal: HTMLElement) {
         super();
         this.small_cal = small_cal;
-        this.current_cell = false
+        this.current_cell = null
     }
 
-    update(now) {
+    update(now: Date) {
         if (this.current_cell) {
             this.current_cell.style.border = "";
         }
@@ -63,35 +71,42 @@ class SmallcalCellHighlight extends Clock {
 /* -------------------------------------------------- */
 
 class ClockElement extends HTMLElement {
-    constructor () {
+
+    timer_id: number
+
+    constructor() {
         super();
+
+        this.timer_id = 0
     }
 
-    connectedCallback () {
-        let interval = this.hasAttribute('interval') ? +this.getAttribute('img') : 60;
+    connectedCallback() {
+        let interval = this.hasAttribute('interval')
+            ? +(this.getAttribute('interval') as string)
+            : 60;
         interval *= 1000 /* ms */
 
         this.timer_id = window.setInterval(() => this.update(new Date), interval)
         this.update(new Date)
     }
 
-    static get observedAttributes () {
+    static get observedAttributes() {
         return ['timer_id']
     }
 
-    update (now) { /* noop */ }
+    update(now: Date) { /* noop */ }
 }
 
 class TodayButton extends ClockElement {
-    update (now) {
-        this.querySelector('a').href = now.format("~Y-~m-~d.html")
+    update(now: Date) {
+        (this.querySelector('a') as any).href = now.format("~Y-~m-~d.html")
     }
 }
 customElements.define('today-button', TodayButton)
 
 
 class CurrentTime extends ClockElement {
-    update (now) {
+    update(now: Date) {
         this.innerHTML = now.format('~H:~M:~S')
     }
 }

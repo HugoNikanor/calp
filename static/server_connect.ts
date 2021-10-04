@@ -1,17 +1,22 @@
 
-async function remove_event (element) {
-    let uid = element.querySelector("icalendar uid text").textContent;
+/*
+async function remove_event(element: Element): void {
+    let uidElement = element.querySelector("icalendar uid text")
+    if (uidElement === null) {
+        throw "Element lacks uid, giving up"
+    }
+    let uid: uid = uidElement.textContent!;
 
     let data = new URLSearchParams();
     data.append('uid', uid);
 
-    let response = await fetch ( '/remove', {
+    let response = await fetch('/remove', {
         method: 'POST',
         body: data
     });
 
     console.log(response);
-    toggle_popup("popup" + element.id);
+    toggle_popup(popup_from_event(element));
 
     if (response.status < 200 || response.status >= 300) {
         let body = await response.text();
@@ -20,28 +25,29 @@ async function remove_event (element) {
         element.remove();
     }
 }
+*/
 
-function event_to_jcal (event) {
-    /* encapsulate event in a shim calendar, to ensure that
-       we always send correct stuff */
-    return ['vcalendar',
-            [
-                /*
-                  'prodid' and 'version' are technically both required (RFC 5545,
-                  3.6 Calendar Components).
-                */
-            ],
-            [
-                /* vtimezone goes here */
-                event.properties.to_jcal()
-            ]
-           ];
-}
+// function event_to_jcal(event) {
+//     /* encapsulate event in a shim calendar, to ensure that
+//        we always send correct stuff */
+//     return ['vcalendar',
+//         [
+//             /*
+//               'prodid' and 'version' are technically both required (RFC 5545,
+//               3.6 Calendar Components).
+//             */
+//         ],
+//         [
+//             /* vtimezone goes here */
+//             event.properties.to_jcal()
+//         ]
+//     ];
+// }
 
-async function create_event (event) {
+async function create_event(event: VEvent) {
 
     // let xml = event.getElementsByTagName("icalendar")[0].outerHTML
-    let calendar = event.properties.calendar.value;
+    let calendar = event.getProperty('x-hnh-calendar-name');
 
     console.log('calendar=', calendar/*, xml*/);
 
@@ -51,11 +57,9 @@ async function create_event (event) {
 
     console.log(event);
 
-    let jcal = event_to_jcal(event);
+    let jcal = event.to_jcal();
 
-
-
-    let doc = jcal_to_xcal(jcal);
+    let doc: Document = jcal_to_xcal(jcal);
     console.log(doc);
     let str = doc.documentElement.outerHTML;
     console.log(str);
@@ -65,7 +69,7 @@ async function create_event (event) {
 
     // return;
 
-    let response = await fetch ( '/insert', {
+    let response = await fetch('/insert', {
         method: 'POST',
         body: data
     });
@@ -91,18 +95,19 @@ async function create_event (event) {
         .parseFromString(body, 'text/xml')
         .children[0];
 
-    let child;
-    while ((child = return_properties.firstChild)) {
-        let target = event.querySelector(
-            "vevent properties " + child.tagName);
-        if (target) {
-            target.replaceWith(child);
-        } else {
-            event.querySelector("vevent properties")
-                .appendChild(child);
-        }
-    }
+    // let child;
+    // while ((child = return_properties.firstChild)) {
+    //     let target = event.querySelector(
+    //         "vevent properties " + child.tagName);
+    //     if (target) {
+    //         target.replaceWith(child);
+    //     } else {
+    //         event.querySelector("vevent properties")
+    //             .appendChild(child);
+    //     }
+    // }
 
-    event.classList.remove("generated");
-    toggle_popup("popup" + event.id);
+    // event.classList.remove("generated");
+    // toggle_popup(popup_from);
+
 }

@@ -6,6 +6,10 @@
 
 class EventCreator {
 
+    event: HTMLElement | false
+    event_start: { x: number, y: number }
+    down_on_event: boolean
+
     /* dynamicly created event when dragging */
     constructor() {
         this.event = false;
@@ -13,7 +17,7 @@ class EventCreator {
         this.down_on_event = false;
     }
 
-    create_empty_event () {
+    create_empty_event() {
         /* TODO this doesn't clone JS attributes */
 
         // let event = document.getElementById("event-template")
@@ -40,7 +44,7 @@ class EventCreator {
         /* -------------------- */
         /* Fix tabs for newly created popup */
 
-        let id = gensym ("__js_event");
+        let id = gensym("__js_event");
 
         // TODO remove button?
         // $("button 2??").onclick = `remove_event(document.getElementById('${id}'))`
@@ -65,15 +69,15 @@ class EventCreator {
 
         /* -------------------- */
 
-        event.id = id;
-        popup.id = "popup" + id;
+        // event.id = id;
+        // popup.id = "popup" + id;
 
-        return [popup, event];
+        // return [popup, event];
     }
 
-    create_event_down (intended_target) {
+    create_event_down(intended_target: HTMLElement): (e: MouseEvent) => any {
         let that = this;
-        return function (e) {
+        return function(e: MouseEvent) {
             /* Only trigger event creation stuff on actuall events background,
                NOT on its children */
             that.down_on_event = false;
@@ -93,20 +97,23 @@ class EventCreator {
 
       (event → [0, 1)), 𝐑, bool → event → ()
      */
-    create_event_move(pos_in, round_to=1, wide_element=false) {
+    create_event_move(
+        pos_in: ((c: HTMLElement, e: MouseEvent) => number),
+        round_to: number = 1,
+        wide_element: boolean = false
+    ): ((e: MouseEvent) => any) {
         let that = this;
-        return function (e) {
-            if (e.buttons != 1 || ! that.down_on_event) return;
+        return function(this: HTMLElement, e: MouseEvent) {
+            if (e.buttons != 1 || !that.down_on_event) return;
 
             /* Create event when we start moving the mouse. */
-            if (! that.event) {
+            if (!that.event) {
                 /* Small deadzone so tiny click and drags aren't registered */
                 if (Math.abs(that.event_start.x - e.clientX) < 10
-                    && Math.abs(that.event_start.y - e.clientY) < 5)
-                { return; }
+                    && Math.abs(that.event_start.y - e.clientY) < 5) { return; }
 
                 /* only allow start of dragging on background */
-                if (e.target != this) return;
+                if (e.target !== this) return;
 
                 /* only on left click */
                 if (e.buttons != 1) return;
@@ -128,8 +135,8 @@ class EventCreator {
                 */
                 let time = round_time(pos_in(this, e), round_to);
 
-                that.event.dataset.time1 = time;
-                that.event.dataset.time2 = time;
+                that.event.dataset.time1 = '' + time;
+                that.event.dataset.time2 = '' + time;
 
                 /* ---------------------------------------- */
 
@@ -151,31 +158,32 @@ class EventCreator {
                    This includes ourselves.
                 */
                 for (let e of this.children) {
-                    e.style.pointerEvents = "none";
+                    (e as HTMLElement).style.pointerEvents = "none";
                 }
 
             }
 
             let time1 = Number(that.event.dataset.time1);
-            let time2 = that.event.dataset.time2 =
-                round_time(pos_in(that.event.parentElement, e),
-                           round_to);
+            let time2 = round_time(
+                pos_in(that.event.parentElement!, e),
+                round_to);
+            that.event.dataset.time2 = '' + time2
 
             /* ---------------------------------------- */
 
-            let event_container = that.event.closest(".event-container");
+            let event_container = that.event.closest(".event-container") as HTMLElement;
 
             /* These two are in UTC */
-            let container_start = parseDate(event_container.dataset.start);
-            let container_end = parseDate(event_container.dataset.end);
+            let container_start = parseDate(event_container.dataset.start!);
+            let container_end = parseDate(event_container.dataset.end!);
 
             /* ---------------------------------------- */
 
             /* ms */
-            let duration = container_end - container_start;
+            let duration = container_end.valueOf() - container_start.valueOf();
 
-            let start_in_duration = duration * Math.min(time1,time2);
-            let end_in_duration   = duration * Math.max(time1,time2);
+            let start_in_duration = duration * Math.min(time1, time2);
+            let end_in_duration = duration * Math.max(time1, time2);
 
             /* Notice that these are converted to UTC, since the intervals are given
                in utc, and I only really care about local time (which a specific local
@@ -187,37 +195,40 @@ class EventCreator {
 
             // console.log(that.event);
             console.log(d1.format("~L~H:~M"), d2.format("~L~H:~M"));
-            that.event.redraw({ getProperty: (name) =>
-                ({ dtstart: d1, dtend: d2 })[name]});
+            // TODO
+            // (that.event as Redrawable).redraw({
+            //     getProperty: (name) =>
+            //         ({ dtstart: d1, dtend: d2 })[name]
+            // });
             // that.event.properties.dtstart = d1;
             // that.event.properties.dtend = d2;
         }
     }
 
-    create_event_finisher (callback) {
+    create_event_finisher(callback: ((event: VEvent) => void)) {
         let that = this;
-        return function create_event_up (e) {
-            if (! that.event) return;
+        return function create_event_up(e: MouseEvent) {
+            if (!that.event) return;
 
             /* Restore pointer events for all existing events.
                Allow pointer events on our new event
             */
-            for (let e of that.event.parentElement.children) {
-                e.style.pointerEvents = "";
+            for (let e of that.event.parentElement!.children) {
+                (e as HTMLElement).style.pointerEvents = "";
             }
 
             // place_in_edit_mode(that.event);
 
             let localevent = that.event;
-            that.event = null;
+            that.event = false
 
-            callback (localevent);
+            // callback(localevent);
 
         }
     }
 }
 
-
+
 
 /* This incarnation of this function only adds the calendar switcher dropdown.
    All events are already editable by switching to that tab.
@@ -259,14 +270,15 @@ class EventCreator {
 //     tab.querySelector("input[name='summary']").focus();
 // }
 
-
 
-window.addEventListener('load', function () {
+declare let EDIT_MODE: boolean
+
+window.addEventListener('load', function() {
     // let start_time = document.querySelector("meta[name='start-time']").content;
     // let end_time = document.querySelector("meta[name='end-time']").content;
 
     const sch = new SmallcalCellHighlight(
-        document.querySelector('.small-calendar'))
+        document.querySelector('.small-calendar')!)
 
     const timebar = new Timebar(/*start_time, end_time*/);
 
@@ -282,42 +294,45 @@ window.addEventListener('load', function () {
     if (true && EDIT_MODE) {
         let eventCreator = new EventCreator;
         for (let c of document.getElementsByClassName("events")) {
-            c.onmousedown = eventCreator.create_event_down(c);
-            c.onmousemove = eventCreator.create_event_move(
-                (c,e) => e.offsetY / c.clientHeight,
+            if (!(c instanceof HTMLElement)) continue;
+            c.addEventListener('mousedown', eventCreator.create_event_down(c));
+            c.addEventListener('mousemove', eventCreator.create_event_move(
+                (c, e) => e.offsetY / c.clientHeight,
                 /* every quarter, every hour */
-                1/(24*4), false
-            );
-            c.onmouseup = eventCreator.create_event_finisher(
-                function (event) {
-                    let popupElement = document.getElementById("popup" + event.id);
-                    open_popup(popupElement);
+                1 / (24 * 4), false
+            ));
+            c.addEventListener('mouseup', eventCreator.create_event_finisher(
+                function(event: VEvent) {
+                    // let popupElement = document.getElementById("popup" + event.id);
+                    // open_popup(popup_from_event(event));
 
-                    popupElement.querySelector("input[name='summary']").focus();
+                    // popupElement.querySelector("input[name='summary']").focus();
 
-                });
+                }));
         }
 
         for (let c of document.getElementsByClassName("longevents")) {
+            if (!(c instanceof HTMLElement)) continue;
             c.onmousedown = eventCreator.create_event_down(c);
             c.onmousemove = eventCreator.create_event_move(
-                (c,e) => e.offsetX / c.clientWidth,
+                (c, e) => e.offsetX / c.clientWidth,
                 /* every day, NOTE should be changed to check
                    interval of longevents */
-                1/7, true
+                1 / 7, true
             );
             c.onmouseup = eventCreator.create_event_finisher(
-                function (event) {
-                    let popupElement = document.getElementById("popup" + event.id);
-                    open_popup(popupElement);
+                function(event) {
+                    // TODO restore this
+                    // let popupElement = document.getElementById("popup" + event.id);
+                    // open_popup(popupElement);
 
-		    popupElement.querySelector("input[name='summary']").focus();
+                    // popupElement.querySelector("input[name='summary']").focus();
 
-                    /* This assumes that it's unchecked beforehand.
-                       Preferably we would just ensure that it's checked here,
-                       But we also need to make sure that the proper handlers
-                       are run then */
-                    popupElement.querySelector("input[name='wholeday']").click();
+                    // /* This assumes that it's unchecked beforehand.
+                    //    Preferably we would just ensure that it's checked here,
+                    //    But we also need to make sure that the proper handlers
+                    //    are run then */
+                    // popupElement.querySelector("input[name='wholeday']").click();
 
                 });
         }
@@ -332,7 +347,7 @@ window.addEventListener('load', function () {
            On mobile they also have the problem that they make
            the whole page scroll there.
         */
-        el.parentElement.removeAttribute("href");
+        el.parentElement!.removeAttribute("href");
 
         let popup = document.getElementById("popup" + el.id);
         // popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
@@ -349,12 +364,12 @@ window.addEventListener('load', function () {
 
     }
 
-    document.onkeydown = function (evt) {
-	evt = evt || window.event;
-        if (! evt.key) return;
-	if (evt.key.startsWith("Esc")) {
-	    close_all_popups();
-	}
+    document.onkeydown = function(evt) {
+        evt = evt || window.event;
+        if (!evt.key) return;
+        if (evt.key.startsWith("Esc")) {
+            close_all_popups();
+        }
     }
 
 
@@ -364,20 +379,21 @@ window.addEventListener('load', function () {
        form updates.
     */
 
-    let gotodatebtn = document.querySelector("#jump-to .btn");
+    let gotodatebtn = document.querySelector("#jump-to .btn")!;
     let target_href = (new Date).format("~Y-~m-~d") + ".html";
     let golink = makeElement('a', {
         className: 'btn',
         href: target_href,
         innerHTML: gotodatebtn.innerHTML,
-    });
+    }) as HTMLAnchorElement
     gotodatebtn.replaceWith(golink);
 
-    document.querySelector("#jump-to input[name='date']").onchange = function () {
-        let date = this.valueAsDate.format("~Y-~m-~d");
-        console.log(date);
-        golink.href = date + ".html";
-    }
+    (document.querySelector("#jump-to input[name='date']") as HTMLInputElement)
+        .onchange = function() {
+            let date = (this as HTMLInputElement).valueAsDate!.format("~Y-~m-~d");
+            console.log(date);
+            golink.href = date + ".html";
+        }
 
     /* ---------------------------------------- */
 
@@ -386,26 +402,27 @@ window.addEventListener('load', function () {
        Before init_input_list since we need this listener to be propagated to clones.
        [CATEGORIES_BIND]
     */
-    for (let lst of document.querySelectorAll(".input-list[data-property='categories']")) {
-        let f = function () {
-            console.log(lst, lst.closest('.popup-container'));
-            let event = event_from_popup(lst.closest('.popup-container'))
-            event.properties.categories = lst.get_value();
-        };
+    // TODO fix this
+    // for (let lst of document.querySelectorAll(".input-list[data-property='categories']")) {
+    //     let f = function() {
+    //         console.log(lst, lst.closest('.popup-container'));
+    //         let event = event_from_popup(lst.closest('.popup-container'))
+    //         event.properties.categories = lst.get_value();
+    //     };
 
-        for (let inp of lst.querySelectorAll('input')) {
-            inp.addEventListener('input', f);
-        }
-    }
+    //     for (let inp of lst.querySelectorAll('input')) {
+    //         inp.addEventListener('input', f);
+    //     }
+    // }
 
     // init_arbitary_kv();
 
     // init_input_list();
 
 
-    document.addEventListener('keydown', function (event) {
+    document.addEventListener('keydown', function(event) {
         if (event.key == '/') {
-            let searchbox = document.querySelector('.simplesearch [name=q]')
+            let searchbox = document.querySelector('.simplesearch [name=q]') as HTMLInputElement
             // focuses the input, and selects all the text in it
             searchbox.select();
             event.preventDefault();

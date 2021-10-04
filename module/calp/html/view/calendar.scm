@@ -110,7 +110,7 @@
     (script (@ (defer) (src "/static/dragable.js")))
     (script (@ (defer) (src "/static/clock.js")))
     (script (@ (defer) (src "/static/popup.js")))
-    (script (@ (defer) (src "/static/rrule.js")))
+    ;; (script (@ (defer) (src "/static/rrule.js")))
     ;; (script (@ (defer) (src "/static/binders.js")))
     (script (@ (defer) (src "/static/server_connect.js")))
     ;; (script (@ (defer) (src "/static/input_list.js")))

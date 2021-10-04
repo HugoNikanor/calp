@@ -1,3 +1,13 @@
 *.css
 .*-cache
 *.map
+clock.js
+dragable.js
+globals.js
+jcal.js
+lib.js
+popup.js
+script.js
+server_connect.js
+types.js
+vevent.js

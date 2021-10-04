@@ -15,7 +15,7 @@
   :use-module ((calp html vcomponent)
                :select (make-block) )
   :use-module ((calp html components)
-               :select (btn tabset #; #; form with-label
+               :select (btn tabset ; form with-label
                             ))
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
@@ -170,7 +170,7 @@
              ;;             (eq? 'TRANSPARENT (prop ev 'TRANSP)))
              ;;    " transparent")
              )
-           (onclick "toggle_popup('popup' + this.id)")
+           ; (onclick "toggle_popup('popup' + this.id)")
            )
         ;; Inner div to prevent overflow. Previously "overflow: none"
         ;; was set on the surounding div, but the popup /needs/ to
