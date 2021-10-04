@@ -1,10 +1,12 @@
 "use strict";
 
 class VEventValue {
-    constructor (type, value, parameters = {}) {
+    constructor (type, value, calendar, parameters = {}) {
         this.type = type;
         this.value = value;
         this.parameters = parameters;
+        this.calendar = calendar;
+        console.log(this.calendar);
     }
 
     to_jcal () {
@@ -172,19 +174,26 @@ function xml_to_vcal (xml) {
     /* xml MUST have a VEVENT (or equivalent) as its root */
     let properties = xml.getElementsByTagName('properties')[0];
     let components = xml.getElementsByTagName('components')[0];
+    let calendar_name;
 
     let property_map = {}
     if (properties) {
-        for (var i = 0; i < properties.childElementCount; i++) {
+        property_loop: for (var i = 0; i < properties.childElementCount; i++) {
             let tag = properties.childNodes[i];
             let parameters = {};
             let value = [];
-            for (var j = 0; j < tag.childElementCount; j++) {
+            value_loop: for (var j = 0; j < tag.childElementCount; j++) {
                 let child = tag.childNodes[j];
-                switch (tag.tagName) {
-                case 'parameters':
+                // console.log(tag);
+                if (child.tagName == 'parameters') {
+                    // console.log('is parameters');
                     parameters = /* handle parameters */ {};
-                    break;
+                    continue value_loop;
+                } else switch (tag.tagName) {
+                case 'x-hnh-calendar-name':
+                    calendar_name = child.innerHTML;
+                    console.log(calendar_name);
+                    continue property_loop;
 
                     /* These can contain multiple value tags, per
                        RFC6321 3.4.1.1. */
@@ -210,5 +219,6 @@ function xml_to_vcal (xml) {
         }
     }
 
-    return new VEvent(property_map, component_list)
+    console.log(calendar_name);
+    return new VEvent(property_map, component_list, calendar_name)
 }

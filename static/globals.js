@@ -315,6 +315,7 @@ class PopupElement extends HTMLElement {
         this.replaceChildren(body);
 
         let that = this;
+        /*
         this.getElementsByClassName("calendar-selection")
             .addEventListener('change', function () {
                 let uid = that.closest('[data-uid]').dataset.uid
@@ -322,6 +323,7 @@ class PopupElement extends HTMLElement {
                 this.value;
                 // event.properties.calendar = this.value;
             });
+            */
 
     }
 }

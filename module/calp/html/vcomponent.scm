@@ -208,7 +208,7 @@
  `(div (@ (class " eventtext edit-tab "))
        (form (@ (class "edit-form"))
              (select (@ (class "calendar-selection"))
-                 (option "- Choose a Calendar -")
+               (option "- Choose a Calendar -")
                ,@(let ((dflt (get-config 'default-calendar)))
                    (map (lambda (calendar)
                           (define name (prop calendar 'NAME))

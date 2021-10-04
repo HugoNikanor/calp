@@ -294,34 +294,34 @@
     ;; This would idealy be a <template> element, but there is some
     ;; form of special case with those in xhtml, but I can't find
     ;; the documentation for it.
-    ,@(let* ((cal (vcalendar
-                   name: "Generated"
-                   children: (list (vevent
-                                    ;; The event template SHOULD lack
-                                    ;; a UID, to stop potential problems
-                                    ;; with conflicts when multiple it's
-                                    ;; cloned mulitple times.
-                                    dtstart: (datetime)
-                                    dtend: (datetime)
-                                    summary: ""
-                                    ;; force a description field,
-                                    ;; but don't put anything in
-                                    ;; it.
-                                    description: ""))))
-             (event (car (children cal))))
-        `(
-          ;; (div (@ (class "template event-container") (id "event-template")
-          ;;         ;; Only needed to create a duration. So actual dates
-          ;;         ;; dosen't matter
-          ;;         (data-start "2020-01-01")
-          ;;         (data-end "2020-01-02"))
-          ;;      ,(caddar          ; strip <a> tag
-          ;;        (make-block event `((class " generated ")))))
-          ;; TODO merge this into the event-set, add attribute
-          ;; for non-displaying elements.
-          ;; (div (@ (class "template") (id "popup-template"))
-          ;;      ,(popup event (string-append "popup" (html-id event))))
-          ))
+    ;; ,@(let* ((cal (vcalendar
+    ;;                name: "Generated"
+    ;;                children: (list (vevent
+    ;;                                 ;; The event template SHOULD lack
+    ;;                                 ;; a UID, to stop potential problems
+    ;;                                 ;; with conflicts when multiple it's
+    ;;                                 ;; cloned mulitple times.
+    ;;                                 dtstart: (datetime)
+    ;;                                 dtend: (datetime)
+    ;;                                 summary: ""
+    ;;                                 ;; force a description field,
+    ;;                                 ;; but don't put anything in
+    ;;                                 ;; it.
+    ;;                                 description: ""))))
+    ;;          (event (car (children cal))))
+    ;;     `(
+    ;;       ;; (div (@ (class "template event-container") (id "event-template")
+    ;;       ;;         ;; Only needed to create a duration. So actual dates
+    ;;       ;;         ;; dosen't matter
+    ;;       ;;         (data-start "2020-01-01")
+    ;;       ;;         (data-end "2020-01-02"))
+    ;;       ;;      ,(caddar          ; strip <a> tag
+    ;;       ;;        (make-block event `((class " generated ")))))
+    ;;       ;; TODO merge this into the event-set, add attribute
+    ;;       ;; for non-displaying elements.
+    ;;       ;; (div (@ (class "template") (id "popup-template"))
+    ;;       ;;      ,(popup event (string-append "popup" (html-id event))))
+    ;;       ))
 
     ;; Auto-complets when adding new fields to a component
     ;; Any string is however still valid.
