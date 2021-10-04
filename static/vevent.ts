@@ -196,19 +196,18 @@ function xml_to_vcal(xml: Element): VEvent {
 
     let property_map = new Map()
     if (properties) {
-        for (var i = 0; i < properties.childElementCount; i++) {
+        property_loop: for (var i = 0; i < properties.childElementCount; i++) {
             let tag = properties.childNodes[i];
             if (!(tag instanceof Element)) continue;
             let parameters = {};
             let value: VEventValue | VEventValue[] = [];
-            for (var j = 0; j < tag.childElementCount; j++) {
+            value_loop: for (var j = 0; j < tag.childElementCount; j++) {
                 let child = tag.childNodes[j];
                 if (!(child instanceof Element)) continue;
-                switch (tag.tagName) {
-                    case 'parameters':
-                        parameters = /* TODO handle parameters */ {};
-                        break;
-
+                if (child.tagName == 'parameters') {
+                    parameters = /* TODO handle parameters */ {};
+                    continue value_loop;
+                } else switch (tag.tagName) {
                     /* These can contain multiple value tags, per
                        RFC6321 3.4.1.1. */
                     case 'categories':
