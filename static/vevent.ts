@@ -77,6 +77,10 @@ class VEvent {
         return e.value;
     }
 
+    get boundProperties(): IterableIterator<string> {
+        return this.properties.keys()
+    }
+
     setProperty(key: string, value: any) {
         let e = this.properties.get(key);
         if (!e) {

@@ -99,18 +99,51 @@
                             ;; onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
                             class: '("close-tooltip")))
 
-                 ,(tabset
-                   `(("📅" title: "Översikt"
-                      (vevent-description
-                       (@ (class "vevent populate-with-uid")))
-                      )
+                 (div (@ (class "tabgroup"))
+                      (tab-element
+                       (@ (title "Översikt"))
+                       (span (@ (slot "label")) "📅")
+                       (vevent-description
+                        (@ (slot "content")
+                           (class "vevent populate-with-uid"))))
+                      (tab-element
+                       (@ (title "Redigera"))
+                       (span (@ (slot "label")) "📅")
+                       (vevent-edit (@ (slot "content")
+                                       (class "populate-with-uid")))
+                       ))
 
-                     ,@(when (edit-mode)
-                         `(("📅" title: "Redigera"
-                            (vevent-edit (@ (class "populate-with-uid"))))))
+                 ;; ,(tabset
+                 ;;   `(("📅" title: "Översikt"
+                 ;;      (vevent-description
+                 ;;       (@ (class "vevent populate-with-uid")))
+                 ;;      )
 
-                     )))))
+                 ;;     ,@(when (edit-mode)
+                 ;;         `(("📅" title: "Redigera"
+                 ;;            (vevent-edit (@ (class "populate-with-uid"))))))
 
+                 ;;     ))
+                 )))
+
+      (template
+       (@ (id "tab-template"))
+       ;; ,((@ (calp html components) include-css) "/static/tab.css")
+       (div (@ (class "tab"))
+            (input (@ (type "radio")
+                      ;; id
+                      ;; (name ,tabgroup)
+                      ))
+            (label (@ ; for id
+                    ;; style= top: calc(var(--tab-size) * i)
+                    (title ; title
+                     ))
+                   (slot (@ (name "label")) "??")
+                   )
+            (div (@ (class "content"))
+                 (slot (@ (name "content"))
+                       (span (@ (class "error"))
+                             "CONTENT MISSING")))))
       )))
 
 ;; based on the output of fmt-single-event

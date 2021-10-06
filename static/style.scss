@@ -856,9 +856,10 @@ popup-element {
 .tab {
     > label {
         position: absolute;
+        top: calc(var(--tab-size) * var(--tab-index));
 
         left: 100%;
-        top: 0;
+        /*top: 0; */
         display: block;
 
         max-height: 5ex;

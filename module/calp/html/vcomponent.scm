@@ -316,6 +316,40 @@
              (input (@ (type "submit")))
              )))
 
+;; (define-public (property-input-template)
+;;   (div (@ (class ""))
+;;        (input (@ (type "text")
+;;                  (name "name")
+;;                  (list "known-fields")
+;;                  (placeholder "Nytt fält")))
+;;        (select (@ (name "type"))
+;;          (option (@ (value "TEXT")) "Text"))
+;;        (span
+;;         (input (@ (type "text")
+;;                   (name "value")
+;;                   (placeholder "Värde"))))))
+
+;; (define (list-input-template)
+;;  ;; It would be better if these input-list's worked on the same
+;;  ;; class=bind system as the fields above. The problem with that
+;;  ;; is however that each input-list requires different search
+;;  ;; and join procedures. Currently this is bound in the JS, see
+;;  ;; [CATEGORIES_BIND].
+;;  ;; It matches on ".input-list[data-property='categories']".
+;;  `(div (@ (class "input-list")
+;;           (data-property "categories"))
+;;        #;
+;;        ,@(awhen (prop ev 'CATEGORIES) ;
+;;        (map (lambda (c)              ;
+;;        `(input (@ (size 2)           ;
+;;        (class "unit")                ;
+;;        (value ,c))))                 ;
+;;        it))
+
+;;        (input (@ (class "unit final")
+;;                  (size 2)
+;;                  (type "text")
+;;                  ))))
 
 ;; Single event in side bar (text objects)
 (define-public (fmt-day day)

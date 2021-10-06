@@ -63,6 +63,18 @@ class ComponentDescription extends ComponentVEvent {
 
 }
 
+function popuplateTab(tab: HTMLElement, tabgroup: string, index: number) {
+    // console.log(tab);
+    let new_id = gensym();
+    let input = tab.querySelector('input[type="radio"]') as HTMLInputElement;
+    let label = tab.querySelector("label")!
+    tab.style.setProperty('--tab-index', '' + index);
+    /* TODO this throws a number of errors, but somehow still works...? */
+    input.name = tabgroup
+    input.id = new_id;
+    label.setAttribute('for', new_id);
+}
+
 class ComponentEdit extends ComponentVEvent {
 
     firstTime: boolean
@@ -246,7 +258,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
     constructor() {
         super();
         this.innerHTML = '<input type="date" /><input type="time" />'
-        console.log('constructing datetime input')
+        // console.log('constructing datetime input')
     }
 
     static get observedAttributes() {
@@ -254,7 +266,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
     }
 
     attributeChangedCallback(name: string, from: any, to: any) {
-        console.log(this, name, boolean(from), boolean(to));
+        // console.log(this, name, boolean(from), boolean(to));
         switch (name) {
             case 'dateonly':
                 (this.querySelector('input[type="time"]') as HTMLInputElement)
@@ -290,7 +302,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
     }
 
     set value(new_value: Date | string) {
-        console.log('Setting date');
+        // console.log('Setting date');
         let date, time;
         if (new_value instanceof Date) {
             date = new_value.format("~L~Y-~m-~d");
@@ -314,16 +326,67 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
 
 customElements.define('date-time-input', DateTimeInput /*, { extends: 'input' } */)
 
+function verifySlot(el: Node | null): el is HTMLElement {
+    if (el === null) {
+        console.error("Element is null");
+        return false;
+    }
+    if (!(el instanceof HTMLElement)) {
+        console.error("Node is not an HTMLElement", el);
+        return false;
+    }
+    return true
+}
+
+class TabElement extends HTMLElement {
+    constructor() {
+        super();
+    }
+
+    connectedCallback() {
+        // this.replaceChildren(template.cloneNode(true));
+        let template
+            = (document.getElementById('tab-template') as HTMLTemplateElement)
+                .content
+        // const shadowRoot = this.attachShadow({ mode: 'open' })
+        //     .appendChild(template.cloneNode(true));
+        // console.log(this);
+        let label = this.querySelector('[slot="label"]')
+        let content = this.querySelector('[slot="content"]')
+        if (!verifySlot(label)) throw "Bad label";
+        if (!verifySlot(content)) throw "Bad content";
+
+        this.replaceChildren(template.cloneNode(true));
+        this.querySelector('slot[name="label"]')!.replaceWith(label);
+        this.querySelector('slot[name="content"]')!.replaceWith(content);
+    }
+}
+
+function buildDescriptionList(data: [string, any][]): HTMLElement {
+    let dl = document.createElement('dl');
+    for (let [key, val] of data) {
+        dl.appendChild(makeElement('dt', { innerText: key }))
+        dl.appendChild(makeElement('dd', { innerText: val }))
+    }
+    return dl;
+}
+
 class PopupElement extends HTMLElement {
+
+    tabgroup_id: string
+    tabcount: number
+
     constructor() {
         super();
 
         /* TODO populate remaining */
         // this.id = 'popup' + this.dataset.uid
+        this.tabgroup_id = gensym();
+        this.tabcount = 0
     }
 
     redraw() {
-        console.log('IMPLEMENT ME');
+        console.warn('IMPLEMENT ME');
     }
 
     connectedCallback() {
@@ -340,14 +403,23 @@ class PopupElement extends HTMLElement {
             .forEach((e) => e.setAttribute('data-uid', uid));
 
         /* tabs */
-        let tabgroup_id = gensym();
-        for (let tab of body.querySelectorAll(".tabgroup .tab")) {
-            let new_id = gensym();
-            let input = tab.querySelector("input")!;
-            input.id = new_id;
-            input.name = tabgroup_id;
-            tab.querySelector("label")!.setAttribute('for', new_id);
-        }
+        // for (let tab of body.querySelectorAll(".tabgroup .tab")) {
+        // }
+        window.setTimeout(() => {
+            // let tabs = this.querySelector('tab-element')!
+            //     .shadowRoot!
+            //     .querySelectorAll('label')
+            // console.log(tabs);
+            // console.log(this.getElementsByTagName('tab-element'))
+            for (let tab of this.getElementsByTagName('tab-element')) {
+                // console.log(tab_container);
+                // let tab = tab_container.shadowRoot!;
+                // tab.documentElement.style.setProperty('--i', i);
+                popuplateTab(tab as TabElement, this.tabgroup_id, this.tabcount)
+                this.tabcount += 1
+            }
+            (this.querySelector('tab-element label') as HTMLInputElement).click()
+        });
         /* end tabs */
 
         /* nav bar */
@@ -370,11 +442,35 @@ class PopupElement extends HTMLElement {
                 // event.properties.calendar = this.value;
             });
 
+
+
+        let tab = makeElement('tab-element', { title: 'Debug' }) as TabElement
+        /// let tab = new TabElement();
+        tab.setAttribute('title', 'Debug')
+        tab.appendChild(makeElement('span', { slot: 'label', innerText: 'D' }))
+        // let dl = makeElement('dl', { slot: 'content' })
+        let obj = vcal_objects.get(uid)!
+        let dl = buildDescriptionList(
+            Array.from(obj.boundProperties)
+                .map(key => [key, obj.getProperty(key)]))
+        dl.slot = 'content'
+        tab.appendChild(dl)
+
+        this.addTab(tab);
+        // window.setTimeout(() => { this.addTab(tab) })
+    }
+
+    addTab(tab: TabElement) {
+        let tabgroup = this.getElementsByClassName('tabgroup')![0]!
+        tabgroup.append(tab);
+        popuplateTab(tab, this.tabgroup_id, this.tabcount)
+        this.tabcount += 1
     }
 }
 
 window.addEventListener('load', function() {
     customElements.define('popup-element', PopupElement)
+    customElements.define('tab-element', TabElement)
 });
 
 function wholeday_checkbox(box: HTMLInputElement) {
