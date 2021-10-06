@@ -124,7 +124,7 @@ class ComponentEdit extends ComponentVEvent {
         }
 
         for (let el of body.getElementsByClassName("interactive")) {
-            if (!(el instanceof HTMLInputElement)) continue;
+            if (!(el instanceof HTMLElement)) continue;
             let p = el.dataset.property!;
             let d: any;
             if ((d = data.getProperty(p))) {
@@ -136,7 +136,9 @@ class ComponentEdit extends ComponentVEvent {
                     here. But due to my custom components implementing custom
                     `.value' procedures, we might not need any special cases
                     here */
-                    console.log(el, d);
+                    /* Technically we just want to cast to HTMLElement with
+                    value field here, but multiple types implement it
+                    sepparately, and no common interface exist */
                     (el as HTMLInputElement).value = d;
                 });
             }
