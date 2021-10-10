@@ -94,7 +94,7 @@ function parseDate(str: string): Date {
             day = +str.substr(8, 2);
             break;
         default:
-            throw 'Bad argument';
+            throw `"${str}" doesn't look like a date/-time string`
     }
 
     let date;

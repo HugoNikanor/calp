@@ -82,6 +82,7 @@ class VEvent {
     }
 
     setProperty(key: string, value: any) {
+        console.log(key, value);
         let e = this.properties.get(key);
         if (!e) {
             key = key.toUpperCase()

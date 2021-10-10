@@ -108,7 +108,7 @@
                            (class "vevent populate-with-uid"))))
                       (tab-element
                        (@ (title "Redigera"))
-                       (span (@ (slot "label")) "📅")
+                       (span (@ (slot "label")) "🖊")
                        (vevent-edit (@ (slot "content")
                                        (class "populate-with-uid")))
                        ))
@@ -195,7 +195,7 @@
 (define (block-template)
   `(div (@ ; (id ,(html-id ev))
            (data-calendar "unknown")
-           (class "event CAL_unknown"
+           (class " CAL_unknown"
              ;; ,(when (and (prop ev 'PARTSTAT)
              ;;             (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
              ;;    " tentative")
@@ -209,16 +209,16 @@
         ;; was set on the surounding div, but the popup /needs/ to
         ;; overflow (for the tabs?).
         (div (@ (class "event-body"))
-             `(span (@ (class "repeating")) ; "↺"
+             (span (@ (class "repeating")) ; "↺"
                     )
              (span (@ (class "bind summary")
                       (data-property "summary"))
                    ; ,(format-summary  ev (prop ev 'SUMMARY))
                    )
-             `(span (@ (class "bind location")
+             (span (@ (class "bind location")
                        (data-property "location")))
              ;; Document symbol when we have text
-             `(span (@ (class "description"))
+             (span (@ (class "description"))
                     ; "🗎"
                     ))
         ) )

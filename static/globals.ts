@@ -2,6 +2,14 @@
 
 const vcal_objects: Map<uid, VEvent> = new Map()
 
+interface HasValue {
+    value: string
+}
+
+function hasValue(obj: any): obj is HasValue {
+    return 'value' in obj;
+}
+
 class ComponentVEvent extends HTMLElement {
 
     template: HTMLTemplateElement
@@ -70,9 +78,13 @@ function popuplateTab(tab: HTMLElement, tabgroup: string, index: number) {
     let label = tab.querySelector("label")!
     tab.style.setProperty('--tab-index', '' + index);
     /* TODO this throws a number of errors, but somehow still works...? */
-    input.name = tabgroup
-    input.id = new_id;
-    label.setAttribute('for', new_id);
+    if (input !== null) {
+        input.name = tabgroup
+        input.id = new_id;
+    }
+    if (label !== null) {
+        label.setAttribute('for', new_id);
+    }
 }
 
 class ComponentEdit extends ComponentVEvent {
@@ -105,15 +117,19 @@ class ComponentEdit extends ComponentVEvent {
 
         this.redraw(data);
 
-        return;
+        // return;
 
         for (let el of this.getElementsByClassName("interactive")) {
+            // console.log(el);
             el.addEventListener('input', () => {
                 let obj = vcal_objects.get(this.uid)
                 if (obj === undefined) {
                     throw 'No object with uid ' + this.uid
                 }
-                if (!(el instanceof HTMLInputElement)) return;
+                if (!(hasValue(el) && el instanceof HTMLElement)) {
+                    console.log(el, 'not an HTMLInputElement');
+                    return;
+                }
                 obj.setProperty(
                     el.dataset.property!,
                     el.value)
@@ -204,15 +220,36 @@ class ComponentBlock extends ComponentVEvent {
     redraw(data: VEvent) {
         super.redraw(data);
 
+
         let p;
         if ((p = data.getProperty('dtstart'))) {
-            this.style.top = date_to_percent(to_local(p)) + "%";
+            let c = this.closest('.event-container') as HTMLElement
+            let start = parseDate(c.dataset.start!).getTime()
+            let end = parseDate(c.dataset.end!).getTime();
+            // console.log(p);
+            let pp = to_local(p).getTime()
+            let result = 100 * (Math.min(end, Math.max(start, pp)) - start) / (end - start) + "%"
+            if (c.classList.contains('longevents')) {
+                this.style.left = result
+            } else {
+                this.style.top = result
+            }
             // console.log('dtstart', p);
         }
         if ((p = data.getProperty('dtend'))) {
-            this.style.height = 'unset';
             // console.log('dtend', p);
-            this.style.bottom = (100 - date_to_percent(to_local(p))) + "%";
+            let c = this.closest('.event-container') as HTMLElement
+            let start = parseDate(c.dataset.start!).getTime()
+            let end = parseDate(c.dataset.end!).getTime();
+            let pp = to_local(p).getTime()
+            let result = 100 - (100 * (Math.min(end, Math.max(start, pp)) - start) / (end - start)) + "%"
+            if (c.classList.contains('longevents')) {
+                this.style.width = 'unset';
+                this.style.right = result;
+            } else {
+                this.style.height = 'unset';
+                this.style.bottom = result;
+            }
         }
     }
 }
@@ -356,6 +393,8 @@ class TabElement extends HTMLElement {
         if (!verifySlot(label)) throw "Bad label";
         if (!verifySlot(content)) throw "Bad content";
 
+        /* TODO set label hover title somewhere around here */
+
         this.replaceChildren(template.cloneNode(true));
         this.querySelector('slot[name="label"]')!.replaceWith(label);
         this.querySelector('slot[name="content"]')!.replaceWith(content);
@@ -447,7 +486,7 @@ class PopupElement extends HTMLElement {
         let tab = makeElement('tab-element', { title: 'Debug' }) as TabElement
         /// let tab = new TabElement();
         tab.setAttribute('title', 'Debug')
-        tab.appendChild(makeElement('span', { slot: 'label', innerText: 'D' }))
+        tab.appendChild(makeElement('span', { slot: 'label', innerText: "🐸" }))
         // let dl = makeElement('dl', { slot: 'content' })
         let obj = vcal_objects.get(uid)!
         let dl = buildDescriptionList(
