@@ -1,34 +1,42 @@
+export {
+    makeElement, date_to_percent, uid,
+    parseDate, gensym, to_local, boolean,
+    xcal, asList, round_time
+}
 
 'use strict';
 /*
   General procedures which in theory could be used anywhere.
  */
 
-interface Object {
-    format: (fmt: string) => string
-}
+declare global {
+    interface Object {
+        format: (fmt: string) => string
+    }
 
-interface HTMLElement {
-    _addEventListener: (name: string, proc: (e: Event) => void) => void
-    listeners: Record<string, ((e: Event) => void)[]>
-}
+    interface HTMLElement {
+        _addEventListener: (name: string, proc: (e: Event) => void) => void
+        listeners: Record<string, ((e: Event) => void)[]>
+    }
 
-interface Date {
-    dateonly: boolean
-    utc: boolean
-    type: 'date' | 'date-time'
-}
+    interface Date {
+        format: (fmt: string) => string
+        dateonly: boolean
+        utc: boolean
+        type: 'date' | 'date-time'
+    }
 
-interface DOMTokenList {
-    find: (regex: string) => [number, string] | undefined
-}
+    interface DOMTokenList {
+        find: (regex: string) => [number, string] | undefined
+    }
 
-interface HTMLCollection {
-    forEach: (proc: ((el: Element) => void)) => void
-}
+    interface HTMLCollection {
+        forEach: (proc: ((el: Element) => void)) => void
+    }
 
-interface HTMLCollectionOf<T> {
-    forEach: (proc: ((el: T) => void)) => void
+    interface HTMLCollectionOf<T> {
+        forEach: (proc: ((el: T) => void)) => void
+    }
 }
 
 type uid = string

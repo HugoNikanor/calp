@@ -3,6 +3,7 @@
 import { close_all_popups } from './popup'
 import { VEvent } from './vevent'
 import { SmallcalCellHighlight, Timebar } from './clock'
+import { makeElement, parseDate, gensym, round_time } from './lib'
 
 /*
   calp specific stuff

@@ -8,7 +8,7 @@
     "target": "es2017",                                     /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
 
     /* Modules */
-    "module": "none",                                /* Specify what module code is generated. */
+    "module": "CommonJS",                                /* Specify what module code is generated. */
 
     /* JavaScript Support */
     "allowJs": false,                                  /* Allow JavaScript files to be a part of your program. Use the `checkJS` option to get errors from these files. */

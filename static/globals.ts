@@ -19,6 +19,7 @@ export {
 import { close_popup, toggle_popup } from './popup'
 import { VEvent, xml_to_vcal } from './vevent'
 import { bind_popup_control } from './dragable'
+import { uid, parseDate, gensym, to_local, boolean, makeElement } from './lib'
 
 "use strict";
 

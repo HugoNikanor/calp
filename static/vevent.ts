@@ -1,4 +1,5 @@
 import { ical_type, valid_input_types, JCal } from './types'
+import { uid, parseDate } from './lib'
 export { VEvent, xml_to_vcal }
 
 "use strict";
