@@ -1,5 +1,9 @@
 'use strict';
 
+import { close_all_popups } from './popup'
+import { VEvent } from './vevent'
+import { SmallcalCellHighlight, Timebar } from './clock'
+
 /*
   calp specific stuff
 */

@@ -1,3 +1,5 @@
+export { bind_popup_control }
+
 /*
   Apply to a given component to make it draggable.
   Drag area (usually a title bar) should be be the only argument.

@@ -1,3 +1,6 @@
+import { ical_type, valid_input_types, JCal } from './types'
+export { VEvent, xml_to_vcal }
+
 "use strict";
 
 interface Redrawable extends HTMLElement {

@@ -1,3 +1,6 @@
+export { jcal_to_xcal }
+import { ical_type, JCalProperty, JCal } from './types'
+
 function jcal_type_to_xcal(doc: Document, type: ical_type, value: any): Element {
     let el = doc.createElementNS(xcal, type);
     switch (type) {

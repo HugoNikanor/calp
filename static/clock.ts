@@ -1,3 +1,4 @@
+export { SmallcalCellHighlight, Timebar }
 
 class Clock {
     update(now: Date) {
