@@ -1,7 +1,6 @@
 export {
-    all_types, ical_type, property_names,
-    valid_fields, known_ical_types,
-    valid_input_types, tagname,
+    ical_type,
+    valid_input_types,
     JCalProperty, JCal
 }
 

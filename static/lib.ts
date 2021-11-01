@@ -9,6 +9,9 @@ export {
   General procedures which in theory could be used anywhere.
  */
 
+/*
+ * https://www.typescriptlang.org/docs/handbook/declaration-merging.html
+ */
 declare global {
     interface Object {
         format: (fmt: string) => string
