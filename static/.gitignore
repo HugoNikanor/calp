@@ -11,3 +11,4 @@ script.js
 server_connect.js
 types.js
 vevent.js
+*.out.js
