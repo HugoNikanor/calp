@@ -19,6 +19,11 @@ function hasValue(obj: any): obj is HasValue {
     return 'value' in obj;
 }
 
+/* Root component for all events which content is closely linked to a
+@code{VEvent} object
+
+Lacks an accompaning tag, and shouldn't be directly instanciated.
+*/
 class ComponentVEvent extends HTMLElement {
 
     template: HTMLTemplateElement
@@ -73,11 +78,14 @@ class ComponentVEvent extends HTMLElement {
 
 }
 
+
+/*
+  <vevent-description />
+*/
 class ComponentDescription extends ComponentVEvent {
     constructor() {
         super();
     }
-
 }
 
 function popuplateTab(tab: HTMLElement, tabgroup: string, index: number) {
@@ -96,6 +104,7 @@ function popuplateTab(tab: HTMLElement, tabgroup: string, index: number) {
     }
 }
 
+/* <vevent-edit /> */
 class ComponentEdit extends ComponentVEvent {
 
     firstTime: boolean
@@ -213,6 +222,10 @@ function find_block(uid: uid): HTMLElement | null {
     return null;
 }
 
+/* <vevent-block />
+
+   A grahpical block in the week view.
+*/
 class ComponentBlock extends ComponentVEvent {
     constructor() {
         super();
@@ -228,7 +241,6 @@ class ComponentBlock extends ComponentVEvent {
 
     redraw(data: VEvent) {
         super.redraw(data);
-
 
         let p;
         if ((p = data.getProperty('dtstart'))) {
@@ -300,6 +312,7 @@ window.addEventListener('load', function() {
 
 
 
+/* '<date-time-input />' */
 class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
     constructor() {
         super();
@@ -372,6 +385,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
 
 customElements.define('date-time-input', DateTimeInput /*, { extends: 'input' } */)
 
+
 function verifySlot(el: Node | null): el is HTMLElement {
     if (el === null) {
         console.error("Element is null");
@@ -384,6 +398,8 @@ function verifySlot(el: Node | null): el is HTMLElement {
     return true
 }
 
+
+/* <tab-element /> */
 class TabElement extends HTMLElement {
     constructor() {
         super();
@@ -419,6 +435,7 @@ function buildDescriptionList(data: [string, any][]): HTMLElement {
     return dl;
 }
 
+/* <popup-element /> */
 class PopupElement extends HTMLElement {
 
     tabgroup_id: string

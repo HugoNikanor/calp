@@ -1,9 +1,11 @@
 import { ical_type, valid_input_types, JCal } from './types'
 import { uid, parseDate } from './lib'
+
 export { VEvent, xml_to_vcal }
 
 "use strict";
 
+/* Something which can be redrawn */
 interface Redrawable extends HTMLElement {
     redraw: ((data: VEvent) => void)
 }
@@ -63,10 +65,21 @@ class VEventValue {
 class VEventDuration extends VEventValue {
 }
 
+/*
+  Abstract representation of a calendar event (or similar).
+All "live" calendar data in the frontend should live in an object of this type.
+ */
 class VEvent {
 
+    /* Calendar properties */
     properties: Map<uid, VEventValue>
+
+    /* Children (such as alarms for events) */
     components: VEvent[]
+
+    /* HTMLElements which wants to be redrawn when this object changes.
+       Elements can be registered with the @code{register} method.
+     */
     registered: Redrawable[]
 
     constructor(properties: Map<uid, VEventValue> = new Map(), components: VEvent[] = []) {
@@ -197,7 +210,6 @@ function make_vevent_value_(value_tag: Element) {
     }
 }
 
-/* xml dom object -> class VEvent */
 function xml_to_vcal(xml: Element): VEvent {
     /* xml MUST have a VEVENT (or equivalent) as its root */
     let properties = xml.getElementsByTagName('properties')[0];
