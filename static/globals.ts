@@ -7,8 +7,6 @@ import { VEvent, xml_to_vcal } from './vevent'
 import { bind_popup_control } from './dragable'
 import { uid, parseDate, gensym, to_local, boolean, makeElement } from './lib'
 
-"use strict";
-
 const vcal_objects: Map<uid, VEvent> = new Map()
 
 interface HasValue {
@@ -27,15 +25,23 @@ Lacks an accompaning tag, and shouldn't be directly instanciated.
 class ComponentVEvent extends HTMLElement {
 
     template: HTMLTemplateElement
+    uid: string
 
-    constructor() {
+    constructor(uid?: string) {
         super();
         this.template = document.getElementById(this.tagName) as HTMLTemplateElement;
 
-        let uid;
-        if ((uid = this.dataset.uid)) {
-            vcal_objects.get(uid)?.register(this);
+        let real_uid;
+        if (this.dataset.uid) uid = this.dataset.uid;
+        if (uid) real_uid = uid;
+
+        if (!real_uid) {
+            throw `UID required`
         }
+
+        this.uid = real_uid;
+
+        vcal_objects.get(this.uid)?.register(this);
 
         /* We DON'T have a redraw here in the general case, since the
            HTML rendered server-side should be fine enough for us.
@@ -108,18 +114,11 @@ function popuplateTab(tab: HTMLElement, tabgroup: string, index: number) {
 class ComponentEdit extends ComponentVEvent {
 
     firstTime: boolean
-    uid: string
 
     constructor() {
         super();
 
         this.firstTime = true;
-
-        if (this.dataset.uid === undefined) {
-            throw "data-uid must be set"
-        } else {
-            this.uid = this.dataset.uid;
-        }
     }
 
     connectedCallback() {
@@ -227,12 +226,11 @@ function find_block(uid: uid): HTMLElement | null {
    A grahpical block in the week view.
 */
 class ComponentBlock extends ComponentVEvent {
-    constructor() {
-        super();
+    constructor(uid?: string) {
+        super(uid);
 
         this.addEventListener('click', () => {
-            let uid = this.dataset.uid
-            if (uid === undefined) throw new Error('UID missing from' + this)
+            let uid = this.uid
             let popup = find_popup(uid);
             if (popup === null) throw new Error('no popup for uid ' + uid);
             toggle_popup(popup);
@@ -436,13 +434,13 @@ function buildDescriptionList(data: [string, any][]): HTMLElement {
 }
 
 /* <popup-element /> */
-class PopupElement extends HTMLElement {
+class PopupElement extends ComponentVEvent {
 
     tabgroup_id: string
     tabcount: number
 
-    constructor() {
-        super();
+    constructor(uid?: string) {
+        super(uid);
 
         /* TODO populate remaining */
         // this.id = 'popup' + this.dataset.uid
@@ -458,10 +456,7 @@ class PopupElement extends HTMLElement {
         let template: HTMLTemplateElement = document.getElementById('popup-template') as HTMLTemplateElement
         let body = (template.content.cloneNode(true) as DocumentFragment).firstElementChild!;
 
-        if (this.dataset.uid === null) {
-            throw 'UID is required'
-        }
-        let uid = this.dataset.uid!
+        let uid = this.uid;
         // console.log(uid);
 
         body.getElementsByClassName('populate-with-uid')
