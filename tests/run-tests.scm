@@ -1,11 +1,13 @@
 #!/usr/bin/guile \
--s
+--debug -s
 !#
 
 ;;; Commentary:
 ;; Not a test, but a script that runs tests.
 ;; Assumes that all other .scm files in this directory are test files,
 ;; and should thereby follow the test-file syntax.
+;; Note that the --debug flag in the (extended) shebang is REQUIRED,
+;; otherwise the coverage tests do nothing.
 ;; TODO document the testfile syntax.
 ;;; Code:
 
@@ -18,12 +20,12 @@
 (add-to-load-path (format #f "~a/module"
                           (dirname here)))
 
-
 (use-modules (ice-9 ftw)
              (ice-9 sandbox)
              (ice-9 getopt-long)
              (srfi srfi-64)             ; test suite
              (srfi srfi-88)             ; suffix keywords
+             (system vm coverage)
              ((calp util) :select (for awhen))
              ;; datetime introduces the reader extensions for datetimes,
              ;; which leaks into the sandboxes below.
@@ -71,39 +73,49 @@
 ;; Forces all warnings to be explicitly handled by tests
 ((@ (calp util exceptions) warnings-are-errors) #t)
 
-(for fname in files
-     (format (current-error-port) "Running test ~a~%" fname)
-     (test-group
-      fname
-      (with-throw-handler #t
-        (lambda ()
-          (with-input-from-file (string-append here "/" fname)
-            (lambda ()
-              (let ((modules (read)))
-                (eval-in-sandbox
-                 `(begin ,@(read-multiple))
-                 #:time-limit 60          ; larger than should be needed
-                 #:allocation-limit #e10e8
-                 #:module (make-sandbox-module
-                           (append modules
-                                   '(((srfi srfi-64) test-assert
-                                      test-equal test-error
-                                      test-eqv)
-                                     ((ice-9 ports) call-with-input-string)
-                                     ((guile) make-struct/no-tail)
-                                     )
-                                   all-pure-bindings)))))))
-        (lambda (err . args)
-          (case err
-            ((misc-error)
-             (display-error #f (current-error-port)
-                            (car args)
-                            (cadr args)
-                            (caddr args)
-                            #f))
-            (else
-             (format (current-error-port)
-                     "Test unexpectedly crashed: ~a~%" args))) ))))
-(test-end "tests")
+(define (run-with-coverage)
+  (with-code-coverage
+   (lambda ()
+     (for fname in files
+          (format (current-error-port) "Running test ~a~%" fname)
+          (test-group
+           fname
+           (with-throw-handler #t
+             (lambda ()
+               (with-input-from-file (string-append here "/" fname)
+                 (lambda ()
+                   (let ((modules (read))
+                         (forms (read-multiple)))
+                     (eval-in-sandbox
+                      `(begin ,@forms)
+                      #:time-limit 60 ; larger than should be needed
+                      #:allocation-limit #e10e8
+                      #:module (make-sandbox-module
+                                (append modules
+                                        '(((srfi srfi-64) test-assert
+                                           test-equal test-error
+                                           test-eqv)
+                                          ((ice-9 ports) call-with-input-string)
+                                          ((guile) make-struct/no-tail)
+                                          )
+                                        all-pure-bindings)))
+                     (list fname modules forms)))))
+             (lambda (err . args)
+               (case err
+                 ((misc-error)
+                  (display-error #f (current-error-port)
+                                 (car args)
+                                 (cadr args)
+                                 (caddr args)
+                                 #f))
+                 (else
+                  (format (current-error-port)
+                          "Test unexpectedly crashed: ~a~%" args))) )))))))
 
+(call-with-values run-with-coverage
+  (lambda (data _)
+    (call-with-output-file "lcov.info"
+      (lambda (port) (coverage-data->lcov data port)))))
+
+(test-end "tests")
 
