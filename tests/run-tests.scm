@@ -8,7 +8,28 @@
 ;; and should thereby follow the test-file syntax.
 ;; Note that the --debug flag in the (extended) shebang is REQUIRED,
 ;; otherwise the coverage tests do nothing.
-;; TODO document the testfile syntax.
+;;
+;; Each test runs in its own sandbox. This is however only to protect
+;; the modules from each other, and to prevent polution of the global
+;; namespace. The system IS NOT protected from the modules.
+;;
+;; Each test file is required to start with an s-expression on the
+;; form:
+;; @lisp
+;; ((library binding ...) ...)
+;; @end lisp
+;; Which details exactly which modules should be imported. The format
+;; is the same as make-sandbox-module. For example:
+;; @example
+;; (((c lex) lex)
+;;  ((c parse) parse-lexeme-tree))
+;; @end example
+;; pulls in the @code{lex} procedure from @code{(c lex)}, and
+;; @code{parse-lexeme-tree} from @code{(c parse)}.
+;; Remaining forms in the file can be any valid scheme expression.
+;; @code{define}s are allowed, but only where they would be allowed
+;; inside a let form in general code (so only at the start for Guile
+;; 2.2, anywhere for Guile 3.0).
 ;;; Code:
 
 (eval-when (compile load)
