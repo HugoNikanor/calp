@@ -82,13 +82,21 @@ class VEvent {
      */
     registered: Redrawable[]
 
-    constructor(properties: Map<uid, VEventValue> = new Map(), components: VEvent[] = []) {
-        this.properties = properties;
+    constructor(properties: Map<string, VEventValue> = new Map(), components: VEvent[] = []) {
         this.components = components;
         this.registered = [];
+		/* Re-normalize all given keys to upper case. We could require
+		 * that beforehand, this is much more reliable, for only a
+		 * marginal performance hit.
+		 */
+        this.properties = new Map;
+        for (const [key, value] of properties) {
+            this.properties.set(key.toUpperCase(), value);
+        }
     }
 
     getProperty(key: string): any | undefined {
+        key = key.toUpperCase()
         let e = this.properties.get(key);
         if (!e) return e;
         return e.value;
@@ -99,10 +107,9 @@ class VEvent {
     }
 
     setProperty(key: string, value: any) {
-        console.log(key, value);
+        key = key.toUpperCase();
         let e = this.properties.get(key);
         if (!e) {
-            key = key.toUpperCase()
             let type: ical_type
             let type_ = valid_input_types.get(key)
             if (type_ === undefined) {
@@ -118,8 +125,6 @@ class VEvent {
             e.value = value;
         }
         for (let el of this.registered) {
-            /* TODO update correct fields, allow component to redraw themselves */
-            console.log(el);
             el.redraw(this);
         }
     }
