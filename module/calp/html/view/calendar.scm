@@ -355,12 +355,16 @@
             (id "xcal-data"))
          ,((@ (vcomponent xcal output) ns-wrap)
            (map (@ (vcomponent xcal output) vcomponent->sxcal)
+                ;; A simple filter-sorted-stream on event-overlaps? here fails. See tests/annoying-events.scm
                 (stream->list
-                 (filter-sorted-stream
+                 (stream-filter
                   (lambda (ev)
                     ((@ (vcomponent datetime) event-overlaps?)
                      ev start-date
                      (date+ end-date (date day: 1))))
-                  events))))))
+                  (stream-take-while (lambda (ev) (date<
+                                              (as-date (prop ev 'DTSTART))
+                                              (date+ end-date (date day: 1))))
+                                     events)))))))
 
     ))
