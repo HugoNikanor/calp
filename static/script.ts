@@ -1,9 +1,11 @@
-'use strict';
-
 import { close_all_popups } from './popup'
 import { VEvent } from './vevent'
 import { SmallcalCellHighlight, Timebar } from './clock'
-import { makeElement, parseDate, gensym, round_time } from './lib'
+import { makeElement, parseDate, round_time } from './lib'
+import { vcal_objects, ComponentBlock, PopupElement } from './globals'
+import { open_popup } from './popup'
+
+import { v4 as uuid } from 'uuid'
 
 /*
   calp specific stuff
@@ -11,74 +13,16 @@ import { makeElement, parseDate, gensym, round_time } from './lib'
 
 class EventCreator {
 
-    event: HTMLElement | false
-    event_start: { x: number, y: number }
-    down_on_event: boolean
+    /* Event which we are trying to create */
+    ev: VEvent | null = null;
 
-    /* dynamicly created event when dragging */
-    constructor() {
-        this.event = false;
-        this.event_start = { x: NaN, y: NaN };
-        this.down_on_event = false;
-    }
+    /* Graphical block for event. Only here so we can find its siblings,
+       and update pointer events accordingly */
+    event: Element | null = null;
 
-    create_empty_event() {
-        /* TODO this doesn't clone JS attributes */
-
-        // let event = document.getElementById("event-template")
-        //     .firstChild.cloneNode(true);
-        // let popup = document.getElementById("popup-template")
-        //     .firstChild.cloneNode(true);
-
-        // document.createElement('vevent-block');
-
-        /* -------------------- */
-        /* Manually transfer or recreate attributes which we still need */
-        /* TODO shouldn't these use transferListeners (or similar)?
-           See input_list.js:transferListeners */
-
-        // for (let dt of popup.getElementsByClassName("date-time")) {
-        //     init_date_time_single(dt);
-        // }
-
-        // popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
-        //     create_event(event);
-        //     return false; /* stop default */
-        // }
-
-        /* -------------------- */
-        /* Fix tabs for newly created popup */
-
-        let id = gensym("__js_event");
-
-        // TODO remove button?
-        // $("button 2??").onclick = `remove_event(document.getElementById('${id}'))`
-
-        /*
-        let tabgroup_id = gensym();
-        for (let tab of popup.querySelectorAll(".tabgroup .tab")) {
-            let new_id = gensym();
-            let input = tab.querySelector("input");
-            input.id = new_id;
-            input.name = tabgroup_id;
-            tab.querySelector("label").setAttribute('for', new_id);
-        }
-
-        let nav = popup.getElementsByClassName("popup-control")[0];
-        bind_popup_control(nav);
-        */
-
-        /* -------------------- */
-
-        // TODO download links
-
-        /* -------------------- */
-
-        // event.id = id;
-        // popup.id = "popup" + id;
-
-        // return [popup, event];
-    }
+    event_start: { x: number, y: number } = { x: NaN, y: NaN }
+    down_on_event: boolean = false
+    timeStart: number = 0
 
     create_event_down(intended_target: HTMLElement): (e: MouseEvent) => any {
         let that = this;
@@ -112,7 +56,7 @@ class EventCreator {
             if (e.buttons != 1 || !that.down_on_event) return;
 
             /* Create event when we start moving the mouse. */
-            if (!that.event) {
+            if (!that.ev) {
                 /* Small deadzone so tiny click and drags aren't registered */
                 if (Math.abs(that.event_start.x - e.clientX) < 10
                     && Math.abs(that.event_start.y - e.clientY) < 5) { return; }
@@ -125,7 +69,14 @@ class EventCreator {
 
                 // let [popup, event] = that.create_empty_event();
                 // that.event = event;
-                that.event = document.createElement('vevent-block');
+                that.ev = new VEvent();
+                that.ev.setProperty('summary', 'Created Event');
+                that.ev.setProperty('uid', uuid())
+
+                // let ev_block = document.createElement('vevent-block') as ComponentBlock;
+                let ev_block = new ComponentBlock(that.ev.getProperty('uid'));
+                that.event = ev_block;
+                that.ev.register(ev_block);
 
                 /* TODO better solution to add popup to DOM */
                 // document.getElementsByTagName("main")[0].append(popup);
@@ -138,14 +89,13 @@ class EventCreator {
                    It might also be an idea to subtract a tiny bit from the short events
                    mouse position, since I feel I always get to late starts.
                 */
-                let time = round_time(pos_in(this, e), round_to);
 
-                that.event.dataset.time1 = '' + time;
-                that.event.dataset.time2 = '' + time;
+                // that.event.dataset.time1 = '' + time;
+                // that.event.dataset.time2 = '' + time;
 
                 /* ---------------------------------------- */
 
-                this.appendChild(that.event);
+                this.appendChild(ev_block);
 
                 /* requires that event is child of an '.event-container'. */
                 // new VComponent(
@@ -166,17 +116,20 @@ class EventCreator {
                     (e as HTMLElement).style.pointerEvents = "none";
                 }
 
+                that.timeStart = round_time(pos_in(this, e), round_to);
             }
 
-            let time1 = Number(that.event.dataset.time1);
-            let time2 = round_time(
-                pos_in(that.event.parentElement!, e),
-                round_to);
-            that.event.dataset.time2 = '' + time2
+            let time = round_time(pos_in(this, e), round_to);
+
+            // let time1 = Number(that.event.dataset.time1);
+            // let time2 = round_time(
+            //     pos_in(that.event.parentElement!, e),
+            //     round_to);
+            // that.event.dataset.time2 = '' + time2
 
             /* ---------------------------------------- */
 
-            let event_container = that.event.closest(".event-container") as HTMLElement;
+            let event_container = this.closest(".event-container") as HTMLElement;
 
             /* These two are in UTC */
             let container_start = parseDate(event_container.dataset.start!);
@@ -187,8 +140,8 @@ class EventCreator {
             /* ms */
             let duration = container_end.valueOf() - container_start.valueOf();
 
-            let start_in_duration = duration * Math.min(time1, time2);
-            let end_in_duration = duration * Math.max(time1, time2);
+            let start_in_duration = duration * Math.min(that.timeStart, time);
+            let end_in_duration = duration * Math.max(that.timeStart, time);
 
             /* Notice that these are converted to UTC, since the intervals are given
                in utc, and I only really care about local time (which a specific local
@@ -198,83 +151,37 @@ class EventCreator {
             let d1 = new Date(container_start.getTime() + start_in_duration)
             let d2 = new Date(container_start.getTime() + end_in_duration)
 
+            /* TODO these writes should preferably be grouped,
+               to save a redraw for all registered listeners */
+            that.ev.setProperty('dtstart', d1);
+            that.ev.setProperty('dtend', d2);
+
             // console.log(that.event);
-            console.log(d1.format("~L~H:~M"), d2.format("~L~H:~M"));
-            // TODO
-            // (that.event as Redrawable).redraw({
-            //     getProperty: (name) =>
-            //         ({ dtstart: d1, dtend: d2 })[name]
-            // });
-            // that.event.properties.dtstart = d1;
-            // that.event.properties.dtend = d2;
+            // console.log(d1.format("~L~H:~M"), d2.format("~L~H:~M"));
         }
     }
 
-    create_event_finisher(callback: ((event: VEvent) => void)) {
+    create_event_finisher(callback: ((ev: VEvent) => void)) {
         let that = this;
         return function create_event_up(e: MouseEvent) {
-            if (!that.event) return;
+            if (!that.ev) return;
 
             /* Restore pointer events for all existing events.
                Allow pointer events on our new event
             */
-            for (let e of that.event.parentElement!.children) {
+            for (let e of (that.event as Element).parentElement!.children) {
                 (e as HTMLElement).style.pointerEvents = "";
             }
 
-            // place_in_edit_mode(that.event);
+            let localevent = that.ev;
+            that.ev = null
+            that.event = null;
 
-            let localevent = that.event;
-            that.event = false
-
-            // callback(localevent);
+            callback(localevent);
 
         }
     }
 }
-
-
-
-/* This incarnation of this function only adds the calendar switcher dropdown.
-   All events are already editable by switching to that tab.
-
-   TODO stop requiring a weird button press to change calendar.
-*/
-// function place_in_edit_mode (event) {
-//     let popup = document.getElementById("popup" + event.id)
-//     let container = popup.getElementsByClassName('dropdown-goes-here')[0]
-//     let calendar_dropdown = document.getElementById('calendar-dropdown-template').firstChild.cloneNode(true);
-// 
-//     let [_, calclass] = popup.classList.find(/^CAL_/);
-//     label: {
-// 	for (let [i, option] of calendar_dropdown.childNodes.entries()) {
-// 	    if (option.value === calclass.substr(4)) {
-// 		calendar_dropdown.selectedIndex = i;
-// 		break label;
-// 	    }
-// 	}
-// 	/* no match, try find default calendar */
-// 	let t;
-// 	if ((t = calendar_dropdown.querySelector("[selected]"))) {
-// 	    event.properties.calendar = t.value;
-// 	}
-//     }
-// 
-// 
-//     /* Instant change while user is stepping through would be
-//      * preferable. But I believe that <option> first gives us the
-//      * input once selected */
-//     calendar_dropdown.onchange = function () {
-//         event.properties.calendar = this.value;
-//     }
-//     container.appendChild(calendar_dropdown);
-// 
-//     let tab = popup.getElementsByClassName("tab")[1];
-//     let radio = tab.getElementsByTagName("input")[0];
-//     radio.click();
-//     tab.querySelector("input[name='summary']").focus();
-// }
-
 
 declare let EDIT_MODE: boolean
 
@@ -307,7 +214,21 @@ window.addEventListener('load', function() {
                 1 / (24 * 4), false
             ));
             c.addEventListener('mouseup', eventCreator.create_event_finisher(
-                function(event: VEvent) {
+                function(ev: VEvent) {
+                    // let popup = document.createElement('popup-element') as PopupElement;
+
+                    let uid = ev.getProperty('uid');
+
+                    vcal_objects.set(uid, ev);
+
+                    let popup = new PopupElement(uid);
+                    /* TODO these things fail, due to the event not being
+                    present in the global_events map */
+                    (document.querySelector('.days') as Element).appendChild(popup);
+                    ev.register(popup);
+                    open_popup(popup);
+                    console.log(popup);
+                    // (popup.querySelector("input[name='summary']") as HTMLInputElement).focus();
                     // let popupElement = document.getElementById("popup" + event.id);
                     // open_popup(popup_from_event(event));
 
@@ -326,7 +247,28 @@ window.addEventListener('load', function() {
                 1 / 7, true
             );
             c.onmouseup = eventCreator.create_event_finisher(
-                function(event) {
+                function(ev: VEvent) {
+                    // let popup = document.createElement('popup-element') as PopupElement;
+
+                    let uid = ev.getProperty('uid');
+
+                    vcal_objects.set(uid, ev);
+
+                    let popup = new PopupElement(uid);
+                    /* TODO these things fail, due to the event not being
+                    present in the global_events map */
+                    (document.querySelector('.days') as Element).appendChild(popup);
+                    ev.register(popup);
+                    open_popup(popup);
+                    console.log(popup);
+                    // (popup.querySelector("input[name='summary']") as HTMLInputElement).focus();
+                    // let popupElement = document.getElementById("popup" + event.id);
+                    // open_popup(popup_from_event(event));
+
+                    // popupElement.querySelector("input[name='summary']").focus();
+
+
+                    // ----------------------------------------------------------------------------------------------------
                     // TODO restore this
                     // let popupElement = document.getElementById("popup" + event.id);
                     // open_popup(popupElement);

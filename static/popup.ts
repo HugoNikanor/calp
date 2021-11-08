@@ -1,8 +1,10 @@
 import { find_block, find_popup, PopupElement } from './globals'
-export { event_from_popup, popup_from_event, close_popup,
-	close_all_popups, /* VIEW, */open_popup, toggle_popup, activePopup
+export {
+    event_from_popup, popup_from_event, close_popup,
+    close_all_popups, /* VIEW, */open_popup, toggle_popup, activePopup
 }
 
+/* TODO rewrite most of this */
 
 /* event component => coresponding popup component */
 function event_from_popup(popup: Element): HTMLElement | null {

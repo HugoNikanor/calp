@@ -535,12 +535,18 @@ along with their colors.
 }
 
 /* graphical block in the calendar */
-.event {
+vevent-block, .event {
     transition: 0.3s;
     font-size: var(--event-font-size);
     overflow: visible;
     background-color: var(--color);
     color: var(--complement);
+
+    position: absolute;
+    width: 100%;
+    min-height: 1em;
+    border: 1px solid black;
+    /* backgroudn: blue; */
 
     /* Event is not confirmed to happen */
     &.tentative {

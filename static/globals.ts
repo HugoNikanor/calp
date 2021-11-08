@@ -1,5 +1,7 @@
 export {
-    find_block, find_popup, PopupElement
+    vcal_objects,
+    find_block, find_popup, PopupElement,
+    ComponentBlock
 }
 
 import { close_popup, toggle_popup } from './popup'
@@ -322,7 +324,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         return ['dateonly']
     }
 
-    attributeChangedCallback(name: string, from: any, to: any) {
+    attributeChangedCallback(name: string, _: any, to: any): void {
         // console.log(this, name, boolean(from), boolean(to));
         switch (name) {
             case 'dateonly':

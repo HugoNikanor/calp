@@ -4,7 +4,6 @@ export {
     xcal, asList, round_time
 }
 
-'use strict';
 /*
   General procedures which in theory could be used anywhere.
  */

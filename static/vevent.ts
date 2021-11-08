@@ -3,8 +3,6 @@ import { uid, parseDate } from './lib'
 
 export { VEvent, xml_to_vcal }
 
-"use strict";
-
 /* Something which can be redrawn */
 interface Redrawable extends HTMLElement {
     redraw: ((data: VEvent) => void)
@@ -85,10 +83,10 @@ class VEvent {
     constructor(properties: Map<string, VEventValue> = new Map(), components: VEvent[] = []) {
         this.components = components;
         this.registered = [];
-		/* Re-normalize all given keys to upper case. We could require
-		 * that beforehand, this is much more reliable, for only a
-		 * marginal performance hit.
-		 */
+        /* Re-normalize all given keys to upper case. We could require
+         * that beforehand, this is much more reliable, for only a
+         * marginal performance hit.
+         */
         this.properties = new Map;
         for (const [key, value] of properties) {
             this.properties.set(key.toUpperCase(), value);

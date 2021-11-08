@@ -12,3 +12,4 @@ server_connect.js
 types.js
 vevent.js
 *.out.js
+node_modules
