@@ -123,7 +123,7 @@
         (unless (null? props)
           `(properties
             ;; NOTE
-            (x-hnh-calendar-name (text ,(prop (parent component) 'NAME)))
+            ;; (x-hnh-calendar-name (text ,(prop (parent component) 'NAME)))
             ,@props)))
      ,(unless (null? (children component))
         `(components ,@(map vcomponent->sxcal (children component)))))))
