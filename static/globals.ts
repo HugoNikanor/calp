@@ -112,7 +112,19 @@ function popuplateTab(tab: HTMLElement, tabgroup: string, index: number) {
     }
 }
 
-/* <vevent-edit /> */
+/* <vevent-dl /> */
+class VEventDL extends ComponentVEvent {
+    redraw(obj: VEvent) {
+        let dl = buildDescriptionList(
+            Array.from(obj.boundProperties)
+                .map(key => [key, obj.getProperty(key)]))
+        this.replaceChildren(dl);
+    }
+}
+
+/* <vevent-edit />
+   Edit form for a given VEvent. Used as the edit tab of popups.
+*/
 class ComponentEdit extends ComponentVEvent {
 
     firstTime: boolean
@@ -206,7 +218,7 @@ function find_popup(uid: uid): HTMLElement | null {
     //     }
     // }
     // throw 'Popup not fonud';
-    return document.querySelector(`popup-element[data-uid="${uid}"]`) as HTMLElement
+    return document.querySelector(`popup-element[data-uid="${uid}"]`)
 }
 
 function find_block(uid: uid): HTMLElement | null {
@@ -306,6 +318,7 @@ window.addEventListener('load', function() {
 
     customElements.define('vevent-description', ComponentDescription);
     customElements.define('vevent-edit', ComponentEdit);
+    customElements.define('vevent-dl', VEventDL);
     customElements.define('vevent-block', ComponentBlock);
 })
 
@@ -314,8 +327,11 @@ window.addEventListener('load', function() {
 
 /* '<date-time-input />' */
 class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
-    constructor() {
-        super();
+    connectedCallback() {
+        /* This can be in the constructor for chromium, but NOT firefox...
+           Vivaldi 4.3.2439.63 stable
+           Mozilla Firefox 94.0.1
+        */
         this.innerHTML = '<input type="date" /><input type="time" />'
         // console.log('constructing datetime input')
     }
@@ -503,23 +519,6 @@ class PopupElement extends ComponentVEvent {
                 // this.value;
                 // event.properties.calendar = this.value;
             });
-
-
-
-        let tab = makeElement('tab-element', { title: 'Debug' }) as TabElement
-        /// let tab = new TabElement();
-        tab.setAttribute('title', 'Debug')
-        tab.appendChild(makeElement('span', { slot: 'label', innerText: "🐸" }))
-        // let dl = makeElement('dl', { slot: 'content' })
-        let obj = vcal_objects.get(uid)!
-        let dl = buildDescriptionList(
-            Array.from(obj.boundProperties)
-                .map(key => [key, obj.getProperty(key)]))
-        dl.slot = 'content'
-        tab.appendChild(dl)
-
-        this.addTab(tab);
-        // window.setTimeout(() => { this.addTab(tab) })
     }
 
     addTab(tab: TabElement) {

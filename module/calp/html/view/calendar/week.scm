@@ -111,7 +111,15 @@
                        (span (@ (slot "label")) "🖊")
                        (vevent-edit (@ (slot "content")
                                        (class "populate-with-uid")))
-                       ))
+                       )
+                      ,@(when (debug)
+                          `((tab-element
+                             (@ (title "Debug"))
+                             (span (@ (slot "label")) "🐸")
+                             (vevent-dl (@ (slot "content")
+                                           (class "populate-with-uid")))
+
+                             ))))
 
                  ;; ,(tabset
                  ;;   `(("📅" title: "Översikt"
