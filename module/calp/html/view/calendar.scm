@@ -351,20 +351,45 @@
                        SEQUENCE REQUEST-STATUS
                        )))
 
-    (div (@ (style "display:none !important;")
-            (id "xcal-data"))
-         ,((@ (vcomponent xcal output) ns-wrap)
-           (map (@ (vcomponent xcal output) vcomponent->sxcal)
-                ;; A simple filter-sorted-stream on event-overlaps? here fails. See tests/annoying-events.scm
-                (stream->list
-                 (stream-filter
-                  (lambda (ev)
-                    ((@ (vcomponent datetime) event-overlaps?)
-                     ev start-date
-                     (date+ end-date (date day: 1))))
-                  (stream-take-while (lambda (ev) (date<
-                                              (as-date (prop ev 'DTSTART))
-                                              (date+ end-date (date day: 1))))
-                                     events)))))))
+    ;; (div (@ (style "display:none !important;"))
+    ;;      ,(map (lambda (calendar)
+    ;;              (prop calendar 'NAME))
+    ;;            calendars))
+
+    ,@(let ((flat-events
+             ;; A simple filter-sorted-stream on event-overlaps? here fails.
+             ;; See tests/annoying-events.scm
+             (stream->list
+              (stream-filter
+               (lambda (ev)
+                 ((@ (vcomponent datetime) event-overlaps?)
+                  ev start-date
+                  (date+ end-date (date day: 1))))
+               (stream-take-while (lambda (ev) (date<
+                                           (as-date (prop ev 'DTSTART))
+                                           (date+ end-date (date day: 1))))
+                                  events)))))
+
+        `((div (@ (style "display:none !important;")
+                  (id "calendar-event-mapping"))
+               ,(let ((ht (make-hash-table)))
+                  (for-each (lambda (event)
+                              (define name (prop (parent event) 'NAME))
+                              (hash-set! ht name
+                                         (cons (prop event 'UID)
+                                               (hash-ref ht name '()))))
+                            flat-events)
+                  (map (lambda (pair)
+                         `(calendar (@ (key ,(base64encode (car pair))))
+                                    ,@(map (lambda (uid) `(li ,uid))
+                                           (cdr pair))))
+                       (hash-map->list cons ht))))
+
+          (div (@ (style "display:none !important;")
+                  (id "xcal-data"))
+               ,((@ (vcomponent xcal output) ns-wrap)
+                 (map (@ (vcomponent xcal output) vcomponent->sxcal)
+                      flat-events
+                      ))))))
 
     ))

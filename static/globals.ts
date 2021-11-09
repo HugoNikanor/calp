@@ -9,7 +9,8 @@ import { VEvent, xml_to_vcal } from './vevent'
 import { bind_popup_control } from './dragable'
 import { uid, parseDate, gensym, to_local, boolean, makeElement } from './lib'
 
-const vcal_objects: Map<uid, VEvent> = new Map()
+const vcal_objects: Map<uid, VEvent> = new Map;
+(window as any).vcal_objects = vcal_objects;
 
 interface HasValue {
     value: string
@@ -146,9 +147,30 @@ class ComponentEdit extends ComponentVEvent {
             throw `Data missing for uid ${this.dataset.uid}.`
         }
 
-        this.redraw(data);
 
         // return;
+
+        /* Handle calendar dropdown */
+        for (let el of this.getElementsByClassName('calendar-selection')) {
+            for (let opt of el.getElementsByTagName('option')) {
+                opt.selected = false;
+                if (opt.value == event_calendar_mapping.get(this.uid)) {
+                    data.setCalendar(opt.value);
+                    opt.selected = true;
+                    /* No break since we want to set the remainders 'selected' to false */
+                }
+            }
+
+            el.addEventListener('change', (e) => {
+                let v = (e.target as HTMLSelectElement).selectedOptions[0].value
+                // e.selectedOptions[0].innerText
+
+                let obj = vcal_objects.get(this.uid)!
+                obj.setCalendar(v);
+            });
+        }
+
+        this.redraw(data);
 
         for (let el of this.getElementsByClassName("interactive")) {
             // console.log(el);
@@ -200,6 +222,15 @@ class ComponentEdit extends ComponentVEvent {
                     sepparately, and no common interface exist */
                     (el as HTMLInputElement).value = d;
                 });
+            }
+        }
+
+        for (let el of body.getElementsByTagName('calendar-selection')) {
+            for (let opt of el.getElementsByTagName('option')) {
+                opt.selected = false;
+                if (opt.value == data._calendar) {
+                    opt.selected = true;
+                }
             }
         }
 
@@ -284,8 +315,14 @@ class ComponentBlock extends ComponentVEvent {
                 this.style.bottom = result;
             }
         }
+
+        if (data._calendar) {
+            this.dataset.calendar = data._calendar;
+        }
     }
 }
+
+const event_calendar_mapping: Map<uid, string> = new Map;
 
 window.addEventListener('load', function() {
 
@@ -296,6 +333,15 @@ window.addEventListener('load', function() {
     for (let vevent of vevents) {
         let ev = xml_to_vcal(vevent);
         vcal_objects.set(ev.getProperty('uid'), ev)
+    }
+
+
+    let div2 = document.getElementById('calendar-event-mapping')!;
+    for (let calendar of div2.children) {
+        for (let child of calendar.children) {
+            event_calendar_mapping.set(
+                child.innerHTML, calendar.getAttribute('key')!);
+        }
     }
 
     /*
@@ -466,8 +512,15 @@ class PopupElement extends ComponentVEvent {
         this.tabcount = 0
     }
 
-    redraw() {
-        console.warn('IMPLEMENT ME');
+    redraw(data: VEvent) {
+        // console.warn('IMPLEMENT ME');
+
+        if (data._calendar) {
+            this.dataset.calendar = data._calendar;
+        }
+
+        /* TODO is there any case where we want to propagate the draw to any of
+           our tabs? or are all our tabs independent? */
     }
 
     connectedCallback() {
@@ -509,16 +562,6 @@ class PopupElement extends ComponentVEvent {
         /* end nav bar */
 
         this.replaceChildren(body);
-
-        let that = this;
-        this.getElementsByClassName("calendar-selection")[0]
-            .addEventListener('change', function() {
-                let uid = (that.closest('[data-uid]') as HTMLElement).dataset.uid!
-                let obj = vcal_objects.get(uid)
-                // TODO this procedure
-                // this.value;
-                // event.properties.calendar = this.value;
-            });
     }
 
     addTab(tab: TabElement) {

@@ -80,6 +80,8 @@ class VEvent {
      */
     registered: Redrawable[]
 
+    _calendar: string | null = null;
+
     constructor(properties: Map<string, VEventValue> = new Map(), components: VEvent[] = []) {
         this.components = components;
         this.registered = [];
@@ -122,6 +124,13 @@ class VEvent {
         } else {
             e.value = value;
         }
+        for (let el of this.registered) {
+            el.redraw(this);
+        }
+    }
+
+    setCalendar(calendar: string) {
+        this._calendar = calendar;
         for (let el of this.registered) {
             el.redraw(this);
         }
