@@ -20,7 +20,7 @@
   :use-module ((rnrs io ports) :select (get-bytevector-all))
   :use-module ((xdg basedir) :prefix xdg-)
 
-  :use-module ((calp html util) :select (html-unattr))
+  :use-module ((base64) :select (base64decode))
 
   :use-module (web http make-routes)
 
@@ -162,8 +162,7 @@
                       (format #f "No event with UID '~a'" uid))))
 
    ;; TODO this fails when dtstart is <date>.
-   ;; @var{cal} should be the name of the calendar encoded with
-   ;; modified base64. See (calp html util).
+   ;; @var{cal} should be the name of the calendar encoded in base64.
    (POST "/insert" (cal data)
 
          (unless (and cal data)
@@ -174,7 +173,7 @@
          ;; NOTE that this leaks which calendar exists,
          ;; but you can only query for existance.
          ;; also, the calendar view already show all calendars.
-         (let* ((calendar-name (html-unattr cal))
+         (let* ((calendar-name (base64decode cal))
                 (calendar
                   (find (lambda (c) (string=? calendar-name (prop c 'NAME)))
                         (get-calendars global-event-object))))

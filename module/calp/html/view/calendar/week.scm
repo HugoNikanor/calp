@@ -86,10 +86,7 @@
       (template
        (@ (id "popup-template"))
        (div (@ ; (id ,id)
-             (class "popup-container CAL_"
-               #; 
-               ,(html-attr (or (prop (parent ev) 'NAME) ;
-               "unknown")))
+             (class "popup-container")
              (onclick "event.stopPropagation()"))
             (div (@ (class "popup"))
                  (nav (@ (class "popup-control"))
@@ -203,6 +200,7 @@
 (define (block-template)
   `(div (@ ; (id ,(html-id ev))
            (data-calendar "unknown")
+           #;
            (class " CAL_unknown"
              ;; ,(when (and (prop ev 'PARTSTAT)
              ;;             (eq? 'TENTATIVE (prop ev 'PARTSTAT)))

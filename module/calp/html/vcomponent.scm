@@ -23,6 +23,7 @@
                         format-recurrence-rule
                                       ))
   :use-module ((calp util config) :select (get-config))
+  :use-module ((base64) :select (base64encode))
   )
 
 (define-public (compact-event-list list)
@@ -35,11 +36,12 @@
 
   (define (summary event)
     `(summary (div (@ (class "summary-line "))
-                   (span (@ (class "square CAL_"
-                              ,(html-attr
-                                (or (prop (parent event)
-                                          'NAME)
-                                    "unknown")))))
+                   (span (@ (class "square")
+                            (data-calendar
+                             ,(base64encode
+                               (or (prop (parent event)
+                                         'NAME)
+                                   "unknown")))))
                    (time ,(let ((dt (prop event 'DTSTART)))
                             (if (datetime? dt)
                                 (datetime->string dt "~Y-~m-~d ~H:~M")
@@ -212,7 +214,7 @@
                ,@(let ((dflt (get-config 'default-calendar)))
                    (map (lambda (calendar)
                           (define name (prop calendar 'NAME))
-                          `(option (@ (value ,(html-attr name))
+                          `(option (@ (value ,(base64encode name))
                                       ,@(when (string=? name dflt)
                                           '((selected))))
                                    ,name))
@@ -363,7 +365,7 @@
                   (lambda (ev)
                     (fmt-single-event
                       ev `((id ,(html-id ev))
-                           (class "CAL_" ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))))
+                           (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown"))))
                       fmt-header:
                       (lambda body
                         `(a (@ (href "#" ,(html-id ev) #; (date-link (as-date (prop ev 'DTSTART)))
@@ -382,14 +384,14 @@
 
 (define-public (calendar-styles calendars)
   `(style
-     ,(format #f "~:{.CAL_~a { --color: ~a; --complement: ~a }~%~}"
-              (map (lambda (c)
-                     (let* ((name (html-attr (prop c 'NAME)))
-                            (bg-color (prop c 'COLOR))
-                            (fg-color (and=> (prop c 'COLOR)
-                                             calculate-fg-color)))
-                       (list name (or bg-color 'white) (or fg-color 'black))))
-                   calendars))))
+       ,(lambda () (format #t "~:{ [data-calendar=\"~a\"] { --color: ~a; --complement: ~a }~%~}"
+                      (map (lambda (c)
+                             (let* ((name (base64encode (prop c 'NAME)))
+                                    (bg-color (prop c 'COLOR))
+                                    (fg-color (and=> (prop c 'COLOR)
+                                                     calculate-fg-color)))
+                               (list name (or bg-color 'white) (or fg-color 'black))))
+                           calendars)))))
 
 ;; "Physical" block in calendar view
 (define*-public (make-block ev optional: (extra-attributes '()))
@@ -399,10 +401,9 @@
        (vevent-block (@ ,@(assq-merge
                   extra-attributes
                   `((id ,(html-id ev))
-                    (data-calendar ,(html-attr (or (prop (parent ev) 'NAME) "unknown")))
+                    (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown")))
                     ;; (data-bindon "bind_view")
-                    (class "vevent event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
-                                                        "unknown"))
+                    (class "vevent event"
                       ,(when (and (prop ev 'PARTSTAT)
                                   (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                          " tentative")
@@ -619,9 +620,11 @@
 
 (define-public (popup ev id)
   (warning "popup is deprecated")
-  `(div (@ (id ,id) (class "popup-container CAL_"
-                           ,(html-attr (or (prop (parent ev) 'NAME)
-                                           "unknown")))
+  `(div (@ (id ,id)
+           (class "popup-container")
+           (data-calendar
+            ,(base64encode (or (prop (parent ev) 'NAME)
+                                "unknown")))
            (onclick "event.stopPropagation()"))
         ;; TODO all (?) code uses .popup-container as the popup, while .popup sits and does nothing.
         ;; Do something about this?

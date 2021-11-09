@@ -27,6 +27,7 @@
 
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
+  :use-module ((base64) :select (base64encode))
   )
 
 
@@ -260,8 +261,7 @@
                        (summary "Calendar list")
                        (ul ,@(map
                               (lambda (calendar)
-                                `(li (@ (class "CAL_"
-                                          ,(html-attr (prop calendar 'NAME))))
+                                `(li (@ (data-calendar ,(base64encode (prop calendar 'NAME))))
                                      (a (@ (href "/search?"
                                                  ,((@ (web uri-query) encode-query-parameters)
                                                    `((q . (and (date/-time<=?
