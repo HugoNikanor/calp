@@ -82,7 +82,7 @@ function jcal_property_to_xcal_property(
 
         let el = doc.createElementNS(xcal, key);
 
-        for (let v of asList(params[key])) {
+        for (let v of asList(params.get(key))) {
             let text = doc.createElementNS(xcal, 'text');
             text.textContent = '' + v;
             el.appendChild(text);

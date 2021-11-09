@@ -1,3 +1,5 @@
+export { create_event }
+
 import { jcal_to_xcal } from './jcal'
 import { VEvent } from './vevent'
 
@@ -49,7 +51,11 @@ async function remove_event(element: Element): void {
 async function create_event(event: VEvent) {
 
     // let xml = event.getElementsByTagName("icalendar")[0].outerHTML
-    let calendar = event.getProperty('x-hnh-calendar-name');
+    let calendar = event._calendar;
+    if (!calendar) {
+        console.error("Can't create event without calendar")
+        return;
+    }
 
     console.log('calendar=', calendar/*, xml*/);
 
@@ -57,19 +63,18 @@ async function create_event(event: VEvent) {
     data.append("cal", calendar);
     // data.append("data", xml);
 
-    console.log(event);
+    // console.log(event);
 
     let jcal = event.to_jcal();
+    // console.log(jcal);
 
     let doc: Document = jcal_to_xcal(jcal);
-    console.log(doc);
+    // console.log(doc);
     let str = doc.documentElement.outerHTML;
     console.log(str);
     data.append("data", str);
 
     // console.log(event.properties);
-
-    // return;
 
     let response = await fetch('/insert', {
         method: 'POST',

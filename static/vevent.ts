@@ -1,4 +1,4 @@
-import { ical_type, valid_input_types, JCal } from './types'
+import { ical_type, valid_input_types, JCal, JCalProperty } from './types'
 import { uid, parseDate } from './lib'
 
 export { VEvent, xml_to_vcal }
@@ -141,11 +141,14 @@ class VEvent {
     }
 
     to_jcal(): JCal {
-        let out_properties = []
-        for (let [key, value] of Object.entries(this.properties)) {
-            let sub = value.to_jcal();
-            sub.unshift(key)
-            out_properties.push(sub);
+        let out_properties: JCalProperty[] = []
+        console.log(this.properties);
+        for (let [key, value] of this.properties) {
+            let prop: JCalProperty = [
+                key.toLowerCase(),
+                ...value.to_jcal(),
+            ]
+            out_properties.push(prop);
         }
         return ['vevent', out_properties, [/* alarms go here*/]]
     }

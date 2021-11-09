@@ -181,6 +181,10 @@ let valid_input_types: Map<string, ical_type | ical_type[]> =
 
 type tagname = 'vevent' | string
 
-type JCalProperty = [string, any, ical_type, any[]]
+/* TODO is this type correct?
+   What really are valid values for any? Does that depend on ical_type? Why is the tail a list?
+   What really is the type for the parameter map?
+*/
+type JCalProperty = [string, Map<string, any>, ical_type, any[]]
 
 type JCal = [tagname, JCalProperty[], JCal[]]

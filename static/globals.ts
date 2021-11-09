@@ -8,6 +8,7 @@ import { close_popup, toggle_popup } from './popup'
 import { VEvent, xml_to_vcal } from './vevent'
 import { bind_popup_control } from './dragable'
 import { uid, parseDate, gensym, to_local, boolean, makeElement } from './lib'
+import { create_event } from './server_connect'
 
 const vcal_objects: Map<uid, VEvent> = new Map;
 (window as any).vcal_objects = vcal_objects;
@@ -188,6 +189,15 @@ class ComponentEdit extends ComponentVEvent {
                     el.value)
             });
         }
+
+        let submit = this.querySelector('form') as HTMLFormElement
+        submit.addEventListener('submit', (e) => {
+            console.log(submit, e);
+            create_event(vcal_objects.get(this.uid)!);
+
+            e.preventDefault();
+            return false;
+        });
     }
 
     redraw(data: VEvent) {
