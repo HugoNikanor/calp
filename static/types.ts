@@ -1,7 +1,8 @@
 export {
     ical_type,
     valid_input_types,
-    JCalProperty, JCal
+    JCalProperty, JCal,
+    xcal, uid
 }
 
 let all_types = [
@@ -181,6 +182,8 @@ let valid_input_types: Map<string, ical_type | ical_type[]> =
 
 type tagname = 'vevent' | string
 
+type uid = string
+
 /* TODO is this type correct?
    What really are valid values for any? Does that depend on ical_type? Why is the tail a list?
    What really is the type for the parameter map?
@@ -188,3 +191,5 @@ type tagname = 'vevent' | string
 type JCalProperty = [string, Map<string, any>, ical_type, any[]]
 
 type JCal = [tagname, JCalProperty[], JCal[]]
+
+const xcal = "urn:ietf:params:xml:ns:icalendar-2.0";

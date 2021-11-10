@@ -1,5 +1,5 @@
-import { ical_type, valid_input_types, JCal, JCalProperty } from './types'
-import { uid, parseDate } from './lib'
+import { uid, ical_type, valid_input_types, JCal, JCalProperty } from './types'
+import { parseDate } from './lib'
 
 export { VEvent, xml_to_vcal }
 

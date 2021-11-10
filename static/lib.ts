@@ -1,7 +1,7 @@
 export {
-    makeElement, date_to_percent, uid,
-    parseDate, gensym, to_local, boolean,
-    xcal, asList, round_time
+    makeElement, date_to_percent,
+    parseDate, gensym, to_local, to_boolean,
+    asList, round_time
 }
 
 /*
@@ -41,8 +41,6 @@ declare global {
     }
 }
 
-type uid = string
-
 HTMLElement.prototype._addEventListener = HTMLElement.prototype.addEventListener;
 HTMLElement.prototype.addEventListener = function(name: string, proc: (e: Event) => void) {
     if (!this.listeners) this.listeners = {};
@@ -50,17 +48,6 @@ HTMLElement.prototype.addEventListener = function(name: string, proc: (e: Event)
     this.listeners[name].push(proc);
     return this._addEventListener(name, proc);
 };
-
-
-
-/* list of lists -> list of tuples */
-/* TODO figure out how to type this correctly */
-function zip(...args: any[]) {
-    // console.log(args);
-    if (args === []) return [];
-    return [...Array(Math.min(...args.map(x => x.length))).keys()]
-        .map((_, i) => args.map(lst => lst[i]));
-}
 
 
 /* ----- Date Extensions ---------------------------- */
@@ -120,13 +107,6 @@ function parseDate(str: string): Date {
     return date;
 }
 
-function copyDate(date: Date): Date {
-    let d = new Date(date);
-    d.utc = date.utc;
-    d.dateonly = date.dateonly;
-    return d;
-}
-
 function to_local(date: Date): Date {
     if (!date.utc) return date;
 
@@ -162,11 +142,6 @@ function date_to_percent(date: Date): number /* in 0, 100 */ {
 /* js infix to not collide with stuff generated backend */
 const gensym = (counter => (prefix = "gensym") => prefix + "js" + ++counter)(0)
 
-function setVar(str: string, val: any) {
-    document.documentElement.style.setProperty("--" + str, val);
-}
-
-
 function asList<T>(thing: Array<T> | T): Array<T> {
     if (thing instanceof Array) {
         return thing;
@@ -176,7 +151,7 @@ function asList<T>(thing: Array<T> | T): Array<T> {
 }
 
 
-function boolean(value: any): boolean {
+function to_boolean(value: any): boolean {
     switch (typeof value) {
         case 'string':
             switch (value) {
@@ -248,5 +223,3 @@ HTMLCollection.prototype.forEach = function(proc) {
         proc(el);
     }
 }
-
-const xcal = "urn:ietf:params:xml:ns:icalendar-2.0";

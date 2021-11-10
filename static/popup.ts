@@ -1,7 +1,11 @@
-import { find_block, find_popup, PopupElement } from './globals'
+import { VIEW, find_block } from './globals'
+import { PopupElement } from './components/popup-element'
+import { uid } from './types'
+
 export {
     event_from_popup, popup_from_event, close_popup,
-    close_all_popups, /* VIEW, */open_popup, toggle_popup, activePopup
+    close_all_popups, open_popup, toggle_popup, activePopup,
+    find_popup
 }
 
 /* TODO rewrite most of this */
@@ -39,7 +43,16 @@ function close_all_popups() {
     }
 }
 
-declare let VIEW: 'month' | 'week'
+
+function find_popup(uid: uid): HTMLElement | null {
+    // for (let el of vcal_objects[uid].registered) {
+    //     if (el.tagName === 'popup-element') {
+    //         return el;
+    //     }
+    // }
+    // throw 'Popup not fonud';
+    return document.querySelector(`popup-element[data-uid="${uid}"]`)
+}
 
 /* open given popup */
 function open_popup(popup: HTMLElement) {
