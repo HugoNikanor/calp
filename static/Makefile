@@ -17,6 +17,9 @@ all: $(TARGETS)
 script.out.js: $(TS_FILES)
 	browserify $< -p tsify --noImplicitAny --debug -o $@
 
+deps.svg: $(TS_FILES)
+	madge --image $@ $^
+
 # Note that 'tsc --watch' doesn't provide the files we are using. It's
 # just here for debug.
 watch:
