@@ -1,6 +1,5 @@
 export {
     find_block,
-    VIEW, EDIT_MODE,
     vcal_objects, event_calendar_mapping
 }
 
@@ -13,13 +12,11 @@ const event_calendar_mapping: Map<uid, string> = new Map;
 declare global {
     interface Window {
         vcal_objects: Map<uid, VEvent>;
+        VIEW: 'month' | 'week';
+        EDIT_MODE: boolean;
     }
 }
 window.vcal_objects = vcal_objects;
-
-declare let VIEW: 'month' | 'week'
-declare let EDIT_MODE: boolean
-
 
 function find_block(uid: uid): HTMLElement | null {
     let obj = vcal_objects.get(uid)

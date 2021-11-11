@@ -2,7 +2,7 @@ import { close_all_popups } from './popup'
 import { VEvent, xml_to_vcal } from './vevent'
 import { SmallcalCellHighlight, Timebar } from './clock'
 import { makeElement } from './lib'
-import { vcal_objects, event_calendar_mapping, EDIT_MODE } from './globals'
+import { vcal_objects, event_calendar_mapping } from './globals'
 import { open_popup } from './popup'
 import { EventCreator } from './event-creator'
 import { PopupElement } from './components/popup-element'
@@ -13,6 +13,11 @@ import { initialize_components } from './elements'
 */
 
 window.addEventListener('load', function() {
+
+    /*
+      TODO possibly check here that both window.EDIT_MODE and window.VIEW have
+      defined values.
+     */
 
     // let json_objects_el = document.getElementById('json-objects');
     let div = document.getElementById('xcal-data')!;
@@ -72,7 +77,7 @@ window.addEventListener('load', function() {
     }, 1000 * 60);
 
     /* Is event creation active? */
-    if (true && EDIT_MODE) {
+    if (true && window.EDIT_MODE) {
         let eventCreator = new EventCreator;
         for (let c of document.getElementsByClassName("events")) {
             if (!(c instanceof HTMLElement)) continue;

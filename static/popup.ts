@@ -1,4 +1,4 @@
-import { VIEW, find_block } from './globals'
+import { find_block } from './globals'
 import { PopupElement } from './components/popup-element'
 import { uid } from './types'
 
@@ -60,7 +60,7 @@ function open_popup(popup: HTMLElement) {
     let element = event_from_popup(popup);
     // let root = document.body;
     let root;
-    switch (VIEW) {
+    switch (window.VIEW) {
         case 'week':
             root = document.getElementsByClassName("days")[0];
             break;
