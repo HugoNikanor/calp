@@ -12,12 +12,12 @@ import { create_event } from '../server_connect'
 */
 class ComponentEdit extends ComponentVEvent {
 
-    firstTime: boolean
-
     constructor() {
         super();
 
-        this.firstTime = true;
+        let frag = this.template.content.cloneNode(true) as DocumentFragment
+        let body = frag.firstElementChild!
+        this.replaceChildren(body);
     }
 
     connectedCallback() {
@@ -38,19 +38,15 @@ class ComponentEdit extends ComponentVEvent {
         for (let el of this.getElementsByClassName('calendar-selection')) {
             for (let opt of el.getElementsByTagName('option')) {
                 opt.selected = false;
-                if (opt.value == event_calendar_mapping.get(this.uid)) {
-                    data.setCalendar(opt.value);
-                    opt.selected = true;
-                    /* No break since we want to set the remainders 'selected' to false */
-                }
+            }
+            if (data.calendar) {
+                (el as HTMLSelectElement).value = data.calendar;
             }
 
             el.addEventListener('change', (e) => {
                 let v = (e.target as HTMLSelectElement).selectedOptions[0].value
-                // e.selectedOptions[0].innerText
-
                 let obj = vcal_objects.get(this.uid)!
-                obj.setCalendar(v);
+                obj.calendar = v;
             });
         }
 
@@ -85,20 +81,10 @@ class ComponentEdit extends ComponentVEvent {
     }
 
     redraw(data: VEvent) {
-        // update ourselves from template
+        /* We only update our fields, instead of reinstansiating
+           ourselves from the template, in hope that it's faster */
 
-        if (!this.template) {
-            throw "Something";
-        }
-
-        let body;
-        if (this.firstTime) {
-            body = (this.template.content.cloneNode(true) as DocumentFragment).firstElementChild!;
-        } else {
-            body = this;
-        }
-
-        for (let el of body.getElementsByClassName("interactive")) {
+        for (let el of this.getElementsByClassName("interactive")) {
             if (!(el instanceof HTMLElement)) continue;
             let p = el.dataset.property!;
             let d: any;
@@ -119,19 +105,10 @@ class ComponentEdit extends ComponentVEvent {
             }
         }
 
-        for (let el of body.getElementsByTagName('calendar-selection')) {
-            for (let opt of el.getElementsByTagName('option')) {
-                opt.selected = false;
-                if (opt.value == data._calendar) {
-                    opt.selected = true;
-                }
+        if (data.calendar) {
+            for (let el of this.getElementsByClassName('calendar-selection')) {
+                (el as HTMLSelectElement).value = data.calendar;
             }
         }
-
-        if (this.firstTime) {
-            this.replaceChildren(body);
-            this.firstTime = false;
-        }
     }
-
 }

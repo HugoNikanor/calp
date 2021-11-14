@@ -129,11 +129,15 @@ class VEvent {
         }
     }
 
-    setCalendar(calendar: string) {
+    set calendar(calendar: string | null) {
         this._calendar = calendar;
         for (let el of this.registered) {
             el.redraw(this);
         }
+    }
+
+    get calendar(): string | null {
+        return this._calendar;
     }
 
     register(htmlNode: Redrawable) {

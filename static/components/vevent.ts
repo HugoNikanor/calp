@@ -26,6 +26,7 @@ class ComponentVEvent extends HTMLElement {
         }
 
         this.uid = real_uid;
+        this.dataset.uid = uid;
 
         vcal_objects.get(this.uid)?.register(this);
 
@@ -36,9 +37,9 @@ class ComponentVEvent extends HTMLElement {
     }
 
     connectedCallback() {
-        let uid, v;
-        if ((uid = this.dataset.uid)) {
-            v = vcal_objects.get(uid)
+        let uid = this.dataset.uid
+        if (uid) {
+            let v = vcal_objects.get(uid)
             if (v) this.redraw(v);
         }
     }

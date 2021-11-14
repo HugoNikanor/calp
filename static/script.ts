@@ -31,9 +31,12 @@ window.addEventListener('load', function() {
 
     let div2 = document.getElementById('calendar-event-mapping')!;
     for (let calendar of div2.children) {
+        let calendar_name = calendar.getAttribute('key')!;
         for (let child of calendar.children) {
-            event_calendar_mapping.set(
-                child.innerHTML, calendar.getAttribute('key')!);
+            let uid = child.innerHTML;
+            event_calendar_mapping.set(uid, calendar_name);
+            let obj = vcal_objects.get(uid);
+            if (obj) obj.calendar = calendar_name
         }
     }
 

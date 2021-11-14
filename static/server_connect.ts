@@ -51,7 +51,7 @@ async function remove_event(element: Element): void {
 async function create_event(event: VEvent) {
 
     // let xml = event.getElementsByTagName("icalendar")[0].outerHTML
-    let calendar = event._calendar;
+    let calendar = event.calendar;
     if (!calendar) {
         console.error("Can't create event without calendar")
         return;
