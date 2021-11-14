@@ -56,8 +56,8 @@ class ComponentBlock extends ComponentVEvent {
             }
         }
 
-        if (data._calendar) {
-            this.dataset.calendar = data._calendar;
+        if (data.calendar) {
+            this.dataset.calendar = data.calendar;
         }
     }
 }

@@ -3,7 +3,7 @@ export { PopupElement }
 import { gensym } from '../lib'
 import { VEvent } from '../vevent'
 import { bind_popup_control } from '../dragable'
-import { close_popup } from '../popup'
+import { close_popup, event_from_popup } from '../popup'
 
 import { ComponentVEvent } from './vevent'
 import { TabElement } from './tab-element'
@@ -14,11 +14,13 @@ class PopupElement extends ComponentVEvent {
     tabgroup_id: string
     tabcount: number
 
+    isVisible: boolean = false;
+
     constructor(uid?: string) {
         super(uid);
 
-        /* TODO populate remaining */
-        // this.id = 'popup' + this.dataset.uid
+        /* TODO populate remaining (??) */
+
         this.tabgroup_id = gensym();
         this.tabcount = 0
     }
@@ -26,8 +28,9 @@ class PopupElement extends ComponentVEvent {
     redraw(data: VEvent) {
         // console.warn('IMPLEMENT ME');
 
-        if (data._calendar) {
-            this.dataset.calendar = data._calendar;
+        console.log('popup', data.calendar);
+        if (data.calendar) {
+            this.dataset.calendar = data.calendar;
         }
 
         /* TODO is there any case where we want to propagate the draw to any of
@@ -73,6 +76,47 @@ class PopupElement extends ComponentVEvent {
         /* end nav bar */
 
         this.replaceChildren(body);
+    }
+
+    static get observedAttributes() {
+        return ['visible'];
+    }
+
+    get visible(): boolean {
+        return this.isVisible;
+    }
+
+    set visible(isVisible: boolean) {
+        this.isVisible = isVisible;
+        if (this.isVisible) {
+            this.classList.add('visible');
+        } else {
+            this.classList.remove('visible');
+        }
+
+        let root;
+        switch (window.VIEW) {
+            case 'week':
+                root = document.getElementsByClassName("days")[0];
+                break;
+            case 'month':
+            default:
+                root = document.body;
+                break;
+        }
+
+        let element = event_from_popup(this) as HTMLElement;
+        /* start <X, Y> sets offset between top left corner
+           of event in calendar and popup. 10, 10 soo old
+           event is still visible */
+        let offsetX = 10, offsetY = 10;
+        while (element !== root && element !== null) {
+            offsetX += element.offsetLeft;
+            offsetY += element.offsetTop;
+            element = element.offsetParent as HTMLElement;
+        }
+        this.style.left = offsetX + "px";
+        this.style.top = offsetY + "px";
     }
 
     addTab(tab: TabElement) {

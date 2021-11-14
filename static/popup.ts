@@ -1,5 +1,6 @@
 import { find_block } from './globals'
 import { PopupElement } from './components/popup-element'
+import { ComponentBlock } from './components/vevent-block'
 import { uid } from './types'
 
 export {
@@ -11,7 +12,7 @@ export {
 /* TODO rewrite most of this */
 
 /* event component => coresponding popup component */
-function event_from_popup(popup: Element): HTMLElement | null {
+function event_from_popup(popup: PopupElement): ComponentBlock | null {
     // return document.getElementById(popup.id.substr(5))
     let el = popup.closest('[data-uid]')
     if (!el) return null;
@@ -21,7 +22,7 @@ function event_from_popup(popup: Element): HTMLElement | null {
 }
 
 /* popup component => coresponding event component */
-function popup_from_event(event: Element): HTMLElement | null {
+function popup_from_event(event: ComponentBlock): PopupElement | null {
     // return document.getElementById("popup" + event.id);
     // return find_popup(event.closest('[data-uid]').dataset.uid)
     let el = event.closest('[data-uid]')
@@ -32,19 +33,19 @@ function popup_from_event(event: Element): HTMLElement | null {
 }
 
 /* hides given popup */
-function close_popup(popup: Element): void {
-    popup.classList.remove("visible");
+function close_popup(popup: PopupElement): void {
+    popup.visible = false;
 }
 
 /* hides all popups */
 function close_all_popups() {
     for (let popup of document.querySelectorAll("popup-element.visible")) {
-        close_popup(popup);
+        close_popup(popup as PopupElement)
     }
 }
 
 
-function find_popup(uid: uid): HTMLElement | null {
+function find_popup(uid: uid): PopupElement | null {
     // for (let el of vcal_objects[uid].registered) {
     //     if (el.tagName === 'popup-element') {
     //         return el;
@@ -55,41 +56,13 @@ function find_popup(uid: uid): HTMLElement | null {
 }
 
 /* open given popup */
-function open_popup(popup: HTMLElement) {
-    popup.classList.add("visible");
-    let element = event_from_popup(popup);
-    // let root = document.body;
-    let root;
-    switch (window.VIEW) {
-        case 'week':
-            root = document.getElementsByClassName("days")[0];
-            break;
-        case 'month':
-        default:
-            root = document.body;
-            break;
-    }
-    /* start <X, Y> sets offset between top left corner
-       of event in calendar and popup. 10, 10 soo old
-       event is still visible */
-    let offsetX = 10, offsetY = 10;
-    while (element !== root && element !== null) {
-        offsetX += element.offsetLeft;
-        offsetY += element.offsetTop;
-        element = element.offsetParent as HTMLElement;
-    }
-    popup.style.left = offsetX + "px";
-    popup.style.top = offsetY + "px";
+function open_popup(popup: PopupElement) {
+    popup.visible = true;
 }
 
 /* toggles open/closed status of popup given by id */
-function toggle_popup(popup: HTMLElement) {
-    // let popup = document.getElementById(popup_id);
-    if (popup.classList.contains("visible")) {
-        close_popup(popup);
-    } else {
-        open_popup(popup);
-    }
+function toggle_popup(popup: PopupElement) {
+    popup.visible = !popup.visible;
 }
 
 /* Code for managing "selected" popup */
