@@ -18,7 +18,8 @@ declare global {
 
     interface HTMLElement {
         _addEventListener: (name: string, proc: (e: Event) => void) => void
-        listeners: Record<string, ((e: Event) => void)[]>
+        listeners: Map<string, ((e: Event) => void)[]>
+        getListeners: () => Map<string, ((e: Event) => void)[]>
     }
 
     interface Date {
@@ -43,11 +44,15 @@ declare global {
 
 HTMLElement.prototype._addEventListener = HTMLElement.prototype.addEventListener;
 HTMLElement.prototype.addEventListener = function(name: string, proc: (e: Event) => void) {
-    if (!this.listeners) this.listeners = {};
-    if (!this.listeners[name]) this.listeners[name] = [];
-    this.listeners[name].push(proc);
+    if (!this.listeners) this.listeners = new Map
+    if (!this.listeners.get(name)) this.listeners.set(name, []);
+    /* Force since we ensure a value just above */
+    this.listeners.get(name)!.push(proc);
     return this._addEventListener(name, proc);
 };
+HTMLElement.prototype.getListeners = function() {
+    return this.listeners;
+}
 
 
 /* ----- Date Extensions ---------------------------- */
