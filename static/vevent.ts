@@ -236,7 +236,8 @@ function xml_to_vcal(xml: Element): VEvent {
 
     let property_map = new Map()
     if (properties) {
-        property_loop: for (var i = 0; i < properties.childElementCount; i++) {
+        property_loop:
+        for (var i = 0; i < properties.childElementCount; i++) {
             let tag = properties.childNodes[i];
             if (!(tag instanceof Element)) continue;
             let parameters = {};

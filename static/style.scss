@@ -568,6 +568,8 @@ vevent-block, .event {
 
     &.generated {
         opacity: 40%;
+        /* TODO only disable transitions for top/botom, and only
+         * when dragging (not when updating through other means) */
         transition: none;
     }
 

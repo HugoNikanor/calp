@@ -40,24 +40,6 @@ window.addEventListener('load', function() {
         }
     }
 
-    /*
-      - .popup
-      - .block
-      - .list
-     */
-    /*
-    let vevent_els = document.getElementsByClassName('vevent')
-    for (let el of vevent_els) {
-        try {
-            vcal_objects[el.dataset.uid].register(el);
-        } catch {
-            console.error("Invalid something, uid = ", el.dataset.uid,
-                          "el = ", el
-                         );
-        }
-    }
-    */
-
     initialize_components();
 
 

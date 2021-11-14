@@ -13,3 +13,6 @@ types.js
 vevent.js
 *.out.js
 node_modules
+elements.js
+event-creator.js
+deps.svg
