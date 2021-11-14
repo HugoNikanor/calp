@@ -81,12 +81,10 @@ window.addEventListener('load', function() {
                     vcal_objects.set(uid, ev);
 
                     let popup = new PopupElement(uid);
-                    /* TODO these things fail, due to the event not being
-                    present in the global_events map */
-                    (document.querySelector('.days') as Element).appendChild(popup);
                     ev.register(popup);
-                    open_popup(popup);
                     console.log(popup);
+                    (document.querySelector('.days') as Element).appendChild(popup);
+                    open_popup(popup);
                     // (popup.querySelector("input[name='summary']") as HTMLInputElement).focus();
                     // let popupElement = document.getElementById("popup" + event.id);
                     // open_popup(popup_from_event(event));
