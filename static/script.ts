@@ -42,6 +42,12 @@ window.addEventListener('load', function() {
 
     initialize_components();
 
+    /* A full redraw here is WAY to slow */
+    // for (let [_, obj] of vcal_objects) {
+    //     for (let registered of obj.registered) {
+    //         registered.redraw(obj);
+    //     }
+    // }
 
 
 

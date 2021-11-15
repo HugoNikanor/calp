@@ -4,6 +4,7 @@ import { gensym } from '../lib'
 import { VEvent } from '../vevent'
 import { bind_popup_control } from '../dragable'
 import { close_popup, event_from_popup } from '../popup'
+import { vcal_objects } from '../globals'
 
 import { ComponentVEvent } from './vevent'
 import { TabElement } from './tab-element'
@@ -23,12 +24,14 @@ class PopupElement extends ComponentVEvent {
 
         this.tabgroup_id = gensym();
         this.tabcount = 0
+
+        let obj = vcal_objects.get(this.uid);
+        if (obj && obj.calendar) {
+            this.dataset.calendar = obj.calendar;
+        }
     }
 
     redraw(data: VEvent) {
-        // console.warn('IMPLEMENT ME');
-
-        console.log('popup', data.calendar);
         if (data.calendar) {
             this.dataset.calendar = data.calendar;
         }
