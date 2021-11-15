@@ -386,17 +386,16 @@ window.default_calendar='~a';"
                                          (cons (prop event 'UID)
                                                (hash-ref ht name '()))))
                             flat-events)
-                  (map (lambda (pair)
-                         `(calendar (@ (key ,(base64encode (car pair))))
-                                    ,@(map (lambda (uid) `(li ,uid))
-                                           (cdr pair))))
-                       (hash-map->list cons ht))))
+                  (hash-map->list
+                   (lambda (key values)
+                     `(calendar (@ (key ,(base64encode key)))
+                                ,@(map (lambda (uid) `(li ,uid))
+                                       values)))
+                   ht)))
 
           (div (@ (style "display:none !important;")
                   (id "xcal-data"))
                ,((@ (vcomponent xcal output) ns-wrap)
                  (map (@ (vcomponent xcal output) vcomponent->sxcal)
                       flat-events
-                      ))))))
-
-    ))
+                      ))))))))
