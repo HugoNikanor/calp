@@ -15,6 +15,7 @@ declare global {
         vcal_objects: Map<uid, VEvent>;
         VIEW: 'month' | 'week';
         EDIT_MODE: boolean;
+        default_calendar: string;
     }
 }
 window.vcal_objects = vcal_objects;

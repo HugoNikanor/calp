@@ -94,7 +94,14 @@
     (meta (@ (name end-time)
              (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
 
-    (script "EDIT_MODE=" ,(if (edit-mode) "true" "false") ";")
+    (script
+     ,(format #f
+              "
+EDIT_MODE=~:[false~;true~];
+window.default_calendar='~a';"
+              (edit-mode)
+              (base64encode (get-config 'default-calendar))))
+
 
     (style ,(format #f "html {
     --editmode: 1.0;

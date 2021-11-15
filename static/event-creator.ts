@@ -67,7 +67,7 @@ class EventCreator {
                 that.ev = new VEvent();
                 that.ev.setProperty('summary', 'Created Event');
                 that.ev.setProperty('uid', uuid())
-                that.ev.calendar = btoa('Calendar');
+                that.ev.calendar = window.default_calendar;
 
                 // let ev_block = document.createElement('vevent-block') as ComponentBlock;
                 let ev_block = new ComponentBlock(that.ev.getProperty('uid'));
