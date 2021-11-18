@@ -101,23 +101,20 @@
 
                  (div (@ (class "tabgroup"))
                       (tab-element
-                       (@ (title "Översikt"))
-                       (span (@ (slot "label")) "📅")
+                       (@ (label-title "Översikt")
+                          (label "📅"))
                        (vevent-description
-                        (@ (slot "content")
-                           (class "vevent populate-with-uid"))))
+                        (@(class "vevent populate-with-uid"))))
                       (tab-element
-                       (@ (title "Redigera"))
-                       (span (@ (slot "label")) "🖊")
-                       (vevent-edit (@ (slot "content")
-                                       (class "populate-with-uid")))
+                       (@ (label-title "Redigera")
+                          (label "🖊"))
+                       (vevent-edit (@ (class "populate-with-uid")))
                        )
                       ,@(when (debug)
                           `((tab-element
-                             (@ (title "Debug"))
-                             (span (@ (slot "label")) "🐸")
-                             (vevent-dl (@ (slot "content")
-                                           (class "populate-with-uid")))
+                             (@ (label-title "Debug")
+                                (label "🐸"))
+                             (vevent-dl (@ (class "populate-with-uid")))
 
                              ))))
 
@@ -144,10 +141,7 @@
                       ))
             (label (@ ; for id
                     ;; style= top: calc(var(--tab-size) * i)
-                    (title ; title
-                     ))
-                   (slot (@ (name "label")) "??")
-                   )
+                    (title)))
             (div (@ (class "content"))
                  (slot (@ (name "content"))
                        (span (@ (class "error"))

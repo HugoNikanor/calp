@@ -22,6 +22,7 @@ class ComponentVEvent extends HTMLElement {
         if (uid) real_uid = uid;
 
         if (!real_uid) {
+            console.warn(this.outerHTML);
             throw `UID required`
         }
 
