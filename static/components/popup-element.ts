@@ -9,6 +9,8 @@ import { vcal_objects } from '../globals'
 import { ComponentVEvent } from './vevent'
 import { TabElement } from './tab-element'
 
+import { remove_event } from '../server_connect'
+
 /* <popup-element /> */
 class PopupElement extends ComponentVEvent {
 
@@ -74,8 +76,11 @@ class PopupElement extends ComponentVEvent {
         let nav = body.getElementsByClassName("popup-control")[0] as HTMLElement;
         bind_popup_control(nav);
 
-        let btn = body.querySelector('.popup-control .close-tooltip') as HTMLButtonElement
-        btn.addEventListener('click', () => close_popup(this));
+        let close_btn = body.querySelector('.popup-control .close-button') as HTMLButtonElement
+        close_btn.addEventListener('click', () => close_popup(this));
+
+        let remove_btn = body.querySelector('.popup-control .remove-button') as HTMLButtonElement
+        remove_btn.addEventListener('click', () => remove_event(uid));
         /* end nav bar */
 
         this.replaceChildren(body);

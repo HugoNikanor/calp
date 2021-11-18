@@ -21,16 +21,21 @@ async function remove_event(uid: uid) {
     });
 
     console.log(response);
-    toggle_popup(popup_from_event(element));
+    // toggle_popup(popup_from_event(element));
 
     if (response.status < 200 || response.status >= 300) {
         let body = await response.text();
         alert(`HTTP error ${response.status}\n${body}`)
     } else {
-        element.remove();
+        /* Remove all HTML components which belong to this vevent */
+        for (let component of element.registered) {
+            component.remove();
+        }
+        /* remove the vevent from our global store,
+           hopefully also freeing it for garbace collection */
+        vcal_objects.delete(uid);
     }
 }
-*/
 
 // function event_to_jcal(event) {
 //     /* encapsulate event in a shim calendar, to ensure that

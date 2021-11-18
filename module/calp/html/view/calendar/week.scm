@@ -93,8 +93,11 @@
                       ,(btn "×"
                             title: "Stäng"
                             onclick: ""
-                            ;; onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
-                            class: '("close-tooltip")))
+                            class: '("close-button"))
+                      ,(btn "🗑"
+                            title: "Ta bort"
+                            class: '("remove-button")
+                            onclick: ""))
 
                  (div (@ (class "tabgroup"))
                       (tab-element
