@@ -3,8 +3,8 @@ export { EventCreator }
 import { VEvent } from './vevent'
 import { v4 as uuid } from 'uuid'
 import { ComponentBlock } from './components/vevent-block'
-import { round_time } from './lib'
-import { parseDate } from './lib'
+import { round_time, parseDate } from './lib'
+import { ical_type } from './types'
 
 class EventCreator {
 
@@ -148,10 +148,11 @@ class EventCreator {
             let d1 = new Date(container_start.getTime() + start_in_duration)
             let d2 = new Date(container_start.getTime() + end_in_duration)
 
-            /* TODO these writes should preferably be grouped,
-               to save a redraw for all registered listeners */
-            that.ev.setProperty('dtstart', d1);
-            that.ev.setProperty('dtend', d2);
+            let type: ical_type = wide_element ? 'date' : 'date-time';
+            that.ev.setProperties([
+                ['dtstart', d1, type],
+                ['dtend', d2, type],
+            ]);
 
             // console.log(that.event);
             // console.log(d1.format("~L~H:~M"), d2.format("~L~H:~M"));

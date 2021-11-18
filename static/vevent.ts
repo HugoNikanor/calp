@@ -106,11 +106,15 @@ class VEvent {
         return this.properties.keys()
     }
 
-    setProperty(key: string, value: any) {
+    __setPropertyInternal(key: string, value: any, type?: ical_type) {
         key = key.toUpperCase();
         let e = this.properties.get(key);
-        if (!e) {
-            let type: ical_type
+        if (e) {
+            if (type) { e.type = type; }
+            e.value = value;
+            return;
+        }
+        if (!type) {
             let type_ = valid_input_types.get(key)
             if (type_ === undefined) {
                 type = 'unknown'
@@ -119,15 +123,27 @@ class VEvent {
             } else {
                 type = type_
             }
-            e = new VEventValue(type, value)
-            this.properties.set(key, e);
-        } else {
-            e.value = value;
+        }
+        e = new VEventValue(type, value)
+        this.properties.set(key, e);
+    }
+
+    setProperty(key: string, value: any, type?: ical_type) {
+        this.__setPropertyInternal(key, value, type);
+        for (let el of this.registered) {
+            el.redraw(this);
+        }
+    }
+
+    setProperties(pairs: [string, any, ical_type?][]) {
+        for (let pair of pairs) {
+            this.__setPropertyInternal(...pair);
         }
         for (let el of this.registered) {
             el.redraw(this);
         }
     }
+
 
     set calendar(calendar: string | null) {
         this._calendar = calendar;

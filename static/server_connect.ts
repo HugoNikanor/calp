@@ -1,15 +1,16 @@
-export { create_event }
+export { create_event, remove_event }
 
 import { jcal_to_xcal } from './jcal'
 import { VEvent } from './vevent'
+import { uid } from './types'
+import { vcal_objects } from './globals'
 
-/*
-async function remove_event(element: Element): void {
-    let uidElement = element.querySelector("icalendar uid text")
-    if (uidElement === null) {
-        throw "Element lacks uid, giving up"
+async function remove_event(uid: uid) {
+    let element = vcal_objects.get(uid);
+    if (!element) {
+        console.error(`No VEvent with that uid = '${uid}', giving up`)
+        return;
     }
-    let uid: uid = uidElement.textContent!;
 
     let data = new URLSearchParams();
     data.append('uid', uid);
