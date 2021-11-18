@@ -1,44 +1,68 @@
 export { DateTimeInput }
 
-import { to_boolean, parseDate } from '../lib'
+import { makeElement, parseDate } from '../lib'
+
 
 /* '<date-time-input />' */
 class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
+
     connectedCallback() {
         /* This can be in the constructor for chromium, but NOT firefox...
            Vivaldi 4.3.2439.63 stable
            Mozilla Firefox 94.0.1
         */
-        this.innerHTML = '<input type="date" /><input type="time" />'
-        // console.log('constructing datetime input')
+        /*
+ https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes#boolean_attributes
+ https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttribute
+        */
+        this.replaceChildren(
+            makeElement('input', { type: 'date' }),
+            makeElement('input', {
+                type: 'time',
+                disabled: this.hasAttribute('dateonly')
+            })
+        )
     }
 
     static get observedAttributes() {
         return ['dateonly']
     }
 
-    attributeChangedCallback(name: string, _: any, to: any): void {
-        // console.log(this, name, to_boolean(from), to_boolean(to));
+    attributeChangedCallback(name: string, _: string | null, to: string | null): void {
         switch (name) {
             case 'dateonly':
-                (this.querySelector('input[type="time"]') as HTMLInputElement)
-                    .disabled = to_boolean(to)
+                let time = this.querySelector('input[type="time"]') as HTMLInputElement | null
+                /* should only be possible on creation whith dateonly="" sat. */
+                if (!time) return;
+                if (to == null) {
+                    time.disabled = false
+                } else {
+                    if (to == '' || to == name) {
+                        time.disabled = true;
+                    } else {
+                        throw new TypeError(`Invalid value for attribute dateonly: ${to}`)
+                    }
+                }
                 break;
         }
     }
 
     get dateonly(): boolean {
-        return to_boolean(this.getAttribute('dateonly'));
+        return this.hasAttribute('dateonly');
     }
 
-    set dateonly(bool: boolean) {
-        this.setAttribute('dateonly', "" + bool);
+    set dateonly(b: boolean) {
+        if (b) {
+            this.setAttribute('dateonly', "");
+        } else {
+            this.removeAttribute('dateonly');
+        }
     }
 
     get valueAsDate(): Date {
         let dt;
         let date = (this.querySelector("input[type='date']") as HTMLInputElement).value;
-        if (to_boolean(this.getAttribute('dateonly'))) {
+        if (this.hasAttribute('dateonly')) {
             dt = parseDate(date);
             dt.type = 'date';
         } else {
@@ -50,18 +74,24 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
     }
 
     get value(): string {
-        return this.valueAsDate.format("~Y-~m-~dT~H:~M:~S")
+        if (this.dateonly) {
+            return this.valueAsDate.format("~Y-~m-~d")
+        } else {
+            return this.valueAsDate.format("~Y-~m-~dT~H:~M:~S")
+        }
     }
 
     set value(new_value: Date | string) {
         // console.log('Setting date');
-        let date, time;
+        let date, time, dateonly = false;
         if (new_value instanceof Date) {
             date = new_value.format("~L~Y-~m-~d");
             time = new_value.format("~L~H:~M:~S");
+            dateonly = new_value.dateonly;
         } else {
             [date, time] = new_value.split('T')
         }
+        this.dateonly = dateonly;
         (this.querySelector("input[type='date']") as HTMLInputElement).value = date;
         (this.querySelector("input[type='time']") as HTMLInputElement).value = time;
     }
