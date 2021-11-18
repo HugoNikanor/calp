@@ -52,7 +52,8 @@ class ComponentEdit extends ComponentVEvent {
 
         this.redraw(data);
 
-        for (let el of this.getElementsByClassName("interactive")) {
+        // for (let el of this.getElementsByClassName("interactive")) {
+        for (let el of this.querySelectorAll("[data-property]")) {
             // console.log(el);
             el.addEventListener('input', () => {
                 let obj = vcal_objects.get(this.uid)
@@ -70,6 +71,25 @@ class ComponentEdit extends ComponentVEvent {
             });
         }
 
+        let wholeday_ = this.querySelector('[name="wholeday"]')
+        if (wholeday_) {
+            let wholeday = wholeday_ as HTMLInputElement
+
+            if (data.getProperty('dtstart')?.dateonly) {
+                wholeday.checked = true;
+            }
+
+            wholeday.addEventListener('click', () => {
+                let chk = wholeday.checked
+                let start = data!.getProperty('dtstart')
+                let end = data!.getProperty('dtend')
+                start.dateonly = chk
+                end.dateonly = chk
+                data!.setProperty('dtstart', start);
+                data!.setProperty('dtend', end);
+            });
+        }
+
         let submit = this.querySelector('form') as HTMLFormElement
         submit.addEventListener('submit', (e) => {
             console.log(submit, e);
@@ -84,7 +104,8 @@ class ComponentEdit extends ComponentVEvent {
         /* We only update our fields, instead of reinstansiating
            ourselves from the template, in hope that it's faster */
 
-        for (let el of this.getElementsByClassName("interactive")) {
+
+        for (let el of this.querySelectorAll("[data-property]")) {
             if (!(el instanceof HTMLElement)) continue;
             let p = el.dataset.property!;
             let d: any;

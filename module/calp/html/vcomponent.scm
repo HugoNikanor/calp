@@ -222,7 +222,7 @@
              (h3 (input (@ (type "text")
                            (placeholder "Sammanfattning")
                            (name "summary") (required)
-                           (class "interactive") (data-property "summary")
+                           (data-property "summary")
                            ; (value ,(prop ev 'SUMMARY))
                            )))
 
@@ -231,14 +231,12 @@
                   ,@(with-label
                      "Starttid"
                      '(date-time-input (@ (name "dtstart")
-                                          (class "interactive")
                                           (data-property "dtstart")
                                           )))
 
                   ,@(with-label
                      "Sluttid"
                      '(date-time-input (@ (name "dtend")
-                                          (class "interactive")
                                           (data-property "dtend"))))
 
                   (div
@@ -246,7 +244,6 @@
                       "Heldag?"
                       `(input (@ (type "checkbox")
                                  (name "wholeday")
-                                 (onclick "wholeday_checkbox(this)")
                                  ))))
 
                   )
@@ -256,7 +253,6 @@
                 `(input (@ (placeholder "Plats")
                            (name "location")
                            (type "text")
-                           (class "interactive")
                            (data-property "location")
                            ; (value ,(or (prop ev 'LOCATION) ""))
                            )))
@@ -264,7 +260,6 @@
              ,@(with-label
                 "Beskrivning"
                 `(textarea (@ (placeholder "Beskrivning")
-                              (class "interactive")
                               (data-property "description")
                               (name "description"))
                            ; ,(prop ev 'DESCRIPTION)

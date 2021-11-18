@@ -33,18 +33,3 @@ function find_block(uid: uid): ComponentBlock | null {
     // throw 'Popup not fonud';
     return null;
 }
-
-
-
-
-
-
-
-
-/*
-function wholeday_checkbox(box: HTMLInputElement) {
-    box.closest('.timeinput')!
-        .querySelectorAll('input[is="date-time"]')
-        .forEach((el) => { (el as DateTimeInput).dateonly = box.checked });
-}
-*/
