@@ -13,13 +13,14 @@ let all_types = [
     'integer',      /* Number.type = 'integer' */
     'date-time',    /* Date */
     'date',         /* Date.dateonly = true */
-    'duration',
-    'period',
-    'utc-offset',
+    'duration',     /* TODO */
+    'period',       /* TODO */
+    'utc-offset',   /* TODO */
     'cal-address',
     'recur',        /* RRule */
     'boolean',      /* boolean */
 ]
+
 
 type ical_type
     = 'text'
@@ -147,6 +148,7 @@ let valid_input_types: Map<string, ical_type | ical_type[]> =
         ['DUE', ['date', 'date-time']],
         ['DURATION', ['duration']],
         ['EXDATE', [['date', 'date-time']]],
+        ['EXRULE', []], /* deprecated */
         ['FREEBUSY', [['period']]],
         ['GEO', ['float']], // pair of floats
         ['LAST-MODIFIED', ['date-time']],
@@ -173,6 +175,7 @@ let valid_input_types: Map<string, ical_type | ical_type[]> =
         ['TZOFFSETFROM', ['utc-offset']],
         ['TZOFFSETTO', ['utc-offset']],
         ['TZURL', ['uri']],
+        ['UID', ['text']],
         ['URL', ['uri']],
         ['VERSION', ['text']],
     ]) as Map<string, ical_type | ical_type[]>

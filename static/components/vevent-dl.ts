@@ -18,7 +18,14 @@ function buildDescriptionList(data: [string, any][]): HTMLElement {
     let dl = document.createElement('dl');
     for (let [key, val] of data) {
         dl.appendChild(makeElement('dt', { innerText: key }))
-        dl.appendChild(makeElement('dd', { innerText: val }))
+        let fmtVal: string = val;
+        if (val instanceof Date) {
+            fmtVal = val.format(
+                val.dateonly
+                    ? '~Y-~m-~d'
+                    : '~Y-~m-~dT~H:~M:~S');
+        }
+        dl.appendChild(makeElement('dd', { innerText: fmtVal }))
     }
     return dl;
 }
