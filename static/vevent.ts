@@ -1,7 +1,10 @@
 import { uid, ical_type, valid_input_types, JCal, JCalProperty } from './types'
 import { parseDate } from './lib'
 
-export { VEvent, xml_to_vcal }
+export {
+    VEvent, xml_to_vcal,
+    RecurrenceRule
+}
 
 /* Something which can be redrawn */
 interface Redrawable extends HTMLElement {
@@ -182,6 +185,140 @@ function make_vevent_value(value_tag: Element) {
         make_vevent_value_(value_tag));
 }
 
+
+// 
+
+
+
+type freqType = 'SECONDLY' | 'MINUTELY' | 'HOURLY' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
+type weekday = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU'
+
+class RecurrenceRule {
+    freq?: freqType
+    until?: Date
+    count?: number
+    interval?: number
+    bysecond?: number[]
+    byminute?: number[]
+    byhour?: number[]
+    byday?: (weekday | [number, weekday])[]
+    bymonthday?: number[]
+    byyearday?: number[]
+    byweekno?: number[]
+    bymonth?: number[]
+    bysetpos?: number[]
+    wkst?: weekday
+
+    to_jcal() {
+        let obj: any = {}
+        if (this.freq) obj['freq'] = this.freq;
+        if (this.until) obj['until'] = this.until.format(this.until.dateonly
+            ? '~Y-~M~D'
+            : '~Y-~M~DT~H:~M:~S');
+        if (this.count) obj['count'] = this.count;
+        if (this.interval) obj['interval'] = this.interval;
+        if (this.bysecond) obj['bysecond'] = this.bysecond;
+        if (this.byminute) obj['byminute'] = this.byminute;
+        if (this.byhour) obj['byhour'] = this.byhour;
+        if (this.bymonthday) obj['bymonthday'] = this.bymonthday;
+        if (this.byyearday) obj['byyearday'] = this.byyearday;
+        if (this.byweekno) obj['byweekno'] = this.byweekno;
+        if (this.bymonth) obj['bymonth'] = this.bymonth;
+        if (this.bysetpos) obj['bysetpos'] = this.bysetpos;
+
+        if (this.byday) {
+            let outarr: string[] = []
+            for (let byday of this.byday) {
+                if (byday instanceof Array) {
+                    let [num, day] = byday;
+                    outarr.push(`${num}${day}`)
+                } else {
+                    outarr.push(byday)
+                }
+            }
+            obj['byday'] = outarr
+        }
+
+        if (this.wkst) obj['wkst'] = this.wkst;
+
+        return obj;
+    }
+}
+
+function xml_to_recurrence_rule(xml: Element): RecurrenceRule {
+    let rr = new RecurrenceRule;
+
+    if (xml.tagName.toLowerCase() !== 'recur') {
+        throw new TypeError();
+    }
+    let by = new Map<string, any>([
+        ['bysecond', []],
+        ['byminute', []],
+        ['byhour', []],
+        ['bymonthday', []],
+        ['byyearday', []],
+        ['byweekno', []],
+        ['bymonth', []],
+        ['bysetpos', []],
+        ['byday', []],
+    ]);
+
+
+    for (let child of xml.children) {
+        /* see appendix a 3.3.10 RECUR of RFC 6321 */
+        let t = child.innerHTML;
+        let tn = child.tagName.toLowerCase()
+
+        switch (tn) {
+            case 'freq':
+                rr.freq = t as freqType
+                break;
+
+            case 'until':
+                rr.until = parseDate(t);
+                break;
+
+            case 'count':
+            case 'interval':
+                rr.count = Number(t)
+                break;
+
+            case 'bysecond':
+            case 'byminute':
+            case 'byhour':
+            case 'bymonthday':
+            case 'byyearday':
+            case 'byweekno':
+            case 'bymonth':
+            case 'bysetpos':
+                by.get(tn)!.push(Number(t));
+                break;
+
+            case 'byday':
+                // xsd:integer? type-weekday
+                let m = t.match(/([+-]?[0-9]*)([A-Z]{2})/)
+                if (m == null) throw new TypeError()
+                else if (m[1] === '') by.get('byday')!.push(m[2] as weekday)
+                else by.get('byday')!.push([Number(m[1]), m[2] as weekday])
+                break;
+
+            case 'wkst':
+                rr.wkst = t as weekday
+                break;
+        }
+    }
+
+    for (let [key, value] of by) {
+        if (!value || value.length == 0) continue;
+        (rr as any)[key] = value;
+    }
+
+    return rr;
+}
+
+// 
+
+
 function make_vevent_value_(value_tag: Element) {
     /* RFC6321 3.6. */
     switch (value_tag.tagName) {
@@ -229,8 +366,7 @@ function make_vevent_value_(value_tag: Element) {
             }
 
         case 'recur':
-            /* TODO parse */
-            return "";
+            return xml_to_recurrence_rule(value_tag);
 
         case 'utc-offset':
             /* TODO parse */
