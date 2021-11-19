@@ -82,6 +82,9 @@
                 ,(block-template)
                 )
 
+      (template (@ (id "vevent-edit-rrule"))
+                ,(vevent-edit-rrule-template))
+
       ;; Based on popup:s output
       (template
        (@ (id "popup-template"))
@@ -108,8 +111,11 @@
                       (tab-element
                        (@ (label-title "Redigera")
                           (label "🖊"))
-                       (vevent-edit (@ (class "populate-with-uid")))
-                       )
+                       (vevent-edit (@ (class "populate-with-uid"))))
+                      (tab-element
+                       (@ (label-tile "Upprepningar")
+                          (label "↺"))
+                       (vevent-edit-rrule (@ (class "populate-with-uid"))))
                       ,@(when (debug)
                           `((tab-element
                              (@ (label-title "Debug")
@@ -147,6 +153,69 @@
                        (span (@ (class "error"))
                              "CONTENT MISSING")))))
       )))
+
+(define (week-day-select args)
+  `(select (@ ,@args)
+     (option "-")
+     ,@(map (lambda (x) `(option (@ (value ,(car x))) ,(cadr x)))
+            '((MO "Monday")
+              (TU "Tuesday")
+              (WE "Wednesday")
+              (TH "Thursday")
+              (FR "Friday")
+              (SA "Saturday")
+              (SU "Sunday")))))
+
+(define (vevent-edit-rrule-template)
+  `(div (@ (class "eventtext"))
+        (h2 "Upprepningar")
+        (dl
+         (dt "Frequency")
+         (dd (select (@ (name "freq"))
+               (option "-")
+               ,@(map (lambda (x) `(option (@ (value ,x)) ,(string-titlecase (symbol->string x))))
+                      '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))))
+
+         (dt "Until")
+         (dd (date-time-input (@ (name "until"))))
+
+         (dt "Conut")
+         (dd (input (@ (type "number") (name "count") (min 0))))
+
+         (dt "Interval")
+         (dd (input (@ (type "number") (name "interval") ; min and max depend on FREQ
+                       )))
+
+         ,@(concatenate
+            (map (lambda (pair)
+                   (define name (list-ref pair 0))
+                   (define pretty-name (list-ref pair 1))
+                   (define min (list-ref pair 2))
+                   (define max (list-ref pair 3))
+                   `((dt ,pretty-name)
+                     (dd (input-list (@ (name ,name))
+                                     (input (@ (type "number")
+                                               (min ,min) (max ,max)))))))
+                 '((bysecond "By Second" 0 60)
+                   (byminute "By Minute" 0 59)
+                   (byhour "By Hour" 0 23)
+                   (bymonthday "By Month Day" -31 31) ; except 0
+                   (byyearday "By Year Day" -366 366) ; except 0
+                   (byweekno "By Week Number" -53 53) ; except 0
+                   (bymonth "By Month" 1 12)
+                   (bysetpos "By Set Position" -366 366) ; except 0
+                   )))
+
+         ;; (dt "By Week Day")
+         ;; (dd (input-list (@ (name "byweekday"))
+         ;;                 (input (@ (type number)
+         ;;                           (min -53) (max 53) ; except 0
+         ;;                           ))
+         ;;                 ,(week-day-select '())
+         ;;                 ))
+
+         (dt "Weekstart")
+         (dd ,(week-day-select '((name "wkst")))))))
 
 ;; based on the output of fmt-single-event
 (define (description-template)

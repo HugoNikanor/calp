@@ -6,6 +6,7 @@ import { DateTimeInput } from './components/date-time-input'
 import { PopupElement } from './components/popup-element'
 import { TabElement } from './components/tab-element'
 import { InputList } from './components/input-list'
+import { EditRRule } from './components/edit-rrule'
 
 export { initialize_components }
 
@@ -19,6 +20,7 @@ function initialize_components() {
     customElements.define('vevent-edit', ComponentEdit);
     customElements.define('vevent-dl', VEventDL);
     customElements.define('vevent-block', ComponentBlock);
+    customElements.define('vevent-edit-rrule', EditRRule);
 
     /* date-time-input should be instansiatable any time, but we do it here
     becouse why not */

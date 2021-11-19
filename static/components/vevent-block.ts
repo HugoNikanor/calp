@@ -59,5 +59,9 @@ class ComponentBlock extends ComponentVEvent {
         if (data.calendar) {
             this.dataset.calendar = data.calendar;
         }
+
+        if (data.getProperty('rrule') !== undefined) {
+            (this.getElementsByClassName('repeating')![0] as HTMLElement).innerText = '↺'
+        }
     }
 }
