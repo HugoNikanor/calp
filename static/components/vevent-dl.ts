@@ -4,6 +4,8 @@ import { ComponentVEvent } from './vevent'
 import { VEvent } from '../vevent'
 import { makeElement } from '../lib'
 
+import { RecurrenceRule } from '../vevent'
+
 /* <vevent-dl /> */
 class VEventDL extends ComponentVEvent {
     redraw(obj: VEvent) {
@@ -24,6 +26,8 @@ function buildDescriptionList(data: [string, any][]): HTMLElement {
                 val.dateonly
                     ? '~Y-~m-~d'
                     : '~Y-~m-~dT~H:~M:~S');
+        } else if (val instanceof RecurrenceRule) {
+            fmtVal = JSON.stringify(val.to_jcal())
         }
         dl.appendChild(makeElement('dd', { innerText: fmtVal }))
     }
