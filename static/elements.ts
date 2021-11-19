@@ -5,6 +5,7 @@ import { ComponentBlock } from './components/vevent-block'
 import { DateTimeInput } from './components/date-time-input'
 import { PopupElement } from './components/popup-element'
 import { TabElement } from './components/tab-element'
+import { InputList } from './components/input-list'
 
 export { initialize_components }
 
@@ -23,6 +24,7 @@ function initialize_components() {
     becouse why not */
 
     customElements.define('date-time-input', DateTimeInput /*, { extends: 'input' } */)
+    customElements.define('input-list', InputList);
 
     /* These maybe also require that the global maps are initialized */
     customElements.define('popup-element', PopupElement)
