@@ -1,5 +1,16 @@
 $gray: #757575;
 $blue: #3399ff;
+/* TODO rename this */
 $btn-height: 0.5ex;
 
+$tablabel-height: 5ex;
+$tablabel-margin: 0;
 
+// "left" or "top"
+$popup-style: "left";
+
+:root {
+    /* Each popup can have a different amoutn of tabs.
+    Override this as appropriate */
+    --tabcount: 4;
+}

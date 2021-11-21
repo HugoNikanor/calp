@@ -4,7 +4,6 @@ import { VEventDL } from './components/vevent-dl'
 import { ComponentBlock } from './components/vevent-block'
 import { DateTimeInput } from './components/date-time-input'
 import { PopupElement } from './components/popup-element'
-import { TabElement } from './components/tab-element'
 import { InputList } from './components/input-list'
 import { EditRRule } from './components/edit-rrule'
 
@@ -30,5 +29,4 @@ function initialize_components() {
 
     /* These maybe also require that the global maps are initialized */
     customElements.define('popup-element', PopupElement)
-    customElements.define('tab-element', TabElement)
 }

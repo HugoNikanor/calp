@@ -18,7 +18,7 @@ function bind_popup_control(nav: HTMLElement) {
     //     throw TypeError('not a popup container');
     // }
 
-    nav.onmousedown = function(e) {
+    nav.addEventListener('mousedown', function(e) {
         /* Ignore mousedown on children */
         if (e.target != nav) return;
         nav.style.cursor = "grabbing";
@@ -27,7 +27,7 @@ function bind_popup_control(nav: HTMLElement) {
         // let popup = nav.closest(".popup-container");
         let popup = nav.closest("popup-element") as HTMLElement;
         nav.dataset.startPoint = popup.offsetLeft + ";" + popup.offsetTop;
-    }
+    })
     window.addEventListener('mousemove', function(e) {
         if (nav.dataset.grabbed) {
             let [x, y] = nav.dataset.grabPoint!.split(";").map(Number);

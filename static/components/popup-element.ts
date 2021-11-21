@@ -7,7 +7,6 @@ import { close_popup, event_from_popup } from '../popup'
 import { vcal_objects } from '../globals'
 
 import { ComponentVEvent } from './vevent'
-import { TabElement } from './tab-element'
 
 import { remove_event } from '../server_connect'
 
@@ -47,28 +46,58 @@ class PopupElement extends ComponentVEvent {
         let body = (template.content.cloneNode(true) as DocumentFragment).firstElementChild!;
 
         let uid = this.uid;
-        // console.log(uid);
 
         body.getElementsByClassName('populate-with-uid')
             .forEach((e) => e.setAttribute('data-uid', uid));
 
-        /* tabs */
-        // for (let tab of body.querySelectorAll(".tabgroup .tab")) {
-        // }
         window.setTimeout(() => {
-            // let tabs = this.querySelector('tab-element')!
-            //     .shadowRoot!
-            //     .querySelectorAll('label')
-            // console.log(tabs);
-            // console.log(this.getElementsByTagName('tab-element'))
-            for (let tab of this.getElementsByTagName('tab-element')) {
-                // console.log(tab_container);
-                // let tab = tab_container.shadowRoot!;
-                // tab.documentElement.style.setProperty('--i', i);
-                popuplateTab(tab as TabElement, this.tabgroup_id, this.tabcount)
-                this.tabcount += 1
+
+            /* tab change button */
+            let tabs = this.querySelectorAll('[role="tab"]')
+            /* list of all tabs */
+            // let tablist = this.querySelector('[role="tablist"]')!
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+
+                    /* hide all tab panels */
+                    for (let tabcontent of this.querySelectorAll('[role="tabpanel"]')) {
+                        tabcontent.setAttribute('hidden', 'true');
+                    }
+                    /* unselect all (selected) tab handles */
+                    for (let item of this.querySelectorAll('[aria-selected="true"]')) {
+                        item.setAttribute('aria-selected', 'false');
+                    }
+                    /* re-select ourselves */
+                    tab.setAttribute('aria-selected', 'true');
+
+                    /* unhide our target tab */
+                    this.querySelector('#' + tab.getAttribute('aria-controls'))!
+                        .removeAttribute('hidden')
+                });
+            });
+
+            /* tab contents */
+            let tabcontents = this.querySelectorAll('[role="tabpanel"]')
+
+            for (let i = 0; i < tabs.length; i++) {
+                let n = i + this.tabcount;
+                this.tabgroup_id
+                let tab = tabs[n];
+                let con = tabcontents[n];
+
+                let a = `${this.tabgroup_id}-tab-${n}`
+                let b = `${this.tabgroup_id}-con-${n}`
+
+                tab.id = a;
+                con.setAttribute('aria-labeledby', a);
+
+                con.id = b;
+                tab.setAttribute('aria-controls', b);
+
             }
-            (this.querySelector('tab-element label') as HTMLInputElement).click()
+            this.tabcount += tabs.length
+
         });
         /* end tabs */
 
@@ -125,28 +154,5 @@ class PopupElement extends ComponentVEvent {
         }
         this.style.left = offsetX + "px";
         this.style.top = offsetY + "px";
-    }
-
-    addTab(tab: TabElement) {
-        let tabgroup = this.getElementsByClassName('tabgroup')![0]!
-        tabgroup.append(tab);
-        popuplateTab(tab, this.tabgroup_id, this.tabcount)
-        this.tabcount += 1
-    }
-}
-
-function popuplateTab(tab: HTMLElement, tabgroup: string, index: number) {
-    // console.log(tab);
-    let new_id = gensym();
-    let input = tab.querySelector('input[type="radio"]') as HTMLInputElement;
-    let label = tab.querySelector("label")!
-    tab.style.setProperty('--tab-index', '' + index);
-    /* TODO this throws a number of errors, but somehow still works...? */
-    if (input !== null) {
-        input.name = tabgroup
-        input.id = new_id;
-    }
-    if (label !== null) {
-        label.setAttribute('for', new_id);
     }
 }

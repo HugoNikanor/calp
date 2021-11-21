@@ -2,6 +2,7 @@
   :use-module (calp util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
+  :use-module (rnrs records syntactic)
   :use-module (datetime)
   :use-module (calp html view calendar shared)
   :use-module (calp html config)
@@ -14,9 +15,8 @@
                         events-between))
   :use-module ((calp html vcomponent)
                :select (make-block) )
-  :use-module ((calp html components)
-               :select (btn tabset ; form with-label
-                            ))
+  ;; :use-module ((calp html components)
+  ;;              :select ())
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
   )
@@ -86,73 +86,86 @@
                 ,(vevent-edit-rrule-template))
 
       ;; Based on popup:s output
-      (template
-       (@ (id "popup-template"))
-       (div (@ ; (id ,id)
-             (class "popup-container")
-             (onclick "event.stopPropagation()"))
-            (div (@ (class "popup"))
-                 (nav (@ (class "popup-control"))
-                      ,(btn "×"
-                            title: "Stäng"
-                            onclick: ""
-                            class: '("close-button"))
-                      ,(btn "🗑"
-                            title: "Ta bort"
-                            class: '("remove-button")
-                            onclick: ""))
+      (template (@ (id "popup-template"))
+                ,(popup-template)))))
 
-                 (div (@ (class "tabgroup"))
-                      (tab-element
-                       (@ (label-title "Översikt")
-                          (label "📅"))
-                       (vevent-description
-                        (@(class "vevent populate-with-uid"))))
-                      (tab-element
-                       (@ (label-title "Redigera")
-                          (label "🖊"))
-                       (vevent-edit (@ (class "populate-with-uid"))))
-                      (tab-element
-                       (@ (label-tile "Upprepningar")
-                          (label "↺"))
-                       (vevent-edit-rrule (@ (class "populate-with-uid"))))
-                      ,@(when (debug)
-                          `((tab-element
-                             (@ (label-title "Debug")
-                                (label "🐸"))
-                             (vevent-dl (@ (class "populate-with-uid")))
 
-                             ))))
+(define-record-type tab
+  (fields title label body))
 
-                 ;; ,(tabset
-                 ;;   `(("📅" title: "Översikt"
-                 ;;      (vevent-description
-                 ;;       (@ (class "vevent populate-with-uid")))
-                 ;;      )
+(define (popup-template)
 
-                 ;;     ,@(when (edit-mode)
-                 ;;         `(("📅" title: "Redigera"
-                 ;;            (vevent-edit (@ (class "populate-with-uid"))))))
+  ;; the XXX-n and YYY-n id:s aren't actually used, but mearly show how things
+  ;; are supposed to be linked together.
+  ;; Each instance of XXX should be replaced with THE SAME unique id,
+  ;; and each instance of YYY shoud be replaced with another, but unique id.
+  ;; n is a serial number, where a tab and its label MUST have the same number.
 
-                 ;;     ))
-                 )))
+  (define* (build-tab
+            tabdata key:
+            (selected "false")
+            (tabindex "-1"))
+    `(button (@ (role "tab")
+                (aria-selected ,selected)
+                (tabindex ,tabindex)
+                (aria-controls "XXX-n")
+                (id "YYY-n")
+                (title ,(tab-title tabdata)))
+             ,(tab-label tabdata)))
 
-      (template
-       (@ (id "tab-template"))
-       ;; ,((@ (calp html components) include-css) "/static/tab.css")
-       (div (@ (class "tab"))
-            (input (@ (type "radio")
-                      ;; id
-                      ;; (name ,tabgroup)
-                      ))
-            (label (@ ; for id
-                    ;; style= top: calc(var(--tab-size) * i)
-                    (title)))
-            (div (@ (class "content"))
-                 (slot (@ (name "content"))
-                       (span (@ (class "error"))
-                             "CONTENT MISSING")))))
-      )))
+  (define tabs
+    (append
+     (list
+      (make-tab "Översikt" "📅"
+                '(vevent-description
+                  (@ (class "vevent populate-with-uid"))))
+      (make-tab "Redigera" "🖊"
+                '(vevent-edit (@ (class "populate-with-uid"))))
+      (make-tab "Upprepningar" "↺"
+                '(vevent-edit-rrule (@ (class "populate-with-uid")))))
+
+     (when (debug)
+       (list
+        (make-tab "Debug" "🐸"
+                  '(vevent-dl (@ (class "populate-with-uid"))))
+        ))))
+
+
+  ;; becomes the direct child of <popup-element/>
+  `(div (@ (class "popup-root window")
+           (onclick "event.stopPropagation()"))
+
+        (nav (@ (class "popup-control"))
+             (button (@ (class "close-button")
+                        (title "Stäng")
+                        (aria-label "Close"))
+                     "×")
+             (button (@ (class "remove-button")
+                        (title "Ta Bort"))
+                     "🗑"))
+
+        (main (@ (class "tabgroup window-body"))
+              (menu (@ (role "tablist")
+                       (aria-label "Simple Tabs"))
+                    ,@(cons (build-tab (car tabs)
+                                       selected: "true"
+                                       tabindex: "0")
+                            (map build-tab (cdr tabs))))
+              ;; content
+              (article (@ (id "XXX-n")
+                          (role "tabpanel")
+                          (tabindex "0")
+                          (aria-labeledby "YYY-n"))
+                       ,(tab-body (car tabs)))
+              ,@(map (lambda (tab)
+                       `(article (@ (id "XXX-n")
+                                    (role "tabpanel")
+                                    (tabindex "0")
+                                    (hidden)
+                                    (aria-labeledby "YYY-n"))
+                                 ,(tab-body tab)))
+                     (cdr tabs))
+              )))
 
 (define (week-day-select args)
   `(select (@ ,@args)

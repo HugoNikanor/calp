@@ -24,7 +24,10 @@ html, body {
     /* main the graphical portion
        of both the wide and the table
        view */
-    main {
+    > main {
+        /* these allow the main area to shrink, so that all areas will fit the
+           screen. It will however not shrink the elements, leading to our
+           (desired) scrollbar */
         min-width: 0;  /* for wide */
         min-height: 0; /* for tall */
 
@@ -742,7 +745,7 @@ vevent-block, .event {
 .error {
     border: 3px solid red;
     background-color: pink;
-    
+
     pre {
         padding: 1em;
     }
@@ -766,19 +769,107 @@ popup-element {
     &.visible {
         display: block;
     }
+
+    main {
+        resize: both;
+        overflow: auto;
+
+        min-height: calc(var(--tabcount) * #{$tablabel-margin + $tablabel-height});
+
+        /* some form of sensible minimi and default size for the popup (s main area). */
+        min-width: 150px;
+        width: 350px;
+        height: 250px;
+
+        article {
+            padding: 1em;
+        }
+    }
 }
 
-.popup {
+.popup-control {
+    cursor: grab;
+    background-color: var(--color);
+
     display: flex;
+
+    @if $popup-style == "left" {
+        flex-direction: column;
+        padding: 1.2ex;
+    } @else {
+        flex-direction: row-reverse;
+        padding: 1ex;
+    }
+
+
+    button {
+        display: block;
+        background: $blue;
+        color: white;
+        border: none;
+        box-shadow: $btn-height $btn-height gray;
+
+        &:active {
+            transform: translate($btn-height, $btn-height);
+            box-shadow: none;
+        }
+
+        @if $popup-style == "left" {
+            width: 9mm;
+            height: 9mm;
+            margin-bottom: 2mm;
+        } @else {
+            width: 7mm;
+            height: 7mm;
+            margin-left: 1mm;
+        }
+    }
+}
+
+.popup-root {
     background-color: #dedede;
     color: black;
-    font-size: 80%;
 
-    /* overflow-y: auto; */
-    max-width: 60ch;
-    max-height: 60ch;
-    min-width: 60ch;
-    min-height: 30ch;
+    display: flex;
+
+    @if $popup-style == "left" {
+        flex-direction: row;
+    } @else {
+        flex-direction: column;
+    }
+
+
+    [role="tablist"] {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        left: 100%;
+        margin: 0;
+        padding: 0;
+
+        [role="tab"] {
+            height: $tablabel-height;
+            margin-bottom: $tablabel-margin;
+
+            width: 5ex;
+            &:hover {
+                width: 10ex;
+            }
+
+            transition: width 0.1s ease-in-out;
+            border: 1px solid #ccc;
+            border-radius: 0 5px 5px 0;
+            background-color: #aeaeae;
+        }
+
+        [aria-selected="true"] {
+            border-left: none;
+            background-color: #dedede;
+        }
+    }
+}
+
+vevent-edit {
 
     select {
         max-width: 100%;
@@ -791,9 +882,6 @@ popup-element {
     }
 
     .eventtext {
-        /* makes the text in the popup scroll, but not the sidebar */
-        overflow-y: auto;
-        padding: 1em;
         word-break: break-word;
 
         table {
@@ -801,122 +889,6 @@ popup-element {
             font-size: 65%;
         }
     }
-
-    .location {
-        font-style: initial;
-    }
-
-    .category {
-        display: inline-block;
-        margin-right: 1ex;
-    }
-
-    .popup-control {
-        display: flex;
-        flex-direction: column;
-
-        /* not needed, but the icons aren't text
-       and should therefor not be copied */
-        user-select: none;
-
-        cursor: grab;
-        background-color: var(--color);
-        /* Transition for background color 
-         * Matches that of '.event'.
-         * TODO break out to common place */
-        transition: 0.3s;
-
-        .btn {
-            max-width: 2em;
-            max-height: 2em;
-            margin: 1em;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            font-size: 150%;
-        }
-
-    }
-}
-
-
-#bar {
-    width: calc(100% + 2em);
-    height: 4px;
-    background: blue;
-    border-color: blue;
-    left: -1em;
-}
-
-/* Tabs
-----------------------------------------
-*/
-
-.tabgroup {
-    position: relative;
-    width: 100%;
-    resize: both;
-    --tab-size: 6ex;
-}
-
-.tab {
-    > label {
-        position: absolute;
-        top: calc(var(--tab-size) * var(--tab-index));
-
-        left: 100%;
-        /*top: 0; */
-        display: block;
-
-        max-height: 5ex;
-        min-height: 5ex;
-
-        min-width: 5ex;
-        width: 5ex;
-
-        transition: width 0.1s ease-in-out;
-        &:hover {
-            width: 10ex;
-        }
-
-        border: 1px solid #ccc;
-        border-radius: 0 5px 5px 0;
-        background-color: #aeaeae;
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    [type=radio] {
-        display: none;
-        &:checked ~ label {
-            z-index: 100;
-            /* to align all tab */
-            border-left: 3px solid transparent;
-            background-color: #dedede;
-
-            ~ .content {
-                z-index: 100;
-            }
-        }
-    }
-
-    .content {
-        position: absolute;
-        top: 0;
-        left: 0;
-        background-color: #dedede;
-        right: 0;
-        bottom: 0;
-        overflow: auto;
-
-        min-width: 100%;
-        min-height: 100%;
-    }
-
 
     .edit-form {
         label {
@@ -936,9 +908,21 @@ popup-element {
         .timeinput {
         }
     }
-
-
 }
+
+vevent-dl {
+    font-size: 80%;
+}
+
+
+#bar {
+    width: calc(100% + 2em);
+    height: 4px;
+    background: blue;
+    border-color: blue;
+    left: -1em;
+}
+
 
 .plusminuschecked label {
     color: black;
