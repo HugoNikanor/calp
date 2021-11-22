@@ -58,7 +58,12 @@
                             [else "🙃"]))
                      (td (a (@ (href "/" ,dir "/" ,k)) ,k))
                      (td ,(number->string (stat:perms stat) 8)))))
-            (cdr (scandir dir))))))
+            (cdr (or (scandir dir)
+                     (scm-error
+                      'misc-error
+                      "directory-table"
+                      "Scandir argument invalid or not directory: ~a"
+                      (list dir) '())))))))
 
 
 
