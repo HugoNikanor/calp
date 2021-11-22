@@ -61,7 +61,9 @@ class ComponentEdit extends ComponentVEvent {
                     throw 'No object with uid ' + this.uid
                 }
                 if (!(el instanceof HTMLInputElement
-                    || el instanceof DateTimeInput)) {
+                    || el instanceof DateTimeInput
+                    || el instanceof HTMLTextAreaElement
+                )) {
                     console.log(el, 'not an HTMLInputElement');
                     return;
                 }
