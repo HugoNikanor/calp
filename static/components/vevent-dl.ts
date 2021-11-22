@@ -19,7 +19,7 @@ class VEventDL extends ComponentVEvent {
 function buildDescriptionList(data: [string, any][]): HTMLElement {
     let dl = document.createElement('dl');
     for (let [key, val] of data) {
-        dl.appendChild(makeElement('dt', { innerText: key }))
+        dl.appendChild(makeElement('dt', { textContent: key }))
         let fmtVal: string = val;
         if (val instanceof Date) {
             fmtVal = val.format(
@@ -29,7 +29,7 @@ function buildDescriptionList(data: [string, any][]): HTMLElement {
         } else if (val instanceof RecurrenceRule) {
             fmtVal = JSON.stringify(val.to_jcal())
         }
-        dl.appendChild(makeElement('dd', { innerText: fmtVal }))
+        dl.appendChild(makeElement('dd', { textContent: fmtVal }))
     }
     return dl;
 }

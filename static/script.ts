@@ -33,7 +33,10 @@ window.addEventListener('load', function() {
     for (let calendar of div2.children) {
         let calendar_name = calendar.getAttribute('key')!;
         for (let child of calendar.children) {
-            let uid = child.innerHTML;
+            let uid = child.textContent;
+            if (!uid) {
+                throw "UID required"
+            }
             event_calendar_mapping.set(uid, calendar_name);
             let obj = vcal_objects.get(uid);
             if (obj) obj.calendar = calendar_name

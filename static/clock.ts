@@ -110,7 +110,7 @@ customElements.define('today-button', TodayButton)
 
 class CurrentTime extends ClockElement {
     update(now: Date) {
-        this.innerHTML = now.format('~H:~M:~S')
+        this.textContent = now.format('~H:~M:~S')
     }
 }
 customElements.define('current-time', CurrentTime)

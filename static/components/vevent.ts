@@ -60,9 +60,9 @@ class ComponentVEvent extends HTMLElement {
             let d, fmt;
             if ((d = data.getProperty(p))) {
                 if ((fmt = el.dataset.fmt)) {
-                    el.innerHTML = d.format(fmt);
+                    el.textContent = d.format(fmt);
                 } else {
-                    el.innerHTML = d;
+                    el.textContent = d;
                 }
             }
         }

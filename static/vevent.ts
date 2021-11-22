@@ -266,7 +266,7 @@ function xml_to_recurrence_rule(xml: Element): RecurrenceRule {
 
     for (let child of xml.children) {
         /* see appendix a 3.3.10 RECUR of RFC 6321 */
-        let t = child.innerHTML;
+        let t = child.textContent || '';
         let tn = child.tagName.toLowerCase()
 
         switch (tn) {
@@ -326,40 +326,40 @@ function make_vevent_value_(value_tag: Element) {
             /* Base64 to binary
                Seems to handle inline whitespace, which xCal standard reqires
                */
-            return atob(value_tag.innerHTML)
+            return atob(value_tag.textContent || '')
 
         case 'boolean':
-            switch (value_tag.innerHTML) {
+            switch (value_tag.textContent) {
                 case 'true': return true;
                 case 'false': return false;
                 default:
-                    console.warn(`Bad boolean ${value_tag.innerHTML}, defaulting with !!`)
-                    return !!value_tag.innerHTML;
+                    console.warn(`Bad boolean ${value_tag.textContent}, defaulting with !!`)
+                    return !!value_tag.textContent;
             }
 
         case 'time':
         case 'date':
         case 'date-time':
-            return parseDate(value_tag.innerHTML);
+            return parseDate(value_tag.textContent || '');
 
         case 'duration':
             /* TODO duration parser here 'P1D' */
-            return value_tag.innerHTML;
+            return value_tag.textContent;
 
         case 'float':
         case 'integer':
-            return +value_tag.innerHTML;
+            return Number(value_tag.textContent);
 
         case 'period':
             /* TODO has sub components, meaning that a string wont do */
             let start = value_tag.getElementsByTagName('start')[0]
-            parseDate(start.innerHTML);
+            parseDate(start.textContent || '');
             let other;
             if ((other = value_tag.getElementsByTagName('end')[0])) {
-                return parseDate(other.innerHTML)
+                return parseDate(other.textContent || '')
             } else if ((other = value_tag.getElementsByTagName('duration')[0])) {
                 /* TODO parse duration */
-                return other.innerHTML
+                return other.textContent
             } else {
                 console.warn('Invalid end to period, defaulting to 1H');
                 return new Date(3600);
@@ -377,7 +377,7 @@ function make_vevent_value_(value_tag: Element) {
         case 'cal-address':
         case 'uri':
         case 'text':
-            return value_tag.innerHTML;
+            return value_tag.textContent;
     }
 }
 
