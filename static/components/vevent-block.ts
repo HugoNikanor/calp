@@ -23,7 +23,24 @@ class ComponentBlock extends ComponentVEvent {
     }
 
     redraw(data: VEvent) {
-        super.redraw(data);
+        let body = (this.template.content.cloneNode(true) as DocumentFragment).firstElementChild!;
+
+        for (let el of body.querySelectorAll('[data-property]')) {
+            if (!(el instanceof HTMLElement)) continue;
+            let p = el.dataset.property!;
+            let d, fmt;
+            if ((d = data.getProperty(p))) {
+                if ((fmt = el.dataset.fmt)) {
+                    el.textContent = d.format(fmt);
+                } else {
+                    el.textContent = d;
+                }
+            }
+        }
+
+        this.replaceChildren(body);
+
+        /* -------------------------------------------------- */
 
         let p;
         if ((p = data.getProperty('dtstart'))) {

@@ -8,7 +8,7 @@ import { VEvent } from '../vevent'
 
 Lacks an accompaning tag, and shouldn't be directly instanciated.
 */
-class ComponentVEvent extends HTMLElement {
+abstract class ComponentVEvent extends HTMLElement {
 
     template: HTMLTemplateElement
     uid: string
@@ -45,29 +45,6 @@ class ComponentVEvent extends HTMLElement {
         }
     }
 
-    redraw(data: VEvent) {
-        // update ourselves from template
-
-        if (!this.template) {
-            throw "Something";
-        }
-
-        let body = (this.template.content.cloneNode(true) as DocumentFragment).firstElementChild!;
-
-        for (let el of body.getElementsByClassName("bind")) {
-            if (!(el instanceof HTMLElement)) continue;
-            let p = el.dataset.property!;
-            let d, fmt;
-            if ((d = data.getProperty(p))) {
-                if ((fmt = el.dataset.fmt)) {
-                    el.textContent = d.format(fmt);
-                } else {
-                    el.textContent = d;
-                }
-            }
-        }
-
-        this.replaceChildren(body);
-    }
+    abstract redraw(data: VEvent): void
 
 }
