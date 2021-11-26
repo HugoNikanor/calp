@@ -19,7 +19,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
             makeElement('input', { type: 'date' }),
             makeElement('input', {
                 type: 'time',
-                disabled: this.hasAttribute('dateonly')
+                disabled: this.dateonly
             })
         )
     }
@@ -59,29 +59,38 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         }
     }
 
-    get valueAsDate(): Date {
+    set value(date: Date) {
+        let [d, t] = date.format("~L~Y-~m-~dT~H:~M:~S").split('T');
+        console.log(d, t);
+        (this.querySelector("input[type='date']") as HTMLInputElement).value = d;
+        (this.querySelector("input[type='time']") as HTMLInputElement).value = t;
+
+        this.dateonly = date.dateonly;
+    }
+
+    get value(): Date {
         let dt;
         let date = (this.querySelector("input[type='date']") as HTMLInputElement).value;
-        if (this.hasAttribute('dateonly')) {
+        if (this.dateonly) {
             dt = parseDate(date);
-            dt.type = 'date';
+            dt.dateonly = true;
         } else {
             let time = (this.querySelector("input[type='time']") as HTMLInputElement).value;
             dt = parseDate(date + 'T' + time)
-            dt.type = 'date-time';
+            dt.dateonly = false;
         }
         return dt;
     }
 
-    get value(): string {
+    get stringValue(): string {
         if (this.dateonly) {
-            return this.valueAsDate.format("~Y-~m-~d")
+            return this.value.format("~Y-~m-~d")
         } else {
-            return this.valueAsDate.format("~Y-~m-~dT~H:~M:~S")
+            return this.value.format("~Y-~m-~dT~H:~M:~S")
         }
     }
 
-    set value(new_value: Date | string) {
+    set stringValue(new_value: Date | string) {
         // console.log('Setting date');
         let date, time, dateonly = false;
         if (new_value instanceof Date) {

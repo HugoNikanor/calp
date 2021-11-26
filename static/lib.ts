@@ -24,9 +24,9 @@ declare global {
 
     interface Date {
         format: (fmt: string) => string
-        dateonly: boolean
         utc: boolean
-        type: 'date' | 'date-time'
+        dateonly: boolean
+        // type: 'date' | 'date-time'
     }
 
     interface DOMTokenList {
