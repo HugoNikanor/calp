@@ -139,17 +139,16 @@ class VEvent {
             } else {
                 let type_options = valid_input_types.get(key)
                 if (type_options === undefined) {
-                    type = 'unknown'
+                    return 'unknown'
                 } else if (type_options.length == 0) {
-                    type = 'unknown'
+                    return 'unknown'
                 } else {
                     if (Array.isArray(type_options[0])) {
-                        type = type_options[0][0]
+                        return type_options[0][0]
                     } else {
-                        type = type_options[0]
+                        return type_options[0]
                     }
                 }
-                return type;
             }
         }
 
@@ -162,6 +161,7 @@ class VEvent {
         let current = this.properties.get(key);
         if (current) {
             if (Array.isArray(current)) {
+                /* TODO something here? */
             } else {
                 if (type) { current.type = type; }
                 current.value = value;
@@ -238,7 +238,7 @@ class VEvent {
     }
 }
 
-function make_vevent_value(value_tag: Element) {
+function make_vevent_value(value_tag: Element): VEventValue {
     /* TODO parameters */
     return new VEventValue(
         /* TODO error on invalid type? */
@@ -380,7 +380,7 @@ function xml_to_recurrence_rule(xml: Element): RecurrenceRule {
 // 
 
 
-function make_vevent_value_(value_tag: Element) {
+function make_vevent_value_(value_tag: Element): string | boolean | Date | number | RecurrenceRule {
     /* RFC6321 3.6. */
     switch (value_tag.tagName) {
         case 'binary':
@@ -405,7 +405,7 @@ function make_vevent_value_(value_tag: Element) {
 
         case 'duration':
             /* TODO duration parser here 'P1D' */
-            return value_tag.textContent;
+            return value_tag.textContent || '';
 
         case 'float':
         case 'integer':
@@ -420,7 +420,7 @@ function make_vevent_value_(value_tag: Element) {
                 return parseDate(other.textContent || '')
             } else if ((other = value_tag.getElementsByTagName('duration')[0])) {
                 /* TODO parse duration */
-                return other.textContent
+                return other.textContent || ''
             } else {
                 console.warn('Invalid end to period, defaulting to 1H');
                 return new Date(3600);
@@ -438,7 +438,7 @@ function make_vevent_value_(value_tag: Element) {
         case 'cal-address':
         case 'uri':
         case 'text':
-            return value_tag.textContent;
+            return value_tag.textContent || '';
     }
 }
 
