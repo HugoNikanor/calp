@@ -235,9 +235,9 @@
   '(div (@ (class " vevent eventtext summary-tab " ()))
         (h3 ((span (@ (class "repeating")) ; "↺"
                    )
-             (span (@ (class "bind summary")
+             (span (@ (class "summary")
                       (data-property "summary")))))
-        (div (div (time (@ (class "bind dtstart")
+        (div (div (time (@ (class "dtstart")
                            (data-property "dtstart")
                            (data-fmt "~L~H:~M")
                            (datetime ; "2021-09-29T19:56:46"
@@ -245,7 +245,7 @@
                         ; "19:56"
                         )
                   "\xa0—\xa0"
-                  (time (@ (class "bind dtend")
+                  (time (@ (class "dtend")
                            (data-property "dtend")
                            (data-fmt "~L~H:~M")
                            (datetime ; "2021-09-29T19:56:46"
@@ -254,14 +254,17 @@
                         ))
              (div (@ (class "fields"))
                   (div (b "Plats: ")
-                       (div (@ (class "bind location")
+                       (div (@ (class "location")
                                (data-property "location"))
                             ; "Alsättersgatan 13"
                             ))
-                  (div (@ (class "bind description")
+                  (div (@ (class "description")
                           (data-property "description"))
                        ; "With a description"
                        )
+
+                  (div (@ (class "categories")
+                          (data-property "categories")))
                   ;; (div (@ (class "categories"))
                   ;;      (a (@ (class "category")
                   ;;            (href "/search/?"
@@ -296,11 +299,11 @@
         (div (@ (class "event-body"))
              (span (@ (class "repeating")) ; "↺"
                     )
-             (span (@ (class "bind summary")
+             (span (@ (class "summary")
                       (data-property "summary"))
                    ; ,(format-summary  ev (prop ev 'SUMMARY))
                    )
-             (span (@ (class "bind location")
+             (span (@ (class "location")
                        (data-property "location")))
              ;; Document symbol when we have text
              (span (@ (class "description"))

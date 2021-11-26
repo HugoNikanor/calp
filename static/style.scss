@@ -662,6 +662,18 @@ vevent-block, .event {
         color: $gray;
         padding-right: 1em;
     }
+
+    .categories > a::after {
+        content: ","
+    }
+
+    .categories > a:last-child::after {
+        content: ""
+    }
+
+    .categories > a {
+        margin-right: 1ch;
+    }
 }
 
 .attach {
