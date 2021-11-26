@@ -129,7 +129,7 @@ type known_ical_types
     | 'URL'
     | 'VERSION'
 
-let valid_input_types: Map<string, ical_type | ical_type[]> =
+let valid_input_types: Map<string, Array<ical_type | ical_type[]>> =
     new Map([
         ['ACTION', ['text']], // AUDIO|DISPLAY|EMAIL|*other*
         ['ATTACH', ['uri', 'binary']],
@@ -178,7 +178,7 @@ let valid_input_types: Map<string, ical_type | ical_type[]> =
         ['UID', ['text']],
         ['URL', ['uri']],
         ['VERSION', ['text']],
-    ]) as Map<string, ical_type | ical_type[]>
+    ])
 
 // type JCalLine {
 // }
@@ -191,7 +191,9 @@ type uid = string
    What really are valid values for any? Does that depend on ical_type? Why is the tail a list?
    What really is the type for the parameter map?
 */
-type JCalProperty = [string, Map<string, any>, ical_type, any[]]
+type JCalProperty
+    = [string, Record<string, any>, ical_type, any]
+    | [string, Record<string, any>, ical_type, ...any[]]
 
 type JCal = [tagname, JCalProperty[], JCal[]]
 

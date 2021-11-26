@@ -1,9 +1,10 @@
 export { ComponentEdit }
 
 import { ComponentVEvent } from './vevent'
+import { InputList } from './input-list'
 import { DateTimeInput } from './date-time-input'
 
-import { vcal_objects, event_calendar_mapping } from '../globals'
+import { vcal_objects } from '../globals'
 import { VEvent } from '../vevent'
 import { create_event } from '../server_connect'
 
@@ -55,18 +56,21 @@ class ComponentEdit extends ComponentVEvent {
         // for (let el of this.getElementsByClassName("interactive")) {
         for (let el of this.querySelectorAll("[data-property]")) {
             // console.log(el);
-            el.addEventListener('input', () => {
+            el.addEventListener('input', (e) => {
                 let obj = vcal_objects.get(this.uid)
+                console.log(el, e);
                 if (obj === undefined) {
                     throw 'No object with uid ' + this.uid
                 }
                 if (!(el instanceof HTMLInputElement
                     || el instanceof DateTimeInput
                     || el instanceof HTMLTextAreaElement
+                    || el instanceof InputList
                 )) {
                     console.log(el, 'not an HTMLInputElement');
                     return;
                 }
+                // console.log(`obj[${el.dataset.property!}] = `, el.value);
                 obj.setProperty(
                     el.dataset.property!,
                     el.value)

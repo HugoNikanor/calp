@@ -14,6 +14,9 @@ interface Redrawable extends HTMLElement {
 class VEventValue {
 
     type: ical_type
+
+    /* value should NEVER be a list, since multi-valued properties should
+       be split into multiple VEventValue objects! */
     value: any
     parameters: Map<string, any>
 
@@ -23,12 +26,13 @@ class VEventValue {
         this.parameters = parameters;
     }
 
-    to_jcal(): [Map<string, any>, ical_type, any] {
+    to_jcal(): [Record<string, any>, ical_type, any] {
         let value;
         let v = this.value;
         switch (this.type) {
             case 'binary':
                 /* TOOD */
+                value = 'BINARY DATA GOES HERE';
                 break;
             case 'date-time':
                 value = v.format("~Y-~m-~dT~H:~M:~S");
@@ -39,12 +43,15 @@ class VEventValue {
                 break;
             case 'duration':
                 /* TODO */
+                value = 'DURATION GOES HERE';
                 break;
             case 'period':
                 /* TODO */
+                value = 'PERIOD GOES HERE';
                 break;
             case 'utc-offset':
                 /* TODO */
+                value = 'UTC-OFFSET GOES HERE';
                 break;
             case 'recur':
                 value = v.asJcal();
@@ -58,13 +65,18 @@ class VEventValue {
             case 'boolean':
                 value = v;
         }
-        return [this.parameters, this.type, value];
+
+        return [this.parameters, this.type, value]
     }
 }
 
 /* maybe ... */
 class VEventDuration extends VEventValue {
 }
+
+type list_values
+    = 'categories' | 'resources' | 'freebusy' | 'exdate' | 'rdate'
+    | 'CATEGORIES' | 'RESOURCES' | 'FREEBUSY' | 'EXDATE' | 'RDATE';
 
 /*
   Abstract representation of a calendar event (or similar).
@@ -73,7 +85,7 @@ All "live" calendar data in the frontend should live in an object of this type.
 class VEvent {
 
     /* Calendar properties */
-    properties: Map<uid, VEventValue>
+    properties: Map<string, VEventValue | VEventValue[]>
 
     /* Children (such as alarms for events) */
     components: VEvent[]
@@ -85,7 +97,10 @@ class VEvent {
 
     _calendar: string | null = null;
 
-    constructor(properties: Map<string, VEventValue> = new Map(), components: VEvent[] = []) {
+    constructor(
+        properties: Map<string, VEventValue | VEventValue[]> = new Map(),
+        components: VEvent[] = []
+    ) {
         this.components = components;
         this.registered = [];
         /* Re-normalize all given keys to upper case. We could require
@@ -98,10 +113,18 @@ class VEvent {
         }
     }
 
-    getProperty(key: string): any | undefined {
+    getProperty(key: list_values): any[] | undefined;
+    getProperty(key: string): any | undefined;
+
+    // getProperty(key: 'categories'): string[] | undefined
+
+    getProperty(key: string): any | any[] | undefined {
         key = key.toUpperCase()
         let e = this.properties.get(key);
         if (!e) return e;
+        if (Array.isArray(e)) {
+            return e.map(ee => ee.value)
+        }
         return e.value;
     }
 
@@ -110,29 +133,52 @@ class VEvent {
     }
 
     __setPropertyInternal(key: string, value: any, type?: ical_type) {
-        key = key.toUpperCase();
-        let e = this.properties.get(key);
-        if (e) {
-            if (type) { e.type = type; }
-            e.value = value;
-            return;
-        }
-        if (!type) {
-            let type_ = valid_input_types.get(key)
-            if (type_ === undefined) {
-                type = 'unknown'
-            } else if (type_ instanceof Array) {
-                type = type_[0]
+        function resolve_type(key: string, type?: ical_type): ical_type {
+            if (type) {
+                return type;
             } else {
-                type = type_
+                let type_options = valid_input_types.get(key)
+                if (type_options === undefined) {
+                    type = 'unknown'
+                } else if (type_options.length == 0) {
+                    type = 'unknown'
+                } else {
+                    if (Array.isArray(type_options[0])) {
+                        type = type_options[0][0]
+                    } else {
+                        type = type_options[0]
+                    }
+                }
+                return type;
             }
         }
-        e = new VEventValue(type, value)
-        this.properties.set(key, e);
+
+        key = key.toUpperCase();
+        if (Array.isArray(value)) {
+            this.properties.set(key,
+                value.map(el => new VEventValue(resolve_type(key, type), el)))
+            return;
+        }
+        let current = this.properties.get(key);
+        if (current) {
+            if (Array.isArray(current)) {
+            } else {
+                if (type) { current.type = type; }
+                current.value = value;
+                return;
+            }
+        }
+        type = resolve_type(key, type);
+        let new_value = new VEventValue(type, value)
+        this.properties.set(key, new_value);
     }
+
+    setProperty(key: list_values, value: any[], type?: ical_type): void;
+    setProperty(key: string, value: any, type?: ical_type): void;
 
     setProperty(key: string, value: any, type?: ical_type) {
         this.__setPropertyInternal(key, value, type);
+
         for (let el of this.registered) {
             el.redraw(this);
         }
@@ -167,12 +213,27 @@ class VEvent {
         let out_properties: JCalProperty[] = []
         console.log(this.properties);
         for (let [key, value] of this.properties) {
-            let prop: JCalProperty = [
-                key.toLowerCase(),
-                ...value.to_jcal(),
-            ]
-            out_properties.push(prop);
+            console.log("key = ", key, ", value = ", value);
+            if (Array.isArray(value)) {
+                if (value.length == 0) continue;
+                let mostly = value.map(v => v.to_jcal())
+                let values = mostly.map(x => x[2])
+                console.log("mostly", mostly)
+                out_properties.push([
+                    key.toLowerCase(),
+                    mostly[0][0],
+                    mostly[0][1],
+                    ...values
+                ])
+            } else {
+                let prop: JCalProperty = [
+                    key.toLowerCase(),
+                    ...value.to_jcal(),
+                ]
+                out_properties.push(prop);
+            }
         }
+
         return ['vevent', out_properties, [/* alarms go here*/]]
     }
 }
@@ -209,7 +270,7 @@ class RecurrenceRule {
     bysetpos?: number[]
     wkst?: weekday
 
-    to_jcal() {
+    to_jcal(): Record<string, any> {
         let obj: any = {}
         if (this.freq) obj['freq'] = this.freq;
         if (this.until) obj['until'] = this.until.format(this.until.dateonly
@@ -386,7 +447,7 @@ function xml_to_vcal(xml: Element): VEvent {
     let properties = xml.getElementsByTagName('properties')[0];
     let components = xml.getElementsByTagName('components')[0];
 
-    let property_map = new Map()
+    let property_map: Map<string, VEventValue | VEventValue[]> = new Map;
     if (properties) {
         property_loop:
         for (var i = 0; i < properties.childElementCount; i++) {
@@ -394,7 +455,8 @@ function xml_to_vcal(xml: Element): VEvent {
             if (!(tag instanceof Element)) continue;
             let parameters = {};
             let value: VEventValue | VEventValue[] = [];
-            value_loop: for (var j = 0; j < tag.childElementCount; j++) {
+            value_loop:
+            for (var j = 0; j < tag.childElementCount; j++) {
                 let child = tag.childNodes[j];
                 if (!(child instanceof Element)) continue;
                 if (child.tagName == 'parameters') {

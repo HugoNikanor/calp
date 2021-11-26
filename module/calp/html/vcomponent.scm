@@ -265,6 +265,14 @@
                            ; ,(prop ev 'DESCRIPTION)
                            ))
 
+             ,@(with-label
+                "Kategorier"
+                `(input-list
+                  (@ (name "categories")
+                     (data-property "categories"))
+                  (input (@ (type "text")
+                            (placeholder "Kattegori")))))
+
              ;; ,@(with-label
              ;;    "Kategorier"
              ;;    ;; It would be better if these input-list's worked on the same

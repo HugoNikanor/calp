@@ -171,11 +171,25 @@
                         ;; ignore empty fields
                         ;; mostly for <text/>
                         (unless (null? value)
-                          (set! (prop* component tag*)
-                            (make-vline tag*
-                                        (handle-tag
-                                          tag (handle-value type params value))
-                                        params)))))]
+                          (let ()
+                            (define vline
+                              (make-vline tag*
+                                          (handle-tag
+                                           tag (handle-value type params value))
+                                          params))
+                            (if (memv tag* '(ATTACH ATTENDEE CATEGORIES
+                                                 COMMENT CONTACT EXDATE
+                                                 REQUEST-STATUS RELATED-TO
+                                                 RESOURCES RDATE
+                                                 ;; x-prop
+                                                 ;; iana-prop
+                                                 ))
+                                (aif (prop* component tag*)
+                                     (set! (prop* component tag*) (cons vline it))
+                                     (set! (prop* component tag*) (list vline)))
+                                ;; else
+                                (set! (prop* component tag*) vline))
+                            ))))]
 
                 [(tag (type value ...) ...)
                  (for (type value) in (zip type value)
@@ -184,7 +198,7 @@
                       (unless (null? value)
                         (let ((params (make-hash-table))
                               (tag* (symbol-upcase tag)))
-                          (set! (prop* component tag*)
+                          (define vline
                             (make-vline tag*
                                         (handle-tag
                                          tag (let ((v (handle-value type params value)))
@@ -192,7 +206,22 @@
                                                (if (eq? tag 'categories)
                                                    (string-split v #\,)
                                                    v)))
-                                        params)))))])))
+                                        params))
+                          ;;
+
+                          (if (memv tag* '(ATTACH ATTENDEE CATEGORIES
+                                               COMMENT CONTACT EXDATE
+                                               REQUEST-STATUS RELATED-TO
+                                               RESOURCES RDATE
+                                               ;; x-prop
+                                               ;; iana-prop
+                                               ))
+                              (aif (prop* component tag*)
+                                   (set! (prop* component tag*) (cons vline it))
+                                   (set! (prop* component tag*) (list vline)))
+                              ;; else
+                              (set! (prop* component tag*) vline))
+                          )))])))
 
   ;; children
   (awhen (assoc-ref sxcal 'components)
