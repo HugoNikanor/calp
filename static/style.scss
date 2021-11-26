@@ -912,6 +912,11 @@ vevent-edit {
 
 vevent-dl {
     font-size: 80%;
+
+    dl {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 
