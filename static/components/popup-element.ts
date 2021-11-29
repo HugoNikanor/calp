@@ -47,9 +47,6 @@ class PopupElement extends ComponentVEvent {
 
         let uid = this.uid;
 
-        body.getElementsByClassName('populate-with-uid')
-            .forEach((e) => e.setAttribute('data-uid', uid));
-
         window.setTimeout(() => {
 
             /* tab change button */

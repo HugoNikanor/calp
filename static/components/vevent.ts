@@ -17,9 +17,29 @@ abstract class ComponentVEvent extends HTMLElement {
         super();
         this.template = document.getElementById(this.tagName) as HTMLTemplateElement;
 
+
         let real_uid;
-        if (this.dataset.uid) uid = this.dataset.uid;
-        if (uid) real_uid = uid;
+
+        console.log(this.tagName);
+        if (uid) {
+            console.log('Got UID directly');
+            real_uid = uid;
+        } else {
+            /* I know that this case is redundant, it's here if we don't want to
+               look up the tree later */
+            if (this.dataset.uid) {
+                console.log('Had UID as direct attribute');
+                real_uid = this.dataset.uid;
+            } else {
+                let el = this.closest('[data-uid]')
+                if (el) {
+                    console.log('Found UID higher up in the tree');
+                    real_uid = (el as HTMLElement).dataset.uid
+                } else {
+                    throw "No parent with [data-uid] set"
+                }
+            }
+        }
 
         if (!real_uid) {
             console.warn(this.outerHTML);
@@ -27,7 +47,7 @@ abstract class ComponentVEvent extends HTMLElement {
         }
 
         this.uid = real_uid;
-        this.dataset.uid = uid;
+        this.dataset.uid = real_uid;
 
         vcal_objects.get(this.uid)?.register(this);
 
