@@ -239,11 +239,16 @@
                      '(date-time-input (@ (name "dtend")
                                           (data-property "dtend"))))
 
-                  (div
+                  (div (@ (class "checkboxes"))
                    ,@(with-label
                       "Heldag?"
                       `(input (@ (type "checkbox")
                                  (name "wholeday")
+                                 )))
+                   ,@(with-label
+                      "Upprepande?"
+                      `(input (@ (type "checkbox")
+                                 (name "has_repeats")
                                  ))))
 
                   )

@@ -95,42 +95,6 @@
 
 (define (popup-template)
 
-  ;; the XXX-n and YYY-n id:s aren't actually used, but mearly show how things
-  ;; are supposed to be linked together.
-  ;; Each instance of XXX should be replaced with THE SAME unique id,
-  ;; and each instance of YYY shoud be replaced with another, but unique id.
-  ;; n is a serial number, where a tab and its label MUST have the same number.
-
-  (define* (build-tab
-            tabdata key:
-            (selected "false")
-            (tabindex "-1"))
-    `(button (@ (role "tab")
-                (aria-selected ,selected)
-                (tabindex ,tabindex)
-                (aria-controls "XXX-n")
-                (id "YYY-n")
-                (title ,(tab-title tabdata)))
-             ,(tab-label tabdata)))
-
-  (define tabs
-    (append
-     (list
-      (make-tab "Översikt" "📅"
-                '(vevent-description
-                  (@ (class "vevent populate-with-uid"))))
-      (make-tab "Redigera" "🖊"
-                '(vevent-edit (@ (class "populate-with-uid"))))
-      (make-tab "Upprepningar" "↺"
-                '(vevent-edit-rrule (@ (class "populate-with-uid")))))
-
-     (when (debug)
-       (list
-        (make-tab "Debug" "🐸"
-                  '(vevent-dl (@ (class "populate-with-uid"))))
-        ))))
-
-
   ;; becomes the direct child of <popup-element/>
   `(div (@ (class "popup-root window")
            (onclick "event.stopPropagation()"))
@@ -144,28 +108,21 @@
                         (title "Ta Bort"))
                      "🗑"))
 
-        (main (@ (class "tabgroup window-body"))
-              (menu (@ (role "tablist")
-                       (aria-label "Simple Tabs"))
-                    ,@(cons (build-tab (car tabs)
-                                       selected: "true"
-                                       tabindex: "0")
-                            (map build-tab (cdr tabs))))
-              ;; content
-              (article (@ (id "XXX-n")
-                          (role "tabpanel")
-                          (tabindex "0")
-                          (aria-labeledby "YYY-n"))
-                       ,(tab-body (car tabs)))
-              ,@(map (lambda (tab)
-                       `(article (@ (id "XXX-n")
-                                    (role "tabpanel")
-                                    (tabindex "0")
-                                    (hidden)
-                                    (aria-labeledby "YYY-n"))
-                                 ,(tab-body tab)))
-                     (cdr tabs))
-              )))
+        (tab-group (@ (class "window-body"))
+                   (vevent-description
+                    (@ (data-label "📅") (data-title "Översikt")
+                       (class "vevent")))
+
+                   (vevent-edit
+                    (@ (data-label "🖊") (data-title "Redigera")))
+
+                   ;; (vevent-edit-rrule
+                   ;;  (@ (data-label "↺") (data-title "Upprepningar")))
+
+                   ,@(when (debug)
+                       '((vevent-dl
+                          (@ (data-label "🐸") (data-title "Debug")))))
+                   )))
 
 (define (week-day-select args)
   `(select (@ ,@args)

@@ -61,7 +61,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
 
     set value(date: Date) {
         let [d, t] = date.format("~L~Y-~m-~dT~H:~M:~S").split('T');
-        console.log(d, t);
+        // console.log(d, t);
         (this.querySelector("input[type='date']") as HTMLInputElement).value = d;
         (this.querySelector("input[type='time']") as HTMLInputElement).value = t;
 

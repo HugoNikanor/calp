@@ -3,13 +3,19 @@ import { parseDate } from './lib'
 
 export {
     VEvent, xml_to_vcal,
-    RecurrenceRule
+    RecurrenceRule,
+    isRedrawable,
 }
 
 /* Something which can be redrawn */
 interface Redrawable extends HTMLElement {
     redraw: ((data: VEvent) => void)
 }
+
+function isRedrawable(x: HTMLElement): x is Redrawable {
+    return 'redraw' in x
+}
+
 
 class VEventValue {
 
@@ -207,6 +213,10 @@ class VEvent {
 
     register(htmlNode: Redrawable) {
         this.registered.push(htmlNode);
+    }
+
+    unregister(htmlNode: Redrawable) {
+        this.registered = this.registered.filter(node => node !== htmlNode)
     }
 
     to_jcal(): JCal {

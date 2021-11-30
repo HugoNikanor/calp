@@ -5,7 +5,7 @@ import { InputList } from './input-list'
 import { DateTimeInput } from './date-time-input'
 
 import { vcal_objects } from '../globals'
-import { VEvent } from '../vevent'
+import { VEvent, RecurrenceRule } from '../vevent'
 import { create_event } from '../server_connect'
 
 /* <vevent-edit />
@@ -13,8 +13,8 @@ import { create_event } from '../server_connect'
 */
 class ComponentEdit extends ComponentVEvent {
 
-    constructor() {
-        super();
+    constructor(uid?: string) {
+        super(uid);
 
         let frag = this.template.content.cloneNode(true) as DocumentFragment
         let body = frag.firstElementChild!
@@ -94,6 +94,22 @@ class ComponentEdit extends ComponentVEvent {
                 data!.setProperty('dtstart', start);
                 data!.setProperty('dtend', end);
             });
+        }
+
+        let has_repeats_ = this.querySelector('[name="has_repeats"]')
+        if (has_repeats_) {
+            let has_repeats = has_repeats_ as HTMLInputElement;
+
+            has_repeats.addEventListener('click', () => {
+                /* TODO unselecting and reselecting this checkbox deletes all entered data.
+                   Cache it somewhere */
+                if (has_repeats.checked) {
+                    vcal_objects.get(this.uid)!.setProperty('rrule', new RecurrenceRule())
+                } else {
+                    /* TODO is this a good way to remove a property ? */
+                    vcal_objects.get(this.uid)!.setProperty('rrule', undefined)
+                }
+            })
         }
 
         let submit = this.querySelector('form') as HTMLFormElement

@@ -120,10 +120,13 @@ function to_local(date: Date): Date {
 
 /* -------------------------------------------------- */
 
-function makeElement(name: string, attr = {}): HTMLElement {
+function makeElement(name: string, attr = {}, actualAttr = {}): HTMLElement {
     let element: HTMLElement = document.createElement(name);
     for (let [key, value] of Object.entries(attr)) {
         (element as any)[key] = value;
+    }
+    for (let [key, value] of Object.entries(actualAttr)) {
+        element.setAttribute(key, '' + value);
     }
     return element;
 }

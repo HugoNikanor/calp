@@ -6,11 +6,13 @@ import { vcal_objects } from '../globals'
 
 import { RecurrenceRule } from '../vevent'
 
-/* <vevent-edit-rrule/> */
+/* <vevent-edit-rrule/>
+   Tab for editing the recurrence rule of a component
+*/
 class EditRRule extends ComponentVEvent {
 
-    constructor() {
-        super();
+    constructor(uid?: string) {
+        super(uid);
 
         let frag = this.template.content.cloneNode(true) as DocumentFragment
         let body = frag.firstElementChild!

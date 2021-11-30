@@ -782,20 +782,19 @@ popup-element {
         display: block;
     }
 
-    main {
+    > * {
         resize: both;
+        /* This overflow: auto gives us the correct resize handle */
         overflow: auto;
 
+        /* TODO this doesn't work, since tabcount is sepparate fronm
+         * popup... */
         min-height: calc(var(--tabcount) * #{$tablabel-margin + $tablabel-height});
 
         /* some form of sensible minimi and default size for the popup (s main area). */
         min-width: 150px;
         width: 350px;
         height: 250px;
-
-        article {
-            padding: 1em;
-        }
     }
 }
 
@@ -839,9 +838,6 @@ popup-element {
 }
 
 .popup-root {
-    background-color: #dedede;
-    color: black;
-
     display: flex;
 
     @if $popup-style == "left" {
@@ -849,7 +845,20 @@ popup-element {
     } @else {
         flex-direction: column;
     }
+}
 
+tab-group {
+    background-color: #dedede;
+    color: black;
+
+    width: 100%;
+    height: 100%;
+    /* This overflow: auto gives us the correct rendering of the content */
+    overflow: auto;
+
+    [role="tabpanel"] {
+        padding: 1em;
+    }
 
     [role="tablist"] {
         display: flex;
@@ -920,6 +929,15 @@ vevent-edit {
         .timeinput {
         }
     }
+}
+
+.checkboxes {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    justify-items: baseline;
+
+    label {grid-row: 1;}
+    input {grid-row: 2;}
 }
 
 vevent-dl {
