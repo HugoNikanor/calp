@@ -7,6 +7,7 @@ import { PopupElement } from './components/popup-element'
 import { InputList } from './components/input-list'
 import { EditRRule } from './components/edit-rrule'
 import { TabGroupElement } from './components/tab-group-element'
+import { VEventChangelog } from './components/changelog'
 
 export { initialize_components }
 
@@ -31,4 +32,5 @@ function initialize_components() {
     /* These maybe also require that the global maps are initialized */
     customElements.define('popup-element', PopupElement)
     customElements.define('tab-group', TabGroupElement)
+    customElements.define('vevent-changelog', VEventChangelog);
 }

@@ -1,4 +1,4 @@
-import { uid, ical_type, valid_input_types, JCal, JCalProperty } from './types'
+import { uid, ical_type, valid_input_types, JCal, JCalProperty, ChangeLogEntry } from './types'
 import { parseDate } from './lib'
 
 export {
@@ -103,6 +103,32 @@ class VEvent {
 
     _calendar: string | null = null;
 
+    _changelog: ChangeLogEntry[] = []
+
+    addlog(entry: ChangeLogEntry) {
+        let len = this._changelog.length
+        let last = this._changelog[len - 1]
+
+        // console.log('entry = ', entry, ', last = ', last);
+
+        if (!last) {
+            // console.log('Adding new entry', entry, this.getProperty('uid'));
+            this._changelog.push(entry);
+            return;
+        }
+
+        if (entry.type === last.type
+            && entry.name === last.name
+            && entry.from === last.to) {
+            this._changelog.pop();
+            entry.from = last.from
+            // console.log('Changing old entry', entry, this.getProperty('uid'));
+            this._changelog.push(entry)
+        } else {
+            this._changelog.push(entry)
+        }
+    }
+
     constructor(
         properties: Map<string, VEventValue | VEventValue[]> = new Map(),
         components: VEvent[] = []
@@ -159,6 +185,20 @@ class VEvent {
         }
 
         key = key.toUpperCase();
+
+        /*
+          To is mostly for the user. From is to allow an undo button
+         */
+        let entry: ChangeLogEntry = {
+            type: 'property',
+            name: key,
+            from: this.getProperty(key), // TODO what happens if getProperty returns a weird type
+            to: '' + value,
+        }
+        // console.log('Logging ', entry);
+        this.addlog(entry);
+
+
         if (Array.isArray(value)) {
             this.properties.set(key,
                 value.map(el => new VEventValue(resolve_type(key, type), el)))
@@ -201,6 +241,12 @@ class VEvent {
 
 
     set calendar(calendar: string | null) {
+        this.addlog({
+            type: 'calendar',
+            name: '',
+            from: this._calendar,
+            to: calendar,
+        });
         this._calendar = calendar;
         for (let el of this.registered) {
             el.redraw(this);

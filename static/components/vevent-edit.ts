@@ -58,7 +58,7 @@ class ComponentEdit extends ComponentVEvent {
             // console.log(el);
             el.addEventListener('input', (e) => {
                 let obj = vcal_objects.get(this.uid)
-                console.log(el, e);
+                // console.log(el, e);
                 if (obj === undefined) {
                     throw 'No object with uid ' + this.uid
                 }

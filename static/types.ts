@@ -2,7 +2,8 @@ export {
     ical_type,
     valid_input_types,
     JCalProperty, JCal,
-    xcal, uid
+    xcal, uid,
+    ChangeLogEntry
 }
 
 let all_types = [
@@ -198,3 +199,10 @@ type JCalProperty
 type JCal = [tagname, JCalProperty[], JCal[]]
 
 const xcal = "urn:ietf:params:xml:ns:icalendar-2.0";
+
+interface ChangeLogEntry {
+    type: 'calendar' | 'property',
+    name: string,
+    from: string | null,
+    to: string | null,
+}

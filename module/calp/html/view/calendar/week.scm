@@ -119,6 +119,9 @@
                    ;; (vevent-edit-rrule
                    ;;  (@ (data-label "↺") (data-title "Upprepningar")))
 
+                   (vevent-changelog
+                    (@ (data-label "📒") (date-title "Changelog")))
+
                    ,@(when (debug)
                        '((vevent-dl
                           (@ (data-label "🐸") (data-title "Debug")))))
