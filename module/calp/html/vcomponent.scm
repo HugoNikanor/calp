@@ -407,46 +407,39 @@
   `((a (@ (href "#" ,(html-id ev))
           (class "hidelink"))
        (vevent-block (@ ,@(assq-merge
-                  extra-attributes
-                  `((id ,(html-id ev))
-                    (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown")))
-                    ;; (data-bindon "bind_view")
-                    (class "vevent event"
-                      ,(when (and (prop ev 'PARTSTAT)
-                                  (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                         " tentative")
-                      ,(when (and (prop ev 'TRANSP)
-                                  (eq? 'TRANSPARENT (prop ev 'TRANSP)))
-                         " transparent")
-                      )
-                    (data-uid ,(prop ev 'UID))
-                    ;; TODO figure out stable way to get popup for element
-                    ;; (onclick "toggle_popup('popup' + this.id)")
-                    )))
-            ;; Inner div to prevent overflow. Previously "overflow: none"
-            ;; was set on the surounding div, but the popup /needs/ to
-            ;; overflow (for the tabs?).
-            (div (@ (class "event-body"))
-             ,(when (prop ev 'RRULE)
-                `(span (@ (class "repeating")) "↺"))
-             (span (@ (class "bind summary")
-                      (data-property "summary"))
-                   ,(format-summary  ev (prop ev 'SUMMARY)))
-             ,(when (prop ev 'LOCATION)
-                `(span (@ (class "bind location")
-                          (data-property "location"))
-                       ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                    (prop ev 'LOCATION))))
-             ;; Document symbol when we have text
-             ,(when (and=> (prop ev 'DESCRIPTION) (negate string-null?))
-                `(span (@ (class "description"))
-                       "🗎")))
-            #;
-            (div (@ (style "display:none !important;"))
-                 ,((@ (vcomponent xcal output) ns-wrap)
-                   ((@ (vcomponent xcal output) vcomponent->sxcal)
-            ev)))
-            ))))
+                           extra-attributes
+                           `((id ,(html-id ev))
+                             (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown")))
+                             (data-uid ,(prop ev 'UID))
+
+                             (class "vevent event"
+                               ,(when (and (prop ev 'PARTSTAT)
+                                           (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+                                  " tentative")
+                               ,(when (and (prop ev 'TRANSP)
+                                           (eq? 'TRANSPARENT (prop ev 'TRANSP)))
+                                  " transparent")
+                               ))))
+                     ;; Inner div to prevent overflow. Previously "overflow: none"
+                     ;; was set on the surounding div, but the popup /needs/ to
+                     ;; overflow (for the tabs?).
+                     ;; TODO the above comment is no longer valid. Popups are now stored
+                     ;; separately from the block.
+                     (div (@ (class "event-body"))
+                          ,(when (prop ev 'RRULE)
+                             `(span (@ (class "repeating")) "↺"))
+                          (span (@ (class "bind summary")
+                                   (data-property "summary"))
+                                ,(format-summary  ev (prop ev 'SUMMARY)))
+                          ,(when (prop ev 'LOCATION)
+                             `(span (@ (class "bind location")
+                                       (data-property "location"))
+                                    ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                                 (prop ev 'LOCATION))))
+                          ;; Document symbol when we have text
+                          ,(when (and=> (prop ev 'DESCRIPTION) (negate string-null?))
+                             `(span (@ (class "description"))
+                                    "🗎")))))))
 
 
 (define (repeat-info event)
