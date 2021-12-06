@@ -523,6 +523,21 @@
             (call-with-values (lambda () (apply proc args)) list))
           lists)))
 
+(define (ass%-ref-all alist key =)
+  (map cdr (filter (lambda (pair) (= key (car pair)))
+                   alist)))
+
+;; Equivalent to assoc-ref (and family), but works on association lists with
+;; non-unique keys, returning all mathing records (instead of just the first).
+;; @begin lisp
+;; (assoc-ref-all '((a . 1) (b . 2) (a . 3)) 'a)
+;; ⇒ (1 3)
+;; @end
+(define-public (assoc-ref-all alist key) (ass%-ref-all alist key equal?))
+(define-public (assq-ref-all alist key)  (ass%-ref-all alist key eq?))
+(define-public (assv-ref-all alist key)  (ass%-ref-all alist key eqv?))
+
+
 
 
 (define-public (vector-last v)
