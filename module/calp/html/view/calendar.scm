@@ -49,7 +49,10 @@
 (define*-public (html-generate
                  key:
                  (intervaltype 'all)    ; 'week | 'month | 'all
-                 calendars events start-date end-date
+                 calendars  ; All calendars to work on, probably (get-calendars global-event-object)
+                 events     ; All events which can be worked on, probably (get-event-set global-event-object)
+                 start-date             ; First date in interval to show
+                 end-date               ; Last  date in interval to show
                  render-calendar        ; (bunch of kv args) → (list sxml)
                  next-start             ; date → date
                  prev-start             ; date → date

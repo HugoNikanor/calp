@@ -364,8 +364,8 @@
       #f))
 
 
+;; <vevent> -> (stream <vevent>)
 (define-public (generate-recurrence-set base-event)
-
 
   (define duration
     ;; NOTE DTEND is an optional field.
