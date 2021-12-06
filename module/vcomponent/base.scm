@@ -110,6 +110,11 @@
    get-prop*
    set-prop*!))
 
+(define-public (delete-property! component key)
+  (hashq-remove! (get-component-properties component)
+                 (as-symb key)))
+
+
 ;; vcomponent x (or str symb) → value
 (define (get-prop component key)
   (let ((props (get-prop* component key)))
@@ -138,6 +143,12 @@
    (lambda (vline parameter-key val)
      (hashq-set! (get-vline-parameters vline)
                  (as-symb parameter-key) val))))
+
+
+(define-public (delete-parameter! vline parameter-key)
+  (hashq-remove! (get-vline-parameters vline)
+                 (as-symb parameter-key)))
+
 
 ;; Returns the parameters of a property as an assoc list.
 ;; @code{(map car <>)} leads to available parameters.
