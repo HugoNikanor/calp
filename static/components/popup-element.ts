@@ -47,6 +47,22 @@ class PopupElement extends ComponentVEvent {
         let close_btn = body.querySelector('.popup-control .close-button') as HTMLButtonElement
         close_btn.addEventListener('click', () => close_popup(this));
 
+        let maximize_btn = body.querySelector('.popup-control .maximize-button') as HTMLButtonElement
+        maximize_btn.addEventListener('click', () => {
+            /* TODO this assumes that popups are direct decendant of their parent,
+               which they really ought to be */
+            let parent = this.parentElement!;
+            let el = this.firstElementChild as HTMLElement
+            /* TODO offsetParent.scrollLeft places us "fullscreen" according to the currently
+               scrolled viewport. But is this the correct way to do it? How does it work for
+               month views */
+            this.style.left = `${this.offsetParent!.scrollLeft + 10}px`;
+            this.style.top = '10px';
+            /* 5ex is width of tab labels */
+            el.style.width = `calc(${parent.clientWidth - 20}px - 5ex)`
+            el.style.height = `${parent.clientHeight - 20}px`
+        });
+
         let remove_btn = body.querySelector('.popup-control .remove-button') as HTMLButtonElement
         remove_btn.addEventListener('click', () => remove_event(uid));
         /* end nav bar */
@@ -70,6 +86,7 @@ class PopupElement extends ComponentVEvent {
             this.classList.remove('visible');
         }
 
+        /* TODO better way to find root */
         let root;
         switch (window.VIEW) {
             case 'week':
@@ -93,5 +110,11 @@ class PopupElement extends ComponentVEvent {
         }
         this.style.left = offsetX + "px";
         this.style.top = offsetY + "px";
+
+        /* Reset width and height to initial, to save user if they have resized
+        it to something weird */
+        let el = this.firstElementChild as HTMLElement;
+        el.style.removeProperty('width');
+        el.style.removeProperty('height');
     }
 }
