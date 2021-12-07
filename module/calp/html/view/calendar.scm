@@ -396,6 +396,8 @@ window.default_calendar='~a';"
                                        values)))
                    ht)))
 
+          ;; Calendar data for all events in current interval,
+          ;; rendered as xcal.
           (div (@ (style "display:none !important;")
                   (id "xcal-data"))
                ,((@ (vcomponent xcal output) ns-wrap)

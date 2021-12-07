@@ -26,6 +26,7 @@
   :use-module ((base64) :select (base64encode))
   )
 
+;; used by search view
 (define-public (compact-event-list list)
 
   (define calendars
@@ -390,6 +391,9 @@
                    events))))))
 
 
+;; Specific styles for each calendar.
+;; TODO only emit the CSS here, requiring the caller to handle the context,
+;; since that would allow us to use this in other contexts.
 (define-public (calendar-styles calendars)
   `(style
        ,(lambda () (format #t "~:{ [data-calendar=\"~a\"] { --color: ~a; --complement: ~a }~%~}"
@@ -468,6 +472,7 @@
 
 ;; TODO bind this into the xcal
 (define (editable-repeat-info event)
+  (warning "editable-repeat-info is deprecated")
   `(div (@ (class "eventtext"))
         (h2 "Upprepningar")
         ,@(when (debug)
