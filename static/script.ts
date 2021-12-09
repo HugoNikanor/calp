@@ -255,11 +255,12 @@ window.addEventListener('load', function() {
     });
 
     document.addEventListener('keydown', function(event) {
-        if (event.key == '/') {
-            let searchbox = document.querySelector('.simplesearch [name=q]') as HTMLInputElement
-            // focuses the input, and selects all the text in it
-            searchbox.select();
-            event.preventDefault();
-        }
+        if (event.key !== '/') return;
+        if ('value' in (event.target as any)) return;
+
+        let searchbox = document.querySelector('.simplesearch [name=q]') as HTMLInputElement
+        // focuses the input, and selects all the text in it
+        searchbox.select();
+        event.preventDefault();
     });
 })
