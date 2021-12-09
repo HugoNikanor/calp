@@ -541,7 +541,7 @@ along with their colors.
 vevent-block, .event {
     transition: 0.3s;
     font-size: var(--event-font-size);
-    overflow: visible;
+    overflow: hidden;
     background-color: var(--color);
     color: var(--complement);
 
