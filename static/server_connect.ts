@@ -94,7 +94,9 @@ async function create_event(event: VEvent) {
         return;
     }
 
-    let body = await response.text();
+    /* response from here on is good */
+
+    // let body = await response.text();
 
     /* server is assumed to return an XML document on the form
        <properties>
@@ -103,10 +105,10 @@ async function create_event(event: VEvent) {
        parse that, and update our own vevent with the data.
     */
 
-    let parser = new DOMParser();
-    let return_properties = parser
-        .parseFromString(body, 'text/xml')
-        .children[0];
+    // let parser = new DOMParser();
+    // let return_properties = parser
+    //     .parseFromString(body, 'text/xml')
+    //     .children[0];
 
     // let child;
     // while ((child = return_properties.firstChild)) {
@@ -120,7 +122,11 @@ async function create_event(event: VEvent) {
     //     }
     // }
 
-    // event.classList.remove("generated");
-    // toggle_popup(popup_from);
-
+    for (let r of event.registered) {
+        r.classList.remove('generated');
+        if (r.tagName.toLowerCase() === 'popup-element') {
+            console.log(r);
+            r.removeAttribute('visible');
+        }
+    }
 }

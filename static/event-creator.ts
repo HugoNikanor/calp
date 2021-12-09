@@ -65,7 +65,6 @@ class EventCreator {
                 // let [popup, event] = that.create_empty_event();
                 // that.event = event;
                 that.ev = new VEvent();
-                that.ev.setProperty('summary', 'Created Event');
                 that.ev.setProperty('uid', uuid())
                 that.ev.calendar = window.default_calendar;
 

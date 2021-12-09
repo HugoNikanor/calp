@@ -35,6 +35,11 @@ class ComponentBlock extends ComponentVEvent {
                 } else {
                     el.textContent = d;
                 }
+            } else switch (p.toLowerCase()) {
+                /* We lack that property, but might want to set a default here */
+                case 'summary':
+                    el.textContent = 'Ny händelse'
+                    break;
             }
         }
 

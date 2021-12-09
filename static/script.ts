@@ -91,14 +91,14 @@ window.addEventListener('load', function() {
 
                     let popup = new PopupElement(uid);
                     ev.register(popup);
-                    console.log(popup);
+                    // console.log(popup);
                     (document.querySelector('.days') as Element).appendChild(popup);
+                    let tabBtn = popup.querySelector('[role="tab"][title="Redigera"]') as HTMLButtonElement
+                    tabBtn.click()
+                    let tab = document.getElementById(tabBtn.getAttribute('aria-controls')!)!
+                    let input = tab.querySelector('input[name="summary"]') as HTMLInputElement
                     open_popup(popup);
-                    // (popup.querySelector("input[name='summary']") as HTMLInputElement).focus();
-                    // let popupElement = document.getElementById("popup" + event.id);
-                    // open_popup(popup_from_event(event));
-
-                    // popupElement.querySelector("input[name='summary']").focus();
+                    input.select();
 
                 }));
         }
