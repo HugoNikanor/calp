@@ -1,9 +1,7 @@
-import { close_all_popups } from './popup'
 import { VEvent, xml_to_vcal } from './vevent'
 import { SmallcalCellHighlight, Timebar } from './clock'
 import { makeElement } from './lib'
 import { vcal_objects, event_calendar_mapping } from './globals'
-import { open_popup } from './popup'
 import { EventCreator } from './event-creator'
 import { PopupElement } from './components/popup-element'
 import { initialize_components } from './elements'
@@ -97,7 +95,7 @@ window.addEventListener('load', function() {
                     tabBtn.click()
                     let tab = document.getElementById(tabBtn.getAttribute('aria-controls')!)!
                     let input = tab.querySelector('input[name="summary"]') as HTMLInputElement
-                    open_popup(popup);
+                    popup.visible = true;
                     input.select();
 
                 }));
@@ -125,7 +123,7 @@ window.addEventListener('load', function() {
                     present in the global_events map */
                     (document.querySelector('.days') as Element).appendChild(popup);
                     ev.register(popup);
-                    open_popup(popup);
+                    popup.visible = true;
                     console.log(popup);
                     // (popup.querySelector("input[name='summary']") as HTMLInputElement).focus();
                     // let popupElement = document.getElementById("popup" + event.id);
@@ -181,7 +179,9 @@ window.addEventListener('load', function() {
         evt = evt || window.event;
         if (!evt.key) return;
         if (evt.key.startsWith("Esc")) {
-            close_all_popups();
+            for (let popup of document.querySelectorAll("popup-element[visible]")) {
+                popup.removeAttribute('visible')
+            }
         }
     }
 
@@ -232,6 +232,27 @@ window.addEventListener('load', function() {
 
     // init_input_list();
 
+    document.addEventListener('keydown', function(event) {
+        /* Physical key position, names are what that key would
+           be in QWERTY */
+        let i = ({
+            'KeyQ': 0,
+            'KeyW': 1,
+            'KeyE': 2,
+            'KeyR': 3,
+            'KeyT': 4,
+            'KeyY': 5,
+        })[event.code];
+        if (i === undefined) return
+        if (!PopupElement.activePopup) return;
+        let element = PopupElement
+            .activePopup
+            .querySelectorAll("[role=tab]")[i] as HTMLInputElement | undefined
+        if (!element) return;
+        /* don't switch tab if event was fired while writing */
+        if ('value' in (event.target as any)) return;
+        element.click();
+    });
 
     document.addEventListener('keydown', function(event) {
         if (event.key == '/') {

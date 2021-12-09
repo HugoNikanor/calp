@@ -2,7 +2,6 @@ export { ComponentBlock }
 
 import { ComponentVEvent } from './vevent'
 import { VEvent } from '../vevent'
-import { toggle_popup, find_popup } from '../popup'
 import { parseDate, to_local } from '../lib'
 
 
@@ -16,9 +15,11 @@ class ComponentBlock extends ComponentVEvent {
 
         this.addEventListener('click', () => {
             let uid = this.uid
-            let popup = find_popup(uid);
+            /* TODO is it better to find the popup through a query selector, or
+               by looking through all registered components of a VEvent? */
+            let popup = document.querySelector(`popup-element[data-uid="${uid}"]`)
             if (popup === null) throw new Error('no popup for uid ' + uid);
-            toggle_popup(popup);
+            popup.toggleAttribute('visible');
         });
     }
 

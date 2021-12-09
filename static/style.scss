@@ -772,6 +772,10 @@ popup-element {
     position: absolute;
     z-index: 1000;
 
+    &[active] {
+        z-index: 1001;
+    }
+
     /* ??? */
     left: 10px;
     top: -50px;

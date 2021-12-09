@@ -2,8 +2,7 @@ export { PopupElement }
 
 import { VEvent } from '../vevent'
 import { bind_popup_control } from '../dragable'
-import { close_popup, event_from_popup } from '../popup'
-import { vcal_objects } from '../globals'
+import { find_block, vcal_objects } from '../globals'
 
 import { ComponentVEvent } from './vevent'
 
@@ -11,6 +10,11 @@ import { remove_event } from '../server_connect'
 
 /* <popup-element /> */
 class PopupElement extends ComponentVEvent {
+
+    /* The popup which is the "selected" popup.
+    /* Makes the popup last hovered over the selected popup, moving it to
+     * the top, and allowing global keyboard bindings to affect it. */
+    static activePopup: PopupElement | null = null;
 
     constructor(uid?: string) {
         super(uid);
@@ -21,6 +25,15 @@ class PopupElement extends ComponentVEvent {
         if (obj && obj.calendar) {
             this.dataset.calendar = obj.calendar;
         }
+
+        /* Makes us the active popup */
+        this.addEventListener('mouseover', () => {
+            if (PopupElement.activePopup) {
+                PopupElement.activePopup.removeAttribute('active');
+            }
+            PopupElement.activePopup = this;
+            this.setAttribute('active', 'active');
+        })
     }
 
     redraw(data: VEvent) {
@@ -43,7 +56,7 @@ class PopupElement extends ComponentVEvent {
         bind_popup_control(nav);
 
         let close_btn = body.querySelector('.popup-control .close-button') as HTMLButtonElement
-        close_btn.addEventListener('click', () => close_popup(this));
+        close_btn.addEventListener('click', () => this.visible = false);
 
         let maximize_btn = body.querySelector('.popup-control .maximize-button') as HTMLButtonElement
         maximize_btn.addEventListener('click', () => {
@@ -106,7 +119,7 @@ class PopupElement extends ComponentVEvent {
                 break;
         }
 
-        let element = event_from_popup(this) as HTMLElement;
+        let element = find_block(this.uid) as HTMLElement | null
         /* start <X, Y> sets offset between top left corner
            of event in calendar and popup. 10, 10 soo old
            event is still visible */
