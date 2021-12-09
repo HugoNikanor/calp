@@ -13,6 +13,7 @@
                         fmt-day
                         make-block
                         fmt-single-event
+                        output-uid
                                           ))
   :use-module (calp html config)
   :use-module (calp html util)
@@ -25,6 +26,7 @@
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
 
+  :use-module ((vcomponent recurrence) :select (repeating? generate-recurrence-set))
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
   :use-module ((base64) :select (base64encode))
@@ -361,26 +363,37 @@ window.default_calendar='~a';"
                        SEQUENCE REQUEST-STATUS
                        )))
 
-    ;; (div (@ (style "display:none !important;"))
-    ;;      ,(map (lambda (calendar)
-    ;;              (prop calendar 'NAME))
-    ;;            calendars))
+    ,@(let* (
+             (flat-events
+              ;; A simple filter-sorted-stream on event-overlaps? here fails.
+              ;; See tests/annoying-events.scm
+              (stream->list
+               (stream-filter
+                (lambda (ev)
+                  ((@ (vcomponent datetime) event-overlaps?)
+                   ev start-date
+                   (date+ end-date (date day: 1))))
+                (stream-take-while (lambda (ev) (date<
+                                            (as-date (prop ev 'DTSTART))
+                                            (date+ end-date (date day: 1))))
+                                   events))))
+             (repeating% regular (partition repeating? flat-events))
+             (repeating
+              (for ev in repeating%
+                   (define instance (copy-vcomponent ev))
 
-    ,@(let ((flat-events
-             ;; A simple filter-sorted-stream on event-overlaps? here fails.
-             ;; See tests/annoying-events.scm
-             (stream->list
-              (stream-filter
-               (lambda (ev)
-                 ((@ (vcomponent datetime) event-overlaps?)
-                  ev start-date
-                  (date+ end-date (date day: 1))))
-               (stream-take-while (lambda (ev) (date<
-                                           (as-date (prop ev 'DTSTART))
-                                           (date+ end-date (date day: 1))))
-                                  events)))))
+                   (set! (prop instance 'UID) (output-uid instance))
+                   (delete-parameter! (prop* instance 'DTSTART) '-X-HNH-ORIGINAL)
+                   (delete-parameter! (prop* instance 'DTEND)   '-X-HNH-ORIGINAL)
 
-        `((div (@ (style "display:none !important;")
+                   instance)))
+
+        `(
+          ;; Mapping showing which events belongs to which calendar,
+          ;; on the form
+          ;; (calendar (@ (key ,(base64-encode calendar-name)))
+          ;;           (li ,event-uid) ...)
+          (div (@ (style "display:none !important;")
                   (id "calendar-event-mapping"))
                ,(let ((ht (make-hash-table)))
                   (for-each (lambda (event)
@@ -388,7 +401,8 @@ window.default_calendar='~a';"
                               (hash-set! ht name
                                          (cons (prop event 'UID)
                                                (hash-ref ht name '()))))
-                            flat-events)
+                            (append regular repeating))
+
                   (hash-map->list
                    (lambda (key values)
                      `(calendar (@ (key ,(base64encode key)))
@@ -399,8 +413,7 @@ window.default_calendar='~a';"
           ;; Calendar data for all events in current interval,
           ;; rendered as xcal.
           (div (@ (style "display:none !important;")
-                  (id "xcal-data"))
-               ,((@ (vcomponent xcal output) ns-wrap)
-                 (map (@ (vcomponent xcal output) vcomponent->sxcal)
-                      flat-events
-                      ))))))))
+                   (id "xcal-data"))
+                ,((@ (vcomponent xcal output) ns-wrap)
+                  (map (@ (vcomponent xcal output) vcomponent->sxcal)
+                       (append regular repeating)))))))))

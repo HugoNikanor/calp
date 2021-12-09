@@ -14,7 +14,7 @@
                         event-zero-length?
                         events-between))
   :use-module ((calp html vcomponent)
-               :select (make-block) )
+               :select (make-block output-uid) )
   ;; :use-module ((calp html components)
   ;;              :select ())
   :use-module ((vcomponent group)
@@ -56,15 +56,8 @@
                 ,@(for event in (stream->list
                                  (events-between start-date end-date events))
                        `(popup-element
-                         ;; TODO
                          (@ (class "vevent")
-                            (data-uid ,(prop event 'UID)))
-                         )
-                       #;
-                       ((@ (calp html vcomponent ) popup) ;
-                       event (string-append "popup" (html-id event))))
-
-                ))
+                            (data-uid ,(output-uid event)))))))
 
       ;; description in sidebar / tab of popup
       (template (@ (id "vevent-description"))

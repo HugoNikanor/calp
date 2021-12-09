@@ -15,6 +15,7 @@
   :use-module ((calp util color) :select (calculate-fg-color))
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
+  :use-module ((vcomponent recurrence) :select (repeating?))
   :use-module ((vcomponent recurrence internal) :prefix #{rrule:}#)
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
@@ -414,7 +415,7 @@
                            extra-attributes
                            `((id ,(html-id ev))
                              (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown")))
-                             (data-uid ,(prop ev 'UID))
+                             (data-uid ,(output-uid ev))
 
                              (class "vevent event"
                                ,(when (and (prop ev 'PARTSTAT)
@@ -469,6 +470,30 @@
                                             value)))
                              (else (->string value))))))
                   (prop event 'RRULE)))))
+
+
+;; Return a unique identifier for a specific instance of an event.
+;; Allows us to reference each instance of a repeating event separately
+;; from any other
+(define-public (output-uid event)
+  (string-concatenate
+   (cons
+    (prop event 'UID)
+    (when (repeating? event)
+      ;; TODO this will break if a UID already looks like this...
+      ;; Just using a pre-generated unique string would solve it,
+      ;; until someone wants to break us. Therefore, we just give
+      ;; up for now, until a proper solution can be devised.
+      (list "---"
+            ;; TODO Will this give us a unique identifier?
+            ;; Or can two events share UID along with start time
+            (datetime->string
+             (as-datetime (or
+                           ;; TODO What happens if the parameter RANGE=THISANDFUTURE is set?
+                           (prop event 'RECURRENCE-ID)
+                           (prop event 'DTSTART)))
+             "~Y-~m-~dT~H:~M:~S"))))))
+
 
 ;; TODO bind this into the xcal
 (define (editable-repeat-info event)

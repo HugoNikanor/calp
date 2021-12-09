@@ -60,7 +60,7 @@ class VEventValue {
                 value = 'UTC-OFFSET GOES HERE';
                 break;
             case 'recur':
-                value = v.asJcal();
+                value = v.to_jcal();
                 break;
 
             case 'float':

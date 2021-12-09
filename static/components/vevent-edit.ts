@@ -7,6 +7,7 @@ import { DateTimeInput } from './date-time-input'
 import { vcal_objects } from '../globals'
 import { VEvent, RecurrenceRule } from '../vevent'
 import { create_event } from '../server_connect'
+import { to_boolean } from '../lib'
 
 /* <vevent-edit />
    Edit form for a given VEvent. Used as the edit tab of popups.
@@ -146,6 +147,11 @@ class ComponentEdit extends ComponentVEvent {
                     (el as HTMLInputElement).value = d;
                 });
             }
+        }
+
+        let el = this.querySelector('[name="has_repeats"]')
+        if (el) {
+            (el as HTMLInputElement).checked = to_boolean(data.getProperty('rrule'))
         }
 
         if (data.calendar) {

@@ -33,9 +33,17 @@ function jcal_type_to_xcal(doc: Document, type: ical_type, value: any): Element 
         case 'recur':
             for (var key in value) {
                 if (!value.hasOwnProperty(key)) continue;
-                let e = doc.createElementNS(xcal, key);
-                e.textContent = value[key];
-                el.appendChild(e);
+                if (key === 'byday') {
+                    for (let v of value[key]) {
+                        let e = doc.createElementNS(xcal, key);
+                        e.textContent = v;
+                        el.appendChild(e);
+                    }
+                } else {
+                    let e = doc.createElementNS(xcal, key);
+                    e.textContent = value[key];
+                    el.appendChild(e);
+                }
             }
             break;
 

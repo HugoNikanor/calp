@@ -17,6 +17,24 @@ class EditRRule extends ComponentVEvent {
         let frag = this.template.content.cloneNode(true) as DocumentFragment
         let body = frag.firstElementChild!
         this.replaceChildren(body);
+
+        for (let el of this.querySelectorAll('[name]')) {
+            el.addEventListener('input', () => {
+                // console.log(this);
+                let data = vcal_objects.get(this.uid)!;
+                let rrule = data.getProperty('rrule')
+                if (!rrule) {
+                    console.warn('RRUle missing from object');
+                    return;
+                }
+                rrule = rrule as RecurrenceRule
+
+                console.log(el.getAttribute('name'), (el as any).value);
+                rrule[el.getAttribute('name')!] = (el as any).value;
+                data.setProperty('rrule', rrule);
+
+            });
+        }
     }
 
     connectedCallback() {
