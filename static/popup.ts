@@ -39,7 +39,7 @@ function close_popup(popup: PopupElement): void {
 
 /* hides all popups */
 function close_all_popups() {
-    for (let popup of document.querySelectorAll("popup-element.visible")) {
+    for (let popup of document.querySelectorAll("popup-element[visible]")) {
         close_popup(popup as PopupElement)
     }
 }

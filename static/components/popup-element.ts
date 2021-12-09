@@ -12,8 +12,6 @@ import { remove_event } from '../server_connect'
 /* <popup-element /> */
 class PopupElement extends ComponentVEvent {
 
-    isVisible: boolean = false;
-
     constructor(uid?: string) {
         super(uid);
 
@@ -74,17 +72,27 @@ class PopupElement extends ComponentVEvent {
         return ['visible'];
     }
 
+    attributeChangedCallback(name: string, oldValue?: string, newValue?: string) {
+        switch (name) {
+            case 'visible':
+                this.onVisibilityChange()
+                break;
+        }
+    }
+
     get visible(): boolean {
-        return this.isVisible;
+        return this.hasAttribute('visible');
     }
 
     set visible(isVisible: boolean) {
-        this.isVisible = isVisible;
-        if (this.isVisible) {
-            this.classList.add('visible');
+        if (isVisible) {
+            this.setAttribute('visible', 'visible');
         } else {
-            this.classList.remove('visible');
+            this.removeAttribute('visible');
         }
+    }
+
+    private onVisibilityChange() {
 
         /* TODO better way to find root */
         let root;
