@@ -8,8 +8,7 @@
   :use-module (datetime)
   :use-module (calp html components)
   :use-module ((calp html vcomponent)
-               :select (popup
-                        calendar-styles
+               :select (calendar-styles
                         fmt-day
                         make-block
                         fmt-single-event

@@ -188,7 +188,7 @@
          (dt "Weekstart")
          (dd ,(week-day-select '((name "wkst")))))))
 
-;; based on the output of fmt-single-event
+;; Template data for <vevent-description />
 (define (description-template)
   '(div (@ (class " vevent eventtext summary-tab " ()))
         (h3 ((span (@ (class "repeating")) ; "↺"
