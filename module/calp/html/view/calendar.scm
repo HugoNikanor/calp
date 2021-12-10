@@ -116,28 +116,7 @@ window.default_calendar='~a';"
     ,(include-alt-css "/static/dark.css"  '(title "Dark"))
     ,(include-alt-css "/static/light.css" '(title "Light"))
 
-    ;; (script (@ (defer) (src "/static/types.js")))
-    ;; (script (@ (defer) (src "/static/lib.js")))
-    ;; (script (@ (defer) (src "/static/jcal.js")))
-    ;; (script (@ (defer) (src "/static/dragable.js")))
-    ;; (script (@ (defer) (src "/static/clock.js")))
-    ;; (script (@ (defer) (src "/static/popup.js")))
-    ;; ;; (script (@ (defer) (src "/static/rrule.js")))
-    ;; ;; (script (@ (defer) (src "/static/binders.js")))
-    ;; (script (@ (defer) (src "/static/server_connect.js")))
-    ;; ;; (script (@ (defer) (src "/static/input_list.js")))
-    ;; ;; (script (@ (defer) (src "/static/date_time.js")))
-    ;; ;; (script (@ (defer) (src "/static/vcal.js")))
-    ;; (script (@ (defer) (src "/static/script.js")))
-    ;; (script (@ (defer) (src "/static/vevent.js")))
-    ;; (script (@ (defer) (src "/static/globals.js")))
-
-    ;; (script (@ (type module) (src "/static/script.js")))
-    ;; (script (@  (src "/static/dist/main.js")))
-    (script (@  (src "/static/script.out.js")))
-    ;; (script (@ (src "/static/build.js")))
-
-    ;; on load
+    (script (@ (src "/static/script.out.js")))
 
     ,(calendar-styles calendars)
 
