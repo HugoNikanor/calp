@@ -376,11 +376,11 @@ window.default_calendar='~a';"
                (stream-filter
                 (lambda (ev)
                   ((@ (vcomponent datetime) event-overlaps?)
-                   ev start-date
-                   (date+ end-date (date day: 1))))
+                   ev pre-start
+                   (date+ post-end (date day: 1))))
                 (stream-take-while (lambda (ev) (date<
                                             (as-date (prop ev 'DTSTART))
-                                            (date+ end-date (date day: 1))))
+                                            (date+ post-end (date day: 1))))
                                    events))))
              (repeating% regular (partition repeating? flat-events))
              (repeating

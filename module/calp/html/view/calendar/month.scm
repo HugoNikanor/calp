@@ -80,7 +80,7 @@
     ;; These popups are relative the document root.
     ;; Can thus be placed anywhere in the DOM.
     ,@(for event in (stream->list
-                     (events-between start-date end-date events))
+                     (events-between pre-start post-end events))
            `(popup-element
              (@ (class "vevent")
                 (data-uid ,(output-uid event)))))
