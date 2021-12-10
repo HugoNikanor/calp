@@ -3,7 +3,7 @@ import { SmallcalCellHighlight, Timebar } from './clock'
 import { makeElement } from './lib'
 import { vcal_objects, event_calendar_mapping } from './globals'
 import { EventCreator } from './event-creator'
-import { PopupElement } from './components/popup-element'
+import { PopupElement, setup_popup_element } from './components/popup-element'
 import { initialize_components } from './elements'
 
 /*
@@ -81,23 +81,9 @@ window.addEventListener('load', function() {
             ));
             c.addEventListener('mouseup', eventCreator.create_event_finisher(
                 function(ev: VEvent) {
-                    // let popup = document.createElement('popup-element') as PopupElement;
-
                     let uid = ev.getProperty('uid');
-
                     vcal_objects.set(uid, ev);
-
-                    let popup = new PopupElement(uid);
-                    ev.register(popup);
-                    // console.log(popup);
-                    (document.querySelector('.days') as Element).appendChild(popup);
-                    let tabBtn = popup.querySelector('[role="tab"][title="Redigera"]') as HTMLButtonElement
-                    tabBtn.click()
-                    let tab = document.getElementById(tabBtn.getAttribute('aria-controls')!)!
-                    let input = tab.querySelector('input[name="summary"]') as HTMLInputElement
-                    popup.visible = true;
-                    input.select();
-
+                    setup_popup_element(ev);
                 }));
         }
 
@@ -112,39 +98,9 @@ window.addEventListener('load', function() {
             );
             c.onmouseup = eventCreator.create_event_finisher(
                 function(ev: VEvent) {
-                    // let popup = document.createElement('popup-element') as PopupElement;
-
                     let uid = ev.getProperty('uid');
-
                     vcal_objects.set(uid, ev);
-
-                    let popup = new PopupElement(uid);
-                    /* TODO these things fail, due to the event not being
-                    present in the global_events map */
-                    (document.querySelector('.days') as Element).appendChild(popup);
-                    ev.register(popup);
-                    popup.visible = true;
-                    console.log(popup);
-                    // (popup.querySelector("input[name='summary']") as HTMLInputElement).focus();
-                    // let popupElement = document.getElementById("popup" + event.id);
-                    // open_popup(popup_from_event(event));
-
-                    // popupElement.querySelector("input[name='summary']").focus();
-
-
-                    // ----------------------------------------------------------------------------------------------------
-                    // TODO restore this
-                    // let popupElement = document.getElementById("popup" + event.id);
-                    // open_popup(popupElement);
-
-                    // popupElement.querySelector("input[name='summary']").focus();
-
-                    // /* This assumes that it's unchecked beforehand.
-                    //    Preferably we would just ensure that it's checked here,
-                    //    But we also need to make sure that the proper handlers
-                    //    are run then */
-                    // popupElement.querySelector("input[name='wholeday']").click();
-
+                    setup_popup_element(ev);
                 });
         }
     }

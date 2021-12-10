@@ -1,4 +1,4 @@
-export { PopupElement }
+export { PopupElement, setup_popup_element }
 
 import { VEvent } from '../vevent'
 import { bind_popup_control } from '../dragable'
@@ -140,4 +140,23 @@ class PopupElement extends ComponentVEvent {
         el.style.width = `calc(${parent.clientWidth - 20}px - 5ex)`
         el.style.height = `${parent.clientHeight - 20}px`
     }
+}
+
+/* Create a new popup element for the given VEvent, and ready it for editing the
+   event. Used when creating event (through the frontend).
+   The return value can safely be ignored.
+*/
+function setup_popup_element(ev: VEvent): PopupElement {
+    let uid = ev.getProperty('uid');
+    let popup = new PopupElement(uid);
+    ev.register(popup);
+    /* TODO propper way to find popup container */
+    (document.querySelector('.days') as Element).appendChild(popup);
+    let tabBtn = popup.querySelector('[role="tab"][title="Redigera"]') as HTMLButtonElement
+    tabBtn.click()
+    let tab = document.getElementById(tabBtn.getAttribute('aria-controls')!)!
+    let input = tab.querySelector('input[name="summary"]') as HTMLInputElement
+    popup.visible = true;
+    input.select();
+    return popup;
 }
