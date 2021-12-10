@@ -21,7 +21,7 @@ export { TabGroupElement }
 */
 class TabGroupElement extends ComponentVEvent {
 
-    menu: HTMLElement;
+    readonly menu: HTMLElement;
 
     tabs: HTMLElement[] = [];
     tabLabels: HTMLElement[] = [];

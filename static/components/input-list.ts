@@ -10,7 +10,7 @@ class InputList extends HTMLElement {
 
     el: HTMLInputElement;
 
-    _listeners: [string, (e: Event) => void][] = [];
+    private _listeners: [string, (e: Event) => void][] = [];
 
     constructor() {
         super();

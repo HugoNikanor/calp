@@ -6,7 +6,7 @@ export { VEventChangelog }
 
 class VEventChangelog extends ComponentVEvent {
 
-    ul: HTMLElement
+    readonly ul: HTMLElement
 
     constructor(uid?: string) {
         super(uid);

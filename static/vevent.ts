@@ -1,4 +1,4 @@
-import { uid, ical_type, valid_input_types, JCal, JCalProperty, ChangeLogEntry } from './types'
+import { ical_type, valid_input_types, JCal, JCalProperty, ChangeLogEntry } from './types'
 import { parseDate } from './lib'
 
 export {
@@ -91,7 +91,7 @@ All "live" calendar data in the frontend should live in an object of this type.
 class VEvent {
 
     /* Calendar properties */
-    properties: Map<string, VEventValue | VEventValue[]>
+    private properties: Map<string, VEventValue | VEventValue[]>
 
     /* Children (such as alarms for events) */
     components: VEvent[]
@@ -164,7 +164,7 @@ class VEvent {
         return this.properties.keys()
     }
 
-    __setPropertyInternal(key: string, value: any, type?: ical_type) {
+    private setPropertyInternal(key: string, value: any, type?: ical_type) {
         function resolve_type(key: string, type?: ical_type): ical_type {
             if (type) {
                 return type;
@@ -223,7 +223,7 @@ class VEvent {
     setProperty(key: string, value: any, type?: ical_type): void;
 
     setProperty(key: string, value: any, type?: ical_type) {
-        this.__setPropertyInternal(key, value, type);
+        this.setPropertyInternal(key, value, type);
 
         for (let el of this.registered) {
             el.redraw(this);
@@ -232,7 +232,7 @@ class VEvent {
 
     setProperties(pairs: [string, any, ical_type?][]) {
         for (let pair of pairs) {
-            this.__setPropertyInternal(...pair);
+            this.setPropertyInternal(...pair);
         }
         for (let el of this.registered) {
             el.redraw(this);

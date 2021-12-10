@@ -8,10 +8,6 @@ import { makeElement } from '../lib'
   <vevent-description />
 */
 class ComponentDescription extends ComponentVEvent {
-    constructor() {
-        super();
-    }
-
     redraw(data: VEvent) {
         // update ourselves from template
 

@@ -2,9 +2,8 @@ export { SmallcalCellHighlight, Timebar }
 
 import { makeElement, date_to_percent } from './lib'
 
-class Clock {
-    update(now: Date) {
-    }
+abstract class Clock {
+    abstract update(now: Date): void;
 }
 
 
