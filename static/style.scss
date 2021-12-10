@@ -45,6 +45,19 @@ html, body {
                 -1em  1em 0.5em gold;
             z-index: 1;
         }
+
+        /* For new event button */
+        position: relative;
+
+        /* add new event button */
+        > button {
+            position: absolute;
+            right: 2mm;
+            bottom: 5mm;
+
+            height: 1cm;
+            width: 1cm;
+        }
     }
 
 

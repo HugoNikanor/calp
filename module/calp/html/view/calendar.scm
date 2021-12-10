@@ -137,6 +137,10 @@ window.default_calendar='~a';"
                              next-start: next-start
                              prev-start: prev-start
                              )
+
+          ,(btn onclick: "addNewEvent()"
+                "+")
+
           ;; Popups used to be here, but was moved into render-calendar so each
           ;; sub-view can itself decide where to put them. This is important
           ;; since they need to be placed as children to the scrolling
