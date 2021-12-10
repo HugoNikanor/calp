@@ -6,6 +6,22 @@ import { makeElement, parseDate } from '../lib'
 /* '<date-time-input />' */
 class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
 
+    readonly time: HTMLInputElement;
+    readonly date: HTMLInputElement;
+
+    constructor() {
+        super();
+
+        this.date = makeElement('input', {
+            type: 'date'
+        }) as HTMLInputElement
+
+        this.time = makeElement('input', {
+            type: 'time',
+            disabled: this.dateonly
+        }) as HTMLInputElement
+    }
+
     connectedCallback() {
         /* This can be in the constructor for chromium, but NOT firefox...
            Vivaldi 4.3.2439.63 stable
@@ -15,13 +31,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
  https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes#boolean_attributes
  https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttribute
         */
-        this.replaceChildren(
-            makeElement('input', { type: 'date' }),
-            makeElement('input', {
-                type: 'time',
-                disabled: this.dateonly
-            })
-        )
+        this.replaceChildren(this.date, this.time)
     }
 
     static get observedAttributes() {
@@ -31,14 +41,11 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
     attributeChangedCallback(name: string, _: string | null, to: string | null): void {
         switch (name) {
             case 'dateonly':
-                let time = this.querySelector('input[type="time"]') as HTMLInputElement | null
-                /* should only be possible on creation whith dateonly="" sat. */
-                if (!time) return;
                 if (to == null) {
-                    time.disabled = false
+                    this.time.disabled = false
                 } else {
                     if (to == '' || to == name) {
-                        time.disabled = true;
+                        this.time.disabled = true;
                     } else {
                         throw new TypeError(`Invalid value for attribute dateonly: ${to}`)
                     }
@@ -62,20 +69,20 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
     set value(date: Date) {
         let [d, t] = date.format("~L~Y-~m-~dT~H:~M:~S").split('T');
         // console.log(d, t);
-        (this.querySelector("input[type='date']") as HTMLInputElement).value = d;
-        (this.querySelector("input[type='time']") as HTMLInputElement).value = t;
+        this.date.value = d;
+        this.time.value = t;
 
         this.dateonly = date.dateonly;
     }
 
     get value(): Date {
         let dt;
-        let date = (this.querySelector("input[type='date']") as HTMLInputElement).value;
+        let date = this.date.value;
         if (this.dateonly) {
             dt = parseDate(date);
             dt.dateonly = true;
         } else {
-            let time = (this.querySelector("input[type='time']") as HTMLInputElement).value;
+            let time = this.time.value;
             dt = parseDate(date + 'T' + time)
             dt.dateonly = false;
         }
@@ -101,16 +108,14 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
             [date, time] = new_value.split('T')
         }
         this.dateonly = dateonly;
-        (this.querySelector("input[type='date']") as HTMLInputElement).value = date;
-        (this.querySelector("input[type='time']") as HTMLInputElement).value = time;
+        this.date.value = date;
+        this.time.value = time;
     }
 
     addEventListener(type: string, proc: ((e: Event) => void)) {
         if (type != 'input') throw "Only input supported";
 
-        (this.querySelector("input[type='date']") as HTMLInputElement)
-            .addEventListener(type, proc);
-        (this.querySelector("input[type='time']") as HTMLInputElement)
-            .addEventListener(type, proc);
+        this.date.addEventListener(type, proc);
+        this.time.addEventListener(type, proc);
     }
 }
