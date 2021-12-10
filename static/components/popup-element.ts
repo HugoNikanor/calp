@@ -59,20 +59,7 @@ class PopupElement extends ComponentVEvent {
         close_btn.addEventListener('click', () => this.visible = false);
 
         let maximize_btn = body.querySelector('.popup-control .maximize-button') as HTMLButtonElement
-        maximize_btn.addEventListener('click', () => {
-            /* TODO this assumes that popups are direct decendant of their parent,
-               which they really ought to be */
-            let parent = this.parentElement!;
-            let el = this.firstElementChild as HTMLElement
-            /* TODO offsetParent.scrollLeft places us "fullscreen" according to the currently
-               scrolled viewport. But is this the correct way to do it? How does it work for
-               month views */
-            this.style.left = `${this.offsetParent!.scrollLeft + 10}px`;
-            this.style.top = '10px';
-            /* 5ex is width of tab labels */
-            el.style.width = `calc(${parent.clientWidth - 20}px - 5ex)`
-            el.style.height = `${parent.clientHeight - 20}px`
-        });
+        maximize_btn.addEventListener('click', () => this.maximize());
 
         let remove_btn = body.querySelector('.popup-control .remove-button') as HTMLButtonElement
         remove_btn.addEventListener('click', () => remove_event(uid));
@@ -137,5 +124,20 @@ class PopupElement extends ComponentVEvent {
         let el = this.firstElementChild as HTMLElement;
         el.style.removeProperty('width');
         el.style.removeProperty('height');
+    }
+
+    maximize() {
+        /* TODO this assumes that popups are direct decendant of their parent,
+           which they really ought to be */
+        let parent = this.parentElement!;
+        let el = this.firstElementChild as HTMLElement
+        /* TODO offsetParent.scrollLeft places us "fullscreen" according to the currently
+           scrolled viewport. But is this the correct way to do it? How does it work for
+           month views */
+        this.style.left = `${this.offsetParent!.scrollLeft + 10}px`;
+        this.style.top = '10px';
+        /* 5ex is width of tab labels */
+        el.style.width = `calc(${parent.clientWidth - 20}px - 5ex)`
+        el.style.height = `${parent.clientHeight - 20}px`
     }
 }
