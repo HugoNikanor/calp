@@ -59,184 +59,19 @@
                          (@ (class "vevent")
                             (data-uid ,(output-uid event)))))))
 
-      ;; description in sidebar / tab of popup
-      (template (@ (id "vevent-description"))
-                ,(description-template)
-                )
 
-      ;; edit tab of popup
-      (template (@ (id "vevent-edit"))
-                ,((@ (calp html vcomponent) edit-template)
-                  calendars
-                  ))
-
-      ;; "physical" block
+      ;; This template is here, instead of in (calp html calendar) since it only
+      ;; applies to this specific view. (calp html calendar month) is assumed to
+      ;; have its own variant of it.
       (template (@ (id "vevent-block"))
                 ,(block-template)
                 )
 
-      (template (@ (id "vevent-edit-rrule"))
-                ,(vevent-edit-rrule-template))
 
-      ;; Based on popup:s output
-      (template (@ (id "popup-template"))
-                ,(popup-template)))))
+)))
 
 
-(define-record-type tab
-  (fields title label body))
-
-(define (popup-template)
-
-  ;; becomes the direct child of <popup-element/>
-  `(div (@ (class "popup-root window")
-           (onclick "event.stopPropagation()"))
-
-        (nav (@ (class "popup-control"))
-             (button (@ (class "close-button")
-                        (title "Stäng")
-                        (aria-label "Close"))
-                     "×")
-             (button (@ (class "maximize-button")
-                        (title "Fullskärm")
-                        ;; (aria-label "")
-                        )
-                     "🗖")
-             (button (@ (class "remove-button")
-                        (title "Ta Bort"))
-                     "🗑"))
-
-        (tab-group (@ (class "window-body"))
-                   (vevent-description
-                    (@ (data-label "📅") (data-title "Översikt")
-                       (class "vevent")))
-
-                   (vevent-edit
-                    (@ (data-label "🖊") (data-title "Redigera")))
-
-                   ;; (vevent-edit-rrule
-                   ;;  (@ (data-label "↺") (data-title "Upprepningar")))
-
-                   (vevent-changelog
-                    (@ (data-label "📒") (date-title "Changelog")))
-
-                   ,@(when (debug)
-                       '((vevent-dl
-                          (@ (data-label "🐸") (data-title "Debug")))))
-                   )))
-
-(define (week-day-select args)
-  `(select (@ ,@args)
-     (option "-")
-     ,@(map (lambda (x) `(option (@ (value ,(car x))) ,(cadr x)))
-            '((MO "Monday")
-              (TU "Tuesday")
-              (WE "Wednesday")
-              (TH "Thursday")
-              (FR "Friday")
-              (SA "Saturday")
-              (SU "Sunday")))))
-
-(define (vevent-edit-rrule-template)
-  `(div (@ (class "eventtext"))
-        (h2 "Upprepningar")
-        (dl
-         (dt "Frequency")
-         (dd (select (@ (name "freq"))
-               (option "-")
-               ,@(map (lambda (x) `(option (@ (value ,x)) ,(string-titlecase (symbol->string x))))
-                      '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))))
-
-         (dt "Until")
-         (dd (date-time-input (@ (name "until"))))
-
-         (dt "Conut")
-         (dd (input (@ (type "number") (name "count") (min 0))))
-
-         (dt "Interval")
-         (dd (input (@ (type "number") (name "interval") ; min and max depend on FREQ
-                       )))
-
-         ,@(concatenate
-            (map (lambda (pair)
-                   (define name (list-ref pair 0))
-                   (define pretty-name (list-ref pair 1))
-                   (define min (list-ref pair 2))
-                   (define max (list-ref pair 3))
-                   `((dt ,pretty-name)
-                     (dd (input-list (@ (name ,name))
-                                     (input (@ (type "number")
-                                               (min ,min) (max ,max)))))))
-                 '((bysecond "By Second" 0 60)
-                   (byminute "By Minute" 0 59)
-                   (byhour "By Hour" 0 23)
-                   (bymonthday "By Month Day" -31 31) ; except 0
-                   (byyearday "By Year Day" -366 366) ; except 0
-                   (byweekno "By Week Number" -53 53) ; except 0
-                   (bymonth "By Month" 1 12)
-                   (bysetpos "By Set Position" -366 366) ; except 0
-                   )))
-
-         ;; (dt "By Week Day")
-         ;; (dd (input-list (@ (name "byweekday"))
-         ;;                 (input (@ (type number)
-         ;;                           (min -53) (max 53) ; except 0
-         ;;                           ))
-         ;;                 ,(week-day-select '())
-         ;;                 ))
-
-         (dt "Weekstart")
-         (dd ,(week-day-select '((name "wkst")))))))
-
-;; Template data for <vevent-description />
-(define (description-template)
-  '(div (@ (class " vevent eventtext summary-tab " ()))
-        (h3 ((span (@ (class "repeating")) ; "↺"
-                   )
-             (span (@ (class "summary")
-                      (data-property "summary")))))
-        (div (div (time (@ (class "dtstart")
-                           (data-property "dtstart")
-                           (data-fmt "~L~H:~M")
-                           (datetime ; "2021-09-29T19:56:46"
-                            ))
-                        ; "19:56"
-                        )
-                  "\xa0—\xa0"
-                  (time (@ (class "dtend")
-                           (data-property "dtend")
-                           (data-fmt "~L~H:~M")
-                           (datetime ; "2021-09-29T19:56:46"
-                            ))
-                        ; "20:56"
-                        ))
-             (div (@ (class "fields"))
-                  (div (b "Plats: ")
-                       (div (@ (class "location")
-                               (data-property "location"))
-                            ; "Alsättersgatan 13"
-                            ))
-                  (div (@ (class "description")
-                          (data-property "description"))
-                       ; "With a description"
-                       )
-
-                  (div (@ (class "categories")
-                          (data-property "categories")))
-                  ;; (div (@ (class "categories"))
-                  ;;      (a (@ (class "category")
-                  ;;            (href "/search/?"
-                  ;;                  "q=%28member%20%22test%22%20%28or%20%28prop%20event%20%28quote%20CATEGORIES%29%29%20%28quote%20%28%29%29%29%29"))
-                  ;;         test))
-                  ;; (div (@ (class "rrule"))
-                  ;;      "Upprepas "
-                  ;;      "varje vecka"
-                  ;;      ".")
-                  (div (@ (class "last-modified"))
-                       "Senast ändrad -"
-                       ; "2021-09-29 19:56"
-                       )))))
-
+;; "physical" block
 (define (block-template)
   `(div (@ ; (id ,(html-id ev))
            (data-calendar "unknown")

@@ -48,34 +48,36 @@ class ComponentBlock extends ComponentVEvent {
 
         /* -------------------------------------------------- */
 
-        let p;
-        if ((p = data.getProperty('dtstart'))) {
-            let c = this.closest('.event-container') as HTMLElement
-            let start = parseDate(c.dataset.start!).getTime()
-            let end = parseDate(c.dataset.end!).getTime();
-            // console.log(p);
-            let pp = to_local(p).getTime()
-            let result = 100 * (Math.min(end, Math.max(start, pp)) - start) / (end - start) + "%"
-            if (c.classList.contains('longevents')) {
-                this.style.left = result
-            } else {
-                this.style.top = result
+        if (window.VIEW === 'week') {
+            let p;
+            if ((p = data.getProperty('dtstart'))) {
+                let c = this.closest('.event-container') as HTMLElement
+                let start = parseDate(c.dataset.start!).getTime()
+                let end = parseDate(c.dataset.end!).getTime();
+                // console.log(p);
+                let pp = to_local(p).getTime()
+                let result = 100 * (Math.min(end, Math.max(start, pp)) - start) / (end - start) + "%"
+                if (c.classList.contains('longevents')) {
+                    this.style.left = result
+                } else {
+                    this.style.top = result
+                }
+                // console.log('dtstart', p);
             }
-            // console.log('dtstart', p);
-        }
-        if ((p = data.getProperty('dtend'))) {
-            // console.log('dtend', p);
-            let c = this.closest('.event-container') as HTMLElement
-            let start = parseDate(c.dataset.start!).getTime()
-            let end = parseDate(c.dataset.end!).getTime();
-            let pp = to_local(p).getTime()
-            let result = 100 - (100 * (Math.min(end, Math.max(start, pp)) - start) / (end - start)) + "%"
-            if (c.classList.contains('longevents')) {
-                this.style.width = 'unset';
-                this.style.right = result;
-            } else {
-                this.style.height = 'unset';
-                this.style.bottom = result;
+            if ((p = data.getProperty('dtend'))) {
+                // console.log('dtend', p);
+                let c = this.closest('.event-container') as HTMLElement
+                let start = parseDate(c.dataset.start!).getTime()
+                let end = parseDate(c.dataset.end!).getTime();
+                let pp = to_local(p).getTime()
+                let result = 100 - (100 * (Math.min(end, Math.max(start, pp)) - start) / (end - start)) + "%"
+                if (c.classList.contains('longevents')) {
+                    this.style.width = 'unset';
+                    this.style.right = result;
+                } else {
+                    this.style.height = 'unset';
+                    this.style.bottom = result;
+                }
             }
         }
 
@@ -84,7 +86,10 @@ class ComponentBlock extends ComponentVEvent {
         }
 
         if (data.getProperty('rrule') !== undefined) {
-            (this.getElementsByClassName('repeating')![0] as HTMLElement).innerText = '↺'
+            let rep = this.getElementsByClassName('repeating')
+            if (rep && rep.length !== 0) {
+                (rep[0] as HTMLElement).innerText = '↺'
+            }
         }
     }
 }

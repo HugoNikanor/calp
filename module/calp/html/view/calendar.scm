@@ -339,6 +339,12 @@ window.default_calendar='~a';"
     ;;       ;;      ,(popup event (string-append "popup" (html-id event))))
     ;;       ))
 
+    ;;; Templates used by our custom components
+    ,((@ (calp html vcomponent) edit-template) calendars)
+    ,((@ (calp html vcomponent) description-template))
+    ,((@ (calp html vcomponent) vevent-edit-rrule-template))
+    ,((@ (calp html vcomponent) popup-template))
+
     ;; Auto-complets when adding new fields to a component
     ;; Any string is however still valid.
     (datalist (@ (id "known-fields"))

@@ -11,7 +11,7 @@
                :select (really-long-event?
                         events-between))
   :use-module ((calp html vcomponent)
-               :select (make-block))
+               :select (make-block output-uid))
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
   )
@@ -77,11 +77,26 @@
              (repeating-naturals 1 7)
              )))
 
-    ;; These popups are relative the document root. Can thus be placed anywhere in the DOM.
+    ;; These popups are relative the document root.
+    ;; Can thus be placed anywhere in the DOM.
     ,@(for event in (stream->list
                      (events-between start-date end-date events))
-           ((@ (calp html vcomponent) popup) event
-            (string-append "popup" ((@ (calp html util) html-id) event))))
+           `(popup-element
+             (@ (class "vevent")
+                (data-uid ,(output-uid event)))))
+
+    (template
+     (@ (id "vevent-block"))
+     ;; TODO this is more or less copied verbatim from week's
+     ;; version, warts and all. Figure out what should and shouldn't
+     ;; be shared between the two.
+     (div (@ (data-calendar "unknown"))
+           (div (@ (class "event-body"))
+                (span (@ (class "repeating")))
+                (span (@ (class "summary")
+                         (data-property "summary")))
+                (span (@ (class "location")
+                         (data-property "location"))))))
     ))
 
 
