@@ -79,7 +79,7 @@
               [else
                (set! body (car rem))
                (loop (cdr rem))])))
-      (div ,body))))
+      ,body)))
 
 
 ;; Creates a group of tabs from a given specification. The specification

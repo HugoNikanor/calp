@@ -171,7 +171,7 @@ window.default_calendar='~a';"
                                               [(month) "view=month"]
                                               [(week) "view=week"]
                                               [else ""]))))
-                       (div "idag"))))
+                       "idag")))
 
               (div (@ (id "jump-to"))
                    ;; Firefox's accessability complain about each date
