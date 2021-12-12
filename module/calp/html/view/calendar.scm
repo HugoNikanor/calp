@@ -283,7 +283,11 @@ window.default_calendar='~a';"
                        ;; Figure out way to merge it with the below call.
                        ,@(stream->list
                           (stream-map
-                           fmt-single-event
+                           (lambda (ev)
+                             (fmt-single-event
+                              ev `((id ,(html-id ev))
+                                   (data-calendar ,(base64encode (or (prop (parent ev) 'NAME)
+                                                                     "unknown"))))))
                            (stream-take-while
                             (compose (cut date/-time<? <> start-date)
                                      (extract 'DTSTART))
