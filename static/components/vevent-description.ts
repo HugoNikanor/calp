@@ -39,6 +39,13 @@ class ComponentDescription extends ComponentVEvent {
             }
         }
 
+        let repeating = body.getElementsByClassName('repeating')[0] as HTMLElement
+        if (data.getProperty('rrule')) {
+            repeating.classList.remove('hidden');
+        } else {
+            repeating.classList.add('hidden');
+        }
+
         this.replaceChildren(body);
     }
 }

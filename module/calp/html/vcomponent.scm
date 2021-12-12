@@ -454,8 +454,8 @@
   '(template
     (@ (id "vevent-description"))
     (div (@ (class " vevent eventtext summary-tab " ()))
-         (h3 ((span (@ (class "repeating")) ; "↺"
-                    )
+         (h3 ((span (@ (class "repeating"))
+                    "↺")
               (span (@ (class "summary")
                        (data-property "summary")))))
          (div (div (time (@ (class "dtstart")
