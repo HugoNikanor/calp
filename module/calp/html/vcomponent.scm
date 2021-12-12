@@ -78,127 +78,128 @@
             (class ,(when (and (prop ev 'PARTSTAT)
                                (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
                       " tentative "))
-            (data-uid ,(prop ev 'UID)))))
-    (h3 ,(fmt-header
-          (when (prop ev 'RRULE)
-            `(span (@ (class "repeating")) "↺"))
-          `(span (@ (class "summary")
-                    (data-property "summary"))
-                 ,(prop ev 'SUMMARY))))
-    (div
-     ,(call-with-values (lambda () (fmt-time-span ev))
-        (case-lambda [(start)
-                      `(div (time (@ (class "dtstart")
-                                     (data-property "dtstart")
-                                     (data-fmt ,(string-append "~L" start))
-                                     (datetime ,(datetime->string
-                                                 (as-datetime (prop ev 'DTSTART))
-                                                 "~1T~3")))
-                                  ,(datetime->string
-                                    (as-datetime (prop ev 'DTSTART))
-                                    start)))]
-                     [(start end)
-                      `(div (time (@ (class "dtstart")
-                                     (data-property "dtstart")
-                                     (data-fmt ,(string-append "~L" start))
-                                     (datetime ,(datetime->string
-                                                 (as-datetime (prop ev 'DTSTART))
-                                                 "~1T~3")))
-                                  ,(datetime->string (as-datetime (prop ev 'DTSTART))
-                                                     start))
-                            " — "
-                            (time (@ (class "dtend")
-                                     (data-property "dtend")
-                                     (data-fmt ,(string-append "~L" end))
-                                     (datetime ,(datetime->string
-                                                 (as-datetime (prop ev 'DTSTART))
-                                                 "~1T~3")))
-                                  ,(datetime->string (as-datetime (prop ev 'DTEND))
-                                                     end)))]))
+            (data-uid ,(output-uid ev)))))
+    (div (@ (class "vevent eventtext summary-tab"))
+         (h3 ,(fmt-header
+               (when (prop ev 'RRULE)
+                 `(span (@ (class "repeating")) "↺"))
+               `(span (@ (class "summary")
+                         (data-property "summary"))
+                      ,(prop ev 'SUMMARY))))
+         (div
+          ,(call-with-values (lambda () (fmt-time-span ev))
+             (case-lambda [(start)
+                           `(div (time (@ (class "dtstart")
+                                          (data-property "dtstart")
+                                          (data-fmt ,(string-append "~L" start))
+                                          (datetime ,(datetime->string
+                                                      (as-datetime (prop ev 'DTSTART))
+                                                      "~1T~3")))
+                                       ,(datetime->string
+                                         (as-datetime (prop ev 'DTSTART))
+                                         start)))]
+                          [(start end)
+                           `(div (time (@ (class "dtstart")
+                                          (data-property "dtstart")
+                                          (data-fmt ,(string-append "~L" start))
+                                          (datetime ,(datetime->string
+                                                      (as-datetime (prop ev 'DTSTART))
+                                                      "~1T~3")))
+                                       ,(datetime->string (as-datetime (prop ev 'DTSTART))
+                                                          start))
+                                 " — "
+                                 (time (@ (class "dtend")
+                                          (data-property "dtend")
+                                          (data-fmt ,(string-append "~L" end))
+                                          (datetime ,(datetime->string
+                                                      (as-datetime (prop ev 'DTSTART))
+                                                      "~1T~3")))
+                                       ,(datetime->string (as-datetime (prop ev 'DTEND))
+                                                          end)))]))
 
-     (div (@ (class "fields"))
-          ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
-             `(div (b "Plats: ")
-                   (div (@ (class "location") (data-property "location"))
-                        ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                     (prop ev 'LOCATION)))))
-          ,(awhen (prop ev 'DESCRIPTION)
-                  `(div (@ (class "description")
-                           (data-property "description"))
-                        ,(format-description ev it)))
+          (div (@ (class "fields"))
+               ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
+                  `(div (b "Plats: ")
+                        (div (@ (class "location") (data-property "location"))
+                             ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                          (prop ev 'LOCATION)))))
+               ,(awhen (prop ev 'DESCRIPTION)
+                       `(div (@ (class "description")
+                                (data-property "description"))
+                             ,(format-description ev it)))
 
-          ,@(awhen (prop* ev 'ATTACH)
-                   ;; attach satisfies @code{vline?}
-                   (for attach in it
-                        (if (and=> (param attach 'VALUE)
-                                   (lambda (p) (string=? "BINARY" (car p))))
-                            ;; Binary data
-                            ;; TODO guess datatype if FMTTYPE is missing
-                            (awhen (and=> (param attach 'FMTTYPE)
-                                          (lambda (it) (string-split
-                                                   (car it) #\/)))
-                                   ;; TODO other file formats
-                                   (when (string=? "image" (car it))
-                                     (let* ((chk (-> (value attach)
-                                                     sha256
-                                                     checksum->string))
-                                            (dname
-                                             (path-append (xdg-runtime-dir)
-                                                          "calp-data" "images"))
-                                            (filename (-> dname
-                                                          (path-append chk)
-                                                          ;; TODO second part of mimetypes
-                                                          ;; doesn't always result in a valid
-                                                          ;; file extension.
-                                                          ;; Take a look in mime.types.
-                                                          (string-append "." (cadr it)))))
-                                       (unless (file-exists? filename)
-                                         ;; TODO handle tmp directory globaly
-                                         (mkdir (dirname dname))
-                                         (mkdir dname)
-                                         (call-with-output-file filename
-                                           (lambda (port)
-                                             (put-bytevector port (value attach)))))
-                                       (let ((link (path-append
-                                                    "/tmpfiles"
-                                                    ;; TODO better mimetype to extension
-                                                    (string-append chk "." (cadr it)))))
-                                         `(a (@ (href ,link))
-                                             (img (@ (class "attach")
-                                                     (src ,link))))))))
-                            ;; URI
-                            (cond ((and=> (param attach 'FMTTYPE)
-                                          (compose (cut string= <> "image" 0 5) car))
-                                   `(img (@ (class "attach")
-                                            (src ,(value attach)))))
-                                  (else `(a (@ (class "attach")
-                                               (href ,(value attach)))
-                                            ,(value attach)))))))
+               ,@(awhen (prop* ev 'ATTACH)
+                        ;; attach satisfies @code{vline?}
+                        (for attach in it
+                             (if (and=> (param attach 'VALUE)
+                                        (lambda (p) (string=? "BINARY" (car p))))
+                                 ;; Binary data
+                                 ;; TODO guess datatype if FMTTYPE is missing
+                                 (awhen (and=> (param attach 'FMTTYPE)
+                                               (lambda (it) (string-split
+                                                        (car it) #\/)))
+                                        ;; TODO other file formats
+                                        (when (string=? "image" (car it))
+                                          (let* ((chk (-> (value attach)
+                                                          sha256
+                                                          checksum->string))
+                                                 (dname
+                                                  (path-append (xdg-runtime-dir)
+                                                               "calp-data" "images"))
+                                                 (filename (-> dname
+                                                               (path-append chk)
+                                                               ;; TODO second part of mimetypes
+                                                               ;; doesn't always result in a valid
+                                                               ;; file extension.
+                                                               ;; Take a look in mime.types.
+                                                               (string-append "." (cadr it)))))
+                                            (unless (file-exists? filename)
+                                              ;; TODO handle tmp directory globaly
+                                              (mkdir (dirname dname))
+                                              (mkdir dname)
+                                              (call-with-output-file filename
+                                                (lambda (port)
+                                                  (put-bytevector port (value attach)))))
+                                            (let ((link (path-append
+                                                         "/tmpfiles"
+                                                         ;; TODO better mimetype to extension
+                                                         (string-append chk "." (cadr it)))))
+                                              `(a (@ (href ,link))
+                                                  (img (@ (class "attach")
+                                                          (src ,link))))))))
+                                 ;; URI
+                                 (cond ((and=> (param attach 'FMTTYPE)
+                                               (compose (cut string= <> "image" 0 5) car))
+                                        `(img (@ (class "attach")
+                                                 (src ,(value attach)))))
+                                       (else `(a (@ (class "attach")
+                                                    (href ,(value attach)))
+                                                 ,(value attach)))))))
 
-          ,(awhen (prop ev 'CATEGORIES)
-                  `(div (@ (class "categories"))
-                        ,@(map (lambda (c)
-                                 `(a (@ (class "category")
-                                        ;; TODO centralize search terms
-                                        (href
-                                         "/search/?"
-                                         ,(encode-query-parameters
-                                           `((q . (member
-                                                   ,(->string c)
-                                                   (or (prop event 'CATEGORIES)
-                                                       '())))))))
-                                     ,c))
-                               it)))
+               ,(awhen (prop ev 'CATEGORIES)
+                       `(div (@ (class "categories"))
+                             ,@(map (lambda (c)
+                                      `(a (@ (class "category")
+                                             ;; TODO centralize search terms
+                                             (href
+                                              "/search/?"
+                                              ,(encode-query-parameters
+                                                `((q . (member
+                                                        ,(->string c)
+                                                        (or (prop event 'CATEGORIES)
+                                                            '())))))))
+                                          ,c))
+                                    it)))
 
-          ,(awhen (prop ev 'RRULE)
-                  `(div (@ (class "rrule"))
-                        ,@(format-recurrence-rule ev)))
+               ,(awhen (prop ev 'RRULE)
+                       `(div (@ (class "rrule"))
+                             ,@(format-recurrence-rule ev)))
 
-          ,(when (prop ev 'LAST-MODIFIED)
-             `(div (@ (class "last-modified")) "Senast ändrad "
-                   ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
+               ,(when (prop ev 'LAST-MODIFIED)
+                  `(div (@ (class "last-modified")) "Senast ändrad "
+                        ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
 
-     )))
+          ))))
 
 
 
