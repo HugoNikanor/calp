@@ -1,35 +1,36 @@
 @node Javascript
 @chapter Javascript
 
-@node Concepts
-@section Concepts
+@c web components
+@defindex wc
 
-@subsection ``Componenents''
+@c done
+@node General Stuff
+@section General stuff
+The frontend code has its entry-point in @code{script.ts}
 
-@deftp {} date_time
-@cindex date-time
-
-@ref{date_time}
-@end deftp
-
-@deftp {} draggable
-@end deftp
-
-@deftp {} input_list
-@end deftp
-
-@node Reference
-@section Reference
-@include javascript/arbitary_kv.texi
-@include javascript/binders.texi
+All elements are initialized in elements.ts
 @include javascript/clock.texi
-@include javascript/date_time.texi
-@include javascript/draggable.texi
-@include javascript/input_list.texi
-@include javascript/jcal.texi
 @include javascript/lib.texi
-@include javascript/popup.texi
-@include javascript/rrule.texi
-@include javascript/script.texi
-@include javascript/server_connect.texi
+@include javascript/eventCreator.texi
 @include javascript/types.texi
+@include javascript/vevent.texi
+@include javascript/globals.texi
+@include javascript/server_connect.texi
+
+@node General Components
+@section General Components
+@include javascript/components/date_time_input.texi
+@include javascript/components/input_list.texi
+
+@node VEvent Components
+@section VEvent Components
+@include javascript/components/vevent.texi
+@include javascript/components/changelog.texi
+@include javascript/components/edit_rrule.texi
+@include javascript/components/popup_element.texi
+@include javascript/components/tab_group_element.texi
+@include javascript/components/vevent_block.texi
+@include javascript/components/vevent_description.texi
+@include javascript/components/vevent_dl.texi
+@include javascript/components/vevent_edit.texi

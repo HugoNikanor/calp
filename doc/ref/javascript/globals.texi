@@ -1,0 +1,41 @@
+@node globals
+@subsection globals.ts
+
+Different variables and values which for different reasons needs to be
+global. Window Value's are those that are bound to the @code{window}
+context in JavaScript, so is really always available, no opt out.
+
+@deftypevar {Map<uid, VEvent>} vcal_objects
+All VEvent objects on current page, indexed by their unique identifiers.
+
+A global object store.
+@end deftypevar
+
+@deftypevar {Map<uid, string>} event_calendar_mapping
+Mapping from VEvent unique identifier, to name of its calendar. Should
+probably not be global, so refrain from using it.
+@end deftypevar
+
+@deftypevr {Window Value} {Map<uid, VEvent>} vcal_objects
+The exact same object store as the regular variable of the same
+name. Mostly here for human debugability.
+@end deftypevr
+
+@deftypevr {Window Value} {@code{'month'} | @code{'string'}} VIEW
+How the calendar is currently formatted. Should be set by the backend
+through a simple @code{script}-tag.
+@end deftypevr
+
+@deftypevr {Window Value} {boolean} EDIT_MODE
+However editing of events is enabled or not.
+Should be set by the backend through a simple @code{script}-tag.
+@end deftypevr
+
+@deftypevr {Window Value} {string} default_calendar
+Name of the calendar to assume when creating new events.
+Should be set by the backend through a simple @code{script}-tag.
+@end deftypevr
+
+@c TODO addNewEvent
+@c @deftypevr {Window Value} {string} default_calendar
+@c @end deftypevr

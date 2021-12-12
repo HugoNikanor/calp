@@ -1,0 +1,23 @@
+@subsection vevent
+
+@deftp {Abstract Web Component} ComponentVEvent {uid: string?}
+
+@c TODO what is done in the default constructor,
+@c and the default connectedCallback
+
+This registeres itself, but doesn't redraw
+We do however redraw in connectedCallback
+
+@deftypeivar ComponentVEvent uid uid
+@end deftypeivar
+
+@deftypeivar ComponentVEvent {HTMLTemplateElement?} template
+@end deftypeivar
+
+@deftypemethod ComponentVEvent void redraw (data: VEvent)
+While abstract for this, @emph{must} be overridden for everyone else
+@end deftypemethod
+@end deftp
+
+Note that many of these assume that their initial children are
+configured specifically, that is however not completely documented.

@@ -1,0 +1,46 @@
+@subsection Tab Group Element
+
+@deftp {Web Component for VEvent} TabGroupElement
+@wcindex <tab-group>
+@wcindex tab-group
+@code{<tab-group>}
+
+A group of tabs, where only one can be visible at a time.
+
+@c TODO which form does the HTML document have? For CSS purposes
+
+Each tab consists of two parts, a label which is used for selecting
+it, and a tab-element, which contains the actual content. These two
+should refer to each other as follows:
+
+@verbatim
++---------------+     +----------------+
+|   TabLabel    |     |       Tab      |
++---------------+     +----------------+
+|            id |<----| aria-labeledby |
+| aria-controls |---->|             id |
++---------------+     +----------------+
+@end verbatim
+
+Further information about tabs in HTML can be found here:
+@url{https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/Tab_Role}
+
+@defvr {CSS Variable} {--tabcount}
+Each tab element has the style property @code{--tabcount} set to how
+many tabs it has. This is mostly useful to make sure the tab context
+is large enough to fit all tab labels without overflowing.
+@end defvr
+
+@deftypemethod TabGroupElement void addTab {HTMLElement} {label: string?} {title: string?}
+Adds a new tab to the group. The first parameter will make up the body
+of the tab. The label is whath should be shown in the tab selector,
+but defaults to the first letter of the text content of the body node.
+Title is the hoover text of the label.
+@end deftypemethod
+
+@deftypemethod TabGroupElement void removeTab {HTMLElement}
+HTMLElement must be one of the tab bodies in this group. This method
+removes it, along with its TabLabel.
+@end deftypemethod
+
+@end deftp

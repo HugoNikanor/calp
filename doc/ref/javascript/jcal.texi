@@ -1,4 +1,7 @@
-
 @node jcal
 @subsection jcal.js
 
+@deftypefun Document jcal_to_xcal {JCal ...}
+A document with the xcal namespace, and @code{icalendar} as its root
+element. Each child is a valid xcal representation of our JCal object.
+@end deftypefun

@@ -1,0 +1,10 @@
+@subsection Edit RRule
+
+@deftp {Web Component for VEvent} EditRRule
+@wcindex <vevent-edit-rrule>
+@wcindex vevent-edit-rrule
+@code{<vevent-edit-rrule>}
+
+An edit form for a recurrence rule. Searches its template for elements
+with @code{[name="<<field name>>"]}, and binds to those.
+@end deftp

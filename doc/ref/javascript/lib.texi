@@ -4,11 +4,6 @@
 
 General procedures which in theory could be used anywhere.
 
-@defvar xcal
-The xml namespace name for xcalendar, which is
-``urn:ietf:params:xml:ns:icalendar-2.0''.
-@end defvar
-
 
 @node Default prototype extensions
 @subsubsection Default prototype extensions
@@ -74,10 +69,6 @@ and 100, where 00:00 maps to 0, and 23:59 to ~100.
 @defun gensym [pxrefix='gensym']
 Generates a new string which is (hopefully) globally unique.
 Compare with @code{gensym} from Lisp.
-@end defun
-
-@defun setVar str val
-Set the CSS var @var{str} to @var{val} on the root element.
 @end defun
 
 @defun asList thing

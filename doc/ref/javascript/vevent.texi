@@ -1,0 +1,108 @@
+@node vevent
+@subsection vevent.js
+
+@deftp {Interface} Redrawable
+@deftypeop {Interface Field} Redrawable void redraw VEvent
+@end deftypeop
+@end deftp
+
+@deffn {Type Predicate} isRedrawable element
+Checks if the given element is an instance of Redrawable.
+@end deffn
+
+
+@deftp {class} VEventValue {type: ical_type} {value: any} {parameters: Map<string, any>}
+
+@deftypemethod VEventValue {[Record<string, any>, ical_type, any]} @
+               to_jcal {}
+The return value is @emph{almost} a @code{JCalProperty}, just without
+the field name.
+@end deftypemethod
+
+@end deftp
+
+@deftp VEvent {properties: Map<string, VEventValue | VEventValue[]>} @
+              {components: VEvent[]}
+
+Component for a single instance of a calendar event. Almost all data
+access should go through @code{getProperty} and @code{setProperty},
+with the exception of the current calendar (which is accessed directly
+through @code{calendar}). Almost all changes through these interfaces
+are logged, and can be viewed in @var{_changelog}.
+
+@deftypemethod VEvent {any?} getProperty {key: string}
+Returns the value of the given property if set, or undefined otherwise.
+
+For the keys
+@itemize
+@item @code{'CATEGORIES'},
+@item @code{'RESOURCES'},
+@item @code{'FREEBUSY'},
+@item @code{'EXDATE'}, and
+@item @code{'RDATE'}
+@end itemize
+instead returns a list list of values.
+@end deftypemethod
+
+
+@deftypemethod VEvent void setProperty {key: string} {value: any} {type: ical_type?}
+Sets the given property to the given value. If type is given it's
+stored alongside the value, possibly updating what is already
+there. Do however note that no validation between the given type and
+the type of the value is done.
+
+@var{value} may also be a list, but should only be so for the keys
+mentioned in @var{getProperty}.
+
+After the value is set, @var{redraw} is called on all registered
+objects, notifying them of the change.
+@end deftypemethod
+
+@deftypemethod VEvent void setProperties {[string, any, ical_type?][]}
+Equivalent to running @var{setProperty} for each element in the input
+list, but only calls @var{redraw} once at the end.
+@end deftypemethod
+
+@deftypemethod VEvent {IteratableIterator<string>} boundProperties
+Returns an iterator of all our properties.
+@end deftypemethod
+
+@deftypeivar VEvent {ChangeLogEntry[]} {_changelog}
+Every write through getProperty gets logged here, and can be
+consumed. Hopefully this will one day turn into an undo system.
+@ref{ChangeLogEntry}.
+@end deftypeivar
+
+@deftypeivar VEvent {string?} calendar
+The name of the calendar which this event belongs to.
+@end deftypeivar
+
+@deftypemethod VEvent void register {htmlNode: Redrawable}
+Register something redrawable, which will be notified whenever this
+VEvents data is updated.
+@end deftypemethod
+
+@deftypemethod VEvent void unregister {htmlNode: Redrawable}
+Stop recieving redraw events on the given component.
+@end deftypemethod
+
+@deftypemethod VEvent JCal to_jcal
+Converts the object to JCal data.
+@end deftypemethod
+
+@end deftp
+
+
+@deftp {class} RecurrenceRule
+@deftypemethod RecurrenceRule {Record<string, any>} to_jcal
+Converts ourselves to JCal data.
+@end deftypemethod
+@end deftp
+
+@deftypefun RecurrencRule xml_to_recurrence_rule {Element}
+Parse a XCAL recurrence rule into a RecurrenceRule object.
+@end deftypefun
+
+@deftypefun VEvent xml_to_vcal {Element}
+Parse a complete XCAL object into a JS VEvent object.
+@end deftypefun
