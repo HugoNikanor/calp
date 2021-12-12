@@ -105,10 +105,6 @@ window.addEventListener('load', function() {
         }
     }
 
-    // for (let nav of document.getElementsByClassName("popup-control")) {
-    //     bind_popup_control(nav);
-    // }
-
     for (let el of document.getElementsByClassName("event")) {
         /* Popup script replaces need for anchors to events.
            On mobile they also have the problem that they make

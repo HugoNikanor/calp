@@ -1,7 +1,6 @@
 export { PopupElement, setup_popup_element }
 
 import { VEvent } from '../vevent'
-import { bind_popup_control } from '../dragable'
 import { find_block, vcal_objects } from '../globals'
 
 import { ComponentVEvent } from './vevent'
@@ -159,4 +158,41 @@ function setup_popup_element(ev: VEvent): PopupElement {
     popup.visible = true;
     input.select();
     return popup;
+}
+
+/*
+  Given the navbar of a popup, make it dragable.
+ */
+function bind_popup_control(nav: HTMLElement) {
+
+    // if (!nav.closest('popup-element')) {
+    //     console.log(nav);
+    //     throw TypeError('not a popup container');
+    // }
+
+    nav.addEventListener('mousedown', function(e) {
+        /* Ignore mousedown on children */
+        if (e.target != nav) return;
+        nav.style.cursor = "grabbing";
+        nav.dataset.grabbed = "true";
+        nav.dataset.grabPoint = e.clientX + ";" + e.clientY;
+        // let popup = nav.closest(".popup-container");
+        let popup = nav.closest("popup-element") as HTMLElement;
+        nav.dataset.startPoint = popup.offsetLeft + ";" + popup.offsetTop;
+    })
+    window.addEventListener('mousemove', function(e) {
+        if (nav.dataset.grabbed) {
+            let [x, y] = nav.dataset.grabPoint!.split(";").map(Number);
+            let [startX, startY] = nav.dataset.startPoint!.split(";").map(Number);
+            // let popup = nav.closest(".popup-container");
+            let popup = nav.closest("popup-element") as HTMLElement;
+
+            popup.style.left = startX + (e.clientX - x) + "px";
+            popup.style.top = startY + (e.clientY - y) + "px";
+        }
+    });
+    window.addEventListener('mouseup', function() {
+        nav.dataset.grabbed = "";
+        nav.style.cursor = "";
+    });
 }
