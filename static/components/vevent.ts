@@ -10,13 +10,12 @@ Lacks an accompaning tag, and shouldn't be directly instanciated.
 */
 abstract class ComponentVEvent extends HTMLElement {
 
-    template: HTMLTemplateElement
+    template: HTMLTemplateElement | null
     uid: string
 
     constructor(uid?: string) {
         super();
-        this.template = document.getElementById(this.tagName) as HTMLTemplateElement;
-
+        this.template = document.getElementById(this.tagName) as HTMLTemplateElement | null
 
         let real_uid;
 

@@ -8,10 +8,18 @@ import { makeElement } from '../lib'
   <vevent-description />
 */
 class ComponentDescription extends ComponentVEvent {
+
+    constructor(uid?: string) {
+        super(uid);
+        if (!this.template) {
+            throw 'vevent-description template required';
+        }
+    }
+
     redraw(data: VEvent) {
         // update ourselves from template
 
-        let body = (this.template.content.cloneNode(true) as DocumentFragment).firstElementChild!;
+        let body = (this.template!.content.cloneNode(true) as DocumentFragment).firstElementChild!;
 
         for (let el of body.querySelectorAll('[data-property]')) {
             if (!(el instanceof HTMLElement)) continue;

@@ -14,6 +14,10 @@ class EditRRule extends ComponentVEvent {
     constructor(uid?: string) {
         super(uid);
 
+        if (!this.template) {
+            throw 'vevent-edit-rrule template required';
+        }
+
         let frag = this.template.content.cloneNode(true) as DocumentFragment
         let body = frag.firstElementChild!
         this.replaceChildren(body);

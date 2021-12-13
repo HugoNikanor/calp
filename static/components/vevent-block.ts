@@ -13,6 +13,10 @@ class ComponentBlock extends ComponentVEvent {
     constructor(uid?: string) {
         super(uid);
 
+        if (!this.template) {
+            throw 'vevent-block template required';
+        }
+
         this.addEventListener('click', () => {
             let uid = this.uid
             /* TODO is it better to find the popup through a query selector, or
@@ -24,7 +28,7 @@ class ComponentBlock extends ComponentVEvent {
     }
 
     redraw(data: VEvent) {
-        let body = (this.template.content.cloneNode(true) as DocumentFragment).firstElementChild!;
+        let body = (this.template!.content.cloneNode(true) as DocumentFragment).firstElementChild!;
 
         for (let el of body.querySelectorAll('[data-property]')) {
             if (!(el instanceof HTMLElement)) continue;

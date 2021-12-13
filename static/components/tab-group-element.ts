@@ -165,6 +165,7 @@ class TabGroupElement extends ComponentVEvent {
     }
 
 
+    /* returns our rrule tab if we have one */
     has_rrule_tab(): Element | false {
         for (let child of this.children) {
             if ((child.firstChild! as HTMLElement).tagName.toLowerCase() === 'vevent-edit-rrule') {
