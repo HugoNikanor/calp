@@ -73,7 +73,8 @@
    (catch 'misc-error
      (lambda () (display (date->string r "#~Y-~m-~d") p))
      (lambda (err _ fmt args . rest)
-       (format p "BAD~s-~s-~s" (year r) (month r) (day r))))))
+       (format p "#<<date> BAD year=~s month=~s day=~s>"
+               (year r) (month r) (day r))))))
 
 
 ;;; TIME
@@ -91,8 +92,8 @@
  (lambda (r p)
    (catch 'misc-error
      (lambda () (display (time->string r "#~H:~M:~S") p))
-     (lambda (err _ fmt args  rest)
-       (format p "BAD~s:~s:~s"
+     (lambda (err _ fmt args rest)
+       (format p "#<<time> hour=~s minute=~s second=~s>"
                (hour r) (minute r) (second r))))))
 
 
@@ -124,9 +125,14 @@
 (set-record-type-printer!
  <datetime>
  (lambda (r p)
-   (if (and (tz r) (not (string=? "UTC" (tz r))))
-       (write (datetime->sexp r) p)
-       (display (datetime->string r "#~1T~3~Z") p))))
+   (catch 'misc-error
+     (lambda ()
+      (if (and (tz r) (not (string=? "UTC" (tz r))))
+          (write (datetime->sexp r) p)
+          (display (datetime->string r "#~1T~3~Z") p)))
+     (lambda (err _ fmt args . rest)
+       (format p "#<<datetime> BAD date=~s time=~s tz=~s>"
+               (get-date r) (get-time% r) (tz r))))))
 
 
 

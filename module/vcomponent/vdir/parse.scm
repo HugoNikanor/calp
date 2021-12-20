@@ -25,6 +25,7 @@
 ;; themselves. Therefore, a simple comparison should work,
 ;; and then the TZOFFSETTO properties can be subtd.
 (define-public (parse-vdir path)
+  ;; TODO empty files here cause "#<eof>" to appear in the output XML, which is *really* bad.
   (let ((color
          (catch 'system-error
            (lambda () (call-with-input-file (path-append path "color") read-line))

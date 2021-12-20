@@ -8,11 +8,11 @@
   :use-module (datetime)
   :use-module (calp html components)
   :use-module ((calp html vcomponent)
-               :select (popup
-                        calendar-styles
+               :select (calendar-styles
                         fmt-day
                         make-block
                         fmt-single-event
+                        output-uid
                                           ))
   :use-module (calp html config)
   :use-module (calp html util)
@@ -25,8 +25,10 @@
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
 
+  :use-module ((vcomponent recurrence) :select (repeating? generate-recurrence-set))
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
+  :use-module ((base64) :select (base64encode))
   )
 
 
@@ -48,7 +50,10 @@
 (define*-public (html-generate
                  key:
                  (intervaltype 'all)    ; 'week | 'month | 'all
-                 calendars events start-date end-date
+                 calendars  ; All calendars to work on, probably (get-calendars global-event-object)
+                 events     ; All events which can be worked on, probably (get-event-set global-event-object)
+                 start-date             ; First date in interval to show
+                 end-date               ; Last  date in interval to show
                  render-calendar        ; (bunch of kv args) → (list sxml)
                  next-start             ; date → date
                  prev-start             ; date → date
@@ -93,7 +98,14 @@
     (meta (@ (name end-time)
              (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
 
-    (script "EDIT_MODE=" ,(if (edit-mode) "true" "false") ";")
+    (script
+     ,(format #f
+              "
+EDIT_MODE=~:[false~;true~];
+window.default_calendar='~a';"
+              (edit-mode)
+              (base64encode (get-config 'default-calendar))))
+
 
     (style ,(format #f "html {
     --editmode: 1.0;
@@ -104,19 +116,8 @@
     ,(include-alt-css "/static/dark.css"  '(title "Dark"))
     ,(include-alt-css "/static/light.css" '(title "Light"))
 
-    (script (@ (defer) (src "/static/types.js")))
-    (script (@ (defer) (src "/static/lib.js")))
-    (script (@ (defer) (src "/static/jcal.js")))
-    (script (@ (defer) (src "/static/dragable.js")))
-    (script (@ (defer) (src "/static/clock.js")))
-    (script (@ (defer) (src "/static/popup.js")))
-    (script (@ (defer) (src "/static/rrule.js")))
-    (script (@ (defer) (src "/static/binders.js")))
-    (script (@ (defer) (src "/static/server_connect.js")))
-    (script (@ (defer) (src "/static/input_list.js")))
-    (script (@ (defer) (src "/static/date_time.js")))
-    (script (@ (defer) (src "/static/vcal.js")))
-    (script (@ (defer) (src "/static/script.js")))
+    (script (@ (src "/static/script.out.js")))
+
     ,(calendar-styles calendars)
 
     ,@(when (debug)
@@ -136,6 +137,10 @@
                              next-start: next-start
                              prev-start: prev-start
                              )
+
+          ,(btn onclick: "addNewEvent()"
+                "+")
+
           ;; Popups used to be here, but was moved into render-calendar so each
           ;; sub-view can itself decide where to put them. This is important
           ;; since they need to be placed as children to the scrolling
@@ -146,6 +151,7 @@
          (footer
           (@ (style "grid-area: footer"))
           (span "Page generated " ,(date->string (current-date)))
+          (span "Current time " (current-time (@ (interval 1))))
           (span (a (@ (href ,(repo-url)))
                    "Source Code")))
 
@@ -162,13 +168,14 @@
                    ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
                          "månadsvy")
 
-                   ,(btn id: "today-button"
-                         href: (string-append
-                                "/today?" (case intervaltype
-                                            [(month) "view=month"]
-                                            [(week) "view=week"]
-                                            [else ""]))
-                         "idag"))
+                   (today-button
+                    (a (@ (class "btn")
+                          (href ,(string-append
+                                  "/today?" (case intervaltype
+                                              [(month) "view=month"]
+                                              [(week) "view=week"]
+                                              [else ""]))))
+                       "idag")))
 
               (div (@ (id "jump-to"))
                    ;; Firefox's accessability complain about each date
@@ -248,32 +255,22 @@
                        (summary "Calendar list")
                        (ul ,@(map
                               (lambda (calendar)
-                                `(li (@ (class "CAL_"
-                                          ,(html-attr (prop calendar 'NAME))))
+                                `(li (@ (data-calendar ,(base64encode (prop calendar 'NAME))))
                                      (a (@ (href "/search?"
-                                            ,((@ (web uri-query) encode-query-parameters)
-                                              `((q . (and (date/-time<=?
-                                                           ,(current-datetime)
-                                                           (prop event 'DTSTART))
-                                                          ;; TODO this seems to miss some calendars,
-                                                          ;; I belive it's due to some setting X-WR-CALNAME,
-                                                          ;; which is only transfered /sometimes/ into NAME.
-                                                          (string=? ,(->string (prop calendar 'NAME))
-                                                                    (or (prop (parent event) 'NAME) ""))))))))
+                                                 ,((@ (web uri-query) encode-query-parameters)
+                                                   `((q . (and (date/-time<=?
+                                                                ,(current-datetime)
+                                                                (prop event 'DTSTART))
+                                                               ;; TODO this seems to miss some calendars,
+                                                               ;; I belive it's due to some setting X-WR-CALNAME,
+                                                               ;; which is only transfered /sometimes/ into NAME.
+                                                               (string=? ,(->string (prop calendar 'NAME))
+                                                                         (or (prop (parent event) 'NAME) ""))))))))
                                         ,(prop calendar 'NAME))))
                               calendars))
-                       (div (@ (id "calendar-dropdown-template") (class "template"))
-                            (select
-                                (option "- Choose a Calendar -")
-                              ,@(let ((dflt (get-config 'default-calendar)))
-                                  (map (lambda (calendar)
-                                         (define name (prop calendar 'NAME))
-                                         `(option (@ (value ,(html-attr name))
-                                                     ,@(when (string=? name dflt)
-                                                         '((selected))))
-                                                  ,name))
-                                       calendars)))
-                            )))
+                       ;; (div (@ (id "calendar-dropdown-template") (class "template"))
+                       ;;      )
+                       ))
 
          ;; List of events
          (div (@ (class "eventlist")
@@ -286,7 +283,11 @@
                        ;; Figure out way to merge it with the below call.
                        ,@(stream->list
                           (stream-map
-                           fmt-single-event
+                           (lambda (ev)
+                             (fmt-single-event
+                              ev `((id ,(html-id ev))
+                                   (data-calendar ,(base64encode (or (prop (parent ev) 'NAME)
+                                                                     "unknown"))))))
                            (stream-take-while
                             (compose (cut date/-time<? <> start-date)
                                      (extract 'DTSTART))
@@ -296,32 +297,40 @@
     ;; This would idealy be a <template> element, but there is some
     ;; form of special case with those in xhtml, but I can't find
     ;; the documentation for it.
-    ,@(let* ((cal (vcalendar
-                   name: "Generated"
-                   children: (list (vevent
-                                    ;; The event template SHOULD lack
-                                    ;; a UID, to stop potential problems
-                                    ;; with conflicts when multiple it's
-                                    ;; cloned mulitple times.
-                                    dtstart: (datetime)
-                                    dtend: (datetime)
-                                    summary: ""
-                                    ;; force a description field,
-                                    ;; but don't put anything in
-                                    ;; it.
-                                    description: ""))))
-             (event (car (children cal))))
-        `((div (@ (class "template event-container") (id "event-template")
-                  ;; Only needed to create a duration. So actual dates
-                  ;; dosen't matter
-                  (data-start "2020-01-01")
-                  (data-end "2020-01-02"))
-               ,(caddar          ; strip <a> tag
-                 (make-block event `((class " generated ")))))
-          ;; TODO merge this into the event-set, add attribute
-          ;; for non-displaying elements.
-          (div (@ (class "template") (id "popup-template"))
-               ,(popup event (string-append "popup" (html-id event))))))
+    ;; ,@(let* ((cal (vcalendar
+    ;;                name: "Generated"
+    ;;                children: (list (vevent
+    ;;                                 ;; The event template SHOULD lack
+    ;;                                 ;; a UID, to stop potential problems
+    ;;                                 ;; with conflicts when multiple it's
+    ;;                                 ;; cloned mulitple times.
+    ;;                                 dtstart: (datetime)
+    ;;                                 dtend: (datetime)
+    ;;                                 summary: ""
+    ;;                                 ;; force a description field,
+    ;;                                 ;; but don't put anything in
+    ;;                                 ;; it.
+    ;;                                 description: ""))))
+    ;;          (event (car (children cal))))
+    ;;     `(
+    ;;       ;; (div (@ (class "template event-container") (id "event-template")
+    ;;       ;;         ;; Only needed to create a duration. So actual dates
+    ;;       ;;         ;; dosen't matter
+    ;;       ;;         (data-start "2020-01-01")
+    ;;       ;;         (data-end "2020-01-02"))
+    ;;       ;;      ,(caddar          ; strip <a> tag
+    ;;       ;;        (make-block event `((class " generated ")))))
+    ;;       ;; TODO merge this into the event-set, add attribute
+    ;;       ;; for non-displaying elements.
+    ;;       ;; (div (@ (class "template") (id "popup-template"))
+    ;;       ;;      ,(popup event (string-append "popup" (html-id event))))
+    ;;       ))
+
+    ;;; Templates used by our custom components
+    ,((@ (calp html vcomponent) edit-template) calendars)
+    ,((@ (calp html vcomponent) description-template))
+    ,((@ (calp html vcomponent) vevent-edit-rrule-template))
+    ,((@ (calp html vcomponent) popup-template))
 
     ;; Auto-complets when adding new fields to a component
     ;; Any string is however still valid.
@@ -344,4 +353,59 @@
                        RDATE RRULE ACTION REPEAT
                        TRIGGER CREATED DTSTAMP LAST-MODIFIED
                        SEQUENCE REQUEST-STATUS
-                       ))))))
+                       )))
+
+    ,@(let* (
+             (flat-events
+              ;; A simple filter-sorted-stream on event-overlaps? here fails.
+              ;; See tests/annoying-events.scm
+              (stream->list
+               (stream-filter
+                (lambda (ev)
+                  ((@ (vcomponent datetime) event-overlaps?)
+                   ev pre-start
+                   (date+ post-end (date day: 1))))
+                (stream-take-while (lambda (ev) (date<
+                                            (as-date (prop ev 'DTSTART))
+                                            (date+ post-end (date day: 1))))
+                                   events))))
+             (repeating% regular (partition repeating? flat-events))
+             (repeating
+              (for ev in repeating%
+                   (define instance (copy-vcomponent ev))
+
+                   (set! (prop instance 'UID) (output-uid instance))
+                   (delete-parameter! (prop* instance 'DTSTART) '-X-HNH-ORIGINAL)
+                   (delete-parameter! (prop* instance 'DTEND)   '-X-HNH-ORIGINAL)
+
+                   instance)))
+
+        `(
+          ;; Mapping showing which events belongs to which calendar,
+          ;; on the form
+          ;; (calendar (@ (key ,(base64-encode calendar-name)))
+          ;;           (li ,event-uid) ...)
+          (div (@ (style "display:none !important;")
+                  (id "calendar-event-mapping"))
+               ,(let ((ht (make-hash-table)))
+                  (for-each (lambda (event)
+                              (define name (prop (parent event) 'NAME))
+                              (hash-set! ht name
+                                         (cons (prop event 'UID)
+                                               (hash-ref ht name '()))))
+                            (append regular repeating))
+
+                  (hash-map->list
+                   (lambda (key values)
+                     `(calendar (@ (key ,(base64encode key)))
+                                ,@(map (lambda (uid) `(li ,uid))
+                                       values)))
+                   ht)))
+
+          ;; Calendar data for all events in current interval,
+          ;; rendered as xcal.
+          (div (@ (style "display:none !important;")
+                   (id "xcal-data"))
+                ,((@ (vcomponent xcal output) ns-wrap)
+                  (map (@ (vcomponent xcal output) vcomponent->sxcal)
+                       (append regular repeating)))))))))

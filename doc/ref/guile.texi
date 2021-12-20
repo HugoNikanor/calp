@@ -1,6 +1,8 @@
 @node Guile
 @chapter Guile
 
+@include guile/util.texi
+
 @c TODO
 This chapter will probably in the future be replaced by a proper
 system overview in the future.

@@ -2,6 +2,7 @@
   :use-module (calp util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
+  :use-module (rnrs records syntactic)
   :use-module (datetime)
   :use-module (calp html view calendar shared)
   :use-module (calp html config)
@@ -13,16 +14,18 @@
                         event-zero-length?
                         events-between))
   :use-module ((calp html vcomponent)
-               :select (make-block) )
+               :select (make-block output-uid) )
+  ;; :use-module ((calp html components)
+  ;;              :select ())
   :use-module ((vcomponent group)
                :select (group-stream get-groups-between))
   )
 
 
-(define*-public (render-calendar key: events start-date end-date #:allow-other-keys)
+(define*-public (render-calendar key: calendars events start-date end-date #:allow-other-keys)
   (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))
          (range (date-range start-date end-date)))
-    `((script "const VIEW='week';")
+    `((script "window.VIEW='week';")
       (div (@ (class "calendar"))
            (div (@ (class "days"))
                 ;; Top left area
@@ -52,10 +55,54 @@
 
                 ,@(for event in (stream->list
                                  (events-between start-date end-date events))
-                       ((@ (calp html vcomponent ) popup) event (string-append "popup" (html-id event))))
+                       `(popup-element
+                         (@ (class "vevent")
+                            (data-uid ,(output-uid event)))))))
 
-                )))))
 
+      ;; This template is here, instead of in (calp html calendar) since it only
+      ;; applies to this specific view. (calp html calendar month) is assumed to
+      ;; have its own variant of it.
+      (template (@ (id "vevent-block"))
+                ,(block-template)
+                )
+
+
+)))
+
+
+;; "physical" block
+(define (block-template)
+  `(div (@ ; (id ,(html-id ev))
+           (data-calendar "unknown")
+           #;
+           (class " CAL_unknown"
+             ;; ,(when (and (prop ev 'PARTSTAT)
+             ;;             (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+             ;;    " tentative")
+             ;; ,(when (and (prop ev 'TRANSP)
+             ;;             (eq? 'TRANSPARENT (prop ev 'TRANSP)))
+             ;;    " transparent")
+             )
+           ; (onclick "toggle_popup('popup' + this.id)")
+           )
+        ;; Inner div to prevent overflow. Previously "overflow: none"
+        ;; was set on the surounding div, but the popup /needs/ to
+        ;; overflow (for the tabs?).
+        (div (@ (class "event-body"))
+             (span (@ (class "repeating")) ; "↺"
+                    )
+             (span (@ (class "summary")
+                      (data-property "summary"))
+                   ; ,(format-summary  ev (prop ev 'SUMMARY))
+                   )
+             (span (@ (class "location")
+                       (data-property "location")))
+             ;; Document symbol when we have text
+             (span (@ (class "description"))
+                    ; "🗎"
+                    ))
+        ) )
 
 
 (define (time-marker-div)

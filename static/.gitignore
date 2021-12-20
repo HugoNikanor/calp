@@ -1,3 +1,7 @@
 *.css
 .*-cache
 *.map
+deps.svg
+*.js
+!arbitary_kv.js
+!input_list.js

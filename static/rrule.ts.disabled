@@ -23,11 +23,11 @@ class RRule {
        be listeners */
 
     fields = ['freq', 'until', 'count', 'interval',
-              'bysecond', 'byminute', 'byhour',
-              'bymonthday', 'byyearday', 'byweekno',
-              'bymonth', 'bysetpos', 'wkst',
-              'byday'
-             ]
+        'bysecond', 'byminute', 'byhour',
+        'bymonthday', 'byyearday', 'byweekno',
+        'bymonth', 'bysetpos', 'wkst',
+        'byday'
+    ]
 
     constructor() {
 
@@ -37,20 +37,20 @@ class RRule {
             this[f] = false;
             Object.defineProperty(
                 this, f, {
-                    /*
-                      TODO many of the fields should be wrapped
-                      in type tags. e.g. <until> elements are either
-                      <date> or <date-time>, NOT a raw date.
-                      by* fields should be wrapped with multiple values.
-                     */
-                    get: () => this['_' + f],
-                    set: (v) => {
-                        this['_' + f] = v
-                        for (let l of this.listeners[f]) {
-                            l(v);
-                        }
+                /*
+                  TODO many of the fields should be wrapped
+                  in type tags. e.g. <until> elements are either
+                  <date> or <date-time>, NOT a raw date.
+                  by* fields should be wrapped with multiple values.
+                 */
+                get: () => this['_' + f],
+                set: (v) => {
+                    this['_' + f] = v
+                    for (let l of this.listeners[f]) {
+                        l(v);
                     }
-                });
+                }
+            });
             this.listeners[f] = [];
         }
     }
@@ -68,7 +68,7 @@ class RRule {
         let root = doc.createElementNS(xcal, 'recur');
         for (let f of this.fields) {
             let v = this.fields[f];
-            if (! v) continue;
+            if (!v) continue;
             let tag = doc.createElementNS(xcal, f);
             /* TODO type formatting */
             tag.textContent = `${v}`;
@@ -81,7 +81,7 @@ class RRule {
         let obj = {};
         for (let f of this.fields) {
             let v = this[f];
-            if (! v) continue;
+            if (!v) continue;
             /* TODO special formatting for some types */
             obj[f] = v;
         }

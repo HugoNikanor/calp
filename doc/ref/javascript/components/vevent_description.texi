@@ -1,0 +1,10 @@
+@subsection VEvent Description
+
+@deftp {Web Component for VEvent} ComponentDescription
+@wcindex <vevent-description>
+@wcindex vevent-description
+@code{<vevent-description>}
+
+A text representation of a VEvent. Used as the summary tab of our
+popup windows, and in the sidebar.
+@end deftp

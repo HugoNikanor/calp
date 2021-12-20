@@ -1,2 +1,22 @@
 @node server_connect
 @subsection server_connect.js
+
+Procedures for interfacing with the backend server.
+
+@deftypefn {Async Function} void create_event {event: VEvent}
+Packs up the given event and sends it to the server to either be
+created, or simply be updated in the persistant database.
+
+Also does some minor updates registered components, to show that the
+event is actually created.
+@end deftypefn
+
+@deftypefn {Async Function} void remove_event {uid: uid}
+Requests that the server permanently remove the event with the given
+unique id from its persistant storage.
+
+If the server responds with a success also delete it from our local
+store (@code{vcal_objects}).
+
+@c TODO link to our backend flow here
+@end deftypefn

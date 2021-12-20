@@ -9,7 +9,7 @@
  ((vcomponent base) extract prop)
 
  ((calp util exceptions) warnings-are-errors warning-handler)
- ((guile) format)
+ ((guile) format @@)
 
  ((vcomponent) parse-calendar)
  ((vcomponent xcal parse) sxcal->vcomponent)
@@ -242,6 +242,13 @@ END:VCALENDAR"
 
 ;;; Earlier I failed to actually parse the recurrence parts, in short, 1 ≠ "1".
 
+(test-assert "Test that xcal recur rules are parseable"
+ ((@@ (vcomponent xcal parse) handle-value)
+  'recur 'props-are-unused-for-recur
+  '((freq "WEEKLY")
+    (interval "1")
+    (wkst "MO"))))
+
 (define ev
   (sxcal->vcomponent
    '(vevent
@@ -260,3 +267,21 @@ END:VCALENDAR"
 (test-assert
     "Check that recurrence rule commint from xcal also works"
   (generate-recurrence-set ev))
+
+;;; TODO test here, for byday parsing, and multiple byday instances in one recur element
+;;; TODO which should also test serializing and deserializing to xcal.
+;;; For example, the following rules specify every workday
+
+;; BEGIN:VCALENDAR
+;; PRODID:-//hugo//calp 0.6.1//EN
+;; VERSION:2.0
+;; CALSCALE:GREGORIAN
+;; BEGIN:VEVENT
+;; SUMMARY:Lunch
+;; DTSTART:20211129T133000
+;; DTEND:20211129T150000
+;; LAST-MODIFIED:20211204T220944Z
+;; UID:3d82c73c-6cdb-4799-beba-5f1d20d55347
+;; RRULE:FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR
+;; END:VEVENT
+;; END:VCALENDAR

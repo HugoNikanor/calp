@@ -1,20 +1,14 @@
 @node clock
 @subsection clock.js
 
-@deftp {(abstract) class} Clock
+@deftp {abstract class} Clock
 Interface for ``things'' which wants to get updated on a human timescale.
 
 @defmethod Clock update now
+@c abstract method
 Called every now and then, with @var{now} being the current time.
 @end defmethod
-
-All instances are expected to implement @code{update}, but are free to
-implement any other methods they see fit.
 @end deftp
-
-Below, only the methods (including @code{constructor} and
-@code{update} which do something of note (excluding the expected))
-are noted.
 
 @deftp {class} Timebar @extends{Clock}
 The (blue) vertical line which show the current time in the current day.

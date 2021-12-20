@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Simple script for starting the HTTP server in debug mode
+# on some apropriate port.
+# Only built for development use.
+find_port() {
+	for p in "$@"; do
+		echo 2>/dev/null >/dev/tcp/localhost/$p 
+		if [ $? -eq 1 ]; then
+			echo $p
+			return
+		fi
+	done
+	echo "No port available"
+	exit 1
+}
+
+port=`find_port {8080..9000}`
+
+echo "Starting on $port"
+
+$(dirname $(realpath $0))/main \
+	-o debug=#t \
+	-o edit-mode=#t \
+	--repl=$XDG_RUNTIME_DIR/calp \
+	server \
+	--port "$port" \
+	--sigusr

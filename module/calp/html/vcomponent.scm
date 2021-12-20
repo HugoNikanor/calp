@@ -1,5 +1,6 @@
 (define-module (calp html vcomponent)
   :use-module (calp util)
+  :use-module ((calp util exceptions) :select (warning))
   :use-module (vcomponent)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
@@ -14,6 +15,7 @@
   :use-module ((calp util color) :select (calculate-fg-color))
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
+  :use-module ((vcomponent recurrence) :select (repeating?))
   :use-module ((vcomponent recurrence internal) :prefix #{rrule:}#)
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
@@ -21,8 +23,11 @@
                         format-summary
                         format-recurrence-rule
                                       ))
+  :use-module ((calp util config) :select (get-config))
+  :use-module ((base64) :select (base64encode))
   )
 
+;; used by search view
 (define-public (compact-event-list list)
 
   (define calendars
@@ -33,11 +38,12 @@
 
   (define (summary event)
     `(summary (div (@ (class "summary-line "))
-                   (span (@ (class "square CAL_"
-                              ,(html-attr
-                                (or (prop (parent event)
-                                          'NAME)
-                                    "unknown")))))
+                   (span (@ (class "square")
+                            (data-calendar
+                             ,(base64encode
+                               (or (prop (parent event)
+                                         'NAME)
+                                   "unknown")))))
                    (time ,(let ((dt (prop event 'DTSTART)))
                             (if (datetime? dt)
                                 (datetime->string dt "~Y-~m-~d ~H:~M")
@@ -58,258 +64,143 @@
 ;; - sidebar
 ;; - popup overwiew tab
 ;; - search result (event details)
+;; Note that the <vevent-description/> tag is bound as a JS custem element, which
+;; will re-render all this, through description-template. This also means that
+;; the procedures output is intended to be static, and to NOT be changed by JavaScript.
 (define*-public (fmt-single-event ev
                                   optional: (attributes '())
                                   key: (fmt-header list))
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
-  `(div (@ ,@(assq-merge
-              attributes
-              `((data-bindby "bind_view")
-                (class " eventtext summary-tab "
-                  ,(when (and (prop ev 'PARTSTAT)
-                              (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                     " tentative ")))))
-        (h3 ,(fmt-header
-              (when (prop ev 'RRULE)
-                `(span (@ (class "repeating")) "↺"))
-              `(span (@ (class "bind summary")
-                        (data-property "summary"))
-                     ,(prop ev 'SUMMARY))))
-        (div
-         ,(call-with-values (lambda () (fmt-time-span ev))
-            (case-lambda [(start)
-                          `(div (time (@ (class "bind dtstart")
-                                         (data-property "dtstart")
-                                         (data-fmt ,(string-append "~L" start))
-                                         (datetime ,(datetime->string
-                                                     (as-datetime (prop ev 'DTSTART))
-                                                     "~1T~3")))
-                                      ,(datetime->string
-                                        (as-datetime (prop ev 'DTSTART))
-                                        start)))]
-                         [(start end)
-                          `(div (time (@ (class "bind dtstart")
-                                         (data-property "dtstart")
-                                         (data-fmt ,(string-append "~L" start))
-                                         (datetime ,(datetime->string
-                                                     (as-datetime (prop ev 'DTSTART))
-                                                     "~1T~3")))
-                                      ,(datetime->string (as-datetime (prop ev 'DTSTART))
-                                                         start))
-                                " — "
-                                (time (@ (class "bind dtend")
-                                         (data-property "dtend")
-                                         (data-fmt ,(string-append "~L" end))
-                                         (datetime ,(datetime->string
-                                                     (as-datetime (prop ev 'DTSTART))
-                                                     "~1T~3")))
-                                      ,(datetime->string (as-datetime (prop ev 'DTEND))
-                                                         end)))]))
+  `(vevent-description
+    (@ ,@(assq-merge
+          attributes
+          `(
+            (class ,(when (and (prop ev 'PARTSTAT)
+                               (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+                      " tentative "))
+            (data-uid ,(output-uid ev)))))
+    (div (@ (class "vevent eventtext summary-tab"))
+         (h3 ,(fmt-header
+               (when (prop ev 'RRULE)
+                 `(span (@ (class "repeating")) "↺"))
+               `(span (@ (class "summary")
+                         (data-property "summary"))
+                      ,(prop ev 'SUMMARY))))
+         (div
+          ,(call-with-values (lambda () (fmt-time-span ev))
+             (case-lambda [(start)
+                           `(div (time (@ (class "dtstart")
+                                          (data-property "dtstart")
+                                          (data-fmt ,(string-append "~L" start))
+                                          (datetime ,(datetime->string
+                                                      (as-datetime (prop ev 'DTSTART))
+                                                      "~1T~3")))
+                                       ,(datetime->string
+                                         (as-datetime (prop ev 'DTSTART))
+                                         start)))]
+                          [(start end)
+                           `(div (time (@ (class "dtstart")
+                                          (data-property "dtstart")
+                                          (data-fmt ,(string-append "~L" start))
+                                          (datetime ,(datetime->string
+                                                      (as-datetime (prop ev 'DTSTART))
+                                                      "~1T~3")))
+                                       ,(datetime->string (as-datetime (prop ev 'DTSTART))
+                                                          start))
+                                 " — "
+                                 (time (@ (class "dtend")
+                                          (data-property "dtend")
+                                          (data-fmt ,(string-append "~L" end))
+                                          (datetime ,(datetime->string
+                                                      (as-datetime (prop ev 'DTSTART))
+                                                      "~1T~3")))
+                                       ,(datetime->string (as-datetime (prop ev 'DTEND))
+                                                          end)))]))
 
-         ;; TODO add optional fields when added in frontend
-         ;; Possibly by always having them here, just hidden.
+          (div (@ (class "fields"))
+               ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
+                  `(div (b "Plats: ")
+                        (div (@ (class "location") (data-property "location"))
+                             ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                          (prop ev 'LOCATION)))))
+               ,(awhen (prop ev 'DESCRIPTION)
+                       `(div (@ (class "description")
+                                (data-property "description"))
+                             ,(format-description ev it)))
 
-         (div (@ (class "fields"))
-          ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
-             `(div (b "Plats: ")
-                   (div (@ (class "bind location") (data-property "location"))
-                        ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                     (prop ev 'LOCATION)))))
-          ,(awhen (prop ev 'DESCRIPTION)
-                  `(div (@ (class "bind description")
-                           (data-property "description"))
-                         ,(format-description ev it)))
+               ,@(awhen (prop* ev 'ATTACH)
+                        ;; attach satisfies @code{vline?}
+                        (for attach in it
+                             (if (and=> (param attach 'VALUE)
+                                        (lambda (p) (string=? "BINARY" (car p))))
+                                 ;; Binary data
+                                 ;; TODO guess datatype if FMTTYPE is missing
+                                 (awhen (and=> (param attach 'FMTTYPE)
+                                               (lambda (it) (string-split
+                                                        (car it) #\/)))
+                                        ;; TODO other file formats
+                                        (when (string=? "image" (car it))
+                                          (let* ((chk (-> (value attach)
+                                                          sha256
+                                                          checksum->string))
+                                                 (dname
+                                                  (path-append (xdg-runtime-dir)
+                                                               "calp-data" "images"))
+                                                 (filename (-> dname
+                                                               (path-append chk)
+                                                               ;; TODO second part of mimetypes
+                                                               ;; doesn't always result in a valid
+                                                               ;; file extension.
+                                                               ;; Take a look in mime.types.
+                                                               (string-append "." (cadr it)))))
+                                            (unless (file-exists? filename)
+                                              ;; TODO handle tmp directory globaly
+                                              (mkdir (dirname dname))
+                                              (mkdir dname)
+                                              (call-with-output-file filename
+                                                (lambda (port)
+                                                  (put-bytevector port (value attach)))))
+                                            (let ((link (path-append
+                                                         "/tmpfiles"
+                                                         ;; TODO better mimetype to extension
+                                                         (string-append chk "." (cadr it)))))
+                                              `(a (@ (href ,link))
+                                                  (img (@ (class "attach")
+                                                          (src ,link))))))))
+                                 ;; URI
+                                 (cond ((and=> (param attach 'FMTTYPE)
+                                               (compose (cut string= <> "image" 0 5) car))
+                                        `(img (@ (class "attach")
+                                                 (src ,(value attach)))))
+                                       (else `(a (@ (class "attach")
+                                                    (href ,(value attach)))
+                                                 ,(value attach)))))))
 
-          ,@(awhen (prop* ev 'ATTACH)
-                   ;; attach satisfies @code{vline?}
-                   (for attach in it
-                        (if (and=> (param attach 'VALUE)
-                                   (lambda (p) (string=? "BINARY" (car p))))
-                            ;; Binary data
-                            ;; TODO guess datatype if FMTTYPE is missing
-                            (awhen (and=> (param attach 'FMTTYPE)
-                                          (lambda (it) (string-split
-                                                   (car it) #\/)))
-                                   ;; TODO other file formats
-                                   (when (string=? "image" (car it))
-                                     (let* ((chk (-> (value attach)
-                                                     sha256
-                                                     checksum->string))
-                                            (dname
-                                             (path-append (xdg-runtime-dir)
-                                                          "calp-data" "images"))
-                                            (filename (-> dname
-                                                          (path-append chk)
-                                                          ;; TODO second part of mimetypes
-                                                          ;; doesn't always result in a valid
-                                                          ;; file extension.
-                                                          ;; Take a look in mime.types.
-                                                          (string-append "." (cadr it)))))
-                                       (unless (file-exists? filename)
-                                         ;; TODO handle tmp directory globaly
-                                         (mkdir (dirname dname))
-                                         (mkdir dname)
-                                         (call-with-output-file filename
-                                           (lambda (port)
-                                             (put-bytevector port (value attach)))))
-                                       (let ((link (path-append
-                                                    "/tmpfiles"
-                                                    ;; TODO better mimetype to extension
-                                                    (string-append chk "." (cadr it)))))
-                                         `(a (@ (href ,link))
-                                             (img (@ (class "attach")
-                                                     (src ,link))))))))
-                            ;; URI
-                            (cond ((and=> (param attach 'FMTTYPE)
-                                          (compose (cut string= <> "image" 0 5) car))
-                                   `(img (@ (class "attach")
-                                            (src ,(value attach)))))
-                                  (else `(a (@ (class "attach")
-                                               (href ,(value attach)))
-                                            ,(value attach)))))))
+               ,(awhen (prop ev 'CATEGORIES)
+                       `(div (@ (class "categories"))
+                             ,@(map (lambda (c)
+                                      `(a (@ (class "category")
+                                             ;; TODO centralize search terms
+                                             (href
+                                              "/search/?"
+                                              ,(encode-query-parameters
+                                                `((q . (member
+                                                        ,(->string c)
+                                                        (or (prop event 'CATEGORIES)
+                                                            '())))))))
+                                          ,c))
+                                    it)))
 
-          ;; TODO add bind once I figure out how to bind lists
-          ,(awhen (prop ev 'CATEGORIES)
-                  `(div (@ (class "categories"))
-                        ,@(map (lambda (c)
-                                 `(a (@ (class "category")
-                                        ;; TODO centralize search terms
-                                        (href
-                                         "/search/?"
-                                         ,(encode-query-parameters
-                                           `((q . (member
-                                                   ,(->string c)
-                                                   (or (prop event 'CATEGORIES)
-                                                       '())))))))
-                                     ,c))
-                               it)))
+               ,(awhen (prop ev 'RRULE)
+                       `(div (@ (class "rrule"))
+                             ,@(format-recurrence-rule ev)))
 
-          ;; TODO bind
-          ,(awhen (prop ev 'RRULE)
-                  `(div (@ (class "rrule"))
-                        ,@(format-recurrence-rule ev)))
+               ,(when (prop ev 'LAST-MODIFIED)
+                  `(div (@ (class "last-modified")) "Senast ändrad "
+                        ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
 
-          ,(when (prop ev 'LAST-MODIFIED)
-             `(div (@ (class "last-modified")) "Senast ändrad "
-                   ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
+          ))))
 
-         )))
-
-(define*-public (fmt-for-edit ev
-                              optional: (attributes '())
-                              key: (fmt-header list))
-  `(div (@ (class " eventtext edit-tab ")
-           (data-bindby "bind_edit"))
-        (form (@ (class "edit-form"))
-              (div (@ (class "dropdown-goes-here")))
-              (h3 (input (@ (type "text")
-                            (placeholder "Sammanfattning")
-                            (name "summary") (required)
-                            (class "bind") (data-property "summary")
-                            (value ,(prop ev 'SUMMARY)))))
-
-              ,(let ((start (prop ev 'DTSTART))
-                     (end (prop ev 'DTEND)))
-                 `(div (@ (class "timeinput"))
-
-                       ,@(with-label
-                          "Starttid"
-                          `(div (@ (class "date-time bind")
-                                   (data-bindby "bind_date_time")
-                                   (name "dtstart"))
-                                (input (@ (type "date")
-                                          (value ,(date->string (as-date start)))))
-                                (input (@ (type "time")
-                                          (value ,(time->string (as-time start) "~H:~M"))
-                                          ,@(when (date? start) '((disabled)))
-                                          ))))
-
-                       ;; TODO some way to add an endtime if missing beforehand
-                       ;; TODO, actually proper support for event without end times
-                       ,@(when end
-                           (with-label
-                           "Sluttid"
-                           `(div (@ (class "date-time bind")
-                                    (data-bindby "bind_date_time")
-                                    (name "dtend"))
-                                 (input (@ (type "date")
-                                           (value ,(date->string (as-date end)))))
-                                 (input (@ (type "time")
-                                           (value ,(time->string (as-time end) "~H:~M"))
-                                           ,@(when (date? end) '((disabled))))))))
-
-                       (div
-                        ,@(with-label
-                           "Heldag?"
-                           `(input (@ (type "checkbox")
-                                      (class "bind")
-                                      (data-bindby "bind_wholeday")
-                                      (name "wholeday")
-                                      ,@(when (date? start) '((checked)))))))
-
-                       ))
-
-              ,@(with-label
-                 "Plats"
-                 `(input (@ (placeholder "Plats")
-                            (name "location")
-                            (type "text")
-                            (class "bind") (data-property "location")
-                            (value ,(or (prop ev 'LOCATION) "")))))
-
-              ,@(with-label
-                 "Beskrivning"
-                 `(textarea (@ (placeholder "Beskrivning")
-                               (class "bind") (data-property "description")
-                               (name "description"))
-                            ,(prop ev 'DESCRIPTION)))
-
-              ,@(with-label
-                 "Kategorier"
-                 ;; It would be better if these input-list's worked on the same
-                 ;; class=bind system as the fields above. The problem with that
-                 ;; is however that each input-list requires different search
-                 ;; and join procedures. Currently this is bound in the JS, see
-                 ;; [CATEGORIES_BIND].
-                 ;; It matches on ".input-list[data-property='categories']".
-                 `(div (@ (class "input-list")
-                          (data-property "categories"))
-                       ,@(awhen (prop ev 'CATEGORIES)
-                                (map (lambda (c)
-                                       `(input (@ (size 2)
-                                                  (class "unit")
-                                                  (value ,c))))
-                                     it))
-
-                       (input (@ (class "unit final")
-                                 (size 2)
-                                 (type "text")
-                                 ))))
-
-              (hr)
-
-              ;; For custom user fields
-              ;; TODO these are currently not bound to anything, so entering data
-              ;; here does nothing. Bigest hurdle to overcome is supporting arbitrary
-              ;; fields which will come and go in the JavaScript.
-              ;; TODO also, all (most? maybe not LAST-MODIFIED) remaining properties
-              ;; should be exposed here.
-              (div (@ (class "input-list"))
-               (div (@ (class "unit final newfield"))
-                    (input (@ (type "text")
-                              (list "known-fields")
-                              (placeholder "Nytt fält")))
-                    (select (@ (name "TYPE"))
-                      (option (@ (value "TEXT")) "Text"))
-                    (span
-                     (input (@ (type "text")
-                               (placeholder "Värde"))))))
-
-              (hr)
-
-
-              (input (@ (type "submit")))
-              )))
 
 
 ;; Single event in side bar (text objects)
@@ -324,7 +215,7 @@
                   (lambda (ev)
                     (fmt-single-event
                       ev `((id ,(html-id ev))
-                           (class "CAL_" ,(html-attr (or (prop (parent ev) 'NAME) "unknown"))))
+                           (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown"))))
                       fmt-header:
                       (lambda body
                         `(a (@ (href "#" ,(html-id ev) #; (date-link (as-date (prop ev 'DTSTART)))
@@ -341,60 +232,61 @@
                    events))))))
 
 
+;; Specific styles for each calendar.
+;; TODO only emit the CSS here, requiring the caller to handle the context,
+;; since that would allow us to use this in other contexts.
 (define-public (calendar-styles calendars)
   `(style
-     ,(format #f "~:{.CAL_~a { --color: ~a; --complement: ~a }~%~}"
-              (map (lambda (c)
-                     (let* ((name (html-attr (prop c 'NAME)))
-                            (bg-color (prop c 'COLOR))
-                            (fg-color (and=> (prop c 'COLOR)
-                                             calculate-fg-color)))
-                       (list name (or bg-color 'white) (or fg-color 'black))))
-                   calendars))))
+       ,(lambda () (format #t "~:{ [data-calendar=\"~a\"] { --color: ~a; --complement: ~a }~%~}"
+                      (map (lambda (c)
+                             (let* ((name (base64encode (prop c 'NAME)))
+                                    (bg-color (prop c 'COLOR))
+                                    (fg-color (and=> (prop c 'COLOR)
+                                                     calculate-fg-color)))
+                               (list name (or bg-color 'white) (or fg-color 'black))))
+                           calendars)))))
 
 ;; "Physical" block in calendar view
 (define*-public (make-block ev optional: (extra-attributes '()))
 
+  ;; surrounding <a /> element which allows something to happen when an element
+  ;; is clicked with JS turned off. Our JS disables this, and handles clicks itself.
   `((a (@ (href "#" ,(html-id ev))
           (class "hidelink"))
-       (div (@ ,@(assq-merge
-                  extra-attributes
-                  `((id ,(html-id ev))
-                    (data-calendar ,(html-attr (or (prop (parent ev) 'NAME) "unknown")))
-                    ;; (data-bindon "bind_view")
-                    (class "event CAL_" ,(html-attr (or (prop (parent ev) 'NAME)
-                                                        "unknown"))
-                      ,(when (and (prop ev 'PARTSTAT)
-                                  (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
-                         " tentative")
-                      ,(when (and (prop ev 'TRANSP)
-                                  (eq? 'TRANSPARENT (prop ev 'TRANSP)))
-                         " transparent")
-                      )
-                    (onclick "toggle_popup('popup' + this.id)")
-                    )))
-            ;; Inner div to prevent overflow. Previously "overflow: none"
-            ;; was set on the surounding div, but the popup /needs/ to
-            ;; overflow (for the tabs?).
-            (div (@ (class "event-body"))
-             ,(when (prop ev 'RRULE)
-                `(span (@ (class "repeating")) "↺"))
-             (span (@ (class "bind summary")
-                      (data-property "summary"))
-                   ,(format-summary  ev (prop ev 'SUMMARY)))
-             ,(when (prop ev 'LOCATION)
-                `(span (@ (class "bind location")
-                          (data-property "location"))
-                       ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                    (prop ev 'LOCATION))))
-             ;; Document symbol when we have text
-             ,(when (and=> (prop ev 'DESCRIPTION) (negate string-null?))
-                `(span (@ (class "description"))
-                       "🗎")))
-            (div (@ (style "display:none !important;"))
-                 ,((@ (vcomponent xcal output) ns-wrap)
-                   ((@ (vcomponent xcal output) vcomponent->sxcal)
-                    ev)))))))
+       (vevent-block (@ ,@(assq-merge
+                           extra-attributes
+                           `((id ,(html-id ev))
+                             (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown")))
+                             (data-uid ,(output-uid ev))
+
+                             (class "vevent event"
+                               ,(when (and (prop ev 'PARTSTAT)
+                                           (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+                                  " tentative")
+                               ,(when (and (prop ev 'TRANSP)
+                                           (eq? 'TRANSPARENT (prop ev 'TRANSP)))
+                                  " transparent")
+                               ))))
+                     ;; Inner div to prevent overflow. Previously "overflow: none"
+                     ;; was set on the surounding div, but the popup /needs/ to
+                     ;; overflow (for the tabs?).
+                     ;; TODO the above comment is no longer valid. Popups are now stored
+                     ;; separately from the block.
+                     (div (@ (class "event-body"))
+                          ,(when (prop ev 'RRULE)
+                             `(span (@ (class "repeating")) "↺"))
+                          (span (@ (class "summary")
+                                   (data-property "summary"))
+                                ,(format-summary  ev (prop ev 'SUMMARY)))
+                          ,(when (prop ev 'LOCATION)
+                             `(span (@ (class "location")
+                                       (data-property "location"))
+                                    ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
+                                                 (prop ev 'LOCATION))))
+                          ;; Document symbol when we have text
+                          ,(when (and=> (prop ev 'DESCRIPTION) (negate string-null?))
+                             `(span (@ (class "description"))
+                                    "🗎")))))))
 
 
 (define (repeat-info event)
@@ -421,208 +313,284 @@
                              (else (->string value))))))
                   (prop event 'RRULE)))))
 
-;; TODO bind this into the xcal
-(define (editable-repeat-info event)
-  `(div (@ (class "eventtext"))
-        (h2 "Upprepningar")
-        ,@(when (debug)
-            '((button (@ (style "position:absolute;right:1ex;top:1ex")
-                         (onclick "console.log(event_from_popup(this.closest('.popup-container')).properties.rrule.asJcal());"))
-                      "js")))
-        (table (@ (class "recur-components bind")
-                  (name "rrule")
-                  (data-bindby "bind_recur"))
-               ,@(map ; (@@ (vcomponent recurrence internal) map-fields)
-                  (lambda (key )
-                    `(tr (@ (class ,key)) (th ,key)
-                         (td
-                          ,(case key
-                             ((freq)
-                              `(select (@ (class "bind-rr") (name "freq"))
-                                 (option "-")
-                                 ,@(map (lambda (x) `(option (@ (value ,x)
-                                                           ,@(awhen (prop event 'RRULE)
-                                                                    (awhen (rrule:freq it)
-                                                                           (awhen (eq? it x)
-                                                                                  '((selected))))))
-                                                        ,(string-titlecase
-                                                          (symbol->string x))))
-                                        '(SECONDLY MINUTELY HOURLY
-                                                   DAILY WEEKLY
-                                                   MONTHLY YEARLY))))
-                             ((until)
-                              (if (date? (prop event 'DTSTART))
-                                  `(input (@ (type "date")
-                                             (name "until")
-                                             (class "bind-rr")
-                                             (value ,(awhen (prop event 'RRULE)
-                                                            (awhen (rrule:until it)
-                                                                   (date->string it))))))
-                                  `(span (@ (class "bind-rr date-time")
-                                            (name "until"))
-                                    (input (@ (type "date")
-                                              (value ,(awhen (prop event 'RRULE)
-                                                             (awhen (rrule:until it)
-                                                                    (date->string
-                                                                     (as-date it)))))))
-                                    (input (@ (type "time")
-                                              (value ,(awhen (prop event 'RRULE)
-                                                             (awhen (rrule:until it)
-                                                                    (time->string
-                                                                     (as-time it))))))))))
-                             ((count)
-                              `(input (@ (type number) (min 0) (size 4)
-                                         (value ,(awhen (prop event 'RRULE)
-                                                        (or (rrule:count it) "")))
-                                         (name "count")
-                                         (class "bind-rr")
-                                         )))
-                             ((interval)
-                              `(input (@ (type number) (min 0) (size 4)
-                                         (value ,(awhen (prop event 'RRULE)
-                                                        (or (rrule:interval it) "")))
-                                         (name "interval")
-                                         (class "bind-rr"))))
-                             ((wkst)
-                              `(select (@ (name "wkst") (class "bind-rr"))
-                                 (option "-")
-                                 ,@(map (lambda (i)
-                                          `(option (@ (value ,i)
-                                                      ,@(awhen (prop event 'RRULE)
-                                                               (awhen (rrule:wkst it)
-                                                                      (awhen (eqv? it i)
-                                                                             '((selected))))))
-                                                   ,(week-day-name i)))
-                                        (iota 7))))
 
-                             ((byday)
-                              (let ((input (lambda* (optional: (byday '(#f . #f)) key: final?)
-                                             `(div (@ (class "unit" ,(if final? " final" "")))
-                                                   ;; TODO make this thiner, and clearer that
-                                                   ;; it belongs to the following dropdown
-                                                   (input (@ (type number)
-                                                             (value ,(awhen (car byday) it))))
-                                                   (select (option "-")
-                                                     ,@(map (lambda (i)
-                                                              `(option (@ (value ,i)
-                                                                          ,@(if (eqv? i (cdr byday))
-                                                                                '((selected)) '()))
-                                                                       ,(week-day-name i)))
-                                                            (iota 7)))))))
-                                ;; TODO how does this bind?
-                                `(div (@ (class "bind-rr input-list"))
-                                      ,@(cond ((and=> (prop event 'RRULE)
-                                                      rrule:byday)
-                                               => (lambda (it) (map input it)))
-                                              (else '()))
+;; Return a unique identifier for a specific instance of an event.
+;; Allows us to reference each instance of a repeating event separately
+;; from any other
+(define-public (output-uid event)
+  (string-concatenate
+   (cons
+    (prop event 'UID)
+    (when (repeating? event)
+      ;; TODO this will break if a UID already looks like this...
+      ;; Just using a pre-generated unique string would solve it,
+      ;; until someone wants to break us. Therefore, we just give
+      ;; up for now, until a proper solution can be devised.
+      (list "---"
+            ;; TODO Will this give us a unique identifier?
+            ;; Or can two events share UID along with start time
+            (datetime->string
+             (as-datetime (or
+                           ;; TODO What happens if the parameter RANGE=THISANDFUTURE is set?
+                           (prop event 'RECURRENCE-ID)
+                           (prop event 'DTSTART)))
+             "~Y-~m-~dT~H:~M:~S"))))))
 
-                                      ,(input final?: #t))))
 
-                             ((bysecond byminute byhour
-                                        bymonthday byyearday
-                                        byweekno bymonth bysetpos)
-                              (let ((input
-                                     (lambda* (value optional: (final ""))
-                                       `(input (@ (class "unit " ,final)
-                                                  (type "number")
-                                                  (size 2)
-                                                  (value ,value)
-                                                  (min ,(case key
-                                                          ((bysecond byminute byhour)  0)
-                                                          ((bymonthday)              -31)
-                                                          ((byyearday)              -366)
-                                                          ((byweekno)                -53)
-                                                          ((bymonth)                 -12)
-                                                          ((bysetpos)               -366)
-                                                          ))
-                                                  (max ,(case key
-                                                          ((bysecond)    60)
-                                                          ((byminute)    59)
-                                                          ((byhour)      23)
-                                                          ((bymonthday)  31)
-                                                          ((byyearday)  366)
-                                                          ((byweekno)    53)
-                                                          ((bymonth)     12)
-                                                          ((bysetpos)   366))))))))
-                                `(div (@ (name ,key)
-                                         (class "bind-rr input-list"))
-                                      ,@(map input
-                                             (awhen (prop event 'RRULE)
-                                                    (or ((case key
-                                                           ((bysecond)   rrule:bysecond)
-                                                           ((byminute)   rrule:byminute)
-                                                           ((byhour)     rrule:byhour)
-                                                           ((bymonthday) rrule:bymonthday)
-                                                           ((byyearday)  rrule:byyearday)
-                                                           ((byweekno)   rrule:byweekno)
-                                                           ((bymonth)    rrule:bymonth)
-                                                           ((bysetpos)   rrule:bysetpos))
-                                                         it)
-                                                        '())))
-                                      ,(input '() "final"))))
-                             (else (error "Unknown field, " key))))
+(define (week-day-select args)
+  `(select (@ ,@args)
+     (option "-")
+     ,@(map (lambda (x) `(option (@ (value ,(car x))) ,(cadr x)))
+            '((MO "Monday")
+              (TU "Tuesday")
+              (WE "Wednesday")
+              (TH "Thursday")
+              (FR "Friday")
+              (SA "Saturday")
+              (SU "Sunday")))))
 
-                         ;; TODO enable this button
-                         (td (button (@ (class "clear-input") (title "Rensa input")) "🗙"))
+
+;;; Templates
+
+
+;; edit tab of popup
+(define-public (edit-template calendars)
+  `(template
+    (@ (id "vevent-edit"))
+    (div (@ (class " eventtext edit-tab "))
+         (form (@ (class "edit-form"))
+               (select (@ (class "calendar-selection"))
+                 (option "- Choose a Calendar -")
+                 ,@(let ((dflt (get-config 'default-calendar)))
+                     (map (lambda (calendar)
+                            (define name (prop calendar 'NAME))
+                            `(option (@ (value ,(base64encode name))
+                                        ,@(when (string=? name dflt)
+                                            '((selected))))
+                                     ,name))
+                          calendars)))
+               (h3 (input (@ (type "text")
+                             (placeholder "Sammanfattning")
+                             (name "summary") (required)
+                             (data-property "summary")
+                                        ; (value ,(prop ev 'SUMMARY))
+                             )))
+
+               (div (@ (class "timeinput"))
+
+                    ,@(with-label
+                       "Starttid"
+                       '(date-time-input (@ (name "dtstart")
+                                            (data-property "dtstart")
+                                            )))
+
+                    ,@(with-label
+                       "Sluttid"
+                       '(date-time-input (@ (name "dtend")
+                                            (data-property "dtend"))))
+
+                    (div (@ (class "checkboxes"))
+                         ,@(with-label
+                            "Heldag?"
+                            `(input (@ (type "checkbox")
+                                       (name "wholeday")
+                                       )))
+                         ,@(with-label
+                            "Upprepande?"
+                            `(input (@ (type "checkbox")
+                                       (name "has_repeats")
+                                       ))))
+
+                    )
+
+               ,@(with-label
+                  "Plats"
+                  `(input (@ (placeholder "Plats")
+                             (name "location")
+                             (type "text")
+                             (data-property "location")
+                                        ; (value ,(or (prop ev 'LOCATION) ""))
+                             )))
+
+               ,@(with-label
+                  "Beskrivning"
+                  `(textarea (@ (placeholder "Beskrivning")
+                                (data-property "description")
+                                (name "description"))
+                                        ; ,(prop ev 'DESCRIPTION)
+                             ))
+
+               ,@(with-label
+                  "Kategorier"
+                  `(input-list
+                    (@ (name "categories")
+                       (data-property "categories"))
+                    (input (@ (type "text")
+                              (placeholder "Kattegori")))))
+
+               ;; TODO This should be a "list" where any field can be edited
+               ;; directly. Major thing holding us back currently is that
+               ;; <input-list /> doesn't supported advanced inputs
+               ;; (div (@ (class "input-list"))
+               ;;      (div (@ (class "unit final newfield"))
+               ;;           (input (@ (type "text")
+               ;;                     (list "known-fields")
+               ;;                     (placeholder "Nytt fält")))
+               ;;           (select (@ (name "TYPE"))
+               ;;             (option (@ (value "TEXT")) "Text"))
+               ;;           (span
+               ;;            (input (@ (type "text")
+               ;;                      (placeholder "Värde"))))))
+
+               ;; (hr)
+
+
+               (input (@ (type "submit")))
+               ))))
+
+;; description in sidebar / tab of popup
+;; Template data for <vevent-description />
+(define-public (description-template)
+  '(template
+    (@ (id "vevent-description"))
+    (div (@ (class " vevent eventtext summary-tab " ()))
+         (h3 ((span (@ (class "repeating"))
+                    "↺")
+              (span (@ (class "summary")
+                       (data-property "summary")))))
+         (div (div (time (@ (class "dtstart")
+                            (data-property "dtstart")
+                            (data-fmt "~L~H:~M")
+                            (datetime ; "2021-09-29T19:56:46"
+                             ))
+                                        ; "19:56"
+                         )
+                   "\xa0—\xa0"
+                   (time (@ (class "dtend")
+                            (data-property "dtend")
+                            (data-fmt "~L~H:~M")
+                            (datetime ; "2021-09-29T19:56:46"
+                             ))
+                                        ; "20:56"
                          ))
-                  '(freq until count interval bysecond byminute byhour
-                         byday bymonthday byyearday byweekno bymonth bysetpos
-                         wkst)
-                  ; (prop event 'RRULE)
-                  ))))
+              (div (@ (class "fields"))
+                   (div (b "Plats: ")
+                        (div (@ (class "location")
+                                (data-property "location"))
+                                        ; "Alsättersgatan 13"
+                             ))
+                   (div (@ (class "description")
+                           (data-property "description"))
+                                        ; "With a description"
+                        )
+
+                   (div (@ (class "categories")
+                           (data-property "categories")))
+                   ;; (div (@ (class "categories"))
+                   ;;      (a (@ (class "category")
+                   ;;            (href "/search/?"
+                   ;;                  "q=%28member%20%22test%22%20%28or%20%28prop%20event%20%28quote%20CATEGORIES%29%29%20%28quote%20%28%29%29%29%29"))
+                   ;;         test))
+                   ;; (div (@ (class "rrule"))
+                   ;;      "Upprepas "
+                   ;;      "varje vecka"
+                   ;;      ".")
+                   (div (@ (class "last-modified"))
+                        "Senast ändrad -"
+                                        ; "2021-09-29 19:56"
+                        ))))))
+
+(define-public (vevent-edit-rrule-template)
+  `(template
+    (@ (id "vevent-edit-rrule"))
+    (div (@ (class "eventtext"))
+         (h2 "Upprepningar")
+         (dl
+          (dt "Frequency")
+          (dd (select (@ (name "freq"))
+                (option "-")
+                ,@(map (lambda (x) `(option (@ (value ,x)) ,(string-titlecase (symbol->string x))))
+                       '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))))
+
+          (dt "Until")
+          (dd (date-time-input (@ (name "until"))))
+
+          (dt "Conut")
+          (dd (input (@ (type "number") (name "count") (min 0))))
+
+          (dt "Interval")
+          (dd (input (@ (type "number") (name "interval") ; min and max depend on FREQ
+                        )))
+
+          ,@(concatenate
+             (map (lambda (pair)
+                    (define name (list-ref pair 0))
+                    (define pretty-name (list-ref pair 1))
+                    (define min (list-ref pair 2))
+                    (define max (list-ref pair 3))
+                    `((dt ,pretty-name)
+                      (dd (input-list (@ (name ,name))
+                                      (input (@ (type "number")
+                                                (min ,min) (max ,max)))))))
+                  '((bysecond "By Second" 0 60)
+                    (byminute "By Minute" 0 59)
+                    (byhour "By Hour" 0 23)
+                    (bymonthday "By Month Day" -31 31) ; except 0
+                    (byyearday "By Year Day" -366 366) ; except 0
+                    (byweekno "By Week Number" -53 53) ; except 0
+                    (bymonth "By Month" 1 12)
+                    (bysetpos "By Set Position" -366 366) ; except 0
+                    )))
+
+          ;; (dt "By Week Day")
+          ;; (dd (input-list (@ (name "byweekday"))
+          ;;                 (input (@ (type number)
+          ;;                           (min -53) (max 53) ; except 0
+          ;;                           ))
+          ;;                 ,(week-day-select '())
+          ;;                 ))
+
+          (dt "Weekstart")
+          (dd ,(week-day-select '((name "wkst")))))))
+  )
 
 
-(define-public (popup ev id)
-  `(div (@ (id ,id) (class "popup-container CAL_" 
-                           ,(html-attr (or (prop (parent ev) 'NAME)
-                                           "unknown"))) 
-           (onclick "event.stopPropagation()"))
-        ;; TODO all (?) code uses .popup-container as the popup, while .popup sits and does nothing.
-        ;; Do something about this?
-        (div (@ (class "popup"))
-             (nav (@ (class "popup-control"))
-                  ,(btn "×"
-                        title: "Stäng"
-                        onclick: "close_popup(document.getElementById(this.closest('.popup-container').id))"
-                        class: '("close-tooltip"))
-                  ,(when (edit-mode)
-                     (list
-                      (btn "🖊️"
-                           title: "Redigera"
-                           onclick: "place_in_edit_mode(event_from_popup(this.closest('.popup-container')))")
-                      (btn "🗑"
-                           title: "Ta bort"
-                           onclick: "remove_event(event_from_popup(this.closest('.popup-container')))"))))
+;; Based on popup:s output
+(define-public (popup-template)
+  `(template
+    (@ (id "popup-template"))
+    ;; becomes the direct child of <popup-element/>
+    (div (@ (class "popup-root window")
+            (onclick "event.stopPropagation()"))
 
-             ,(tabset
-                `(("📅" title: "Översikt"
-                   ,(fmt-single-event ev))
+         (nav (@ (class "popup-control"))
+              (button (@ (class "close-button")
+                         (title "Stäng")
+                         (aria-label "Close"))
+                      "×")
+              (button (@ (class "maximize-button")
+                         (title "Fullskärm")
+                         ;; (aria-label "")
+                         )
+                      "🗖")
+              (button (@ (class "remove-button")
+                         (title "Ta Bort"))
+                      "🗑"))
 
-                  ,@(when (edit-mode)
-                     `(("📅" title: "Redigera"
-                        ,(fmt-for-edit ev))))
+         (tab-group (@ (class "window-body"))
+                    (vevent-description
+                     (@ (data-label "📅") (data-title "Översikt")
+                        (class "vevent")))
 
-                  ,@(when (debug)
-                      `(("🐸" title: "Debug"
-                         (div
-                          (pre ,(prop ev 'UID))))))
+                    (vevent-edit
+                     (@ (data-label "🖊") (data-title "Redigera")))
 
-                  ("⤓" title: "Nedladdning"
-                   (div (@ (class "eventtext") (style "font-family:sans"))
-                        (h2 "Ladda ner")
-                        (div (@ (class "side-by-side"))
-                             (ul (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".ics"))
-                                        "som iCal"))
-                                 (li (a (@ (href "/calendar/" ,(prop ev 'UID) ".xcs"))
-                                        "som xCal")))
-                             ,@(when (debug)
-                                 `((ul
-                                    (li (button (@ (onclick "console.log(event_to_jcal(event_from_popup(this.closest('.popup-container'))));")) "js"))
-                                    (li (button (@ (onclick "console.log(jcal_to_xcal(event_to_jcal(event_from_popup(this.closest('.popup-container')))));")) "xml"))
-                                    (li (button (@ (onclick "console.log(event_from_popup(this.closest('.popup-container')))")) "this"))
-                                    ))))
-                        ))
+                    ;; (vevent-edit-rrule
+                    ;;  (@ (data-label "↺") (data-title "Upprepningar")))
 
-                  ,@(when (prop ev 'RRULE)
-                      `(("↺" title: "Upprepningar" class: "repeating"
-                         ,(editable-repeat-info ev)))))))))
+                    (vevent-changelog
+                     (@ (data-label "📒") (date-title "Changelog")))
+
+                    ,@(when (debug)
+                        '((vevent-dl
+                           (@ (data-label "🐸") (data-title "Debug")))))))))

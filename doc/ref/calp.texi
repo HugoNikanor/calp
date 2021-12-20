@@ -65,7 +65,12 @@ text @footnote{Improvements welcome}
 @unnumbered Index
 @printindex cp
 @printindex fn
+@printindex ky
+@printindex pg
 @printindex tp
 @printindex vr
+
+@unnumbered Web Components
+@printindex wc
 
 @bye

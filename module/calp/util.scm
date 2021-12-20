@@ -9,7 +9,6 @@
                 set/r!
                 catch-multiple
                 quote?
-                re-export-modules
                 -> ->> set set-> aif awhen
                 let-lazy let-env
                 case* define-many
@@ -298,18 +297,9 @@
 (define-public (as-symb s)
   (if (string? s) (string->symbol s) s))
 
-
-
 (define-public (enumerate lst)
   (zip (iota (length lst))
        lst))
-
-;; Map with index
-(define-syntax-rule (map-each proc lst)
-  (map (lambda (x i) (proc x i))
-       lst (iota (length lst))))
-
-(export map-each)
 
 ;; Takes a procedure returning multiple values, and returns a function which
 ;; takes the same arguments as the original procedure, but only returns one of
@@ -338,14 +328,6 @@
         (else
          (cons (proc (car dotted-list))
                (map/dotted proc (cdr dotted-list))))))
-
-(define-syntax re-export-modules
-  (syntax-rules ()
-    ((_ (mod ...) ...)
-     (begin
-       (module-use! (module-public-interface (current-module))
-                    (resolve-interface '(mod ...)))
-       ...))))
 
 ;; Merges two association lists, comparing with eq.
 ;; The cdrs in all pairs in both lists should be lists,
@@ -380,7 +362,7 @@
     ;; NOTE changing this list to cons allows the output to work with assq-merge.
     (hash-map->list list h)))
 
-;; (group-by '(0 1 2 3 4 2 5 6) 2)
+;; (split-by '(0 1 2 3 4 2 5 6) 2)
 ;; ⇒ ((0 1) (3 4) (5 6))
 (define-public (split-by list item)
   (let loop ((done '())
@@ -523,6 +505,21 @@
             (call-with-values (lambda () (apply proc args)) list))
           lists)))
 
+(define (ass%-ref-all alist key =)
+  (map cdr (filter (lambda (pair) (= key (car pair)))
+                   alist)))
+
+;; Equivalent to assoc-ref (and family), but works on association lists with
+;; non-unique keys, returning all mathing records (instead of just the first).
+;; @begin lisp
+;; (assoc-ref-all '((a . 1) (b . 2) (a . 3)) 'a)
+;; ⇒ (1 3)
+;; @end
+(define-public (assoc-ref-all alist key) (ass%-ref-all alist key equal?))
+(define-public (assq-ref-all alist key)  (ass%-ref-all alist key eq?))
+(define-public (assv-ref-all alist key)  (ass%-ref-all alist key eqv?))
+
+
 
 
 (define-public (vector-last v)
@@ -536,6 +533,10 @@
 (define-public (->quoted-string any)
   (with-output-to-string (lambda () (write any))))
 
+
+
+
+;; TODO shouldn't this use `file-name-separator-string'?
 (define-public (path-append . strings)
   (fold (lambda (s done)
             (string-append
@@ -554,6 +555,7 @@
 
 
 
+;;; TODO shouldn't this use dynamic-wind? To handle non-local exits?
 (define-syntax let-env
   (syntax-rules ()
     [(_ ((name value) ...)
