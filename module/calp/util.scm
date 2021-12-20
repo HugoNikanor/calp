@@ -9,7 +9,6 @@
                 set/r!
                 catch-multiple
                 quote?
-                re-export-modules
                 -> ->> set set-> aif awhen
                 let-lazy let-env
                 case* define-many
@@ -338,14 +337,6 @@
         (else
          (cons (proc (car dotted-list))
                (map/dotted proc (cdr dotted-list))))))
-
-(define-syntax re-export-modules
-  (syntax-rules ()
-    ((_ (mod ...) ...)
-     (begin
-       (module-use! (module-public-interface (current-module))
-                    (resolve-interface '(mod ...)))
-       ...))))
 
 ;; Merges two association lists, comparing with eq.
 ;; The cdrs in all pairs in both lists should be lists,

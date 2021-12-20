@@ -7,8 +7,10 @@
   :re-export (make-vcomponent
               parse-cal-path parse-calendar))
 
-(re-export-modules (vcomponent base)
-                   (vcomponent instance methods))
+(define cm (module-public-interface (current-module)))
+(module-use! cm (resolve-interface '(vcomponent base)))
+(module-use! cm (resolve-interface '(vcomponent instance methods)))
+
 
 (define-config calendar-files '()
   description: "Which files to parse. Takes a list of paths or a single string which will be globbed."
