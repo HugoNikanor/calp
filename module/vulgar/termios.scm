@@ -102,7 +102,7 @@
 ;; Macro for creating accessor bindings for slots in a list, which are wrapped
 ;; inside a <termios> record. Called exactly once below.
 (define-macro (create-bindings! . symbols)
-  `(begin ,@(map-each
+  `(begin ,@(map
              (lambda (symb i)
                `(define-public ,symb
                   (make-procedure-with-setter
@@ -110,7 +110,8 @@
                    (lambda (t v) (let ((lst (as-list t)))
                               (list-set! lst ,i v)
                               (set-list! t lst))))))
-             symbols)))
+             symbols
+             (iota (length symbols)))))
 
 (create-bindings! ; accessors
  iflag oflag cflag lflag line cc ispeed ospeed)
