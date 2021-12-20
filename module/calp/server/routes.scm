@@ -253,69 +253,22 @@
              ;; accidental overwriting.
 
 
-             (cond
-              [(get-event-by-uid global-event-object (prop event 'UID))
-               => (lambda (old-event)
-
-                    ;; remove old instance of event from runtime
-                    ((@ (vcomponent util instance methods) remove-event)
-                     global-event-object old-event)
-
-                    ;; Add new event to runtime,
-                    ;; MUST be done after since the two events SHOULD share UID.
-                    (parameterize ((warnings-are-errors #t))
-                      (catch 'warning
-                        (lambda () (add-event global-event-object calendar event))
-                        (lambda (err fmt args)
-                          (return (build-response code: 400)
-                                  (format #f "~?~%" fmt args)))))
-
-                    (set! (prop event 'LAST-MODIFIED)
-                      (current-datetime))
-
-                    ;; NOTE Posibly defer save to a later point.
-                    ;; That would allow better asyncronous preformance.
-
-                    ;; save-event sets -X-HNH-FILENAME from the UID. This is fine
-                    ;; since the two events are guaranteed to have the same UID.
-                    (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
-                      (return (build-response code: 500)
-                              "Saving event to disk failed."))
-
-
-                    (unless (eq? calendar (parent old-event))
-                        ;; change to a new calendar
-                        (format (current-error-port)
-                                "Unlinking old event from ~a~%"
-                                (prop old-event '-X-HNH-FILENAME))
-                        ;; NOTE that this may fail, leading to a duplicate event being
-                        ;; created (since we save beforehand). This is just a minor problem
-                        ;; which either a better atomic model, or a propper error
-                        ;; recovery log would solve.
-                        ((@ (vcomponent formats vdir save-delete) remove-event) old-event))
-
-
-                    (format (current-error-port)
-                            "Event updated ~a~%" (prop event 'UID)))]
-
-              [else
-               (parameterize ((warnings-are-errors #t))
-                 (catch 'warning
-                   (lambda () (add-event global-event-object calendar event))
-                   (lambda (err fmt args)
-                     (return (build-response code: 400)
-                             (format #f "~?~%" fmt args)))))
-
-               (set! (prop event 'LAST-MODIFIED) (current-datetime))
-
-               ;; NOTE Posibly defer save to a later point.
-               ;; That would allow better asyncronous preformance.
-               (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
-                 (return (build-response code: 500)
-                         "Saving event to disk failed."))
-
-               (format (current-error-port)
-                       "Event inserted ~a~%" (prop event 'UID))])
+             (parameterize ((warnings-are-errors #t))
+               (catch*
+                (lambda () (add-and-save-event global-event-object
+                                          calendar event))
+                (warning
+                 (lambda (err fmt args)
+                   (define str (format #f "~?" fmt args))
+                   (format (current-error-port) "400 ~a~%" str)
+                   (return (build-response code: 400)
+                           str)))
+                (#t
+                 (lambda (err proc fmt args _)
+                   (define str (format #f "~a in ~a: ~?~%" err proc fmt args))
+                   (format (current-error-port) "500 ~a~%" str)
+                   (return (build-response code: 500)
+                           str)))))
 
              (return '((content-type application/xml))
                      (with-output-to-string

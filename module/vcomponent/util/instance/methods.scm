@@ -18,8 +18,14 @@
            get-event-by-uid
            fixed-events-in-range
 
+           get-calendar-by-name
+
            get-event-set get-calendars
            get-fixed-events get-repeating-events
+
+           add-and-save-event
+
+           add-calendars
            ))
 
 (define-public (load-calendars calendar-files)
@@ -50,6 +56,10 @@
   (hash-ref (slot-ref this 'uid-map) uid))
 
 
+(define-method (get-calendar-by-name (this <events>) string)
+  (find (lambda (c) (string=? string (prop c 'NAME)))
+        (get-calendars this)))
+
 
 (define-method (fixed-events-in-range (this <events>) start end)
   (filter-sorted (lambda (ev) ((in-date-range? start end)
@@ -64,8 +74,12 @@
   (for calendar in (slot-ref this 'calendar-files)
        (format (current-error-port) "  - ~a~%" calendar))
 
-  (slot-set! this 'calendars (load-calendars (slot-ref this 'calendar-files)))
+  (let ((calendars (load-calendars (slot-ref this 'calendar-files))))
+    (apply add-calendars this calendars)))
 
+(define-method (add-calendars (this <events>) . calendars)
+
+  (slot-set! this 'calendars (append calendars (slot-ref this 'calendars)))
 
   (let* ((groups
           (group-by
@@ -147,3 +161,57 @@
   (hash-set! (slot-ref this 'uid-map) (prop event 'UID)
              #f))
 
+
+
+(define-method (add-and-save-event (this <events>) calendar event)
+  (cond
+   [(get-event-by-uid this (prop event 'UID))
+    => (lambda (old-event)
+
+         ;; remove old instance of event from runtime
+         (remove-event this old-event)
+
+         ;; Add new event to runtime,
+         ;; MUST be done after since the two events SHOULD share UID.
+         ;; NOTE that this can emit warnings
+         (add-event this calendar event)
+
+         (set! (prop event 'LAST-MODIFIED)
+           (current-datetime))
+
+         ;; NOTE Posibly defer save to a later point.
+         ;; That would allow better asyncronous preformance.
+
+         ;; save-event sets -X-HNH-FILENAME from the UID. This is fine
+         ;; since the two events are guaranteed to have the same UID.
+         (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
+           (throw 'misc-error "Saving event to disk failed."))
+
+
+         (unless (eq? calendar (parent old-event))
+           ;; change to a new calendar
+           (format (current-error-port)
+                   "Unlinking old event from ~a~%"
+                   (prop old-event '-X-HNH-FILENAME))
+           ;; NOTE that this may fail, leading to a duplicate event being
+           ;; created (since we save beforehand). This is just a minor problem
+           ;; which either a better atomic model, or a propper error
+           ;; recovery log would solve.
+           ((@ (vcomponent formats vdir save-delete) remove-event) old-event))
+
+
+         (format (current-error-port)
+                 "Event updated ~a~%" (prop event 'UID)))]
+
+   [else
+    (add-event this calendar event)
+
+    (set! (prop event 'LAST-MODIFIED) (current-datetime))
+
+    ;; NOTE Posibly defer save to a later point.
+    ;; That would allow better asyncronous preformance.
+    (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
+      (throw 'misc-error "Saving event to disk failed."))
+
+    (format (current-error-port)
+            "Event inserted ~a~%" (prop event 'UID))]))
