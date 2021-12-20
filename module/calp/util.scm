@@ -554,23 +554,27 @@
 
 
 
-;;; TODO shouldn't this use dynamic-wind? To handle non-local exits?
+
 (define-syntax let-env
   (syntax-rules ()
     [(_ ((name value) ...)
         body ...)
 
-     (let ((env-pairs
-            (map (lambda (n new-value)
-                   (list n new-value (getenv n)))
-                 (list (symbol->string (quote name)) ...)
-                 (list value ...))))
-       (for-each (lambda (pair) (setenv (car pair) (cadr pair)))
-                 env-pairs)
-       (let ((return (begin body ...)))
-        (for-each (lambda (pair) (setenv (car pair) (caddr pair)))
-                  env-pairs)
-        return))]))
+     (let ((env-pairs #f))
+       (dynamic-wind
+         (lambda ()
+           (set! env-pairs
+             (map (lambda (n new-value)
+                    (list n new-value (getenv n)))
+                  (list (symbol->string (quote name)) ...)
+                  (list value ...)))
+           (for-each (lambda (pair) (setenv (car pair) (cadr pair)))
+                     env-pairs))
+         (lambda () body ...)
+         (lambda ()
+           (for-each (lambda (pair) (setenv (car pair) (caddr pair)))
+                     env-pairs))))]))
+
 
 (define-public (uuidgen)
   ((@ (rnrs io ports) call-with-port)
