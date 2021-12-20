@@ -362,7 +362,7 @@
     ;; NOTE changing this list to cons allows the output to work with assq-merge.
     (hash-map->list list h)))
 
-;; (group-by '(0 1 2 3 4 2 5 6) 2)
+;; (split-by '(0 1 2 3 4 2 5 6) 2)
 ;; ⇒ ((0 1) (3 4) (5 6))
 (define-public (split-by list item)
   (let loop ((done '())
@@ -533,6 +533,10 @@
 (define-public (->quoted-string any)
   (with-output-to-string (lambda () (write any))))
 
+
+
+
+;; TODO shouldn't this use `file-name-separator-string'?
 (define-public (path-append . strings)
   (fold (lambda (s done)
             (string-append
@@ -551,6 +555,7 @@
 
 
 
+;;; TODO shouldn't this use dynamic-wind? To handle non-local exits?
 (define-syntax let-env
   (syntax-rules ()
     [(_ ((name value) ...)
