@@ -1,0 +1,331 @@
+@node Calp Util
+@section (calp util)
+
+@defmac define-syntax [stx]
+Extends the default syntax from the default
+@lisp
+(define-syntax @r{<name>} (λ (stx) body ...))
+@end lisp
+To also allow
+@lisp
+(define-syntax (@r{<name>} stx) body ...)
+@end lisp
+@end defmac
+
+
+@defmac when pred body ...
+@defmacx unless pred body ...
+Extends @var{when} and @var{unless} to return @code{'()} on the
+false-case (instead of being undefined).
+@end defmac
+
+
+@defmac aif condition consequent alternate
+@defmacx awhen condition consequent ...
+Equivalent to the standard @var{if} and @var{when}@footnote{Actually
+our extra specialized @var{when}}, but binds the return of
+@var{condition} in the variable @var{it}.
+@end defmac
+
+
+@defmac for key in collection body ...
+@defmacx for (key ...) in collection body ...
+@c TODO write me
+@end defmac
+
+@defmac let* forms body ...
+Replace let* with a version that can bind from lists.
+Also supports SRFI-71 (extended let-syntax for multiple values)
+@lisp
+(let* ([a b (values 1 2)]               ; @r{SRFI-71}
+       [(c d) '(3 4)]                   ; @r{Let-list (mine)}
+       [(a b . c) (cons* 1 2 3)]        ; @r{Improper list matching (mine)}
+       [e 5])                           ; @r{Regular}
+  (list e d c b a))
+;; => (5 4 3 2 1)
+@end lisp
+@end defmac
+
+@defmac print-and-return expr
+Prints @var{expr}, and then returns it.
+Only evaluates @var{expr} once.
+@end defmac
+
+
+@defun swap f
+@math{swap (λ (x y) body ...) ⇔ λ (y x) body ...}
+@end defun
+
+@defmac case* clauses
+Like Scheme's regular @var{case}, but evaluates each symbol before
+checking against them.
+@end defmac
+
+@defmac set! key value ...
+@defmacx set! key = proc ...
+@defmacx set! key = (op args ...) ...
+Extends @var{set!} to allow multiple forms in one, also introduces the
+cases:
+@lisp
+(set! x = f) ⇔ (set! x (f x))
+(set! x = (+ 1) ⇔ (set! x (+ x 1))
+@end lisp
+@end defmac
+
+@defmac set/r! key value ...
+See @var{set!}, but also returns the final value.
+@end defmac
+
+
+@defmac define-many
+@c TODO document me
+@end defmac
+
+
+@defmac label name proc
+Equivalent to
+@lisp
+(letrec ((name proc))
+       proc)
+@end lisp
+@end defmac
+
+
+@defun sort* items comperator [get=identity]
+@defunx sort*! items comperator [get=identity]
+A sort more similar to Python's. Applies @var{get} to each item before
+calling @var{comperator} on them.
+
+@var{sort*!} may modify the input list.
+@end defun
+
+
+@defun find-extreme items [<=<] [access=identity]
+Returns 2 values, the most extreme value, as compared by @var{<} after
+calling @var{access} on each element, along with the remaining values
+in an undefined order.
+
+Should be faster than @var{car+cdr} ∘ @var{sort*}.
+@end defun
+
+@defun find-min list [access=identity]
+@defunx find-max list [access=identity]
+See @var{find-extreme}
+@end defun
+
+@defun filter-sorted proc list
+@end defun
+
+@defun != args ...
+@lisp
+(define != (negate =))
+@end lisp
+@end defun
+
+@defun take-to lst n
+Equivalent to @var{take}, but return everything (instead of crash) if
+n > (length lst).
+@end defun
+
+@defun string-take-to str n
+Same as @var{take-to}, but for strings
+@end defun
+
+
+@defun string-first
+@defunx string-last
+Returns the first and last character of a string respectivly
+@end defun
+
+
+@defun as-symb s
+Returns @code{(string->symbol s)} if @var{s} is a string, @var{s} otherwise.
+@end defun
+
+@defun enumerate lst
+Returns a list of lists, where the @var{car} is the index in the list,
+and the @var{cadr} is the corresponding element of the original list
+@end defun
+
+
+@defun map-each proc lst
+Like @var{map}, but @var{proc} should take 2 arguments, the element to
+operate on, along with the an index.
+@end defun
+
+
+@defun unval proc [n=0]
+Takes a procedure returning multiple values, and returns a function
+which takes the same arguments as the original procedure, but only
+returns one of the procedures. Which procedure can be sent as an
+additional parameter.
+@end defun
+
+
+@defun flatten lst
+Takes an arbitrarily nested list, and flattens it to a depth 1 list
+@end defun
+
+
+@defmac let-lazy forms body ...
+Syntactically equivalent to a regular @var{let}, but wraps each variable
+in @var{forms} in @var{delay}, while it finds each instance of that
+variable in body and wraps in in @var{force}.
+@end defmac
+
+
+@defun map/dotted proc dotted-list
+Like @var{map}, but also works for improper lists.
+@end defun
+
+
+@defun assq-merge a b
+@c TODO
+@end defun
+
+@defun kvlist->assq
+Given a flat list where each odd element (counting from 1) is a
+keyword, and each even element is any value, return these as a list of
+pairs of symbols and values.
+
+@lisp
+(kvlist->assq '(#:a 1 #:b "Hello"))
+⇒ ((a 1)
+   (b "Hello"))
+@end lisp
+@end defun
+
+@defun assq-limit alist [number=1]
+@end defun
+
+@defun group-by proc lst
+Calls @var{proc} on each element in @var{lst}, and return a
+association list which @code{(proc e)} as its keys, and all elements
+which mapped to that value.
+@end defun
+
+@defun split-by lst element
+Split a list into sub-lists on @var{element}
+@lisp
+(split-by '(0 1 2 3 4 2 5 6) 2)
+⇒ ((0 1) (3 4) (5 6))
+@end lisp
+@end defun
+
+
+@defun cross-product args ...
+Returns the cross product between all given lists. Each pair will be a
+list, whose indices matches the order of the inputs
+@end defun
+
+@defun string-flatten tree
+@end defun
+
+@defun intersperse item list
+Inserts @var{item} between each element in @var{list}.
+@end defun
+
+
+@defun insert-ordered item collection [<=<]
+Inserts @var{item} into @var{collection}, such that collection
+remainins sorted if it was sorted beforehand.
+@end defun
+
+
+@defmac -> item forms ...
+@defmacx ->> item forms ...
+Applies each form onto item, from left to right.
+A form can either by a symbol, which is the applied directly, or a
+list, in which case @var{->} inserts item as the second argument
+(after the operand), and @var{->>} inserts it last.
+@end defmac
+
+
+@defmac set (accessor object) value
+@defmacx set (accessor object) = (operation args ...)
+See @xref{SRFI-9 Records,,,guile}
+@end defmac
+
+@defmac set-> object (accessor value) rest ...
+@defmacx set-> object (accessor = (operator args)) rest ...
+Wrapper around @var{set}, but applies transformations from left to
+right, similar to @var{->}.
+@end defmac
+
+
+@defun downcase-symbol
+Converts a symbol to lower case.
+@end defun
+
+
+@defun group list chunk-size
+Splits @var{list} into sub-lists of size @var{chunk-size}.
+Requires that @math{chunk-size|(length list)}
+@end defun
+
+
+@defun iterate proc until base
+Repeatedly applies @var{proc} to @var{base}, until @var{until} is
+satisfied.
+@end defun
+
+@defun valued-map proc lists ...
+@end defun
+
+
+@defun assoc-ref-all alist key
+@defunx assq-ref-all alist key
+@defunx assv-ref-all alist key
+Equivalent to assoc-ref (and family), but works on association lists with
+non-unique keys, returning all mathing records (instead of just the first).
+@lisp
+(assoc-ref-all '((a . 1) (b . 2) (a . 3)) 'a)
+⇒ (1 3)
+@end lisp
+@end defun
+
+
+@defun vector-last v
+Returns the last element of @var{v}.
+@end defun
+
+@defun ->str any
+@defunx ->string any
+Converts @var{any} to a string, as per @var{display}.
+@end defun
+
+@defun ->quoted-string any
+Converts @var{any} to a string, as per @var{write}.
+@end defun
+
+@defun path-append strings ...
+Joins all strings into a path, squeezing duplicated delimiters, but
+ensuring that all delimiters that are needed are there.
+@end defun
+
+
+@defun path-join lst
+@lisp
+(apply path-append lst)
+@end lisp
+@end defun
+
+
+@defun path-absolute? path
+@end defun
+
+@defun path-split path
+Splits path into a list of components.
+The first component will be @code{""} if path is absolute.
+@end defun
+
+
+@defmac let-env bindings body ...
+Similar to @var{let}, but sets environment variables for the code in
+body. Restores the old values once we leave.
+@end defmac
+
+
+@defun uuidgen
+Generates a UUID.
+@end defun
