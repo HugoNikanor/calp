@@ -42,3 +42,5 @@ README: README.in
 
 test:
 	tests/run-tests.scm
+	genhtml -o coverage lcov.info
+
