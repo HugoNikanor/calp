@@ -252,8 +252,7 @@
 ;; Ord b => (list a) [, (b, b -> bool), (a -> b)] -> a, (list a)
 (define*-public (find-extreme items optional: (< <) (access identity))
   (if (null? items)
-      ;; Vad fan retunerar man här?
-      (values #f '())
+      (error "Can't find extreme in an empty list")
       (fold-values
        (lambda (c min other)
          (if (< (access c) (access min))

@@ -2,7 +2,8 @@
 ;; Checks some prodecuders from (calp util)
 ;;; Code:
 
-(((calp util) filter-sorted set/r!))
+(((calp util) filter-sorted set/r!
+  find-min find-max))
 
 (test-equal "Filter sorted"
   '(3 4 5)
@@ -16,3 +17,22 @@
 (test-error
  'syntax-error
  (test-read-eval-string "(set/r! x err not)"))
+
+
+(call-with-values (lambda () (find-min (iota 10)))
+  (lambda (extreme rest)
+    (test-equal "Found correct minimum"
+      0 extreme)
+    (test-equal "Removed \"something\" from the set"
+      9 (length rest))))
+
+
+(call-with-values (lambda () (find-max '("Hello" "Test" "Something long") string-length))
+  (lambda (extreme rest)
+    (test-equal "Found the longest string" "Something long" extreme)
+    (test-equal "Removed the string" 2 (length rest))
+    (test-assert "Other members left 1" (member "Hello" rest))
+    (test-assert "Other members left 2" (member "Test" rest))))
+
+
+(test-error 'misc-error (find-extreme '()))
