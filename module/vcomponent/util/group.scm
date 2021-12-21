@@ -1,4 +1,4 @@
-(define-module (vcomponent group)
+(define-module (vcomponent util group)
   #:use-module (vcomponent)
   #:use-module (vcomponent datetime)
   #:use-module (datetime)

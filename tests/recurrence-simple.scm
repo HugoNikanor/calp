@@ -11,8 +11,8 @@
  ((calp util exceptions) warnings-are-errors warning-handler)
  ((guile) format @@)
 
- ((vcomponent) parse-calendar)
- ((vcomponent xcal parse) sxcal->vcomponent)
+ ((vcomponent formats ical parse) parse-calendar)
+ ((vcomponent formats xcal parse) sxcal->vcomponent)
  ((vcomponent recurrence)
   parse-recurrence-rule
   make-recur-rule
@@ -243,7 +243,7 @@ END:VCALENDAR"
 ;;; Earlier I failed to actually parse the recurrence parts, in short, 1 ≠ "1".
 
 (test-assert "Test that xcal recur rules are parseable"
- ((@@ (vcomponent xcal parse) handle-value)
+ ((@@ (vcomponent formats xcal parse) handle-value)
   'recur 'props-are-unused-for-recur
   '((freq "WEEKLY")
     (interval "1")

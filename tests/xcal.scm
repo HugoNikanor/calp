@@ -3,9 +3,9 @@
 ;; Currently only checks that events survive a round trip.
 ;;; Code:
 
-(((vcomponent xcal parse) sxcal->vcomponent)
- ((vcomponent xcal output) vcomponent->sxcal)
- ((vcomponent ical parse) parse-calendar)
+(((vcomponent formats xcal parse) sxcal->vcomponent)
+ ((vcomponent formats xcal output) vcomponent->sxcal)
+ ((vcomponent formats ical parse) parse-calendar)
  ((calp util) ->)
  ((vcomponent base)
   parameters prop* children)

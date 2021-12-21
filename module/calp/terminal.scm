@@ -3,18 +3,17 @@
   #:use-module (datetime)
   #:use-module (srfi srfi-17)
   #:use-module (srfi srfi-26)
-  #:use-module (srfi srfi-41)
-  #:use-module (srfi srfi-41 util)
+  #:use-module ((srfi srfi-41) :select (stream-car))
   #:use-module (calp util)
   #:use-module (vulgar)
   #:use-module (vulgar info)
   #:use-module (vulgar color)
   #:use-module (vulgar components)
-  #:use-module (vcomponent group)
 
   #:use-module (vcomponent)
   #:use-module (vcomponent datetime)
-  #:use-module (vcomponent search)
+  #:use-module (vcomponent util search)
+  #:use-module (vcomponent util group)
 
   #:use-module (text util)
   #:use-module (text flow)
@@ -28,7 +27,7 @@
   #:use-module (oop goops)
   #:use-module (oop goops describe)
 
-  #:autoload (vcomponent instance) (global-event-object)
+  #:autoload (vcomponent util instance) (global-event-object)
 
   #:export (main-loop))
 

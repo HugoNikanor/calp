@@ -5,8 +5,8 @@
   :use-module (calp util options)
   :use-module ((srfi srfi-41) :select (stream->list))
 
-  :use-module ((vcomponent instance methods) :select (get-event-set))
-  :autoload (vcomponent instance) (global-event-object)
+  :use-module ((vcomponent util instance methods) :select (get-event-set))
+  :autoload (vcomponent util instance) (global-event-object)
 
   :export (main)
   )

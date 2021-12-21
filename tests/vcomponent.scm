@@ -3,7 +3,7 @@
 ;;; Code:
 
 (((vcomponent base) prop)
- ((vcomponent) parse-calendar))
+ ((vcomponent formats ical parse) parse-calendar))
 
 (define ev (call-with-input-string
                "BEGIN:DUMMY

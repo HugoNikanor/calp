@@ -2,14 +2,15 @@
   :use-module (calp util)
   :use-module (calp util config)
   :use-module (vcomponent base)
-  :use-module (vcomponent parse)
-  :use-module (vcomponent instance methods)
-  :re-export (make-vcomponent
-              parse-cal-path parse-calendar))
+  ;; :use-module ((vcomponent util instance methods)
+  ;;              :select (make-vcomponent))
+  :use-module ((vcomponent util parse-cal-path)
+               :select (parse-cal-path))
+  :re-export (make-vcomponent parse-cal-path))
 
 (define cm (module-public-interface (current-module)))
 (module-use! cm (resolve-interface '(vcomponent base)))
-(module-use! cm (resolve-interface '(vcomponent instance methods)))
+(module-use! cm (resolve-interface '(vcomponent util instance methods)))
 
 
 (define-config calendar-files '()

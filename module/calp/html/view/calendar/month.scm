@@ -12,7 +12,7 @@
                         events-between))
   :use-module ((calp html vcomponent)
                :select (make-block output-uid))
-  :use-module ((vcomponent group)
+  :use-module ((vcomponent util group)
                :select (group-stream get-groups-between))
   )
 

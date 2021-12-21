@@ -1,10 +1,10 @@
 ;;; Commentary:
 ;; Code for parsing vdir's and icalendar files.
 ;; This module handles the finding of files, while
-;; (vcomponent parse ical) handles reading data from icalendar files.
+;; (vcomponent formats parse ical) handles reading data from icalendar files.
 ;;; Code:
 
-(define-module (vcomponent vdir parse)
+(define-module (vcomponent formats vdir parse)
   :use-module (srfi srfi-1)
 
   :use-module ((ice-9 hash-table) :select (alist->hash-table))
@@ -15,7 +15,7 @@
   :use-module (calp util exceptions)
   :use-module (vcomponent base)
 
-  :use-module (vcomponent ical parse)
+  :use-module (vcomponent formats ical parse)
   )
 
 

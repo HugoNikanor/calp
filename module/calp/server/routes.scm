@@ -25,11 +25,11 @@
   :use-module (web http make-routes)
 
   :use-module (vcomponent)
-  :use-module (vcomponent search)
+  :use-module (vcomponent util search)
   :use-module (datetime)
-  :use-module (vcomponent ical output)
+  :use-module (vcomponent formats ical output)
 
-  :autoload (vcomponent instance) (global-event-object)
+  :autoload (vcomponent util instance) (global-event-object)
 
   :use-module (calp html view calendar)
   :use-module ((calp html view search) :select (search-result-page))
@@ -159,7 +159,7 @@
                 (remove-event global-event-object it)
                 (set! (prop it 'X-HNH-REMOVED) #t)
                 (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
-                (unless ((@ (vcomponent vdir save-delete) save-event) it)
+                (unless ((@ (vcomponent formats vdir save-delete) save-event) it)
                   (return (build-response code: 500)
                           "Saving event to disk failed."))
                 (return (build-response code: 204)))
@@ -203,7 +203,7 @@
            ;; *TOP* node is a required part of the sxml.
 
            (let ((event
-                   ((@ (vcomponent xcal parse) sxcal->vcomponent)
+                   ((@ (vcomponent formats xcal parse) sxcal->vcomponent)
                     (catch 'parser-error
                       (lambda ()
                         (move-to-namespace
@@ -232,7 +232,7 @@
                => (lambda (old-event)
 
                     ;; remove old instance of event from runtime
-                    ((@ (vcomponent instance methods) remove-event)
+                    ((@ (vcomponent util instance methods) remove-event)
                      global-event-object old-event)
 
                     ;; Add new event to runtime,
@@ -252,7 +252,7 @@
 
                     ;; save-event sets -X-HNH-FILENAME from the UID. This is fine
                     ;; since the two events are guaranteed to have the same UID.
-                    (unless ((@ (vcomponent vdir save-delete) save-event) event)
+                    (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
                       (return (build-response code: 500)
                               "Saving event to disk failed."))
 
@@ -266,7 +266,7 @@
                         ;; created (since we save beforehand). This is just a minor problem
                         ;; which either a better atomic model, or a propper error
                         ;; recovery log would solve.
-                        ((@ (vcomponent vdir save-delete) remove-event) old-event))
+                        ((@ (vcomponent formats vdir save-delete) remove-event) old-event))
 
 
                     (format (current-error-port)
@@ -284,7 +284,7 @@
 
                ;; NOTE Posibly defer save to a later point.
                ;; That would allow better asyncronous preformance.
-               (unless ((@ (vcomponent vdir save-delete) save-event) event)
+               (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
                  (return (build-response code: 500)
                          "Saving event to disk failed."))
 
@@ -339,7 +339,7 @@
                        ;; Look into changing how events carry around their
                        ;; parent information, possibly splitting "source parent"
                        ;; and "program parent" into different fields.
-                       (lambda () (sxml->xml ((@ (vcomponent xcal output) vcomponent->sxcal) it)))))
+                       (lambda () (sxml->xml ((@ (vcomponent formats xcal output) vcomponent->sxcal) it)))))
              (return (build-response code: 404)
                      (format #f "No component with UID=~a found." uid))))
 

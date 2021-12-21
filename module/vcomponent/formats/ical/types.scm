@@ -1,10 +1,12 @@
 ;; see (vcomponent parse types)
-(define-module (vcomponent ical types)
+(define-module (vcomponent formats ical types)
   :use-module (calp util)
   :use-module (calp util exceptions)
   :use-module (base64)
-  :use-module (datetime))
+  :use-module (datetime)
+  :use-module (datetime timespec))
 
+;; TODO shouldn't these really take vline:s?
 
 (define (write-binary _ value)
   (bytevector->base64-string value))
@@ -61,8 +63,6 @@
 (define (write-uri _ value)
   value)
 
-
-(use-modules (datetime timespec))
 
 (define (write-utc-offset _ value)
   (with-output-to-string

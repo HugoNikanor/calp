@@ -14,6 +14,7 @@
                 case* define-many
                 and=>> label
                 print-and-return
+                begin1
                 )
   #:replace (let* set! define-syntax
                   when unless))
@@ -135,6 +136,14 @@
 (define (improper->proper-list lst len)
   (let* ((head tail (split-at lst len)))
     (append head (list tail))))
+
+
+(define-syntax-rule (begin1 first rest ...)
+  (let ((return first))
+    rest ...
+    return))
+
+
 
 
 

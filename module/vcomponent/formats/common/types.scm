@@ -1,9 +1,10 @@
-(define-module (vcomponent parse types)
+(define-module (vcomponent formats common types)
   :use-module (calp util)
   :use-module (calp util exceptions)
   :use-module (base64)
   :use-module (datetime)
   :use-module (srfi srfi-9 gnu)
+  :use-module (datetime timespec)
   )
 
 ;; BINARY
@@ -102,8 +103,6 @@
 ;; URI
 (define (parse-uri props value)
   value)
-
-(use-modules (datetime timespec))
 
 ;; UTC-OFFSET
 (define (parse-utc-offset props value)

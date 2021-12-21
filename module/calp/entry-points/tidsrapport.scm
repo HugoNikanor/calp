@@ -50,8 +50,8 @@
              (srfi srfi-1)
              (vcomponent)
              (datetime)
-             (vcomponent instance)
-             (vcomponent instance methods)
+             (vcomponent util instance)
+             (vcomponent util instance methods)
              (calp util)
              (ice-9 regex)
              (ice-9 popen)
@@ -66,7 +66,7 @@
   (define instances
    (group-by (compose day as-date (extract 'DTSTART))
              (stream->list
-              ((@ (vcomponent search) execute-query)
+              ((@ (vcomponent util search) execute-query)
                (lambda (e)
                  (define d (as-datetime (prop e 'DTSTART)))
                  (define s (date year: year month: month day: 1))

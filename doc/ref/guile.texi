@@ -2,6 +2,109 @@
 @chapter Guile
 
 @include guile/util.texi
+@include guile/vcomponent.texi
+
+
+@node Other
+@section Other
+
+@defun get-parser type
+@example
+get-parser ∷ type-name → hash-table x string → any
+type = 'BINARY | 'BOOLEAN | 'CAL-ADDRES | 'DATE | 'DATE-TIME
+     | 'DURATION | 'FLOAT | 'INTEGER | 'PERIOD | 'RECUR
+     | 'TEXT | 'TIME | 'URI | 'UTC-OFFSET
+@end example
+
+@ref{ical-get-writer}
+@end defun
+
+@subsection formats ical
+@subsubsection output
+
+@defun component->ical-string component
+@end defun
+
+@defun print-components-with-fake-parent events
+@end defun
+
+@defun print-all-events
+@end defun
+
+@defun print-events-in-interval start end
+@end defun
+
+@subsubsection parse
+
+@defun parse-calendar port
+@end defun
+
+@subsubsection types
+
+@defun escape-chars str
+Escape ``@verb{|,|}'', ``@verb{|;|}'' and ``@verb{|\|}'' with a
+backslash, and encode newlines as ``@verb{|\n|}''.
+@end defun
+
+@defun get-writer type
+@anchor{ical-get-writer}
+@example
+get-writer ∷ type-name → hash-table x value → string
+type = 'BINARY | 'BOOLEAN | 'CAL-ADDRES | 'DATE | 'DATE-TIME
+     | 'DURATION | 'FLOAT | 'INTEGER | 'PERIOD | 'RECUR
+     | 'TEXT | 'TIME | 'URI | 'UTC-OFFSET
+@end example
+@end defun
+
+@subsection formats vdir
+@subsubsection parse
+
+@defun parse-vdir path
+@end defun
+
+@subsubsection save-delete
+
+@defun save-event event
+@end defun
+
+@defun remove-event event
+@end defun
+
+@subsection formats xcal
+@subsubsection output
+
+@defun vcomponent->sxcal component
+@end defun
+
+@defun ns-wrap
+@lisp
+(define (ns-wrap sxml)
+  `(icalendar (@ (xmlns "urn:ietf:params:xml:ns:icalendar-2.0"))
+              ,sxml))
+@end lisp
+Where @var{sxml} is expected to be the output of @var{vcomponent->sxcal}.
+@end defun
+
+@subsubsection parse
+@defun sxcal->vcomponent sxcal
+Parses a vcomponent in sxcal format. Requires that the vcomponent is
+the root of the document (fragment), so wrapping icalendar-tags or
+similar @emph{must} be removed.
+
+@example
+(vcalendar
+  (properties ...)
+  (components ...))
+@end example
+@end defun
+
+@subsubsection types
+@defun get-writer type
+@ref{ical-get-writer}
+@end defun
+
+
+@c --------------------------------------------------
 
 @c TODO
 This chapter will probably in the future be replaced by a proper

@@ -61,11 +61,11 @@
      (case (string->symbol from)
        [(ical)
         ;; read ical
-        (@ (vcomponent ical parse) parse-calendar)]
+        (@ (vcomponent formats ical parse) parse-calendar)]
        [(xcal)
         ;; read xcal
         (compose
-         (@ (vcomponent xcal parse) sxcal->vcomponent)
+         (@ (vcomponent formats xcal parse) sxcal->vcomponent)
          ;; TODO strip *TOP*
          xml->sxml)]
        [else (error "")]
@@ -76,13 +76,13 @@
        [(ical)
         ;; write ical
         (lambda (component port)
-          (display ((@ (vcomponent ical output) component->ical-string)
+          (display ((@ (vcomponent formats ical output) component->ical-string)
                     component)
                    port))]
        [(xcal)
         ;; write xcal
         (lambda (component port)
-          (sxml->xml ((@ (vcomponent xcal output) vcomponent->sxcal)
+          (sxml->xml ((@ (vcomponent formats xcal output) vcomponent->sxcal)
                       component)
                      port))]
        [else (error "")]))

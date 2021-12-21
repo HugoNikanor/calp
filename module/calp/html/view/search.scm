@@ -1,7 +1,7 @@
 (define-module (calp html view search)
   :use-module (calp util)
   :use-module (vcomponent)
-  :use-module (vcomponent search)
+  :use-module (vcomponent util search)
   :use-module ((ice-9 pretty-print) :select (pretty-print))
   :use-module ((web uri-query) :select (encode-query-parameters))
   :use-module ((calp html components)

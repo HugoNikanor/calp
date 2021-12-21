@@ -85,9 +85,6 @@
           => (lambda (vline) (set-vline-value! vline value))]
          [else (hashq-set! ht key (make-vline key value))])))
 
-(define-public (set-vline! component key vline)
-  (hashq-set! (get-component-properties component)
-              key vline))
 
 
 
@@ -158,9 +155,6 @@
 (define-public (properties component)
   (hash-map->list cons (get-component-properties component)))
 
-(define-public (property-keys component)
-  (hash-map->list (lambda (a _) a) (get-component-properties component)))
-
 (define (copy-vline vline)
   (make-vline (vline-key vline)
               (get-vline-value vline)
@@ -185,10 +179,6 @@
 
 (define-public (extract* field)
   (lambda (e) (prop* e field)))
-
-(define-public (key=? k1 k2)
-  (eq? (as-symb k1)
-       (as-symb k2)))
 
 (define-public (x-property? symb)
   (string=? "X-" (string-take (symbol->string symb) 2)))

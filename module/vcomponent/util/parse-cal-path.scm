@@ -1,12 +1,12 @@
-(define-module (vcomponent parse)
+(define-module (vcomponent util parse-cal-path)
   :use-module (calp util)
-  :use-module (vcomponent base)
-  :use-module ((vcomponent vdir parse) :select (parse-vdir))
   :use-module ((calp util time) :select (report-time!))
+  :use-module (vcomponent base)
+  :use-module ((vcomponent formats ical parse)
+               :select (parse-calendar))
+  :use-module ((vcomponent formats vdir parse)
+               :select (parse-vdir)))
 
-  :use-module (vcomponent ical parse)
-  :re-export (parse-calendar)
-  )
 
 ;; Parse a vdir or ics file at the given path.
 (define-public (parse-cal-path path)

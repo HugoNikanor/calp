@@ -8,7 +8,7 @@
   datetime)
  ((vcomponent datetime)
   event-length/clamped)
- ((vcomponent) parse-calendar)
+ ((vcomponent formats ical parse) parse-calendar)
  )
 
 (define ev (call-with-input-string

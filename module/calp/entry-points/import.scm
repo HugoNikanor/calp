@@ -7,9 +7,11 @@
   :use-module (srfi srfi-1)
   ;; TODO FIX
   ;; :use-module (output vdir)
-  :use-module ((vcomponent vdir save-delete) :select (save-event))
+  :use-module ((vcomponent formats vdir save-delete) :select (save-event))
   :use-module (vcomponent)
-  :autoload (vcomponent instance) (global-event-object)
+  ;; :use-module ((vcomponent formats ical parse) :select (parse-cal-path))
+  :use-module ((vcomponent util parse-cal-path) :select (parse-cal-path))
+  :autoload (vcomponent util instance) (global-event-object)
   )
 
 (define options

@@ -1,7 +1,6 @@
 (define-module (calp entry-points server)
   :use-module (calp util)
   :use-module (calp util options)
-  :use-module (calp util exceptions)
   :use-module (calp util config)
 
   :use-module (srfi srfi-1)
@@ -68,7 +67,7 @@
       (lambda _
         (display "Received SIGUSR1, reloading calendars\n"
                  (current-error-port))
-        ((@ (vcomponent instance) reload)))))
+        ((@ (vcomponent util instance) reload)))))
 
 
 

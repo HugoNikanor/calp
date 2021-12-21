@@ -115,7 +115,8 @@
                                 (append modules
                                         '(((srfi srfi-64) test-assert
                                            test-equal test-error
-                                           test-eqv)
+                                           test-eqv test-eq
+                                           test-approximate)
                                           ((ice-9 ports) call-with-input-string)
                                           ((guile) make-struct/no-tail)
                                           )

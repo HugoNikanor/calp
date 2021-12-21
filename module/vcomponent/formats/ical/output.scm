@@ -1,21 +1,21 @@
-(define-module (vcomponent ical output)
+(define-module (vcomponent formats ical output)
+  :use-module (calp util exceptions)
+  :use-module (calp util)
+  :use-module (datetime)
+  :use-module (datetime zic)
+  :use-module ((datetime instance) :select (zoneinfo))
+  :use-module (glob)
   :use-module (ice-9 format)
   :use-module (ice-9 match)
-  :use-module (calp util)
-  :use-module (calp util exceptions)
-  :use-module (vcomponent)
-  :use-module (vcomponent datetime)
   :use-module (srfi srfi-1)
-  :use-module (datetime)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
-  :use-module (datetime zic)
-  :use-module (glob)
-  :use-module (vcomponent recurrence)
+  :use-module (vcomponent)
+  :use-module (vcomponent datetime)
   :use-module (vcomponent geo)
-  :use-module (vcomponent ical types)
-  :autoload (vcomponent instance) (global-event-object)
-  :use-module ((datetime instance) :select (zoneinfo))
+  :use-module (vcomponent formats ical types)
+  :use-module (vcomponent recurrence)
+  :autoload (vcomponent util instance) (global-event-object)
   )
 
 (define (prodid)
@@ -164,32 +164,6 @@
   (cond [(prop component '-X-HNH-ALTERNATIVES)
          => (lambda (alts) (hash-map->list (lambda (_ comp) (component->ical-string comp))
                                       alts))]))
-
-;; TODO tzid param on dtstart vs tz field in datetime object
-;; TODO remove this, replace with methods from (output vdir)
-;; how do we keep these two in sync?
-(define (write-event-to-file event calendar-path)
-  (define cal (make-vcomponent 'VCALENDAR))
-
-  (set! (prop cal 'PRODID) (prodid)
-        (prop cal 'VERSION) "2.0"
-        (prop cal 'CALSCALE) "GREGORIAN")
-
-  (add-child! cal event)
-
-  (awhen (and (provided? 'zoneinfo) 
-              (param (prop* event 'DTSTART) 'TZID))
-         ;; TODO this is broken
-         (add-child! cal (zoneinfo->vtimezone (zoneinfo) it)))
-
-  (unless (prop event 'UID)
-    (set! (prop event 'UID)
-      (uuidgen)))
-
-  (with-output-to-file (glob (format #f "~a/~a.ics"
-                                     calendar-path
-                                     (prop event 'UID)))
-    (lambda () (component->ical-string cal))))
 
 
 

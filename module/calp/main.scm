@@ -35,7 +35,7 @@
           (description
            "Start a Guile repl which can be connected to, defaults to the unix socket "
            (i "/run/user/${UID}/calp-${PID}") ", but it can be bound to any unix or "
-           "TCP socket. ((@ (vcomponent instance) global-event-object)) "
+           "TCP socket. ((@ (vcomponent util instance) global-event-object)) "
            "should contain all events."
            (br)
            (b "Should NOT be used in production.")))
@@ -260,5 +260,5 @@
       ;; and prints them.
       (map (lambda (it)
              (with-output-to-port (current-error-port)
-               (lambda () ((@ (vcomponent describe) describe) it))))
+               (lambda () ((@ (vcomponent util describe) describe) it))))
            (filter-stack (@ (vcomponent) vcomponent?) (make-stack #t))))))

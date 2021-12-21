@@ -4,7 +4,7 @@
 ;;; Code:
 
 (((vcomponent base) param prop* parameters prop)
- ((vcomponent parse) parse-calendar)
+ ((vcomponent formats ical parse) parse-calendar)
  ((vcomponent) make-vcomponent)
  ((calp util) sort* set!))
 

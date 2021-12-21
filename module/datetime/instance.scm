@@ -9,7 +9,13 @@
 (define-config tz-list '()
   description: "List of default zoneinfo files to be parsed")
 
-;; TODO see (vcomponent instance), this has a similar problem with early load
+;; TODO see (vcomponent uil instance), this has a similar problem with early load
+;; Takes a list of zoneinfo files relative
+;; $XDG-DATA-HOME/calp/zoneinfo, which will probably be
+;; '("tzdata/europe" "tzdata/afrifa" ...)
+;; and builds all these into one giant zoneinfo database object
+;; Note that scripts/tzget should be run beforehand, to download the
+;; data
 (define-once zoneinfo
   (let ((cache (make-hash-table)))
     (label self

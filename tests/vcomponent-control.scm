@@ -2,8 +2,8 @@
 ;; Tests that with-replaced-properties work.
 ;;; Code:
 
-(((vcomponent control) with-replaced-properties)
- ((vcomponent) parse-calendar)
+(((vcomponent util control) with-replaced-properties)
+ ((vcomponent formats ical parse) parse-calendar)
  ((vcomponent base) prop))
 
 

@@ -2,7 +2,7 @@
   :export (main)
   :use-module (calp util)
   :use-module (calp util options)
-  :use-module (vcomponent ical output)
+  :use-module (vcomponent formats ical output)
   :use-module (ice-9 getopt-long)
   :use-module (datetime)
   )

@@ -1,11 +1,9 @@
 (define-module (calp html vcomponent)
   :use-module (calp util)
-  :use-module ((calp util exceptions) :select (warning))
-  :use-module (vcomponent)
   :use-module (srfi srfi-1)
-  :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
   :use-module ((rnrs io ports) :select (put-bytevector))
+  :use-module (vcomponent)
   :use-module (datetime)
   :use-module ((text util) :select (add-enumeration-punctuation))
   :use-module ((web uri-query) :select (encode-query-parameters))
@@ -16,7 +14,6 @@
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
   :use-module ((vcomponent recurrence) :select (repeating?))
-  :use-module ((vcomponent recurrence internal) :prefix #{rrule:}#)
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
                         format-description
@@ -169,7 +166,7 @@
                                                           (src ,link))))))))
                                  ;; URI
                                  (cond ((and=> (param attach 'FMTTYPE)
-                                               (compose (cut string= <> "image" 0 5) car))
+                                               (lambda (p) (string=? (car p) "image" 0 5)))
                                         `(img (@ (class "attach")
                                                  (src ,(value attach)))))
                                        (else `(a (@ (class "attach")
@@ -289,6 +286,7 @@
                                     "🗎")))))))
 
 
+;; TODO possibly unused?
 (define (repeat-info event)
   `(div (@ (class "eventtext"))
         (h2 "Upprepningar")

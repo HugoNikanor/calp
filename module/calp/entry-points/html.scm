@@ -14,14 +14,14 @@
                :renamer (lambda _ 'render-calendar-wide))
   :use-module ((calp html view calendar month)
                :select (render-calendar-table))
-  :use-module ((vcomponent instance methods)
+  :use-module ((vcomponent util instance methods)
                 :select (get-calendars get-event-set))
 
   :use-module ((sxml simple) :select (sxml->xml))
   :use-module ((sxml transformations) :select (href-transformer))
   :use-module ((xdg basedir) :prefix xdg-)
 
-  :autoload (vcomponent instance) (global-event-object)
+  :autoload (vcomponent util instance) (global-event-object)
   )
 
 

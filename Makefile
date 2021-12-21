@@ -1,5 +1,5 @@
 .PHONY: all clean test \
-	static
+	static coverage
 
 GUILE_SITE_DIR=$(shell guile -c "(display (%site-dir))")
 GUILE_CCACHE_DIR=$(shell guile -c "(display (%site-ccache-dir))")
@@ -42,5 +42,12 @@ README: README.in
 
 test:
 	tests/run-tests.scm
-	genhtml -o coverage lcov.info
+	$(MAKE) coverage
 
+coverage:
+	genhtml \
+		--show-details \
+		--output-directory coverage \
+		--prefix $(shell pwd) \
+		--no-function-coverage \
+		lcov.info

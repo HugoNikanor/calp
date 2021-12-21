@@ -3,8 +3,6 @@
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
                :select (events-between))
-  :use-module ((vcomponent build)
-               :select (vcalendar vevent))
   :use-module (datetime)
   :use-module (calp html components)
   :use-module ((calp html vcomponent)
@@ -26,7 +24,7 @@
   :use-module (srfi srfi-41 util)
 
   :use-module ((vcomponent recurrence) :select (repeating? generate-recurrence-set))
-  :use-module ((vcomponent group)
+  :use-module ((vcomponent util group)
                :select (group-stream get-groups-between))
   :use-module ((base64) :select (base64encode))
   )
@@ -406,6 +404,6 @@ window.default_calendar='~a';"
           ;; rendered as xcal.
           (div (@ (style "display:none !important;")
                    (id "xcal-data"))
-                ,((@ (vcomponent xcal output) ns-wrap)
-                  (map (@ (vcomponent xcal output) vcomponent->sxcal)
+                ,((@ (vcomponent formats xcal output) ns-wrap)
+                  (map (@ (vcomponent formats xcal output) vcomponent->sxcal)
                        (append regular repeating)))))))))
