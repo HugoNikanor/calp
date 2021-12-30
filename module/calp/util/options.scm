@@ -1,56 +1,42 @@
 (define-module (calp util options)
   :use-module (calp util)
+  :use-module (ice-9 match)
   :use-module (srfi srfi-1)
-)
+  :use-module (text markup)
+  )
 
 ;; option-assoc → getopt-valid option-assoc
 (define-public (getopt-opt options)
-  (map (lambda (optline)
-         (cons (car optline)
-               (map (lambda (opt-field)
-                      (cons (car opt-field)
-                            (cond [(eq? 'value (car opt-field))
-                                   (cond [(cadr opt-field)
-                                          list? => (lambda (opts)
-                                                     (case (car opts)
-                                                       ;; TODO this should also generate a validator
-                                                       ((options) '(#t))
-                                                       (else '(#t))))]
-                                         [(symbol? (cadr opt-field)) '(optional)]
-                                         [else (cdr opt-field)])]
-                                  [else (cdr opt-field)])))
-                    (lset-intersection (lambda (a b) (eqv? b (car a)))
-                                       (cdr optline)
-                                       '(single-char required? value predicate)))))
-       options))
-
-
+  (define ice-9-names '(single-char required? value predicate))
+  (for (option-name flags ...) in options
+       (cons option-name
+             (map (match-lambda
+                    (('value (_ ...))       `(value #t))
+                    (('value (? symbol? _)) `(value optional))
+                    ((key v)                `(,key ,v)))
+                  (filter (match-lambda ((key _ ...) (memv key ice-9-names)))
+                          flags)))))
 
 
 ;; (name (key value) ...) → sxml
 (define (fmt-help option-line)
-  (let ((name (car option-line))
-        (args (cdr option-line)))
-    (let ((valuefmt (case (and=> (assoc-ref args 'value) car)
-                      [(#t) '(" " (i value))]
-                      [(#f) '()]
-                      [else => (lambda (s)
-                                 (if (list? s)
-                                     (case (car s)
-                                       [(options)
-                                        `(" {" ,(string-join (cdr s) "|") "}")])
-                                     `(" [" (i ,s) "]")))])))
-      `(*TOP* (b "--" ,name) ,@valuefmt
-              ,@(awhen (assoc-ref args 'single-char)
-                       `("," (ws)
-                         (b "-" ,(car it)) 
-                         ,@valuefmt))
-              (br)
-              ,@(awhen (assoc-ref args 'description)
-                       `((blockquote ,@it)
-                         (br)))))))
-
-(use-modules (text markup))
+  (match option-line
+    ((name args ...)
+     (let ((valuefmt (match (assoc-ref args 'value)
+                       [(#t) '(" " (i value))]
+                       [(or #f (#f)) '()]
+                       [(('options options ...))
+                        `(" {" ,(string-join options "|") "}")]
+                       [(s) `(" [" (i ,s) "]")])))
+       `(*TOP* (b "--" ,name) ,@valuefmt
+               ,@(awhen (assoc-ref args 'single-char)
+                        `("," (ws)
+                          (b "-" ,(car it))
+                          ,@valuefmt))
+               (br)
+               ,@(awhen (assoc-ref args 'description)
+                        `((blockquote ,@it)
+                          (br))))))))
 
 (define-public (format-arg-help options)
   (sxml->ansi-text (cons '*TOP* (map sxml->ansi-text (map fmt-help options)))))
