@@ -25,7 +25,7 @@
 (define (data-dirs)
   (let ((str (getenv "XDG_DATA_DIRS")))
     (if str
-        (string-split str #\:)
+        (parse-path str)
         '("/usr/local/share" "/usr/share"))))
 
 ;;; sysconfdir

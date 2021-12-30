@@ -20,7 +20,7 @@
     (addr (value #t)
 
           (description "Address to use, defaults to " (i "0.0.0.0")
-                       " for IPv4, and " (i "::") " for IPv6.")
+                       " for IPv4, and " (i "[::]") " for IPv6.")
           )
     ;; numbers as single-char doesn't work.
     (six (description "Use IPv6."))
