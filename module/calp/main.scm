@@ -63,7 +63,12 @@
     (update-zoneinfo)
 
     (help (single-char #\h)
-          (description "Print this help"))))
+          (description "Print this help"))
+
+    (printconf (description "Print known configuration variables."
+                            (br) (b "NOTE") ": "
+                            "Only those configuration variables which are loaded "
+                            "will be shown, more might be available"))))
 
 (define module-help
   '(*TOP* (br)
@@ -185,6 +190,9 @@
          (display (sxml->ansi-text module-help)
                   (current-output-port))
          (print-arg-help options)
+         (throw 'return))
+
+  (awhen (option-ref opts 'printconf #f)
          (display (sxml->ansi-text
                    ;; NOTE that this can only display config
                    ;; items in loaded modules.
@@ -192,8 +200,7 @@
                    ;; all configuration items.
                    (get-configuration-documentation))
                   (current-output-port))
-         (throw 'return)
-         )
+         (throw 'return))
 
   (when (option-ref opts 'version #f)
     (format #t "Calp version ~a~%" (@ (calp) version))
