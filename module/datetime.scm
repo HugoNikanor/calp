@@ -15,6 +15,8 @@
   :use-module (srfi srfi-41 util)
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
+  :use-module (ice-9 match)
+  :use-module (ice-9 regex)
   :use-module (calp util config)
   :re-export (locale-month locale-month-short)
   )
@@ -641,10 +643,48 @@
 
 ;;; Input
 
-(define*-public (string->datetime str optional: (fmt "~Y-~m-~dT~H:~M:~S~Z"))
-  (let loop ((str (string->list str))
+#;
+(define (parse-month str)
+  "Get month number from a (shortened) monthname.
+Returns -1 on failure"
+  (let loop ((i 1)
+             (months (map (compose string-locale-downcase locale-month)
+                          (iota 12 1))))
+    (if (null? months)
+        -1
+        (let ((len (min (string-length (car months))
+                        (string-length str))))
+          (if (string=?
+               (string-take (string-downcase str) len)
+               (string-take (car months) len))
+              i
+              (loop (1+ i) (cdr months)))))))
+
+
+
+(define* (parse-month str optional: (locale %global-locale))
+  "Get month number from a (shortened) monthname.
+Returns -1 on failure"
+  (cond ((find (match-lambda ((_ name)
+                              (let ((len (min (string-length name)
+                                              (string-length str))))
+                                (string-locale-ci=? (string-take str len)
+                                                    (string-take name len)
+                                                    locale))))
+               (enumerate (map (lambda (n) (locale-month n locale)) (iota 12 1))))
+         => (compose 1+ car))
+        (else -1)))
+
+
+(define*-public (string->datetime str optional: (fmt "~Y-~m-~dT~H:~M:~S~Z")
+                                  (locale %global-locale))
+  (let loop* ((str (string->list str))
              (fmt (string->list fmt))
-             (dt (datetime)))
+             (dt (datetime))
+             (ampm identity))
+
+    (define* (loop str fmt dt optional: (ampm ampm))
+      (loop* str fmt dt ampm))
 
     (define time (get-time% dt))
     (define date (get-date dt))
@@ -657,11 +697,11 @@
            ;; ((@ (calp util exceptions) warning)
            ;;  "Premature end of string, still got fmt = ~s"
            ;;  fmt)
-           dt]
+           (ampm dt)]
           [(null? fmt)
            ;; ((@ (calp util exceptions) warning)
            ;;  "Unsparsed characters at end of string")
-           dt]
+           (ampm dt)]
           [(eq? #\~ (car fmt))
            (case (cadr fmt)
              [(#\~) (if (eq? #\~ (car str))
@@ -675,6 +715,7 @@
                                "Mismatched symbol, expected ~a got ~a"
                                (list #\~ (car str))
                                #f))]
+             ;; TODO is this lost if not at the end?
              [(#\Z)
               (if (eq? #\Z (car str))
                   (loop (cdr str)
@@ -683,8 +724,52 @@
                   (loop str
                         (cdr fmt)
                         dt))]
+             ;; AM/PM
+             [(#\p)
+              (cond ((string-match "^([AaPp])[.]?[Mm][.]?" (list->string str))
+                     => (lambda (m)
+                          (loop (drop str (match:end m))
+                                (cddr fmt)
+                                dt
+                                (case (string-ref (match:substring m 1) 0)
+                                  ((#\a #\A)
+                                   (lambda (dt)
+                                     (datetime date: (get-date dt)
+                                               time: (if (= 12 (hour (get-time% dt)))
+                                                         (set (hour (get-time% dt)) 0)
+                                                         (get-time% dt)))))
+                                  ((#\p #\P)
+                                   (lambda (dt)
+                                     (datetime date: (get-date dt)
+                                               time: (if (= 12 (hour (get-time% dt)))
+                                                         (get-time% dt)
+                                                         (set (hour (get-time% dt))
+                                                              (+ 12 (hour (get-time% dt))))))))))
+                          ))
+                    ;; fail here?
+                    (else (loop str (cddr fmt) dt)))
+              ]
+             ;; month by name
+             [(#\b #\B #\h)
+              (let* ((head post (cond ((null? (cddr fmt)) (values str '()))
+                                      ((eqv? #\~ (caddr fmt))
+                                       (cond ((null? (cdddr fmt))
+                                              (error "Unexpected ~ at end of fmt"))
+                                             ((eqv? #\~ (cadddr fmt))
+                                              (span (lambda (c) (not (eqv? #\~ c)))
+                                                    str))
+                                             (else (error "Can't have format specifier directly after month by name"))))
+                                      (else (span (lambda (c) (not (eqv? c (caddr fmt))))
+                                                  str)))))
+                (loop post
+                      (cddr fmt)
+                      (as-dt (set (month date)
+                                  (parse-month (list->string head) locale)))))]
              [(#\H #\M #\S #\m #\d)
-              (let* ((pre post (split-at str 2))
+              ;; This captures both the possibility of a date with a single digit,
+              ;; e.g. 7 may, but also compact, digits only, form without delimiters,
+              ;; e.g. --0507,
+              (let* ((pre post (span-upto 2 char-numeric? str))
                      (num (-> pre list->string string->number)))
                 (loop
                  post
@@ -720,11 +805,11 @@
                       (list (car fmt) (car str))
                       #f))])))
 
-(define*-public (string->time str optional: (fmt "~H:~M:~S"))
-  (get-time% (string->datetime str fmt)))
+(define*-public (string->time str optional: (fmt "~H:~M:~S") (locale %global-locale))
+  (get-time% (string->datetime str fmt locale)))
 
-(define*-public (string->date str optional: (fmt "~Y-~m-~d"))
-  (get-date (string->datetime str fmt)))
+(define*-public (string->date str optional: (fmt "~Y-~m-~d") (locale %global-locale))
+  (get-date (string->datetime str fmt locale)))
 
 ;; Parse @var{string} as either a date, time, or date-time.
 ;; String MUST be on iso-8601 format.

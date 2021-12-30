@@ -1,5 +1,5 @@
 ;;; Commentary:
-;; Tests date, time, and datetime creation, 
+;; Tests date, time, and datetime creation,
 ;; (output) formatting, and arithmetic.
 ;;; Code:
 
@@ -13,9 +13,12 @@
   datetime-difference
   datetime-
   leap-year?
+  string->date string->time string->datetime
   )
  ((ice-9 format) format)
  ((calp util) let*)
+ ((ice-9 i18n) make-locale)
+ ((guile) LC_TIME)
  )
 
 (test-equal "empty time"
@@ -149,5 +152,77 @@
     #2020-02-29 (date+ #2020-02-28 (date day: 1)))
 
 
+(test-equal "Parse ISO"
+  #2021-12-30T13:53:33
+  (string->datetime "2021-12-30T13:53:33" "~Y-~m-~dT~H:~M:~S"))
 
-;; TODO string->date family
+(test-equal "Parse ical date-time"
+  #2021-12-30T13:53:33
+  (string->datetime "20211230T135333" "~Y~m~dT~H~M~S"))
+
+
+(test-equal "Parse single hour (padded)"
+            (time hour: 5)
+            (string->time "05" "~H"))
+
+(test-equal "Parse single hour (non-padded)"
+            (time hour: 5)
+            (string->time "5" "~H"))
+
+(test-equal "Parse month (swedish)"
+            (date month: 5)
+            (string->date "Maj" "~b" (make-locale LC_TIME "sv_SE.UTF-8")))
+
+(test-equal "Parse month (english)"
+            (date month: 5)
+            (string->date "May" "~b" (make-locale LC_TIME "en_US.UTF-8")))
+
+(test-equal "AM/PM AM"
+            (time hour: 10)
+            (string->time "10 AM" "~H ~p"))
+
+(test-equal "AM/PM PM"
+            (time hour: 22)
+            (string->time "10 PM" "~H ~p"))
+
+(test-equal "AM/PM AM 12"
+            (time hour: 0)
+            (string->time "12 AM" "~H ~p"))
+
+(test-equal "AM/PM PM 12"
+            (time hour: 12)
+            (string->time "12 PM" "~H ~p"))
+
+(test-equal "AM/PM PM (prefix)"
+            (time hour: 22)
+            (string->time "PM 10" "~p ~H"))
+
+(test-equal "Parse complicated 1"
+            #2021-12-30T10:56:00
+            (string->datetime "Dec. 30, 2021, 10:56"
+                              "~b. ~d, ~Y, ~H:~M"
+                              (make-locale LC_TIME "en_US.UTF-8")))
+
+(test-equal "Parse complicated 2"
+            #2021-12-30T10:56:00
+            (string->datetime "Dec. 30, 2021, 10:56 a.m."
+                              "~b. ~d, ~Y, ~H:~M"
+                              (make-locale LC_TIME "en_US.UTF-8")))
+
+(test-equal "Parse complicated 3"
+            #2021-12-30T22:56:00
+            (string->datetime "Dec. 30, 2021, 10:56 p.m."
+                              "~b. ~d, ~Y, ~H:~M ~p"
+                              (make-locale LC_TIME "en_US.UTF-8")))
+
+(test-equal "Parse date single digit day"
+            (date day: 6)
+            (string->date "6" "~d"))
+
+(test-equal "Parse date single digit day, trailing comma"
+            (date day: 6)
+            (string->date "6," "~d,"))
+
+(test-equal "Parse date single digit day, trailing comma + space"
+            (date day: 6)
+            (string->date "6, " "~d, "))
