@@ -712,7 +712,7 @@ Returns -1 on failure"
                         ;; other than the top level, to allow better error
                         ;; messages.
                         (scm-error 'misc-error "string->datetime"
-                               "Mismatched symbol, expected ~a got ~a"
+                               "Mismatched symbol, expected ~s got ~s"
                                (list #\~ (car str))
                                #f))]
              ;; TODO is this lost if not at the end?
@@ -801,7 +801,7 @@ Returns -1 on failure"
                      (cdr fmt)
                      dt)
                (scm-error 'misc-error "string->datetime"
-                      "Mismatched symbol, expected ~a got ~a"
+                      "Mismatched symbol, expected ~s got ~s"
                       (list (car fmt) (car str))
                       #f))])))
 

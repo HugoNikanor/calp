@@ -3,7 +3,7 @@
 ;;; Code:
 
 (((calp util) filter-sorted set/r!
-  find-min find-max))
+  find-min find-max span-upto))
 
 (test-equal "Filter sorted"
   '(3 4 5)
@@ -36,3 +36,13 @@
 
 
 (test-error 'misc-error (find-extreme '()))
+
+(call-with-values (lambda () (span-upto 2 char-numeric? (string->list "123456")))
+  (lambda (head tail)
+    (test-equal '(#\1 #\2) head)
+    (test-equal '(#\3 #\4 #\5 #\6) tail)))
+
+(call-with-values (lambda () (span-upto 2 char-numeric? (string->list "H123456")))
+  (lambda (head tail)
+    (test-equal '() head)
+    (test-equal '(#\H #\1 #\2 #\3 #\4 #\5 #\6) tail)))

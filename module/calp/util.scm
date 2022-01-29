@@ -388,6 +388,31 @@
                  (cdr rem))])))
 
 
+
+;; Simar to span from srfi-1, but never takes more than
+;; @var{count} items. Can however still take less.
+;; @example
+;; (span-upto 2 char-numeric? (string->list "123456"))
+;; ⇒ (#\1 #\2)
+;; ⇒ (#\3 #\4 #\5 #\6)
+;; (span-upto 2 char-numeric? (string->list "H123456"))
+;; ⇒ ()
+;; ⇒ (#\H #\1 #\2 #\3 #\4 #\5 #\6)
+;; @end example
+(define-public (span-upto count predicate list)
+  (let loop ((remaining count)
+             (taken '())
+             (list list))
+    (if (or (zero? remaining) (null? list))
+        (values (reverse! taken) list)
+        (if (predicate (car list))
+            (loop (1- remaining)
+                  (cons (car list) taken)
+                  (cdr list))
+            (loop (1- remaining)
+                  taken list)))))
+
+
 ;; Returns the cross product between l1 and l2.
 ;; each element is a cons cell.
 (define (cross-product% l1 l2)
