@@ -24,28 +24,27 @@
 
 ;;; Enums
 
-(define-many define-public
-  (jan january   ) 1
-  (feb february  ) 2
-  (mar mars      ) 3
-  (apr april     ) 4
-  (may           ) 5
-  (jun june      ) 6
-  (jul july      ) 7
-  (aug august    ) 8
-  (sep september ) 9
-  (oct october   ) 10
-  (nov november  ) 11
-  (dec december  ) 12)
+(define-public jan  1) (define-public january 1)
+(define-public feb  2) (define-public february 2)
+(define-public mar  3) (define-public mars 3)
+(define-public apr  4) (define-public april 4)
+(define-public may  5)
+(define-public jun  6) (define-public june 6)
+(define-public jul  7) (define-public july 7)
+(define-public aug  8) (define-public august 8)
+(define-public sep  9) (define-public september 9)
+(define-public oct 10) (define-public october 10)
+(define-public nov 11) (define-public november 11)
+(define-public dec 12) (define-public december 12)
 
-(define-many define-public
-  (sun sunday)    0
-  (mon monday)    1
-  (tue tuesday)   2
-  (wed wednesday) 3
-  (thu thursday)  4
-  (fri friday)    5
-  (sat saturday)  6)
+
+(define-public sun 0) (define-public sunday 0)
+(define-public mon 1) (define-public monday 1)
+(define-public tue 2) (define-public tuesday 2)
+(define-public wed 3) (define-public wednesday 3)
+(define-public thu 4) (define-public thursday 4)
+(define-public fri 5) (define-public friday 5)
+(define-public sat 6) (define-public saturday 6)
 
 
 ;;; Configuration
@@ -905,10 +904,9 @@ Returns -1 on failure"
                  a))
           #t args))
 
-(define-many define-public
-  (date=?) date=
-  (time=?) time=
-  (datetime=?) datetime=)
+(define-public date=? date=)
+(define-public time=? time=)
+(define-public datetime=? datetime=)
 
 (define (date<% a b)
   (let ((ay (year a))
@@ -969,27 +967,47 @@ Returns -1 on failure"
 (define-public (date/-time< a b)
   (datetime< (as-datetime a) (as-datetime b)))
 
-(define-many define-public
-  (date<?) date<
-  (date> date>?) (swap date<)
-  (date<=?) date<=
-  (date>= date>=?) (swap date<=)
+(define-public date<?        date<)
 
-  (time<?) time<
-  (time> time>?) (swap time<)
-  (time<=?) time<=
-  (time>= time>=?) (swap time<=)
+(define-public date>         (swap date<))
+(define-public date>?        (swap date<))
 
-  (datetime<?) datetime<
-  (datetime> datetime>?) (swap datetime<)
-  (datetime<=?) datetime<=
-  (datetime>= datetime>=?) (swap datetime<=)
+(define-public date<=?       date<=)
 
-  (date/-time<?) date/-time<
-  (date/-time> date/-time>?) (swap date/-time<)
-  (date/-time<= date/-time<=?) (negate date/-time>)
-  (date/-time>= date/-time>=?) (negate date/-time<)
-  )
+(define-public date>=        (swap date<=))
+(define-public date>=?       (swap date<=))
+
+(define-public time<?        time<)
+
+(define-public time>         (swap time<))
+(define-public time>?        (swap time<))
+
+(define-public time<=?       time<=)
+
+(define-public time>=        (swap time<=))
+(define-public time>=?       (swap time<=))
+
+(define-public datetime<?    datetime<)
+
+(define-public datetime>     (swap datetime<))
+(define-public datetime>?    (swap datetime<))
+
+(define-public datetime<=?   datetime<=)
+
+(define-public datetime>=    (swap datetime<=))
+(define-public datetime>=?   (swap datetime<=))
+
+(define-public date/-time<?  date/-time<)
+
+(define-public date/-time>   (swap date/-time<))
+(define-public date/-time>?  (swap date/-time<))
+
+(define-public date/-time<=  (negate  date/-time>))
+(define-public date/-time<=? (negate  date/-time>))
+
+(define-public date/-time>=  (negate  date/-time<))
+(define-public date/-time>=? (negate  date/-time<))
+
 
 
 

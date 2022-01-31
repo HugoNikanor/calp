@@ -9,7 +9,7 @@
                 set/r!
                 -> ->> set set-> aif awhen
                 let-lazy let-env
-                case* define-many
+                case*
                 and=>> label
                 print-and-return
                 begin1
@@ -210,17 +210,6 @@
        (set! args ... val)
        val))))
 
-
-(define-syntax define-many
-  (syntax-rules ()
-    [(_) (begin)]
-    [(_ def) (begin)]
-    [(_ (symbols ...) value rest ...)
-     (begin (define symbols value) ...
-            (define-many rest ...))]
-    [(_ def (symbols ...) value rest ...)
-     (begin (def symbols value) ...
-            (define-many def rest ...))]))
 
 ;; Attach a label to a function, allowing it to call itself
 ;; without actually giving it a name (can also be thought

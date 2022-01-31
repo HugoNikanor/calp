@@ -76,12 +76,6 @@ cases:
 See @var{set!}, but also returns the final value.
 @end defmac
 
-
-@defmac define-many
-@c TODO document me
-@end defmac
-
-
 @defmac label name proc
 Equivalent to
 @lisp
