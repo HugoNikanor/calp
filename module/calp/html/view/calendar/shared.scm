@@ -43,8 +43,8 @@
     (unless (null? tree)
       (let ((w (/ (- 1 x)
                   (+ 1 (length-of-longst-branch (left-subtree tree))))))
-        (set! (width (car tree)) w
-              (x-pos (car tree)) x)
+        (set! (width (tree-node tree)) w
+              (x-pos (tree-node tree)) x)
         (inner (+ x w) (left-subtree tree))
         (inner x (right-subtree tree))))))
 

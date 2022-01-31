@@ -3,6 +3,7 @@
   #:use-module (hnh util)
   #:export (make-tree left-subtree
                       right-subtree
+                      tree-node
                       length-of-longst-branch
                       tree-map))
 
@@ -17,6 +18,9 @@
       (list (car lst)
             (make-tree pred? head)
             (make-tree pred? tail)))))
+
+(define (tree-node tree)
+  (car tree))
 
 (define (left-subtree tree)
   (list-ref tree 1))
