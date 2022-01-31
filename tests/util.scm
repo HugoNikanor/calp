@@ -3,7 +3,11 @@
 ;;; Code:
 
 (((calp util) filter-sorted set/r!
-  find-min find-max span-upto))
+  find-min find-max span-upto
+  iterate ->string ->quoted-string path-append
+  begin1)
+ ((ice-9 ports) with-output-to-string)
+ )
 
 (test-equal "Filter sorted"
   '(3 4 5)
@@ -46,3 +50,31 @@
   (lambda (head tail)
     (test-equal '() head)
     (test-equal '(#\H #\1 #\2 #\3 #\4 #\5 #\6) tail)))
+
+
+(test-equal "begin1 side effects" "World"
+ (with-output-to-string
+   (lambda ()
+     (test-equal "begin1 return value" "Hello"
+       (begin1
+        "Hello"
+        (display "World"))))))
+
+
+(test-equal 0 (iterate 1- zero? 10))
+
+
+
+(test-equal "5" (->string 5))
+(test-equal "5" (->string "5"))
+
+(test-equal "5" (->quoted-string 5))
+(test-equal "\"5\"" (->quoted-string "5"))
+
+
+(test-equal "/home/hugo/"
+  (path-append "/home" "hugo/"))
+
+(test-equal "/home/hugo/" (path-append "/" "/home/" "/hugo/"))
+
+(test-equal "/" (path-append ""))
