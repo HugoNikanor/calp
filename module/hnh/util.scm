@@ -7,8 +7,6 @@
   #:re-export (define*-public fold-values)
   #:export (for sort* sort*!
                 set/r!
-                catch-multiple
-                quote?
                 -> ->> set set-> aif awhen
                 let-lazy let-env
                 case* define-many
