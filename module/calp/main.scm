@@ -11,6 +11,9 @@
 
   :use-module ((text markup) :select (sxml->ansi-text))
   :use-module ((hnh util exceptions) :select (filter-stack))
+  ;; calp util exceptions contains the warnings-are-errors configuration
+  ;; item, this forces that to load.
+  :use-module ((calp util exceptions) :select ())
 
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 regex)

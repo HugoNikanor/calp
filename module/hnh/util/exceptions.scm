@@ -1,7 +1,6 @@
 (define-module (hnh util exceptions)
   #:use-module (srfi srfi-1)
   #:use-module (hnh util)
-  #:use-module (calp util config)
   #:use-module (ice-9 format)
 
   #:use-module ((system vm frame)
@@ -17,10 +16,6 @@
 
 (define-public warnings-are-errors
   (make-parameter #f))
-
-(define-config warnings-are-errors #f
-  description: "Crash on warnings."
-  post: warnings-are-errors)
 
 ;; forwards return from warning-hander. By default returns an unspecified value,
 ;; but instances are free to provide a proper return value and use it.
