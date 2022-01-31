@@ -1,8 +1,8 @@
 ;;; Commentary:
-;; Checks some prodecuders from (calp util)
+;; Checks some prodecuders from (hnh util)
 ;;; Code:
 
-(((calp util) filter-sorted set/r!
+(((hnh util) filter-sorted set/r!
   find-min find-max span-upto
   iterate ->string ->quoted-string path-append
   begin1)

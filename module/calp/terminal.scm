@@ -4,7 +4,7 @@
   #:use-module (srfi srfi-17)
   #:use-module (srfi srfi-26)
   #:use-module ((srfi srfi-41) :select (stream-car))
-  #:use-module (calp util)
+  #:use-module (hnh util)
   #:use-module (vulgar)
   #:use-module (vulgar info)
   #:use-module (vulgar color)

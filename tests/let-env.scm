@@ -1,5 +1,5 @@
 (((guile) setenv getenv)
- ((calp util) let-env))
+ ((hnh util) let-env))
 
 (setenv "CALP_TEST_ENV" "1")
 (test-equal "Ensure we have set value beforehand"

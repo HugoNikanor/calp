@@ -11,7 +11,7 @@
 (add-to-load-path "module")
 
 (use-modules 
-  (calp util) 
+  (hnh util) 
   (ice-9 ftw) 
   (ice-9 match)
   (srfi srfi-1)

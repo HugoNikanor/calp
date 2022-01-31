@@ -1,6 +1,6 @@
 (define-module (vcomponent duration)
-  :use-module (calp util)
-  :use-module (calp util exceptions)
+  :use-module (hnh util)
+  :use-module (hnh util exceptions)
   :use-module (datetime)
   :use-module (ice-9 peg)
   :use-module (ice-9 match)

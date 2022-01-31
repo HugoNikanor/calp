@@ -1,5 +1,5 @@
 (add-to-load-path "module")
-(use-modules (calp util)
+(use-modules (hnh util)
              (calp util app)
              (calp util config)
              (vcomponent)

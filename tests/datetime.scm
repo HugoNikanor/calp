@@ -16,7 +16,7 @@
   string->date string->time string->datetime
   )
  ((ice-9 format) format)
- ((calp util) let*)
+ ((hnh util) let*)
  ((ice-9 i18n) make-locale)
  ((guile) LC_TIME)
  )

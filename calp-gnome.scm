@@ -8,7 +8,7 @@
 (begin
 
  (use-modules
-  (calp util)
+  (hnh util)
   ((srfi srfi-1) :select (partition))
   (srfi srfi-41)
   (vcomponent datetime)

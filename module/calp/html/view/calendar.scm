@@ -1,5 +1,5 @@
 (define-module (calp html view calendar)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
                :select (events-between))

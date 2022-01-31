@@ -1,5 +1,5 @@
 (define-module (calp html view search)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (vcomponent)
   :use-module (vcomponent util search)
   :use-module ((ice-9 pretty-print) :select (pretty-print))

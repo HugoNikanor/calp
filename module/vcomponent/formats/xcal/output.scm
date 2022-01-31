@@ -1,6 +1,6 @@
 (define-module (vcomponent formats xcal output)
-  :use-module (calp util)
-  :use-module (calp util exceptions)
+  :use-module (hnh util)
+  :use-module (hnh util exceptions)
   :use-module (vcomponent)
   :use-module (vcomponent geo)
   :use-module (vcomponent formats xcal types)

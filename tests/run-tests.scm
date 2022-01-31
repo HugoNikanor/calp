@@ -47,7 +47,7 @@
              (srfi srfi-64)             ; test suite
              (srfi srfi-88)             ; suffix keywords
              (system vm coverage)
-             ((calp util) :select (for awhen))
+             ((hnh util) :select (for awhen))
              ;; datetime introduces the reader extensions for datetimes,
              ;; which leaks into the sandboxes below.
              (datetime))
@@ -92,7 +92,7 @@
 (test-begin "tests")
 
 ;; Forces all warnings to be explicitly handled by tests
-((@ (calp util exceptions) warnings-are-errors) #t)
+((@ (hnh util exceptions) warnings-are-errors) #t)
 
 (define (run-with-coverage)
   (with-code-coverage

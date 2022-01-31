@@ -1,5 +1,5 @@
 (define-module (calp benchmark parse)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (glob)
   :use-module (statprof)
 

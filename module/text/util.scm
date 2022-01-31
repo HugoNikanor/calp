@@ -3,7 +3,7 @@
 ;;; Code:
 
 (define-module (text util)
-  :use-module ((calp util) :select (define*-public intersperse) )
+  :use-module ((hnh util) :select (define*-public intersperse) )
   )
 
 (define-public (words str) (string-split str #\space))

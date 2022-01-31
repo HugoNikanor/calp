@@ -6,7 +6,7 @@
 ;;; Code:
 
 (define-module (sxml transformations)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module ((srfi srfi-1) :select (concatenate))
   :use-module ((sxml transform) :select (pre-post-order))
   )

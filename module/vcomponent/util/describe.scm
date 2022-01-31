@@ -1,5 +1,5 @@
 (define-module (vcomponent util describe)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (vcomponent base)
   :use-module (text util))
 

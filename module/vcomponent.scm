@@ -1,5 +1,5 @@
 (define-module (vcomponent)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (calp util config)
   :use-module (vcomponent base)
   ;; :use-module ((vcomponent util instance methods)

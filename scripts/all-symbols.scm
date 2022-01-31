@@ -13,7 +13,7 @@
 
 (add-to-load-path (string-append (dirname (dirname (current-filename))) "/module"))
 
-(use-modules (calp util)
+(use-modules (hnh util)
              (srfi srfi-1))
 
 

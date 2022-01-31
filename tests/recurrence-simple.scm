@@ -8,7 +8,7 @@
  ((datetime) day-stream mon)
  ((vcomponent base) extract prop)
 
- ((calp util exceptions) warnings-are-errors warning-handler)
+ ((hnh util exceptions) warnings-are-errors warning-handler)
  ((guile) format @@)
 
  ((vcomponent formats ical parse) parse-calendar)

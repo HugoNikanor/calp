@@ -1,6 +1,6 @@
 (define-module (vcomponent formats ical output)
-  :use-module (calp util exceptions)
-  :use-module (calp util)
+  :use-module (hnh util exceptions)
+  :use-module (hnh util)
   :use-module (datetime)
   :use-module (datetime zic)
   :use-module ((datetime instance) :select (zoneinfo))

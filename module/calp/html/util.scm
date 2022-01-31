@@ -1,5 +1,5 @@
 (define-module (calp html util)
-  :use-module (calp util))
+  :use-module (hnh util))
 
 
 (define-public (date-link date)

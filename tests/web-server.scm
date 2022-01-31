@@ -7,7 +7,7 @@
  ((web server) run-server)
  ((ice-9 threads) call-with-new-thread cancel-thread)
  ((web client) http-get)
- ((calp util) let*)
+ ((hnh util) let*)
  ((web response) response-code response-location)
  ((web uri) build-uri uri-path)
  ((guile) AF_INET))

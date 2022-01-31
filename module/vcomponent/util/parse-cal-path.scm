@@ -1,5 +1,5 @@
 (define-module (vcomponent util parse-cal-path)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module ((calp util time) :select (report-time!))
   :use-module (vcomponent base)
   :use-module ((vcomponent formats ical parse)

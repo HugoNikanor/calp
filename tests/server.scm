@@ -3,7 +3,7 @@
 ;;; Code:
 
 (((web http make-routes) parse-endpoint-string)
- ((calp util) let*))
+ ((hnh util) let*))
 
 (test-assert "Check that parsing doesn't crash"
   (parse-endpoint-string "/static/:dir/:file"))

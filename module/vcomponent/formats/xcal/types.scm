@@ -1,5 +1,5 @@
 (define-module (vcomponent formats xcal types)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (vcomponent formats ical types)
   :use-module (datetime)
   )

@@ -7,7 +7,7 @@
 (define-module (vulgar)
   #:use-module (srfi srfi-60)
   #:use-module (vulgar termios)
-  #:use-module (calp util)
+  #:use-module (hnh util)
   #:export (with-vulgar))
 
 (define-public (cls)

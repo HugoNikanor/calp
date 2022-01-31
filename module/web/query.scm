@@ -1,5 +1,5 @@
 (define-module (web query)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (srfi srfi-1)
   :use-module (web uri))
 

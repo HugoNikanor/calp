@@ -3,7 +3,7 @@
  ((vcomponent base) extract prop make-vcomponent)
  ((vcomponent datetime) event-overlaps?)
  ((datetime) date date+ date<)
- ((calp util) set!))
+ ((hnh util) set!))
 
 (define* (event key: summary dtstart dtend)
   (define ev (make-vcomponent 'VEVENT))

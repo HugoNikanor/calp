@@ -1,5 +1,5 @@
 (define-module (c parse)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (srfi srfi-1)
   :use-module (ice-9 match)
   :export (parse-lexeme-tree))

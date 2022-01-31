@@ -1,6 +1,6 @@
-(define-module (calp util exceptions)
+(define-module (hnh util exceptions)
   #:use-module (srfi srfi-1)
-  #:use-module (calp util)
+  #:use-module (hnh util)
   #:use-module (calp util config)
   #:use-module (ice-9 format)
 

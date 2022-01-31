@@ -1,5 +1,5 @@
 (define-module (web uri-query)
-  :use-module ((calp util) :select (->quoted-string))
+  :use-module ((hnh util) :select (->quoted-string))
   :use-module ((web uri) :select (uri-encode))
   )
 

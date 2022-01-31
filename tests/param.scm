@@ -6,7 +6,7 @@
 (((vcomponent base) param prop* parameters prop)
  ((vcomponent formats ical parse) parse-calendar)
  ((vcomponent) make-vcomponent)
- ((calp util) sort* set!))
+ ((hnh util) sort* set!))
 
 (define v (call-with-input-string
               "BEGIN:DUMMY

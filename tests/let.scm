@@ -2,7 +2,7 @@
 ;; Tests my custom let*.
 ;;; Code:
 
-(((calp util) let*)
+(((hnh util) let*)
  ((guile) set!))
 
 (test-assert (let* ((a #t)) a))

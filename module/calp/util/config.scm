@@ -5,7 +5,7 @@
 ;;; Code:
 
 (define-module (calp util config)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (srfi srfi-1)
   :use-module (ice-9 format) ; for format-procedure
   :use-module (ice-9 curried-definitions) ; for ensure

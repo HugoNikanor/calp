@@ -5,7 +5,7 @@
   :use-module (ice-9 getopt-long)
   :use-module (datetime)
   :use-module (vulgar)
-  :use-module (calp util options)
+  :use-module (hnh util options)
   )
 
 (define options

@@ -1,5 +1,5 @@
 @node Calp Util
-@section (calp util)
+@section (hnh util)
 
 @defmac define-syntax [stx]
 Extends the default syntax from the default

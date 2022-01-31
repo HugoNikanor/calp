@@ -1,5 +1,5 @@
 (define-module (calp html components)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (ice-9 curried-definitions)
   :use-module (ice-9 match)
   :export (xhtml-doc)

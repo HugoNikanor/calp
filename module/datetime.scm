@@ -9,7 +9,7 @@
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
 
-  :use-module (calp util)
+  :use-module (hnh util)
 
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
@@ -694,12 +694,12 @@ Returns -1 on failure"
             [else dt]))
 
     (cond [(null? str)
-           ;; ((@ (calp util exceptions) warning)
+           ;; ((@ (hnh util exceptions) warning)
            ;;  "Premature end of string, still got fmt = ~s"
            ;;  fmt)
            (ampm dt)]
           [(null? fmt)
-           ;; ((@ (calp util exceptions) warning)
+           ;; ((@ (hnh util exceptions) warning)
            ;;  "Unsparsed characters at end of string")
            (ampm dt)]
           [(eq? #\~ (car fmt))

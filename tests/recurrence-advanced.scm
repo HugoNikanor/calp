@@ -23,7 +23,7 @@
  ((vcomponent base) make-vcomponent prop prop* extract)
  ((datetime) parse-ics-datetime datetime time date
   datetime->string)
- ((calp util) -> set!)
+ ((hnh util) -> set!)
  ((srfi srfi-41) stream->list)
  ((srfi srfi-88) keyword->string))
 

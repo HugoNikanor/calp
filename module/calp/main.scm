@@ -1,16 +1,16 @@
 ;; -*- geiser-scheme-implementation: guile -*-
 (define-module (calp main)
-  :use-module (calp util)
+  :use-module (hnh util)
 
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-88)             ; keyword syntax
 
   :use-module ((calp util config) :select (set-config! get-config get-configuration-documentation))
-  :use-module (calp util options)
+  :use-module (hnh util options)
   :use-module ((calp util hooks) :select (shutdown-hook))
 
   :use-module ((text markup) :select (sxml->ansi-text))
-  :use-module ((calp util exceptions) :select (filter-stack))
+  :use-module ((hnh util exceptions) :select (filter-stack))
 
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 regex)
@@ -215,7 +215,7 @@
       ;; (define path (read-line pipe))
       (define line ((@ (ice-9 rdelim) read-line) pipe))
       (define names (string-split line #\space))
-      ((@ (calp util io) with-atomic-output-to-file)
+      ((@ (hnh util io) with-atomic-output-to-file)
        (path-append (xdg-data-home) "/calp/zoneinfo.scm")
        (lambda ()
          (write `(set-config! 'tz-list ',names)) (newline)

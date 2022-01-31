@@ -1,4 +1,4 @@
-(define-module (calp util io)
+(define-module (hnh util io)
   :use-module ((ice-9 rdelim) :select (read-line)))
 
 (define-public (open-input-port str)

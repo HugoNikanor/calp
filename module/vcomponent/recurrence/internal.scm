@@ -5,7 +5,7 @@
   #:use-module ((vcomponent base) :select (prop))
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-9 gnu)
-  #:use-module (calp util)
+  #:use-module (hnh util)
   )
 
 ;; EXDATE is also a property linked to recurense rules

@@ -4,7 +4,7 @@
   #:use-module (datetime)
   #:use-module (datetime timespec)
   #:use-module (datetime zic)
-  #:use-module (calp util)
+  #:use-module (hnh util)
 
   :use-module (ice-9 curried-definitions)
 

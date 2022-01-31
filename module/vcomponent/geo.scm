@@ -1,5 +1,5 @@
 (define-module (vcomponent geo)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (srfi srfi-9 gnu))
 
 (define-immutable-record-type <geographical-position>

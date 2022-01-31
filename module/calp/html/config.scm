@@ -1,5 +1,5 @@
 (define-module (calp html config)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (calp util config)
   )
 

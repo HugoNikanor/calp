@@ -7,7 +7,7 @@
   :use-module (ice-9 rdelim)
   :use-module (srfi srfi-9)             ; records
   :use-module (c cpp)
-  :use-module (calp util)
+  :use-module (hnh util)
   :export (make-termios
            copy-termios
            tcsetattr! tcgetattr! cfmakeraw!))

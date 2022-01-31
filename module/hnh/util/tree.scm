@@ -1,6 +1,6 @@
-(define-module (calp util tree)
+(define-module (hnh util tree)
   #:use-module (srfi srfi-1)
-  #:use-module (calp util)
+  #:use-module (hnh util)
   #:export (make-tree left-subtree
                       right-subtree
                       length-of-longst-branch

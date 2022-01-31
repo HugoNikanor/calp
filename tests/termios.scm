@@ -5,7 +5,7 @@
 ;; It might also leave the terminal in a broken state if exited prematurely.
 ;;; Code:
 
-(((calp util) set!)
+(((hnh util) set!)
  ((vulgar termios)
   make-termios copy-termios
   lflag

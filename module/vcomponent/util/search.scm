@@ -25,7 +25,7 @@
 ;;; Code:
 
 (define-module (vcomponent util search)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-41)

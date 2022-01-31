@@ -1,6 +1,6 @@
 (define-module (calp entry-points server)
-  :use-module (calp util)
-  :use-module (calp util options)
+  :use-module (hnh util)
+  :use-module (hnh util options)
   :use-module (calp util config)
 
   :use-module (srfi srfi-1)

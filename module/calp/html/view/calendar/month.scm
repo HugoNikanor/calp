@@ -1,5 +1,5 @@
 (define-module (calp html view calendar month)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)

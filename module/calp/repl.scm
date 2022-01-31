@@ -6,7 +6,7 @@
   :use-module (system repl server)
   :use-module (ice-9 regex)
   :use-module ((calp util hooks) :select (shutdown-hook))
-  :use-module ((calp util exceptions) :select (warning))
+  :use-module ((hnh util exceptions) :select (warning))
   )
 
 (define-public (repl-start address)

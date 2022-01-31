@@ -1,5 +1,5 @@
 (define-module (calp server server)
-  :use-module (calp util)
+  :use-module (hnh util)
   :use-module (web server)
   :use-module ((calp server routes) :select (make-make-routes))
   :use-module (ice-9 threads))
