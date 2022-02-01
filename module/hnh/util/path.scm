@@ -20,3 +20,24 @@
         (cdr strings)))
 
 (define-public (path-join lst) (apply path-append lst))
+
+;; @example
+;; (path-split "usr/lib/test")
+;; ⇒ ("usr" "lib" "test")
+;; (path-split "/usr/lib/test")
+;; ⇒ ("" "usr" "lib" "test")
+;; (path-split "//usr////lib/test")
+;; ⇒ ("" "usr" "lib" "test")
+;; @end example
+(define-public (path-split path)
+  (let* ((head tail
+               (car+cdr
+                (reverse
+                 (map reverse-list->string
+                      (fold (lambda (c done)
+                              (if (file-name-separator? c)
+                                  (cons '() done)
+                                  (cons (cons c (car done)) (cdr done))))
+                            '(())
+                            (string->list path)))))))
+    (cons head (remove string-null? tail))))
