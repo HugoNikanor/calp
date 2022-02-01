@@ -18,3 +18,5 @@
           (if (string-null? s)
               "/" s))
         (cdr strings)))
+
+(define-public (path-join lst) (apply path-append lst))
