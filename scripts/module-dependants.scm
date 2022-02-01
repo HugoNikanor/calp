@@ -2,6 +2,13 @@
 -e main -s
 !#
 
+;;; Commentary:
+;;;
+;;; For a given module in the project, finds all other modules who uses that
+;;; module, and break it down per symbol.
+;;;
+;;; Code:
+
 (define module-dir (string-append
                     (dirname (dirname (current-filename)))
                     "/module"))
@@ -102,7 +109,7 @@
                    (for-each (lambda (file) (format #t "• ~a~%" file)) files))
                  symbol-used-by)
 
-  (display (center-string "Unused" 80 #\= #\=)) (newline)
+  (display (center-string " Unused (except possibly internally) " 80 #\= #\=)) (newline)
   (for-each (lambda (symb) (format #t "• ~a~%" symb))
             (lset-difference
              eqv?
