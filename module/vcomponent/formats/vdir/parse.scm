@@ -12,6 +12,7 @@
   :use-module ((ice-9 ftw) :select (scandir ftw))
 
   :use-module (hnh util)
+  :use-module ((hnh util path) :select (path-append))
   :use-module (hnh util exceptions)
   :use-module (vcomponent base)
 

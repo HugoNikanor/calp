@@ -1,6 +1,7 @@
 (define-module (calp entry-points html)
   :export (main)
   :use-module (hnh util)
+  :use-module ((hnh util path) :select (path-append))
   :use-module (calp util time)
   :use-module (hnh util options)
   :use-module (datetime)
@@ -66,15 +67,15 @@
 ;; file existing but is of wrong type,
 (define (create-files output-directory)
 
-  (let* ((link (path-append output-directory "/static")))
+  (let* ((link (path-append output-directory "static")))
 
     (unless (file-exists? output-directory)
       (mkdir output-directory))
 
     ;; TODO nicer way to resolve static
-    (let ((link (path-append output-directory "/static")))
+    (let ((link (path-append output-directory "static")))
      (unless (file-exists? link)
-       (symlink (path-append (xdg-data-home) "/calp/www/static") link)))))
+       (symlink (path-append (xdg-data-home) "calp" "www" "static") link)))))
 
 
 (define (re-root-static tree)

@@ -12,7 +12,6 @@
       (open-output-file str)))
 
 
-
 (define-public (read-lines port)
   (with-input-from-port port
     (lambda ()

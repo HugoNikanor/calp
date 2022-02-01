@@ -2,6 +2,7 @@
   :use-module (hnh util)
   :use-module (calp util config)
   :use-module (hnh util exceptions)
+  :use-module ((hnh util path) :select (path-append))
   :use-module (datetime zic)
   :use-module ((xdg basedir) :prefix xdg-)
   :export (zoneinfo))

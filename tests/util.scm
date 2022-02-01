@@ -4,8 +4,9 @@
 
 (((hnh util) filter-sorted set/r!
   find-min find-max span-upto
-  iterate ->string ->quoted-string path-append
+  iterate ->string ->quoted-string
   begin1)
+ ((hnh util path) path-append)
  ((ice-9 ports) with-output-to-string)
  )
 

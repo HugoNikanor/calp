@@ -1,5 +1,6 @@
 (define-module (calp benchmark parse)
   :use-module (hnh util)
+  :use-module ((hnh util path) :select (path-append))
   :use-module (glob)
   :use-module (statprof)
 

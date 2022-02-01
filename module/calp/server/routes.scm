@@ -1,5 +1,6 @@
 (define-module (calp server routes)
   :use-module (hnh util)
+  :use-module ((hnh util path) :select (path-append))
   :use-module (hnh util options)
   :use-module (hnh util exceptions)
 

@@ -1,6 +1,7 @@
 ;; -*- geiser-scheme-implementation: guile -*-
 (define-module (calp main)
   :use-module (hnh util)
+  :use-module ((hnh util path) :select (path-append))
 
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-88)             ; keyword syntax
@@ -125,8 +126,8 @@
          ;; if an explicitly given config is missing.
          [(find file-exists?
                 (list
-                 (path-append (xdg-config-home) "/calp/config.scm")
-                 (path-append (xdg-sysconfdir) "/calp/config.scm")))
+                 (path-append (xdg-config-home) "calp" "config.scm")
+                 (path-append (xdg-sysconfdir) "calp" "config.scm")))
           => identity]))
 
   (when stprof (statprof-start))
@@ -210,7 +211,7 @@
     (throw 'return))
 
   (when (option-ref opts 'update-zoneinfo #f)
-    (let* ((locations (list "/usr/libexec/calp/tzget" (path-append (xdg-data-home) "/tzget")))
+    (let* ((locations (list "/usr/libexec/calp/tzget" (path-append (xdg-data-home) "tzget")))
            (filename (or (find file-exists? locations)
                          (error "tzget not installed, please put it in one of ~a" locations)))
            (pipe (open-input-pipe filename)))
@@ -219,13 +220,13 @@
       (define line ((@ (ice-9 rdelim) read-line) pipe))
       (define names (string-split line #\space))
       ((@ (hnh util io) with-atomic-output-to-file)
-       (path-append (xdg-data-home) "/calp/zoneinfo.scm")
+       (path-append (xdg-data-home) "calp" "zoneinfo.scm")
        (lambda ()
          (write `(set-config! 'tz-list ',names)) (newline)
          (write `(set-config! 'last-zoneinfo-upgrade ,((@ (datetime) current-date)))) (newline)))))
 
   ;; always load zoneinfo if available.
-  (let ((z (path-append (xdg-data-home) "/calp/zoneinfo.scm")))
+  (let ((z (path-append (xdg-data-home) "calp" "zoneinfo.scm")))
     (when (file-exists? z)
       (primitive-load z)))
 

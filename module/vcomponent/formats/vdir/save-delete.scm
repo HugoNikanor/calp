@@ -11,6 +11,7 @@
 
 (define-module (vcomponent formats vdir save-delete)
   :use-module (hnh util)
+  :use-module ((hnh util path) :select (path-append))
   :use-module ((hnh util exceptions) :select (assert))
   :use-module (vcomponent formats ical output)
   :use-module (vcomponent)

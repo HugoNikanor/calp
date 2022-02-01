@@ -1,5 +1,8 @@
 (define-module (calp html vcomponent)
   :use-module (hnh util)
+  ;; TODO should we really use path-append here? Path append is
+  ;; system-dependant, while URL-paths aren't.
+  :use-module ((hnh util path) :select (path-append))
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module ((rnrs io ports) :select (put-bytevector))
