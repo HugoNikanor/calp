@@ -2,21 +2,24 @@
   :use-module (srfi srfi-1)
   :use-module (hnh util))
 
-;; TODO shouldn't this use `file-name-separator-string'?
 (define-public (path-append . strings)
   (fold (lambda (s done)
             (string-append
              done
              (if (string-null? s)
-                 (string-append s "/")
-                 (if (char=? #\/ (string-last done))
-                     (if (char=? #\/ (string-first s))
+                 (string-append s file-name-separator-string)
+                 (if (file-name-separator? (string-last done))
+                     (if (file-name-separator? (string-first s))
                          (string-drop s 1) s)
-                     (if (char=? #\/ (string-first s))
-                         s (string-append "/" s))))))
+                     (if (file-name-separator? (string-first s))
+                         s (string-append file-name-separator-string s))))))
+        ;; If first component is empty, add a leading slash to make
+        ;; the path absolute. This isn't exactly correct if we have
+        ;; drive letters, but on those system the user should make
+        ;; sure that the first component of the path is non-empty.
         (let ((s (car strings)))
           (if (string-null? s)
-              "/" s))
+              file-name-separator-string s))
         (cdr strings)))
 
 (define-public (path-join lst) (apply path-append lst))
