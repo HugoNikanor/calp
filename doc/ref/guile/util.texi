@@ -1,5 +1,7 @@
-@node Calp Util
-@section (hnh util)
+@node General Utilities
+@section General Utilities
+
+Provided by the module @code{(hnh util)}.
 
 @defmac define-syntax [stx]
 Extends the default syntax from the default
@@ -30,7 +32,18 @@ our extra specialized @var{when}}, but binds the return of
 
 @defmac for key in collection body ...
 @defmacx for (key ...) in collection body ...
-@c TODO write me
+Syntactic sugar over @code{map}.
+@example
+for x in collection
+    body ...
+@end example
+expands into
+@example
+(map (lambda (x) body ...) collection)
+@end example
+
+If keys are a list, an match-lambda is used instead.
+@xref{Pattern Matching,,,guile}
 @end defmac
 
 @defmac let* forms body ...
@@ -108,6 +121,7 @@ See @var{find-extreme}
 @end defun
 
 @defun filter-sorted proc list
+@c TODO document me
 @end defun
 
 @defun != args ...
@@ -139,12 +153,6 @@ Returns @code{(string->symbol s)} if @var{s} is a string, @var{s} otherwise.
 @defun enumerate lst
 Returns a list of lists, where the @var{car} is the index in the list,
 and the @var{cadr} is the corresponding element of the original list
-@end defun
-
-
-@defun map-each proc lst
-Like @var{map}, but @var{proc} should take 2 arguments, the element to
-operate on, along with the an index.
 @end defun
 
 
@@ -190,6 +198,7 @@ pairs of symbols and values.
 @end defun
 
 @defun assq-limit alist [number=1]
+@c TODO document
 @end defun
 
 @defun group-by proc lst
@@ -207,12 +216,27 @@ Split a list into sub-lists on @var{element}
 @end defun
 
 
+@defun span-upto count predicate list
+Simar to span from srfi-1, but never takes more than
+@var{count} items. Can however still take less.
+@example
+(span-upto 2 char-numeric? (string->list "123456"))
+⇒ (#\1 #\2)
+⇒ (#\3 #\4 #\5 #\6)
+(span-upto 2 char-numeric? (string->list "H123456"))
+⇒ ()
+⇒ (#\H #\1 #\2 #\3 #\4 #\5 #\6)
+@end example
+@end defun
+
+
 @defun cross-product args ...
 Returns the cross product between all given lists. Each pair will be a
 list, whose indices matches the order of the inputs
 @end defun
 
 @defun string-flatten tree
+@c TODO document me
 @end defun
 
 @defun intersperse item list
@@ -247,6 +271,11 @@ right, similar to @var{->}.
 @end defmac
 
 
+@defmac and=>> value procedures ...
+Chained application of @code{and=>}, so applies each procedure from
+left to right, stopping when one return @code{#f}.
+@end defmac
+
 @defun downcase-symbol
 Converts a symbol to lower case.
 @end defun
@@ -264,6 +293,16 @@ satisfied.
 @end defun
 
 @defun valued-map proc lists ...
+Applies a procedure which returns multiple values to each element of a
+list, and returns all values returned from all procedure calls.
+@example
+(define (± x) (values x (- x)))
+(valued-map ± '(1 2))
+⇒  1
+⇒ -1
+⇒  2
+⇒ -2
+@end example
 @end defun
 
 
@@ -292,34 +331,6 @@ Converts @var{any} to a string, as per @var{display}.
 Converts @var{any} to a string, as per @var{write}.
 @end defun
 
-@defun path-append strings ...
-Joins all strings into a path, squeezing duplicated delimiters, but
-ensuring that all delimiters that are needed are there.
-
-Note that delimiters embedded inside the string, which aren't first or
-last in a substring (or are the only thing in a string) are
-kept. Meaning that
-@example
-(path-append "/" "hello") ⇒ "/hello"
-(path-append "/usr/local/bin" "cmd") ⇒ "/usr/local/bin/cmd"
-@end example
-@end defun
-
-
-@defun path-join lst
-@lisp
-(apply path-append lst)
-@end lisp
-@end defun
-
-
-@defun path-absolute? path
-@end defun
-
-@defun path-split path
-Splits path into a list of components.
-The first component will be @code{""} if path is absolute.
-@end defun
 
 
 @defmac let-env bindings body ...

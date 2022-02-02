@@ -2,6 +2,7 @@
 @chapter Guile
 
 @include guile/util.texi
+@include guile/util-path.texi
 @include guile/vcomponent.texi
 
 

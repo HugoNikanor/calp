@@ -1,0 +1,32 @@
+@node Path Utilities
+@section Path Utilities
+
+Provided by the module @code{(hnh util path)}.
+
+See also @code{absolute-file-name?} from Guile.
+
+@defun path-append strings ...
+Joins all strings into a path, squeezing duplicated delimiters, but
+ensuring that all delimiters that are needed are there.
+
+Note that delimiters embedded inside the string, which aren't first or
+last in a substring (or are the only thing in a string) are
+kept. Meaning that
+@example
+(path-append "/" "hello") ⇒ "/hello"
+(path-append "/usr/local/bin" "cmd") ⇒ "/usr/local/bin/cmd"
+@end example
+@end defun
+
+
+@defun path-join lst
+@lisp
+(apply path-append lst)
+@end lisp
+@end defun
+
+
+@defun path-split path
+Splits path into a list of components.
+The first component will be @code{""} if path is absolute.
+@end defun
