@@ -27,6 +27,7 @@
    (head (title "Search results")
          ,(include-css "/static/style.css"))
    (body
+    (a (@ (href ("/today"))) "Till Idag")
     (h2 "Search term")
     (form
      (pre (textarea (@ (name "q") (rows 5) (spellcheck false)
