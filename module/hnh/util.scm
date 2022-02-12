@@ -137,10 +137,10 @@
 
 
 (define-syntax-rule (begin1 first rest ...)
-  (let ((return first))
-    rest ...
-    return))
-
+  (call-with-values (lambda () first)
+    (lambda returned
+      rest ...
+      (apply values returned))))
 
 
 
