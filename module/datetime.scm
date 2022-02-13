@@ -661,18 +661,19 @@ Returns -1 on failure"
 
 
 
-(define* (parse-month str optional: (locale %global-locale))
+(define*-public (parse-month str optional: (locale %global-locale))
   "Get month number from a (shortened) monthname.
 Returns -1 on failure"
-  (cond ((find (match-lambda ((_ name)
-                              (let ((len (min (string-length name)
-                                              (string-length str))))
-                                (string-locale-ci=? (string-take str len)
-                                                    (string-take name len)
-                                                    locale))))
-               (enumerate (map (lambda (n) (locale-month n locale)) (iota 12 1))))
-         => (compose 1+ car))
-        (else -1)))
+  (or
+   (find (lambda (n)
+           (define name (locale-month n locale))
+           (define len (min (string-length name)
+                            (string-length str)))
+           (string-locale-ci=? (string-take str len)
+                               (string-take name len)
+                               locale))
+         (iota 12 1))
+   -1))
 
 
 (define*-public (string->datetime str optional: (fmt "~Y-~m-~dT~H:~M:~S~Z")
