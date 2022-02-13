@@ -675,6 +675,11 @@ Returns -1 on failure"
             [else dt]))
 
     (cond [(null? str)
+           ;; TODO should this be considered an error?
+           ;; Should it be toggleable through a flag.
+           ;; It's sometimes useful to allow it, since it allows optional
+           ;; trailing fields, but sometimes useful to disallow it, since
+           ;; it gives a better check that the data is valid
            ;; ((@ (hnh util exceptions) warning)
            ;;  "Premature end of string, still got fmt = ~s"
            ;;  fmt)

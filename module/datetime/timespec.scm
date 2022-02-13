@@ -64,15 +64,6 @@
           specs))
 
 
-(define (parse-time string)
-  (apply (lambda* (hour optional: (minute "0") (second "0"))
-           (time hour: (string->number hour)
-                 minute: (string->number minute)
-                 ;; discard sub-seconds
-                 second: (string->number (car (string-split second #\.)))))
-         (string-split string #\:)))
-
-
 (define*-public (parse-time-spec
                  string optional: (suffixes '(#\s #\w #\u #\g #\z)))
   (let* ((type string
@@ -81,11 +72,12 @@
                       (values (string-ref string idx)
                               (substring string 0 idx)))]
                 [else (values #\w string)])))
+    ;; Note that string->time allows a longer format than the input
     (cond [(string=? "-"  string)
            (make-timespec (time) '+ type)]
           [(string-prefix? "-" string)
-           (make-timespec (parse-time (string-drop string 1))
+           (make-timespec (string->time (string-drop string 1) "~H:~M:~S")
                           '- type)]
           [else
-           (make-timespec (parse-time string)
+           (make-timespec (string->time string "~H:~M:~S")
                           '+ type)])))
