@@ -642,25 +642,6 @@
 
 ;;; Input
 
-#;
-(define (parse-month str)
-  "Get month number from a (shortened) monthname.
-Returns -1 on failure"
-  (let loop ((i 1)
-             (months (map (compose string-locale-downcase locale-month)
-                          (iota 12 1))))
-    (if (null? months)
-        -1
-        (let ((len (min (string-length (car months))
-                        (string-length str))))
-          (if (string=?
-               (string-take (string-downcase str) len)
-               (string-take (car months) len))
-              i
-              (loop (1+ i) (cdr months)))))))
-
-
-
 (define*-public (parse-month str optional: (locale %global-locale))
   "Get month number from a (shortened) monthname.
 Returns -1 on failure"
