@@ -14,6 +14,7 @@
   datetime-
   leap-year?
   string->date string->time string->datetime
+  parse-month
   )
  ((ice-9 format) format)
  ((hnh util) let*)
@@ -226,3 +227,15 @@
 (test-equal "Parse date single digit day, trailing comma + space"
             (date day: 6)
             (string->date "6, " "~d, "))
+
+
+(define en_US (make-locale LC_TIME "en_US.UTF-8"))
+(define sv_SE (make-locale LC_TIME "sv_SE.UTF-8"))
+
+(test-equal 1 (parse-month "jan" en_US))
+(test-equal 1 (parse-month "jan" sv_SE))
+
+(test-equal 12 (parse-month "dec" en_US))
+(test-equal -1 (parse-month "inv" en_US))
+
+(test-equal 5 (parse-month "mAJ" sv_SE))
