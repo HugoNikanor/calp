@@ -11,14 +11,18 @@
 ;; See zic(8) for data format
 ;;; Code:
 (define-module (datetime zic)
-  :use-module (hnh util)
-  :use-module (hnh util exceptions)
+  :use-module ((hnh util)
+               :select (awhen group set when sort* iterate group-by let*))
+  :use-module ((hnh util exceptions) :select (warning))
   :use-module (datetime)
   :use-module (datetime timespec)
-  :use-module (ice-9 rdelim)
+  :use-module ((ice-9 rdelim) :select (read-line))
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
-  :use-module (srfi srfi-9 gnu))
+  :use-module (srfi srfi-9 gnu)
+  :use-module ((vcomponent recurrence internal)
+               :select (byday make-recur-rule bymonthday))
+  )
 
 
 (define-public (read-zoneinfo ports-or-filenames)
@@ -341,9 +345,6 @@ expries rules aren't yet implemented." type)]
      dt
      (datetime time: (timespec-time timespec)))
     ))
-
-
-(use-modules (vcomponent recurrence internal))
 
 (define-public (rule->rrule rule)
   (if (eq? 'only (rule-to rule))

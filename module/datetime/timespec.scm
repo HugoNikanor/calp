@@ -4,8 +4,10 @@
 ;;; Code:
 
 (define-module (datetime timespec)
-  :use-module (hnh util)
-  :use-module (hnh util exceptions)
+  :export (make-timespec
+           timespec? timespec-time timespec-sign timespec-type)
+  :use-module ((hnh util) :select (set define*-public unless let*))
+  :use-module ((hnh util exceptions) :select (warning))
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9 gnu)
@@ -25,8 +27,6 @@
   ;; s - standard time without daylight savings adjustments
   ;; u, g, z - Universal time
   (type timespec-type))                 ; char
-
-(export make-timespec timespec? timespec-time timespec-sign timespec-type)
 
 (define-public (timespec-zero)
   (make-timespec (time) '+ #\w))

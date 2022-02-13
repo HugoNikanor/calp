@@ -9,17 +9,18 @@
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
 
-  :use-module (hnh util)
+  :use-module ((hnh util)
+               :select (vector-last define*-public set! -> swap case* set
+                                    span-upto let* set->))
 
   :use-module (srfi srfi-41)
-  :use-module (srfi srfi-41 util)
+  :use-module ((srfi srfi-41 util)
+               :select (with-streams))
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
-  :use-module (ice-9 match)
   :use-module (ice-9 regex)
   :use-module (calp util config)
-  :re-export (locale-month locale-month-short)
-  )
+  :re-export (locale-month locale-month-short))
 
 
 ;;; Enums
