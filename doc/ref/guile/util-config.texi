@@ -1,0 +1,92 @@
+@node Configuration
+
+@section Configuration
+
+Provided by the module @code{(calp util config)}.
+
+Configuration items are similar to regular defines, but global to the
+entire program, and assignable before they are declared.
+Their primary purpose is to allow a user supplied @file{config.scm},
+without needing all appropriate modules already loaded.
+
+@defmac define-config name default kw-parameters ...
+Declares a new configuration variable named @var{named}, with the
+default value @var{default}. @var{kw-parameters} are given on Guile's
+standard @code{hash: value} form. @ref{get-property} available parameters.
+@end defmac
+
+@defun get-property config-name property-key
+Returns a metadata-slot value for the given configuration setting.
+
+Each declared configuration item has (at least) the following metadata
+slots:
+
+@table @samp
+@item description
+Short human-readable description of this configuration item.
+
+@item source-module
+Module in which this item was declared. Automatically filled in by @code{define-config}.
+
+@item pre
+Procedure which can pre-process or validate set values. Think about it
+as if @code{(set-config! key value)} expands to
+@code{(true-set-config! key (pre value))},
+with the bonus that if @code{pre value} returns @code{#f} then the
+assignment fail.
+
+@item post
+Procedure to run after the value is set. For example for updating a
+local parameter.
+@example
+(define-public week-start (make-parameter sun))
+(define-config week-start sun
+  description: "First day of week"
+  pre: (ensure (lambda (x) (<= sun x sat)))
+  post: week-start)
+@end example
+@end table
+
+@findex set-property!
+Note that @code{set-property!} doesn't exist, since properties are read-only.
+@end defun
+
+@defun set-config! name value
+Sets the @var{value} of the configuration variable @var{name}.
+@end defun
+
+@defun get-config key [default]
+Retrieve the configured value for @var{key}. Throws an error if key
+isn't set, and @var{default} isn't given (to differentiate it from
+@code{#f} being set.
+@end defun
+
+@defun {(ensure predicate)} value
+Helper procedure for @code{pre} hooks. Curried function which checks
+if @var{value} satisfies @var{predicate}, and if so returns @var{value}.
+
+@example
+(define-public ((ensure predicate) value)
+  (if (predicate value)
+      value #f))
+@end example
+@end defun
+
+@defun get-configuration-documentation
+Collects all variables we know about (both defined and non-defined
+(but set)), and builds a markup-tree with information about them.
+@c TODO document markup format, link it here
+@end defun
+
+@defun format-procedure procedure
+Procedure mainly used by @code{get-configuration-documentation}. Gives
+a simple string representation of the given procedure.
+
+@example
+(format-procedure format-procedure)
+⇒ "format-procedure(proc)"
+
+(format-procedure (lambda* (key: (a 1)) (+ a 3)))
+⇒ "λkey: a"
+@end example
+@end defun
