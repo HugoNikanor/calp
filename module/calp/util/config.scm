@@ -37,6 +37,7 @@
 
 (define (define-config% name default-value kwargs)
   (for (key value) in (group kwargs 2)
+       ;; TODO un-smart this
        (set! ((or (hashq-ref config-properties key)
                   (error "Missing config protperty slot " key))
               name)
@@ -64,6 +65,7 @@
   (if (eq? default %uniq)
       (let ((v (hashq-ref config-values key %uniq)))
         (when (eq? v %uniq)
+          ;; TODO throw descript error
           (error "Missing config" key))
         v)
       (hashq-ref config-values key default)))
@@ -71,8 +73,8 @@
 
 
 (define-public ((ensure predicate) value)
-  (if (not (predicate value))
-      #f value))
+  (if (predicate value)
+      value #f))
 
 
 
@@ -106,6 +108,8 @@
 
 (export format-procedure)
 
+;; TODO break this up into separate `get-all-configuration-items' and
+;; `format-configuration-items' procedures
 (define-public (get-configuration-documentation)
   (define groups
     (group-by (compose source-module car)

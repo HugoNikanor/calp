@@ -31,6 +31,9 @@
 
   #:export (main-loop))
 
+
+;;; TODO change all hard coded escape sequences to proper markup
+
 (define-values (height width) (get-terminal-size))
 
 (define (open-in-editor fname)
