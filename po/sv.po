@@ -335,7 +335,7 @@ msgid   "Recurring?"
 msgstr  "Upprepande?"
 
 #: module/calp/html/vcomponent.scm:419 module/calp/html/vcomponent.scm:420
-#: module/calp/terminal.scm:149
+#: module/calp/terminal.scm:149 module/calp/terminal.scm:146
 msgid   "Location"
 msgstr  "Plats"
 
@@ -540,39 +540,38 @@ msgstr  "V:"
 msgid   "Crash on warnings."
 msgstr  "Krasha på varningar"
 
-#: module/calp/terminal.scm:78
+#: module/calp/terminal.scm:78 module/calp/terminal.scm:75
 msgid   "NO LOCATION"
 msgstr  "INGEN PLATS"
 
-#: module/calp/terminal.scm:129
+#: module/calp/terminal.scm:129 module/calp/terminal.scm:126
 msgid   "== Day View ==\n"
 msgstr  "== Dagsvy ==\n"
 
-#: module/calp/terminal.scm:155
+#: module/calp/terminal.scm:155 module/calp/terminal.scm:152
 msgid   "Start"
 msgstr  "Start"
 
 #. Event start date-time terminal view
 #. Event end date-time terminal view
-#. Event start date-time terminal view
-#. Event end date-time terminal view
 #: module/calp/terminal.scm:160 module/calp/terminal.scm:168
+#: module/calp/terminal.scm:157 module/calp/terminal.scm:165
 msgid   "~Y-~m-~d ~H:~M:~S"
 msgstr  "~Y-~m-~d ~H:~M:~S"
 
-#: module/calp/terminal.scm:163
+#: module/calp/terminal.scm:163 module/calp/terminal.scm:160
 msgid   "End"
 msgstr  "Slut"
 
-#: module/calp/terminal.scm:211
+#: module/calp/terminal.scm:211 module/calp/terminal.scm:208
 msgid   "quick search: "
 msgstr  "Snabbsök: "
 
-#: module/calp/terminal.scm:218
+#: module/calp/terminal.scm:218 module/calp/terminal.scm:215
 msgid   "search: "
 msgstr  "sök: "
 
-#: module/calp/terminal.scm:264
+#: module/calp/terminal.scm:264 module/calp/terminal.scm:261
 msgid   "== Search View ==\n"
 msgstr  "== Sökvy ==\n"
 
@@ -687,18 +686,11 @@ msgstr  "Ogiltigt formatteringstecken"
 msgid   "Adding timespecs of differing types"
 msgstr  "Lägger till tidsspecifikationer av olika typer"
 
-#: module/vcomponent/datetime/output.scm:20
-msgid   "Upprepas "
-msgstr  ""
-
-#: module/vcomponent/datetime/output.scm:25
-msgid   ", undantaget "
-msgstr  ""
-
 #. Warning message for failure to format description.
 #. First argument is name of warning/error,
 #. second is error arguments
 #: module/vcomponent/datetime/output.scm:51
+#: module/vcomponent/datetime/output.scm:58
 #, scheme-format
 msgid   "~a on formatting description, ~s"
 msgstr  "~a vid formattering av beskrivning, ~s"
@@ -833,8 +825,8 @@ msgstr  "Subkommandon"
 #: module/calp/main.scm:89
 msgid   "<p><b>html</b> reads calendar files from disk, and writes them to "
         "static HTML files.</p>"
-msgstr  "<p><b>html</b> läser kalenderfiler från disk, och matar ur sig statiska "
-        "HTML-filer.</p>"
+msgstr  "<p><b>html</b> läser kalenderfiler från disk, och matar ur sig "
+        "statiska HTML-filer.</p>"
 
 #: module/calp/main.scm:90
 msgid   "<p><b>terminal</b> loads the calendars, and starts an interactive "
@@ -856,7 +848,7 @@ msgstr  "<p><b>ical</b> laddar kallenderdatabasen, och återserialiserar den "
 msgid   "Flags"
 msgstr  "Flaggor"
 
-#: module/calp/terminal.scm:320
+#: module/calp/terminal.scm:320 module/calp/terminal.scm:317
 msgid   "loading..."
 msgstr  "laddar..."
 
@@ -1027,15 +1019,45 @@ msgstr  "<p><b>benchmark</b> <i>modul</i><br/>Kör proceduren 'run-benchmark' "
 #. Generation data
 #. Compact event list date only
 #. Header for sidebar day
-#. Week view header format
-#. start date metainfo
-#. end date metainfo
-#. Generation data
-#. Compact event list date only
-#. Header for sidebar day
 #: module/calp/html/view/calendar/week.scm:50
 #: module/calp/html/view/calendar.scm:92 module/calp/html/view/calendar.scm:94
 #: module/calp/html/view/calendar.scm:156 module/calp/html/vcomponent.scm:52
-#: module/calp/html/vcomponent.scm:218
+#: module/calp/html/vcomponent.scm:218 module/vcomponent/datetime/output.scm:69
+#: module/vcomponent/datetime/output.scm:70
+#: module/vcomponent/datetime/output.scm:71
 msgid   "~Y-~m-~d"
 msgstr  "~Y-~m-~d"
+
+#. [FRR]
+#. Part of the sentance "Repeated [every two weeks], except on ~a, ~a & ~a"
+#. See everything tagged [FRR]
+#: module/vcomponent/datetime/output.scm:24
+msgid   "Repeated "
+msgstr  "Upprepas "
+
+#. See [FRR]
+#: module/vcomponent/datetime/output.scm:29
+msgid   ", except on "
+msgstr  ", undantaget "
+
+#. [FRR] Exception date without time
+#: module/vcomponent/datetime/output.scm:35
+#: module/vcomponent/datetime/output.scm:44
+#, scheme-format
+msgid   "~e ~b"
+msgstr  "~e ~b"
+
+#. [FRR] Exception date with time
+#: module/vcomponent/datetime/output.scm:42
+msgid   "~e ~b ~k:~M"
+msgstr  "~e ~b ~k:~M"
+
+#: module/vcomponent/datetime/output.scm:79
+msgid   "~H:~M"
+msgstr  "~H:~M"
+
+#. Note the non-breaking space
+#: module/vcomponent/datetime/output.scm:81
+#: module/vcomponent/datetime/output.scm:84
+msgid   "~Y-~m-~d ~H:~M"
+msgstr  "~Y-~m-~d ~H:~M"
