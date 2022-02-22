@@ -6,6 +6,8 @@
   :use-module (srfi srfi-1)
 
   :use-module (ice-9 getopt-long)
+  :use-module (calp translation)
+  :use-module (sxml simple)
 
   :use-module ((calp server server) :select (start-server))
 
@@ -13,25 +15,23 @@
 
 
 (define options
-  '((port (value #t) (single-char #\p)
-          (description "Bind to TCP port, defaults to " (i 8080) "."
-                       (br) "Can also be set through the config variable "
-                       (i "port") "."))
+  `((port (value #t) (single-char #\p)
+          (description ,(xml->sxml (_ "<group>Bind to TCP port, defaults to <i>8080</i>.
+<br/>Can also be set through the config variable
+<i>port</i>.</group>"))))
     (addr (value #t)
-
-          (description "Address to use, defaults to " (i "0.0.0.0")
-                       " for IPv4, and " (i "[::]") " for IPv6.")
-          )
+          (description ,(xml->sxml (_ "<group>Address to use, defaults to <i>0.0.0.0</i> for IPv4,
+and <i>[::]</i> for IPv6</group>"))))
     ;; numbers as single-char doesn't work.
-    (six (description "Use IPv6."))
-    (four (description "Use IPv4."))
-    (sigusr (description "Reload events on SIGUSR1"))
+    (six (description ,(_ "Use IPv6.")))
+    (four (description ,(_ "Use IPv4.")))
+    (sigusr (description ,(_ "Reload events on SIGUSR1")))
     (help (single-char #\h)
-          (description "Print this help."))))
+          (description ,(_ "Print this help.")))))
 
 
 (define-config port 8080
-  description: "Port to which the web server should bind.")
+  description: (_ "Port to which the web server should bind."))
 
 (define-public (main args)
 
@@ -60,18 +60,22 @@
             "::" "0.0.0.0")))
 
   (when (option-ref opts 'sigusr #f)
-    (display "Listening for SIGUSR1\n" (current-error-port))
+    (format (current-error-port) (_ "Listening for SIGUSR1~%"))
     ;; NOTE this uses the main thread, and does therefore block HTTP requests
     ;; while reloading. However, it appears to not cause any race conditions.
     (sigaction SIGUSR1
       (lambda _
-        (display "Received SIGUSR1, reloading calendars\n"
-                 (current-error-port))
+        (format (current-error-port) (_ "Received SIGUSR1, reloading calendars~%"))
         ((@ (vcomponent util instance) reload)))))
 
 
 
-  (format #t "Starting server on ~a:~a~%I'm ~a, runing from ~a~%"
+  ;; Arguments are
+  ;; IP-address which we bind to
+  ;; Port which we listen to
+  ;; PID of this process
+  ;; PWD of this process
+  (format #t (_ "Starting server on ~a:~a~%I'm ~a, runing from ~a~%")
           addr port
           (getpid) (getcwd))
 

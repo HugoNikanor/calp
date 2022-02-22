@@ -1,4 +1,5 @@
 (define-module (calp html caltable)
+
   :use-module (hnh util)
   :use-module (calp html util)
   :use-module (datetime)
@@ -35,6 +36,7 @@
           ;; making the text red for all holidays, or creating a yellow background
           ;; for events from a specific source.
           (time (@ (datetime ,(date->string date "~Y-~m-~d")))
+                ;; TODO should this field be translated?
                 ,(day date)))))
 
   (define month-start (start-of-month start-date))
@@ -49,11 +51,13 @@
 
         ;; top row, names of week days
         ,@(map (lambda (d) `(div (@ (class "column-head"))
+                            ;; TODO this SHOULD be translated
                             ,(string-titlecase (week-day-name d 2))))
                (weekday-list))
 
         ;; left columun, week numbers
         ,@(map (lambda (v) `(div (@ (class "row-head")) ,v))
+               ;; TODO translate this
                (map week-number
                     (stream->list
                      (stream-take-while (lambda (s) (date<= s post-end))

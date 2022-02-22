@@ -11,6 +11,8 @@
   :use-module ((vcomponent datetime) :select (ev-time<?))
   :use-module (oop goops)
 
+  :use-module (calp translation)
+
   :export (add-event
            remove-event
 
@@ -50,7 +52,7 @@
 (define-method (initialize (this <events>) args)
   (next-method)
 
-  (format (current-error-port) "Building <events> from~%")
+  (format (current-error-port) (_ "Building <events> from~%"))
   (for calendar in (slot-ref this 'calendar-files)
        (format (current-error-port) "  - ~a~%" calendar))
 

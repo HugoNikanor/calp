@@ -2,6 +2,7 @@
   :use-module (hnh util)
   :use-module ((calp util config) :select (get-config))
   :use-module ((oop goops) :select (make))
+  :use-module (calp translation)
   :export (global-event-object)
 )
 
@@ -18,5 +19,5 @@
 (define-public (reload)
   (let ((new-value (make (@@ (vcomponent util instance methods) <events>)
                      calendar-files: (get-config 'calendar-files))))
-    (display "Reload done\n" (current-error-port))
+    (format (current-error-port) (_ "Reload done~%"))
     (set! global-event-object new-value)))

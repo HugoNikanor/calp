@@ -35,6 +35,7 @@
   :use-module (calp html view calendar)
   :use-module ((calp html view search) :select (search-result-page))
 
+  :use-module (calp translation)
 
   )
 
@@ -49,7 +50,9 @@
 (define (directory-table dir)
   `(table
     (thead
-     (tr (th "") (th "Name") (th "Perm")))
+     (tr (th "") (th ,(_ "Name"))
+         ;; File permissions, should be about as long as three digits
+         (th ,(_ "Perm"))))
     (tbody
      ,@(map (lambda (k)
               (let* ((stat (lstat (path-append dir k))))
@@ -63,7 +66,7 @@
                      (scm-error
                       'misc-error
                       "directory-table"
-                      "Scandir argument invalid or not directory: ~a"
+                      (_ "Scandir argument invalid or not directory: ~a")
                       (list dir) '())))))))
 
 
@@ -97,7 +100,7 @@
    (GET "/" ()
         (return '((content-type text/html))
                 (sxml->html-string
-                 '(body (a (@ (href "/today")) "Gå till idag")
+                 '(body (a (@ (href "/today")) ,(_ "Go to Today"))
                         (script "window.onload = function() {
   document.getElementsByTagName('a')[0].click();}")))))
 
@@ -150,7 +153,7 @@
    (POST "/remove" (uid)
          (unless uid
            (return (build-response code: 400)
-                   "uid required"))
+                   (_ "uid required")))
 
          (aif (get-event-by-uid global-event-object uid)
               (begin
@@ -162,10 +165,10 @@
                 (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
                 (unless ((@ (vcomponent formats vdir save-delete) save-event) it)
                   (return (build-response code: 500)
-                          "Saving event to disk failed."))
+                          (_ "Saving event to disk failed.")))
                 (return (build-response code: 204)))
               (return (build-response code: 400)
-                      (format #f "No event with UID '~a'" uid))))
+                      (format #f (_ "No event with UID '~a'") uid))))
 
    ;; TODO this fails when dtstart is <date>.
    ;; @var{cal} should be the name of the calendar encoded in base64.
@@ -173,7 +176,7 @@
 
          (unless (and cal data)
            (return (build-response code: 400)
-                   "Both 'cal' and 'data' required\r\n"))
+                   (string-append (_ "Both 'cal' and 'data' required") "\r\n")))
 
 
          ;; NOTE that this leaks which calendar exists,
@@ -186,7 +189,8 @@
 
            (unless calendar
              (return (build-response code: 400)
-                     (format #f "No calendar with name [~a]\r\n" calendar-name)))
+                     (format #f "~@?\r\n" (_ "No calendar with name [~a]")
+                             calendar-name)))
 
            ;; Expected form of data (but in XML) is:
            ;; @example
@@ -215,11 +219,13 @@
                          #f))
                       (lambda (err port . args)
                         (return (build-response code: 400)
-                                (format #f "XML parse error ~{~a~}\r\n" args)))))))
+                                (format #f "~a ~{~a~}\r\n"
+                                        (_ "XML parse error")
+                                        args)))))))
 
              (unless (eq? 'VEVENT (type event))
                (return (build-response code: 400)
-                       "Object not a VEVENT\r\n"))
+                       (string-append (_ "Object not a VEVENT") "\r\n")))
 
              ;; NOTE add-event uses the given UID if one is given,
              ;; but generates its own if not. It might be a good idea
@@ -255,13 +261,14 @@
                     ;; since the two events are guaranteed to have the same UID.
                     (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
                       (return (build-response code: 500)
-                              "Saving event to disk failed."))
+                              (_ "Saving event to disk failed.")))
 
 
                     (unless (eq? calendar (parent old-event))
                         ;; change to a new calendar
                         (format (current-error-port)
-                                "Unlinking old event from ~a~%"
+                                ;; unlinks (removes) a single event, argument is a file name
+                                (_ "Unlinking old event from ~a~%")
                                 (prop old-event '-X-HNH-FILENAME))
                         ;; NOTE that this may fail, leading to a duplicate event being
                         ;; created (since we save beforehand). This is just a minor problem
@@ -271,7 +278,7 @@
 
 
                     (format (current-error-port)
-                            "Event updated ~a~%" (prop event 'UID)))]
+                            (_ "Event updated ~a~%") (prop event 'UID)))]
 
               [else
                (parameterize ((warnings-are-errors #t))
@@ -287,10 +294,10 @@
                ;; That would allow better asyncronous preformance.
                (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
                  (return (build-response code: 500)
-                         "Saving event to disk failed."))
+                         (_ "Saving event to disk failed.")))
 
                (format (current-error-port)
-                       "Event inserted ~a~%" (prop event 'UID))])
+                       (_ "Event inserted ~a~%") (prop event 'UID))])
 
              (return '((content-type application/xml))
                      (with-output-to-string
@@ -342,7 +349,7 @@
                        ;; and "program parent" into different fields.
                        (lambda () (sxml->xml ((@ (vcomponent formats xcal output) vcomponent->sxcal) it)))))
              (return (build-response code: 404)
-                     (format #f "No component with UID=~a found." uid))))
+                     (format #f (_ "No component with UID=~a found.") uid))))
 
    (GET "/calendar/:uid{.*}.ics" (uid)
         (aif (get-event-by-uid global-event-object uid)
@@ -351,7 +358,7 @@
                        (lambda () (print-components-with-fake-parent
                               (list it)))))
              (return (build-response code: 404)
-                     (format #f "No component with UID=~a found." uid))))
+                     (format #f (_ "No component with UID=~a found.") uid))))
 
    (GET "/search/text" (q)
         (return (build-response

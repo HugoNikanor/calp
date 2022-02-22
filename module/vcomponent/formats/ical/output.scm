@@ -15,6 +15,7 @@
   :use-module (vcomponent geo)
   :use-module (vcomponent formats ical types)
   :use-module (vcomponent recurrence)
+  :use-module (calp translation)
   :autoload (vcomponent util instance) (global-event-object)
   )
 
@@ -90,7 +91,7 @@
       (get-writer 'TEXT)]
 
      [else
-      (warning "Unknown key ~a" key)
+      (warning (_ "Unknown key ~a") key)
       (get-writer 'TEXT)]))
 
   (catch #t #; 'wrong-type-arg

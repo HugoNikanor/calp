@@ -2,6 +2,7 @@
   :use-module (hnh util)
   :use-module (ice-9 curried-definitions)
   :use-module (ice-9 match)
+  :use-module (calp translation)
   :export (xhtml-doc)
   )
 
@@ -57,7 +58,7 @@
               allow-other-keys:
               rest: args)
   (when (and onclick href)
-    (error "Only give one of onclick, href and submit."))
+    (error (_ "Only give one of onclick, href and submit.")))
 
   (let ((body #f))
     `(,(cond [href 'a]

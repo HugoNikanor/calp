@@ -2,6 +2,7 @@
   :use-module (hnh util)
   :use-module ((calp util time) :select (report-time!))
   :use-module (vcomponent base)
+  :use-module (calp translation)
   :use-module ((vcomponent formats ical parse)
                :select (parse-calendar))
   :use-module ((vcomponent formats vdir parse)
@@ -19,13 +20,13 @@
          (set! (prop comp '-X-HNH-SOURCETYPE) 'file)
          comp) ]
       [(directory)
-       (report-time! "Parsing ~a" path)
+       (report-time! (_ "Parsing ~a") path)
        (let ((comp (parse-vdir path)))
          (set! (prop comp '-X-HNH-SOURCETYPE) 'vdir
                (prop comp '-X-HNH-DIRECTORY) path)
          comp)]
       [(block-special char-special fifo socket unknown symlink)
-       => (lambda (t) (error "Can't parse file of type " t))]))
+       => (lambda (t) (error (_ "Can't parse file of type ") t))]))
 
   (unless (prop cal "NAME")
     (set! (prop cal "NAME")

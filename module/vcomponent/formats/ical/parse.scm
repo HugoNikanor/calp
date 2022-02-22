@@ -9,6 +9,7 @@
   :use-module (vcomponent base)
   :use-module (vcomponent geo)
   :use-module (vcomponent formats common types)
+  :use-module (calp translation)
  )
 
 (define string->symbol
@@ -120,7 +121,7 @@
     (lambda (params value)
       (let ((vv (parser params value)))
         (when (list? vv)
-          (throw 'parse-error "List in enum field"))
+          (throw 'parse-error (_ "List in enum field")))
         (let ((v (string->symbol vv)))
           (unless (memv v enum)
             (warning "~a ∉ { ~{~a~^, ~} }"
@@ -155,7 +156,7 @@
            (lambda (params value)
              (let ((v ((get-parser 'TEXT) params value)))
                (unless (= 1 (length v))
-                 (warning "List in non-list field: ~s" v))
+                 (warning (_ "List in non-list field: ~s") v))
                (string-join v ",")))]
 
           ;; TEXT, but allow a list
@@ -192,7 +193,7 @@
                           DRAFT FINAL CANCELED))]
 
           [(memv key '(REQUEST-STATUS))
-           (throw 'parse-error "TODO Implement REQUEST-STATUS")]
+           (throw 'parse-error (_ "TODO Implement REQUEST-STATUS"))]
 
           [(memv key '(ACTION))
            (enum-parser '(AUDIO DISPLAY EMAIL
@@ -226,7 +227,7 @@
            (compose car (get-parser 'TEXT))]
 
           [else
-           (warning "Unknown key ~a" key)
+           (warning (_ "Unknown key ~a") key)
            (compose car (get-parser 'TEXT))])))
 
     ;; If we produced a list create multiple VLINES from it.
@@ -273,9 +274,15 @@
                    (lambda (fmt . args)
                      (let ((linedata (get-metadata head*)))
                        (format
-                        #f "WARNING parse error around ~a
+                        #f
+                        ;; arguments:
+                        ;; linedata
+                        ;; ~?
+                        ;; source line
+                        ;; source file
+                        (_ "WARNING parse error around ~a
   ~?
-  line ~a ~a~%"
+  line ~a ~a~%")
                         (get-string linedata)
                         fmt args
                         (get-line linedata)
@@ -321,10 +328,16 @@
             (lambda (err fmt . args)
               (let ((linedata (get-metadata head*)))
                 (display (format
-                          #f "ERROR parse error around ~a
+                          #f
+                          ;; arguments
+                          ;; linedata
+                          ;; ~?
+                          ;; source line
+                          ;; source file
+                          (_ "ERROR parse error around ~a
   ~?
   line ~a ~a
-  Defaulting to string~%"
+  Defaulting to string~%")
                           (get-string linedata)
                           fmt args
                           (get-line linedata)

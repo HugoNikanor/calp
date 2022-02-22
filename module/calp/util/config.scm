@@ -9,6 +9,7 @@
   :use-module (srfi srfi-1)
   :use-module (ice-9 format) ; for format-procedure
   :use-module (ice-9 curried-definitions) ; for ensure
+  :use-module (calp translation)
   :export (define-config)
 )
 
@@ -38,7 +39,7 @@
 (define (define-config% name default-value kwargs)
   (for (key value) in (group kwargs 2)
        (set! ((or (hashq-ref config-properties key)
-                  (error "Missing config protperty slot " key))
+                  (error (_ "Missing config protperty slot ") key))
               name)
          value))
   (set-config! name (get-config name default-value)))
@@ -53,7 +54,7 @@
 (define-public (set-config! name value)
   (hashq-set! config-values name
               (aif (pre name)
-                   (or (it value) (error "Pre crashed for" name))
+                   (or (it value) (error (_ "Pre crashed for") name))
                    value))
 
   (awhen (post name) (it value)))
@@ -64,7 +65,7 @@
   (if (eq? default %uniq)
       (let ((v (hashq-ref config-values key %uniq)))
         (when (eq? v %uniq)
-          (error "Missing config" key))
+          (error (_ "Missing config") key))
         v)
       (hashq-ref config-values key default)))
 
@@ -112,7 +113,7 @@
               (hash-map->list list config-values)))
 
   `(*TOP*
-    (header "Configuration variables")
+    (header ,(_ "Configuration variables"))
     (dl
      ,@(concatenate
         (for (module values) in groups
@@ -124,7 +125,8 @@
                        `((dt ,key)
                          (dd (p (@ (inline))
                                 ,(or (description key) "")))
-                         (dt "V:")
+                         ;; Configuration variable value indicator
+                         (dt ,(_ "V:"))
                          (dd ,(if (procedure? value)
                                   (format-procedure value)
                                   `(scheme ,value))

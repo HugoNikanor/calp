@@ -5,6 +5,7 @@
   :use-module (datetime)
   :use-module (vcomponent base)
   :use-module (text util)
+  :use-module (calp translation)
   )
 
 (define-config summary-filter (lambda (_ a) a)
@@ -14,13 +15,14 @@
   pre: (ensure procedure?))
 
 ;; ev → sxml
+;; TODO translation
 (define-public (format-recurrence-rule ev)
-  `("Upprepas "
+  `(,(_ "Upprepas ")
     ,((@ (vcomponent recurrence display) format-recurrence-rule)
       (prop ev 'RRULE))
     ,@(awhen (prop* ev 'EXDATE)
              (list
-              ", undantaget "
+              (_ ", undantaget ")
               (add-enumeration-punctuation
                (map (lambda (d)
                       (if (date? d)
@@ -43,7 +45,10 @@
 (define-public (format-description ev str)
   (catch #t (lambda () ((get-config 'description-filter) ev str))
     (lambda (err . args)
-      (warning "~a on formatting description, ~s" err args)
+      ;; Warning message for failure to format description.
+      ;; First argument is name of warning/error,
+      ;; second is error arguments
+      (warning (_ "~a on formatting description, ~s") err args)
       str)))
 
 ;; Takes an event, and returns a pretty string for the time interval

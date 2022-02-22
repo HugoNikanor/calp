@@ -11,6 +11,7 @@
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9 gnu)
+  :use-module (calp translation)
   )
 
 
@@ -33,7 +34,7 @@
 
 (define-public (timespec-add . specs)
   (unless (apply eqv? (map timespec-type specs))
-    (warning "Adding timespecs of differing types"))
+    (warning (_ "Adding timespecs of differing types")))
 
   (reduce (lambda (spec done)
             (cond

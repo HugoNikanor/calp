@@ -4,18 +4,19 @@
   :use-module (hnh util options)
   :use-module (ice-9 getopt-long)
   :use-module (sxml simple)
+  :use-module (calp translation)
   )
 
 
 
 (define opt-spec
-  `((from (single-char #\f) (value (options "xcal" "ical")) 
-          (description "Input format (infered from " (i "infile") ")"))
+  `((from (single-char #\f) (value (options "xcal" "ical"))
+          (description ,(xml->sxml (_ "<group>Input format (otherwise infered from <i>infile</i>)</group>"))))
     (to (single-char #\t) (value (options "xcal" "ical"))
-        (description "Output format (infered from " (i "outfile") ")"))
-    (infile (value #t) (single-char #\i) (description "Input file"))
-    (outfile (value #t) (single-char #\o) (description "Output file"))
-    (help (single-char #\h) (description "Print this help."))))
+        (description ,(xml->sxml (_ "<group>Output format (otherwise infered from <i>outfile</i>)</group>"))))
+    (infile (value #t) (single-char #\i) (description ,(_ "Input file")))
+    (outfile (value #t) (single-char #\o) (description ,(_ "Output file")))
+    (help (single-char #\h) (description ,(_ "Print this help.")))))
 
 
 (define (filename-to-type filename)

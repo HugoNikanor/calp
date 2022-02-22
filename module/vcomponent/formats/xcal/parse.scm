@@ -9,6 +9,7 @@
   :use-module (vcomponent formats common types)
   :use-module (datetime)
   :use-module (srfi srfi-1)
+  :use-module (calp translation)
   )
 
 ;; symbol, ht, (list a) -> non-list
@@ -83,7 +84,7 @@
                  (string->number value))
                 (else (throw
                        'key-error
-                       "Invalid type ~a, with value ~a"
+                       (_ "Invalid type ~a, with value ~a")
                        type value))))))
 
        ;; freq until count interval wkst
@@ -153,7 +154,7 @@
   (case tag-name
     [(request-status)
      ;; TODO
-     (warning "Request status not yet implemented")
+     (warning (_ "Request status not yet implemented"))
      #f]
 
     ((transp) (parse-enum

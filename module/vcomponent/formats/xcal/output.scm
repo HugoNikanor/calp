@@ -7,6 +7,7 @@
   :use-module (ice-9 match)
   :use-module (datetime)
   :use-module (srfi srfi-1)
+  :use-module (calp translation)
   )
 
 
@@ -69,7 +70,7 @@
      (get-writer 'TEXT)]
 
     [else
-     (warning "Unknown key ~a" key)
+     (warning (_ "Unknown key ~a") key)
      (get-writer 'TEXT)]))
 
   (writer ((@@ (vcomponent base) get-vline-parameters) vline) (value vline)))

@@ -42,6 +42,8 @@
   :use-module (hnh util)
   :use-module (hnh util options)
   :use-module (ice-9 getopt-long)
+  :use-module (calp translation)
+  :use-module (sxml simple)
   :use-module (datetime)
   )
 
@@ -165,20 +167,20 @@ trailer
 )
 
 (define opt-spec
-  '((pdf (value #t)
-         (description "Input pdf fill"))
+  `((pdf (value #t)
+         (description ,(_ "Input pdf file")))
     (output (single-char #\o) (value optional)
-            (description "Output file"))
+            (description ,(_ "Output file")))
 
     (data (value optional)
-          (description "Static data to fill fields with")
+          (description ,(_ "Static data to fill fields with"))
           )
     (template (value optional)
-              (description "Map between real field names and human readable names." (br)
-                           "If data is given, but not trans, then data is assumed to be in a correct format"))
+              (description ,(xml->sxml (_ "<group>Map between real field names and human readable names.<br/>
+If data is given, but not trans, then data is assumed to be in a correct format</group>"))))
     (search (value #t)
             (description
-             "Search term for dynamic filling. Supports basic globbing"))))
+             ,(_ "Search term for dynamic filling. Supports basic globbing")))))
 
 (define (parse-search str)
   (cond [(string-match "\\{(.*)\\}" str)
@@ -204,7 +206,7 @@ trailer
   (define template
     (call-with-input-file
      (or (option-ref opts 'template #f)
-         (error "Template required"))
+         (error (_ "Template required")))
      read))
 
   (define prepared-data
@@ -232,9 +234,9 @@ trailer
             (define days
               (let ((days (assoc-ref group 'days)))
                 (cond ((not (list? days))
-                       (error "Needs list, not pair"))
+                       (error (_ "Needs list, not pair")))
                       ((null? days)
-                       (error "Need more days"))
+                       (error (_ "Need more days")))
                       ((and (list? (car days)) (eqv? '- (caar days)))
                        (map (lambda (s) (string-append prefix (->string s)))
                             (iota (1+ (- (list-ref (car days) 2)
@@ -250,7 +252,7 @@ trailer
               ,@(build-alist work-hours days)
               (,sum ,(apply + work-hours))))
           (or (assoc-ref template 'groups)
-              (error "Groups required in template"))
+              (error (_ "Groups required in template")))
           search)))
 
   (define report

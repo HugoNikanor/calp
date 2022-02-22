@@ -2,6 +2,7 @@
   :use-module (hnh util)
   :use-module (vcomponent formats ical types)
   :use-module (datetime)
+  :use-module (calp translation)
   )
 
 (define (write-boolean _ v)
@@ -51,4 +52,4 @@
 
 (define-public (get-writer type)
   (or (hashq-ref sxml-writers type #f)
-      (error "No writer for type" type)))
+      (error (_ "No writer for type") type)))

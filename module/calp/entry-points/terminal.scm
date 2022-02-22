@@ -6,12 +6,13 @@
   :use-module (datetime)
   :use-module (vulgar)
   :use-module (hnh util options)
+  :use-module (calp translation)
   )
 
 (define options
-  '((date (value #t) (single-char #\d)
-          (description "Which date to start on."))
-    (help (single-char #\t) (description "Print this help."))
+  `((date (value #t) (single-char #\d)
+          (description ,(_ "Which date to start on.")))
+    (help (single-char #\t) (description ,(_ "Print this help.")))
     ))
 
 (define (main args)

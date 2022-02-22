@@ -1,5 +1,6 @@
 (define-module (calp html util)
-  :use-module (hnh util))
+  :use-module (hnh util)
+  :use-module (calp translation))
 
 
 (define-public (date-link date)
@@ -30,6 +31,6 @@
                       #xFF))
             "#000000" "#FFFFFF")))
     (lambda args
-      (format (current-error-port) "Error calculating foreground color?~%~s~%" args)
+      (format (current-error-port) (_ "Error calculating foreground color?~%~s~%") args)
       "#FF0000"
       )))

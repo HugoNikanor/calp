@@ -17,6 +17,7 @@
                :select (make-block output-uid) )
   ;; :use-module ((calp html components)
   ;;              :select ())
+  :use-module (calp translation)
   :use-module ((vcomponent util group)
                :select (group-stream get-groups-between))
   )
@@ -30,7 +31,9 @@
            (div (@ (class "days"))
                 ;; Top left area
                 (div (@ (class "week-indicator"))
-                     (span (@ (style "font-size: 50%")) "v.")  ; figure out if we want this...
+                     (span (@ (style "font-size: 50%"))
+                           ;; Week number prefix
+                           ,(_ "v."))
                      ,@(->> (week-number start-date)
                             number->string string->list
                             (map (lambda (c) `(span ,(string c))))))
@@ -43,8 +46,10 @@
                 ,@(map (lambda (day-date)
                          `(div (@ (class "meta"))
                                (span (@ (class "daydate"))
-                                     ,(date->string day-date "~Y-~m-~d"))
+                                     ;; Week view header format
+                                     ,(date->string day-date (_ "~Y-~m-~d")))
                                (span (@ (class "dayname"))
+                                     ;; TODO translation here?
                                      ,(string-titlecase (date->string day-date "~a")))))
                        range)
                 ,@(stream->list
