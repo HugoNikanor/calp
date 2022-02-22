@@ -1,0 +1,1041 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid   ""
+msgstr  "Project-Id-Version: 1.0\n"
+        "Report-Msgid-Bugs-To: \n"
+        "POT-Creation-Date: 2022-02-21 16:45+0100\n"
+        "PO-Revision-Date: 2022-02-21 16:50+0100\n"
+        "Last-Translator: Hugo Hörnquist <hugo@hornquist.se>\n"
+        "Language-Team: No Team <LL@li.org>\n"
+        "Language: Swedish\n"
+        "MIME-Version: 1.0\n"
+        "Content-Type: text/plain; charset=UTF-8\n"
+        "Content-Transfer-Encoding: 8bit\n"
+
+#: module/calp/entry-points/benchmark.scm:20
+msgid   "Output is by default supressed, since many fields contain way to "
+        "much data to read. This turns it on again."
+msgstr  "Som standard är utskrifter avstängda, eftersom många fällt inehåller "
+        "aldelles för mycket data för att läsas. Det här slår på det igen."
+
+#: module/calp/entry-points/benchmark.scm:22
+#: module/calp/entry-points/ical.scm:17 module/calp/entry-points/import.scm:24
+#: module/calp/entry-points/terminal.scm:15
+#: module/calp/entry-points/convert.scm:19 module/calp/entry-points/html.scm:60
+#: module/calp/entry-points/server.scm:30
+msgid   "Print this help."
+msgstr  "Visar den här hjälpen."
+
+#: module/calp/entry-points/convert.scm:17
+msgid   "Input file"
+msgstr  "Indatafil"
+
+#: module/calp/entry-points/tidsrapport.scm:173
+#: module/calp/entry-points/convert.scm:18
+msgid   "Output file"
+msgstr  "Utdatafil"
+
+#: module/calp/entry-points/html.scm:32
+msgid   "Start date of output."
+msgstr  "Startdatum för utdatan."
+
+#: module/calp/entry-points/html.scm:99
+#, scheme-format
+msgid   "Writing to [~a]~%"
+msgstr  "Skriver till [~a]~%"
+
+#: module/calp/entry-points/html.scm:167
+#, scheme-format
+msgid   "Unknown html style: ~a"
+msgstr  "Okänd html-stil: ~a"
+
+#: module/calp/entry-points/html.scm:169
+msgid   "all done"
+msgstr  "Allt klart"
+
+#: module/calp/entry-points/ical.scm:15
+msgid   "Returns all elements between these two dates."
+msgstr  "Returnerar alla element mellan de två datumen."
+
+#: module/calp/entry-points/import.scm:20
+msgid   "Name of calendar to import into"
+msgstr  "Namn på kalendar att importera till"
+
+#: module/calp/entry-points/import.scm:22
+msgid   "ics file to import"
+msgstr  "ics-fil att importera"
+
+#: module/calp/entry-points/import.scm:43
+#, scheme-format
+msgid   "No calendar named ~s~%"
+msgstr  "Ingen kallender vid namn ~s~%"
+
+#: module/calp/entry-points/import.scm:48
+#, scheme-format
+msgid   "About to import the following ~a events into ~a~%"
+msgstr  "På väg att importera ~a händelser till ~a~%"
+
+#: module/calp/entry-points/import.scm:54
+msgid   "Continue? [Y/n] "
+msgstr  "Fortsätt? [J/n]"
+
+#. numbers as single-char doesn't work.
+#: module/calp/entry-points/server.scm:26
+msgid   "Use IPv6."
+msgstr  "Använd IPv6."
+
+#: module/calp/entry-points/server.scm:27
+msgid   "Use IPv4."
+msgstr  "Använd IPv4."
+
+#: module/calp/entry-points/server.scm:28
+msgid   "Reload events on SIGUSR1"
+msgstr  "Ladda om händelser vid SIGUSR1 "
+
+#: module/calp/entry-points/server.scm:34
+msgid   "Port to which the web server should bind."
+msgstr  "Port till vilken webservern ska binda."
+
+#: module/calp/entry-points/server.scm:63
+#, scheme-format
+msgid   "Listening for SIGUSR1~%"
+msgstr  "Vakar för SIGUSR1~%"
+
+#: module/calp/entry-points/server.scm:68
+#, scheme-format
+msgid   "Received SIGUSR1, reloading calendars~%"
+msgstr  "Mottog SIGUSR1, laddar om kallendar~%"
+
+#. Arguments are
+#. IP-address which we bind to
+#. Port which we listen to
+#. PID of this process
+#. PWD of this process
+#: module/calp/entry-points/server.scm:78
+#, scheme-format
+msgid   "Starting server on ~a:~a~%I'm ~a, runing from ~a~%"
+msgstr  "Startar server på ~a:~a~%Jag är ~a, körandes från ~a~%"
+
+#: module/calp/entry-points/terminal.scm:14
+msgid   "Which date to start on."
+msgstr  "Vilket datum att börja på."
+
+#: module/calp/entry-points/text.scm:14
+msgid   "Width of written text, defaults to 70 chars."
+msgstr  "Brädd på den \"tryckta\" texten; 70 tecken som standard."
+
+#: module/calp/entry-points/text.scm:18
+msgid   "Prints this help."
+msgstr  "Visar den här hjälpen."
+
+#: module/calp/entry-points/tidsrapport.scm:171
+msgid   "Input pdf file"
+msgstr  "PDF-fil att arbeta på"
+
+#: module/calp/entry-points/tidsrapport.scm:176
+msgid   "Static data to fill fields with"
+msgstr  "Statisk data att fylla fälten med"
+
+#: module/calp/entry-points/tidsrapport.scm:183
+msgid   "Search term for dynamic filling. Supports basic globbing"
+msgstr  "Sökterm för dynamisk ifyllning. Stödjer grundläggande \"globbar\""
+
+#: module/calp/entry-points/tidsrapport.scm:209
+msgid   "Template required"
+msgstr  "Mall krävs"
+
+#: module/calp/entry-points/tidsrapport.scm:237
+msgid   "Needs list, not pair"
+msgstr  "Behöver lista, inte par"
+
+#: module/calp/entry-points/tidsrapport.scm:239
+msgid   "Need more days"
+msgstr  "Behöver fler dagar"
+
+#: module/calp/entry-points/tidsrapport.scm:255
+msgid   "Groups required in template"
+msgstr  "Grupper krävs i mallen"
+
+#. Week number prefix
+#: module/calp/html/view/calendar/week.scm:36
+msgid   "v."
+msgstr  "v."
+
+#: module/calp/html/view/calendar.scm:76
+msgid   "Next-start needs to be a procedure"
+msgstr  "Next-start måste vara en procedur"
+
+#: module/calp/html/view/calendar.scm:79
+msgid   "Prev-start needs to be a procedure"
+msgstr  "Prev-start måste vara en procedur"
+
+#: module/calp/html/view/calendar.scm:90
+#, scheme-format
+msgid   "Calendar for the dates between ~a and ~a"
+msgstr  "Kallender för tidsintervallet ~a till ~a"
+
+#: module/calp/html/view/calendar.scm:154
+msgid   "Page generated "
+msgstr  "Sidan genererad "
+
+#: module/calp/html/view/calendar.scm:157
+msgid   "Current time "
+msgstr  "Nuvarande tid "
+
+#: module/calp/html/view/calendar.scm:159
+msgid   "Source Code"
+msgstr  "Källkod"
+
+#. Button to view week
+#: module/calp/html/view/calendar.scm:170
+msgid   "Week"
+msgstr  "Veckovy"
+
+#. button to view month
+#: module/calp/html/view/calendar.scm:174
+msgid   "Month"
+msgstr  "Månadsvy"
+
+#. Button to go to today
+#: module/calp/html/view/calendar.scm:184
+msgid   "Today"
+msgstr  "Idag"
+
+#: module/calp/html/view/calendar.scm:204
+msgid   "Month overview"
+msgstr  "Månaden i översikt"
+
+#. Header of small calendar
+#: module/calp/html/view/calendar.scm:208
+#, scheme-format
+msgid   "~B ~Y"
+msgstr  "~B ~Y"
+
+#. Search placeholder
+#: module/calp/html/view/calendar.scm:234
+msgid   "Search"
+msgstr  "Sök"
+
+#: module/calp/html/view/calendar.scm:240
+msgid   "Option sliders"
+msgstr  "Inställningsreglage"
+
+#: module/calp/html/view/calendar.scm:243
+msgid   "Event blankspace"
+msgstr  "Händelsetomrum"
+
+#: module/calp/html/view/calendar.scm:252
+msgid   "Fontsize"
+msgstr  "Typsnittsstorlek"
+
+#: module/calp/html/view/calendar.scm:263
+msgid   "Calendar list"
+msgstr  "Kallenderlista"
+
+#: module/calp/html/view/calendar.scm:289
+msgid   "Earlier"
+msgstr  "Tidigare"
+
+#: module/calp/html/view/search.scm:28
+msgid   "Search results"
+msgstr  "Sökresultat"
+
+#: module/calp/html/view/search.scm:31
+msgid   "Show today"
+msgstr  "Till idag"
+
+#: module/calp/html/view/search.scm:32
+msgid   "Search term"
+msgstr  "Sökterm"
+
+#: module/calp/html/view/search.scm:39
+msgid   "limit to future occurences"
+msgstr  "Begränsda till framtida instanser"
+
+#: module/calp/html/view/search.scm:43
+msgid   "Error searching"
+msgstr  "Misslyckades söka"
+
+#: module/calp/html/view/search.scm:46
+#, scheme-format
+msgid   "Result (page ~a)"
+msgstr  "Resultat (sida ~a)"
+
+#: module/calp/html/components.scm:61
+msgid   "Only give one of onclick, href and submit."
+msgstr  "onlick, href, och submit är ömsesidigt uteslutande."
+
+#: module/calp/html/config.scm:9
+msgid   "Places the generated thingy in debug mode"
+msgstr  "Placerar den genererade mojängen i debug-läge"
+
+#: module/calp/html/config.scm:17
+msgid   "Makes the document editable"
+msgstr  "Gör dokumentet redigerbart"
+
+#: module/calp/html/util.scm:34
+#, scheme-format
+msgid   "Error calculating foreground color?~%~s~%"
+msgstr  "Misslyckades beräkna förgrundsfärg?~%~s~%"
+
+#. Compact event list date + time
+#: module/calp/html/vcomponent.scm:50
+msgid   "~Y-~m-~d ~H:~M"
+msgstr  "~Y-~m-~d ~H:~M"
+
+#. Button for viewing calendar, accompanied by a calendar icon
+#: module/calp/html/vcomponent.scm:55
+msgid   "View"
+msgstr  "Visa"
+
+#: module/calp/html/vcomponent.scm:126
+msgid   "Location: "
+msgstr  "Plats: "
+
+#: module/calp/html/vcomponent.scm:203
+msgid   "Last modified"
+msgstr  "Senast ändrad"
+
+#. Last modified datetime
+#: module/calp/html/vcomponent.scm:206
+msgid   "~1 ~H:~M"
+msgstr  "~1 ~H:~M"
+
+#: module/calp/html/vcomponent.scm:303 module/calp/html/vcomponent.scm:520
+msgid   "Recurrences"
+msgstr  "Upprepningar"
+
+#. NOTE flytta "muffarna" utanför
+#: module/calp/html/vcomponent.scm:375
+msgid   "- Choose a Calendar -"
+msgstr  "- Välj en kallender -"
+
+#: module/calp/html/vcomponent.scm:385
+msgid   "Summary"
+msgstr  "Sammanfattning"
+
+#: module/calp/html/vcomponent.scm:394
+msgid   "Start time"
+msgstr  "Starttid"
+
+#: module/calp/html/vcomponent.scm:400
+msgid   "End time"
+msgstr  "Sluttid"
+
+#: module/calp/html/vcomponent.scm:406
+msgid   "Whole day?"
+msgstr  "Heldag?"
+
+#: module/calp/html/vcomponent.scm:411
+msgid   "Recurring?"
+msgstr  "Upprepande?"
+
+#: module/calp/html/vcomponent.scm:419 module/calp/html/vcomponent.scm:420
+#: module/calp/terminal.scm:149
+msgid   "Location"
+msgstr  "Plats"
+
+#: module/calp/html/vcomponent.scm:428 module/calp/html/vcomponent.scm:429
+msgid   "Description"
+msgstr  "Beskrivning"
+
+#: module/calp/html/vcomponent.scm:436
+msgid   "Categories"
+msgstr  "Kattegorier"
+
+#: module/calp/html/vcomponent.scm:441
+msgid   "Category"
+msgstr  "Kattegori"
+
+#: module/calp/html/vcomponent.scm:522
+msgid   "Frequency"
+msgstr  "Frekvens"
+
+#: module/calp/html/vcomponent.scm:528
+msgid   "Until"
+msgstr  "Till och med"
+
+#: module/calp/html/vcomponent.scm:531
+msgid   "Conut"
+msgstr  "Antal"
+
+#: module/calp/html/vcomponent.scm:534
+msgid   "Interval"
+msgstr  "Intervall"
+
+#: module/calp/html/vcomponent.scm:548
+msgid   "By Second"
+msgstr  "Per sekund"
+
+#: module/calp/html/vcomponent.scm:549
+msgid   "By Minute"
+msgstr  "Per minut"
+
+#: module/calp/html/vcomponent.scm:550
+msgid   "By Hour"
+msgstr  "Per timme"
+
+#: module/calp/html/vcomponent.scm:551
+msgid   "By Month Day"
+msgstr  "Per månadsdag"
+
+#. except 0
+#: module/calp/html/vcomponent.scm:552
+msgid   "By Year Day"
+msgstr  "Per årsdag"
+
+#. except 0
+#: module/calp/html/vcomponent.scm:553
+msgid   "By Week Number"
+msgstr  "Per veckonummer"
+
+#. except 0
+#: module/calp/html/vcomponent.scm:554
+msgid   "By Month"
+msgstr  "Per månad"
+
+#: module/calp/html/vcomponent.scm:555
+msgid   "By Set Position"
+msgstr  "Per fix-position"
+
+#. (dt "By Week Day")
+#. (dd (input-list (@ (name "byweekday"))
+#. (input (@ (type number)
+#. (min -53) (max 53) ; except 0
+#. ))
+#. ,(week-day-select '())
+#. ))
+#: module/calp/html/vcomponent.scm:566
+msgid   "Weekstart"
+msgstr  "Veckobörjan"
+
+#. Close this popup
+#: module/calp/html/vcomponent.scm:582
+msgid   "Close"
+msgstr  "Stäng"
+
+#. Make this popup occupy the entire screen
+#: module/calp/html/vcomponent.scm:587
+msgid   "Fullscreen"
+msgstr  "Fullskärm"
+
+#. Remove/Trash the event this popup represent
+#. Think garbage can
+#: module/calp/html/vcomponent.scm:594
+msgid   "Remove"
+msgstr  "Ta bort"
+
+#: module/calp/html/vcomponent.scm:599
+msgid   "Overview"
+msgstr  "Översikt"
+
+#: module/calp/html/vcomponent.scm:603
+msgid   "Edit"
+msgstr  "Redigera"
+
+#: module/calp/html/vcomponent.scm:609
+msgid   "Changelog"
+msgstr  "Händelseförlopp"
+
+#: module/calp/html/vcomponent.scm:613
+msgid   "Debug"
+msgstr  "Debug"
+
+#: module/calp/server/routes.scm:53
+msgid   "Name"
+msgstr  "Namn"
+
+#. File permissions, should be about as long as three digits
+#: module/calp/server/routes.scm:55
+msgid   "Perm"
+msgstr  "Mod"
+
+#: module/calp/server/routes.scm:69
+#, scheme-format
+msgid   "Scandir argument invalid or not directory: ~a"
+msgstr  "Scandir:s argument ogilgit eller inte katalog: ~a"
+
+#: module/calp/server/routes.scm:103
+msgid   "Go to Today"
+msgstr  "Gå till idag"
+
+#: module/calp/server/routes.scm:156
+msgid   "uid required"
+msgstr  "uid krävs"
+
+#: module/calp/server/routes.scm:168 module/calp/server/routes.scm:264
+#: module/calp/server/routes.scm:297
+msgid   "Saving event to disk failed."
+msgstr  "Misslyckades spara händelse till disk."
+
+#: module/calp/server/routes.scm:171
+#, scheme-format
+msgid   "No event with UID '~a'"
+msgstr  "Ingen händelse med UID '~a'"
+
+#: module/calp/server/routes.scm:179
+msgid   "Both 'cal' and 'data' required"
+msgstr  "Både 'cal' och 'data' obligatoriska"
+
+#: module/calp/server/routes.scm:192
+#, scheme-format
+msgid   "No calendar with name [~a]"
+msgstr  "Ingen kallender heter [~a]"
+
+#: module/calp/server/routes.scm:223
+msgid   "XML parse error"
+msgstr  "XML inläsningsfel"
+
+#: module/calp/server/routes.scm:228
+msgid   "Object not a VEVENT"
+msgstr  "Objektet är inte ett VEVENT"
+
+#. unlinks (removes) a single event, argument is a file name
+#: module/calp/server/routes.scm:271
+#, scheme-format
+msgid   "Unlinking old event from ~a~%"
+msgstr  "Tar bort den gamla händelsen från ~a~%"
+
+#: module/calp/server/routes.scm:281
+#, scheme-format
+msgid   "Event updated ~a~%"
+msgstr  "Händelse uppdaterad ~a~%"
+
+#: module/calp/server/routes.scm:300
+#, scheme-format
+msgid   "Event inserted ~a~%"
+msgstr  "Händelse infogad ~a~%"
+
+#: module/calp/server/routes.scm:352 module/calp/server/routes.scm:361
+#, scheme-format
+msgid   "No component with UID=~a found."
+msgstr  "Hittade ingen komponent med UID=~a."
+
+#: module/calp/util/config.scm:42
+msgid   "Missing config protperty slot "
+msgstr  "Skanat konfigurationsegenskapsfält"
+
+#: module/calp/util/config.scm:57
+msgid   "Pre crashed for"
+msgstr  "Pre krashade för"
+
+#: module/calp/util/config.scm:68
+msgid   "Missing config"
+msgstr  "Saknad konfiguration"
+
+#: module/calp/util/config.scm:116
+msgid   "Configuration variables"
+msgstr  "Konfigurationsvariabler"
+
+#. Configuration variable value indicator
+#: module/calp/util/config.scm:129
+msgid   "V:"
+msgstr  "V:"
+
+#: module/calp/util/exceptions.scm:7
+msgid   "Crash on warnings."
+msgstr  "Krasha på varningar"
+
+#: module/calp/terminal.scm:78
+msgid   "NO LOCATION"
+msgstr  "INGEN PLATS"
+
+#: module/calp/terminal.scm:129
+msgid   "== Day View ==\n"
+msgstr  "== Dagsvy ==\n"
+
+#: module/calp/terminal.scm:155
+msgid   "Start"
+msgstr  "Start"
+
+#. Event start date-time terminal view
+#. Event end date-time terminal view
+#. Event start date-time terminal view
+#. Event end date-time terminal view
+#: module/calp/terminal.scm:160 module/calp/terminal.scm:168
+msgid   "~Y-~m-~d ~H:~M:~S"
+msgstr  "~Y-~m-~d ~H:~M:~S"
+
+#: module/calp/terminal.scm:163
+msgid   "End"
+msgstr  "Slut"
+
+#: module/calp/terminal.scm:211
+msgid   "quick search: "
+msgstr  "Snabbsök: "
+
+#: module/calp/terminal.scm:218
+msgid   "search: "
+msgstr  "sök: "
+
+#: module/calp/terminal.scm:264
+msgid   "== Search View ==\n"
+msgstr  "== Sökvy ==\n"
+
+#: module/calp/repl.scm:16
+#, scheme-format
+msgid   "Starting REPL server at ~a~%"
+msgstr  "Startar REPL-server på ~a~%"
+
+#: module/calp/repl.scm:26
+#, scheme-format
+msgid   "Failed to unlink ~a"
+msgstr  "Misslyckades med att avlänka ~a"
+
+#: module/calp/repl.scm:30
+msgid   "Empty address?"
+msgstr  "Tom address?"
+
+#. currently impossible
+#: module/calp/repl.scm:35
+msgid   "How did you get here?"
+msgstr  "Hur hamnade du här?"
+
+#: module/calp/main.scm:51
+msgid   "Path to alterantive configuration file to load instead of the "
+        "default one."
+msgstr  "Sökväg till alternativ konfigurationsfil."
+
+#: module/calp/main.scm:65
+#, scheme-format
+msgid   "Display version, which is ~a btw."
+msgstr  "Visar version, vilket är ~a helt apropå."
+
+#: module/calp/main.scm:71
+msgid   "Print this help"
+msgstr  "Visar den här hjälpen."
+
+#: module/calp/main.scm:123
+#, scheme-format
+msgid   "Configuration file ~a missing"
+msgstr  "Konfigurationsfilen ~a saknas"
+
+#. Two arguments:
+#. Configuration file path,
+#. thrown error arguments
+#: module/calp/main.scm:171
+#, scheme-format
+msgid   "Failed loading config file ~a~%~s~%"
+msgstr  "Misslyckades med att ladda konfigurationsfilen ~a~%~s~%"
+
+#: module/calp/main.scm:212
+#, scheme-format
+msgid   "Calp version ~a~%"
+msgstr  "Calp version ~a~%"
+
+#: module/calp/main.scm:218
+#, scheme-format
+msgid   "tzget not installed, please put it in one of ~a"
+msgstr  "tzget är inte intstalleratt, vänligen placera programmet i en av ~a"
+
+#: module/calp/main.scm:250
+#, scheme-format
+msgid   "Unsupported mode of operation: ~a~%"
+msgstr  "Orimligt subbkomando: ~a~%"
+
+#: module/calp/main.scm:265
+msgid   "Program start"
+msgstr  "Programstart"
+
+#: module/datetime/instance.scm:28
+msgid   "Default zoneinfo only available when tz-dir and tz-list are "
+        "configured"
+msgstr  "Standardzoninfo endast tillgängligt när tz-dir och tz-list är satta"
+
+#: module/datetime/zic.scm:166 module/datetime/zic.scm:339
+msgid   "what even is \"Standard time\"‽"
+msgstr  "Vad är ens \"Standardtid\"‽"
+
+#. NOTE an earlier version of the code the parsers for those.
+#. They were removed since they were unused, uneeded, and was
+#. technical dept.
+#: module/datetime/zic.scm:262
+#, scheme-format
+msgid   "Invalid key ~a. Note that leap seconds and\n"
+        "expries rules aren't yet implemented."
+msgstr  "Ogiltig nyckel ~a. Notera att skottsekunder och utgångsreglerännu "
+        "inte är implementerade."
+
+#: module/datetime/zic.scm:299
+#, scheme-format
+msgid   "Unresolved link, target missing ~a -> ~a"
+msgstr  "Ohanterad länk, saknar mål ~a -> ~a"
+
+#: module/datetime/zic.scm:360
+msgid   "Check your input"
+msgstr  "Kontrollera din input"
+
+#: module/datetime/zic.scm:384
+msgid   "Counting backward for RRULES unsupported"
+msgstr  "Att räkna baklänges stdöjs inte för RRULES"
+
+#. NOTE No zones seem to currently use %z formatting.
+#. '%z' is NOT a format string, but information about another format string.
+#: module/datetime/zic.scm:403
+msgid   "%z not yet implemented"
+msgstr  "%z ännu ej implementerat"
+
+#: module/datetime/zic.scm:406
+msgid   "Invalid format char"
+msgstr  "Ogiltigt formatteringstecken"
+
+#: module/datetime/timespec.scm:37
+msgid   "Adding timespecs of differing types"
+msgstr  "Lägger till tidsspecifikationer av olika typer"
+
+#: module/vcomponent/datetime/output.scm:20
+msgid   "Upprepas "
+msgstr  ""
+
+#: module/vcomponent/datetime/output.scm:25
+msgid   ", undantaget "
+msgstr  ""
+
+#. Warning message for failure to format description.
+#. First argument is name of warning/error,
+#. second is error arguments
+#: module/vcomponent/datetime/output.scm:51
+#, scheme-format
+msgid   "~a on formatting description, ~s"
+msgstr  "~a vid formattering av beskrivning, ~s"
+
+#: module/vcomponent/formats/common/types.scm:15
+msgid   "Binary field not marked ENCODING=BASE64"
+msgstr  "Binärdatefält ej markerat ENCODING=BASE64"
+
+#: module/vcomponent/formats/common/types.scm:27
+#, scheme-format
+msgid   "~a invalid boolean"
+msgstr  "~a är inte en giltig boolean"
+
+#: module/vcomponent/formats/common/types.scm:60
+msgid   "Non integer as integer"
+msgstr  "Icke-heltag som heltal"
+
+#: module/vcomponent/formats/common/types.scm:91
+#, scheme-format
+msgid   "Non-escapable character: ~a"
+msgstr  "Tecken utan specialtolkning: ~a"
+
+#: module/vcomponent/formats/common/types.scm:140
+msgid   "No parser for type"
+msgstr  "Ingen inläsare för typ"
+
+#: module/vcomponent/formats/ical/output.scm:94
+#: module/vcomponent/formats/ical/parse.scm:230
+#: module/vcomponent/formats/xcal/output.scm:73
+#, scheme-format
+msgid   "Unknown key ~a"
+msgstr  "Okänd nyckel ~a"
+
+#: module/vcomponent/formats/ical/parse.scm:124
+msgid   "List in enum field"
+msgstr  "Lista in uppräkningsinstansfält"
+
+#: module/vcomponent/formats/ical/parse.scm:159
+#, scheme-format
+msgid   "List in non-list field: ~s"
+msgstr  "Lista i fält för icke-lista: ~s"
+
+#: module/vcomponent/formats/ical/parse.scm:196
+msgid   "TODO Implement REQUEST-STATUS"
+msgstr  "TODO implementera REQUEST-STATUS"
+
+#. arguments:
+#. linedata
+#. ~?
+#. source line
+#. source file
+#: module/vcomponent/formats/ical/parse.scm:283
+#, scheme-format
+msgid   "WARNING parse error around ~a\n"
+        "  ~?\n"
+        "  line ~a ~a~%"
+msgstr  "VARNING inläsningsfel runt ~a ~? rad ~a ~a~%"
+
+#. arguments
+#. linedata
+#. ~?
+#. source line
+#. source file
+#: module/vcomponent/formats/ical/parse.scm:337
+#, scheme-format
+msgid   "ERROR parse error around ~a\n"
+        "  ~?\n"
+        "  line ~a ~a\n"
+        "  Defaulting to string~%"
+msgstr  "FEL inläsningsfel runt ~a ~? rad ~a ~a Faller tilbaka på sträng~%"
+
+#: module/vcomponent/formats/ical/types.scm:40
+msgid   "PERIOD writer not yet implemented"
+msgstr  "PERIOD-formaterrare ännu ej implementerad"
+
+#: module/vcomponent/formats/ical/types.scm:97
+#: module/vcomponent/formats/xcal/types.scm:55
+msgid   "No writer for type"
+msgstr  "Ingen formatterare för typ"
+
+#: module/vcomponent/formats/vdir/parse.scm:62
+#, scheme-format
+msgid   "No events in component~%~a"
+msgstr  "Inga händelser i komponenten~%~a"
+
+#: module/vcomponent/formats/xcal/parse.scm:87
+#, scheme-format
+msgid   "Invalid type ~a, with value ~a"
+msgstr  "Ogiltig typ ~a, med värde ~a"
+
+#. TODO
+#: module/vcomponent/formats/xcal/parse.scm:157
+msgid   "Request status not yet implemented"
+msgstr  "Statusbegäran ännu ej implementerad"
+
+#: module/vcomponent/util/instance/methods.scm:55
+#, scheme-format
+msgid   "Building <events> from~%"
+msgstr  "Bygger <events> från~%"
+
+#: module/vcomponent/util/instance.scm:22
+#, scheme-format
+msgid   "Reload done~%"
+msgstr  "Omladdning färdig~%"
+
+#: module/vcomponent/util/parse-cal-path.scm:23
+#, scheme-format
+msgid   "Parsing ~a"
+msgstr  "Läser ~a"
+
+#: module/vcomponent/util/parse-cal-path.scm:29
+msgid   "Can't parse file of type "
+msgstr  "Kan inte läsa fil av typen "
+
+msgid   "Can't give week together with day or time"
+msgstr  "Kan inte ge vecka tillsamans med dag eller tid"
+
+#: module/calp/html/vcomponent.scm:512
+msgid   "Last Modified"
+msgstr  "Senast ändrad"
+
+#: module/calp/main.scm:84
+msgid   "Usage: <b>calp</b> [ <i>flags</i> ] <i>mode</i> [ <i>mode flags</i> ]"
+msgstr  "Användning: <b>calp</b> [ <i>flaggor</i> ] <i>subkommando</i> "
+        "[ <i>Subkommandosflaggor</i> ]"
+
+#. Header for following list of modes of operation
+#: module/calp/main.scm:87
+msgid   "Modes"
+msgstr  "Subkommandon"
+
+#: module/calp/main.scm:89
+msgid   "<p><b>html</b> reads calendar files from disk, and writes them to "
+        "static HTML files.</p>"
+msgstr  "<p><b>html</b> läser kalenderfiler från disk, och matar ur sig statiska "
+        "HTML-filer.</p>"
+
+#: module/calp/main.scm:90
+msgid   "<p><b>terminal</b> loads the calendars, and starts an interactive "
+        "terminal interface.</p>"
+msgstr  "<p><b>terminal</b> laddar kalendrar, och startar ett en interaktiv "
+        "miljö i terminalen.</p>"
+
+#: module/calp/main.scm:94
+msgid   "<p><b>ical</b> loads the calendar database, and immediately\n"
+        "re-serializes it back into iCAL format. Useful for merging calendars."
+        "</p>"
+msgstr  "<p><b>ical</b> laddar kallenderdatabasen, och återserialiserar den "
+        "omedelbart tillbaka till iCAL. Användbart för att slå samman "
+        "kallendrar.</p>"
+
+#. Header for list of available flags.
+#. Actual list is auto generated elsewhere.
+#: module/calp/main.scm:105
+msgid   "Flags"
+msgstr  "Flaggor"
+
+#: module/calp/terminal.scm:320
+msgid   "loading..."
+msgstr  "laddar..."
+
+#: module/datetime/instance.scm:12
+msgid   "List of default zoneinfo files to be parsed"
+msgstr  "Lista av standardzoninfofiler att ladda"
+
+#: module/calp/main.scm:98
+msgid   "<p><b>server</b> starts an HTTP server which dynamically loads and\n"
+        "displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}."
+        "html</i> runs\n"
+        "the same output code as <b>html</b>. While the <i>/calendar/{uid}."
+        "ics</i> uses\n"
+        "the same code as <b>ical</b>.</p>"
+msgstr  "<p><b>server</b> startar en HTTP-server vilken dynamiskt laddar och "
+        "visar händelser. Addresserna <i>/month/{date}.html</i> &amp; <i>/"
+        "week/{date}.html</i> kör samma utskriftskod som <b>html</b>. Emedans "
+        "<i>/calendar/{uid}.ics</i> delar kod med <b>ical</b>.</p>"
+
+#: module/calp/entry-points/text.scm:16
+msgid   "<group>Read from <i>file</i> instead of standard input.</group>"
+msgstr  "<group>Läs fran <i>file</i> istället för standard-input.</group>"
+
+#: module/calp/entry-points/tidsrapport.scm:179
+msgid   "<group>Map between real field names and human readable names.<br/>\n"
+        "If data is given, but not trans, then data is assumed to be in a "
+        "correct format</group>"
+msgstr  "<group>Översättningstabell mellan verkliga fältnamn och mänskligt "
+        "läsbara namn.<br/>Om data är given, men inte översättingstabellen, "
+        "så antas datan redan ha korrekta nycklar</group>"
+
+#: module/calp/entry-points/convert.scm:14
+msgid   "<group>Input format (otherwise infered from <i>infile</i>)</group>"
+msgstr  "<group>Inputformat (härleds annars från <i>infile</i>)</group>"
+
+#: module/calp/entry-points/convert.scm:16
+msgid   "<group>Output format (otherwise infered from <i>outfile</i>)</group>"
+msgstr  "<group>Utadataformat (härleds annars från <i>outfile</i>)</group>"
+
+#: module/calp/entry-points/html.scm:35
+msgid   "<group>How many pages should be rendered.\n"
+        "If --style=<b>week</b> and --from=<b>2020-04-27</b>;\n"
+        "then --count=<b>4</b> would render the four pages\n"
+        "2020-04-27, 2020-05-04, 2020-05-11, and 2020-05-25.\n"
+        "Defaults to 12 to give a whole year when --style=<b>month</b></group>"
+msgstr  "<group>Antal sidor att rendera.Om --style=<b>week</b> och --"
+        "from=<b>2020-04-27</b> kommer--count=<b>4</b> rendera de fyra "
+        "sidorna2020-04-27, 2020-05-04, 2020-05-11, och 2020-05-25.Antar "
+        "värdet 12 för att ge ett helt år då --style=<b>month</b></group>"
+
+#: module/calp/entry-points/html.scm:42
+msgid   "<group>Directory where html files should end up. Default to <b>./"
+        "html</b></group>"
+msgstr  "<group>Katalog där html-filer ska placeras. Har standardvärder <b>./"
+        "html</b></group>"
+
+#: module/calp/entry-points/html.scm:46
+msgid   "<group>How the body of the HTML page should be layed out.\n"
+        "<br/><b>week</b>\n"
+        "gives a horizontally scrolling page with 7 elements, where each has "
+        "events\n"
+        "graphically laid out hour by hour.\n"
+        "<br/><b>table</b>\n"
+        "gives a month in overview as a table. Each block contains the events "
+        "for the\n"
+        "given day, in order of start time. They are however not graphically "
+        "sized.\n"
+        "<br/><b>wide</b>\n"
+        "is the same as week, but gives a full month.</group>"
+msgstr  "<group>Hur HTML-sidans komponenter ska placeras.<br/><b>week</b> ger "
+        "en horisentellt skrollande sida med 7 element, där varje element har "
+        "händelser grafiskt utlaggda.<br/><b>table</b> ger en månadsöversikt "
+        "som en tabell, där varje cell visar den dagens händelser i ordning, "
+        "dock inte grafiskt skalade.<br/><b>wide</b> Motsvarande som week, "
+        "men för en hel månad</group>"
+
+#: module/calp/entry-points/html.scm:57
+msgid   "<group>Creates a standalone document instead of an HTML fragment\n"
+        "for embedding in a larger page. Currently only applies to the "
+        "<i>small</i> style</group>"
+msgstr  "<group>Skapar ett fristående dokument istället för ett HTML-fragment "
+        "för inbäddning i andra sidor. Fungerar för nuvarande bara med stilen "
+        "<i>small</i></group>"
+
+#: module/calp/entry-points/server.scm:19
+msgid   "<group>Bind to TCP port, defaults to <i>8080</i>.\n"
+        "<br/>Can also be set through the config variable\n"
+        "<i>port</i>.</group>"
+msgstr  "<group>Bind till en TCP-port, och blir <i>8080</i> om osatt.<br/>Kan "
+        "även sättas genom konfigurationsfältet <i>port</i>.</group>"
+
+#: module/calp/entry-points/server.scm:23
+msgid   "<group>Address to use, defaults to <i>0.0.0.0</i> for IPv4,\n"
+        "and <i>[::]</i> for IPv6</group>"
+msgstr  "<group>Address att använda, utgår från <i>0.0.0.0</i> för IPv4, samt "
+        "<i>[::]</i> för IPv6</group>"
+
+#: module/calp/main.scm:38
+msgid   "<group>Run the program within Guile's built in statical\n"
+        "profiler. Display style is one of <b>flat</b> or <b>tree</b>.</group>"
+msgstr  "<group>Kör programmet i Guiles inbyggda statiska profilerare.\n"
+        "Visningsstil är <b>flat</b> eller <b>tree</b>.</group>"
+
+#: module/calp/main.scm:42
+msgid   "<group>Start a Guile repl which can be connected to, defaults to "
+        "the\n"
+        "unix socket <i>/run/user/${UID}/calp-${PID}</i>, but it can be bound "
+        "to any\n"
+        "unix or TCP socket. ((@ (vcomponent util instance) global-event-"
+        "object)) should\n"
+        "contain all events.\n"
+        "<br/>\n"
+        "<b>Should NOT be used in production.</b></group>"
+msgstr  "<group>Startar en Guile-REPL för anslutningar. Binder som standard "
+        "till unix-sockeln <i>/run/user/${UID}/calp-${PID}</i>, man kan "
+        "bindas till valfri unix eller TCP sockel. ((@ (vcomponent util "
+        "instance) global-event-object)) bör inehålla alla händelser<br/"
+        "><b>Ska INTE användas i produktion.</b></group>"
+
+#: module/calp/main.scm:59
+msgid   "<group>Set configuration options, on the form <i>key</i>=<i>value</"
+        "i>\n"
+        "as if they were set in the config file. These options have priority "
+        "over those\n"
+        "from the file.  Can <i>not</i> be given with an equal after --"
+        "option.  <br/>Can\n"
+        "be given multiple times.</group>"
+msgstr  "<group>Sätter konfigurationsvariabler, på formen <i>nyckel</"
+        "i>=<i>värde</i>, motsvarande om de hade satts i konfigurationsfilen. "
+        "Dock har de här prioritet över dem från filen.\n"
+        "Kan <i>inte</i> ges med ett lika-med-tecken efter --option.<br/>Kan "
+        "ges flera gånger.</group>"
+
+#: module/calp/main.scm:73
+msgid   "<group>Print known configuration variables.\n"
+        "<br/><b>NOTE</b>:\n"
+        "Only those configuration variables which are loaded will be shown, "
+        "more might be\n"
+        "available</group>"
+msgstr  "<group>Visar kända konfigurationsvariabler.<br/><b>NOTERA</b>:\n"
+        "Endast de konfigurationsvariablerna vilka har laddats in kommer "
+        "visas, fler kan vara finnas</group>"
+
+#: module/calp/main.scm:91
+msgid   "[UNTESTED]<br/><p><b>import</b>s a calendar object into the database."
+        "</p>"
+msgstr  "[OTESTAD]<br/><p><b>import</b>erar ett kallenderobjekt till "
+        "databasen.</p>"
+
+#: module/calp/main.scm:92
+msgid   "<p><b>text</b> formats and justifies what it's given on standard "
+        "input,\n"
+        "and writes it to standard output. Similar to this text.</p>"
+msgstr  "<p><b>text</b> formatterar och justerar det den får på standard-"
+        "input, och skriver det till standard-output, på motsvarande stil som "
+        "den här texten.</p>"
+
+#: module/calp/main.scm:96
+msgid   "<p><b>benchmark</b> <i>module</i><br/>Runs the procedure 'run-"
+        "benchmark'\n"
+        "from the module (calp benchmark <i>module</i>).</p>"
+msgstr  "<p><b>benchmark</b> <i>modul</i><br/>Kör proceduren 'run-benchmark' "
+        "från modulen (calp benchmark <i>modul</i>).</p>"
+
+#. Week view header format
+#. start date metainfo
+#. end date metainfo
+#. Generation data
+#. Compact event list date only
+#. Header for sidebar day
+#. Week view header format
+#. start date metainfo
+#. end date metainfo
+#. Generation data
+#. Compact event list date only
+#. Header for sidebar day
+#: module/calp/html/view/calendar/week.scm:50
+#: module/calp/html/view/calendar.scm:92 module/calp/html/view/calendar.scm:94
+#: module/calp/html/view/calendar.scm:156 module/calp/html/vcomponent.scm:52
+#: module/calp/html/vcomponent.scm:218
+msgid   "~Y-~m-~d"
+msgstr  "~Y-~m-~d"
