@@ -35,6 +35,75 @@
 (eval-when (compile load)
  (define here (dirname (current-filename))))
 
+(use-modules (srfi srfi-64))
+
+(define (µs x)
+  (* x #e1e6))
+
+(define (transform-time-of-day tod)
+  (+ (* (µs 1) (car tod))
+     (cdr tod)))
+
+(define (construct-test-runner)
+  (define runner (test-runner-null))
+  ;; end of individual test case
+  (test-runner-on-test-begin! runner
+    (lambda (runner)
+      (test-runner-aux-value! runner (transform-time-of-day (gettimeofday)))))
+  (test-runner-on-test-end! runner
+    (lambda (runner)
+      (case (test-result-kind runner)
+        ((pass)  (display "\x1b[0;32mX\x1b[m"))
+        ((fail)  (newline) (display "\x1b[0;31mE\x1b[m"))
+        ((xpass) (display "\x1b[0;33mX\x1b[m"))
+        ((xfail) (display "\x1b[0;33mE\x1b[m"))
+        ((skip)  (display "\x1B[0;33m-\x1b[m")))
+      (when (eq? 'fail (test-result-kind))
+        (format #t " ~a~%" (test-runner-test-name runner))
+        (cond ((test-result-ref runner 'actual-error)
+               => (lambda (err) (format #t "Error: ~s~%" err)))
+              (else
+               (format #t "Expected: ~s~%Received: ~s~%"
+                       (test-result-ref runner 'expected-value "[UNKNOWN]")
+                       (test-result-ref runner 'actual-value "[UNKNOWN]"))))
+        (format #t "Near ~a:~a~%~y"
+                (test-result-ref runner 'source-file)
+                (test-result-ref runner 'source-line)
+                (test-result-ref runner 'source-form)))
+
+      (let ((start (test-runner-aux-value runner))
+            (end (transform-time-of-day (gettimeofday))))
+        (when (< (µs 1) (- end start))
+          (format #t "~%Slow test: ~s, took ~a~%"
+                  (test-runner-test-name runner)
+                  (exact->inexact (/ (- end start) (µs 1)))
+                  )))))
+
+  ;; on start of group
+  (test-runner-on-group-begin! runner
+    ;; count is number of #f
+    (lambda (runner name count)
+      (format #t "~a ~a ~a~%"
+              (make-string 10 #\=)
+              name
+              (make-string 10 #\=))))
+  (test-runner-on-group-end! runner
+    (lambda (runner) (newline)))
+  ;; after everything else is done
+  (test-runner-on-final! runner
+    (lambda (runner)
+      (format #t "pass:  ~a~%" (test-runner-pass-count runner))
+      (format #t "fail:  ~a~%" (test-runner-fail-count runner))
+      (format #t "xpass: ~a~%" (test-runner-xpass-count runner))
+      (format #t "xfail: ~a~%" (test-runner-xfail-count runner))
+      ))
+
+  runner)
+
+;; (test-runner-current my-test-runner)
+(test-runner-factory construct-test-runner)
+
+
 (format #t "current filename = ~a~%" here)
 
 
@@ -44,7 +113,6 @@
 (use-modules (ice-9 ftw)
              (ice-9 sandbox)
              (ice-9 getopt-long)
-             (srfi srfi-64)             ; test suite
              (srfi srfi-88)             ; suffix keywords
              (system vm coverage)
              ((hnh util) :select (for awhen))
@@ -98,7 +166,6 @@
   (with-code-coverage
    (lambda ()
      (for fname in files
-          (format (current-error-port) "Running test ~a~%" fname)
           (test-group
            fname
            (with-throw-handler #t
@@ -113,13 +180,12 @@
                       #:allocation-limit #e10e8
                       #:module (make-sandbox-module
                                 (append modules
-                                        '(((srfi srfi-64) test-assert
-                                           test-equal test-error
-                                           test-eqv test-eq
-                                           test-approximate)
+                                        `(((srfi srfi-64)
+                                           ,@(module-map
+                                              (lambda (n _) n)
+                                              (resolve-interface '(srfi srfi-64))))
                                           ((ice-9 ports) call-with-input-string)
-                                          ((guile) make-struct/no-tail)
-                                          )
+                                          ((guile) make-struct/no-tail))
                                         all-pure-bindings)))
                      (list fname modules forms)))))
              (lambda (err . args)
@@ -133,6 +199,7 @@
                  (else
                   (format (current-error-port)
                           "Test unexpectedly crashed: ~a~%" args))) )))))))
+
 
 (call-with-values run-with-coverage
   (lambda (data _)
