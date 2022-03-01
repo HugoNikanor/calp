@@ -4,11 +4,6 @@
 
 (use-modules (ice-9 regex)
              (sxml simple)
-
-             ;; TODO this module introduces description-filter. It should be
-             ;; possible to use set-config! before the declaration point is
-             ;; known. But I currently get a config error.
-             ;; (vcomponent datetime output)
              )
 
 (set-config! 'calendar-files (glob "~/.local/var/cal/*"))
