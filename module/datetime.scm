@@ -535,6 +535,7 @@
           (iota (modulo (- (* 7 5) month-len month-start) 7) 1)))))
 
 
+;; The amount of days in the given interval, both end pointts inclusive
 (define-public (days-in-interval start-date end-date)
   (let ((diff (date-difference (date+ end-date (date day: 1)) start-date)))
     (with-streams

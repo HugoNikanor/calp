@@ -15,6 +15,7 @@
   leap-year?
   string->date string->time string->datetime
   parse-month
+  days-in-interval
   )
  ((ice-9 format) format)
  ((hnh util) let*)
@@ -239,3 +240,7 @@
 (test-equal -1 (parse-month "inv" en_US))
 
 (test-equal 5 (parse-month "mAJ" sv_SE))
+
+
+(test-equal "Days in regular year" 365 (days-in-interval #2021-01-01 #2021-12-31))
+(test-equal "Days in leap year"    366 (days-in-interval #2020-01-01 #2020-12-31))
