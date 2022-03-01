@@ -12,10 +12,11 @@ without needing all appropriate modules already loaded.
 @defmac define-config name default kw-parameters ...
 Declares a new configuration variable named @var{named}, with the
 default value @var{default}. @var{kw-parameters} are given on Guile's
-standard @code{hash: value} form. @ref{get-property} available parameters.
+standard @code{hash: value} form. @pxref{get-property} for available parameters.
 @end defmac
 
 @defun get-property config-name property-key
+@anchor{get-property}
 Returns a metadata-slot value for the given configuration setting.
 
 Each declared configuration item has (at least) the following metadata
