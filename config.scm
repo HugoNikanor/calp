@@ -8,7 +8,6 @@
 
 (set-config! 'calendar-files (glob "~/.local/var/cal/*"))
 
-;;; TODO possibly replace with propper lookup
 (define my-courses
   '((TSEA82 . "Datorteknik")
     (TFYA19 . "Kvantdatorer")
@@ -30,17 +29,14 @@
 (define (a link) `(a (@ (href ,link)) ,link))
 
 (define (parse-html str)
-  ;; extra space to ensure that we don't get a self closing
-  ;; div tag in the final output
-  ;; TODO Fix a real sxml->html   | The space
-  ;; method instead of pretending |
-  ;; that HTML is XML.            v
-  (xml->sxml (string-append "<div> " str "</div>")
-             default-entity-handler:
-             (lambda (port name)
-               (case name
-                 [(nbsp) " "]
-                 [else (symbol->string name)]))) )
+  (catch 'misc-error
+    (lambda ()
+      ;; resolve interface throws on missing module
+      (let* ((gumbo (resolve-interface '(sxml gumbo)))
+             (html->sxml (module-ref gumbo 'html->sxml)))
+        (html->sxml str)))
+    ;; Give up on parsing
+    (lambda _ str)))
 
 (define (parse-links str)
   (define regexp (make-regexp "https?://\\S+"))
