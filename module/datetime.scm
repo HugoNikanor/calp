@@ -10,12 +10,10 @@
   :use-module (srfi srfi-9 gnu)
 
   :use-module ((hnh util)
-               :select (vector-last define*-public set! -> swap case* set
+               :select (vector-last define*-public set! -> ->> swap case* set
                                     span-upto let* set->))
 
   :use-module (srfi srfi-41)
-  :use-module ((srfi srfi-41 util)
-               :select (with-streams))
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
   :use-module (ice-9 regex)
@@ -538,12 +536,12 @@
 ;; The amount of days in the given interval, both end pointts inclusive
 (define-public (days-in-interval start-date end-date)
   (let ((diff (date-difference (date+ end-date (date day: 1)) start-date)))
-    (with-streams
-     (fold + (day diff)
-           (map days-in-month
-                (take (+ (month diff)
-                         (* 12 (year diff)))
-                      (month-stream start-date)))))))
+    (->> (month-stream start-date)
+         (stream-take (+ (month diff)
+                         (* 12 (year diff))))
+         (stream-map days-in-month)
+         (stream-fold + (day diff)))))
+
 
 ;; Day from start of the year, so 1 feb would be day 32.
 ;; Also known as Julian day.
