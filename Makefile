@@ -50,4 +50,5 @@ coverage:
 		--output-directory coverage \
 		--prefix $(shell pwd) \
 		--no-function-coverage \
+		--quiet \
 		lcov.info
