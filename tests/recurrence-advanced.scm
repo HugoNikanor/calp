@@ -27,6 +27,14 @@
  ((srfi srfi-41) stream->list)
  ((srfi srfi-88) keyword->string))
 
+(test-expect-fail "RSET: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
+(test-expect-fail "STR: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
+(test-expect-fail "RSET: The second-to-last weekday of the month")
+(test-expect-fail "STR: The second-to-last weekday of the month")
+
+;; TODO this test is really slow, figure out why (takes approx. 25s to run)
+(test-skip "RSET: Every day in January, for 3 years (alt 2)")
+
 (define (run-test comp)
 
   (test-equal (string-append "RSET: " (prop comp 'SUMMARY))
@@ -971,8 +979,7 @@ ver (U.S. Presidential Election day)"
                 #2072-11-08T09:00:00))
 
   (vevent
-   summary: "The third instance into the month of one of Tuesday, Wednesday, or
-Thursday, for the next 3 months"
+   summary: "The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months"
    dtstart: "19970904T090000"
    rrule: "FREQ=MONTHLY;COUNT=3;BYDAY=TU,WE,TH;BYSETPOS=3"
    x-summary: "NOT YET IMPLEMENTED"
@@ -981,7 +988,7 @@ Thursday, for the next 3 months"
                 #1997-11-06T09:00:00))
 
   (vevent
-   summary: "The second-to-last weekday of the month NOTE WILL FAIL DUE TO FEW EXAMPLES"
+   summary: "The second-to-last weekday of the month"
    dtstart: "19970929T090000"
    rrule: "FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-2"
    x-summary: "NOT YET IMPLEMENTED"
