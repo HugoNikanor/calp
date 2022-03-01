@@ -133,7 +133,7 @@
 
 
 (for-each (lambda (edge)
-            (let ((gv-edge (gv.edge graph 
+            (let ((gv-edge (gv.edge graph
                                  (format #f "~a" (edge-down edge))
                                  (format #f "~a" (edge-up edge))
                                  )))
@@ -144,7 +144,7 @@
                          (not (memv (car (edge-down edge)) '(vcomponent calp ))))
                 (gv.setv gv-edge "color" "blue"))
               ))
-          (remove-edges '((srfi srfi-1) 
+          (remove-edges '((srfi srfi-1)
                           (srfi srfi-9)
                           (srfi srfi-26)
                           (srfi srfi-41)
