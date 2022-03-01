@@ -11,7 +11,6 @@
            begin1
            print-and-return
            swap
-           case*
            set/r!
            label
            sort* sort*!
@@ -141,24 +140,6 @@
 (define (swap f)
   (lambda args (apply f (reverse args))))
 
-
-(define-syntax case*%
-  (syntax-rules (else)
-    [(_ _ else)
-     #t]
-    [(_ invalue (value ...))
-     (memv invalue (list value ...))]
-    #;
-    [(_ invalue target)
-     (eq? invalue target)]))
-
-;; Like `case', but evals the case parameters
-(define-syntax case*
-  (syntax-rules (else)
-    [(_ invalue (cases body ...) ...)
-     (cond ((case*% invalue cases)
-            body ...)
-           ...)]))
 
 ;; Allow set to work on multiple values at once,
 ;; similar to Common Lisp's @var{setf}

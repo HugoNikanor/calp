@@ -16,7 +16,6 @@
                         ->
                         ->>
                         swap
-                        case*
                         set
                         label
                         span-upto
@@ -365,17 +364,16 @@
            (not (zero? (remainder year 100))))))
 
 ;; Returns number of days month for a given date. Just looks at the year and month components.
-(define (days-in-month date)
-  (case* (month date)
-         ((jan mar may jul aug oct dec) 31)
-         ((apr jun sep nov) 30)
-         ((feb)
-          (if (leap-year? (year date))
-              29 28))
-         (else (scm-error 'out-of-range "days-in-month"
-                      "No month number ~a (~a)"
-                      (list (month date) date)
-                      #f))))
+(define-public (days-in-month date)
+  (define m (month date))
+  (cond ((memv m (list jan mar may jul aug oct dec)) 31)
+        ((memv m (list apr jun sep nov)) 30)
+        ((and (= m feb) (leap-year? (year date))) 29)
+        ((= m feb) 28)
+        (else (scm-error 'out-of-range "days-in-month"
+                         "No month number ~a (~a)"
+                         (list (month date) date)
+                         #f))))
 
 (define (days-in-year date)
   (if (leap-year? (year date))

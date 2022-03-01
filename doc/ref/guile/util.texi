@@ -57,11 +57,6 @@ Only evaluates @var{expr} once.
 @math{swap (λ (x y) body ...) ⇔ λ (y x) body ...}
 @end defun
 
-@defmac case* clauses
-Like Scheme's regular @var{case}, but evaluates each symbol before
-checking against them.
-@end defmac
-
 @defmac set! key value ...
 @defmacx set! key = proc ...
 @defmacx set! key = (op args ...) ...
