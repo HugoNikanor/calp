@@ -7,3 +7,9 @@
 (test-equal "sha256 string digest"
   "185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"
   (checksum->string (sha256 "Hello")))
+
+(let ((port (open-output-string)))
+  (checksum->string (sha256 "Hello") port)
+  (test-equal "sha256 string digest to port"
+    "185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"
+    (get-output-string port)))

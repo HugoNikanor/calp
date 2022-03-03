@@ -28,11 +28,7 @@
           ((@ (system foreign) bytevector->pointer) md))
   md)
 
-(define (checksum->string md)
-  (string-concatenate
-   (map (lambda (byte)
-          (format #f "~x~x"
-                  (logand #xF (ash byte -4))
-                  (logand #xF byte)))
-        (bytevector->u8-list md))))
+(define* (checksum->string md #:optional port)
+  ((@ (ice-9 format) format) port
+   "~{~2'0x~}" (bytevector->u8-list md)))
 
