@@ -196,9 +196,15 @@
                                  (cadr args)
                                  (caddr args)
                                  #f))
+                 ((unbound-variable)
+                  (let ((proc (car args))
+                        (fmt (cadr args))
+                        (fmt-args (caddr args)))
+                    (format (current-error-port)
+                            "[~a] ~?~%" proc fmt fmt-args)))
                  (else
                   (format (current-error-port)
-                          "Test unexpectedly crashed: ~a~%" args))) )))))))
+                          "Test unexpectedly crashed [~a]: ~s~%" err args))) )))))))
 
 
 (call-with-values run-with-coverage
