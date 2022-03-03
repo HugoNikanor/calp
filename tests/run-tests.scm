@@ -1,5 +1,13 @@
-#!/usr/bin/guile \
---debug -s
+#!/usr/bin/bash
+
+here=$(dirname $(realpath $0))
+export GUILE_LOAD_PATH=$(dirname $here)/module
+export GUILE_LOAD_COMPILED_PATH=$(dirname $here)/obj
+export GUILE_AUTO_COMPILE=0
+
+make -C $(dirname $here) go_files
+
+exec guile --debug -s "$0" "$@"
 !#
 
 ;;; Commentary:
@@ -32,8 +40,13 @@
 ;; 2.2, anywhere for Guile 3.0).
 ;;; Code:
 
-(eval-when (compile load)
+(eval-when (compile load eval)
  (define here (dirname (current-filename))))
+
+(add-to-load-path (format #f "~a/module" (dirname here)))
+(set! %load-compiled-path (cons (format #f "~a/obj" (dirname here))
+                                %load-compiled-path))
+
 
 (use-modules (srfi srfi-64))
 
@@ -100,15 +113,7 @@
 
   runner)
 
-;; (test-runner-current my-test-runner)
 (test-runner-factory construct-test-runner)
-
-
-(format #t "current filename = ~a~%" here)
-
-
-(add-to-load-path (format #f "~a/module"
-                          (dirname here)))
 
 (use-modules (ice-9 ftw)
              (ice-9 sandbox)

@@ -13,7 +13,7 @@ GUILE_C_FLAGS = -Lmodule \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
 
-all: $(GO_FILES) README static
+all: go_files README static
 
 static:
 	$(MAKE) -C static
@@ -23,8 +23,10 @@ obj/%.go: module/%.scm
 	@echo guild compile $<
 	@guild compile $(GUILE_C_FLAGS) -o $@ $<
 
+go_files: $(GO_FILES)
+
 clean:
-	$(MAKE) -C static clean
+	-$(MAKE) -C static clean
 	-rm -r obj
 
 install: all
@@ -40,7 +42,7 @@ install: all
 README: README.in
 	./main text < README.in | sed "s/<<today>>/`date -I`/" > README
 
-test:
+test: go_files
 	tests/run-tests.scm
 	$(MAKE) coverage
 
