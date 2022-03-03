@@ -75,7 +75,13 @@
     ;; TODO nicer way to resolve static
     (let ((link (path-append output-directory "static")))
      (unless (file-exists? link)
-       (symlink (path-append (xdg-data-home) "calp" "www" "static") link)))))
+       (if (catch 'system-error
+             (lambda () (lstat link))
+             (lambda (err proc fmt fmt-args data)
+               #f))
+           (format #t "WARNING: broken symlink ~s → ~s~%"
+                   link (readlink link))
+           (symlink (path-append (xdg-data-home) "calp" "www" "static") link))))))
 
 
 (define (re-root-static tree)
