@@ -24,6 +24,7 @@
                                       ))
   :use-module ((calp util config) :select (get-config))
   :use-module ((base64) :select (base64encode))
+  :use-module (ice-9 format)
   )
 
 ;; used by search view

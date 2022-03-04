@@ -9,6 +9,7 @@
   :use-module ((ice-9 rdelim) :select (read-string))
   :use-module ((ice-9 ftw) :select (scandir))
   :use-module (ice-9 regex) #| regex here due to bad macros |#
+  :use-module (ice-9 format)
 
   :use-module ((web response) :select (build-response))
   :use-module ((web uri) :select (build-relative-ref))

@@ -19,6 +19,7 @@
   ;;              :select ())
   :use-module ((vcomponent util group)
                :select (group-stream get-groups-between))
+  :use-module (ice-9 format)
   )
 
 

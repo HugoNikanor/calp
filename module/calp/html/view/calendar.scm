@@ -27,6 +27,8 @@
   :use-module ((vcomponent util group)
                :select (group-stream get-groups-between))
   :use-module ((base64) :select (base64encode))
+
+  :use-module (ice-9 format)
   )
 
 

@@ -5,6 +5,7 @@
   #:use-module ((vcomponent base) :select (prop))
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-9 gnu)
+  #:use-module (ice-9 format)
   #:use-module (hnh util)
   )
 

@@ -1,6 +1,7 @@
 (define-module (crypto)
   :use-module (rnrs bytevectors)
   :use-module (system foreign)
+  :use-module (ice-9 format)
   :export (sha256 checksum->string))
 
 (define-once libcrypto (dynamic-link "libcrypto"))

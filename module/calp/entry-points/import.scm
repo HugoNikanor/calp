@@ -4,6 +4,7 @@
   :use-module (hnh util options)
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 rdelim)
+  :use-module (ice-9 format)
   :use-module (srfi srfi-1)
   ;; TODO FIX
   ;; :use-module (output vdir)

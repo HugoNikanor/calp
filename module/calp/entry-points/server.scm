@@ -6,6 +6,7 @@
   :use-module (srfi srfi-1)
 
   :use-module (ice-9 getopt-long)
+  :use-module (ice-9 format)
 
   :use-module ((calp server server) :select (start-server))
 

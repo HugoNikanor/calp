@@ -6,6 +6,7 @@
   :use-module (ice-9 regex)
   :use-module ((rnrs io ports) :select (call-with-port))
   :use-module (ice-9 pretty-print) ; used by one error handler
+  :use-module (ice-9 format)
   :use-module ((hnh util io) :select (read-lines))
   :use-module (hnh util graph)
   :use-module (c lex)

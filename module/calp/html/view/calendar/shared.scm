@@ -16,6 +16,7 @@
                :select (btn tabset))
   :use-module ((calp html vcomponent)
                :select (make-block) )
+  :use-module (ice-9 format)
   )
 
 

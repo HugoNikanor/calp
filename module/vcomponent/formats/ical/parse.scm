@@ -1,5 +1,6 @@
 (define-module (vcomponent formats ical parse)
   :use-module ((ice-9 rdelim) :select (read-line))
+  :use-module (ice-9 format)
   :use-module (hnh util exceptions)
   :use-module (hnh util)
   :use-module (datetime)
