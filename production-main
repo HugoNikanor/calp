@@ -1,2 +1,3 @@
 #!/bin/bash
-exec $(which guile) -c '((@ (calp main) main) (command-line))' "$@"
+GUILE=${GUILE:-guile}
+exec "$GUILE" -c '((@ (calp main) main) (command-line))' "$@"

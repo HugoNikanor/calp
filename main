@@ -3,7 +3,6 @@
 here=$(dirname $(realpath $0))
 . $here/env
 
-GUILE=${GUILE:-$(which guile)}
-# GUILE_LOAD_PATH=$here/module
+make GUILE="$GUILE" go_files
 
 exec $GUILE -c '((@ (calp main) main) (command-line))' "$@"

@@ -1,13 +1,12 @@
 #!/usr/bin/bash
 
 here=$(dirname $(realpath $0))
-export GUILE_LOAD_PATH=$(dirname $here)/module
-export GUILE_LOAD_COMPILED_PATH=$(dirname $here)/obj
-export GUILE_AUTO_COMPILE=0
 
-make -C $(dirname $here) go_files
+. "$(dirname "$here")/env"
 
-exec guile --debug -s "$0" "$@"
+make -C $(dirname $here) GUILE="$GUILE" go_files
+
+exec $GUILE --debug -s "$0" "$@"
 !#
 
 ;;; Commentary:
@@ -42,11 +41,6 @@ exec guile --debug -s "$0" "$@"
 
 (eval-when (compile load eval)
  (define here (dirname (current-filename))))
-
-(add-to-load-path (format #f "~a/module" (dirname here)))
-(set! %load-compiled-path (cons (format #f "~a/obj" (dirname here))
-                                %load-compiled-path))
-
 
 (use-modules (srfi srfi-64))
 
@@ -105,6 +99,7 @@ exec guile --debug -s "$0" "$@"
   ;; after everything else is done
   (test-runner-on-final! runner
     (lambda (runner)
+      (format #t "Guile version ~a~%~%" (version))
       (format #t "pass:  ~a~%" (test-runner-pass-count runner))
       (format #t "fail:  ~a~%" (test-runner-fail-count runner))
       (format #t "xpass: ~a~%" (test-runner-xpass-count runner))
@@ -218,4 +213,3 @@ exec guile --debug -s "$0" "$@"
       (lambda (port) (coverage-data->lcov data port)))))
 
 (test-end "tests")
-

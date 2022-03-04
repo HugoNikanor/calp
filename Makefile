@@ -1,11 +1,19 @@
 .PHONY: all clean test \
-	static coverage
+	static coverage \
+	go_files
 
-GUILE_SITE_DIR=$(shell guile -c "(display (%site-dir))")
-GUILE_CCACHE_DIR=$(shell guile -c "(display (%site-ccache-dir))")
+GUILE := guile
+export GUILE
+
+GUILD := guild
+
+GUILE_VERSION=$(shell $(GUILE) -c '(display (version))')
+
+GUILE_SITE_DIR=$(shell $(GUILE) -c "(display (%site-dir))")
+GUILE_CCACHE_DIR=$(shell $(GUILE) -c "(display (%site-ccache-dir))")
 
 SCM_FILES = $(shell find module/ -type f -name \*.scm)
-GO_FILES = $(SCM_FILES:module/%.scm=obj/%.go)
+GO_FILES = $(SCM_FILES:module/%.scm=obj-$(GUILE_VERSION)/%.go)
 
 GUILE_C_FLAGS = -Lmodule \
 				-Wunused-toplevel \
@@ -18,16 +26,17 @@ all: go_files README static
 static:
 	$(MAKE) -C static
 
-obj/%.go: module/%.scm
-	@mkdir -p obj
-	@echo guild compile $<
-	@guild compile $(GUILE_C_FLAGS) -o $@ $<
+obj-$(GUILE_VERSION)/%.go: module/%.scm
+	@echo $(GUILD) compile $<
+	@$(GUILD) compile $(GUILE_C_FLAGS) -o $@ $<
 
+# Phony target used by test/run-tests.scm and main to
+# automatically compile everything before they run.
 go_files: $(GO_FILES)
 
 clean:
 	-$(MAKE) -C static clean
-	-rm -r obj
+	-rm -r obj-*
 
 install: all
 	install -d $(DESTDIR)$(GUILE_SITE_DIR)  $(DESTDIR)$(GUILE_CCACHE_DIR)

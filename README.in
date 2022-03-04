@@ -24,17 +24,20 @@ Standards and specifications
 ----------------------------
 - RFC 5545 (iCalendar)
 - RFC 6321 (xCal)
+- RFC 7265 (jCal)
 - Vdir Storage Format [VDIR]
 
-Building
---------
-	./configure
-	./main
-No explicit compilation is required for general usage, since Guile compiles
-files as they are needed. You do however have to run `./configure` before the first startup to set up some local variables and download the timezone db.
+Building & Running
+------------------
+Everything can be directly loaded due to Guile's auto-compilation. 
+However, two entry points are provided.
+- `main', which sets up its own environment, and explicitly builds all libraries before starting, and
+- `production-main', which assumes that the environment already is fine, and is the version which should be installed.
 
-To actually compile the files, and render the documentation (at the time of writing only the README), run
-	make all
+The code can also be explicitly manually built, see the makefile.
+
+The environment/make variable GUILE can be set to another guile binary, such as `guile3'.
+Guild by defaults also uses this, but if a separate guild version is explicitly required then the env/make var GUILD can be set (but this shouldn't be needed).
 
 Techical Details
 ----------------

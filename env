@@ -1,15 +1,18 @@
 # -*- mode: sh -*-
 
-root=$(dirname $(realpath $BASH_SOURCE))
+_here=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
 
-GUILE_LOAD_PATH="$root/module:$GUILE_LOAD_PATH"
-#GUILE_LOAD_COMPILED_PATH="$root/obj/module:$GUILE_LOAD_COMPILED_PATH"
-#LD_LIBRARY_PATH="$root/lib:$LD_LIBRARY_PATH"
+export GUILE=${GUILE:-guile}
+guile_version=$($GUILE -c '(display (version))')
 
-XDG_DATA_HOME=$root
-LIBEXEC=$root/scripts/
+export GUILE_LOAD_COMPILED_PATH=${_here}/obj-${guile_version}:${GUILE_LOAD_COMPILED_PATH}
+export GUILE_LOAD_PATH=${_here}/module:${GUILE_LOAD_PATH}
+export GUILE_AUTO_COMPILE=0
 
-export GUILE_LOAD_PATH GUILE_LOAD_COMPILED_PATH LD_LIBRARY_PATH XDG_DATA_HOME LIBEXEC
+# TODO why are these set?
+export XDG_DATA_HOME=$_here
+export LIBEXEC=${_here}/scripts/
+
 #export GUILE_AUTO_COMPILE=0
 
 # exec "$@"
