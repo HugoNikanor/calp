@@ -16,7 +16,6 @@ SCM_FILES = $(shell find module/ -type f -name \*.scm)
 GO_FILES = $(SCM_FILES:module/%.scm=obj-$(GUILE_VERSION)/%.go)
 
 GUILE_C_FLAGS = -Lmodule \
-				-Wunused-toplevel \
 				-Wshadowed-toplevel -Wunbound-variable \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
@@ -27,8 +26,8 @@ static:
 	$(MAKE) -C static
 
 obj-$(GUILE_VERSION)/%.go: module/%.scm
-	@echo $(GUILD) compile $<
-	@$(GUILD) compile $(GUILE_C_FLAGS) -o $@ $<
+	@echo $(GUILD) $(GUILE_VERSION) compile $<
+	@$(GUILD) compile $(GUILE_C_FLAGS) -o $@ $< >/dev/null
 
 # Phony target used by test/run-tests.scm and main to
 # automatically compile everything before they run.
