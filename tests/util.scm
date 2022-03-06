@@ -8,6 +8,7 @@
   begin1)
  ((hnh util path) path-append)
  ((ice-9 ports) with-output-to-string)
+ ((guile) set!)
  )
 
 (test-equal "Filter sorted"
@@ -53,13 +54,10 @@
     (test-equal '(#\H #\1 #\2 #\3 #\4 #\5 #\6) tail)))
 
 
-(test-equal "begin1 side effects" "World"
- (with-output-to-string
-   (lambda ()
-     (test-equal "begin1 return value" "Hello"
-       (begin1
-        "Hello"
-        (display "World"))))))
+(let ((value #f))
+  (test-equal "begin1 return value" "Hello"
+              (begin1 "Hello" (set! value "World")))
+  (test-equal "begin1 side effects" "World" value))
 
 
 (test-equal 0 (iterate 1- zero? 10))
