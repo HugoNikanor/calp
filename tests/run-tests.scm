@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+# -*- mode: scheme; geiser-scheme-implementation: guile -*-
 
 here=$(dirname $(realpath $0))
 
@@ -40,7 +41,7 @@ exec $GUILE --debug -s "$0" "$@"
 ;;; Code:
 
 (eval-when (compile load eval)
- (define here (dirname (current-filename))))
+  (define here (dirname (current-filename))))
 
 (use-modules (srfi srfi-64))
 
@@ -50,6 +51,8 @@ exec $GUILE --debug -s "$0" "$@"
 (define (transform-time-of-day tod)
   (+ (* (µs 1) (car tod))
      (cdr tod)))
+
+(define verbose? (make-parameter #f))
 
 (define (construct-test-runner)
   (define runner (test-runner-null))
@@ -65,8 +68,9 @@ exec $GUILE --debug -s "$0" "$@"
         ((xpass) (display "\x1b[0;33mX\x1b[m"))
         ((xfail) (display "\x1b[0;33mE\x1b[m"))
         ((skip)  (display "\x1B[0;33m-\x1b[m")))
+      (when (or (verbose?) (eq? 'fail (test-result-kind)))
+       (format #t " ~a~%" (test-runner-test-name runner)))
       (when (eq? 'fail (test-result-kind))
-        (format #t " ~a~%" (test-runner-test-name runner))
         (cond ((test-result-ref runner 'actual-error)
                => (lambda (err) (format #t "Error: ~s~%" err)))
               (else
@@ -139,10 +143,10 @@ exec $GUILE --debug -s "$0" "$@"
           (reverse done)
           (loop (cons sexp done))))))
 
-
 (define options
   '((skip (value #t))
-    (only (value #t))))
+    (only (value #t))
+    (verbose (single-char #\v))))
 
 (define opts (getopt-long (command-line) options))
 (define to-skip (call-with-input-string (option-ref opts 'skip "")
@@ -150,6 +154,9 @@ exec $GUILE --debug -s "$0" "$@"
 (define only (option-ref opts 'only #f))
 
 (when only (set! files (list only)))
+
+(when (option-ref opts 'verbose #f)
+  (verbose? #t))
 
 (when (list? to-skip)
  (for skip in to-skip
