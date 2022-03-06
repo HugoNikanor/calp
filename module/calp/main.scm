@@ -160,7 +160,7 @@
                         (reverse done)
                         (loop (cons form done))))))))
        (make-sandbox-module
-        `(((guile) use-modules)
+        `(((guile) use-modules resolve-interface module-ref)
           ,@all-pure-and-impure-bindings
           ))
        ))
