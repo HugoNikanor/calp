@@ -6,7 +6,7 @@
   find-min find-max span-upto
   iterate ->string ->quoted-string
   begin1)
- ((hnh util path) path-append)
+ ((hnh util path) path-append path-split)
  ((ice-9 ports) with-output-to-string)
  ((guile) set!)
  )
@@ -62,18 +62,20 @@
 
 (test-equal 0 (iterate 1- zero? 10))
 
-
-
 (test-equal "5" (->string 5))
 (test-equal "5" (->string "5"))
 
 (test-equal "5" (->quoted-string 5))
 (test-equal "\"5\"" (->quoted-string "5"))
 
+(test-equal "no slashes"                                      "home/user"  (path-append "home" "user"))
+(test-equal "no slashes, absolute"                            "/home/user" (path-append "" "home" "user"))
+(test-equal "slashes in one component, absolute"              "/home/user" (path-append "" "/home/" "user"))
+(test-equal "slashes in one component, absolute due to first" "/home/user" (path-append "/home/" "user"))
+(test-equal "Slashes in both"                                 "home/user"  (path-append "home/" "/user"))
+(test-equal "root"                                            "/"          (path-append ""))
 
-(test-equal "/home/hugo/"
-  (path-append "/home" "hugo/"))
-
-(test-equal "/home/hugo/" (path-append "/" "/home/" "/hugo/"))
-
-(test-equal "/" (path-append ""))
+(test-equal '("usr" "lib" "test")    (path-split "usr/lib/test"))
+(test-equal '("usr" "lib" "test")    (path-split "usr/lib/test/"))
+(test-equal '("" "usr" "lib" "test") (path-split "/usr/lib/test"))
+(test-equal '("" "usr" "lib" "test") (path-split "//usr////lib/test"))
