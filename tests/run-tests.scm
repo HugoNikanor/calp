@@ -118,7 +118,8 @@ exec $GUILE --debug -s "$0" "$@"
              ((hnh util) :select (for awhen))
              ;; datetime introduces the reader extensions for datetimes,
              ;; which leaks into the sandboxes below.
-             (datetime))
+             (datetime)
+             ((srfi srfi-1) :select (take-while drop)))
 
 (define files
   (scandir here
@@ -206,10 +207,39 @@ exec $GUILE --debug -s "$0" "$@"
                   (format (current-error-port)
                           "Test unexpectedly crashed [~a]: ~s~%" err args))) )))))))
 
+(use-modules (hnh util path))
+(add-to-load-path (path-append (dirname here) "scripts"))
+
+(define-values (module-files module-names)
+  ((@ (all-modules) all-modules-under-directory)
+   (path-append (dirname here) "module")))
+
 
 (call-with-values run-with-coverage
   (lambda (data _)
-    (call-with-output-file "lcov.info"
-      (lambda (port) (coverage-data->lcov data port)))))
+
+    (define to-drop
+      (1+ (length
+           (take-while (lambda (p) (not (string=? p "module")))
+                       (path-split (car module-files))))))
+
+    (define (drop-components path-list)
+      (drop path-list to-drop))
+
+    (define target-ht (make-hash-table))
+    (define source-ht ((@@ (system vm coverage) data-file->line-counts) data))
+    (for-each (lambda (path)
+                (cond ((hash-ref source-ht path #f)
+                       => (lambda (value) (hash-set! target-ht path value)))))
+              (map (compose path-join drop-components path-split) module-files))
+
+    (let ((better-data
+            ((@@ (system vm coverage) %make-coverage-data)
+             ((@@ (system vm coverage) data-ip-counts)        data)
+             ((@@ (system vm coverage) data-sources)          data)
+             ((@@ (system vm coverage) data-file->procedures) data)
+             target-ht)))
+      (call-with-output-file "lcov.info"
+        (lambda (port) (coverage-data->lcov better-data port))))))
 
 (test-end "tests")

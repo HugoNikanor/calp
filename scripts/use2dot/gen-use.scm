@@ -2,43 +2,19 @@
 !#
 
 (add-to-load-path (dirname (current-filename)))
+(add-to-load-path (dirname (dirname (current-filename))))
 
 (use-modules ((scripts frisk) :select (make-frisker edge-type edge-up
                               edge-down))
              (srfi srfi-1)
-             (ice-9 ftw)
-             (ice-9 regex)
-             (ice-9 match)
              ((graphviz) :prefix gv.)
+             (all-modules)
              )
 
 (define scan (make-frisker `(default-module . (calp main))))
 
-(define re (make-regexp "\\.scm$"))
-
-(define lst '())
-
-(ftw "module" (lambda (filename statinfo flag)
-                (cond ((and (eq? flag 'regular)
-                            (regexp-exec re filename))
-                       => (lambda (m)
-                            (set! lst (cons filename lst))
-                            #t
-                            ))
-                      (else #t))))
-
-
-
-(define files lst)
-
-(define our-modules
-  (filter identity
-          (map (lambda (file)
-                 (match (call-with-input-file file read)
-                        (('define-module (module ...) _ ...)
-                         module)
-                        (_ #f)))
-               files)))
+(define-values (files our-modules)
+  (all-modules-under-directory "module"))
 
 (define graph (gv.digraph "G"))
 (gv.setv graph "color" "blue")
