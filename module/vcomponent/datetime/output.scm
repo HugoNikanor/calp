@@ -1,17 +1,9 @@
 (define-module (vcomponent datetime output)
   :use-module (hnh util)
-  :use-module (calp util config)
-  :use-module (hnh util exceptions)
   :use-module (datetime)
   :use-module (vcomponent base)
   :use-module (text util)
   )
-
-(define-config summary-filter (lambda (_ a) a)
-  pre: (ensure procedure?))
-
-(define-config description-filter (lambda (_ a) a)
-  pre: (ensure procedure?))
 
 ;; ev → sxml
 (define-public (format-recurrence-rule ev)
@@ -36,15 +28,6 @@
                     (map value it)))))
     "."))
 
-(define-public (format-summary ev str)
-  ((get-config 'summary-filter) ev str))
-
-;; NOTE this should have information about context (html/term/...)
-(define-public (format-description ev str)
-  (catch #t (lambda () ((get-config 'description-filter) ev str))
-    (lambda (err . args)
-      (warning "~a on formatting description, ~s" err args)
-      str)))
 
 ;; Takes an event, and returns a pretty string for the time interval
 ;; the event occupies.

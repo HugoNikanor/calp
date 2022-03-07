@@ -7,15 +7,13 @@
                :select (event-length
                         overlapping?
                         event-length/clamped))
-  :use-module ((vcomponent datetime output)
-               :select (format-summary))
   :use-module (hnh util tree)
   :use-module (datetime)
   :use-module (calp html config)
   :use-module ((calp html components)
                :select (btn tabset))
   :use-module ((calp html vcomponent)
-               :select (make-block) )
+               :select (make-block format-summary))
   :use-module (ice-9 format)
   )
 

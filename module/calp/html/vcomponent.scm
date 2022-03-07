@@ -3,6 +3,7 @@
   ;; TODO should we really use path-append here? Path append is
   ;; system-dependant, while URL-paths aren't.
   :use-module ((hnh util path) :select (path-append))
+  :use-module ((hnh util exceptions) :select (warning))
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module ((rnrs io ports) :select (put-bytevector))
@@ -18,14 +19,31 @@
   :use-module ((vcomponent recurrence) :select (repeating?))
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
-                        format-description
-                        format-summary
                         format-recurrence-rule
                                       ))
-  :use-module ((calp util config) :select (get-config))
+  :use-module (calp util config)
   :use-module ((base64) :select (base64encode))
   :use-module (ice-9 format)
   )
+
+
+(define-config summary-filter (lambda (_ a) a)
+  pre: (ensure procedure?))
+
+(define-config description-filter (lambda (_ a) a)
+  pre: (ensure procedure?))
+
+
+(define-public (format-summary ev str)
+  ((get-config 'summary-filter) ev str))
+
+;; NOTE this should have information about context (html/term/...)
+;; And then be moved somewhere else.
+(define-public (format-description ev str)
+  (catch #t (lambda () ((get-config 'description-filter) ev str))
+    (lambda (err . args)
+      (warning "~a on formatting description, ~s" err args)
+      str)))
 
 ;; used by search view
 (define-public (compact-event-list list)
