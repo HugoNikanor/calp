@@ -30,6 +30,8 @@ window.addNewEvent = () => {
     let ev = new VEvent();
     let uid = uuid()
     let now = new Date()
+    /* Round seconds to 0, since time inputs wants exact seconds */
+    now.setUTCSeconds(0);
     ev.setProperties([
         ['uid', uid],
         ['dtstart', now, 'date-time'],
