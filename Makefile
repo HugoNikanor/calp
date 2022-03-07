@@ -1,5 +1,5 @@
 .PHONY: all clean test \
-	static coverage \
+	static \
 	go_files
 
 GUILE := guile
@@ -40,25 +40,25 @@ clean:
 install: all
 	install -d $(DESTDIR)$(GUILE_SITE_DIR)  $(DESTDIR)$(GUILE_CCACHE_DIR)
 	rsync -a module/ $(DESTDIR)$(GUILE_SITE_DIR)
-	rsync -a obj/ $(DESTDIR)$(GUILE_CCACHE_DIR)
+	rsync -a obj-$(GUILE_VERSION)/ $(DESTDIR)$(GUILE_CCACHE_DIR)
 	install -d $(DESTDIR)/usr/share/calp/www
-	rsync -a static $(DESTDIR)/usr/share/calp/www
+	$(MAKE) -C static install
 	install -m 644 -D -t $(DESTDIR)/usr/share/doc/calp README
 	install -m 755 -D -t $(DESTDIR)/usr/lib/calp/ scripts/tzget
-	install -D production-main $(DESTDIR)/usr/bin/calp
+	install -m755 -D production-main $(DESTDIR)/usr/bin/calp
 
 README: README.in
 	./main text < README.in | sed "s/<<today>>/`date -I`/" > README
 
-test: go_files
-	tests/run-tests.scm
-	$(MAKE) coverage
+lcov.info: $(GO_FILES)
+	env DEBUG=1 tests/run-tests.scm --coverage=$@
 
-coverage:
-	genhtml \
-		--show-details \
-		--output-directory coverage \
-		--prefix $(shell pwd) \
-		--no-function-coverage \
-		--quiet \
-		lcov.info
+test: coverage
+
+GENHTML_FLAGS=--show-details \
+			  --prefix $(shell pwd)/module \
+			  --no-function-coverage \
+			  --quiet
+
+coverage: lcov.info
+	genhtml $(GENHTML_FLAGS) --output-directory $@ $<

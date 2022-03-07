@@ -1,4 +1,4 @@
-.PHONY: all clean watch
+.PHONY: all install clean watch
 
 TARGETS := style.css smallcal.css script.out.js
 WATCH=
@@ -29,6 +29,8 @@ watch:
 		rename-session "calp watch" \; \
 		select-layout even-vertical
 
+install: all
+	install -m644 -t $(DESTDIR)/usr/share/calp/www/ $(TARGETS)
 
 clean:
 	rm $(TARGETS)
