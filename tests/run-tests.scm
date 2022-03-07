@@ -5,45 +5,29 @@ here=$(dirname $(realpath $0))
 
 . "$(dirname "$here")/env"
 
-make -C $(dirname $here) GUILE="$GUILE" go_files
-
-exec $GUILE --debug -s "$0" "$@"
+if [ "$DEBUG" = '' ]; then
+  exec $GUILE -s "$0" "$@"
+else
+  exec $GUILE --debug -s "$0" "$@"
+fi
 !#
 
-;;; Commentary:
-;; Not a test, but a script that runs tests.
-;; Assumes that all other .scm files in this directory are test files,
-;; and should thereby follow the test-file syntax.
-;; Note that the --debug flag in the (extended) shebang is REQUIRED,
-;; otherwise the coverage tests do nothing.
-;;
-;; Each test runs in its own sandbox. This is however only to protect
-;; the modules from each other, and to prevent polution of the global
-;; namespace. The system IS NOT protected from the modules.
-;;
-;; Each test file is required to start with an s-expression on the
-;; form:
-;; @lisp
-;; ((library binding ...) ...)
-;; @end lisp
-;; Which details exactly which modules should be imported. The format
-;; is the same as make-sandbox-module. For example:
-;; @example
-;; (((c lex) lex)
-;;  ((c parse) parse-lexeme-tree))
-;; @end example
-;; pulls in the @code{lex} procedure from @code{(c lex)}, and
-;; @code{parse-lexeme-tree} from @code{(c parse)}.
-;; Remaining forms in the file can be any valid scheme expression.
-;; @code{define}s are allowed, but only where they would be allowed
-;; inside a let form in general code (so only at the start for Guile
-;; 2.2, anywhere for Guile 3.0).
-;;; Code:
+(format #t "current-filename = ~s~%" (current-filename))
 
-(eval-when (compile load eval)
-  (define here (dirname (current-filename))))
+(define here (dirname (current-filename)))
 
-(use-modules (srfi srfi-64))
+(use-modules (srfi srfi-1)
+             (srfi srfi-64)
+             (srfi srfi-88)
+             (hnh util path)
+             (ice-9 ftw)
+             (ice-9 format)
+             (ice-9 getopt-long)
+             (system vm coverage)
+             )
+
+
+
 
 (define (µs x)
   (* x #e1e6))
@@ -114,139 +98,85 @@ exec $GUILE --debug -s "$0" "$@"
 
 (test-runner-factory construct-test-runner)
 
-(use-modules (ice-9 ftw)
-             (ice-9 sandbox)
-             (ice-9 getopt-long)
-             (srfi srfi-88)             ; suffix keywords
-             (system vm coverage)
-             ((hnh util) :select (for awhen))
-             ;; datetime introduces the reader extensions for datetimes,
-             ;; which leaks into the sandboxes below.
-             (datetime)
-             ((srfi srfi-1) :select (take-while drop)))
+
 
-(define files
-  (scandir here
-           (lambda (name)
-             (and (< 2 (string-length name))
-                  (not (string=? name (basename (current-filename))))
-                  (string=? "scm" (string-take-right name 3))))))
+(define (rework-coverage data)
+  (define-values (module-files module-names)
+    ((@ (all-modules) all-modules-under-directory)
+     (path-append (dirname here) "module")))
+
+  (define to-drop
+    (1+ (length
+         (take-while (lambda (p) (not (string=? p "module")))
+                     (path-split (car module-files))))))
+
+  (define (drop-components path-list)
+    (drop path-list to-drop))
+
+  (define target-ht (make-hash-table))
+  (define source-ht ((@@ (system vm coverage) data-file->line-counts) data))
+  (for-each (lambda (path)
+              (cond ((hash-ref source-ht path #f)
+                     => (lambda (value) (hash-set! target-ht path value)))))
+            (map (compose path-join drop-components path-split) module-files))
+
+  ((@@ (system vm coverage) %make-coverage-data)
+   ((@@ (system vm coverage) data-ip-counts)        data)
+   ((@@ (system vm coverage) data-sources)          data)
+   ((@@ (system vm coverage) data-file->procedures) data)
+   target-ht))
 
 
+
 
-;; Load tests
-
-(define (read-multiple)
-  (let loop ((done '()))
-    (let ((sexp (read)))
-      (if (eof-object? sexp)
-          (reverse done)
-          (loop (cons sexp done))))))
-
-(define options
+(define option-spec
   '((skip (value #t))
     (only (value #t))
-    (verbose (single-char #\v))))
+    (verbose (single-char #\v))
+    (coverage (value optional))))
 
-(define opts (getopt-long (command-line) options))
-(define to-skip (call-with-input-string (option-ref opts 'skip "")
-                  read))
-(define only (option-ref opts 'only #f))
+(define options (getopt-long (command-line) option-spec))
 
-(when only (set! files (list only)))
+(define coverage-dest (option-ref options 'coverage #f))
 
-(when (option-ref opts 'verbose #f)
+(when (option-ref options 'verbose #f)
   (verbose? #t))
 
-(when (list? to-skip)
- (for skip in to-skip
-      (test-skip skip)))
+
 
-;; NOTE test-group fails if called before any test begin, since
-;; (test-runner-current) needs to be a test-runner (dead or not),
-;; but is initially bound to #f.
-(test-begin "tests")
+(define dir (path-append here "test"))
 
-;; Forces all warnings to be explicitly handled by tests
+(define (file-extension? ext)
+  (lambda (filename)
+    (and (<= (string-length ext) (string-length filename))
+         (string=? (string-append "." ext)
+                   (string-take-right
+                    filename (1+ (string-length ext)))))))
+
+(define files (map (lambda (p) (path-append dir p))
+                   (scandir dir (file-extension? "scm"))))
+
+;; (format #t "Running on:~%~y~%" files)
+
 ((@ (hnh util exceptions) warnings-are-errors) #t)
 
-(define (run-with-coverage)
-  (with-code-coverage
-   (lambda ()
-     (for fname in files
-          (test-group
-           fname
-           (with-throw-handler #t
-             (lambda ()
-               (with-input-from-file (string-append here "/" fname)
-                 (lambda ()
-                   (let ((modules (read))
-                         (forms (read-multiple)))
-                     (eval-in-sandbox
-                      `(begin ,@forms)
-                      #:time-limit 60 ; larger than should be needed
-                      #:allocation-limit #e10e8
-                      #:module (make-sandbox-module
-                                (append modules
-                                        `(((srfi srfi-64)
-                                           ,@(module-map
-                                              (lambda (n _) n)
-                                              (resolve-interface '(srfi srfi-64))))
-                                          ((ice-9 ports) call-with-input-string)
-                                          ((guile) make-struct/no-tail))
-                                        all-pure-bindings)))
-                     (list fname modules forms)))))
-             (lambda (err . args)
-               (case err
-                 ((misc-error)
-                  (display-error #f (current-error-port)
-                                 (car args)
-                                 (cadr args)
-                                 (caddr args)
-                                 #f))
-                 ((unbound-variable)
-                  (let ((proc (car args))
-                        (fmt (cadr args))
-                        (fmt-args (caddr args)))
-                    (format (current-error-port)
-                            "[~a] ~?~%" proc fmt fmt-args)))
-                 (else
-                  (format (current-error-port)
-                          "Test unexpectedly crashed [~a]: ~s~%" err args))) )))))))
+(define finalizer
+  (if coverage-dest
+      (lambda (thunk)
+        (define-values (coverage _) (with-code-coverage thunk))
+        (add-to-load-path (path-append (dirname here) "scripts"))
 
-(use-modules (hnh util path))
-(add-to-load-path (path-append (dirname here) "scripts"))
+        (let ((limited-coverage (rework-coverage coverage)))
+          (call-with-output-file coverage-dest
+            (lambda (port) (coverage-data->lcov limited-coverage port))))
 
-(define-values (module-files module-names)
-  ((@ (all-modules) all-modules-under-directory)
-   (path-append (dirname here) "module")))
+        (format #t "Wrote coverage data to ~a~%" coverage-dest))
+      (lambda (thunk) (thunk))
+      ))
 
+(test-begin "suite")
+(finalizer (lambda () (for-each (lambda (f) (test-group f (load f))) files)))
+(test-end "suite")
 
-(call-with-values run-with-coverage
-  (lambda (data _)
+(newline)
 
-    (define to-drop
-      (1+ (length
-           (take-while (lambda (p) (not (string=? p "module")))
-                       (path-split (car module-files))))))
-
-    (define (drop-components path-list)
-      (drop path-list to-drop))
-
-    (define target-ht (make-hash-table))
-    (define source-ht ((@@ (system vm coverage) data-file->line-counts) data))
-    (for-each (lambda (path)
-                (cond ((hash-ref source-ht path #f)
-                       => (lambda (value) (hash-set! target-ht path value)))))
-              (map (compose path-join drop-components path-split) module-files))
-
-    (let ((better-data
-            ((@@ (system vm coverage) %make-coverage-data)
-             ((@@ (system vm coverage) data-ip-counts)        data)
-             ((@@ (system vm coverage) data-sources)          data)
-             ((@@ (system vm coverage) data-file->procedures) data)
-             target-ht)))
-      (call-with-output-file "lcov.info"
-        (lambda (port) (coverage-data->lcov better-data port))))))
-
-(test-end "tests")

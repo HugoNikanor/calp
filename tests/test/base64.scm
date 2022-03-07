@@ -3,8 +3,10 @@
 ;; Examples from RFC4648
 ;;; Code:
 
-(((base64) base64encode base64decode))
-
+(define-module (test base64)
+  :use-module (srfi srfi-64)
+  :use-module (srfi srfi-88)
+  :use-module ((base64) :select (base64encode base64decode)))
 
 (test-equal "" (base64encode ""))
 (test-equal "Zg==" (base64encode "f"))
@@ -13,7 +15,6 @@
 (test-equal "Zm9vYg==" (base64encode "foob"))
 (test-equal "Zm9vYmE=" (base64encode "fooba"))
 (test-equal "Zm9vYmFy" (base64encode "foobar"))
-
 (test-equal "" (base64decode ""))
 (test-equal "f" (base64decode "Zg=="))
 (test-equal "fo" (base64decode "Zm8="))

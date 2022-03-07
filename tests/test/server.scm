@@ -2,8 +2,12 @@
 ;; Tests parse-endpoint-string, used for defining server routes.
 ;;; Code:
 
-(((web http make-routes) parse-endpoint-string)
- ((hnh util) let*))
+(define-module (test server)
+  :use-module (srfi srfi-64)
+  :use-module (srfi srfi-88)
+  :use-module ((web http make-routes)
+               :select (parse-endpoint-string))
+  :use-module ((hnh util) :select (let*)))
 
 (test-assert "Check that parsing doesn't crash"
   (parse-endpoint-string "/static/:dir/:file"))
@@ -12,7 +16,6 @@
 (let* ((path args (parse-endpoint-string "/static/:dir/:file")))
   (test-equal "/static/([^/.]+)/([^/.]+)" path)
   (test-equal '(dir file) args))
-
 
 ;; Checks that parsing with custom regex works
 ;; along with literal periods.

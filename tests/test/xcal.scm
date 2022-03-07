@@ -3,18 +3,24 @@
 ;; Currently only checks that events survive a round trip.
 ;;; Code:
 
-(((vcomponent formats xcal parse) sxcal->vcomponent)
- ((vcomponent formats xcal output) vcomponent->sxcal)
- ((vcomponent formats ical parse) parse-calendar)
- ((hnh util) ->)
- ((vcomponent base)
-  parameters prop* children)
- )
+(define-module (test xcal)
+  :use-module (srfi srfi-64)
+  :use-module (srfi srfi-88)
+  :use-module ((vcomponent formats xcal parse)
+               :select (sxcal->vcomponent))
+  :use-module ((vcomponent formats xcal output)
+               :select (vcomponent->sxcal))
+  :use-module ((vcomponent formats ical parse)
+               :select (parse-calendar))
+  :use-module ((hnh util) :select (->))
+  :use-module ((vcomponent base)
+               :select (parameters prop* children)))
 
 ;;; Some different types, same parameters
 
 (define ev
-  (call-with-input-string "BEGIN:VCALENDAR
+  (call-with-input-string
+    "BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//calparse-test
 BEGIN:VEVENT
@@ -34,17 +40,19 @@ END:VCALENDAR"
     parse-calendar))
 
 (define twice-converted
-  (-> ev
-      vcomponent->sxcal
-      sxcal->vcomponent))
+  (-> ev vcomponent->sxcal sxcal->vcomponent))
 
 ;;; NOTE both these tests may fail since neither properties nor parameters are ordered sorted.
 
-(test-equal "c->x & c->x->c->x"
+(test-equal
+  "c->x & c->x->c->x"
   (vcomponent->sxcal ev)
   (vcomponent->sxcal twice-converted))
 
-(test-equal "xcal parameters"
+(test-equal
+  "xcal parameters"
   '((X-TEST-PARAM "10"))
-  (parameters (prop* (car (children twice-converted))
-                     'STATUS)))
+  (parameters
+    (prop* (car (children twice-converted)) 'STATUS)))
+
+
