@@ -90,6 +90,12 @@
     (begin1 "Hello" (set! value "World")))
   (test-equal "begin1 side effects" "World" value))
 
+(let ((x 1))
+  (test-eqv "begin1 set! after return"
+    1 (begin1 x (set! x 10)))
+  (test-eqv "Updates value"
+    10 x))
+
 (test-equal 0 (iterate 1- zero? 10))
 
 (test-equal "5" (->string 5))
