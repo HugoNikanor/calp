@@ -1,4 +1,5 @@
 (define-module (hnh util io)
+  :use-module ((hnh util) :select (begin1))
   :use-module ((ice-9 rdelim) :select (read-line)))
 
 (define-public (open-input-port str)
@@ -13,18 +14,18 @@
 
 
 (define-public (read-lines port)
-  (with-input-from-port port
-    (lambda ()
-      (let loop ((line (read-line)))
-        (if (eof-object? line)
-            '() (cons line (loop (read-line))))))))
+  (let ((line (read-line port)))
+    (if (eof-object? line)
+        '() (cons line (read-lines port)))))
 
 ;; Same functionality as the regular @var{with-output-to-file}, but
 ;; with the difference that either everything is written, or nothing
 ;; is written, and if anything is written it's all written atomicaly at
 ;; once (the original file will never contain an intermidiate state).
 ;; Does NOT handle race conditions between threads.
-;; Return #f on failure, something truthy otherwise
+;; 
+;; propagates the return value of @var{thunk} upon successfully writing
+;; the file, and @code{#f} otherwise.
 (define-public (with-atomic-output-to-file filename thunk)
   ;; copy to enusre writable string
   (define tmpfile (string-copy (string-append
@@ -36,13 +37,14 @@
   (dynamic-wind
     (lambda () (set! port (mkstemp! tmpfile)))
     (lambda ()
-      (with-output-to-port port thunk)
-      ;; Closing a port forces a write, due to buffering
-      ;; some of the errors that logically would come
-      ;; from write calls are first raised here. But since
-      ;; crashing is acceptable here, that's fine.
-      (close-port port)
-      (rename-file tmpfile filename))
+      (begin1
+       (with-output-to-port port thunk)
+       ;; Closing a port forces a write, due to buffering
+       ;; some of the errors that logically would come
+       ;; from write calls are first raised here. But since
+       ;; crashing is acceptable here, that's fine.
+       (close-port port)
+       (rename-file tmpfile filename)))
     (lambda ()
       (when (access? tmpfile F_OK)
         ;; I'm a bit unclear on how to trash our write buffer.
