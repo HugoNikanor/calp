@@ -1,5 +1,6 @@
 (define-module (test let-env)
   :use-module (srfi srfi-64)
+  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((guile) :select (setenv getenv))
   :use-module ((hnh util) :select (let-env)))

@@ -1,5 +1,6 @@
 (define-module (test vcomponent-formats-common-types)
   :use-module (srfi srfi-64)
+  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((vcomponent formats common types)
                :select (get-parser))

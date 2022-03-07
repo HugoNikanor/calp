@@ -72,6 +72,12 @@
                  `(else ,@body)))
               cases))))
 
+(define* (string->number/throw string optional: (radix 10))
+  (or (string->number string radix)
+      (scm-error 'wrong-type-argument
+                 "string->number/throw"
+                 "Can't parse ~s as number in base ~a"
+                 '(string radix) #f)))
 
 ;; RFC 5545, Section 3.3.10. Recurrence Rule, states that the UNTIL value MUST have
 ;; the same type as the DTSTART of the event (date or datetime). I have seen events
@@ -92,8 +98,8 @@
                  (parse-ics-datetime val)))
          (day (rfc->datetime-weekday (string->symbol val)))
          (days (map parse-day-spec (string-split val #\,)))
-         (num  (string->number val))
-         (nums (map string->number (string-split val #\,))))
+         (num  (string->number/throw val))
+         (nums (map string->number/throw (string-split val #\,))))
 
         ;; It's an error to give BYHOUR and smaller for pure dates.
         ;; 3.3.10. p 41

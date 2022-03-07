@@ -5,6 +5,7 @@
 
 (define-module (test param)
   :use-module (srfi srfi-64)
+  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((vcomponent base)
                :select (param prop* parameters prop))
@@ -45,7 +46,8 @@ END:DUMMY"
   (call-with-input-string
     "BEGIN:DUMMY
 KEY:Some Text
-END:DUMMY"))
+END:DUMMY"
+    parse-calendar))
 
 ;; Similar thing happens for sxcal, but during serialization instead
 (let ((component (make-vcomponent 'DUMMY)))

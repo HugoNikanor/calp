@@ -6,6 +6,7 @@
 
 (define-module (test recurrence-simple)
   :use-module (srfi srfi-64)
+  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((srfi srfi-41)
                :select (stream-take stream-map stream->list stream-car))
@@ -33,7 +34,7 @@
 ;;; Test that recurrence rule parsing fails where appropriate
 
 (parameterize ((warnings-are-errors #t)
-               (warning-handler identity))
+               (warning-handler (lambda _ "")))
   (test-error "Invalid FREQ"
     'warning
     (parse-recurrence-rule "FREQ=ERR;COUNT=3"))
