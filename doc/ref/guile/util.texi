@@ -338,7 +338,14 @@ Similar to @var{let}, but sets environment variables for the code in
 body. Restores the old values once we leave.
 @end defmac
 
+@subsection UUID generation
 
-@defun uuidgen
-Generates a UUID.
+Provided by module @code{(hnh util uuid)}.
+
+@defun uuid-v4
+Generates a UUID-v4 string.
+@end defun
+
+@defun uuid
+Generates an implementation defined (but guaranteed valid) UUID.
 @end defun

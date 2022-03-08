@@ -575,9 +575,3 @@
          (lambda ()
            (for-each (lambda (pair) (setenv (car pair) (caddr pair)))
                      env-pairs))))]))
-
-
-(define-public (uuidgen)
-  ((@ (rnrs io ports) call-with-port)
-   ((@ (ice-9 popen) open-input-pipe) "uuidgen")
-   (@ (ice-9 rdelim) read-line)))

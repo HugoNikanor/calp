@@ -1,5 +1,6 @@
 (define-module (vcomponent util instance methods)
   :use-module (hnh util)
+  :use-module (hnh util uuid)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
@@ -93,7 +94,7 @@
 
   (add-child! calendar event)
   (unless (prop event 'UID)
-    (set! (prop event 'UID) (uuidgen)))
+    (set! (prop event 'UID) (uuid)))
 
 
 

@@ -11,6 +11,7 @@
 
 (define-module (vcomponent formats vdir save-delete)
   :use-module (hnh util)
+  :use-module (hnh util uuid)
   :use-module ((hnh util path) :select (path-append))
   :use-module ((hnh util exceptions) :select (assert))
   :use-module (vcomponent formats ical output)
@@ -24,7 +25,7 @@
 
   (assert (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE)))
 
-  (let* ((uid (or (prop event 'UID) (uuidgen))))
+  (let* ((uid (or (prop event 'UID) (uuid))))
     (set! (prop event 'UID) uid
       ;; TODO use existing filename if present?
       (prop event '-X-HNH-FILENAME) (path-append
