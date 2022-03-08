@@ -5,6 +5,11 @@
 Copyright @copyright{} 2020 Hugo Hörnquist
 @end copying
 
+@dircategory The Algorithmic Language Scheme
+@direntry
+* Calp: (calp).   Parsing and displaying of icalendar files
+@end direntry
+
 @c Borrowed from guile.texi
 @c  @nicode{S} is plain S in info, or @code{S} elsewhere.  This can be used
 @c  when the quotes that @code{} gives in info aren't wanted, but the
