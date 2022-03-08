@@ -5,6 +5,7 @@ WATCH=
 
 # script explicitly named, since that is our entry point
 TS_FILES = script.ts $(shell find . -type f -name \*.ts -not -path */node_modules/*)
+JS_FILES = $(TS_FILES:%.ts=%.js)
 
 export PATH := $(shell npm bin):$(PATH)
 
@@ -20,14 +21,8 @@ script.out.js: $(TS_FILES)
 deps.svg: $(TS_FILES)
 	madge --image $@ $^
 
-# Note that 'tsc --watch' doesn't provide the files we are using. It's
-# just here for debug.
 watch:
-	tmux \
-		new-session "scss --watch -I. style.scss:style.css" \; \
-		split-window "tsc --watch" \; \
-		rename-session "calp watch" \; \
-		select-layout even-vertical
+	./make-watch
 
 install: all
 	install -m644 -t $(DESTDIR)/usr/share/calp/www/ $(TARGETS)

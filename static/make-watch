@@ -1,0 +1,23 @@
+#!/bin/bash
+
+here=$(dirname "$(realpath "$0")")
+cd "$here" || {
+	echo "Failed to cd to location of script ($here)"
+	exit 1
+}
+
+export PATH="$here/node_modules/.bin:$PATH"
+
+# Note that 'tsc --watch' doesn't provide the files we are using. It's
+# just here for debug.
+if [ -n "$TMUX" ]; then
+	tmux new-window "scss --watch -I. style.scss:style.css"
+	tmux new-window "tsc --watch"
+else
+	tmux \
+		 new-session "scss --watch -I. style.scss:style.css" \; \
+		 split-window "tsc --watch" \; \
+		 rename-session "calp watch" \; \
+		 select-layout even-vertical
+
+ fi
