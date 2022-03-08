@@ -433,10 +433,18 @@
             [(js) "javascript"]
             [else ext]))
 
-        (return
-         `((content-type ,(string->symbol (string-append "text/" mime))))
-         (call-with-input-file (string-append "static/" * "." ext)
-           read-string)))
+        (catch 'system-error
+          (lambda ()
+           (return
+            `((content-type ,(string->symbol (string-append "text/" mime))))
+            (call-with-input-file (string-append "static/" * "." ext)
+              read-string)))
+          (lambda (err proc fmt fmt-args data)
+            (warning (format #f "404|500: ~?" fmt fmt-args))
+            (if (and (not (null? data)) (= 2 (car data)))
+                (return (build-response code: 404)
+                        (format #f "~?" fmt fmt-args))
+                (scm-error err proc fmt fmt-args data)))))
 
    (GET "/static/:*{.*}" (*)
         (return
