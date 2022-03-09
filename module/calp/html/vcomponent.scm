@@ -232,11 +232,11 @@
                  (stream-map
                   (lambda (ev)
                     (fmt-single-event
-                      ev `((id ,(html-id ev))
+                      ev `((id ,(html-id ev) "-side")
                            (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown"))))
                       fmt-header:
                       (lambda body
-                        `(a (@ (href "#" ,(html-id ev) #; (date-link (as-date (prop ev 'DTSTART)))
+                        `(a (@ (href "#" ,(html-id ev) "-block" #; (date-link (as-date (prop ev 'DTSTART)))
                                      )
                                (class "hidelink"))
                             ,@body))))
@@ -269,11 +269,11 @@
 
   ;; surrounding <a /> element which allows something to happen when an element
   ;; is clicked with JS turned off. Our JS disables this, and handles clicks itself.
-  `((a (@ (href "#" ,(html-id ev))
+  `((a (@ (href "#" ,(html-id ev) "-side")
           (class "hidelink"))
        (vevent-block (@ ,@(assq-merge
                            extra-attributes
-                           `((id ,(html-id ev))
+                           `((id ,(html-id ev) "-block")
                              (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown")))
                              (data-uid ,(output-uid ev))
 
