@@ -57,6 +57,11 @@
                 `(tr (td ,(case (stat:type stat)
                             [(directory) "📁"]
                             [(regular) "📰"]
+                            [(symlink) "🔗"]
+                            [(block-special) "🖴"]
+                            [(char-special) "🔌"]
+                            ;; [(fifo)]
+                            ;; [(socket)]
                             [else "🙃"]))
                      (td (a (@ (href "/" ,dir "/" ,k)) ,k))
                      (td ,(number->string (stat:perms stat) 8)))))
