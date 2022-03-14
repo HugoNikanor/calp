@@ -1,6 +1,6 @@
 (define-module (calp server routes)
   :use-module (hnh util)
-  :use-module ((hnh util path) :select (path-append))
+  :use-module (hnh util path)
   :use-module (hnh util options)
   :use-module (hnh util exceptions)
 
@@ -33,11 +33,9 @@
 
   :autoload (vcomponent util instance) (global-event-object)
 
+  :use-module (calp util config)
   :use-module (calp html view calendar)
-  :use-module ((calp html view search) :select (search-result-page))
-
-
-  )
+  :use-module ((calp html view search) :select (search-result-page)))
 
 
 
@@ -47,13 +45,23 @@
 
 
 
-(define (directory-table dir)
+;; @var{prefix} directory tree which should be exported
+;; @var{dir}    location in exported directory tree
+;; Note that the exported url is currently hard-coded to
+;; start with /static.
+(define (directory-table prefix dir)
   `(table
     (thead
      (tr (th "") (th "Name") (th "Perm") (th "Size")))
     (tbody
+     (tr (td "↩️") (td (@ (colspan 3))
+                      (a (@ (href ,(-> (path-split dir)
+                                       (drop-right 1)
+                                       (xcons "/static")
+                                       path-join)))
+                         "Return up")))
      ,@(map (lambda (k)
-              (let* ((stat (lstat (path-append dir k))))
+              (let* ((stat (lstat (path-append prefix dir k))))
                 `(tr (td ,(case (stat:type stat)
                             [(directory) "📁"]
                             [(regular) "📰"]
@@ -63,19 +71,21 @@
                             ;; [(fifo)]
                             ;; [(socket)]
                             [else "🙃"]))
-                     (td (a (@ (href "/" ,dir "/" ,k)) ,k))
-                     (td ,(number->string (stat:perms stat) 8)))))
+                     (td (a (@ (href ,(path-append "/static" dir k)))
+                            ,k))
+                     (td ,(number->string (stat:perms stat) 8))
                      ;; TODO replace with stylesheet containing
                      ;; td:nth-child(3} { text-align: end; }
                      (td (@ (style "text-align:end"))
                          (data (@ (value ,(stat:size stat)))
                                ,(format #f "~:d" (stat:size stat)))))))
-            (cdr (or (scandir dir)
-                     (scm-error
-                      'misc-error
-                      "directory-table"
-                      "Scandir argument invalid or not directory: ~a"
-                      (list dir) '())))))))
+            ;; cddr drops '.' and '..'
+            (cddr (or (scandir (path-append prefix dir))
+                      (scm-error
+                       'misc-error
+                       "directory-table"
+                       "Scandir argument invalid or not directory: ~s"
+                       (list dir) '())))))))
 
 
 
@@ -96,6 +106,14 @@
 
 
 
+(define static-dir (make-parameter "static"))
+
+(define-config static-dir "static"
+  description: "Where static files for the web server are located"
+  post: static-dir
+  )
+
+
 
 ;; TODO ensure encoding on all fields which take user provided data.
 ;; Possibly a fallback which strips everything unknown, and treats
@@ -435,6 +453,7 @@
    ;; is mostly for development, and something like nginx should be used in
    ;; production it isn't a huge problem.
 
+
    (GET "/static/:*{.*}.:ext" (* ext)
 
         ;; Actually parsing /etc/mime.types would be better.
@@ -447,7 +466,7 @@
           (lambda ()
            (return
             `((content-type ,(string->symbol (string-append "text/" mime))))
-            (call-with-input-file (string-append "static/" * "." ext)
+            (call-with-input-file (path-append (static-dir) (string-append * "." ext))
               read-string)))
           (lambda (err proc fmt fmt-args data)
             (warning (format #f "404|500: ~?" fmt fmt-args))
@@ -456,11 +475,13 @@
                         (format #f "~?" fmt fmt-args))
                 (scm-error err proc fmt fmt-args data)))))
 
-   (GET "/static/:*{.*}" (*)
+   ;; Note that `path' will most likely start with a slash
+   (GET "/static:path{.*}" (path)
         (return
          '((content-type text/html))
          (sxml->html-string
-          (directory-table (path-append "static" *)))))
+          ;; TODO 404 instead of 500 here
+          (directory-table (static-dir) path))))
 
    ;; This is almost the same as /static/, but with the difference that
    ;; we produce these images during runtime
