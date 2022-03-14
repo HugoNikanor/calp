@@ -50,7 +50,7 @@
 (define (directory-table dir)
   `(table
     (thead
-     (tr (th "") (th "Name") (th "Perm")))
+     (tr (th "") (th "Name") (th "Perm") (th "Size")))
     (tbody
      ,@(map (lambda (k)
               (let* ((stat (lstat (path-append dir k))))
@@ -65,6 +65,11 @@
                             [else "🙃"]))
                      (td (a (@ (href "/" ,dir "/" ,k)) ,k))
                      (td ,(number->string (stat:perms stat) 8)))))
+                     ;; TODO replace with stylesheet containing
+                     ;; td:nth-child(3} { text-align: end; }
+                     (td (@ (style "text-align:end"))
+                         (data (@ (value ,(stat:size stat)))
+                               ,(format #f "~:d" (stat:size stat)))))))
             (cdr (or (scandir dir)
                      (scm-error
                       'misc-error
