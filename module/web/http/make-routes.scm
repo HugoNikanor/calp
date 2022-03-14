@@ -3,8 +3,7 @@
   :use-module (hnh util)
   :use-module (ice-9 regex)
   :use-module (srfi srfi-1)
-  :use-module (web response)
-  :use-module (web uri))
+  )
 
 
 
@@ -54,14 +53,14 @@
                  ,@body))
             ,@(unless (null? intersect)
                 (map (lambda (i)
-                       `(match:substring match-object ,i))
+                       `((@ (ice-9 regex) match:substring) match-object ,i))
                      (cdr (iota (1+ (length intersect)))))))))))
 
 (define-macro (make-routes . routes)
 
   `(lambda* (request body #:optional state)
      ;; (format (current-error-port) "~a~%"  request)
-     ;; ALl these bindings generate compile time warnings since the expansion
+     ;; All these bindings generate compile time warnings since the expansion
      ;; of the macro might not use them. This isn't really a problem.
      (let ((r:method  ((@ (web request) request-method)  request))
            (r:uri     ((@ (web request) request-uri)     request))
@@ -93,21 +92,22 @@
                 (lambda (return)
                   (apply
                    (cond ,@(map generate-case routes)
-                         (else (lambda* _ (return (build-response #:code 404)
+                         (else (lambda* _ (return ((@ (web response) build-response) code: 404)
                                                   "404 Not Fonud"))))
                    (append
                     ((@ (web query) parse-query) r:query)
 
                     (let ((content-type (assoc-ref r:headers 'content-type)))
-                      (when content-type
-                        (let ((type (car content-type))
-                              (args (cdr content-type)))
-                          (when (eq? type 'application/x-www-form-urlencoded)
-                            (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
-                              ((@ (web query) parse-query)
-                               ((@ (ice-9 iconv) bytevector->string)
-                                body encoding)
-                               encoding)))))))))))
+                      ((@ (hnh util) when) content-type
+                       (let ((type (car content-type))
+                             (args (cdr content-type)))
+                         ((@ (hnh util) when)
+                          (eq? type 'application/x-www-form-urlencoded)
+                          (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
+                            ((@ (web query) parse-query)
+                             ((@ (ice-9 iconv) bytevector->string)
+                              body encoding)
+                             encoding)))))))))))
            (case-lambda ((headers body new-state) (values headers body new-state))
                         ((headers body) (values headers body state))
                         ((headers) (values headers "" state))))))))

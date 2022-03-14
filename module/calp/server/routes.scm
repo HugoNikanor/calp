@@ -1,14 +1,12 @@
 (define-module (calp server routes)
   :use-module (hnh util)
   :use-module (hnh util path)
-  :use-module (hnh util options)
   :use-module (hnh util exceptions)
 
   :use-module (srfi srfi-1)
 
   :use-module ((ice-9 rdelim) :select (read-string))
   :use-module ((ice-9 ftw) :select (scandir))
-  :use-module (ice-9 regex) #| regex here due to bad macros |#
   :use-module (ice-9 format)
 
   :use-module ((web response) :select (build-response))
