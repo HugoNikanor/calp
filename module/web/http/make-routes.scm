@@ -66,25 +66,22 @@
            (r:uri     ((@ (web request) request-uri)     request))
            (r:version ((@ (web request) request-version) request))
            (r:headers ((@ (web request) request-headers) request))
-           (r:meta    ((@ (web request) request-meta)    request))
-           (r:port    ((@ (web request) request-port)    request)))
+           (r:meta    ((@ (web request) request-meta)    request)))
        (let ((r:scheme   ((@ (web uri) uri-scheme)   r:uri))
              (r:userinfo ((@ (web uri) uri-userinfo) r:uri))
-             ;; TODO can sometimes be a pair of host and port
-             ;; '("localhost" . 8080). It shouldn't...
-             (r:host     (or ((@ (web uri) uri-host) r:uri)
-                             ((@ (web request) request-host)
-                              request)))
-             (r:port     (or ((@ (web uri) uri-port) r:uri)
-                             ((@ (web request) request-port)
-                              request)))
+             ;; uri-{host,port} is (probably) not set when we are a server,
+             ;; fetch them from the request instead
+             (r:host     (or ((@ (web uri) uri-host)     r:uri)
+                             (and=> ((@ (web request) request-host) request) car)))
+             (r:port     (or ((@ (web uri) uri-port)     r:uri)
+                             (and=> ((@ (web request) request-host) request) cdr)))
              (r:path     ((@ (web uri) uri-path)     r:uri))
              (r:query    ((@ (web uri) uri-query)    r:uri))
              (r:fragment ((@ (web uri) uri-fragment) r:uri)))
          ;; TODO propper logging
-         (display (format #f "[~a] ~a ~a/~a?~a~%"
+         (display (format #f "[~a] ~a ~a:~a~a?~a~%"
                           (datetime->string (current-datetime))
-                          r:method r:host r:path (or r:query ""))
+                          r:method r:host r:port r:path (or r:query ""))
                   (current-error-port))
          (call-with-values
              (lambda ()
