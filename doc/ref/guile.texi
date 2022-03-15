@@ -1,6 +1,7 @@
 @node Guile
 @chapter Guile
 
+@include guile/datetime.texi
 @include guile/util.texi
 @include guile/util-path.texi
 @include guile/util-config.texi
@@ -122,3 +123,4 @@ Note that @var{body} is guarded through a dynamic-wind, meaning that
 even non-local exits will restore @var{component} to its initial
 state.
 @end defmac
+
