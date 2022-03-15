@@ -475,11 +475,15 @@
 
    ;; Note that `path' will most likely start with a slash
    (GET "/static:path{.*}" (path)
-        (return
-         '((content-type text/html))
-         (sxml->html-string
-          ;; TODO 404 instead of 500 here
-          (directory-table (static-dir) path))))
+        (catch
+          'misc-error
+          (lambda () (return
+                 '((content-type text/html))
+                 (sxml->html-string
+                  (directory-table (static-dir) path))))
+          (lambda (err proc fmt fmt-args data)
+            (return (build-response code: 404)
+                    (format #f "~?" fmt fmt-args)))))
 
    ;; This is almost the same as /static/, but with the difference that
    ;; we produce these images during runtime
