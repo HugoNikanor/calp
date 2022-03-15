@@ -48,7 +48,7 @@
 ;; Note that the exported url is currently hard-coded to
 ;; start with /static.
 (define (directory-table prefix dir)
-  `(table
+  `(table (@ (class "directory-table"))
     (thead
      (tr (th "") (th "Name") (th "Perm") (th "Size")))
     (tbody
@@ -72,8 +72,6 @@
                      (td (a (@ (href ,(path-append "/static" dir k)))
                             ,k))
                      (td ,(number->string (stat:perms stat) 8))
-                     ;; TODO replace with stylesheet containing
-                     ;; td:nth-child(3} { text-align: end; }
                      (td (@ (style "text-align:end"))
                          (data (@ (value ,(stat:size stat)))
                                ,(format #f "~:d" (stat:size stat)))))))
@@ -480,7 +478,10 @@
           (lambda () (return
                  '((content-type text/html))
                  (sxml->html-string
-                  (directory-table (static-dir) path))))
+                  `(html
+                    (head (title "Calp directory listing for " path)
+                          ,((@ (calp html components) include-css) "/static/directory-listing.css"))
+                    (body ,(directory-table (static-dir) path))))))
           (lambda (err proc fmt fmt-args data)
             (return (build-response code: 404)
                     (format #f "~?" fmt fmt-args)))))

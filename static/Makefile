@@ -1,6 +1,6 @@
 .PHONY: all install clean watch
 
-TARGETS := style.css smallcal.css script.out.js
+TARGETS := style.css smallcal.css script.out.js directory-listing.css
 WATCH=
 
 # script explicitly named, since that is our entry point
