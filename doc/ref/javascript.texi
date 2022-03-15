@@ -17,6 +17,7 @@ All elements are initialized in elements.ts
 @include javascript/vevent.texi
 @include javascript/globals.texi
 @include javascript/server_connect.texi
+@include javascript/formatters.texi
 
 @node General Components
 @section General Components

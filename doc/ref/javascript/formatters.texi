@@ -1,0 +1,12 @@
+@node formatters
+@subsection formatters
+
+Formatting procedures used by some components.
+@c TODO can we have a backref of every node containing @ref{formatters-proc}?
+
+@deftypevar {Map<string, (e:HTMLElement, s:any) => void>} formatters
+@anchor{formatters-proc}
+
+Each procedure takes two arguments. The HTML-element which contents
+should be replaced, along with the target value, as returned by @ref{VEvent.getProperty}.
+@end deftypevar

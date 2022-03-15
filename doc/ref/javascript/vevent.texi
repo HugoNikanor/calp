@@ -31,6 +31,7 @@ through @code{calendar}). Almost all changes through these interfaces
 are logged, and can be viewed in @var{_changelog}.
 
 @deftypemethod VEvent {any?} getProperty {key: string}
+@anchor{VEvent.getProperty}
 Returns the value of the given property if set, or undefined otherwise.
 
 For the keys

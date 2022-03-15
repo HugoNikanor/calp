@@ -7,4 +7,10 @@
 
 A text representation of a VEvent. Used as the summary tab of our
 popup windows, and in the sidebar.
+
+When redrawn, it looks for an HTML-tag inside its template having the
+attribute @code{data-property} matching the properties name. If one is
+found, it looks in the @code{formatters} table
+(@ref{formatters-proc}), for a field matching the property value, and
+defaults to the key @code{default}.
 @end deftp
