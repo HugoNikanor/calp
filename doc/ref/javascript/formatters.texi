@@ -10,3 +10,7 @@ Formatting procedures used by some components.
 Each procedure takes two arguments. The HTML-element which contents
 should be replaced, along with the target value, as returned by @ref{VEvent.getProperty}.
 @end deftypevar
+
+@deftypevr {Window Value} {Map<string, (e:HTMLElement, s:string) => void>} formatters
+Same object as @xref{formatters-proc}. Provided for @xref{user-additions.js}.
+@end deftypevr

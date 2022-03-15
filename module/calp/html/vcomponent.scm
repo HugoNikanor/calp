@@ -26,7 +26,6 @@
   :use-module (ice-9 format)
   )
 
-
 (define-config summary-filter (lambda (_ a) a)
   pre: (ensure procedure?))
 

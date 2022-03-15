@@ -4,6 +4,12 @@ export {
 
 import { makeElement } from './lib'
 
+declare global {
+    interface Window {
+        formatters : Map<string, (e : HTMLElement, s : any) => void>;
+    }
+}
+
 let formatters : Map<string, (e : HTMLElement, s : any) => void>;
 formatters = window.formatters = new Map();
 

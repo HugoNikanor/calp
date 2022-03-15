@@ -10,6 +10,7 @@
 The frontend code has its entry-point in @code{script.ts}
 
 All elements are initialized in elements.ts
+
 @include javascript/clock.texi
 @include javascript/lib.texi
 @include javascript/eventCreator.texi
@@ -18,6 +19,7 @@ All elements are initialized in elements.ts
 @include javascript/globals.texi
 @include javascript/server_connect.texi
 @include javascript/formatters.texi
+@include javascript/user-additions.texi
 
 @node General Components
 @section General Components

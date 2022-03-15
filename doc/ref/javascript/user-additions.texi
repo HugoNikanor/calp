@@ -1,0 +1,18 @@
+@node user-additions.js
+@section user-additions.js
+
+Some things in the JavaScript code is built to be user-extendable.
+The HTML-page attempts to load @code{/static/user/user-additions.js}.
+
+
+Currently; this only entails @ref{formatters}, where you could, for
+example, parse all HTTP-links in a description.
+
+@example
+window.formatters.set('description', (el, d) => @{
+    el.innerHTML = d.replaceAll(/https?:\/\/\S+/g, '<a href="$&">$&</a>');
+@})
+@end example
+
+Remember that the documents are X-HTML, so be @emph{extremely} careful
+with innerHTML.

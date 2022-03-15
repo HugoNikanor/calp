@@ -117,6 +117,7 @@ window.default_calendar='~a';"
     ,(include-alt-css "/static/light.css" '(title "Light"))
 
     (script (@ (src "/static/script.out.js")))
+    (script (@ (src "/static/user/user-additions.js")))
 
     ,(calendar-styles calendars)
 
