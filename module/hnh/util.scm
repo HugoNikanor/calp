@@ -13,6 +13,7 @@
                 and=>> label
                 print-and-return
                 begin1
+                catch*
                 )
   #:replace (let* set! define-syntax
                   when unless))
@@ -577,3 +578,11 @@
          (lambda ()
            (for-each (lambda (pair) (setenv (car pair) (caddr pair)))
                      env-pairs))))]))
+
+(define-syntax catch*
+  (syntax-rules ()
+    ((_ thunk (key handler))
+     (catch (quote key) thunk handler))
+    ((_ thunk (key handler) rest ...)
+     (catch* (lambda () (catch (quote key) thunk handler))
+             rest ...))))
