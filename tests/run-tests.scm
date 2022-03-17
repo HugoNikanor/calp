@@ -154,7 +154,9 @@ fi
                     filename (1+ (string-length ext)))))))
 
 (define files (map (lambda (p) (path-append dir p))
-                   (scandir dir (file-extension? "scm"))))
+                   (scandir dir (lambda (fname)
+                                  (and ((file-extension? "scm") fname)
+                                       (not (char=? #\. (string-ref fname 0))))))))
 
 ;; (format #t "Running on:~%~y~%" files)
 
