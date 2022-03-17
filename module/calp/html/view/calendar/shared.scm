@@ -1,6 +1,5 @@
 (define-module (calp html view calendar shared)
   :use-module (hnh util)
-  :use-module ((hnh util exceptions) :select (assert))
   :use-module (srfi srfi-1)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
@@ -32,7 +31,10 @@
   ;; only find  events which  also overlaps  the
   ;; smaller event.
 
-  (assert event-length-key)
+  (unless event-length-key
+    (scm-error 'wrong-type-arg "fix-event-widths!"
+               "event-length-key is required"
+               #f #f))
 
   ;; @var{x} is how for left in the container we are.
   (let inner ((x 0)

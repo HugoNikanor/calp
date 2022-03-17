@@ -6,7 +6,7 @@
   #:use-module ((system vm frame)
                 :select (frame-bindings binding-ref))
 
-  #:export (assert))
+  )
 
 
 (define-public warning-handler
@@ -30,20 +30,6 @@
            (current-error-port))
   (raise 2)
   )
-
-(define (prettify-tree tree)
-  (cond [(pair? tree) (cons (prettify-tree (car tree))
-                            (prettify-tree (cdr tree)))]
-        [(and (procedure? tree) (procedure-name tree))
-         => identity]
-        [else tree]))
-
-
-(define-macro (assert form)
-  `(unless ,form
-     (throw 'assertion-error "Assertion failed. ~a expected, ~a got"
-            (quote ,form)
-            ((@@ (calp util exceptions) prettify-tree) (list ,form)))))
 
 
 (define-public (filter-stack pred? stk)

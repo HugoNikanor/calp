@@ -13,7 +13,6 @@
   :use-module (hnh util)
   :use-module (hnh util uuid)
   :use-module ((hnh util path) :select (path-append))
-  :use-module ((hnh util exceptions) :select (assert))
   :use-module (vcomponent formats ical output)
   :use-module (vcomponent)
   :use-module ((hnh util io) :select (with-atomic-output-to-file))
@@ -23,7 +22,11 @@
 (define-public (save-event event)
   (define calendar (parent event))
 
-  (assert (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE)))
+  (unless (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE))
+    (scm-error 'wrong-type-arg "save-event"
+               "Can only save events belonging to vdir calendars. Calendar is of type ~s"
+               (list (prop calendar '-X-HNH-SOURCETYPE))
+               #f))
 
   (let* ((uid (or (prop event 'UID) (uuid))))
     (set! (prop event 'UID) uid
@@ -38,5 +41,9 @@
 
 (define-public (remove-event event)
   (define calendar (parent event))
-  (assert (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE)))
+  (unless (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE))
+    (scm-error 'wrong-type-arg "remove-event"
+               "Can only remove events belonging to vdir calendars. Calendar is of type ~s"
+               (list (prop calendar '-X-HNH-SOURCETYPE))
+               #f))
   (delete-file (prop event '-X-HNH-FILENAME)))

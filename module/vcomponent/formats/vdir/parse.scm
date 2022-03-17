@@ -38,12 +38,16 @@
 
     (reduce (lambda (item calendar)
 
-              (define-values (events other) (partition (lambda (e) (eq? 'VEVENT (type e)))
-                                                       (children item)))
+              (define-values (events other)
+                (partition (lambda (e) (eq? 'VEVENT (type e)))
+                           (children item)))
 
 
-              ;; (assert (eq? 'VCALENDAR (type calendar)))
-              (assert (eq? 'VCALENDAR (type item)))
+              (unless (eq? 'VCALENDAR (type item))
+                (scm-error 'misc-error "parse-vdir"
+                           "Unexepected top level component. Expected VCALENDAR, got ~a. In file ~s"
+                           (list (type item) (prop item '-X-HNH-FILENAME))
+                           #f))
 
               (for child in (children item)
                    (set! (prop child '-X-HNH-FILENAME)
@@ -60,10 +64,7 @@
               (case (length events)
                 [(0) (warning "No events in component~%~a"
                               (prop item '-X-HNH-FILENAME))]
-                [(1)
-                 (let ((child (car events)))
-                   (assert (memv (type child) '(VTIMEZONE VEVENT)))
-                   (add-child! calendar child))]
+                [(1) (add-child! calendar (car events))]
 
                 ;; two or more
                 [else
