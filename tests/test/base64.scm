@@ -31,7 +31,7 @@
 ;; TODO normalize base64 errors
 
 (test-error "Invalid base64"
-  'misc-error
+  'decoding-error
   (base64decode "@@@@"))
 
 (test-error "To short base64"

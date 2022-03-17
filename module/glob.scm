@@ -6,8 +6,10 @@
 
 
 (define (glob-err epath eerrno)
-  (error "Glob errored on ~s with errno = ~a"
-         (pointer->string epath) eerrno))
+  (scm-error 'misc-error "glob-err"
+             "Glob errored on ~s with errno = ~a"
+             (list (pointer->string epath) eerrno)
+             #f))
 
 ;; NOTE there really should be an (c eval) module, to resolve symbols such as
 ;; @var{<<}.
@@ -29,7 +31,10 @@
                             (procedure->pointer int glob-err (list '* int))
                             (bytevector->pointer bv))))
       (unless (zero? globret)
-        (error "Globret errror ~a" globret))
+        (scm-error 'misc-error "glob"
+                   "Globret errror ~a"
+                   (list globret)
+                   #f))
       (let* ((globstr (parse-c-struct (bytevector->pointer bv) (list size_t '* size_t)))
              (strvec (pointer->bytevector (cadr globstr) (car globstr) 0
 					  (string->symbol (format #f "u~a" (* 8 (sizeof '*))))))

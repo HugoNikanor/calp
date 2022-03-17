@@ -17,6 +17,7 @@
 ;; Returns a color with good contrast to the given background color.
 ;; https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color/1855903#1855903
 (define-public (calculate-fg-color c)
+  ;; TODO what errors can actually appear here?
   (catch #t
     (lambda ()
       (define (str->num c n) (string->number (substring/shared c n (+ n 2)) 16))

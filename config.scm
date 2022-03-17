@@ -30,8 +30,9 @@
 
 (define (parse-html str)
   (catch 'misc-error
+    ;; resolve-interface throws misc-error on missing module.
+    ;; TODO what does html->sxml throw?
     (lambda ()
-      ;; resolve interface throws on missing module
       (let* ((gumbo (resolve-interface '(sxml gumbo)))
              (html->sxml (module-ref gumbo 'html->sxml)))
         (html->sxml str)))

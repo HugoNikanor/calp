@@ -81,10 +81,10 @@
                         bymonthday byyearday byweekno
                         bymonth bysetpos)
                  (string->number value))
-                (else (throw
-                       'key-error
+                (else (scm-error 'key-error "handle-value"
                        "Invalid type ~a, with value ~a"
-                       type value))))))
+                       (list type value)
+                       #f))))))
 
        ;; freq until count interval wkst
 
@@ -108,9 +108,11 @@
                                          byyearday byweekno bymonth bysetpos)
                                (list (symbol->keyword key)
                                      (map (lambda (v) (parse-value-of-that-type key v))
-                                          (map car values)))
-                               )
-                              (else (throw 'error)))))))))]
+                                          (map car values))))
+                              (else (scm-error 'misc-error "handle-value"
+                                               "Invalid key ~s"
+                                               (list key)
+                                               #f)))))))))]
 
     [(time) (parse-iso-time (car value))]
 

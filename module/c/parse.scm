@@ -34,7 +34,9 @@
          [(LL) '(long-long)]
          [(L) '(long)]
          [(U) '(unsigned)])
-       (error "Invalid integer suffix")))
+       (scm-error 'c-parse-error "parse-integer-suffix"
+                  "Invalid integer suffix ~s"
+                  (list str) #f)))
 
 (define (parse-lexeme-tree tree)
   (match tree
@@ -113,11 +115,11 @@
      `(funcall ,(parse-lexeme-tree function)
                ,(parse-lexeme-tree arguments))]
 
-    [bare (throw 'parse-error
-                 'parse-lexeme-tree
-                 "Naked literal in lex-tree. How did that get there?"
-                 '()
-                 bare)]))
+    [bare (scm-error 'c-parse-error
+                     "parse-lexeme-tree"
+                     "Naked literal in lex-tree: ~s"
+                     (list bare)
+                     #f)]))
 
 ;; https://en.wikipedia.org/wiki/Operators_in_C_and_C%2B%2B
 
@@ -175,7 +177,11 @@
            (parse-lexeme-tree op)
            (mark-other (parse-lexeme-tree right)))]
 
-    [other (error "Not an infix tree ~a" other)]))
+    [other (scm-error 'c-parse-error
+                      "flatten-infix"
+                      "Not an infix tree ~a"
+                      (list other)
+                      #f)]))
 
 
 

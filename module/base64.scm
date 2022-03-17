@@ -39,7 +39,10 @@
          (+ 26 (- byte a))]
         [(<= zero byte nine)
          (+ 26 26 (- byte zero))]
-        [else (error "Invalid encoded value" byte (integer->char byte))]))
+        [else (scm-error 'decoding-error
+                         "encoded->real"
+                         "Invalid character in Base64 string: ~s"
+                         (list byte) #f)]))
 
 (define ref
   (make-procedure-with-setter

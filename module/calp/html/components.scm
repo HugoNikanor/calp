@@ -57,7 +57,10 @@
               allow-other-keys:
               rest: args)
   (when (and onclick href)
-    (error "Only give one of onclick, href and submit."))
+    (scm-error 'wrong-type-arg "btn"
+               "href, onclick, and submit mutually exclusive. href = ~s, onclick = ~s, submit = ~s."
+               (list href onclick submit)
+               #f))
 
   (let ((body #f))
     `(,(cond [href 'a]

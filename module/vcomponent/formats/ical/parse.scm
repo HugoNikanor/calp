@@ -121,7 +121,9 @@
     (lambda (params value)
       (let ((vv (parser params value)))
         (when (list? vv)
-          (throw 'parse-error "List in enum field"))
+          (scm-error 'parse-error "enum-parser"
+                     "List in enum field"
+                     #f #f))
         (let ((v (string->symbol vv)))
           (unless (memv v enum)
             (warning "~a ∉ { ~{~a~^, ~} }"
@@ -193,7 +195,9 @@
                           DRAFT FINAL CANCELED))]
 
           [(memv key '(REQUEST-STATUS))
-           (throw 'parse-error "TODO Implement REQUEST-STATUS")]
+           (scm-error 'parse-error "build-vline"
+                      "TODO Implement REQUEST-STATUS"
+                      #f #f)]
 
           [(memv key '(ACTION))
            (enum-parser '(AUDIO DISPLAY EMAIL
@@ -319,7 +323,7 @@
                                      (set! (prop* (car stack) key) vline))))))
 
                       (loop (cdr lst) stack)])))
-            (lambda (err fmt . args)
+            (lambda (err proc fmt fmt-args data)
               (let ((linedata (get-metadata head*)))
                 (display (format
                           #f "ERROR parse error around ~a
@@ -327,7 +331,7 @@
   line ~a ~a
   Defaulting to string~%"
                           (get-string linedata)
-                          fmt args
+                          fmt fmt-args
                           (get-line linedata)
                           (get-file linedata))
                          (current-error-port))

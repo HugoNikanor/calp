@@ -74,10 +74,10 @@
              ,display)))
 
   (unless next-start
-    (error 'html-generate "Next-start needs to be a procedure"))
+    (scm-error 'misc-error "html-generate" "Next-start needs to be a procedure" #f #f))
 
   (unless prev-start
-    (error 'html-generate "Prev-start needs to be a procedure"))
+    (scm-error 'misc-error "html-generate" "Prev-start needs to be a procedure" #f #f))
 
   (xhtml-doc
    (@ (lang sv))

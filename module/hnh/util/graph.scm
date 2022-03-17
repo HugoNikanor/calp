@@ -73,8 +73,9 @@
 (define-public (find-and-remove-node-without-dependencies graph)
   (let ((node (find-node-without-dependencies graph)))
     (unless node
-      (throw 'graph-error 'find-and-remove-node-without-dependencies
-             "No node without dependencies in graph" '() graph))
+      (scm-error 'graph-error "find-and-remove-node-without-dependencies"
+                 "No node without dependencies in graph"
+                 #f (list graph)))
     (values node (remove-node graph node))))
 
 ;; Assumes that the edges of the graph are dependencies.
@@ -89,5 +90,5 @@
             '()
             (let* ((node graph* (find-and-remove-node-without-dependencies graph)))
               (cons node (loop graph*))))))
-    (lambda (err caller fmt args graph . data)
-      graph)))
+    (lambda (err caller fmt args data)
+      (car graph))))

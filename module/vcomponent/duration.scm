@@ -20,7 +20,9 @@
           key: (sign '+)
           week day time)
   (when (and week (or day time))
-    (error "Can't give week together with day or time"))
+    (scm-error 'misc-error "duration"
+               "Can't give week together with day or time"
+               #f #f))
   (make-duration sign week day time))
 
 
@@ -64,7 +66,10 @@
 (define (parse-duration str)
   (let ((m (match-pattern dur-pattern str)))
     (unless m
-      (throw 'parse-error "~a doesn't appar to be a duration" str))
+      (scm-error 'parse-error "parse-duration"
+                 "~s doesn't appar to be a duration"
+                 (list str)
+                 #f))
 
     (unless (= (peg:end m) (string-length str))
       (warning "Garbage at end of duration"))
@@ -83,9 +88,12 @@
                              [(H) `(hour: ,n)]
                              [(M) `(minute: ,n)]
                              [(S) `(second: ,n)]
-                             [else (error "Invalid key")]))]
+                             [else (scm-error 'misc-error "parse-duration"
+                                              "Invalid key ~a" type #f)]))]
                         [a
-                         (error "~a not on form ((number <num>) type)" a)])
+                         (scm-error 'misc-error "parse-duration"
+                                    "~s not on expected form ((number <num>) type)"
+                                    (list a) #f)])
                       (context-flatten (lambda (x) (and (pair? (car x))
                                                    (eq? 'number (caar x))))
                       (cdr (member "P" tree)))

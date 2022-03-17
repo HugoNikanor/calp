@@ -1,4 +1,5 @@
 
+;; TODO this is bad, but this file is replaced once translations are merged
 (eval-when (load)
   (throw 'do-not-load-me
          "Import (text numbers <langugage>) instead")

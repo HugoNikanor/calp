@@ -120,8 +120,11 @@
     (cond [altconfig
            (if (file-exists? altconfig)
                altconfig
-               (throw 'option-error
-                      "Configuration file ~a missing" altconfig))]
+               (scm-error 'misc-error
+                          "wrapped-main"
+                          "Configuration file ~a missing"
+                          (list altconfig)
+                          #f))]
          ;; altconfig could be placed in the list below. But I want to raise an error
          ;; if an explicitly given config is missing.
          [(find file-exists?
@@ -213,7 +216,10 @@
   (when (option-ref opts 'update-zoneinfo #f)
     (let* ((locations (list "/usr/libexec/calp/tzget" (path-append (xdg-data-home) "tzget")))
            (filename (or (find file-exists? locations)
-                         (error "tzget not installed, please put it in one of ~a" locations)))
+                         (scm-error 'missing-helper "wrapped-main"
+                                    "tzget not installed, please put it in one of ~a"
+                                    (list locations)
+                                    (list "tzget" locations))))
            (pipe (open-input-pipe filename)))
 
       ;; (define path (read-line pipe))

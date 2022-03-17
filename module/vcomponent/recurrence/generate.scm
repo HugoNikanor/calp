@@ -217,7 +217,9 @@
          [(BYHOUR) (to-dt (set (hour t) value))]
          [(BYMINUTE) (to-dt (set (minute t) value))]
          [(BYSECOND) (to-dt (set (second t) value))]
-         [else (error "Unrecognized by-extender" key)])))
+         [else (scm-error 'wrong-type-arg "update"
+                          "Unrecognized by-extender ~s"
+                          key #f)])))
    date-object
    extension-rule))
 

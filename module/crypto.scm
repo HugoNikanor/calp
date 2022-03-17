@@ -22,7 +22,9 @@
   (define bv
     (cond ((bytevector? msg) msg)
           ((string? msg) (string->utf8 msg))
-          (else (throw 'value-error "Invalid type"))))
+          (else (scm-error 'wrong-type-arg "sha256"
+                           "Wrong type argument. Expected string or bytevector, got ~s"
+                           (list msg) (list msg)))))
   (SHA256 ((@ (system foreign) bytevector->pointer) bv)
           (bytevector-length bv)
           ((@ (system foreign) bytevector->pointer) md))

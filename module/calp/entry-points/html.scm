@@ -173,7 +173,7 @@
              pre-start: (start-of-week start)
              post-end: (end-of-week (end-of-month start)))]
     [else
-     (error "Unknown html style: ~a" style)])
+     (scm-error 'misc-error "html-main" "Unknown html style: ~a" (list style) #f)])
 
   ((@ (calp util time) report-time!) "all done")
   )

@@ -247,18 +247,20 @@
 ;; and the other items in some order.
 ;; Ord b => (list a) [, (b, b -> bool), (a -> b)] -> a, (list a)
 (define*-public (find-extreme items optional: (< <) (access identity))
-  (if (null? items)
-      (error "Can't find extreme in an empty list")
-      (fold-values
-       (lambda (c min other)
-         (if (< (access c) (access min))
-             ;; Current stream head is smaller that previous min
-             (values c (cons min other))
-             ;; Previous min is still smallest
-             (values min (cons c other))))
-       (cdr items)
-       ;; seeds:
-       (car items) '())))
+  (when (null? items)
+    (scm-error 'wrong-type-arg "find-extreme"
+               "Can't find extreme in an empty list"
+               #f #f))
+  (fold-values
+   (lambda (c min other)
+     (if (< (access c) (access min))
+         ;; Current stream head is smaller that previous min
+         (values c (cons min other))
+         ;; Previous min is still smallest
+         (values min (cons c other))))
+   (cdr items)
+   ;; seeds:
+   (car items) '()))
 
 (define*-public (find-min list optional: (access identity))
   (find-extreme list < access))

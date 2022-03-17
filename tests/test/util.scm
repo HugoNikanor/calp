@@ -61,7 +61,7 @@
       "Other members left 2"
       (member "Test" rest))))
 
-(test-error 'misc-error (find-extreme '()))
+(test-error 'wrong-type-arg (find-extreme '()))
 
 (call-with-values
   (lambda ()

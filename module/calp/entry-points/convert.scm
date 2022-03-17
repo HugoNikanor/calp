@@ -68,7 +68,7 @@
          (@ (vcomponent formats xcal parse) sxcal->vcomponent)
          ;; TODO strip *TOP*
          xml->sxml)]
-       [else (error "")]
+       [else (scm-error 'misc-error "convert-main" "Unexpected parser type: ~a" (list from) #f)]
        ))
 
    (define writer
@@ -85,7 +85,7 @@
           (sxml->xml ((@ (vcomponent formats xcal output) vcomponent->sxcal)
                       component)
                      port))]
-       [else (error "")]))
+       [else (scm-error 'misc-error "convert-main" "Unexpected writer type: ~a" (list to) #f)]))
 
 
    (call-with-output-file outfile

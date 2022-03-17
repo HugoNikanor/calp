@@ -5,7 +5,6 @@
   :use-module (ice-9 match)
   :use-module (ice-9 regex)
   :use-module ((rnrs io ports) :select (call-with-port))
-  :use-module (ice-9 pretty-print) ; used by one error handler
   :use-module (ice-9 format)
   :use-module ((hnh util io) :select (read-lines))
   :use-module (hnh util graph)
@@ -26,7 +25,10 @@
   (aif (regexp-exec define-re header-line)
     (cons (match:substring it 1)
           (match:substring it 4))
-    (error "Line dosen't match" header-line)))
+    (scm-error 'c-parse-error
+               "tokenize-define-line"
+               "Line dosen't match: ~s"
+               (list header-line) #f)))
 
 
 (define-public (do-funcall function arguments)
@@ -100,7 +102,7 @@
   (map (lambda (line)
          (catch #t
            (lambda () (parse-cpp-define line))
-           (lambda (err caller fmt args . _)
+           (lambda (err caller fmt args data)
              (format #t "~a ~?~%" fmt args)
              #f)))
        lines))

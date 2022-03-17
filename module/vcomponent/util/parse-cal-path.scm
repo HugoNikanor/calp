@@ -25,7 +25,10 @@
                (prop comp '-X-HNH-DIRECTORY) path)
          comp)]
       [(block-special char-special fifo socket unknown symlink)
-       => (lambda (t) (error "Can't parse file of type " t))]))
+       => (lambda (t) (scm-error 'misc-error "parse-cal-path"
+                            "Can't parse file of type ~s"
+                            (list t)
+                            #f))]))
 
   (unless (prop cal "NAME")
     (set! (prop cal "NAME")

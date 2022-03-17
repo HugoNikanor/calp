@@ -735,11 +735,15 @@ Returns -1 on failure"
               (let* ((head post (cond ((null? (cddr fmt)) (values str '()))
                                       ((eqv? #\~ (caddr fmt))
                                        (cond ((null? (cdddr fmt))
-                                              (error "Unexpected ~ at end of fmt"))
+                                              (scm-error 'misc-error "string->datetime"
+                                                         "Unexpected ~ at end of fmt"
+                                                         #f #f))
                                              ((eqv? #\~ (cadddr fmt))
                                               (span (lambda (c) (not (eqv? #\~ c)))
                                                     str))
-                                             (else (error "Can't have format specifier directly after month by name"))))
+                                             (else (scm-error 'misc-error "string->datetime"
+                                                              "Can't have format specifier directly after month by name"
+                                                              #f #f))))
                                       (else (span (lambda (c) (not (eqv? c (caddr fmt))))
                                                   str)))))
                 (loop post

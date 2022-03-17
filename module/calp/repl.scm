@@ -21,8 +21,9 @@
                [else 'UNIX])
      [(UNIX)
       (add-hook! shutdown-hook (lambda () (catch 'system-error (lambda () (delete-file address))
-                                       (lambda (err proc fmt . args)
-                                         (warning "Failed to unlink ~a" address args)
+                                       (lambda (err proc fmt args data)
+                                         (warning (format #f "Failed to unlink ~a: ~?"
+                                                          address fmt args))
                                          err))))
       (make-unix-domain-server-socket path: address)]
      [(IPv4) (apply (case-lambda

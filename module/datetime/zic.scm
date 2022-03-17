@@ -91,14 +91,14 @@
 ;; @end example
 (define-public (get-zone zoneinfo name)
   (or (hash-ref (zoneinfo-zones zoneinfo) name)
-      (error "No zone ~a" name)))
+      (scm-error 'misc-error "get-zone" "No zone ~a" (list name) #f)))
 
 ;; @example
 ;; (get-rule zoneinfo 'EU)
 ;; @end example
 (define-public (get-rule zoneinfo name)
   (or (hashq-ref (zoneinfo-rules zoneinfo) name)
-      (error "No rule ~a" name)))
+      (scm-error 'misc-error "get-rule" "No rule ~a" (list name) #f)))
 
 
 
@@ -118,7 +118,9 @@
    [(string-prefix? name "October")  10]
    [(string-prefix? name "November") 11]
    [(string-prefix? name "December") 12]
-   [else (error "Unknown month" name)]))
+   [else (scm-error 'misc-error "month-name->number"
+                    "Unknown month ~s" (list name)
+                    #f)]))
 
 
 (define (string->weekday name)
@@ -130,7 +132,9 @@
    [(string-prefix? name "Friday")    fri]
    [(string-prefix? name "Saturday")  sat]
    [(string-prefix? name "Sunday")    sun]
-   [else (error "Unknown week day" name)]))
+   [else (scm-error 'misc-error "string->weekday"
+                    "Unknown week day ~s"
+                    (list name) #f)]))
 
 
 (define (parse-from str)
@@ -258,8 +262,10 @@
                         ;; NOTE an earlier version of the code the parsers for those.
                         ;; They were removed since they were unused, uneeded, and was
                         ;; technical dept.
-                        (error "Invalid key ~a. Note that leap seconds and
-expries rules aren't yet implemented." type)]
+                        (scm-error 'misc-error "parse-zic-file"
+                                   "Invalid key ~s. Note that leap seconds and expries rules aren't yet implemented."
+                                   (list type)
+                                   #f)]
                        ))]))))))
 
 
@@ -356,7 +362,9 @@ expries rules aren't yet implemented." type)]
                    until: (let ((to  (rule-to rule)))
                             (case to
                               ((maximum) #f)
-                              ((minimum) (error "Check your input"))
+                              ((minimum) (scm-error 'misc-error "rule->rrule"
+                                                    "Check your input"
+                                                    #f #f))
                               ((only)
                                (datetime
                                 date: (date year: (rule-from rule) month: 1 day: 1)))
@@ -401,4 +409,9 @@ expries rules aren't yet implemented." type)]
        (warning "%z not yet implemented")
        fmt-string]
 
-      [else (error "Invalid format char")])))
+      [else (scm-error 'misc-error "zone-format"
+                       "Invalid format char ~s in ~s at position ~a"
+                       (list (string-index fmt-string (1+ idx))
+                             fmt-string
+                             (1+ idx))
+                       #f)])))

@@ -39,7 +39,11 @@
   (for (key value) in (group kwargs 2)
        (aif (hashq-ref config-properties key)
             (set! (it name) value)
-            (error "Missing config protperty slot " key)))
+            (scm-error 'configuration-error
+                       "define-config"
+                       "No configuration slot named ~s, when defining ~s"
+                       (list key name)
+                       #f)))
   (set-config! name (get-config name default-value)))
 
 (define-syntax define-config
@@ -52,7 +56,12 @@
 (define-public (set-config! name value)
   (hashq-set! config-values name
               (aif (pre name)
-                   (or (it value) (error "Pre crashed for" name))
+                   (or (it value)
+                       (scm-error 'configuration-error
+                                  "set-config!"
+                                  "Pre-property failed when setting ~s to ~s"
+                                  (list name value)
+                                  #f))
                    value))
 
   (awhen (post name) (it value)))
@@ -63,8 +72,10 @@
   (if (eq? default %uniq)
       (let ((v (hashq-ref config-values key %uniq)))
         (when (eq? v %uniq)
-          ;; TODO throw descript error
-          (error "Missing config" key))
+          (scm-error 'configuration-error
+                     "get-config"
+                     "No configuration item named ~s"
+                     (list key) #f))
         v)
       (hashq-ref config-values key default)))
 

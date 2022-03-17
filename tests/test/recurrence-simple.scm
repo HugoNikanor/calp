@@ -42,7 +42,7 @@
     'warning
     (parse-recurrence-rule "FREQ=HOURLY;COUNT=-1"))
   (test-error "Invalid COUNT"
-    'wrong-type-argument
+    'wrong-type-arg
     (parse-recurrence-rule "FREQ=HOURLY;COUNT=err")))
 
 ;;; Test that basic recurrence works

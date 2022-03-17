@@ -136,4 +136,5 @@
 
 (define-public (get-parser type)
   (or (hashq-ref type-parsers type #f)
-      (error "No parser for type" type)))
+      (scm-error 'misc-error "get-parser" "No parser for type ~a"
+                 (list type) #f)))

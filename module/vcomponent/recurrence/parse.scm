@@ -51,7 +51,9 @@
 
 (define-macro (quick-case key . cases)
   (let ((else-clause (or (assoc-ref cases 'else)
-                         '(error "Guard failed"))))
+                         '(scm-error 'misc-error "quick-case"
+                                     "Guard failed"
+                                     #f #f))))
     `(case ,key
        ,@(map (match-lambda
                 ((key guard '=> body ...)
@@ -74,10 +76,10 @@
 
 (define* (string->number/throw string optional: (radix 10))
   (or (string->number string radix)
-      (scm-error 'wrong-type-argument
+      (scm-error 'wrong-type-arg
                  "string->number/throw"
                  "Can't parse ~s as number in base ~a"
-                 '(string radix) #f)))
+                 (list string radix) (list string radix))))
 
 ;; RFC 5545, Section 3.3.10. Recurrence Rule, states that the UNTIL value MUST have
 ;; the same type as the DTSTART of the event (date or datetime). I have seen events
