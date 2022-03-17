@@ -39,10 +39,15 @@
 ;; NOTE this should have information about context (html/term/...)
 ;; And then be moved somewhere else.
 (define-public (format-description ev str)
-  (catch #t (lambda () ((get-config 'description-filter) ev str))
-    (lambda (err . args)
-      (warning "~a on formatting description, ~s" err args)
-      str)))
+  (catch* (lambda () ((get-config 'description-filter) ev str))
+          (configuration-error
+           (lambda (key subr msg args data)
+             (format (current-error-port)
+                     "Error retrieving configuration, ~?~%" msg args)))
+          (#t ; for errors when running the filter
+           (lambda (err . args)
+             (warning "~a on formatting description, ~s" err args)
+             str))))
 
 ;; used by search view
 (define-public (compact-event-list list)

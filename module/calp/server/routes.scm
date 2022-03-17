@@ -413,28 +413,27 @@
         (define error #f)
 
         (define search-result
-          (catch #t
-            (lambda ()
-             (catch 'max-page
-               ;; TODO Get-page only puts a time limiter per page, meaning that
-               ;; if a user requests page 1000 the server is stuck trying to
-               ;; find that page, which can take up to 1000 * timeslice = 500s = 8min+
-               ;; A timeout here, and also an actual multithreaded server should
-               ;; solve this.
-               (lambda () (get-page paginator page))
-               (lambda (err page-number)
-                 (define location
-                   (build-relative-ref
-                    path: r:path        ; host: r:host port: r:port
-                    query: (encode-query-parameters
-                            `((p . ,page-number)
-                              (q . ,search-term)))))
-                 (return (build-response
-                          code: 307
-                          headers: `((location . ,location)))))))
-           (lambda (err callee fmt arg data)
-             (set! error
-              (format #f "~?~%" fmt arg)))))
+          ;; TODO Get-page only puts a time limiter per page, meaning that
+          ;; if a user requests page 1000 the server is stuck trying to
+          ;; find that page, which can take up to 1000 * timeslice = 500s = 8min+
+          ;; A timeout here, and also an actual multithreaded server should
+          ;; solve this.
+          (catch* (lambda () (get-page paginator page))
+                  (max-page
+                   (lambda (err page-number)
+                     (define location
+                       (build-relative-ref
+                        path: r:path        ; host: r:host port: r:port
+                        query: (encode-query-parameters
+                                `((p . ,page-number)
+                                  (q . ,search-term)))))
+                     (return (build-response
+                              code: 307
+                              headers: `((location . ,location))))))
+                  (#t
+                   (lambda (err callee fmt arg data)
+                     (set! error
+                       (format #f "~?~%" fmt arg))))))
 
         (return '((content-type application/xhtml+xml))
                 (with-output-to-string
