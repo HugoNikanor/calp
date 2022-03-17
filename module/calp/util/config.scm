@@ -37,11 +37,9 @@
 
 (define (define-config% name default-value kwargs)
   (for (key value) in (group kwargs 2)
-       ;; TODO un-smart this
-       (set! ((or (hashq-ref config-properties key)
-                  (error "Missing config protperty slot " key))
-              name)
-         value))
+       (aif (hashq-ref config-properties key)
+            (set! (it name) value)
+            (error "Missing config protperty slot " key)))
   (set-config! name (get-config name default-value)))
 
 (define-syntax define-config
