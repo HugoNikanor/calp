@@ -45,8 +45,8 @@ type = 'BINARY | 'BOOLEAN | 'CAL-ADDRES | 'DATE | 'DATE-TIME
 @subsubsection types
 
 @defun escape-chars str
-Escape ``@verb{|,|}'', ``@verb{|;|}'' and ``@verb{|\|}'' with a
-backslash, and encode newlines as ``@verb{|\n|}''.
+Escape @code{,}, @code{;} and @code{\} with a
+backslash, and encode newlines as @code{\n}.
 @end defun
 
 @defun get-writer type
@@ -82,7 +82,7 @@ type = 'BINARY | 'BOOLEAN | 'CAL-ADDRES | 'DATE | 'DATE-TIME
 @defun ns-wrap
 @lisp
 (define (ns-wrap sxml)
-  `(icalendar (@ (xmlns "urn:ietf:params:xml:ns:icalendar-2.0"))
+  `(icalendar (@@ (xmlns "urn:ietf:params:xml:ns:icalendar-2.0"))
               ,sxml))
 @end lisp
 Where @var{sxml} is expected to be the output of @var{vcomponent->sxcal}.

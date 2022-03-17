@@ -13,14 +13,14 @@ Each tab consists of two parts, a label which is used for selecting
 it, and a tab-element, which contains the actual content. These two
 should refer to each other as follows:
 
-@verbatim
+@example
 +---------------+     +----------------+
 |   TabLabel    |     |       Tab      |
 +---------------+     +----------------+
 |            id |<----| aria-labeledby |
 | aria-controls |---->|             id |
 +---------------+     +----------------+
-@end verbatim
+@end example
 
 Further information about tabs in HTML can be found here:
 @url{https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/Tab_Role}

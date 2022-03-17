@@ -57,9 +57,8 @@ Alias of @code{'string'}.
 Alias for a record consisting of
 @itemize @bullet
 @item the name of the type, as a string
-@item All parameters of the object, as a @code{Record<string, any}@
-      @footnote{Which is simply a regular javascript object, mapping
-      strings to anything}.
+@item All parameters of the object, as a @code{Record<string, any>}
+@footnote{Which is simply a regular javascript object, mapping strings to anything}.
 @item An @code{ical_type} value, noting the type of the final field(s)
 @item And one or more values of the type specified by the third field.
 @end itemize

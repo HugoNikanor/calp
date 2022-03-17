@@ -116,22 +116,29 @@ This means that the @var{utc} field is @code{false}, and that
 Formats a Date object according to the format specification @var{str}.
 Keeping with Guile each format specifier starts with a ~.
 
-@c table formatting borrowed from Gulie Reference (SRFI-19 Date to string)
-@multitable {MMMM} {MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM}
-@item @nicode{~~} @tab literal ~
+@table @samp
+@item ~~
+literal ~
 @c Almost all fields are left padded. How do I signify this
 @c with a single footnote?
-@item @nicode{~Y} @tab year, left-padding with zeroes.
-@item @nicode{~m} @tab month number, left padded with zeroes.
-@item @nicode{~d} @tab day of month.
-@item @nicode{~H} @tab hour
-@item @nicode{~M} @tab minute
-@item @nicode{~S} @tab second
-@item @nicode{~Z} @tab 'Z' if Date is UTC, otherwise nothing
-
-@item @nicode{~L} @tab Converts the date to local time
+@item ~Y
+year, left-padding with zeroes.
+@item ~m
+month number, left padded with zeroes.
+@item ~d
+day of month.
+@item ~H
+hour
+@item ~M
+minute
+@item ~S
+second
+@item ~Z
+'Z' if Date is UTC, otherwise nothing
+@item ~L
+Converts the date to local time
 (@pxref{to_local}) (doesn't modify source object). Outputs nothing
-@end multitable
+@end table
 @end defmethod
 
 @defun format_date date str
