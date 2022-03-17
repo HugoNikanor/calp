@@ -465,7 +465,7 @@
               read-string)))
           (lambda (err proc fmt fmt-args data)
             (warning (format #f "404|500: ~?" fmt fmt-args))
-            (if (and (not (null? data)) (= 2 (car data)))
+            (if (= ENOENT (car data))
                 (return (build-response code: 404)
                         (format #f "~?" fmt fmt-args))
                 (scm-error err proc fmt fmt-args data)))))
