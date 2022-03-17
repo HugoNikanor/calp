@@ -1124,7 +1124,7 @@ Returns -1 on failure"
 
 ;; overflow is number of days above
 ;; time x time → time x int
-(define-public (time+% base change)
+(define (time+% base change)
 
   ;; while (day base) > (days-in-month base)
   ;;     month++; days -= (days-in-month base)
