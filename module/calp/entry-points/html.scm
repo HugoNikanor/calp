@@ -1,6 +1,7 @@
 (define-module (calp entry-points html)
   :export (main)
   :use-module (hnh util)
+  :use-module ((hnh util exceptions) :select (warning))
   :use-module ((hnh util path) :select (path-append))
   :use-module (calp util time)
   :use-module (hnh util options)
@@ -66,22 +67,31 @@
 
 ;; file existing but is of wrong type,
 (define (create-files output-directory)
+  (define link (path-append output-directory "static"))
+  ;; NOTE the target path is newer created
+  (define target (path-append (xdg-data-home) "calp" "www" "static"))
 
-  (let* ((link (path-append output-directory "static")))
+  (unless (file-exists? output-directory)
+    (mkdir output-directory))
 
-    (unless (file-exists? output-directory)
-      (mkdir output-directory))
-
-    ;; TODO nicer way to resolve static
-    (let ((link (path-append output-directory "static")))
-     (unless (file-exists? link)
-       (if (catch 'system-error
-             (lambda () (lstat link))
-             (lambda (err proc fmt fmt-args data)
-               #f))
-           (format #t "WARNING: broken symlink ~s → ~s~%"
-                   link (readlink link))
-           (symlink (path-append (xdg-data-home) "calp" "www" "static") link))))))
+  (catch 'system-error
+    (lambda () (symlink target link))
+    (lambda (err proc fmt fmt-args data)
+      (define errno (car data))
+      (cond ((= errno EACCES)
+             (warning (format #f "~?" fmt fmt-args)))
+            ((= errno EEXIST)
+             (let ((st (lstat link)))
+               (cond ((not (eq? 'symlink (stat:type st)))
+                      (warning "File ~s exists, but isn't a symlink" link))
+                     ((not (string=? target (readlink link)))
+                      (warning "~s is a symlink, but points to ~s instead of expected ~s"
+                               link (readlink link) target))))
+             ;; else, file exists as a symlink, and points where we want,
+             ;; which is expected. Do nothing and be happy.
+             )
+            ;; Rethrow
+            (else (scm-error err proc fmt fmt-args data))))))
 
 
 (define (re-root-static tree)
