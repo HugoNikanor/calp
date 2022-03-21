@@ -9,8 +9,7 @@ export GUILE_LOAD_COMPILED_PATH=${_here}/obj-${guile_version}:${GUILE_LOAD_COMPI
 export GUILE_LOAD_PATH=${_here}/module:${GUILE_LOAD_PATH}
 export GUILE_AUTO_COMPILE=0
 
-# TODO why are these set?
-export XDG_DATA_HOME=$_here
+# TODO why is this set?
 export LIBEXEC=${_here}/scripts/
 
 #export GUILE_AUTO_COMPILE=0
