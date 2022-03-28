@@ -175,6 +175,9 @@
     (lambda (err proc fmt args data)
       ;; NOTE This is mostly a hack to see that we
       ;; actually check for the correct error.
+      ;;
+      ;; stream-ref quite unhelpfully throws this error as
+      ;; $3 = (wrong-type-arg stream-ref "beyond end of stream" () (#<stream>))
       (unless (string=? fmt "beyond end of stream")
         (scm-error err proc fmt args data))
 
