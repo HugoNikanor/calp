@@ -58,8 +58,8 @@
               rest: args)
   (when (and onclick href)
     (scm-error 'wrong-type-arg "btn"
-               "href, onclick, and submit mutually exclusive. href = ~s, onclick = ~s, submit = ~s."
-               (list href onclick submit)
+               "href and onclick are mutually exclusive. href = ~s, onclick = ~s."
+               (list href onclick)
                #f))
 
   (let ((body #f))
