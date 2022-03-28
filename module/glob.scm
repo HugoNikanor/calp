@@ -16,11 +16,14 @@
 (define << ash)
 (include# "/usr/include/glob.h" define-public)
 
-(define-values (glob% globfree%)
-  (let ((this (dynamic-link)))
-    (values
-     (pointer->procedure int  (dynamic-func "glob" this)     `(* ,int * *))
-     (pointer->procedure void (dynamic-func "globfree" this) '(*)))))
+(define lib (dynamic-link))
+
+(define glob%
+  (pointer->procedure int (dynamic-func "glob" lib)
+                      `(* ,int * *)))
+(define globfree
+  (pointer->procedure void (dynamic-func "globfree" lib)
+                      '(*)))
 
 (define glob-flags (logior GLOB_MARK GLOB_BRACE GLOB_TILDE_CHECK))
 
@@ -41,5 +44,5 @@
              (ret (map (compose pointer->string make-pointer)
                        (bytevector->uint-list strvec (native-endianness) (sizeof '*)))))
 
-        (globfree% (bytevector->pointer bv))
+        (globfree (bytevector->pointer bv))
         ret))))
