@@ -5,4 +5,4 @@ here=$(dirname $(realpath $0))
 
 make GUILE="$GUILE" go_files
 
-exec $GUILE -c '((@ (calp main) main) (command-line))' "$@"
+exec $GUILE -e '(@ (calp main) main)' "$@"
