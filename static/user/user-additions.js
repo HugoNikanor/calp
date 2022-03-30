@@ -1,12 +1,21 @@
 window.formatters.set('description', (el, d) => {
     if (/<br\/?>/.exec(d)) {
-        /* Assume that the text is HTML iff in contains a <br/> tag */
+        /* Assume that the text is HTML iff it contains a <br/> tag */
         let parser = new DOMParser();
         let doc = parser.parseFromString(d, 'text/html');
         el.replaceChildren(doc.body);
     } else {
-        /* Otherwise it should be plain(er) text, parse "all" links */
-        el.innerHTML = d.replaceAll(/https?:\/\/\S+/g, '<a href="$&">$&</a>');
+        /* Otherwise it should be plain(er) text, parse "all" links
+           (and reserved XML characters)
+        */
+        // TODO replace with something that doesn't use innerHTML */
+        el.innerHTML = d
+            .replaceAll(/</g, '&lt;')
+            .replaceAll(/>/g, '&gt;')
+            .replaceAll(/&/g, '&amp;')
+            .replaceAll(/'/g, '&apos;')
+            .replaceAll(/"/g, '&quot;')
+            .replaceAll(/https?:\/\/\S+/g, '<a href="$&">$&</a>')
     }
 })
 
