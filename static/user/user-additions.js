@@ -5,17 +5,22 @@ window.formatters.set('description', (el, d) => {
         let doc = parser.parseFromString(d, 'text/html');
         el.replaceChildren(doc.body);
     } else {
-        /* Otherwise it should be plain(er) text, parse "all" links
-           (and reserved XML characters)
-        */
-        // TODO replace with something that doesn't use innerHTML */
-        el.innerHTML = d
-            .replaceAll(/</g, '&lt;')
-            .replaceAll(/>/g, '&gt;')
-            .replaceAll(/&/g, '&amp;')
-            .replaceAll(/'/g, '&apos;')
-            .replaceAll(/"/g, '&quot;')
-            .replaceAll(/https?:\/\/\S+/g, '<a href="$&">$&</a>')
+        /* Otherwise it should be plain(er) text, parse "all" links */
+        let rx = /https?:\/\/\S+/g
+        let idx = 0;
+        let children = []
+        for (let match of d.matchAll(rx)) {
+            let anch = document.createElement('a')
+            anch.href = match[0]
+            anch.textContent = match[0]
+
+            children.push(d.substring(idx, match.index))
+            children.push(anch)
+
+            idx = match.index + match[0].length
+        }
+        children.push(d.substring(idx))
+        el.replaceChildren(...children);
     }
 })
 
