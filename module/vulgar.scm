@@ -19,35 +19,39 @@
           (1+ y) (1+ x)))
 
 
-(define-syntax with-vulgar
-  (syntax-rules ()
-    ((_ thunk)
-     (with-vulgar (bitwise-not (bitwise-ior ECHO ICANON))
-                  thunk))
-    ((_ bits thunk)
-     (let* ((ifd (current-input-port))
-            (ofd (current-output-port))
-            (iattr (make-termios))
-            (oattr (make-termios))
-            iattr* oattr*)
-       (dynamic-wind
-         (lambda ()
-           (tcgetattr! iattr ifd)
-           (tcgetattr! oattr ofd)
+(define (with-vulgar . args)
+  (apply
+   (case-lambda
+     ((thunk)
+      (with-vulgar (bitwise-not (bitwise-ior ECHO ICANON))
+                   thunk))
+     ((bits thunk)
+      (let* ((ifd (current-input-port))
+             (ofd (current-output-port))
+             (iattr (make-termios))
+             (oattr (make-termios))
+             iattr* oattr*)
+        (dynamic-wind
+          (lambda ()
+            (tcgetattr! iattr ifd)
+            (tcgetattr! oattr ofd)
 
-           ;; Store current settings to enable resetting the terminal later
-           (set! iattr* (copy-termios iattr)
-                 oattr* (copy-termios oattr)
+            ;; Store current settings to enable resetting the terminal later
+            (set! iattr* (copy-termios iattr)
+                  oattr* (copy-termios oattr)
 
-                 (lflag iattr) (bitwise-and bits (lflag iattr))
-                 (lflag oattr) (bitwise-and bits (lflag oattr)))
+                  (lflag iattr) (bitwise-and bits (lflag iattr))
+                  (lflag oattr) (bitwise-and bits (lflag oattr)))
 
-           (tcsetattr! iattr ifd)
-           (tcsetattr! oattr ofd)
-           (system "tput civis"))
-         thunk
-         (lambda ()
-           (tcsetattr! iattr* ifd)
-           (tcsetattr! oattr* ofd)
-           (system "tput cnorm")
-           ))))))
+            (tcsetattr! iattr ifd)
+            (tcsetattr! oattr ofd)
+            (format #t "\x1b[?1049h")
+            (system "tput civis"))
+          thunk
+          (lambda ()
+            (tcsetattr! iattr* ifd)
+            (tcsetattr! oattr* ofd)
+            (format #t "\x1b[?1049l")
+            (system "tput cnorm")
+            )))))
+   args))
