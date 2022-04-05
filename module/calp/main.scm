@@ -241,6 +241,8 @@
                       '("term"))))
     ((case (string->symbol (car ropt))
        ((html)   (@ (calp entry-points     html) main))
+       ;; TODO chnange term to be non-interactive term
+       ;; and then add interactive-term (or similar)
        ((term)   (@ (calp entry-points terminal) main))
        ((import) (@ (calp entry-points   import) main))
        ((text)   (@ (calp entry-points     text) main))

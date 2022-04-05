@@ -65,6 +65,11 @@
   (year year) (month month) (day day))
 
 (define*-public (date key: (year 0) (month 0) (day 0))
+  (unless (and (integer? year) (integer? month) (integer? day))
+    (scm-error 'wrong-type-arg "date"
+               "Year, month, and day must all be integers. ~s, ~s, ~s"
+               (list year month day)
+               #f))
   (make-date year month day))
 
 (set-record-type-printer!
@@ -72,7 +77,7 @@
  (lambda (r p)
    (catch 'misc-error
      (lambda () (display (date->string r "#~Y-~m-~d") p))
-     (lambda (err _ fmt args . rest)
+     (lambda (err proc fmt args data)
        (format p "#<<date> BAD year=~s month=~s day=~s>"
                (year r) (month r) (day r))))))
 

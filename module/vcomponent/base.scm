@@ -164,6 +164,7 @@
 (define-public (copy-vcomponent component)
   (make-vcomponent%
    (type component)
+   ;; TODO deep copy?
    (children component)
    (parent component)
    ;; properties
