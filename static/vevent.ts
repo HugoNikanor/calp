@@ -396,8 +396,11 @@ function xml_to_recurrence_rule(xml: Element): RecurrenceRule {
                 break;
 
             case 'count':
-            case 'interval':
                 rr.count = Number(t)
+                break;
+
+            case 'interval':
+                rr.interval = Number(t)
                 break;
 
             case 'bysecond':
