@@ -122,7 +122,7 @@ window.default_calendar='~a';"
     ,(calendar-styles calendars)
 
     ,@(when (debug)
-        '((style ".root { background-color: pink; }"))))
+        '((style ":root { --background-color: pink; }"))))
 
    (body
     (div (@ (class "root"))
