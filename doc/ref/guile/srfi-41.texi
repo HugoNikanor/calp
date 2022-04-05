@@ -1,0 +1,80 @@
+@node SRFI 41 Utilities
+@section SRFI 41 Utilities
+
+Extra utilities for handling streams. Provided by @code{(srfi srfi-41
+util)}.
+
+@defun stream-car+cdr stream
+Returns the car and cdr of stream.
+@end defun
+
+@defun interleave-streams < streams
+Merges a number of totally ordered streams into a single
+totally ordered stream.
+
+((≺, stream)) → (≺, stream)
+@end defun
+
+@defun stream-insert < item stream
+Insert item in the totally ordered stream (≺, stream).
+@end defun
+
+
+@defun filter-sorted-stream pred stream
+@end defun
+
+
+@defun filter-sorted-stream* pred keep-remaining? stream
+@end defun
+
+@defun get-stream-interval start-pred end-pred stream
+Get the substream from stream from the first match of start-pred, to
+the first match of end-pred after start-pred.
+@end defun
+
+
+@defun stream-find pred stream
+Find the first element in stream satisfying the predicate, or #f none
+was found.
+@end defun
+
+
+@defun stream-remave pred stream
+Stream-filter, but with predicate negated.
+@end defun
+
+
+@defun stream->values stream
+Equivalent to list->values. Returns as many objects as the stream is long.
+@end defun
+
+
+@defun repeating-naturals from repeats
+Natural numbers from @var{from} and up, but each repeated @var{repeat}
+times.
+@example
+(stream->list 15 (repeating-naturals 1 3))
+⇒ (1 1 1 2 2 2 3 3 3 4 4 4 5 5 5)
+@end example
+@end defun
+
+
+@defun stream-partition pred stream
+@end defun
+
+@defun stream-split idx stream
+@end defun
+
+@defun stream-paginate stream [page-size=10]
+@end defun
+
+
+@defun eager-stream-cons a b
+stream cons, but eval arguments beforehand.
+@end defun
+
+@defun stream-timeslice-limit stream timeslice
+Wrap a stream in time limits. Each element has at most @var{timeslice}
+seconds to produce a value, otherwise the stream ends. Useful for finding the
+``final'' element matching a predicate in an infinite stream.
+@end defun

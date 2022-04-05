@@ -2,6 +2,7 @@
 @chapter Guile
 
 @include guile/datetime.texi
+@include guile/srfi-41.texi
 @include guile/util.texi
 @include guile/util-path.texi
 @include guile/util-config.texi
