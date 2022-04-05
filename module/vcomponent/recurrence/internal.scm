@@ -47,11 +47,14 @@
         wkst)
 (export! count)
 
+;; Interval and wkst have default values, since those are assumed
+;; anyways, and having them set frees us from having to check them at
+;; the use site.
 (define*-public (make-recur-rule
                  key:
-                 freq until count interval bysecond byminute byhour
+                 freq until count (interval 1) bysecond byminute byhour
                  byday bymonthday byyearday byweekno bymonth bysetpos
-                 wkst)
+                 (wkst monday))
   ;; TODO possibly validate fields here
   ;; to prevent creation of invalid rules.
   ;; This was made apparent when wkst was (incorrectly) set to MO,

@@ -131,7 +131,7 @@
           (else o)))))
 
    ;; obj
-   (make-recur-rule interval: 1 wkst: mon)
+   (make-recur-rule)
 
    ;; ((key val) ...)
    (map (cut string-split <> #\=)
