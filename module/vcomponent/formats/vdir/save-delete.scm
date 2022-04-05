@@ -35,11 +35,12 @@
                #f))
 
   (let* ((uid (or (prop event 'UID) (uuid))))
-    (set! (prop event 'UID) uid
-      ;; TODO use existing filename if present?
-      (prop event '-X-HNH-FILENAME) (path-append
-                                      (prop calendar '-X-HNH-DIRECTORY)
-                                      (string-append uid ".ics")))
+    (set! (prop event 'UID) uid)
+    (unless (prop event 'X-HNH-FILENAME)
+      (set! (prop event '-X-HNH-FILENAME)
+        (path-append
+         (prop calendar '-X-HNH-DIRECTORY)
+         (string-append uid ".ics"))))
     (with-atomic-output-to-file (prop event '-X-HNH-FILENAME)
       (lambda () (print-components-with-fake-parent (list event))))
     uid))
