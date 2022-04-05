@@ -27,12 +27,21 @@
 
 
 (define-class <events> ()
-  (calendar-files init-keyword: calendar-files:)
-  (calendars getter: get-calendars)
+  ;; Files which calendars where loaded from
+  (calendar-files init-keyword: calendar-files:
+                  init-value: '())
+  ;; calendar objects
+  (calendars getter: get-calendars
+             init-value: '())
+  ;; events, which should all be children of the calendars
   (events getter: get-events)
+  ;; subset of events
   (repeating-events getter: get-repeating-events)
+  ;; subset of events
   (fixed-events getter: get-fixed-events)
+  ;; events again, but as stream with repeating events realised
   (event-set getter: get-event-set)
+  ;; hash-table from event UID:s, to the events
   uid-map
   )
 
