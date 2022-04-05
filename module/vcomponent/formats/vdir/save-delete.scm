@@ -22,6 +22,12 @@
 (define-public (save-event event)
   (define calendar (parent event))
 
+  (unless calendar
+    (scm-error 'wrong-type-arg "save-event"
+               "Can only save events belonging to calendars, event uid = ~s"
+               (list (prop event 'UID))
+               #f))
+
   (unless (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE))
     (scm-error 'wrong-type-arg "save-event"
                "Can only save events belonging to vdir calendars. Calendar is of type ~s"
