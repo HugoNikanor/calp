@@ -19,6 +19,7 @@ fi
 (use-modules (srfi srfi-1)
              (srfi srfi-64)
              (srfi srfi-88)
+             (hnh util)
              (hnh util path)
              (ice-9 ftw)
              (ice-9 format)
@@ -159,6 +160,12 @@ fi
                                        (not (char=? #\. (string-ref fname 0))))))))
 
 ;; (format #t "Running on:~%~y~%" files)
+
+(awhen (option-ref options 'only #f)
+       (set! files (list (path-append "test" it))))
+
+(awhen (option-ref options 'skip #f)
+       (set! files (delete it files)))
 
 ((@ (hnh util exceptions) warnings-are-errors) #t)
 
