@@ -4,6 +4,7 @@
 
 (use-modules (ice-9 regex)
              (sxml simple)
+             (sxml xpath)
              )
 
 (set-config! 'calendar-files (glob "~/.local/var/cal/*"))
@@ -26,8 +27,6 @@
     'pre (lambda (m) (aref my-courses (string->symbol (match:substring m))))
     'post)))
 
-(define (a link) `(a (@ (href ,link)) ,link))
-
 (define (parse-html str)
   (catch 'misc-error
     ;; resolve-interface throws misc-error on missing module.
@@ -35,9 +34,13 @@
     (lambda ()
       (let* ((gumbo (resolve-interface '(sxml gumbo)))
              (html->sxml (module-ref gumbo 'html->sxml)))
-        (html->sxml str)))
+        ;; html->sxml always gives us (html (head ...) (body <content>))
+        ;; this strips it down to just <content>
+        (cdar ((sxpath '(// body)) (html->sxml str)))))
     ;; Give up on parsing
     (lambda _ str)))
+
+(define (a link) `(a (@ (href ,link)) ,link))
 
 (define (parse-links str)
   (define regexp (make-regexp "https?://\\S+"))
@@ -83,11 +86,8 @@
 (set-config! 'description-filter
  (lambda (ev str)
    (cond [(member (prop (parent ev) 'NAME)
-                  html-cals
-                  )
-          (parse-html (regexp-substitute/global
-                        #f "<br>" str
-                        'pre "<br/>" 'post))]
+                  html-cals)
+          (parse-html str)]
          [(prop ev 'X-MICROSOFT-SKYPETEAMSMEETINGURL)
           (parse-teams-description str)]
          [else (parse-links str)])))
