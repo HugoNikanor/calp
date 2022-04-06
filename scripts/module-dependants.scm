@@ -49,7 +49,7 @@
 (define (regular-file? filename)
   (eq? 'regular (stat:type (cstat filename))))
 
-(define (filename-extension ext)
+(define (filename-extension? ext)
   (let ((re (make-regexp (string-append ((@ (texinfo string-utils)
                                             escape-special-chars)
                                          ext "^$[]()*." #\\)
@@ -88,7 +88,7 @@
                       )))
            )
          (delete target-file
-                 (filter (filename-extension ".scm")
+                 (filter (filename-extension? ".scm")
                          (filter regular-file?
                                  (find-all-files-under module-dir)))))))
 
