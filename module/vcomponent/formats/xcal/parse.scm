@@ -9,6 +9,7 @@
   :use-module (vcomponent formats common types)
   :use-module (datetime)
   :use-module (srfi srfi-1)
+  :use-module (calp translation)
   )
 
 ;; symbol, ht, (list a) -> non-list
@@ -82,7 +83,7 @@
                         bymonth bysetpos)
                  (string->number value))
                 (else (scm-error 'key-error "handle-value"
-                       "Invalid type ~a, with value ~a"
+                       (_ "Invalid type ~a, with value ~a")
                        (list type value)
                        #f))))))
 
@@ -155,7 +156,7 @@
   (case tag-name
     [(request-status)
      ;; TODO
-     (warning "Request status not yet implemented")
+     (warning (_ "Request status not yet implemented"))
      #f]
 
     ((transp) (parse-enum

@@ -24,6 +24,7 @@
   :use-module (calp util config)
   :use-module ((base64) :select (base64encode))
   :use-module (ice-9 format)
+  :use-module (calp translation)
   )
 
 (define-config summary-filter (lambda (_ a) a)
@@ -68,10 +69,13 @@
                                    "unknown")))))
                    (time ,(let ((dt (prop event 'DTSTART)))
                             (if (datetime? dt)
-                                (datetime->string dt "~Y-~m-~d ~H:~M")
-                                (date->string dt "~Y-~m-~d" ))))
+                                ;; Compact event list date + time
+                                (datetime->string dt (_ "~Y-~m-~d ~H:~M"))
+                                ;; Compact event list date only
+                                (date->string dt (_ "~Y-~m-~d") ))))
                    (a (@ (href ,(date->string (as-date (prop event 'DTSTART)) "/week/~Y-~m-~d.html")))
-                      "View 📅")
+                      ;; Button for viewing calendar, accompanied by a calendar icon
+                      ,(_ "View") " 📅")
                    (span ,(prop event 'SUMMARY)))))
   (cons
    (calendar-styles calendars)
@@ -109,6 +113,7 @@
                          (data-property "summary"))
                       ,(prop ev 'SUMMARY))))
          (div
+          ;; TODO localize this?
           ,(call-with-values (lambda () (fmt-time-span ev))
              (case-lambda [(start)
                            `(div (time (@ (class "dtstart")
@@ -141,7 +146,7 @@
 
           (div (@ (class "fields"))
                ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
-                  `(div (b "Plats: ")
+                  `(div (b ,(_ "Location: "))
                         (div (@ (class "location") (data-property "location"))
                              ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                           (prop ev 'LOCATION)))))
@@ -218,8 +223,10 @@
                              ,@(format-recurrence-rule ev)))
 
                ,(when (prop ev 'LAST-MODIFIED)
-                  `(div (@ (class "last-modified")) "Senast ändrad "
-                        ,(datetime->string (prop ev 'LAST-MODIFIED) "~1 ~H:~M"))))
+                  `(div (@ (class "last-modified")) ,(_ "Last modified") " "
+                        ,(datetime->string (prop ev 'LAST-MODIFIED)
+                                           ;; Last modified datetime
+                                           (_ "~1 ~H:~M")))))
 
           ))))
 
@@ -229,7 +236,9 @@
 (define-public (fmt-day day)
   (let* (((date . events) day))
     `(section (@ (class "text-day"))
-              (header (h2 ,(let ((s (date->string date "~Y-~m-~d")))
+              (header (h2 ,(let ((s (date->string date
+                                                  ;; Header for sidebar day
+                                                  (_ "~Y-~m-~d"))))
                              `(a (@ (href "#" ,s)
                                     (class "hidelink")) ,s))))
               ,@(stream->list
@@ -314,12 +323,13 @@
 ;; TODO possibly unused?
 (define (repeat-info event)
   `(div (@ (class "eventtext"))
-        (h2 "Upprepningar")
+        (h2 ,(_ "Recurrences"))
         (table (@ (class "recur-components"))
                ,@((@@ (vcomponent recurrence internal) map-fields)
                   (lambda (key value)
                     `(tr (@ (class ,key)) (th ,key)
                          (td
+                          ;; TODO Should these date string be translated?
                           ,(case key
                              ((wkst) (week-day-name value))
                              ((until) (if (date? value)
@@ -364,6 +374,7 @@
   `(select (@ ,@args)
      (option "-")
      ,@(map (lambda (x) `(option (@ (value ,(car x))) ,(cadr x)))
+            ;; TODO translate
             '((MO "Monday")
               (TU "Tuesday")
               (WE "Wednesday")
@@ -383,7 +394,8 @@
     (div (@ (class " eventtext edit-tab "))
          (form (@ (class "edit-form"))
                (select (@ (class "calendar-selection"))
-                 (option "- Choose a Calendar -")
+                 ;; NOTE flytta "muffarna" utanför
+                 (option ,(_ "- Choose a Calendar -"))
                  ,@(let ((dflt (get-config 'default-calendar)))
                      (map (lambda (calendar)
                             (define name (prop calendar 'NAME))
@@ -393,7 +405,7 @@
                                      ,name))
                           calendars)))
                (h3 (input (@ (type "text")
-                             (placeholder "Sammanfattning")
+                             (placeholder ,(_ "Summary"))
                              (name "summary") (required)
                              (data-property "summary")
                                         ; (value ,(prop ev 'SUMMARY))
@@ -402,24 +414,24 @@
                (div (@ (class "timeinput"))
 
                     ,@(with-label
-                       "Starttid"
+                       (_ "Start time")
                        '(date-time-input (@ (name "dtstart")
                                             (data-property "dtstart")
                                             )))
 
                     ,@(with-label
-                       "Sluttid"
+                       (_ "End time")
                        '(date-time-input (@ (name "dtend")
                                             (data-property "dtend"))))
 
                     (div (@ (class "checkboxes"))
                          ,@(with-label
-                            "Heldag?"
+                            (_ "Whole day?")
                             `(input (@ (type "checkbox")
                                        (name "wholeday")
                                        )))
                          ,@(with-label
-                            "Upprepande?"
+                            (_ "Recurring?")
                             `(input (@ (type "checkbox")
                                        (name "has_repeats")
                                        ))))
@@ -427,8 +439,8 @@
                     )
 
                ,@(with-label
-                  "Plats"
-                  `(input (@ (placeholder "Plats")
+                  (_ "Location")
+                  `(input (@ (placeholder ,(_ "Location"))
                              (name "location")
                              (type "text")
                              (data-property "location")
@@ -436,20 +448,20 @@
                              )))
 
                ,@(with-label
-                  "Beskrivning"
-                  `(textarea (@ (placeholder "Beskrivning")
+                  (_ "Description")
+                  `(textarea (@ (placeholder ,(_ "Description"))
                                 (data-property "description")
                                 (name "description"))
                                         ; ,(prop ev 'DESCRIPTION)
                              ))
 
                ,@(with-label
-                  "Kategorier"
+                  (_ "Categories")
                   `(input-list
                     (@ (name "categories")
                        (data-property "categories"))
                     (input (@ (type "text")
-                              (placeholder "Kattegori")))))
+                              (placeholder (_ "Category"))))))
 
                ;; TODO This should be a "list" where any field can be edited
                ;; directly. Major thing holding us back currently is that
@@ -481,6 +493,7 @@
                     "↺")
               (span (@ (class "summary")
                        (data-property "summary")))))
+         ;; TODO should't the time tags contain something?
          (div (div (time (@ (class "dtstart")
                             (data-property "dtstart")
                             (data-fmt "~L~H:~M")
@@ -497,7 +510,7 @@
                                         ; "20:56"
                          ))
               (div (@ (class "fields"))
-                   (div (b "Plats: ")
+                   (div (b ,("Location: "))
                         (div (@ (class "location")
                                 (data-property "location"))
                                         ; "Alsättersgatan 13"
@@ -519,7 +532,7 @@
                    ;;      "varje vecka"
                    ;;      ".")
                    (div (@ (class "last-modified"))
-                        "Senast ändrad -"
+                        ,(_ "Last Modified") " -"
                                         ; "2021-09-29 19:56"
                         ))))))
 
@@ -527,21 +540,21 @@
   `(template
     (@ (id "vevent-edit-rrule"))
     (div (@ (class "eventtext"))
-         (h2 "Upprepningar")
+         (h2 ,(_ "Recurrences"))
          (dl
-          (dt "Frequency")
+          (dt ,(_ "Frequency"))
           (dd (select (@ (name "freq"))
                 (option "-")
                 ,@(map (lambda (x) `(option (@ (value ,x)) ,(string-titlecase (symbol->string x))))
                        '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))))
 
-          (dt "Until")
+          (dt ,(_ "Until"))
           (dd (date-time-input (@ (name "until"))))
 
-          (dt "Conut")
+          (dt ,(_ "Conut"))
           (dd (input (@ (type "number") (name "count") (min 0))))
 
-          (dt "Interval")
+          (dt ,(_ "Interval"))
           (dd (input (@ (type "number") (name "interval") ; min and max depend on FREQ
                         )))
 
@@ -555,14 +568,14 @@
                       (dd (input-list (@ (name ,name))
                                       (input (@ (type "number")
                                                 (min ,min) (max ,max)))))))
-                  '((bysecond "By Second" 0 60)
-                    (byminute "By Minute" 0 59)
-                    (byhour "By Hour" 0 23)
-                    (bymonthday "By Month Day" -31 31) ; except 0
-                    (byyearday "By Year Day" -366 366) ; except 0
-                    (byweekno "By Week Number" -53 53) ; except 0
-                    (bymonth "By Month" 1 12)
-                    (bysetpos "By Set Position" -366 366) ; except 0
+                  '((bysecond ,(_ "By Second") 0 60)
+                    (byminute ,(_ "By Minute") 0 59)
+                    (byhour ,(_ "By Hour") 0 23)
+                    (bymonthday ,(_ "By Month Day") -31 31) ; except 0
+                    (byyearday ,(_ "By Year Day") -366 366) ; except 0
+                    (byweekno ,(_ "By Week Number") -53 53) ; except 0
+                    (bymonth ,(_ "By Month") 1 12)
+                    (bysetpos ,(_ "By Set Position") -366 366) ; except 0
                     )))
 
           ;; (dt "By Week Day")
@@ -573,7 +586,7 @@
           ;;                 ,(week-day-select '())
           ;;                 ))
 
-          (dt "Weekstart")
+          (dt ,(_ "Weekstart"))
           (dd ,(week-day-select '((name "wkst")))))))
   )
 
@@ -588,32 +601,36 @@
 
          (nav (@ (class "popup-control"))
               (button (@ (class "close-button")
-                         (title "Stäng")
+                         ;; Close this popup
+                         (title ,(_ "Close"))
                          (aria-label "Close"))
                       "×")
               (button (@ (class "maximize-button")
-                         (title "Fullskärm")
+                         ;; Make this popup occupy the entire screen
+                         (title ,(_ "Fullscreen"))
                          ;; (aria-label "")
                          )
                       "🗖")
               (button (@ (class "remove-button")
-                         (title "Ta Bort"))
+                         ;; Remove/Trash the event this popup represent
+                         ;; Think garbage can
+                         (title ,(_ "Remove")))
                       "🗑"))
 
          (tab-group (@ (class "window-body"))
                     (vevent-description
-                     (@ (data-label "📅") (data-title "Översikt")
+                     (@ (data-label "📅") (data-title ,(_ "Overview"))
                         (class "vevent")))
 
                     (vevent-edit
-                     (@ (data-label "🖊") (data-title "Redigera")))
+                     (@ (data-label "🖊") (data-title ,(_ "Edit"))))
 
                     ;; (vevent-edit-rrule
                     ;;  (@ (data-label "↺") (data-title "Upprepningar")))
 
                     (vevent-changelog
-                     (@ (data-label "📒") (date-title "Changelog")))
+                     (@ (data-label "📒") (date-title ,(_ "Changelog"))))
 
                     ,@(when (debug)
                         '((vevent-dl
-                           (@ (data-label "🐸") (data-title "Debug")))))))))
+                           (@ (data-label "🐸") (data-title ,(_ "Debug"))))))))))

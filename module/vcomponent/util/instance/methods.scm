@@ -12,6 +12,8 @@
   :use-module ((vcomponent datetime) :select (ev-time<?))
   :use-module (oop goops)
 
+  :use-module (calp translation)
+
   :export (add-event
            remove-event
 
@@ -70,7 +72,7 @@
 (define-method (initialize (this <events>) args)
   (next-method)
 
-  (format (current-error-port) "Building <events> from~%")
+  (format (current-error-port) (_ "Building <events> from~%"))
   (for calendar in (slot-ref this 'calendar-files)
        (format (current-error-port) "  - ~a~%" calendar))
 
@@ -185,13 +187,13 @@
          ;; save-event sets -X-HNH-FILENAME from the UID. This is fine
          ;; since the two events are guaranteed to have the same UID.
          (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
-           (throw 'misc-error "Saving event to disk failed."))
+           (throw 'misc-error (_ "Saving event to disk failed.")))
 
 
          (unless (eq? calendar (parent old-event))
            ;; change to a new calendar
            (format (current-error-port)
-                   "Unlinking old event from ~a~%"
+                   (_ "Unlinking old event from ~a~%")
                    (prop old-event '-X-HNH-FILENAME))
            ;; NOTE that this may fail, leading to a duplicate event being
            ;; created (since we save beforehand). This is just a minor problem
@@ -201,7 +203,7 @@
 
 
          (format (current-error-port)
-                 "Event updated ~a~%" (prop event 'UID)))]
+                 (_ "Event updated ~a~%") (prop event 'UID)))]
 
    [else
     (add-event this calendar event)
@@ -211,7 +213,7 @@
     ;; NOTE Posibly defer save to a later point.
     ;; That would allow better asyncronous preformance.
     (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
-      (throw 'misc-error "Saving event to disk failed."))
+      (throw 'misc-error (_ "Saving event to disk failed.")))
 
     (format (current-error-port)
-            "Event inserted ~a~%" (prop event 'UID))]))
+            (_ "Event inserted ~a~%") (prop event 'UID))]))

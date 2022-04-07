@@ -20,8 +20,14 @@ GUILE_C_FLAGS = -Lmodule \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
 
-all: go_files README static
+# All po-files inside po/, except new.po, and hidden files
+PO_FILES = $(shell find po -type f -name \*.po -and -not -name new.po -and -not -name .\*)
+LOCALIZATIONS = $(PO_FILES:po/%.po=localization/%/LC_MESSAGES/calp.mo)
+
+all: go_files README static $(LOCALIZATIONS)
 	$(MAKE) -C doc/ref
+
+XGETTEXT_FLAGS = --from-code=UTF-8 --add-comments --indent -k_
 
 static:
 	$(MAKE) -C static
@@ -33,6 +39,16 @@ obj-$(GUILE_VERSION)/%.go: module/%.scm
 # Phony target used by test/run-tests.scm and main to
 # automatically compile everything before they run.
 go_files: $(GO_FILES)
+
+po/%.po: $(SCM_FILES)
+	xgettext $(XGETTEXT_FLAGS) --output $@ -L scheme $^ --join-existing --omit-header
+
+po/new.po: $(SCM_FILES)
+	xgettext $(XGETTEXT_FLAGS) --output $@ -L scheme $^
+
+localization/%/LC_MESSAGES/calp.mo: po/%.po
+	-@mkdir -p $(shell dirname $@)
+	msgfmt --check -o $@ $<
 
 clean:
 	-$(MAKE) -C static clean

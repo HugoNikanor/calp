@@ -9,6 +9,7 @@
   :use-module (srfi srfi-1)
   :use-module (ice-9 format) ; for format-procedure
   :use-module (ice-9 curried-definitions) ; for ensure
+  :use-module (calp translation)
   :export (define-config)
 )
 
@@ -41,7 +42,7 @@
             (set! (it name) value)
             (scm-error 'configuration-error
                        "define-config"
-                       "No configuration slot named ~s, when defining ~s"
+                       (_ "No configuration slot named ~s, when defining ~s")
                        (list key name)
                        #f)))
   (set-config! name (get-config name default-value)))
@@ -59,7 +60,9 @@
                    (or (it value)
                        (scm-error 'configuration-error
                                   "set-config!"
-                                  "Pre-property failed when setting ~s to ~s"
+                                  ;; first slot is property name, second is new
+                                  ;; property value.
+                                  (_ "Pre-property failed when setting ~s to ~s")
                                   (list name value)
                                   #f))
                    value))
@@ -74,7 +77,7 @@
         (when (eq? v %uniq)
           (scm-error 'configuration-error
                      "get-config"
-                     "No configuration item named ~s"
+                     (_ "No configuration item named ~s")
                      (list key) #f))
         v)
       (hashq-ref config-values key default)))
@@ -125,7 +128,7 @@
               (hash-map->list list config-values)))
 
   `(*TOP*
-    (header "Configuration variables")
+    (header ,(_ "Configuration variables"))
     (dl
      ,@(concatenate
         (for (module values) in groups
@@ -137,7 +140,8 @@
                        `((dt ,key)
                          (dd (p (@ (inline))
                                 ,(or (description key) "")))
-                         (dt "V:")
+                         ;; Configuration variable value indicator
+                         (dt ,(_ "V:"))
                          (dd ,(if (procedure? value)
                                   (format-procedure value)
                                   `(scheme ,value))

@@ -22,6 +22,7 @@
   :use-module (srfi srfi-9 gnu)
   :use-module ((vcomponent recurrence internal)
                :select (byday make-recur-rule bymonthday))
+  :use-module (calp translation)
   )
 
 
@@ -166,7 +167,7 @@
                           day:   (string->number day))
               time: (timespec-time timespec)
               tz: (case (timespec-type timespec)
-                    [(#\s) (warning "what even is \"Standard time\"‽") ""]
+                    [(#\s) (warning (_ "what even is \"Standard time\"‽")) ""]
                     [(#\w) #f]
                     ;; Since we might represent times before UTC existed
                     ;; this is a bit of a lie. But it should work.
@@ -263,7 +264,7 @@
                         ;; They were removed since they were unused, uneeded, and was
                         ;; technical dept.
                         (scm-error 'misc-error "parse-zic-file"
-                                   "Invalid key ~s. Note that leap seconds and expries rules aren't yet implemented."
+                                   (_ "Invalid key ~s. Note that leap seconds and expries rules aren't yet implemented.")
                                    (list type)
                                    #f)]
                        ))]))))))
@@ -301,7 +302,7 @@
                          (target (link-target link))
                          (target-item (hash-ref zones target #f)))
                     (if (not target-item)
-                        (warning "Unresolved link, target missing ~a -> ~a" name target)
+                        (warning (_ "Unresolved link, target missing ~a -> ~a") name target)
                         (hash-set! zones name target-item))))
                 (car it)))
 
@@ -341,7 +342,7 @@
                          (set (day d) base-day)))]))
      tz: (case (timespec-type (rule-at rule))
            ((#\w) #f)
-           ((#\s) (warning "what even is \"Standard time\"‽") #f)
+           ((#\s) (warning (_ "what even is \"Standard time\"‽")) #f)
            ((#\u #\g #\z) 'UTC))))
 
   (let ((timespec (rule-at rule)))
@@ -363,7 +364,7 @@
                             (case to
                               ((maximum) #f)
                               ((minimum) (scm-error 'misc-error "rule->rrule"
-                                                    "Check your input"
+                                                    (_ "Check your input")
                                                     #f #f))
                               ((only)
                                (datetime
@@ -388,7 +389,7 @@
                ;; Sun>=8
                (let* (((<> wday base-day) (rule-on rule)))
                  (when (eq? '< <>)
-                   (warning "Counting backward for RRULES unsupported"))
+                   (warning (_ "Counting backward for RRULES unsupported")))
                  ;; NOTE this only realy works when base-day = 7n + 1, n ∈ N
                  ;; something like Sun>=5 is hard to fix, since we can only
                  ;; say which sunday in the month we want (first sunday,
@@ -406,11 +407,15 @@
                              idx (+ idx 2))]
       [(#\z)
        ;; NOTE No zones seem to currently use %z formatting.
-       (warning "%z not yet implemented")
+       ;; '%z' is NOT a format string, but information about another format string.
+       (warning (_ "%z not yet implemented"))
        fmt-string]
 
       [else (scm-error 'misc-error "zone-format"
-                       "Invalid format char ~s in ~s at position ~a"
+                       ;; first slot is the errornous character,
+                       ;; second is the whole string, third is the index
+                       ;; of the faulty character.
+                       (_ "Invalid format char ~s in ~s at position ~a")
                        (list (string-index fmt-string (1+ idx))
                              fmt-string
                              (1+ idx))

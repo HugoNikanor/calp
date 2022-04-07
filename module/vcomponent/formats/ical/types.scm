@@ -4,7 +4,9 @@
   :use-module (hnh util exceptions)
   :use-module (base64)
   :use-module (datetime)
-  :use-module (datetime timespec))
+  :use-module (datetime timespec)
+  :use-module (calp translation)
+  )
 
 ;; TODO shouldn't these really take vline:s?
 
@@ -35,7 +37,7 @@
 
 ;; TODO
 (define (write-period _ value)
-  (warning "PERIOD writer not yet implemented")
+  (warning (_ "PERIOD writer not yet implemented"))
   (with-output-to-string
     (lambda () (write value))))
 
@@ -92,4 +94,4 @@
 
 (define-public (get-writer type)
   (or (hashq-ref type-writers type #f)
-      (error "No writer for type" type)))
+      (error (_ "No writer for type") type)))

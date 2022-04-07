@@ -29,6 +29,7 @@
   :use-module ((base64) :select (base64encode))
 
   :use-module (ice-9 format)
+  :use-module (calp translation)
   )
 
 
@@ -74,10 +75,10 @@
              ,display)))
 
   (unless next-start
-    (scm-error 'misc-error "html-generate" "Next-start needs to be a procedure" #f #f))
+    (scm-error 'misc-error "html-generate" (_ "Next-start needs to be a procedure") #f #f))
 
   (unless prev-start
-    (scm-error 'misc-error "html-generate" "Prev-start needs to be a procedure" #f #f))
+    (scm-error 'misc-error "html-generate" (_ "Prev-start needs to be a procedure") #f #f))
 
   (xhtml-doc
    (@ (lang sv))
@@ -88,9 +89,11 @@
     (meta (@ (name viewport)
              (content "width=device-width, initial-scale=0.5")))
     (meta (@ (name description)
-             (content "Calendar for the dates between "
-                      ,(date->string start-date) " and "
-                      ,(date->string end-date))))
+             (content ,(format #f (_ "Calendar for the dates between ~a and ~a")
+                               ;; start date metainfo
+                               (date->string start-date (_ "~Y-~m-~d"))
+                               ;; end date metainfo
+                               (date->string end-date   (_ "~Y-~m-~d"))))))
     ;; NOTE this is only for the time actually part of this calendar.
     ;; overflowing times from pre-start and post-end is currently ignored here.
     (meta (@ (name start-time)
@@ -151,10 +154,12 @@ window.default_calendar='~a';"
          ;; Page footer
          (footer
           (@ (style "grid-area: footer"))
-          (span "Page generated " ,(date->string (current-date)))
-          (span "Current time " (current-time (@ (interval 1))))
+          (span ,(_ "Page generated ")
+                ;; Generation data
+                ,(date->string (current-date) (_ "~Y-~m-~d")))
+          (span ,(_ "Current time ") (current-time (@ (interval 1))))
           (span (a (@ (href ,(repo-url)))
-                   "Source Code")))
+                   ,(_ "Source Code"))))
 
          ;; Small calendar and navigation
          (nav (@ (class "calnav") (style "grid-area: nav"))
@@ -164,10 +169,12 @@ window.default_calendar='~a';"
                                     (start-of-week start-date)
                                     start-date)
                                 "/week/~1.html")
-                         "veckovy")
+                         ;; Button to view week
+                         (_ "Week"))
 
                    ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
-                         "månadsvy")
+                         ;; button to view month
+                         (_ "Month"))
 
                    (today-button
                     (a (@ (class "btn")
@@ -176,7 +183,8 @@ window.default_calendar='~a';"
                                               [(month) "view=month"]
                                               [(week) "view=week"]
                                               [else ""]))))
-                       "idag")))
+                       ;; Button to go to today
+                       ,(_ "Today"))))
 
               (div (@ (id "jump-to"))
                    ;; Firefox's accessability complain about each date
@@ -196,9 +204,11 @@ window.default_calendar='~a';"
                          ,(btn "➔"))))
 
          (details (@ (open) (style "grid-area: cal"))
-                  (summary "Month overview")
+                  (summary ,(_ "Month overview"))
                   (div (@ (class "smallcall-head"))
-                       ,(string-titlecase (date->string start-date "~B ~Y")))
+                       ,(string-titlecase (date->string start-date
+                                                        ;; Header of small calendar
+                                                        (_ "~B ~Y"))))
                   ;; NOTE it might be a good idea to put the navigation buttons
                   ;; earlier in the DOM-tree/tag order. At least Vimium's
                   ;; @key{[[} keybind sometimes finds parts of events instead.
@@ -223,17 +233,17 @@ window.default_calendar='~a';"
                        (action "/search/text"))
                     (input (@ (type "text")
                               (name "q")
-                              (placeholder "Sök")))
+                              ;; Search placeholder
+                              (placeholder ,(_ "Search"))))
                     (input (@ (type "submit")
                               (value ">"))))
 
               ,(when (or (debug) (edit-mode))
                  `(details (@ (class "sliders"))
-                           (summary "Option sliders")
-
+                           (summary ,(_ "Option sliders"))
 
                            ,@(when (edit-mode)
-                               `((label "Event blankspace")
+                               `((label ,(_ "Event blankspace"))
                                  ,(slider-input
                                    variable: "editmode"
                                    min: 0
@@ -242,7 +252,7 @@ window.default_calendar='~a';"
                                    value: 1)))
 
                            ,@(when (debug)
-                               `((label "Fontsize")
+                               `((label ,(_ "Fontsize"))
                                  ,(slider-input
                                    unit: "pt"
                                    min: 1
@@ -253,7 +263,7 @@ window.default_calendar='~a';"
 
               ;; List of calendars
               (details (@ (class "calendarlist"))
-                       (summary "Calendar list")
+                       (summary ,(_ "Calendar list"))
                        (ul ,@(map
                               (lambda (calendar)
                                 `(li (@ (data-calendar ,(base64encode (prop calendar 'NAME))))
@@ -279,7 +289,7 @@ window.default_calendar='~a';"
               ;; Events which started before our start point,
               ;; but "spill" into our time span.
               (section (@ (class "text-day"))
-                       (header (h2 "Tidigare"))
+                       (header (h2 ,(_ "Earlier")))
                        ;; TODO this group gets styles applied incorrectly.
                        ;; Figure out way to merge it with the below call.
                        ,@(stream->list
@@ -287,8 +297,7 @@ window.default_calendar='~a';"
                            (lambda (ev)
                              (fmt-single-event
                               ev `((id ,(html-id ev))
-                                   (data-calendar ,(base64encode (or (prop (parent ev) 'NAME)
-                                                                     "unknown"))))))
+                                   (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown"))))))
                            (stream-take-while
                             (compose (cut date/-time<? <> start-date)
                                      (extract 'DTSTART))

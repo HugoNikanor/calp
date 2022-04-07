@@ -19,9 +19,10 @@
   :use-module ((vcomponent util instance methods)
                 :select (get-calendars get-event-set))
 
-  :use-module ((sxml simple) :select (sxml->xml))
+  :use-module ((sxml simple) :select (sxml->xml xml->sxml))
   :use-module ((sxml transformations) :select (href-transformer))
   :use-module ((xdg basedir) :prefix xdg-)
+  :use-module (calp translation)
 
   :autoload (vcomponent util instance) (global-event-object)
   )
@@ -29,39 +30,35 @@
 
 (define opt-spec
   `((from (value #t) (single-char #\F)
-          (description "Start date of output.")
+          (description ,(_ "Start date of output."))
           )
     (count (value #t)
-           (description "How many pages should be rendered."
-                        "If --style=" (b "week") " and --from=" (b "2020-04-27")
-                        " then --count=" (b 4) " would render the four pages "
-                        "2020-04-27, 2020-05-04, 2020-05-11, and 2020-05-25. "
-                        "Defaults to 12 to give a whole year when --style=" (b "month") "."
-                        ))
+           (description ,(xml->sxml (_ "<group>How many pages should be rendered.
+If --style=<b>week</b> and --from=<b>2020-04-27</b>;
+then --count=<b>4</b> would render the four pages
+2020-04-27, 2020-05-04, 2020-05-11, and 2020-05-25.
+Defaults to 12 to give a whole year when --style=<b>month</b></group>"))))
 
     (target (single-char #\t) (value #t)
-            (description "Directory where html files should end up. Default to " (b "./html")))
+            (description ,(xml->sxml (_ "<group>Directory where html files should end up. Default to <b>./html</b></group>"))))
 
     (style (value #t) (predicate ,(lambda (v) (memv (string->symbol v)
                                             '(small wide week table))))
-           (description "How the body of the HTML page should be layed out. "
-                        (br) (b "week")
-                        " gives a horizontally scrolling page with 7 elements, "
-                        "where each has events graphically laid out hour by hour."
-                        (br) (b "table")
-                        " gives a month in overview as a table. Each block contains "
-                        "the events for the given day, in order of start time. They are "
-                        "however not graphically sized. "
-                        (br) (b "wide")
-                        " is the same as week, but gives a full month.")
-           )
+           (description ,(xml->sxml (_ "<group>How the body of the HTML page should be layed out.
+<br/><b>week</b>
+gives a horizontally scrolling page with 7 elements, where each has events
+graphically laid out hour by hour.
+<br/><b>table</b>
+gives a month in overview as a table. Each block contains the events for the
+given day, in order of start time. They are however not graphically sized.
+<br/><b>wide</b>
+is the same as week, but gives a full month.</group>"))))
 
     (standalone
-     (description "Creates a standalone document instead of an HTML fragment "
-                  "for embedding in a larger page. Currently only applies to the "
-                  (i "small") "style"))
+     (description ,(xml->sxml (_ "<group>Creates a standalone document instead of an HTML fragment
+for embedding in a larger page. Currently only applies to the <i>small</i> style</group>"))))
 
-    (help (single-char #\h) (description "Print this help."))))
+    (help (single-char #\h) (description ,(_ "Print this help.")))))
 
 
 
@@ -115,7 +112,7 @@
   (stream-for-each
    (lambda (start-date)
      (define fname (path-append target-directory (date->string start-date "~1.xml")))
-     (format (current-error-port) "Writing to [~a]~%" fname)
+     (format (current-error-port) (_ "Writing to [~a]~%") fname)
      (with-output-to-file fname
        (lambda () (sxml->xml (re-root-static
                          (apply html-generate
@@ -183,7 +180,7 @@
              pre-start: (start-of-week start)
              post-end: (end-of-week (end-of-month start)))]
     [else
-     (scm-error 'misc-error "html-main" "Unknown html style: ~a" (list style) #f)])
+     (scm-error 'misc-error "html-main" (_ "Unknown html style: ~a") (list style) #f)])
 
-  ((@ (calp util time) report-time!) "all done")
+  ((@ (calp util time) report-time!) (_ "all done"))
   )

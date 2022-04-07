@@ -8,6 +8,7 @@
                :select (xhtml-doc include-css))
   :use-module ((calp html vcomponent)
                :select (compact-event-list))
+  :use-module (calp translation)
   )
 
 ;; Display the result of a search term, but doesn't do any searching
@@ -24,25 +25,25 @@
                 errors has-query? search-term search-result page paginator)
   (xhtml-doc
    (@ (lang sv))
-   (head (title "Search results")
+   (head (title ,(_ "Search results"))
          ,(include-css "/static/style.css"))
    (body
-    (a (@ (href ("/today"))) "Till Idag")
-    (h2 "Search term")
+    (a (@ (href ("/today"))) ,(_ "Show today"))
+    (h2 ,(_ "Search term"))
     (form
      (pre (textarea (@ (name "q") (rows 5) (spellcheck false)
                        (style "width:100%"))
                     ,(when has-query?
                        (with-output-to-string
                          (lambda () (pretty-print search-term))))))
-     (label (@ (for "onlyfuture")) "limit to future occurences")
+     (label (@ (for "onlyfuture")) ,(_ "limit to future occurences"))
      (input (@ (name "onlyfuture") (id "onlyfuture") (type checkbox)))
      (input (@ (type submit))))
     ,@(if errors
-          `((h2 "Error searching")
+          `((h2 ,(_ "Error searching"))
             (div (@ (class "error"))
                  (pre ,errors)))
-          `((h2 "Result (page " ,page ")")
+          `((h2 ,(format #f (_ "Result (page ~a)") page))
             (ul ,@(compact-event-list search-result))
             (div (@ (class "paginator"))
                  ,@(paginator->list

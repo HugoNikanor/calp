@@ -5,14 +5,16 @@
   :use-module (vcomponent formats ical output)
   :use-module (ice-9 getopt-long)
   :use-module (datetime)
+  :use-module (calp translation)
+  :use-module (calp translation)
   )
 
 (define opt-spec
-  '((from (value #t) (single-char #\F))
+  `((from (value #t) (single-char #\F))
     (to (value #t) (single-char #\T)
-        (description "Returns all elements between these two dates."))
+        (description ,(_ "Returns all elements between these two dates.")))
     (help (single-char #\h)
-          (description "Print this help."))))
+          (description ,(_ "Print this help.")))))
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt opt-spec)))

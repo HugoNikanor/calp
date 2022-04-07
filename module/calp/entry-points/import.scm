@@ -12,16 +12,17 @@
   :use-module (vcomponent)
   ;; :use-module ((vcomponent formats ical parse) :select (parse-cal-path))
   :use-module ((vcomponent util parse-cal-path) :select (parse-cal-path))
+  :use-module (calp translation)
   :autoload (vcomponent util instance) (global-event-object)
   )
 
 (define options
-  '((calendar (value #t) (single-char #\c)
-              (description "Name of calendar to import into"))
+  `((calendar (value #t) (single-char #\c)
+              (description ,(_ "Name of calendar to import into")))
     (file (value #t) (single-char #\f)
-          (description "ics file to import"))
+          (description ,(_ "ics file to import")))
     (help (single-char #\h)
-          (description "Print this help."))))
+          (description ,(_ "Print this help.")))))
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt options)))
@@ -40,27 +41,24 @@
                      (get-calendars global-event-object)))))
 
     (unless calendar
-      (format (current-error-port) "No calendar named ~s~%" cal-name)
+      (format (current-error-port) (_ "No calendar named ~s~%") cal-name)
       (throw 'return))
 
     (let ((new-events (parse-cal-path fname)))
 
-      (format #t "About to the following ~a events into ~a~%~{~a~^~%~}~%"
+      (format #t (_ "About to import the following ~a events into ~a~%")
               (length (children new-events))
-              (prop calendar 'NAME)
+              (prop calendar 'NAME))
+      (format #t "~{~a~^~%~}~%"
               (map (extract 'SUMMARY) (children new-events)))
 
-      (format #t "Continue? [Y/n] ")
+      (format #t (_ "Continue? [Y/n] "))
 
-      (let loop ((c #\space))
-        (case c
-          [(#\n #\N) (throw 'return)]
-          [(#\y #\Y) (map (lambda (e)
-                            (add-event calendar e)
-                            (save-event e))
-                          (children new-events))]
-          [else
-           (let ((line (read-line)))
-             (loop (if (string-null? line)
-                       #\Y (string-ref line 0))))]))
-      )))
+      (let loop ((line (read-line)))
+        (case (if (string-null? line) 'yes (yes-no-check line))
+          [(no) (throw 'return)]
+          [(yes) (map (lambda (e)
+                       (add-event calendar e)
+                       (save-event e))
+                     (children new-events))]
+          [else (loop line (read-line))])))))

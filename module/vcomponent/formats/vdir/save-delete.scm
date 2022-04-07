@@ -24,13 +24,13 @@
 
   (unless calendar
     (scm-error 'wrong-type-arg "save-event"
-               "Can only save events belonging to calendars, event uid = ~s"
+               (_ "Can only save events belonging to calendars, event uid = ~s")
                (list (prop event 'UID))
                #f))
 
   (unless (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE))
     (scm-error 'wrong-type-arg "save-event"
-               "Can only save events belonging to vdir calendars. Calendar is of type ~s"
+               (_ "Can only save events belonging to vdir calendars. Calendar is of type ~s")
                (list (prop calendar '-X-HNH-SOURCETYPE))
                #f))
 
@@ -50,7 +50,7 @@
   (define calendar (parent event))
   (unless (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE))
     (scm-error 'wrong-type-arg "remove-event"
-               "Can only remove events belonging to vdir calendars. Calendar is of type ~s"
+               (_ "Can only remove events belonging to vdir calendars. Calendar is of type ~s")
                (list (prop calendar '-X-HNH-SOURCETYPE))
                #f))
   (delete-file (prop event '-X-HNH-FILENAME)))

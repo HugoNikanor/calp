@@ -24,29 +24,31 @@
 
   :use-module (statprof)
   :use-module (calp repl)
+  :use-module (sxml simple)
 
   :use-module ((xdg basedir) :prefix xdg-)
+
+  :use-module (calp translation)
 
   )
 
 
 (define options
   `((statprof (value display-style)
-              (description "Run the program within Guile's built in statical "
-                           "profiler. Display style is one of "
-                           (b "flat") " or " (b "tree") "."))
+              (description ,(xml->sxml (_ "<group>Run the program within Guile's built in statical
+profiler. Display style is one of <b>flat</b> or <b>tree</b>.</group>"))))
     (repl (value address)
           (description
-           "Start a Guile repl which can be connected to, defaults to the unix socket "
-           (i "/run/user/${UID}/calp-${PID}") ", but it can be bound to any unix or "
-           "TCP socket. ((@ (vcomponent util instance) global-event-object)) "
-           "should contain all events."
-           (br)
-           (b "Should NOT be used in production.")))
+           ,(xml->sxml (_ "<group>Start a Guile repl which can be connected to, defaults to the
+unix socket <i>/run/user/${UID}/calp-${PID}</i>, but it can be bound to any
+unix or TCP socket. ((@ (vcomponent util instance) global-event-object)) should
+contain all events.
+<br/>
+<b>Should NOT be used in production.</b></group>"))))
 
     (config (value #t)
             (description
-             "Path to alterantive configuration file to load instead of the default one. "))
+             ,(_ "Path to alterantive configuration file to load instead of the default one.")))
 
     ;; Techical note:
     ;; Guile's getopt doesn't support repeating keys. Thereby the small jank,
@@ -54,57 +56,54 @@
     (option (single-char #\o)
             (value #t)
             (description
-             "Set configuration options, on the form "
-             (i "key") "=" (i "value")
-             " as if they were set in the config file. These options have "
-             "priority over those from the file. "
-             "Can " (i "not") " be given with an equal after --option."
-             (br) "Can be given multiple times."))
+             ,(xml->sxml (_ "<group>Set configuration options, on the form <i>key</i>=<i>value</i>
+as if they were set in the config file. These options have priority over those
+from the file.  Can <i>not</i> be given with an equal after --option.  <br/>Can
+be given multiple times.</group>"))))
 
     (version (single-char #\v)
-             (description "Display version, which is " ,(@ (calp) version) " btw."))
+             (description ,(format #f (_ "Display version, which is ~a btw.")
+                                   (@ (calp) version))))
 
     (update-zoneinfo)
 
     (help (single-char #\h)
-          (description "Print this help"))
+          (description ,(_ "Print this help")))
 
-    (printconf (description "Print known configuration variables."
-                            (br) (b "NOTE") ": "
-                            "Only those configuration variables which are loaded "
-                            "will be shown, more might be available"))))
+    (printconf (description ,(xml->sxml (_ "<group>Print known configuration variables.
+<br/><b>NOTE</b>:
+Only those configuration variables which are loaded will be shown, more might be
+available</group>"))))))
 
 (define module-help
-  '(*TOP* (br)
-    (center (b "Calp")) (br) (br)
-    "Usage: " (b "calp") " [ " (i flags) " ] " (i mode) " [ " (i "mode flags") " ]" (br)
-
-    (hr)
-    (center (b "Modes")) (br) (br)
-
-    (p (b "html") " reads calendar files from disk, and writes them to static HTML files.")
-
-    (p (b "terminal") " loads the calendars, and startrs an interactive terminal interface.")
-
-    "[UNTESTED]" (br)
-    (p (b "import") "s an calendar object into the database.")
-
-    (p (b "text") " formats and justifies what it's given on standard input, "
-       "and writes it to standard output. Similar to this text.")
-
-    (p (b "ical") " loads the calendar database, and imideately "
-       "reserializes it back into ICAL format. "
-       "Useful for merging calendars.")
-
-    (p (b "benchmark") " " (i "module") (br)
-       "Runs the procedure 'run-benchmark' from the module (calp benchmark " (i "module") ").")
-
-    (p (b "server") " starts an HTTP server which dynamicly loads and displays event. The "
-       (i "/month/{date}.html") " & " (i "/week/{date}.html") " runs the same output code as "
-       (b "html") ". While the " (i "/calendar/{uid}.ics") " uses the same code as " (b "ical") ".")
-
-    (hr) (br)
-    (center (b "Flags")) (br)))
+  (xml->sxml
+   (string-append
+    "<group><br/>
+<center><b>" "Calp" "</b></center>
+<br/><br/>
+" (_ "Usage: <b>calp</b> [ <i>flags</i> ] <i>mode</i> [ <i>mode flags</i> ]") "<br/>
+<hr/>"
+;; Header for following list of modes of operation
+    "<center><b>" (_ "Modes") "</b></center>
+<br/><br/>"
+    (_ "<p><b>html</b> reads calendar files from disk, and writes them to static HTML files.</p>")
+    (_ "<p><b>terminal</b> loads the calendars, and starts an interactive terminal interface.</p>")
+    (_ "[UNTESTED]<br/><p><b>import</b>s a calendar object into the database.</p>")
+    (_ "<p><b>text</b> formats and justifies what it's given on standard input,
+and writes it to standard output. Similar to this text.</p>")
+    (_ "<p><b>ical</b> loads the calendar database, and immediately
+re-serializes it back into iCAL format. Useful for merging calendars.</p>")
+    (_ "<p><b>benchmark</b> <i>module</i><br/>Runs the procedure 'run-benchmark'
+from the module (calp benchmark <i>module</i>).</p>")
+    (_ "<p><b>server</b> starts an HTTP server which dynamically loads and
+displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs
+the same output code as <b>html</b>. While the <i>/calendar/{uid}.ics</i> uses
+the same code as <b>ical</b>.</p>")
+    "<hr/><br/>"
+    ;; Header for list of available flags.
+    ;; Actual list is auto generated elsewhere.
+    "<center><b>" (_ "Flags") "</b></center>
+<br/></group>")))
 
 (define (ornull a b)
   (if (null? a)
@@ -122,7 +121,7 @@
                altconfig
                (scm-error 'misc-error
                           "wrapped-main"
-                          "Configuration file ~a missing"
+                          (_ "Configuration file ~a missing")
                           (list altconfig)
                           #f))]
          ;; altconfig could be placed in the list below. But I want to raise an error
@@ -169,7 +168,10 @@
        ))
     (lambda args
       (format (current-error-port)
-              "Failed loading config file ~a~%~s~%"
+              ;; Two arguments:
+              ;; Configuration file path,
+              ;; thrown error arguments
+              (_ "Failed loading config file ~a~%~s~%")
               config-file
               args
               )))
@@ -210,14 +212,14 @@
          (throw 'return))
 
   (when (option-ref opts 'version #f)
-    (format #t "Calp version ~a~%" (@ (calp) version))
+    (format #t (_ "Calp version ~a~%") (@ (calp) version))
     (throw 'return))
 
   (when (option-ref opts 'update-zoneinfo #f)
     (let* ((locations (list "/usr/libexec/calp/tzget" (path-append (xdg-data-home) "tzget")))
            (filename (or (find file-exists? locations)
                          (scm-error 'missing-helper "wrapped-main"
-                                    "tzget not installed, please put it in one of ~a"
+                                    (_ "tzget not installed, please put it in one of ~a")
                                     (list locations)
                                     (list "tzget" locations))))
            (pipe (open-input-pipe filename)))
@@ -253,7 +255,7 @@
        ((benchmark) (@ (calp entry-points benchmark) main))
        (else => (lambda (s)
                   (format (current-error-port)
-                          "Unsupported mode of operation: ~a~%"
+                          (_ "Unsupported mode of operation: ~a~%")
                           s)
                   (exit 1))))
      ropt))
@@ -268,7 +270,7 @@
 
 
 (define-public (main args)
-  ((@ (calp util time) report-time!) "Program start")
+  ((@ (calp util time) report-time!) (_ "Program start"))
   (with-throw-handler #t
     (lambda ()
       (dynamic-wind (lambda () 'noop)

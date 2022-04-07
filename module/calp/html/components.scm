@@ -2,6 +2,7 @@
   :use-module (hnh util)
   :use-module (ice-9 curried-definitions)
   :use-module (ice-9 match)
+  :use-module (calp translation)
   :export (xhtml-doc)
   )
 
@@ -58,7 +59,7 @@
               rest: args)
   (when (and onclick href)
     (scm-error 'wrong-type-arg "btn"
-               "href and onclick are mutually exclusive. href = ~s, onclick = ~s."
+               (_ "href and onclick are mutually exclusive. href = ~s, onclick = ~s.")
                (list href onclick)
                #f))
 

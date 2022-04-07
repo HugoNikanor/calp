@@ -5,6 +5,8 @@
   :use-module (hnh util options)
   :use-module ((srfi srfi-41) :select (stream->list))
 
+  :use-module (calp translation)
+
   :use-module ((vcomponent util instance methods) :select (get-event-set))
   :autoload (vcomponent util instance) (global-event-object)
 
@@ -15,9 +17,9 @@
 (define opt-spec
   `((enable-output (single-char #\o)
                    (description
-                    "Output is be default supressed, since many fields contain way to much data "
-                    "to read. This turns it on again."))
-    (help (single-char #\h) (description "Print this help."))))
+                    ,(_ "Output is by default supressed, since many fields contain way to much data to read. This turns it on again.")
+                    ))
+    (help (single-char #\h) (description ,(_ "Print this help.")))))
 
 
 (define (main args)
