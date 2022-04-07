@@ -80,9 +80,9 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
             ((= errno EEXIST)
              (let ((st (lstat link)))
                (cond ((not (eq? 'symlink (stat:type st)))
-                      (warning "File ~s exists, but isn't a symlink" link))
+                      (warning (_ "File ~s exists, but isn't a symlink") link))
                      ((not (string=? target (readlink link)))
-                      (warning "~s is a symlink, but points to ~s instead of expected ~s"
+                      (warning (_ "~s is a symlink, but points to ~s instead of expected ~s")
                                link (readlink link) target))))
              ;; else, file exists as a symlink, and points where we want,
              ;; which is expected. Do nothing and be happy.

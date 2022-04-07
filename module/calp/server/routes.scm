@@ -131,7 +131,7 @@
    (GET "/" ()
         (return '((content-type text/html))
                 (sxml->html-string
-                 '(body (a (@ (href "/today")) ,(_ "Go to Today"))
+                 `(body (a (@ (href "/today")) ,(_ "Go to Today"))
                         (script "window.onload = function() {
   document.getElementsByTagName('a')[0].click();}")))))
 
@@ -443,7 +443,7 @@
                  '((content-type text/html))
                  (sxml->html-string
                   `(html
-                    (head (title "Calp directory listing for " path)
+                    (head (title (_ "Calp directory listing for ") path)
                           ,((@ (calp html components) include-css) "/static/directory-listing.css"))
                     (body ,(directory-table (static-dir) path))))))
           (lambda (err proc fmt fmt-args data)

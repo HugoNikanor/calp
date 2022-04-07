@@ -14,6 +14,7 @@
   :use-module ((calp html vcomponent)
                :select (make-block format-summary))
   :use-module (ice-9 format)
+  :use-module (calp translation)
   )
 
 
@@ -33,7 +34,7 @@
 
   (unless event-length-key
     (scm-error 'wrong-type-arg "fix-event-widths!"
-               "event-length-key is required"
+               (_ "event-length-key is required")
                #f #f))
 
   ;; @var{x} is how for left in the container we are.

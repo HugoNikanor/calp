@@ -44,10 +44,10 @@
           (configuration-error
            (lambda (key subr msg args data)
              (format (current-error-port)
-                     "Error retrieving configuration, ~?~%" msg args)))
+                     (_ "Error retrieving configuration, ~?~%") msg args)))
           (#t ; for errors when running the filter
            (lambda (err . args)
-             (warning "~a on formatting description, ~s" err args)
+             (warning (_ "~a on formatting description, ~s") err args)
              str))))
 
 ;; used by search view
@@ -510,7 +510,7 @@
                                         ; "20:56"
                          ))
               (div (@ (class "fields"))
-                   (div (b ,("Location: "))
+                   (div (b ,(_ "Location: "))
                         (div (@ (class "location")
                                 (data-property "location"))
                                         ; "Alsättersgatan 13"

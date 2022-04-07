@@ -15,6 +15,7 @@
   :use-module ((hnh util path) :select (path-append))
   :use-module (vcomponent formats ical output)
   :use-module (vcomponent)
+  :use-module (calp translation)
   :use-module ((hnh util io) :select (with-atomic-output-to-file))
   )
 
