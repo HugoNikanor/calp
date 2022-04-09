@@ -23,7 +23,7 @@
     (label self
            (case-lambda
              (()
-              (define tz-list (get-config 'tz-list))
+              (define tz-list (tz-list))
               (if (null? tz-list)
                 (warning (_ "Default zoneinfo only available when tz-dir and tz-list are configured"))
                 (self tz-list)))

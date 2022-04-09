@@ -25,22 +25,17 @@
   :use-module ((base64) :select (base64encode))
   :use-module (ice-9 format)
   :use-module (calp translation)
+  :use-module (calp html filter)
   )
-
-(define-config summary-filter (lambda (_ a) a)
-  pre: (ensure procedure?))
-
-(define-config description-filter (lambda (_ a) a)
-  pre: (ensure procedure?))
 
 
 (define-public (format-summary ev str)
-  ((get-config 'summary-filter) ev str))
+  ((summary-filter) ev str))
 
 ;; NOTE this should have information about context (html/term/...)
 ;; And then be moved somewhere else.
 (define-public (format-description ev str)
-  (catch* (lambda () ((get-config 'description-filter) ev str))
+  (catch* (lambda () ((description-filter) ev str))
           (configuration-error
            (lambda (key subr msg args data)
              (format (current-error-port)
@@ -396,7 +391,7 @@
                (select (@ (class "calendar-selection"))
                  ;; NOTE flytta "muffarna" utanför
                  (option ,(_ "- Choose a Calendar -"))
-                 ,@(let ((dflt (get-config 'default-calendar)))
+                 ,@(let ((dflt ((@ (vcomponent) default-calendar))))
                      (map (lambda (calendar)
                             (define name (prop calendar 'NAME))
                             `(option (@ (value ,(base64encode name))

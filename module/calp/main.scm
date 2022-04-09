@@ -6,7 +6,6 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-88)             ; keyword syntax
 
-  :use-module ((calp util config) :select (set-config! get-config get-configuration-documentation))
   :use-module (hnh util options)
   :use-module ((calp util hooks) :select (shutdown-hook))
 
@@ -50,16 +49,13 @@ contain all events.
             (description
              ,(_ "Path to alterantive configuration file to load instead of the default one.")))
 
-    ;; Techical note:
-    ;; Guile's getopt doesn't support repeating keys. Thereby the small jank,
-    ;; and my regex hack below.
-    (option (single-char #\o)
-            (value #t)
-            (description
-             ,(xml->sxml (_ "<group>Set configuration options, on the form <i>key</i>=<i>value</i>
-as if they were set in the config file. These options have priority over those
-from the file.  Can <i>not</i> be given with an equal after --option.  <br/>Can
-be given multiple times.</group>"))))
+    (debug (single-char #\d)
+           (description
+            ,(_ "Turns on debug mode for HTML output")))
+
+    (edit-mode
+     (description
+      ,(_ "Makes generated HTML user editable (through JS)")))
 
     (version (single-char #\v)
              (description ,(format #f (_ "Display version, which is ~a btw.")
@@ -70,10 +66,7 @@ be given multiple times.</group>"))))
     (help (single-char #\h)
           (description ,(_ "Print this help")))
 
-    (printconf (description ,(xml->sxml (_ "<group>Print known configuration variables.
-<br/><b>NOTE</b>:
-Only those configuration variables which are loaded will be shown, more might be
-available</group>"))))))
+    ))
 
 (define module-help
   (xml->sxml
@@ -176,22 +169,12 @@ the same code as <b>ical</b>.</p>")
               args
               )))
 
+  (awhen (option-ref opts 'edit-mode #f)
+         ((@ (calp html config) edit-mode) #t))
 
+  (awhen (option-ref opts 'debug #f)
+         ((@ (calp html config) debug) #t))
 
-  ;; NOTE this doesn't stop at first non-option, meaning that -o flags
-  ;; from sub-commands might be parsed.
-  (map (lambda (pair)
-         (let* (((key value) (string-split (cadr pair) #\=)))
-           (set-config! (string->symbol key)
-                        (let ((form (call-with-input-string value read)))
-                          (if (list? form)
-                              (primitive-eval form)
-                              form)))))
-       (filter (lambda (p)
-                 ;; should match `--option', as well as a single flag with any
-                 ;; number of other options, as long as the last one is `o'.
-                 (string-match "^-(-option|[^-]*o)$" (car p)))
-               (zip args (cdr args))))
 
   ;; help printing moved below some other stuff to allow
   ;; print-configuration-and-return to show bound values.
@@ -199,16 +182,6 @@ the same code as <b>ical</b>.</p>")
          (display (sxml->ansi-text module-help)
                   (current-output-port))
          (print-arg-help options)
-         (throw 'return))
-
-  (awhen (option-ref opts 'printconf #f)
-         (display (sxml->ansi-text
-                   ;; NOTE that this can only display config
-                   ;; items in loaded modules.
-                   ;; See scripts/get-config.scm for finding
-                   ;; all configuration items.
-                   (get-configuration-documentation))
-                  (current-output-port))
          (throw 'return))
 
   (when (option-ref opts 'version #f)
@@ -230,8 +203,9 @@ the same code as <b>ical</b>.</p>")
       ((@ (hnh util io) with-atomic-output-to-file)
        (path-append (xdg-data-home) "calp" "zoneinfo.scm")
        (lambda ()
-         (write `(set-config! 'tz-list ',names)) (newline)
-         (write `(set-config! 'last-zoneinfo-upgrade ,((@ (datetime) current-date)))) (newline)))))
+         (write `((@ (datetime instance) tz-list) ',names)) (newline)
+         ;; (write `(set-config! 'last-zoneinfo-upgrade ,((@ (datetime) current-date)))) (newline)
+         ))))
 
   ;; always load zoneinfo if available.
   (let ((z (path-append (xdg-data-home) "calp" "zoneinfo.scm")))

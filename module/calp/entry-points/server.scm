@@ -38,9 +38,8 @@ and <i>[::]</i> for IPv6</group>"))))
 
   (define opts (getopt-long args (getopt-opt options)))
   (define addr (option-ref opts 'addr #f))
-  (define port (or (and=> (option-ref opts 'port #f)
-                          string->number)
-                   (get-config 'port)))
+  (define port (cond ((option-ref opts 'port #f) => string->number)
+                     (else (port))))
   (define family
     (cond [(option-ref opts 'six  #f) AF_INET6]
           [(option-ref opts 'four #f) AF_INET]

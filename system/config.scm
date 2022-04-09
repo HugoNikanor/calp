@@ -3,7 +3,7 @@
              ((datetime) :select (mon))
              (glob))
 
-(set-config! 'calendar-files (glob "/var/lib/calp/.local/var/cal/*"))
+((@ (vcomponent) calendar-files) (glob "/var/lib/calp/.local/var/cal/*"))
 
 (define (parse-links str)
   (define regexp (make-regexp "https?://\\S+"))
@@ -15,11 +15,11 @@
                  (a (match:substring m))
                  (recur (match:suffix m)))))))
 
-(set-config! 'description-filter
+((@ (calp html vcomponent) description-filter)
  (lambda (ev str) (parse-links str)))
 
-(set-config! 'week-start mon)
+((@ (datetime) week-start) mon)
 ;; (set-config! 'default-calendar "Calendar")
 
-(set-config! 'port 8082)
-(set-config! 'edit-mode #t)
+((@ (calp entry-points server) port) 8082)
+((@ (calp html config) edit-mode) #t)

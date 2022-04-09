@@ -48,11 +48,10 @@
 
 ;;; Configuration
 
-(define-public week-start (make-parameter sun))
+;; (define-public week-start (make-parameter sun))
 (define-config week-start sun
   description: "First day of week"
-  pre: (ensure (lambda (x) (<= sun x sat)))
-  post: week-start)
+  pre: (ensure (lambda (x) (<= sun x sat))))
 
 
 ;;; RECORD TYPES

@@ -4,6 +4,7 @@
   :use-module (vcomponent base)
   :use-module (text util)
   :use-module (calp translation)
+  :use-module ((hnh util exceptions) :select (warning))
   :use-module ((vcomponent recurrence display) :select (format-recurrence-rule))
   )
 
@@ -38,11 +39,12 @@
     "."))
 
 (define-public (format-summary ev str)
-  ((get-config 'summary-filter) ev str))
+  ((@ (calp html filter) summary-filter) ev str))
 
 ;; NOTE this should have information about context (html/term/...)
 (define-public (format-description ev str)
-  (catch #t (lambda () ((get-config 'description-filter) ev str))
+  (catch #t (lambda () ((@ (calp html filter) description-filter)
+                   ev str))
     (lambda (err . args)
       ;; Warning message for failure to format description.
       ;; First argument is name of warning/error,

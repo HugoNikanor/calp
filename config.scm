@@ -7,7 +7,7 @@
              (sxml xpath)
              )
 
-(set-config! 'calendar-files (glob "~/.local/var/cal/*"))
+((@ (vcomponent config) calendar-files) (glob "~/.local/var/cal/*"))
 
 (define my-courses
   '((TSEA82 . "Datorteknik")
@@ -20,7 +20,7 @@
 (define* (aref alist key optional: default)
   (or (assoc-ref alist key) default key))
 
-(set-config! 'summary-filter
+((@ (calp html filter) summary-filter)
  (lambda (ev str)
    (regexp-substitute/global
     #f "T[A-Z]{3}[0-9]{2}" str
@@ -83,7 +83,7 @@
     "LiTHe kod"
     "Klassfadder 2020"))
 
-(set-config! 'description-filter
+((@ (calp html filter) description-filter)
  (lambda (ev str)
    (cond [(member (prop (parent ev) 'NAME)
                   html-cals)
@@ -92,6 +92,6 @@
           (parse-teams-description str)]
          [else (parse-links str)])))
 
-(set-config! 'week-start mon)
-(set-config! 'default-calendar "Calendar")
-(set-config! 'path-prefix (car (glob "~/.local")))
+((@ (datetime) week-start) mon)
+((@ (vcomponent config) default-calendar) "Calendar")
+;; (set-config! 'path-prefix (car (glob "~/.local")))

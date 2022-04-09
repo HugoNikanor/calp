@@ -5,4 +5,5 @@
 
 (define-config warnings-are-errors #f
   description: (_ "Crash on warnings.")
-  post: warnings-are-errors)
+  post: (@ (hnh util exceptions) warnings-are-errors)
+  )

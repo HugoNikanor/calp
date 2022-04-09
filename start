@@ -20,9 +20,9 @@ port=`find_port {8080..9000}`
 echo "Starting on $port"
 
 $(dirname $(realpath $0))/main \
-	-o debug=#t \
-	-o edit-mode=#t \
 	--repl=$XDG_RUNTIME_DIR/calp \
+	--debug \
+	--edit-mode \
 	server \
 	--port "$port" \
 	--sigusr

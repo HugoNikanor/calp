@@ -111,12 +111,8 @@
 
 
 
-(define static-dir (make-parameter "static"))
-
 (define-config static-dir "static"
-  description: "Where static files for the web server are located"
-  post: static-dir
-  )
+  description: (_ "Where static files for the web server are located"))
 
 
 

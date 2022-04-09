@@ -107,7 +107,7 @@
 EDIT_MODE=~:[false~;true~];
 window.default_calendar='~a';"
               (edit-mode)
-              (base64encode (get-config 'default-calendar))))
+              (base64encode ((@ (vcomponent) default-calendar)))))
 
 
     (style ,(format #f "html {
