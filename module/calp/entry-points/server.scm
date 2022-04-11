@@ -38,7 +38,7 @@ and <i>[::]</i> for IPv6</group>"))))
 
   (define opts (getopt-long args (getopt-opt options)))
   (define addr (option-ref opts 'addr #f))
-  (define port (cond ((option-ref opts 'port #f) => string->number)
+  (define port% (cond ((option-ref opts 'port #f) => string->number)
                      (else (port))))
   (define family
     (cond [(option-ref opts 'six  #f) AF_INET6]
@@ -76,12 +76,12 @@ and <i>[::]</i> for IPv6</group>"))))
   ;; PID of this process
   ;; PWD of this process
   (format #t (_ "Starting server on ~a:~a~%I'm ~a, runing from ~a~%")
-          addr port
+          addr port%
           (getpid) (getcwd))
 
   (catch 'system-error
     (lambda ()
-      (start-server (list family: family port: port host: addr)))
+      (start-server (list family: family port: port% host: addr)))
 
     ;; probably address already in use
     (lambda (err proc fmt args errno)
