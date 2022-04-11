@@ -863,60 +863,99 @@ msgstr  "~Y-~m-~d ~H:~M"
 
 #, scheme-format
 msgid   "href and onclick are mutually exclusive. href = ~s, onclick = ~s."
-msgstr  ""
+msgstr  "href och onclick är ömsesidigt uteslutande. href = ~s, onclick = ~s."
 
 #. File size
 msgid   "Size"
-msgstr  ""
+msgstr  "Storlek"
 
 #, scheme-format
 msgid   "Scandir argument invalid or not directory: ~s"
-msgstr  ""
-
-#, scheme-format
-msgid   "No configuration slot named ~s, when defining ~s"
-msgstr  ""
+msgstr  "Scandir:s argument ogiltigt eller inte katalog: ~s"
 
 #. first slot is property name, second is new
 #. property value.
 #, scheme-format
 msgid   "Pre-property failed when setting ~s to ~s"
-msgstr  ""
-
-#, scheme-format
-msgid   "No configuration item named ~s"
-msgstr  ""
+msgstr  "För-vilkor misslyckades när ~s sattes till ~s"
 
 #, scheme-format
 msgid   "Invalid key ~s. Note that leap seconds and expries rules aren't yet "
         "implemented."
-msgstr  ""
+msgstr  "Ogiltig nyckel ~s. Notera att skottsekunder och utgångsregler ännu "
+        "inte är implementerade."
 
 #. first slot is the errornous character,
 #. second is the whole string, third is the index
 #. of the faulty character.
 #, scheme-format
 msgid   "Invalid format char ~s in ~s at position ~a"
-msgstr  ""
+msgstr  "Ogitligt formatteringstecken ~s i ~s på position ~a"
 
 #, scheme-format
 msgid   "No parser for type ~a"
-msgstr  ""
+msgstr  "Ingen läsare för datatypen ~a"
 
 #, scheme-format
 msgid   "Can only save events belonging to calendars, event uid = ~s"
-msgstr  ""
-
-#, scheme-format
-msgid   "Can only save events belonging to vdir calendars. Calendar is of "
-        "type ~s"
-msgstr  ""
-
-#, scheme-format
-msgid   "Can only remove events belonging to vdir calendars. Calendar is of "
-        "type ~s"
-msgstr  ""
+msgstr  "Kan endast spara händelser tillhörande kalendrar, event uid = ~s"
 
 #, scheme-format
 msgid   "Can't parse file of type ~s"
-msgstr  ""
+msgstr  "Kan inte läsa fil av typen ~s"
+
+#, scheme-format
+msgid   "Unexpected parser type: ~a"
+msgstr  "Oväntad läsartyp: ~a"
+
+#, scheme-format
+msgid   "Unexpected writer type: ~a"
+msgstr  "Oväntad skrivartyp: ~a"
+
+#, scheme-format
+msgid   "File ~s exists, but isn't a symlink"
+msgstr  "Filen ~s finns, men är inte en symlänk"
+
+#, scheme-format
+msgid   "~s is a symlink, but points to ~s instead of expected ~s"
+msgstr  "~s är en symlänk, men pekar på ~s istället för (förväntade) ~s"
+
+msgid   "event-length-key is required"
+msgstr  "event-length-key krävs"
+
+#, scheme-format
+msgid   "Error retrieving configuration, ~?~%"
+msgstr  "Misslyckades hämta konfiguration, ~?~%"
+
+msgid   "Where static files for the web server are located"
+msgstr  "Var statiska filer för webbserver finns"
+
+msgid   "Calp directory listing for "
+msgstr  "Calp kataloglistning för "
+
+msgid   "== Day View =="
+msgstr  "== Dagsvy =="
+
+msgid   "Turns on debug mode for HTML output"
+msgstr  "Slår på debugläge för HTML-utskrift"
+
+msgid   "Makes generated HTML user editable (through JS)"
+msgstr  "Gör genererad HTML användarredigerbar (genom JS)"
+
+msgid   "Can only save events belonging to vdir calendars."
+msgstr  "Kan endast spara händelser tillhörande vdir-kalendrar."
+
+#, scheme-format
+msgid   "Calendar is of type ~s"
+msgstr  "Kalendern är av typen ~s"
+
+msgid   "Can only remove events belonging to vdir calendars."
+msgstr  "Kan endast ta bort händelser tillhörande vdir-kalendrar."
+
+msgid   "Which files to parse. Takes a list of paths or a single string which "
+        "will be globbed."
+msgstr  "Vilka filer att läsa in. Tar en lista av filvägar eller en ensam "
+        "sträng, vilken kommer globb:as."
+
+msgid   "Default calendar to use for operations. Set to empty string to unset"
+msgstr  "Standardkalendar att utgå från. En tom sträng \"rensar\" fältet"
