@@ -2,16 +2,23 @@
   :use-module (ice-9 i18n)
   :use-module (ice-9 regex)
   :use-module (ice-9 match)
-  :export (_ yes-no-check))
+  :export (_ translate yes-no-check))
 
 (bindtextdomain "calp" "/home/hugo/code/calp/localization/")
 
-(define (_ . msg)
+
+;; Translate string, but doesn't mark it for translation.
+;; Used (at least) for get-config introspection procedures.
+(define (translate string)
   ;; NOTE this doesn't squeese repeated whitespace
   (string-map (match-lambda
                 (#\newline #\space)
                 (c c))
-              (gettext (string-join msg) "calp")))
+              (gettext string "calp")))
+
+;; Mark string for translation, and also make it discoverable for gettext
+(define (_ . msg)
+  (translate (string-join msg)))
 
 (define* (yes-no-check string #:optional (locale %global-locale))
   (cond ((string-match (locale-yes-regexp locale) string) 'yes)
