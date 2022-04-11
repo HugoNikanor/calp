@@ -1,7 +1,0 @@
-[Unit]
-Description=Calendar server
-
-[Service]
-User=calp
-ExecStart=calp --config /etc/calp/config.scm -- server
-Restart=always

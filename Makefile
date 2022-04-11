@@ -60,6 +60,7 @@ install: all
 	rsync -a obj-$(GUILE_VERSION)/ $(DESTDIR)$(GUILE_CCACHE_DIR)
 	install -d $(DESTDIR)/usr/share/calp/www
 	$(MAKE) -C static install
+	$(MAKE) -C system install
 	$(MAKE) -C doc/ref install
 	install -m 644 -D -t $(DESTDIR)/usr/share/doc/calp README
 	install -m 755 -D -t $(DESTDIR)/usr/lib/calp/ scripts/tzget

@@ -7,6 +7,12 @@
              (sxml xpath)
              )
 
+(when (getenv "SYSTEMD")
+  ((@ (calp entry-points server) port) 58080)
+  ((@ (calp html config) debug) #f)
+  ((@ (calp html config) edit-mode) #t)
+  )
+
 ((@ (vcomponent config) calendar-files) (glob "~/.local/var/cal/*"))
 
 (define my-courses

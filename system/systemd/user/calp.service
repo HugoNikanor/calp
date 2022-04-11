@@ -1,0 +1,12 @@
+[Unit]
+Description=Calendar server
+Documentation=info:calp
+Documentation=file:/usr/share/doc/calp/README
+
+[Service]
+Environment=SYSTEMD=true
+ExecStart=calp --config %E/calp/config.scm --repl %t/calp-production server --sigusr
+Restart=always
+
+[Install]
+WantedBy=default.target
