@@ -41,7 +41,7 @@ obj-$(GUILE_VERSION)/%.go: module/%.scm
 go_files: $(GO_FILES)
 
 po/%.po: $(SCM_FILES)
-	xgettext $(XGETTEXT_FLAGS) --output $@ -L scheme $^ --join-existing --omit-header
+	xgettext $(XGETTEXT_FLAGS) --output $@ -L scheme $^ --join-existing --omit-header --no-location
 
 po/new.po: $(SCM_FILES)
 	xgettext $(XGETTEXT_FLAGS) --output $@ -L scheme $^
