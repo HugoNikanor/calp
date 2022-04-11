@@ -6,26 +6,9 @@
 (define-module (test datetime)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
-  :use-module ((datetime)
-               :select (date+ date-
-                              time+
-                              time-
-                              year
-                              month
-                              day
-                              date
-                              time
-                              datetime
-                              datetime+
-                              datetime<=?
-                              datetime-difference
-                              datetime-
-                              leap-year?
-                              string->date
-                              string->time
-                              string->datetime
-                              parse-month
-                              days-in-interval))
+  :use-module ((srfi srfi-41)
+               :select (stream->list stream-take))
+  :use-module (datetime)
   :use-module ((ice-9 format) :select (format))
   :use-module ((hnh util) :select (let*))
   :use-module ((ice-9 i18n) :select (make-locale))
@@ -391,5 +374,310 @@
   (days-in-interval
     #2020-01-01
     #2020-12-31))
+
+
+;;; Commentary:
+;; Tests timespan overlaps and month-streams.
+;; Separate from tests/datetime.scm since
+;; (datetime util) originally was its own module.
+;;; Code:
+
+
+(test-assert
+  "jan->dec"
+  (stream->list
+    (stream-take
+      11
+      (month-stream
+        #2020-01-01))))
+
+(test-assert
+  "dec->jan"
+  (stream->list
+    (stream-take
+      2
+      (month-stream
+        #2020-12-01))))
+
+(test-assert
+  "dec->feb"
+  (stream->list
+    (stream-take
+      3
+      (month-stream
+        #2020-12-01))))
+
+(test-assert
+  "20 months"
+  (stream->list
+    (stream-take
+      20
+      (month-stream
+        #2020-01-01))))
+
+(test-equal
+  "Correct months"
+  (list #2020-02-01
+        #2020-03-01
+        #2020-04-01
+        #2020-05-01
+        #2020-06-01
+        #2020-07-01
+        #2020-08-01
+        #2020-09-01
+        #2020-10-01
+        #2020-11-01
+        #2020-12-01
+        #2021-01-01)
+  (stream->list
+    (stream-take
+      12
+      (month-stream
+        #2020-02-01))))
+
+(test-assert
+  "in-date-range?"
+  (not ((in-date-range?
+          #2020-01-01
+          #2020-02-29)
+        #2018-02-02)))
+
+(test-assert
+  "A"
+  (timespan-overlaps?
+    #2020-01-01
+    #2020-01-10
+    #2020-01-05
+    #2020-01-15))
+
+(test-assert
+  "A, shared start"
+  (timespan-overlaps?
+    #2020-01-01
+    #2020-01-10
+    #2020-01-01
+    #2020-01-15))
+
+(test-assert
+  "A, tangential"
+  (not (timespan-overlaps?
+         #2020-01-01T00:00:00
+         #2020-01-10T00:00:00
+         #2020-01-10T00:00:00
+         #2020-01-30T00:00:00)))
+
+(test-assert
+  "s1 instant"
+  (timespan-overlaps?
+    #2020-01-15T10:00:00
+    #2020-01-15T10:00:00
+    #2020-01-10T00:00:00
+    #2020-01-30T00:00:00))
+
+(test-assert
+  "s2 instant"
+  (timespan-overlaps?
+    #2020-01-10T00:00:00
+    #2020-01-30T00:00:00
+    #2020-01-15T10:00:00
+    #2020-01-15T10:00:00))
+
+(test-assert
+  "s1 instant, shared start with s2"
+  (timespan-overlaps?
+    #2020-01-15T10:00:00
+    #2020-01-15T10:00:00
+    #2020-01-15T10:00:00
+    #2020-01-30T00:00:00))
+
+(test-assert
+  "s1 instant, shared end with s2"
+  (not (timespan-overlaps?
+         #2020-01-15T10:00:00
+         #2020-01-15T10:00:00
+         #2020-01-10T00:00:00
+         #2020-01-15T10:00:00)))
+
+(test-assert
+  "s2 instant, shared start with s1"
+  (timespan-overlaps?
+    #2020-01-15T10:00:00
+    #2020-01-30T00:00:00
+    #2020-01-15T10:00:00
+    #2020-01-15T10:00:00))
+
+(test-assert
+  "s2 instant, shared end with s1"
+  (not (timespan-overlaps?
+         #2020-01-10T00:00:00
+         #2020-01-15T10:00:00
+         #2020-01-15T10:00:00
+         #2020-01-15T10:00:00)))
+
+(test-assert
+  "both instant"
+  (not (timespan-overlaps?
+         #2020-01-15T10:00:00
+         #2020-01-15T10:00:00
+         #2020-01-15T10:00:00
+         #2020-01-15T10:00:00)))
+
+(test-assert
+  "tangential whole day"
+  (not (timespan-overlaps?
+         #2020-01-01
+         #2020-01-02
+         #2020-01-02
+         #2020-01-03)))
+
+(test-assert
+  "B"
+  (timespan-overlaps?
+    #2020-01-05
+    #2020-01-15
+    #2020-01-01
+    #2020-01-10))
+
+(test-assert
+  "E"
+  (timespan-overlaps?
+    #2020-01-01
+    #2020-01-10
+    #2020-01-01
+    #2020-01-10))
+
+
+
+
+;;; Commentary:
+;; Tests that all ordering predicates for dates,
+;; times, and datetimes hold.
+;;; Code:
+
+(test-assert "date< empty" (date<))
+
+(test-assert
+  "date< single"
+  (date< #2020-01-10))
+
+(test-assert
+  "date< double"
+  (date< #2020-01-10
+         #2020-01-11))
+
+(test-assert
+  "date< tripple"
+  (date< #2020-01-10
+         #2020-01-11
+         #2020-01-12))
+
+(test-assert
+  "date< tripple negate"
+  (not (date< #2020-01-10
+              #2020-01-12
+              #2020-01-11)))
+
+(test-assert "date<= empty" (date<=))
+
+(test-assert
+  "date<= single"
+  (date<= #2020-01-10))
+
+(test-assert
+  "date<= double"
+  (date<=
+    #2020-01-10
+    #2020-01-11))
+
+(test-assert
+  "date<="
+  (not (date<=
+         #2020-01-01
+         #2018-05-15
+         #2020-01-31)))
+
+(test-assert
+  "date<= equal"
+  (date<=
+    #2018-05-15
+    #2018-05-15))
+
+(test-assert
+  "date<"
+  (not (date< #2020-01-01
+              #2018-05-15
+              #2020-01-31)))
+
+(test-assert
+  "date>"
+  (not (date> #2020-01-31
+              #2018-05-15
+              #2020-01-01)))
+
+(test-assert
+  "date>="
+  (not (date>=
+         #2020-01-31
+         #2018-05-15
+         #2020-01-01)))
+
+(test-assert
+  "time< simple"
+  (time< #05:00:00
+         #10:00:00))
+
+(test-assert
+  "time<"
+  (time< (time)
+         #10:00:00))
+
+(test-assert
+  "date/-time<"
+  (date/-time<
+    #2020-01-01
+    #2020-01-02))
+
+(test-assert
+  "not date/-time<"
+  (not (date/-time<
+         #2020-01-01
+         #2020-01-01)))
+
+(test-assert
+  "date/-time< only other dt"
+  (date/-time<
+    #2020-01-01
+    #2020-01-02T10:00:00))
+
+(test-assert
+  "date/-time< other dt, same date"
+  (date/-time<
+    #2020-01-01
+    #2020-01-01T10:00:00))
+
+;; In UTC+2 (CEST) the below datetime overflows into midnight the following
+;; day. Earlier versions of this program only looked at the time component
+(test-assert
+  "date/-time< TZ overflow"
+  (date/-time<
+    #2020-04-05
+    (datetime
+      date:
+      #2020-04-05
+      time:
+      #22:00:00
+      tz:
+      "UTC")))
+
+(test-assert
+  "date/-time< time-only"
+  (date/-time<
+    #00:00:00
+    #10:00:00))
+
+(test-assert
+  (not (date/-time<
+         #2018-11-30T08:10:00
+         #2014-04-13T16:00:00)))
 
 
