@@ -5,7 +5,6 @@
   :use-module (text util)
   :use-module (calp translation)
   :use-module ((hnh util exceptions) :select (warning))
-  :use-module ((vcomponent recurrence display) :select (format-recurrence-rule))
   )
 
 ;; ev → sxml
@@ -15,7 +14,7 @@
   ;; Part of the sentance "Repeated [every two weeks], except on ~a, ~a & ~a"
   ;; See everything tagged [FRR]
   `(,(_ "Repeated ")
-    ,(format-recurrence-rule (prop ev 'RRULE))
+    ,((@ (vcomponent recurrence display) format-recurrence-rule) (prop ev 'RRULE))
     ,@(awhen (prop* ev 'EXDATE)
              (list
               ;; See [FRR]
