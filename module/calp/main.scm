@@ -138,27 +138,7 @@ the same code as <b>ical</b>.</p>")
   ;; assumed to be "safe". Instead it's so we can control the environment in
   ;; which it is executed.
   (catch #t
-    (lambda ()
-      (eval
-       `(begin
-          (use-modules (srfi srfi-1)
-                       (srfi srfi-88)
-                       (datetime)
-                       (vcomponent)
-                       (calp util config)
-                       (glob))
-          ,@(with-input-from-file config-file
-              (lambda ()
-                (let loop ((done '()))
-                  (let ((form (read)))
-                    (if (eof-object? form)
-                        (reverse done)
-                        (loop (cons form done))))))))
-       (make-sandbox-module
-        `(((guile) use-modules resolve-interface module-ref)
-          ,@all-pure-and-impure-bindings
-          ))
-       ))
+    (lambda () (load config-file))
     (lambda args
       (format (current-error-port)
               ;; Two arguments:

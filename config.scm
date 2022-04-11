@@ -2,7 +2,7 @@
 ;;; Currently loaded by main, and requires that `calendar-files`
 ;;; is set to a list of files (or directories).
 
-(use-modules (ice-9 regex)
+(use-modules (calp config-base)
              (sxml simple)
              (sxml xpath)
              )
