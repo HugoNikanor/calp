@@ -3,22 +3,29 @@
   :use-module (srfi srfi-1)
   :use-module (ice-9 ftw)
   :use-module (ice-9 match)
-  :export (all-files-and-modules-under-directory all-modules-under-directory))
+  :use-module (hnh util path)
+  :export (all-files-and-modules-under-directory
+           all-modules-under-directory
+           fs-find-base fs-find))
+
+(define (fs-find dir)
+  (define files '())
+  (ftw dir (lambda args (set! files (cons args files)) #t))
+  files)
+
+;; (define (fs-find proc dir)
+;;   (filter proc (fs-find-base dir)))
 
 (define (all-files-and-modules-under-directory dir)
   (define re (make-regexp "\\.scm$"))
 
-  (define files '())
-
-  (ftw dir (lambda (filename statinfo flag)
-             (cond ((and (eq? flag 'regular)
-                         (regexp-exec re filename))
-                    => (lambda (m)
-                         (set! files (cons filename files))
-                         #t
-                         ))
-                   (else #t))))
-
+  (define files
+    (map car
+         (filter (match-lambda ((filename _ 'regular)
+                                (and (regexp-exec re filename)
+                                     (not (file-hidden? filename))))
+                               (_ #f))
+                 (fs-find dir))))
 
   (map (lambda (file)
          (list file
