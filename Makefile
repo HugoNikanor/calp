@@ -1,6 +1,7 @@
 .PHONY: all clean test \
 	static \
-	go_files
+	go_files \
+	lcov.info
 
 GUILE := guile
 export GUILE
