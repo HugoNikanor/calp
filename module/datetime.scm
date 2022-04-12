@@ -560,7 +560,7 @@
   (let ((date-diff
          (cond [start-date
                 (let* ((end-date (date+ start-date (get-date dt))))
-                  (days-in-interval start-date end-date)) ]
+                  (1- (days-in-interval start-date end-date))) ]
                [(or (not (zero? (month (get-date dt))))
                     (not (zero? (year (get-date dt)))))
                 (scm-error 'misc-error "datetime->decimal-hour"
@@ -569,7 +569,7 @@
                        #f)]
                [else (day (get-date dt))])))
     (+ (time->decimal-hour (get-time% dt))
-       (* (1- date-diff) 24))))
+       (* date-diff 24))))
 
 ;; Returns a list of all dates from start to end.
 ;; both inclusive
