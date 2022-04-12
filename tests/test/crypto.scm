@@ -13,3 +13,6 @@
   (test-equal "sha256 string digest to port"
     "185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"
     (get-output-string port)))
+
+(test-error 'wrong-type-arg
+  (sha256 'something-which-is-not-a-string-or-bytevector))

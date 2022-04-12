@@ -58,7 +58,10 @@
   (test-equal
     (string-append "STR: " (prop comp 'SUMMARY))
     (prop comp 'X-SUMMARY)
-    (format-recurrence-rule (prop comp 'RRULE))))
+    ;; TODO setting language='en causes messages to be in english, but date
+    ;; strings still format LC_TIME (which I have set to swedish)...
+    ;; TODO possibly test with other languages
+    (format-recurrence-rule (prop comp 'RRULE) 'sv)))
 
 (define (vevent . rest)
   (define v (make-vcomponent 'VEVENT))
@@ -1342,6 +1345,33 @@
                    #2005-05-16T09:00:00
                    #2005-05-18T09:00:00
                    #2006-05-15T09:00:00
-                   #2006-05-17T09:00:00))))
+                   #2006-05-17T09:00:00))
+           (vevent
+            summary: "Each second, for ever"
+            dtstart: "20201010T100000"
+            rrule: "FREQ=SECONDLY"
+            x-summary: "varje sekund"
+            x-set: (list #2020-10-10T10:00:00
+                         #2020-10-10T10:00:01
+                         #2020-10-10T10:00:02
+                         #2020-10-10T10:00:03
+                         #2020-10-10T10:00:04
+                         #2020-10-10T10:00:05
+                         #2020-10-10T10:00:06
+                         #2020-10-10T10:00:07
+                         #2020-10-10T10:00:08
+                         #2020-10-10T10:00:09
+                         #2020-10-10T10:00:10
+                         #2020-10-10T10:00:11
+                         #2020-10-10T10:00:12
+                         #2020-10-10T10:00:13
+                         #2020-10-10T10:00:14
+                         #2020-10-10T10:00:15
+                         #2020-10-10T10:00:16
+                         #2020-10-10T10:00:17
+                         #2020-10-10T10:00:18
+                         #2020-10-10T10:00:19))
+
+           ))
 
 

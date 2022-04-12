@@ -12,7 +12,7 @@
   :use-module ((ice-9 format) :select (format))
   :use-module ((hnh util) :select (let*))
   :use-module ((ice-9 i18n) :select (make-locale))
-  :use-module ((guile) :select (LC_TIME)))
+  :use-module ((guile) :select (LC_CTYPE LC_TIME)))
 
 (test-equal
   "empty time"
@@ -55,6 +55,17 @@
     "~a"
     #2020-01-01))
 
+(test-equal "time print"
+  "#20:30:40"
+  (format #f "~a" #20:30:40))
+
+(test-equal "time print bad"
+  "#<<time> hour=#f minute=1 second=2>"
+  (format #f "~a" (time hour: #f
+                        minute: 1
+                        second: 2)))
+
+
 (test-equal
   "Syntax date="
   (date year: 2020 month: 1 day: 1)
@@ -72,16 +83,19 @@
   #2020-01-01T13:37:00)
 
 (test-equal
+    "Date- over leap year month shift"
   #2020-02-28
   (date- #2020-03-05
          (date day: 6)))
 
 (test-equal
+    "Date- land on leap day"
   #2020-02-29
   (date- #2020-03-05
          (date day: 5)))
 
 (test-equal
+    "Date- within month"
   #2020-03-01
   (date- #2020-03-05
          (date day: 4)))
@@ -144,6 +158,7 @@
          #2020-01-01))
 
 (test-equal
+    "Simple datetime construction"
   #2020-01-01T10:00:00
   (datetime
     date:
@@ -152,6 +167,7 @@
     #10:00:00))
 
 (test-equal
+    "Datetime add date-only and time-only."
   #2020-01-01T10:00:00
   (datetime+
     (datetime
@@ -162,6 +178,7 @@
       #10:00:00)))
 
 (test-equal
+    "Datetime subtract time"
   #2020-10-09T14:00:00
   (datetime-
     #2020-10-10T00:00:00
@@ -170,12 +187,14 @@
       #10:00:00)))
 
 (test-equal
+    "Datetime subtract datetime"
   #2020-09-24T14:00:00
   (datetime-
     #2020-10-10T00:00:00
     #0000-00-15T10:00:00))
 
 (test-equal
+    "Date+ multiple"
   #2020-03-10
   (date+ #2020-03-01
          (date day: 4)
@@ -228,12 +247,15 @@
 ;; NOTE
 ;; at the time of writing this returns #2020-02-00
 ;; The general question is, how is the last in a month handled?
+;; TODO
 (test-equal
+    "Date+ over year end"
   #2020-01-31
   (date+ #2019-12-31
          (date month: 1)))
 
-(test-assert (leap-year? 2020))
+
+(test-assert "leap-year?" (leap-year? 2020))
 
 (test-equal
   "Add to Leap day"
@@ -271,7 +293,7 @@
   (string->date
     "Maj"
     "~b"
-    (make-locale LC_TIME "sv_SE.UTF-8")))
+    (make-locale (list LC_CTYPE LC_TIME) "sv_SE.UTF-8")))
 
 (test-equal
   "Parse month (english)"
@@ -279,7 +301,7 @@
   (string->date
     "May"
     "~b"
-    (make-locale LC_TIME "en_US.UTF-8")))
+    (make-locale (list LC_CTYPE LC_TIME) "en_US.UTF-8")))
 
 (test-equal
   "AM/PM AM"
@@ -346,20 +368,30 @@
   (string->date "6, " "~d, "))
 
 (define en_US
-  (make-locale LC_TIME "en_US.UTF-8"))
+  (make-locale (list LC_CTYPE LC_TIME) "en_US.UTF-8"))
 
 (define sv_SE
-  (make-locale LC_TIME "sv_SE.UTF-8"))
+  (make-locale (list LC_CTYPE LC_TIME) "sv_SE.UTF-8"))
 
-(test-equal 1 (parse-month "jan" en_US))
+(test-equal "Week day name"
+  "söndag" (week-day-name sun locale: sv_SE))
+(test-equal "Week day name (modulo)"
+  "söndag" (week-day-name (+ 7 sun) locale: sv_SE))
 
-(test-equal 1 (parse-month "jan" sv_SE))
+(test-equal "en month name - january"
+  1 (parse-month "jan" en_US))
 
-(test-equal 12 (parse-month "dec" en_US))
+(test-equal "sv month name - januari"
+  1 (parse-month "jan" sv_SE))
 
-(test-equal -1 (parse-month "inv" en_US))
+(test-equal "en month name - december"
+  12 (parse-month "dec" en_US))
 
-(test-equal 5 (parse-month "mAJ" sv_SE))
+(test-equal "en month name - invalid"
+  -1 (parse-month "inv" en_US))
+
+(test-equal "sv month name - mAJ"
+  5 (parse-month "mAJ" sv_SE))
 
 (test-equal
   "Days in regular year"
@@ -374,6 +406,166 @@
   (days-in-interval
     #2020-01-01
     #2020-12-31))
+
+
+
+(test-error "Construct invalid date (year)"
+  'wrong-type-arg
+  (date year: #f))
+
+(test-error "Construct invalid date (month)"
+  'wrong-type-arg
+  (date month: #f))
+
+(test-error "Construct invalid date (day)"
+  'wrong-type-arg
+  (date day: #f))
+
+
+(test-assert "Current date is a date"
+  (date? (current-date)))
+
+(let ((t #20:30:40))
+  (test-equal "As-time identity" t (as-time t)))
+
+(let ((d #2020-10-05))
+  (test-equal "As-date identity" d (as-date d)))
+
+(test-equal "As-time date == 0"
+  (time) (as-time (date)))
+(test-equal "As-date time == 0"
+  (date) (as-date (time)))
+
+(test-error "As-time invalid argument"
+  'wrong-type-arg
+  (as-time #f))
+
+(test-error "As-date invalid argument"
+   'wrong-type-arg
+  (as-date #f))
+
+(test-error "As-datetime invalid argument"
+  'wrong-type-arg
+  (as-datetime #f))
+
+(test-assert "Time-zero on empty time"
+  (time-zero? (time)))
+
+(test-error "Invalid month (below)"
+  'out-of-range
+  (days-in-month (date year: 2020 month: 0)))
+
+(test-error "Invalid month (above)"
+  'out-of-range
+  (days-in-month (date year: 2020 month: 13)))
+
+;; This both tests days-in-year for both cases, and leap year code for the weird years.
+(test-equal "Leap year exception exception"
+  366 (days-in-year (date year: 2000)))
+(test-equal "Leap year exception"
+  365 (days-in-year (date year: 1800)))
+
+(test-equal "End of month leap year"
+  #2020-02-29
+  (end-of-month #2020-02-05))
+
+(test-equal "Time-min"
+  (time)
+  (time-min (time) (time hour: 1)))
+
+(test-equal "Time-max"
+  (time hour: 1)
+  (time-max (time) (time hour: 1)))
+
+(test-equal "Date-min"
+  (date)
+  (date-min (date) (date year: 1)))
+
+(test-equal "Date-max"
+  (date year: 1)
+  (date-max (date) (date year: 1)))
+
+(test-equal "Datetime-min"
+  (datetime)
+  (datetime-min (datetime)
+                (datetime hour: 1)))
+
+(test-equal "Datetime-max"
+  (datetime hour: 1)
+  (datetime-max (datetime)
+                (datetime hour: 1)))
+
+;; month± mostly here for coverage,
+;; actual tests are for date±
+(test-equal "month+ dflt"
+  (date month: 3 day: 1)
+  (month+ (date month: 2 day: 1)))
+
+(test-equal "month+ given change"
+  (date month: 4 day: 1)
+  (month+ (date month: 2 day: 1) 2))
+
+(test-equal "month- dflt"
+  (date month: 1 day: 1)
+  (month- (date month: 2 day: 1)))
+
+(test-equal "month- given change"
+  (date month: 2 day: 1)
+  (month- (date month: 4 day: 1) 2))
+
+;; same for {add,remove}-day; mostly here for coverage.
+
+(test-equal "add-day"
+  (date month: 1 day: 2)
+  (add-day (date month: 1 day: 1)))
+
+(test-equal "remove-day"
+  (date month: 1 day: 1)
+  (remove-day (date month: 1 day: 2)))
+
+;; TODO more week-number tests
+(test-equal "Week 53"
+  53 (week-number #2020-12-28 mon))
+
+(test-equal "End of week"
+  #2022-04-17 (end-of-week #2022-04-11 mon))
+(test-equal "End of week (wednesday)"
+  #2022-04-12 (end-of-week #2022-04-11 wed))
+
+(define-values (pre mid post)
+  (month-days #2020-03-01 mon))
+(test-equal "month-days pre"
+  (list #2020-02-24 #2020-02-25 #2020-02-26 #2020-02-27 #2020-02-28 #2020-02-29)
+  pre)
+(test-equal "month-days mid"
+  (list #2020-03-01 #2020-03-02 #2020-03-03 #2020-03-04 #2020-03-05 #2020-03-06 #2020-03-07 #2020-03-08 #2020-03-09 #2020-03-10 #2020-03-11 #2020-03-12 #2020-03-13 #2020-03-14 #2020-03-15 #2020-03-16 #2020-03-17 #2020-03-18 #2020-03-19 #2020-03-20 #2020-03-21 #2020-03-22 #2020-03-23 #2020-03-24 #2020-03-25 #2020-03-26 #2020-03-27 #2020-03-28 #2020-03-29 #2020-03-30 #2020-03-31)
+  mid)
+(test-equal "month-days post"
+  (list #2020-04-01 #2020-04-02 #2020-04-03 #2020-04-04 #2020-04-05)
+  post)
+
+(test-equal "Year day"
+  32 (year-day #2020-02-01))
+
+(test-equal "time->decimal-hour"
+  10.5 (time->decimal-hour #10:30:00))
+
+(test-equal "datetime->decimal-hour"
+  34.5
+  (datetime->decimal-hour
+   (datetime day: 1 time: #10:30:00)))
+
+(test-error "Datetime->decimal-hour fail on multi month"
+  'misc-error
+  (datetime->decimal-hour (datetime month: 1)))
+
+(test-equal
+    "Datetime->decimal hour suceed on multi month"
+    (exact->inexact (* 24 28))
+  (datetime->decimal-hour (datetime month: 1)
+                          #2022-02-01))
+
+
 
 
 ;;; Commentary:

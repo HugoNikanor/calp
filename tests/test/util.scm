@@ -6,19 +6,138 @@
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
-  :use-module ((hnh util)
-               :select (filter-sorted
-                        set/r!
-                        find-min
-                        find-max
-                        find-extreme
-                        span-upto
-                        iterate
-                        ->string
-                        ->quoted-string
-                        begin1))
+  :use-module (srfi srfi-1)
+  :use-module (hnh util)
   :use-module ((hnh util path)
-               :select (path-append path-split)))
+               :select (path-append path-split file-hidden?)))
+
+(test-equal "when"
+  1 (when #t 1))
+
+(test-equal "'() when #f"
+  '() (when #f 1))
+
+(test-equal "unless"
+  1 (unless #f 1))
+
+(test-equal "'() unless #t"
+  '() (unless #t 1))
+
+(test-equal "awhen it"
+  '(3 4 5)
+  (awhen (memv 2 '(1 2 3 4 5))
+         (cdr it)))
+
+(test-equal "awhen not"
+  '()
+  (awhen (memv 0 '(1 2 3 4 5))
+         (cdr it)))
+
+(test-equal "for simple"
+  (iota 10)
+  (for x in (iota 10)
+       x))
+
+(test-equal "for matching"
+  (iota 12)
+  (for (x c) in (zip (iota 12) (string->list "Hello, World"))
+       x))
+
+(test-equal "procedure label"
+  120
+  ((label factorial (lambda (n)
+                      (if (zero? n)
+                          1 (* n (factorial (1- n))))))
+   5))
+
+;; we can't test if sort*! destroys the list, since its only /allowed/ to do it,
+;; not required.
+(test-equal "sort*!"
+  '("a" "Hello" "Assparagus")
+  (sort*! '("Hello" "a" "Assparagus")
+          < string-length))
+
+(test-assert "not equal"
+  (!= 1 2))
+
+(test-equal "Take to"
+  '() (take-to '() 5))
+
+(test-equal "Enumerate"
+  '((0 #\H) (1 #\e) (2 #\l) (3 #\l) (4 #\o) (5 #\,) (6 #\space) (7 #\W) (8 #\o) (9 #\r) (10 #\l) (11 #\d) (12 #\!))
+  (enumerate (string->list "Hello, World!")))
+
+(test-equal "unval first"
+  1
+  ((unval (lambda () (values 1 2 3)))))
+
+(test-equal "unval other"
+  2
+  ((unval car+cdr 1)
+   (cons 1 2)))
+
+(test-equal "flatten already flat"
+  (iota 10)
+  (flatten (iota 10)))
+
+(test-equal "flatten really deep"
+  '(1)
+  (flatten '(((((((((((((((1)))))))))))))))))
+
+(test-equal "flatten mixed"
+  '(1 2 3 4 5)
+  (flatten '((((((1(((((2((((3))))))4))))))))5)))
+
+;; TODO test let-lazy
+
+(test-equal "map/dotted without dot"
+  '(1 2 3 4)
+  (map/dotted 1+ '(0 1 2 3)))
+
+(test-equal "map/dotted with dot"
+    '(1 2 3 . 4)
+  (map/dotted 1+ '(0 1 2 . 3)))
+
+(test-equal "map/dotted direct value"
+  1 (map/dotted 1+ 0))
+
+(test-equal "assq merge"
+  '((k 2 1) (v 2))
+  (assq-merge '((k 1) (v 2)) '((k 2))))
+
+(test-equal "kvlist->assq"
+  '((a 1) (b 2))
+  (kvlist->assq '(a: 1 b: 2)))
+
+
+(test-equal "kvlist->assq repeated key"
+  '((a 1) (b 2) (a 3))
+  (kvlist->assq '(a: 1 b: 2 a: 3)))
+
+;; TODO assq-limit ?
+
+(test-equal "->" 9 (-> 1 (+ 2) (* 3)))
+(test-equal "-> order dependant" -1 (-> 1 (- 2)))
+(test-equal "->> order dependant" 1 (->> 1 (- 2)))
+
+;; TODO set and set->
+
+;; TODO and=>>
+
+(test-equal "Group"
+  '((0 1) (2 3) (4 5) (6 7) (8 9))
+  (group (iota 10) 2))
+
+;; TODO test failure when grouping isn't possible?
+
+(test-equal "assoc-ref-all" '(1 3) (assoc-ref-all '((a . 1) (b . 2) (a . 3)) 'a))
+(test-equal "assq-ref-all" '(1 3) (assq-ref-all '((a . 1) (b . 2) (a . 3)) 'a))
+(test-equal "assv-ref-all "'(1 3) (assv-ref-all '((a . 1) (b . 2) (a . 3)) 'a))
+
+(test-equal "vector-last"
+  1 (vector-last #(0 2 3 1)))
+
+;; TODO test catch*
 
 (test-equal
   "Filter sorted"
@@ -149,4 +268,7 @@
   '("" "usr" "lib" "test")
   (path-split "//usr////lib/test"))
 
-
+(test-assert (file-hidden? ".just-filename"))
+(test-assert (file-hidden? "/path/to/.hidden"))
+(test-assert (not (file-hidden? "/visible/.in/hidden")))
+(test-assert (not (file-hidden? "")))
