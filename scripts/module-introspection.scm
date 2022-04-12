@@ -5,6 +5,7 @@
            uniq
            unique-symbols
            find-module-declaration
+           module-declaration?
            ))
 
 
@@ -32,11 +33,11 @@
           string<? symbol->string)))
 
 
+(define (module-declaration? form)
+  (cond ((null? form) #f)
+        ((not (pair? form)) #f)
+        (else (eq? 'define-module (car form)))))
 
 (define (find-module-declaration forms)
-  (and=> (find (lambda (form)
-                 (cond ((null? form) #f)
-                       ((not (pair? form)) #f)
-                       (else (eq? 'define-module (car form)))))
-               forms)
+  (and=> (find module-declaration? forms)
          cadr))
