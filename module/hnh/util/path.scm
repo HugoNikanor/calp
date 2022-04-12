@@ -51,3 +51,9 @@
                             '(())
                             (string->list path)))))))
     (cons head (remove string-null? tail))))
+
+
+(define-public (file-hidden? path)
+  (define base (basename path))
+  (and (not (string-null? base))
+       (char=? #\. (string-ref base 0))))
