@@ -28,16 +28,9 @@
 
 (define (unique-symbols tree)
   (uniq
-   (sort* (filter symbol? (flatten-tree tree))
+   (sort* (filter symbol? (flatten tree))
           string<? symbol->string)))
 
-
-(define (flatten-tree tree)
-  (cond ((null? tree) '())
-        ((pair? tree)
-         (append (flatten-tree (car tree))
-                 (flatten-tree (cdr tree))))
-        (else (list tree))))
 
 
 (define (find-module-declaration forms)
