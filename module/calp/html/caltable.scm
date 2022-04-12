@@ -4,6 +4,8 @@
   :use-module (calp html util)
   :use-module (datetime)
   :use-module (srfi srfi-41)
+
+  :use-module (calp translation)
   )
 
 ;; Small calendar similar to the one below.
@@ -47,7 +49,7 @@
   `(div (@ (class "small-calendar"))
 
         ;; Cell 0, 0. The letter v. for week number
-        (div (@ (class "column-head row-head")) (_ "v."))
+        (div (@ (class "column-head row-head")) ,(_ "v."))
 
         ;; top row, names of week days
         ,@(map (lambda (d) `(div (@ (class "column-head"))

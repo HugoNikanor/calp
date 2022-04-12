@@ -456,7 +456,7 @@
                     (@ (name "categories")
                        (data-property "categories"))
                     (input (@ (type "text")
-                              (placeholder (_ "Category"))))))
+                              (placeholder ,(_ "Category"))))))
 
                ;; TODO This should be a "list" where any field can be edited
                ;; directly. Major thing holding us back currently is that
@@ -630,5 +630,5 @@
                      (@ (data-label "📒") (date-title ,(_ "Changelog"))))
 
                     ,@(when (debug)
-                        '((vevent-dl
+                        `((vevent-dl
                            (@ (data-label "🐸") (data-title ,(_ "Debug"))))))))))
