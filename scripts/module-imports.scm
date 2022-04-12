@@ -15,7 +15,8 @@
 (add-to-load-path (dirname (current-filename)))
 
 (use-modules (hnh util)
-             (srfi srfi-1)
+             ((srfi srfi-1) :select (lset-difference))
+             (rnrs lists)
              (module-introspection))
 
 
@@ -24,8 +25,12 @@
 
 (define (main args)
   (define filename (cadr args))
-  (define forms (reverse (call-with-input-file filename get-forms)))
-  ;; All symbols in source file
+  (define-values (module-declaration-lst forms)
+    (partition module-declaration?
+               (reverse (call-with-input-file filename get-forms))))
+  ;; All symbols in source file, which are not in module declaration.
+  ;; Otherwise all explicitly imported symbols would be marked as
+  ;; used.
   (define symbs (unique-symbols forms))
   ;; (format #t "~y" (find-module-declaration forms))
   ;; (format #t "~a~%" symbs)
@@ -49,13 +54,12 @@
                       used-symbols
                       (lset-difference eq? all-symbols used-symbols)))
 
-            (remove (lambda (mod)
-                      (member (module-name mod)
-                              '((guile)
-                                (guile-user)
-                                (srfi srfi-1)
-                                )))
-                    (module-uses (resolve-module
-                                   (find-module-declaration
-                                     forms)))))
+            (remp (lambda (mod)
+                    (member (module-name mod)
+                            '((guile)
+                              (guile-user)
+                              (srfi srfi-1)
+                              )))
+                  (module-uses (resolve-module
+                                 (cadr (car module-declaration-lst))))))
   (newline))

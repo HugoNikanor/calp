@@ -4,6 +4,7 @@
   :use-module (ice-9 ftw)
   :use-module (ice-9 match)
   :use-module (hnh util path)
+  :use-module (module-introspection)
   :export (all-files-and-modules-under-directory
            all-modules-under-directory
            fs-find-base fs-find))
@@ -29,10 +30,8 @@
 
   (map (lambda (file)
          (list file
-               (match (call-with-input-file file read)
-                 (('define-module (module ...) _ ...)
-                  module)
-                 (_ #f))))
+               (call-with-input-file file
+                 (compose find-module-declaration get-forms))))
        files))
 
 (define (all-modules-under-directory dir)
