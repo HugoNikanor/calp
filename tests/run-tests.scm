@@ -15,16 +15,19 @@ fi
 (format #t "current-filename = ~s~%" (current-filename))
 
 (define here (dirname (current-filename)))
+(use-modules (hnh util path))
+(add-to-load-path (path-append (dirname here) "scripts"))
 
 (use-modules (srfi srfi-1)
              (srfi srfi-64)
              (srfi srfi-88)
              (hnh util)
-             (hnh util path)
              (ice-9 ftw)
              (ice-9 format)
              (ice-9 getopt-long)
+             (ice-9 match)
              (system vm coverage)
+             ((all-modules) :select (fs-find))
              )
 
 
@@ -145,19 +148,12 @@ fi
 
 
 
-(define dir (path-append here "test"))
-
-(define (file-extension? ext)
-  (lambda (filename)
-    (and (<= (string-length ext) (string-length filename))
-         (string=? (string-append "." ext)
-                   (string-take-right
-                    filename (1+ (string-length ext)))))))
-
-(define files (map (lambda (p) (path-append dir p))
-                   (scandir dir (lambda (fname)
-                                  (and ((file-extension? "scm") fname)
-                                       (not (char=? #\. (string-ref fname 0))))))))
+(define re (make-regexp "\\.scm$"))
+(define files (map car
+                   (filter (match-lambda ((filename _ 'regular)
+                                          (regexp-exec re filename))
+                                         (_ #f))
+                           (fs-find (path-append here "test")))))
 
 ;; (format #t "Running on:~%~y~%" files)
 
@@ -173,7 +169,6 @@ fi
   (if coverage-dest
       (lambda (thunk)
         (define-values (coverage _) (with-code-coverage thunk))
-        (add-to-load-path (path-append (dirname here) "scripts"))
 
         (let ((limited-coverage (rework-coverage coverage)))
           (call-with-output-file coverage-dest
