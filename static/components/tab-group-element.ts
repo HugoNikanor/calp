@@ -87,6 +87,11 @@ class TabGroupElement extends ComponentVEvent {
         but still defaut to '?' if no text is found */
         label = label || child.dataset.label || (child.textContent + '?')[0];
         title = title || child.dataset.title || '';
+        let extra_attributes = {};
+        /* Used to target a tab by name */
+        if (child.dataset.originaltitle) {
+            extra_attributes = { 'data-originaltitle': child.dataset.originaltitle }
+        }
 
         let tab_id = gensym('tab_content_');
         let label_id = gensym('tab_label_');
@@ -100,6 +105,7 @@ class TabGroupElement extends ComponentVEvent {
             title: title,
             'aria-selected': false,
             'aria-controls': tab_id,
+            ... extra_attributes,
         })
 
         let tabContainer = makeElement('article', {}, {

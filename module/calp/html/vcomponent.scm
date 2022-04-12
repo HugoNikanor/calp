@@ -618,7 +618,10 @@
                         (class "vevent")))
 
                     (vevent-edit
-                     (@ (data-label "🖊") (data-title ,(_ "Edit"))))
+                     (@ (data-label "🖊")
+                        (data-title ,(_ "Edit"))
+                        ;; Used by JavaScript to target this tab
+                        (data-originaltitle "Edit")))
 
                     ;; (vevent-edit-rrule
                     ;;  (@ (data-label "↺") (data-title "Upprepningar")))

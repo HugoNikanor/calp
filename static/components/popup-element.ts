@@ -151,7 +151,7 @@ function setup_popup_element(ev: VEvent): PopupElement {
     ev.register(popup);
     /* TODO propper way to find popup container */
     (document.querySelector('.days') as Element).appendChild(popup);
-    let tabBtn = popup.querySelector('[role="tab"][title="Redigera"]') as HTMLButtonElement
+    let tabBtn = popup.querySelector('[role="tab"][data-originaltitle="Edit"]') as HTMLButtonElement
     tabBtn.click()
     let tab = document.getElementById(tabBtn.getAttribute('aria-controls')!)!
     let input = tab.querySelector('input[name="summary"]') as HTMLInputElement
