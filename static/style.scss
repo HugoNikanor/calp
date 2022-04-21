@@ -201,6 +201,8 @@ The sidebar with all the events
     /* mostly for long links */
     word-break: break-word;
 
+    scroll-behavior: smooth;
+
     .eventtext {
         border-bottom: 1px solid black;
         margin-top: 1em;
