@@ -627,8 +627,10 @@
                     ;;  (@ (data-label "↺") (data-title "Upprepningar")))
 
                     (vevent-changelog
-                     (@ (data-label "📒") (date-title ,(_ "Changelog"))))
+                     (@ (data-label "📒")
+                        (data-title ,(_ "Changelog"))))
 
                     ,@(when (debug)
                         `((vevent-dl
-                           (@ (data-label "🐸") (data-title ,(_ "Debug"))))))))))
+                           (@ (data-label "🐸")
+                              (data-title ,(_ "Debug"))))))))))
