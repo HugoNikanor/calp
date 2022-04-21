@@ -13,7 +13,7 @@
   :use-module ((web uri-query) :select (encode-query-parameters))
   :use-module ((calp html util) :select (html-id calculate-fg-color))
   :use-module ((calp html config) :select (edit-mode debug))
-  :use-module ((calp html components) :select (btn tabset form with-label))
+  :use-module ((calp html components) :select (with-label))
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
   :use-module ((vcomponent recurrence) :select (repeating?))

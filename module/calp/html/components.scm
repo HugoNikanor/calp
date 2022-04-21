@@ -130,25 +130,6 @@
           forms))))
 
 
-(define-public (form elements)
-  `(form
-    ,@(map (label self
-                  (lambda (el)
-                    (match el
-                      ((name ('@ tags ...) body ...)
-                       (let ((id (gensym "formelement")))
-                         (cons
-                          `(label (@ (for ,id)) ,name)
-                          (map
-                           (set-attribute `((name ,name)))
-                           (cons
-                            ((set-attribute `((id ,id))) (car body))
-                            (cdr body))))))
-                      ((name body ...)
-                       (self `(,name (@) ,@body))))))
-           elements)))
-
-
 (define-public (include-css path . extra-attributes)
   `(link (@ (type "text/css")
             (rel "stylesheet")
