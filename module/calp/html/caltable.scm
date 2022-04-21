@@ -24,6 +24,12 @@
 ;; end-date   : <date>
 ;; next-start : <date> → <date>
 ;; prev-start : <date> → <date>
+;; 
+;; Month containing start-date.
+;; Days between start-date and end-date will be highlighted
+;; prev-start and next-start will generate links for the next interval,
+;; they can't be infered from start and end date, mostly due to months having
+;; different lengths
 (define*-public (cal-table key: start-date end-date next-start prev-start)
 
   (define (->link date)
