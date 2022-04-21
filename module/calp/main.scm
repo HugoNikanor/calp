@@ -127,10 +127,6 @@ the same code as <b>ical</b>.</p>")
 
   (when stprof (statprof-start))
 
-  (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a"
-                                            (xdg-runtime-dir)
-                                            (getpid)))]
-        [repl => repl-start])
 
 
   ;; Load config
@@ -192,6 +188,12 @@ the same code as <b>ical</b>.</p>")
     (when (file-exists? z)
       (primitive-load z)))
 
+  ;; Start repl late, since configuration items are implemented as properties,
+  ;; meaning that they are thread local (and the repl lives in its own thread).
+  (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a"
+                                            (xdg-runtime-dir)
+                                            (getpid)))]
+        [repl => repl-start])
 
   (let ((ropt (ornull (option-ref opts '() '())
                       '("term"))))
