@@ -18,39 +18,22 @@
      (xhtml-doc (@) body ...))))
 
 
-;; Add a slider with an associated number input. Keeps the two in check.
-;; Uses the js function setVar (which must be provided elsewhere)
-;; set the the value of @var{variable}.
+;; Add a slider with an associated number input. Keeps the two in sync.
 (define*-public (slider-input key: variable
                               (min 0)
                               (max 10)
                               (step 1)
                               (value 1)
                               (unit ""))
-  (let ((groupname (symbol->string (gensym "slider"))))
-    `(div (@ (class "input-group"))
-          (script
-           "function " ,groupname "fn (value) {"
-           "setVar('" ,variable "', value + '" ,unit "');"
-           "for (let el of document.getElementsByClassName('" ,groupname "')) {"
-           "    el.value = value;"
-           "}}")
-          (input (@ (type "range")
-                    (class ,groupname)
-                    (min ,min)
-                    (max ,max)
-                    (step ,step)
-                    (value ,value)
-                    (oninput ,groupname "fn(this.value)")
-                    ))
-          (input (@ (type "number")
-                    (class ,groupname)
-                    (min ,min)
-                    (max ,max)
-                    (step ,step)
-                    (value ,value)
-                    (oninput ,groupname "fn(this.value)"))
-                 ))))
+
+  `(slider-input
+    (@ (min ,min)
+       (max ,max)
+       (step ,step)
+       (value ,value)
+       (oninput
+        ,(format #f "document.documentElement.style.setProperty('--~a', this.value + '~a')"
+                 variable unit)))))
 
 ;; Generates a button or button-like link.
 ;; TODO <div/> inside <button/> isn't valid.

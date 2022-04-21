@@ -8,6 +8,7 @@ import { InputList } from './components/input-list'
 import { EditRRule } from './components/edit-rrule'
 import { TabGroupElement } from './components/tab-group-element'
 import { VEventChangelog } from './components/changelog'
+import { SliderInput } from './components/slider'
 
 export { initialize_components }
 
@@ -28,6 +29,7 @@ function initialize_components() {
 
     customElements.define('date-time-input', DateTimeInput /*, { extends: 'input' } */)
     customElements.define('input-list', InputList);
+    customElements.define('slider-input', SliderInput);
 
     /* These maybe also require that the global maps are initialized */
     customElements.define('popup-element', PopupElement)

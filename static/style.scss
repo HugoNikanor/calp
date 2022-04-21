@@ -283,14 +283,9 @@ Each event within the eventlist
         margin: 0;
     }
 
-    .input-group {
-        display: flex;
-
-        input {
-            min-width: 0;
-        }
-    }
 }
+
+@import 'slider_input';
 
 /* Calendar List
 ----------------------------------------
