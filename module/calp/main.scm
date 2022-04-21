@@ -61,8 +61,6 @@ contain all events.
              (description ,(format #f (_ "Display version, which is ~a btw.")
                                    (@ (calp) version))))
 
-    (update-zoneinfo)
-
     (help (single-char #\h)
           (description ,(_ "Print this help")))
 
@@ -92,6 +90,8 @@ from the module (calp benchmark <i>module</i>).</p>")
 displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs
 the same output code as <b>html</b>. While the <i>/calendar/{uid}.ics</i> uses
 the same code as <b>ical</b>.</p>")
+    (_ "<p><b>update-zoneinfo</b> in theory downloads and updates our local
+zoneinfo database, but is currently broken.</p>")
     "<hr/><br/>"
     ;; Header for list of available flags.
     ;; Actual list is auto generated elsewhere.
@@ -164,25 +164,6 @@ the same code as <b>ical</b>.</p>")
     (format #t (_ "Calp version ~a~%") (@ (calp) version))
     (throw 'return))
 
-  (when (option-ref opts 'update-zoneinfo #f)
-    (let* ((locations (list "/usr/libexec/calp/tzget" (path-append (xdg-data-home) "tzget")))
-           (filename (or (find file-exists? locations)
-                         (scm-error 'missing-helper "wrapped-main"
-                                    (_ "tzget not installed, please put it in one of ~a")
-                                    (list locations)
-                                    (list "tzget" locations))))
-           (pipe (open-input-pipe filename)))
-
-      ;; (define path (read-line pipe))
-      (define line ((@ (ice-9 rdelim) read-line) pipe))
-      (define names (string-split line #\space))
-      ((@ (hnh util io) with-atomic-output-to-file)
-       (path-append (xdg-data-home) "calp" "zoneinfo.scm")
-       (lambda ()
-         (write `((@ (datetime instance) tz-list) ',names)) (newline)
-         ;; (write `(set-config! 'last-zoneinfo-upgrade ,((@ (datetime) current-date)))) (newline)
-         ))))
-
   ;; always load zoneinfo if available.
   (let ((z (path-append (xdg-data-home) "calp" "zoneinfo.scm")))
     (when (file-exists? z)
@@ -209,6 +190,7 @@ the same code as <b>ical</b>.</p>")
        ((convert) (@ (calp entry-points convert) main))
        ((tidsrapport) (@ (calp entry-points   tidsrapport) main))
        ((benchmark) (@ (calp entry-points benchmark) main))
+       ((update-zoneinfo) (@ (calp entry-points update-zoneinfo) main))
        (else => (lambda (s)
                   (format (current-error-port)
                           (_ "Unsupported mode of operation: ~a~%")
