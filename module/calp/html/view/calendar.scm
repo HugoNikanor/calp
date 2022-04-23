@@ -186,22 +186,22 @@ window.default_calendar='~a';"
                        ;; Button to go to today
                        ,(_ "Today"))))
 
-              (div (@ (id "jump-to"))
-                   ;; Firefox's accessability complain about each date
-                   ;; component, meaning that it's broken. This label
-                   ;; is for the whole input, which can be enabled
-                   ;; if wanted.
-                   ;; (label (@ (for "date")) "Hoppa till")
-                   (form (@ (action "/today"))
-                         (input (@ (type hidden)
-                                   (name "view")
-                                   (value ,(case intervaltype
-                                             [(month week) => symbol->string]
-                                             [else "month"]))))
-                         (input (@ (type date)
-                                   (name "date")
-                                   (value ,(date->string start-date "~1"))))
-                         ,(btn "➔"))))
+              (date-jump
+               ;; Firefox's accessability complain about each date
+               ;; component, meaning that it's broken. This label
+               ;; is for the whole input, which can be enabled
+               ;; if wanted.
+               ;; (label (@ (for "date")) "Hoppa till")
+               (form (@ (action "/today"))
+                     (input (@ (type hidden)
+                               (name "view")
+                               (value ,(case intervaltype
+                                         [(month week) => symbol->string]
+                                         [else "month"]))))
+                     (input (@ (type date)
+                               (name "date")
+                               (value ,(date->string start-date "~1"))))
+                     ,(btn "➔"))))
 
          (details (@ (open) (style "grid-area: cal"))
                   (summary ,(_ "Month overview"))

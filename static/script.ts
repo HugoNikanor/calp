@@ -137,29 +137,6 @@ window.addEventListener('load', function() {
         }
     }
 
-
-    /* Replace backend-driven [today] link with frontend, with one that
-       gets correctly set in the frontend. Similarly, update the go to
-       specific date button into a link which updates wheneven the date
-       form updates.
-    */
-
-    let gotodatebtn = document.querySelector("#jump-to .btn")!;
-    let target_href = (new Date).format("~Y-~m-~d") + ".html";
-    let golink = makeElement('a', {
-        className: 'btn',
-        href: target_href,
-        innerHTML: gotodatebtn.innerHTML,
-    }) as HTMLAnchorElement
-    gotodatebtn.replaceWith(golink);
-
-    (document.querySelector("#jump-to input[name='date']") as HTMLInputElement)
-        .onchange = function() {
-            let date = (this as HTMLInputElement).valueAsDate!.format("~Y-~m-~d");
-            console.log(date);
-            golink.href = date + ".html";
-        }
-
     /* ---------------------------------------- */
 
     /* needs to be called AFTER bind_properties, but BEFORE init_input_list
