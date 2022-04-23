@@ -1,6 +1,7 @@
 window.formatters.set('description', (el, d) => {
-    if (/<br\/?>/.exec(d)) {
-        /* Assume that the text is HTML iff it contains a <br/> tag */
+    if (/<\/?\w+( \w+(="?\w+"?)?)*\/?>/.exec(d)) {
+        /* Assume that the text is HTML if it contains something which looks
+           like an HTML tag */
         let parser = new DOMParser();
         let doc = parser.parseFromString(d, 'text/html');
         el.replaceChildren(doc.body);
