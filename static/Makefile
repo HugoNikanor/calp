@@ -3,8 +3,7 @@
 TARGETS := style.css smallcal.css script.out.js directory-listing.css
 WATCH=
 
-# script explicitly named, since that is our entry point
-TS_FILES = script.ts $(shell find . -type f -name \*.ts -not -path */node_modules/*)
+TS_FILES = $(shell find . -type f -name \*.ts -not -path */node_modules/*)
 JS_FILES = $(TS_FILES:%.ts=%.js)
 
 export PATH := $(shell npm bin):$(PATH)
@@ -15,7 +14,8 @@ all: $(TARGETS)
 	tail -n1 $< | tail -c+65 | base64 --decode | jq '.' > $@
 
 # r!browserify --list script.ts -p tsify | xargs -L1 basename | tac
-script.out.js: $(TS_FILES)
+# script explicitly named, since that is our entry point
+script.out.js: script.ts $(TS_FILES)
 	browserify $< -p tsify --noImplicitAny --debug -o $@
 
 deps.svg: $(TS_FILES)
