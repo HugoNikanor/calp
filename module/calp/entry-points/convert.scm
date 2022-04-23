@@ -2,6 +2,7 @@
   :export (main)
   :use-module (hnh util)
   :use-module (hnh util options)
+  :use-module ((hnh util path) :select (filename-extension))
   :use-module (ice-9 getopt-long)
   :use-module (sxml simple)
   :use-module (calp translation)
@@ -20,7 +21,7 @@
 
 
 (define (filename-to-type filename)
-  (let ((extension (car (reverse (string-split filename #\.)))))
+  (let ((extension (filename-extension filename)))
     (cond [(string-ci=? "ics" extension)
            "ical"]
           [(or (string-ci=? "xcal" extension)

@@ -57,3 +57,6 @@
   (define base (basename path))
   (and (not (string-null? base))
        (char=? #\. (string-ref base 0))))
+
+(define-public (filename-extension filename)
+  (car (reverse (string-split filename #\.))))
