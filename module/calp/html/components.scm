@@ -156,12 +156,3 @@
           (@ (for ,id))
           (span (@ (class "plus"))  "+")
           (span (@ (class "minus")) "-"))))
-
-;; (define-once timespan-generator-id (gensym "timespan-generator"))
-;; (define-public (input-timespan-generator)
-;;   `((div (@ (class "template")
-;;             (id ,timespan-generator-id))
-;;          ,(input-timespan))
-;;     (script
-;;      "function make_timespan_input() {\n"
-;;      "return document.getElementsById(" ,timespan-generator-id ").cloneNode(true);")))

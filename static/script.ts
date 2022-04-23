@@ -1,6 +1,5 @@
 import { VEvent, xml_to_vcal } from './vevent'
 import { SmallcalCellHighlight, Timebar } from './clock'
-import { makeElement } from './lib'
 import { vcal_objects, event_calendar_mapping } from './globals'
 import { EventCreator } from './event-creator'
 import { PopupElement, setup_popup_element } from './components/popup-element'
@@ -111,20 +110,6 @@ window.addEventListener('load', function() {
            the whole page scroll there.
         */
         el.parentElement!.removeAttribute("href");
-
-        let popup = document.getElementById("popup" + el.id);
-        // popup.getElementsByClassName("edit-form")[0].onsubmit = function () {
-        //     create_event(el);
-        //     return false; /* stop default */
-        // }
-
-        /* Bind all vcomponent properties into javascript. */
-        // if (el.closest(".longevents")) {
-        //     new VComponent(el, true);
-        // } else {
-        //     new VComponent(el, false);
-        // }
-
     }
 
     document.onkeydown = function(evt) {
@@ -138,28 +123,6 @@ window.addEventListener('load', function() {
     }
 
     /* ---------------------------------------- */
-
-    /* needs to be called AFTER bind_properties, but BEFORE init_input_list
-       After bind_properties since that initializes categories to a possible field
-       Before init_input_list since we need this listener to be propagated to clones.
-       [CATEGORIES_BIND]
-    */
-    // TODO fix this
-    // for (let lst of document.querySelectorAll(".input-list[data-property='categories']")) {
-    //     let f = function() {
-    //         console.log(lst, lst.closest('.popup-container'));
-    //         let event = event_from_popup(lst.closest('.popup-container'))
-    //         event.properties.categories = lst.get_value();
-    //     };
-
-    //     for (let inp of lst.querySelectorAll('input')) {
-    //         inp.addEventListener('input', f);
-    //     }
-    // }
-
-    // init_arbitary_kv();
-
-    // init_input_list();
 
     document.addEventListener('keydown', function(event) {
         /* Physical key position, names are what that key would
