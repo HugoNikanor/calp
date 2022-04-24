@@ -84,18 +84,15 @@
                  [else (list line '(br))])))
        (string-split str #\newline)))
 
-(define html-cals
-  '("D-sektionens officiella kalender"
-    "LiTHe kod"
-    "Klassfadder 2020"))
+(define html-rx
+  (make-regexp "</?\\w+( +\\w+(=[\"']?\\w+[\"']?)?)* */?>"))
 
 ((@ (calp html filter) description-filter)
  (lambda (ev str)
-   (cond [(member (prop (parent ev) 'NAME)
-                  html-cals)
-          (parse-html str)]
-         [(prop ev 'X-MICROSOFT-SKYPETEAMSMEETINGURL)
+   (cond [(prop ev 'X-MICROSOFT-SKYPETEAMSMEETINGURL)
           (parse-teams-description str)]
+         [(regexp-exec html-rx str)
+           (parse-html str)]
          [else (parse-links str)])))
 
 ((@ (datetime) week-start) mon)

@@ -1,5 +1,5 @@
 window.formatters.set('description', (el, d) => {
-    if (/<\/?\w+( \w+(="?\w+"?)?)*\/?>/.exec(d)) {
+    if (/<\/?\w+( +\w+(=["']?\w+["']?)?)* *\/?>/.exec(d)) {
         /* Assume that the text is HTML if it contains something which looks
            like an HTML tag */
         let parser = new DOMParser();
