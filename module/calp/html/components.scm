@@ -36,7 +36,6 @@
                  variable unit)))))
 
 ;; Generates a button or button-like link.
-;; TODO <div/> inside <button/> isn't valid.
 (define*-public (btn key: onclick href (class '())
               allow-other-keys:
               rest: args)

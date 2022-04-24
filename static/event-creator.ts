@@ -45,7 +45,7 @@ class EventCreator {
         pos_in: ((c: HTMLElement, e: MouseEvent) => number),
         round_to: number = 1,
         wide_element: boolean = false
-    ): ((e: MouseEvent) => any) {
+    ): ((e: MouseEvent) => void) {
         let that = this;
         return function(this: HTMLElement, e: MouseEvent) {
             if (e.buttons != 1 || !that.down_on_event) return;
