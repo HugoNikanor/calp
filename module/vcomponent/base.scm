@@ -77,6 +77,14 @@
   (set-component-children! parent (cons child (children parent)))
   (set-component-parent! child parent))
 
+(define-public (remove-child! parent-component child)
+  (unless (eq? parent-component (parent child))
+    (scm-error
+     'wrong-type-arg "remove-child!" "Child doesn't belong to parent"
+     (list parent-component child) #f))
+  (set-component-children! parent-component (delq1! child (children parent-component)))
+  (set-component-parent! child #f))
+
 ;;; TODO key=DTSTART, (date? value) => #t
 ;;; KRÄVER att (props vline 'VALUE) <- "DATE"
 (define (set-property! component key value)
