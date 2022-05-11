@@ -172,6 +172,7 @@
 
          ;; remove old instance of event from runtime
          (remove-event this old-event)
+         (remove-child! (parent old-event) old-event)
 
          ;; Add new event to runtime,
          ;; MUST be done after since the two events SHOULD share UID.
