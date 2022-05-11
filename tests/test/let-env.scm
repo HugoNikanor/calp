@@ -3,7 +3,7 @@
   :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((guile) :select (setenv getenv))
-  :use-module ((hnh util) :select (let-env)))
+  :use-module ((hnh util env) :select (let-env)))
 
 (setenv "CALP_TEST_ENV" "1")
 

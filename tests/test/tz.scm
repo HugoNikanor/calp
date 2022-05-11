@@ -17,7 +17,7 @@
                         datetime->unix-time
                         unix-time->datetime
                         get-datetime))
-  :use-module ((hnh util) :select (let-env)))
+  :use-module ((hnh util env) :select (let-env)))
 
 ;; London alternates between +0000 and +0100
 (let-env

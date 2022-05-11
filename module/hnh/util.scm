@@ -8,7 +8,7 @@
   #:export (for sort* sort*!
                 set/r!
                 -> ->> set set-> aif awhen
-                let-lazy let-env
+                let-lazy
                 case*
                 and=>> label
                 print-and-return
@@ -557,27 +557,6 @@
   (with-output-to-string (lambda () (write any))))
 
 
-
-
-(define-syntax let-env
-  (syntax-rules ()
-    [(_ ((name value) ...)
-        body ...)
-
-     (let ((env-pairs #f))
-       (dynamic-wind
-         (lambda ()
-           (set! env-pairs
-             (map (lambda (n new-value)
-                    (list n new-value (getenv n)))
-                  (list (symbol->string (quote name)) ...)
-                  (list value ...)))
-           (for-each (lambda (pair) (setenv (car pair) (cadr pair)))
-                     env-pairs))
-         (lambda () body ...)
-         (lambda ()
-           (for-each (lambda (pair) (setenv (car pair) (caddr pair)))
-                     env-pairs))))]))
 
 (define-syntax catch*
   (syntax-rules ()
