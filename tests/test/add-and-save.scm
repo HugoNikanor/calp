@@ -8,7 +8,11 @@
   :use-module ((srfi srfi-1) :select (find))
   :use-module ((vcomponent formats vdir save-delete) :select (save-event))
   :use-module ((vcomponent formats xcal parse) :select (sxcal->vcomponent))
-  :use-module ((vcomponent util instance methods) :select (add-calendars add-and-save-event)))
+  :use-module ((vcomponent util instance methods)
+               :select (add-calendars
+                        add-and-save-event
+                        remove-event
+                        )))
 
 (define timezone
   '(vtimezone
@@ -100,5 +104,15 @@
 ;; (add-and-save-event event-object calendar event)
 
 
-(test-equal "Correct amount of children"
+(test-equal "Correct amount of children in calendar"
   2 (length (children calendar)))
+
+
+(define get-events (@@ (vcomponent util instance methods) get-events))
+(test-equal "Event object contains correct number of events (single calendar)"
+  2 (length (get-events event-object)))
+
+(remove-event event-object (car (get-events event-object)))
+
+(test-equal "Correct number of events after removing first element"
+  1 (length (get-events event-object)))
