@@ -1,5 +1,5 @@
 (define-module (hnh util env)
-  :export (let-env))
+  :export (let-env with-working-directory))
 
 (define-syntax let-env
   (syntax-rules ()
@@ -22,4 +22,12 @@
                      env-pairs))))]))
 
 
+(define-syntax-rule (with-working-directory directory thunk)
+  (let ((old-cwd #f))
+   (dynamic-wind
+     (lambda ()
+       (set! old-cwd (getcwd))
+       (chdir directory))
+     thunk
+     (lambda () (chdir old-cwd)))))
 
