@@ -146,12 +146,12 @@
 
 
 (define-method (remove-event (this <events>) event)
-  ;; cons #f so delq1! can delete the first element
-
-  (delq1! event (cons #f (slot-ref this 'events)))
+  (slot-set! this 'events
+             (delq1! event (slot-ref this 'events)))
 
   (let ((slot-name (if (repeating? event) 'repeating-events 'fixed-events)))
-    (delq1! event (cons #f (slot-ref this slot-name))))
+    (slot-set! this slot-name
+               (delq1! event (slot-ref this slot-name))))
 
   (slot-set! this 'event-set
              (stream-remove
