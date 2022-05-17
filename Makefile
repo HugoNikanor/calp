@@ -1,4 +1,5 @@
 .PHONY: all clean test \
+	check \
 	static \
 	go_files \
 	lcov.info
@@ -82,3 +83,6 @@ GENHTML_FLAGS=--show-details \
 
 coverage: lcov.info
 	genhtml $(GENHTML_FLAGS) --output-directory $@ $<
+
+check:
+	tests/run-tests.scm --skip $(PWD)/tests/test/web-server.scm
