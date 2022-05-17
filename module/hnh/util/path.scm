@@ -60,3 +60,18 @@
 
 (define-public (filename-extension filename)
   (car (reverse (string-split filename #\.))))
+
+
+(define-public (realpath filename)
+  (unless (string? filename)
+    (scm-error 'wrong-type-arg "realpath"
+               "filename not a string: ~a"
+               (list filename) #f))
+  (when (string-null? filename)
+    (scm-error 'wrong-type-arg "realpath"
+               "filename can't be empty"
+               #f #f))
+
+  (if (absolute-file-name? filename)
+      filename
+      (path-append (getcwd) filename)))

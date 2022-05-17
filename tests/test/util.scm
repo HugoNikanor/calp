@@ -8,8 +8,9 @@
   :use-module (srfi srfi-88)
   :use-module (srfi srfi-1)
   :use-module (hnh util)
+  :use-module (hnh util env)
   :use-module ((hnh util path)
-               :select (path-append path-split file-hidden?)))
+               :select (path-append path-split file-hidden? realpath)))
 
 (test-equal "when"
   1 (when #t 1))
@@ -272,3 +273,21 @@
 (test-assert (file-hidden? "/path/to/.hidden"))
 (test-assert (not (file-hidden? "/visible/.in/hidden")))
 (test-assert (not (file-hidden? "")))
+
+(test-equal "Realpath for path fragment"
+  "/home/hugo"
+  (with-working-directory
+   "/home"
+   (lambda () (realpath "hugo"))))
+
+(test-equal "Realpath for already absolute path"
+  "/home/hugo"
+  (with-working-directory
+   "/tmp"
+   (lambda () (realpath "/home/hugo"))))
+
+(test-equal "Realpath for already absolute path"
+  "/home/hugo"
+  (with-working-directory
+   "/tmp"
+   (lambda () (realpath "/home/hugo"))))
