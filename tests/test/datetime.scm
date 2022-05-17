@@ -15,72 +15,36 @@
   :use-module ((guile) :select (LC_CTYPE LC_TIME)))
 
 (test-equal
-  "empty time"
+  "A new time is empty"
   (time)
   #00:00:00)
 
+(test-equal "A new date is empty"
+  (date)
+  #0000-00-00)
+
 (test-assert
-  "Synatx date"
+  "Datetime have syntax"
   #2020-01-01)
 
-(test-assert
-  "Test year type"
-  (integer? (year (date year: 2020))))
-
-(test-assert
-  "Test mmnth type"
-  (integer? (month (date month: 1))))
-
-(test-assert
-  "Test day type"
-  (integer? (day (date day: 1))))
-
-(test-equal
-  "Manual print (any)"
-  "2020-10-10"
-  (let ((d #2020-10-10))
-    (format #f "~a-~a-~a" (year d) (month d) (day d))))
-
-(test-equal
-  "Manual print (number)"
-  "2020-10-10"
-  (let ((d #2020-10-10))
-    (format #f "~d-~d-~d" (year d) (month d) (day d))))
-
-(test-equal
-  "Date print"
-  "#2020-01-01"
-  (format
-    #f
-    "~a"
-    #2020-01-01))
-
-(test-equal "time print"
-  "#20:30:40"
-  (format #f "~a" #20:30:40))
-
-(test-equal "time print bad"
-  "#<<time> hour=#f minute=1 second=2>"
-  (format #f "~a" (time hour: #f
-                        minute: 1
-                        second: 2)))
 
 
-(test-equal
-  "Syntax date="
-  (date year: 2020 month: 1 day: 1)
-  #2020-01-01)
+(test-group "The syntax for <> is equivalent to manually creating them"
+  (test-equal
+      "dates"
+    (date year: 2020 month: 1 day: 1)
+    #2020-01-01)
 
-(test-equal
-  "Syntax time="
-  (time hour: 13 minute: 37 second: 0)
-  #13:37:00)
+  (test-equal
+      "times"
+    (time hour: 13 minute: 37 second: 0)
+    #13:37:00)
 
-(test-equal
-  "Syntax Datetime="
-  (datetime year: 2020 month: 1 day: 1
-            hour: 13 minute: 37 second: 0)
-  #2020-01-01T13:37:00)
+  (test-equal
+      "datetimes"
+    (datetime year: 2020 month: 1 day: 1
+              hour: 13 minute: 37 second: 0)
+    #2020-01-01T13:37:00))
 
 (test-equal
     "Date- over leap year month shift"
