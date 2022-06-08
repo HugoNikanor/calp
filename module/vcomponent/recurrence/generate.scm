@@ -362,8 +362,7 @@
     ;; but not the RDATE events ???
     ;; (TODO test against some other calendar program)
     (limit-rrule-stream rrule (if (date? (prop event 'DTSTART))
-                                  date<= datetime<=) date-stream)
-    ))
+                                  date<= datetime<=) date-stream)))
 
 (export rrule-instances)
 
