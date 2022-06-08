@@ -114,6 +114,9 @@
 (define-config static-dir "static"
   description: (_ "Where static files for the web server are located"))
 
+
+(define ical-namespace '(IC . "urn:ietf:params:xml:ns:icalendar-2.0"))
+
 
 
 ;; TODO ensure encoding on all fields which take user provided data.
@@ -205,14 +208,12 @@
            (return (build-response code: 400)
                    (string-append (_ "Both 'cal' and 'data' required") "\r\n")))
 
-
          ;; NOTE that this leaks which calendar exists,
          ;; but you can only query for existance.
          ;; also, the calendar view already show all calendars.
          (let* ((calendar-name (base64decode cal))
                 (calendar
-                  (find (lambda (c) (string=? calendar-name (prop c 'NAME)))
-                        (get-calendars global-event-object))))
+                 (get-calendar-by-name global-event-object calendar-name)))
 
            (unless calendar
              (return (build-response code: 400)
@@ -238,12 +239,12 @@
                    ((@ (vcomponent formats xcal parse) sxcal->vcomponent)
                     (catch 'parser-error
                       (lambda ()
-                        (move-to-namespace
-                         ;; TODO Multiple event components
-                         (car ((sxpath '(// IC:vevent))
-                               (xml->sxml data namespaces:
-                                          '((IC . "urn:ietf:params:xml:ns:icalendar-2.0")))))
-                         #f))
+                        (-> data
+                            (xml->sxml namespaces: (list ical-namespace))
+                            ((sxpath '(// IC:vevent)))
+                            ;; TODO Multiple event components
+                            car
+                            (move-to-namespace #f)))
                       (lambda (err port . args)
                         (return (build-response code: 400)
                                 (format #f "~a ~{~a~}\r\n"
