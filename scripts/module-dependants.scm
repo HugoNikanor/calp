@@ -18,6 +18,7 @@
 
 
 (use-modules (hnh util)
+             (hnh util path)
              (srfi srfi-1)
              (ice-9 ftw)
              (texinfo string-utils)
@@ -58,9 +59,7 @@
 
 
 (define (main args)
-  ;; TODO this needs to be an absolute filename, for the remove below to work
-  ;; Fix this once `realpath' is written
-  (define target-file (cadr args))
+  (define target-file (realpath (cadr args)))
   (define target-forms
     (reverse (call-with-input-file target-file get-forms)))
   (define target-module
