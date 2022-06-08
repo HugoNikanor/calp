@@ -314,14 +314,33 @@
     date-stream)))
 
 ;; (a := <date|datetime>) => <rrule>, a → (stream a)
-(define-stream (generate-posibilities rrule start-date)
+(define-stream (generate-posibilities* rrule start-date)
   (limit-recurrence-set
    rrule
    (extend-recurrence-set
     rrule start-date)))
 
+(define-stream (generate-posibilities rrule start-date)
+  ;; Some expanders can produce dates before our start time.
+  ;; For example FREQ=WEEKLY;BYDAY=MO where DTSTART is
+  ;; anything after monday. This filters these out.
+  (stream-drop-while
+   (lambda (d) (date/-time< d start-date))
+   (generate-posibilities* rrule start-date)))
+
+(define-stream (limit-rrule-stream rrule < date-stream)
+  (cond [(count rrule) => (lambda (c) (stream-take c date-stream))]
+        [(until rrule) => (lambda (end) (stream-take-while (lambda (dt) (< dt end)) date-stream))]
+        [else date-stream]))
+
+(define-stream (rrule-instances-raw rrule start-date)
+  (limit-rrule-stream rrule (if (date? start-date)
+                                date<= datetime<=)
+                      (generate-posibilities rrule start-date)))
 
 ;; Recurring <vcomponent> → (stream <date|datetime>)
+;; TODO rename this procedure (to something like event-instances), allowing
+;; rrule-instances-raw to take its place
 (define-stream (rrule-instances event)
   (define rrule (prop event 'RRULE))
 
@@ -330,14 +349,9 @@
                       (aif (prop* event 'EXDATE)
                            (cut member <> (map value it))
                            (const #f))
-                      ;; Some expanders can produce dates before our start time.
-                      ;; For example FREQ=WEEKLY;BYDAY=MO where DTSTART is
-                      ;; anything after monday. This filters these out.
-                      (stream-drop-while
-                       (lambda (d) (date/-time< d (prop event 'DTSTART)))
-                       (if rrule
-                           (generate-posibilities rrule (prop event 'DTSTART))
-                           stream-null))
+                      (if rrule
+                          (generate-posibilities rrule (prop event 'DTSTART))
+                          stream-null)
                       ;; TODO ideally I should merge the limited recurrence set
                       ;; with the list of rdates here. However, I have never
                       ;; sen an event with an RDATE property, so I wont worry
@@ -347,12 +361,9 @@
     ;; TODO count and until shoud be applied to the RRULE events,
     ;; but not the RDATE events ???
     ;; (TODO test against some other calendar program)
-    (cond [(count rrule) => (lambda (c) (stream-take c date-stream))]
-          [(until rrule) => (lambda (end) (stream-take-while
-                                      (cut (if (date? (prop event 'DTSTART))
-                                               date<= datetime<=) <> end)
-                                      date-stream))]
-          [else date-stream])))
+    (limit-rrule-stream rrule (if (date? (prop event 'DTSTART))
+                                  date<= datetime<=) date-stream)
+    ))
 
 (export rrule-instances)
 
