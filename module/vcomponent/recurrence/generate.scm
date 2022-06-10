@@ -345,19 +345,19 @@
   (define rrule (prop event 'RRULE))
 
   ;; 3.8.5.1 exdate are evaluated AFTER rrule (and rdate)
-  (let ((date-stream (stream-remove
-                      (aif (prop* event 'EXDATE)
-                           (cut member <> (map value it))
-                           (const #f))
-                      (if rrule
-                          (generate-posibilities rrule (prop event 'DTSTART))
-                          stream-null)
-                      ;; TODO ideally I should merge the limited recurrence set
-                      ;; with the list of rdates here. However, I have never
-                      ;; sen an event with an RDATE property, so I wont worry
-                      ;; about it for now.
-                      ;; (stream-merge (list->stream (#|rdate's|#))
-                      )))
+  (let* ((strm (if rrule
+                   (generate-posibilities rrule (prop event 'DTSTART))
+                   stream-null))
+         (date-stream
+          (cond ((prop* event 'EXDATE)
+                 => (lambda (ex) (stream-remove (cut member <> (map value ex)) strm)))
+                (else strm))
+          ;; TODO ideally I should merge the limited recurrence set
+          ;; with the list of rdates here. However, I have never
+          ;; sen an event with an RDATE property, so I wont worry
+          ;; about it for now.
+          ;; (stream-merge (list->stream (#|rdate's|#))
+          ))
     ;; TODO count and until shoud be applied to the RRULE events,
     ;; but not the RDATE events ???
     ;; (TODO test against some other calendar program)
