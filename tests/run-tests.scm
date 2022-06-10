@@ -24,6 +24,7 @@ fi
              (hnh util)
              (ice-9 ftw)
              (ice-9 format)
+             (ice-9 pretty-print)
              (ice-9 getopt-long)
              (ice-9 match)
              (system vm coverage)
@@ -42,6 +43,14 @@ fi
 
 (define verbose? (make-parameter #f))
 
+(define (escaped sequence string)
+  (format #f "\x1b[~am~a\x1b[m" sequence string))
+
+(define (green s)  (escaped 32 s))
+(define (red s)    (escaped 31 s))
+(define (yellow s) (escaped 33 s))
+(define (bold s)   (escaped  1 s))
+
 (define (construct-test-runner)
   (define runner (test-runner-null))
   ;; end of individual test case
@@ -51,13 +60,17 @@ fi
   (test-runner-on-test-end! runner
     (lambda (runner)
       (case (test-result-kind runner)
-        ((pass)  (display "\x1b[0;32mX\x1b[m"))
-        ((fail)  (newline) (display "\x1b[0;31mE\x1b[m"))
-        ((xpass) (display "\x1b[0;33mX\x1b[m"))
-        ((xfail) (display "\x1b[0;33mE\x1b[m"))
-        ((skip)  (display "\x1B[0;33m-\x1b[m")))
+        ((pass)  (display (green "X")))
+        ((fail)  (newline) (display (red "E")))
+        ((xpass) (display (yellow "X")))
+        ((xfail) (display (yellow "E")))
+        ((skip)  (display (yellow "-"))))
       (when (or (verbose?) (eq? 'fail (test-result-kind)))
-       (format #t " ~a~%" (test-runner-test-name runner)))
+        (format #t " ~a~%"
+                (cond ((test-runner-test-name runner)
+                       (negate string-null?) => identity)
+                      ((test-result-ref runner 'expected-value)
+                       => (lambda (p) (with-output-to-string (lambda () (display (bold "[SOURCE]: ")) (truncated-print p))))))))
       (when (eq? 'fail (test-result-kind))
         (cond ((test-result-ref runner 'actual-error)
                => (lambda (err) (format #t "Error: ~s~%" err)))
