@@ -316,6 +316,7 @@
 
                                  ;; See RFC 5545 p.53 for list of all repeating types
                                  ;; (for vcomponent)
+                                 ;; TODO templetize this, and allow users to set which types are list types, but also validate this upon creation (elsewhere)
                                  (if (memv key '(ATTACH ATTENDEE CATEGORIES
                                                      COMMENT CONTACT EXDATE
                                                      REQUEST-STATUS RELATED-TO

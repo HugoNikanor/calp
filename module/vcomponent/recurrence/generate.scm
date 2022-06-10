@@ -342,27 +342,28 @@
 ;; TODO rename this procedure (to something like event-instances), allowing
 ;; rrule-instances-raw to take its place
 (define-stream (rrule-instances event)
-  (define rrule (prop event 'RRULE))
-
   ;; 3.8.5.1 exdate are evaluated AFTER rrule (and rdate)
-  (let* ((strm (if rrule
-                   (generate-posibilities rrule (prop event 'DTSTART))
-                   stream-null))
-         (date-stream
-          (cond ((prop* event 'EXDATE)
-                 => (lambda (ex) (stream-remove (cut member <> (map value ex)) strm)))
-                (else strm))
-          ;; TODO ideally I should merge the limited recurrence set
-          ;; with the list of rdates here. However, I have never
-          ;; sen an event with an RDATE property, so I wont worry
-          ;; about it for now.
-          ;; (stream-merge (list->stream (#|rdate's|#))
-          ))
-    ;; TODO count and until shoud be applied to the RRULE events,
-    ;; but not the RDATE events ???
-    ;; (TODO test against some other calendar program)
-    (limit-rrule-stream rrule (if (date? (prop event 'DTSTART))
-                                  date<= datetime<=) date-stream)))
+  (let ((rrule-stream
+         (cond ((prop event 'RRULE)
+                => (lambda (rrule)
+                     (rrule-instances-raw rrule (prop event 'DTSTART))))
+               (else stream-null)))
+        (rdates
+         (cond ((prop* event 'RDATE) => (lambda (v) (map value v)))
+               (else '())))
+        (exdates
+         (cond ((prop* event 'EXDATE) => (lambda (v) (map value v)))
+               (else #f))))
+
+    (let ((items (interleave-streams
+                  date/-time<?
+                  (list (list->stream rdates)
+                        rrule-stream))))
+      ;; `If' outside to avoid running stream-remove when it
+      ;; would always be false
+      (if exdates
+          (stream-remove (lambda (dt) (member dt exdates)) items)
+          items))))
 
 (export rrule-instances)
 
