@@ -72,7 +72,7 @@ README: README.in
 	./main text < README.in | sed "s/<<today>>/`date -I`/" > README
 
 lcov.info: $(GO_FILES)
-	env DEBUG=1 tests/run-tests.scm --coverage=$@
+	env DEBUG=0 tests/run-tests.scm --coverage=$@
 
 test: coverage
 
@@ -85,4 +85,4 @@ coverage: lcov.info
 	genhtml $(GENHTML_FLAGS) --output-directory $@ $<
 
 check:
-	tests/run-tests.scm --skip $(PWD)/tests/test/web-server.scm
+	tests/run-tests.scm $(if $(VERBOSE),--verbose) --skip $(PWD)/tests/test/web-server.scm
