@@ -79,6 +79,8 @@
     (unless (zero? remaining)
       (loop (sleep remaining)))))
 
+(test-skip "time limited stream")
+
 (let ((strm (stream-map (lambda (x) (when (zero? (modulo x 4)) (true-sleep 1)) x) (stream-from 1))))
   (let ((strm (stream-timeslice-limit strm 0.1)))
     (test-equal "time limited stream"
