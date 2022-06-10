@@ -17,6 +17,8 @@
   :export (add-event
            remove-event
 
+           make-instance
+
            get-event-by-uid
            fixed-events-in-range
 
@@ -53,6 +55,9 @@
   uid-map
   )
 
+
+(define (make-instance calendar-files)
+  (make <events> calendar-files: calendar-files))
 
 (define-method (get-event-by-uid (this <events>) uid)
   (hash-ref (slot-ref this 'uid-map) uid))
