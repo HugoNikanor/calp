@@ -23,7 +23,7 @@
   :use-module ((vcomponent recurrence internal)
                :select (count until))
   :use-module ((vcomponent base)
-               :select (make-vcomponent prop prop* extract))
+               :select (make-vcomponent prop prop* extract make-vline))
   :use-module ((datetime)
                :select (parse-ics-datetime
                         datetime
@@ -63,6 +63,8 @@
     ;; TODO possibly test with other languages
     (format-recurrence-rule (prop comp 'RRULE) 'sv)))
 
+;; TODO remove this makeshift parser (and all others), and replace them with a
+;; properly specified syntax for easily creating objects.
 (define (vevent . rest)
   (define v (make-vcomponent 'VEVENT))
   (let loop ((rem rest))
@@ -72,14 +74,14 @@
                       keyword->string
                       string-upcase
                       string->symbol)))
-        (set! (prop v symb)
-          (case symb
-            ((DTSTART EXDATE)
-             (parse-ics-datetime (cadr rem)))
-            ((RRULE) (parse-recurrence-rule (cadr rem)))
-            (else (cadr rem))))
-        (when (eq? symb 'EXDATE)
-              (set! (prop* v symb) = list)))
+        ;; TODO extend to allow dates (without time)
+        (case symb
+          ((EXDATE RDATE) (set! (prop* v symb)
+                            (map (lambda (dt) (make-vline symb dt (make-hash-table)))
+                                 (map parse-ics-datetime (cadr rem)))))
+          ((DTSTART) (set! (prop v symb) (parse-ics-datetime (cadr rem))))
+          ((RRULE)   (set! (prop v symb) (parse-recurrence-rule (cadr rem))))
+          (else      (set! (prop v symb) (cadr rem)))))
       (loop (cddr rem))))
   v)
 
@@ -1024,7 +1026,7 @@
              dtstart:
              "19970902T090000"
              exdate:
-             "19970902T090000"
+             (list "19970902T090000")
              rrule:
              "FREQ=MONTHLY;BYDAY=FR;BYMONTHDAY=13"
              x-summary:
@@ -1290,7 +1292,7 @@
              dtstart:
              "19970902T090000"
              exdate:
-             "19970902T090000"
+             (list "19970902T090000")
              rrule:
              "FREQ=MONTHLY;BYDAY=FR,WE;BYMONTHDAY=13"
              x-summary:
@@ -1371,7 +1373,50 @@
                          #2020-10-10T10:00:17
                          #2020-10-10T10:00:18
                          #2020-10-10T10:00:19))
-
+           ;; Exdates are applied after rrule's, meaning that less than count
+           ;; instances may be present.
+           (vevent
+            summary: "Exdates are applied AFTER rrule's"
+            dtstart: "20220610T100000"
+            rrule: "FREQ=DAILY;COUNT=5"
+            exdate: (list "20220612T100000")
+            x-summary: "dagligen, totalt 5 gånger"
+            x-set: (list #2022-06-10T10:00:00
+                         #2022-06-11T10:00:00
+                         ;; #2022-06-12T10:00:00 ; skipped by exdate
+                         #2022-06-13T10:00:00
+                         #2022-06-14T10:00:00
+                         ))
+           (vevent
+            summary: "RDATE:s add to the recurrence rule"
+            dtstart: "20220610T100000"
+            rrule: "FREQ=DAILY;COUNT=5"
+            rdate: (list "20220620T100000")
+            x-summary: "dagligen, totalt 5 gånger"
+            x-set: (list #2022-06-10T10:00:00
+                         #2022-06-11T10:00:00
+                         #2022-06-12T10:00:00
+                         #2022-06-13T10:00:00
+                         #2022-06-14T10:00:00
+                         #2022-06-20T10:00:00 ; added by rdate
+                         )
+            )
+           (vevent
+            summary: "RDATE:s add to the recurrence rule"
+            dtstart: "20220610T100000"
+            rrule: "FREQ=DAILY;COUNT=5"
+            exdate: (list "20220620T100000")
+            rdate: (list "20220620T100000")
+            x-summary: "dagligen, totalt 5 gånger"
+            x-set: (list #2022-06-10T10:00:00
+                         #2022-06-11T10:00:00
+                         #2022-06-12T10:00:00
+                         #2022-06-13T10:00:00
+                         #2022-06-14T10:00:00
+                         ;; #2022-06-20T10:00:00 ; added by rdate, removed by exdate
+                         ))
+           ;; TODO rdate with different timezone than dtstart
+           ;; TODO rdate with period
            ))
 
 
