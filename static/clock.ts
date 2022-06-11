@@ -102,9 +102,24 @@ class ClockElement extends HTMLElement {
     update(now: Date) { /* noop */ }
 }
 
+
 class TodayButton extends ClockElement {
+    a: HTMLAnchorElement;
+
+    constructor() {
+        super();
+        this.a = document.createElement('a');
+        this.a.textContent = 'Idag';
+        this.a.classList.add('btn');
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.replaceChildren(this.a);
+    }
+
     update(now: Date) {
-        (this.querySelector('a') as any).href = now.format("~Y-~m-~d.html")
+        this.a.href = now.format("~Y-~m-~d.html")
     }
 }
 
