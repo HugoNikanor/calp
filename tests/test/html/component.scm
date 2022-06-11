@@ -7,28 +7,6 @@
   :use-module (calp html components)
   )
 
-(test-equal '(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
-                    (html (@ (xmlns "http://www.w3.org/1999/xhtml"))
-                          body))
-  (xhtml-doc body))
-
-(test-equal '(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
-                    (html (@ (xmlns "http://www.w3.org/1999/xhtml"))
-                          (b "Hello, World!")))
-  (xhtml-doc ,'(b "Hello, World!")))
-
-(test-equal
-    '(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
-            (html (@ (xmlns "http://www.w3.org/1999/xhtml")
-                     (lang sv))
-                  body))
-    (xhtml-doc (@ (lang sv)) body))
-
-
-;; TODO Slider not tested, due to depending on gensyms, and really needing
-;;      integration testing to be worth anything.
-
-
 (test-equal
     '(button (@ (class "btn") (onclick "onclick")) "Body")
   (btn onclick: "onclick" "Body"))
