@@ -51,7 +51,7 @@ function find_block(uid: uid): ComponentBlock | null {
         return null;
     }
     for (let el of obj.registered) {
-        if (el.tagName === 'vevent-block') {
+        if (el.tagName.toLowerCase() === 'vevent-block') {
             return el as ComponentBlock;
         }
     }

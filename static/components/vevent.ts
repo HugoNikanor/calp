@@ -15,7 +15,7 @@ abstract class ComponentVEvent extends HTMLElement {
 
     constructor(uid?: string) {
         super();
-        this.template = document.getElementById(this.tagName) as HTMLTemplateElement | null
+        this.template = document.getElementById(this.tagName.toLowerCase()) as HTMLTemplateElement | null
 
         let real_uid;
 
