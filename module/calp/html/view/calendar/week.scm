@@ -27,7 +27,7 @@
 (define*-public (render-calendar key: calendars events start-date end-date #:allow-other-keys)
   (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))
          (range (date-range start-date end-date)))
-    `((script "window.VIEW='week';")
+    `((script ,(lambda () (format #t "window.VIEW='week';")))
       (div (@ (class "calendar"))
            (div (@ (class "days"))
                 ;; Top left area

@@ -34,8 +34,10 @@ window.formatters.set('description', (el, d) => {
 
 window.salar = new Promise((resolve, reject) =>
     fetch('/static/user/salar.json')
-    .then(d => d.json())
-    .then(d => resolve(d)))
+    .then(resp => { if (! resp.ok) reject("404"); else resp.json() })
+    .then(d => resolve(d))
+    .catch(err => reject(err))
+)
 
 
 window.formatters.set('location', async function(el, d) {
@@ -46,7 +48,12 @@ window.formatters.set('location', async function(el, d) {
         return;
     }
 
-    let salar = await window.salar;
+    try {
+        let salar = await window.salar;
+    } catch (e) {
+        console.warn("Location formatter failed", e);
+        return;
+    }
 
     let name = m[1]
     let frag = salar[name];

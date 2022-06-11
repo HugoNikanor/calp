@@ -13,7 +13,8 @@
   :use-module ((web uri) :select (build-relative-ref))
   :use-module ((web uri-query) :select (encode-query-parameters))
 
-  :use-module (sxml simple)
+  :use-module ((sxml simple) :select (sxml->xml xml->sxml))
+  :use-module ((sxml html)   :select (sxml->html))
   :use-module (sxml xpath)
   :use-module (sxml namespace)
 
@@ -37,13 +38,17 @@
 
   :use-module (calp translation)
 
+  :use-module ((calp html components) :select (xhtml-doc include-css))
+
   )
 
 
 
-(define (sxml->html-string sxml)
-  (with-output-to-string
-    (lambda () (display "<!doctype html>\n") (sxml->xml sxml))))
+(define (content-type html?)
+  (if html? 'text/html 'application/xhtml+xml))
+
+(define (sxml->output html?)
+  (if html? sxml->html sxml->xml))
 
 
 
@@ -118,6 +123,7 @@
 (define ical-namespace '(IC . "urn:ietf:params:xml:ns:icalendar-2.0"))
 
 
+(define root-script "window.onload = () => document.getElementsByTagName('a')[0].click()")
 
 ;; TODO ensure encoding on all fields which take user provided data.
 ;; Possibly a fallback which strips everything unknown, and treats
@@ -127,12 +133,14 @@
 
    ;; Manual redirect to not reserve root.
    ;; Also reason for really ugly frontend redirect.
-   (GET "/" ()
-        (return '((content-type text/html))
-                (sxml->html-string
-                 `(body (a (@ (href "/today")) ,(_ "Go to Today"))
-                        (script "window.onload = function() {
-  document.getElementsByTagName('a')[0].click();}")))))
+   (GET "/" (html)
+        (return `((content-type ,(content-type html)))
+                (with-output-to-string
+                  (lambda ()
+                   ((sxml->output html)
+                    (xhtml-doc
+                     (body (a (@ (href "/today")) ,(_ "Go to Today"))
+                           (script ,(lambda () (display root-script))))))))))
 
    (GET "/favicon.ico" ()
         (return
@@ -141,14 +149,12 @@
 
    ;; TODO any exception in this causes the whole page to fail
    ;; It would be much better if most of the page could still make it.
-   (GET "/week/:start-date.html" (start-date)
-        (let* ((start-date
-                (start-of-week (parse-iso-date start-date))))
-
-          (return `((content-type application/xhtml+xml))
+   (GET "/week/:start-date.html" (start-date html)
+        (let* ((start-date (start-of-week (parse-iso-date start-date))))
+          (return `((content-type ,(content-type html)))
                   (with-output-to-string
                     (lambda ()
-                      (sxml->xml
+                      ((sxml->output html)
                        (html-generate calendars: (get-calendars global-event-object)
                                       events: (get-event-set global-event-object)
                                       start-date: start-date
@@ -159,13 +165,12 @@
                                       intervaltype: 'week
                                       )))))))
 
-   (GET "/month/:start-date.html" (start-date)
+   (GET "/month/:start-date.html" (start-date html)
         (let* ((start-date (start-of-month (parse-iso-date start-date))))
-
-          (return '((content-type application/xhtml+xml))
+          (return `((content-type ,(content-type html)))
                   (with-output-to-string
                     (lambda ()
-                      (sxml->xml
+                      ((sxml->output html)
                        (html-generate calendars: (get-calendars global-event-object)
                                       events: (get-event-set global-event-object)
                                       start-date: start-date
@@ -355,7 +360,7 @@
                                  (prop event 'SUMMARY)))))
                         ))))))
 
-   (GET "/search" (q p onlyfuture)
+   (GET "/search" (q p onlyfuture html)
         (define search-term
           (if (and q (not (string-null? q)))
               (if onlyfuture
@@ -397,10 +402,10 @@
                      (set! error
                        (format #f "~?~%" fmt arg))))))
 
-        (return '((content-type application/xhtml+xml))
+        (return `((content-type (content-type html)))
                 (with-output-to-string
                   (lambda ()
-                    (sxml->xml
+                    ((sxml->output html)
                      (search-result-page
                       error
                       (and=> q (negate string-null?))
@@ -433,16 +438,19 @@
                 (scm-error err proc fmt fmt-args data)))))
 
    ;; Note that `path' will most likely start with a slash
-   (GET "/static:path{.*}" (path)
+   (GET "/static:path{.*}" (path html)
         (catch
           'misc-error
           (lambda () (return
-                 '((content-type text/html))
-                 (sxml->html-string
-                  `(html
-                    (head (title ,(_ "Calp directory listing for ") path)
-                          ,((@ (calp html components) include-css) "/static/directory-listing.css"))
-                    (body ,(directory-table (static-dir) path))))))
+                 `((content-type ,(content-type html)))
+                 (with-output-to-string
+                   (lambda ()
+                     ((sxml->output html)
+                      (xhtml-doc
+                       (head (title ,(_ "Calp directory listing for ") path)
+                             ,(include-css
+                               "/static/directory-listing.css"))
+                       (body ,(directory-table (static-dir) path))))))))
           (lambda (err proc fmt fmt-args data)
             (return (build-response code: 404)
                     (format #f "~?" fmt fmt-args)))))

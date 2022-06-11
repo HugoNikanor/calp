@@ -12,6 +12,7 @@
     ((_ (@ attr ...) body ...)
      `(*TOP*
        (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
+       ,(lambda () (format #t "~%<!DOCTYPE html>~%"))
        (html (@ (xmlns "http://www.w3.org/1999/xhtml") attr ...)
              body ...)))
     ((_ body ...)

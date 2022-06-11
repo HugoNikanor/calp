@@ -298,7 +298,7 @@ function make_vevent_value(value_tag: Element): VEventValue {
     /* TODO parameters */
     return new VEventValue(
         /* TODO error on invalid type? */
-        value_tag.tagName as ical_type,
+        value_tag.tagName.toLowerCase() as ical_type,
         make_vevent_value_(value_tag));
 }
 
@@ -441,7 +441,7 @@ function xml_to_recurrence_rule(xml: Element): RecurrenceRule {
 
 function make_vevent_value_(value_tag: Element): string | boolean | Date | number | RecurrenceRule {
     /* RFC6321 3.6. */
-    switch (value_tag.tagName) {
+    switch (value_tag.tagName.toLowerCase()) {
         case 'binary':
             /* Base64 to binary
                Seems to handle inline whitespace, which xCal standard reqires
@@ -518,10 +518,10 @@ function xml_to_vcal(xml: Element): VEvent {
             for (var j = 0; j < tag.childElementCount; j++) {
                 let child = tag.childNodes[j];
                 if (!(child instanceof Element)) continue;
-                if (child.tagName == 'parameters') {
+                if (child.tagName.toLowerCase() == 'parameters') {
                     parameters = /* TODO handle parameters */ {};
                     continue value_loop;
-                } else switch (tag.tagName) {
+                } else switch (tag.tagName.toLowerCase()) {
                     /* These can contain multiple value tags, per
                        RFC6321 3.4.1.1. */
                     case 'categories':
@@ -535,7 +535,7 @@ function xml_to_vcal(xml: Element): VEvent {
                         value = make_vevent_value(child);
                 }
             }
-            property_map.set(tag.tagName, value);
+            property_map.set(tag.tagName.toLowerCase(), value);
         }
     }
 
