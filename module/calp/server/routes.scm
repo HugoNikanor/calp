@@ -66,7 +66,7 @@
                                        (drop-right 1)
                                        (xcons "/static")
                                        path-join)))
-                         "Return up")))
+                         ,(_ "Return up"))))
      ,@(map (lambda (k)
               (let* ((stat (lstat (path-append prefix dir k))))
                 `(tr (td ,(case (stat:type stat)
@@ -440,7 +440,7 @@
                  '((content-type text/html))
                  (sxml->html-string
                   `(html
-                    (head (title (_ "Calp directory listing for ") path)
+                    (head (title ,(_ "Calp directory listing for ") path)
                           ,((@ (calp html components) include-css) "/static/directory-listing.css"))
                     (body ,(directory-table (static-dir) path))))))
           (lambda (err proc fmt fmt-args data)

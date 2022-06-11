@@ -481,7 +481,7 @@
 ;; description in sidebar / tab of popup
 ;; Template data for <vevent-description />
 (define-public (description-template)
-  '(template
+  `(template
     (@ (id "vevent-description"))
     (div (@ (class " vevent eventtext summary-tab " ()))
          (h3 ((span (@ (class "repeating"))
@@ -563,7 +563,7 @@
                       (dd (input-list (@ (name ,name))
                                       (input (@ (type "number")
                                                 (min ,min) (max ,max)))))))
-                  '((bysecond ,(_ "By Second") 0 60)
+                  `((bysecond ,(_ "By Second") 0 60)
                     (byminute ,(_ "By Minute") 0 59)
                     (byhour ,(_ "By Hour") 0 23)
                     (bymonthday ,(_ "By Month Day") -31 31) ; except 0
