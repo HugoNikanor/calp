@@ -38,13 +38,11 @@
 
   :use-module (calp translation)
 
+  :use-module ((calp html components) :select (xhtml-doc include-css))
+
   )
 
 
-
-(define (sxml->html-string sxml)
-  (with-output-to-string
-    (lambda () (display "<!doctype html>\n") (sxml->xml sxml))))
 
 (define (content-type html?)
   (if html? 'text/html 'application/xhtml+xml))
@@ -125,6 +123,7 @@
 (define ical-namespace '(IC . "urn:ietf:params:xml:ns:icalendar-2.0"))
 
 
+(define root-script "window.onload = () => document.getElementsByTagName('a')[0].click()")
 
 ;; TODO ensure encoding on all fields which take user provided data.
 ;; Possibly a fallback which strips everything unknown, and treats
@@ -134,12 +133,14 @@
 
    ;; Manual redirect to not reserve root.
    ;; Also reason for really ugly frontend redirect.
-   (GET "/" ()
-        (return '((content-type text/html))
-                (sxml->html-string
-                 `(body (a (@ (href "/today")) ,(_ "Go to Today"))
-                        (script "window.onload = function() {
-  document.getElementsByTagName('a')[0].click();}")))))
+   (GET "/" (html)
+        (return `((content-type ,(content-type html)))
+                (with-output-to-string
+                  (lambda ()
+                   ((sxml->output html)
+                    (xhtml-doc
+                     (body (a (@ (href "/today")) ,(_ "Go to Today"))
+                           (script ,(lambda () (display root-script))))))))))
 
    (GET "/favicon.ico" ()
         (return
@@ -437,16 +438,19 @@
                 (scm-error err proc fmt fmt-args data)))))
 
    ;; Note that `path' will most likely start with a slash
-   (GET "/static:path{.*}" (path)
+   (GET "/static:path{.*}" (path html)
         (catch
           'misc-error
           (lambda () (return
-                 '((content-type text/html))
-                 (sxml->html-string
-                  `(html
-                    (head (title (_ "Calp directory listing for ") path)
-                          ,((@ (calp html components) include-css) "/static/directory-listing.css"))
-                    (body ,(directory-table (static-dir) path))))))
+                 `((content-type ,(content-type html)))
+                 (with-output-to-string
+                   (lambda ()
+                     ((sxml->output html)
+                      (xhtml-doc
+                       (head (title (_ "Calp directory listing for ") path)
+                             ,(include-css
+                               "/static/directory-listing.css"))
+                       (body ,(directory-table (static-dir) path))))))))
           (lambda (err proc fmt fmt-args data)
             (return (build-response code: 404)
                     (format #f "~?" fmt fmt-args)))))
