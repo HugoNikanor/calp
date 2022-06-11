@@ -3,6 +3,10 @@
   :use-module ((web uri) :select (uri-encode))
   )
 
+;; TODO why this format for values?
+;; TODO why aren't we encoding the keys?
+;; TODO why isn't this in the same module as `parse-query'?
+;; TODO why isn't this on the same format as `parse-query'?
 
 (define-public (encode-query-parameters parameters)
   (string-join

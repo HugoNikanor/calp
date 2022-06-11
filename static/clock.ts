@@ -99,7 +99,7 @@ class ClockElement extends HTMLElement {
         return ['timer_id']
     }
 
-    update(now: Date) { /* noop */ }
+    update(_: Date) { /* noop */ }
 }
 
 

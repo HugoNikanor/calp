@@ -51,6 +51,8 @@ fi
 (define (yellow s) (escaped 33 s))
 (define (bold s)   (escaped  1 s))
 
+;;; TODO handle nested grups in a better fassion
+
 (define (construct-test-runner)
   (define runner (test-runner-null))
   ;; end of individual test case

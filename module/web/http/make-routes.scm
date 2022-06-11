@@ -102,6 +102,7 @@
                        (append
                         ((@ (web query) parse-query) r:query)
 
+                        ;; TODO what's happening here?
                         (let ((content-type (assoc-ref r:headers 'content-type)))
                           ((@ (hnh util) when) content-type
                            (let ((type (car content-type))
