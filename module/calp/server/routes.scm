@@ -13,7 +13,8 @@
   :use-module ((web uri) :select (build-relative-ref))
   :use-module ((web uri-query) :select (encode-query-parameters))
 
-  :use-module (sxml simple)
+  :use-module ((sxml simple) :select (sxml->xml xml->sxml))
+  :use-module ((sxml html)   :select (sxml->html))
   :use-module (sxml xpath)
   :use-module (sxml namespace)
 
@@ -44,6 +45,12 @@
 (define (sxml->html-string sxml)
   (with-output-to-string
     (lambda () (display "<!doctype html>\n") (sxml->xml sxml))))
+
+(define (content-type html?)
+  (if html? 'text/html 'application/xhtml+xml))
+
+(define (sxml->output html?)
+  (if html? sxml->html sxml->xml))
 
 
 
@@ -141,14 +148,12 @@
 
    ;; TODO any exception in this causes the whole page to fail
    ;; It would be much better if most of the page could still make it.
-   (GET "/week/:start-date.html" (start-date)
-        (let* ((start-date
-                (start-of-week (parse-iso-date start-date))))
-
-          (return `((content-type application/xhtml+xml))
+   (GET "/week/:start-date.html" (start-date html)
+        (let* ((start-date (start-of-week (parse-iso-date start-date))))
+          (return `((content-type ,(content-type html)))
                   (with-output-to-string
                     (lambda ()
-                      (sxml->xml
+                      ((sxml->output html)
                        (html-generate calendars: (get-calendars global-event-object)
                                       events: (get-event-set global-event-object)
                                       start-date: start-date
@@ -159,13 +164,12 @@
                                       intervaltype: 'week
                                       )))))))
 
-   (GET "/month/:start-date.html" (start-date)
+   (GET "/month/:start-date.html" (start-date html)
         (let* ((start-date (start-of-month (parse-iso-date start-date))))
-
-          (return '((content-type application/xhtml+xml))
+          (return `((content-type ,(content-type html)))
                   (with-output-to-string
                     (lambda ()
-                      (sxml->xml
+                      ((sxml->output html)
                        (html-generate calendars: (get-calendars global-event-object)
                                       events: (get-event-set global-event-object)
                                       start-date: start-date
@@ -355,7 +359,7 @@
                                  (prop event 'SUMMARY)))))
                         ))))))
 
-   (GET "/search" (q p onlyfuture)
+   (GET "/search" (q p onlyfuture html)
         (define search-term
           (if (and q (not (string-null? q)))
               (if onlyfuture
@@ -397,10 +401,10 @@
                      (set! error
                        (format #f "~?~%" fmt arg))))))
 
-        (return '((content-type application/xhtml+xml))
+        (return `((content-type (content-type html)))
                 (with-output-to-string
                   (lambda ()
-                    (sxml->xml
+                    ((sxml->output html)
                      (search-result-page
                       error
                       (and=> q (negate string-null?))
