@@ -24,11 +24,6 @@
                   body))
     (xhtml-doc (@ (lang sv)) body))
 
-
-;; TODO Slider not tested, due to depending on gensyms, and really needing
-;;      integration testing to be worth anything.
-
-
 (test-equal
     '(button (@ (class "btn") (onclick "onclick")) "Body")
   (btn onclick: "onclick" "Body"))
