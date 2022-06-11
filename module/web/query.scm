@@ -8,9 +8,12 @@
     (fold (lambda (str list)
             ;; only split on the first equal.
             ;; Does HTTP allow multiple equal signs in a data field?
-            ;; NOTE that this fails if str lacks an equal sign.
-            (define idx (string-index str #\=))
-            (define key (uri-decode (substring str 0 idx) encoding: encoding))
-            (define val (uri-decode (substring str (1+ idx)) encoding: encoding))
-            (cons* (-> key string->symbol symbol->keyword) val list))
+            (let* ((key val
+                       (cond ((string-index str #\=)
+                              => (lambda (idx)
+                                   (values (uri-decode (substring str 0 idx)    encoding: encoding)
+                                           (uri-decode (substring str (1+ idx)) encoding: encoding))))
+                             (else (let ((v (uri-decode str encoding: encoding)))
+                                     (values v v))))))
+              (cons* (-> key string->symbol symbol->keyword) val list)))
           '() (string-split query-string #\&))))
