@@ -1,5 +1,8 @@
 import { VEvent, xml_to_vcal } from './vevent'
-import { SmallcalCellHighlight, Timebar } from './clock'
+import {
+    SmallcalCellHighlight, Timebar,
+    initialize_clock_components
+} from './clock'
 import { vcal_objects, event_calendar_mapping } from './globals'
 import { EventCreator } from './event-creator'
 import { PopupElement, setup_popup_element } from './components/popup-element'
@@ -40,6 +43,7 @@ window.addEventListener('load', function() {
         }
     }
 
+    initialize_clock_components();
     initialize_components();
 
     /* A full redraw here is WAY to slow */

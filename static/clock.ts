@@ -1,4 +1,7 @@
-export { SmallcalCellHighlight, Timebar }
+export {
+    SmallcalCellHighlight, Timebar,
+    initialize_clock_components
+}
 
 import { makeElement, date_to_percent } from './lib'
 
@@ -104,7 +107,6 @@ class TodayButton extends ClockElement {
         (this.querySelector('a') as any).href = now.format("~Y-~m-~d.html")
     }
 }
-customElements.define('today-button', TodayButton)
 
 
 class CurrentTime extends ClockElement {
@@ -112,4 +114,8 @@ class CurrentTime extends ClockElement {
         this.textContent = now.format('~H:~M:~S')
     }
 }
-customElements.define('current-time', CurrentTime)
+
+function initialize_clock_components() {
+    customElements.define('today-button', TodayButton)
+    customElements.define('current-time', CurrentTime)
+}
