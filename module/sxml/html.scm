@@ -364,6 +364,8 @@ ist ATTRS and the child nodes in BODY."
      (pi->html type body port))
     (('*TOP* nodes ...)
      (for-each (cut sxml->html <> port) nodes))
+    ((? procedure? proc) ; is whole tree a procedure
+     (with-output-to-port port proc))
     (((? symbol? tag) ('@ attrs ...) body ...)
      (element->html tag attrs body port))
     (((? symbol? tag) body ...)
