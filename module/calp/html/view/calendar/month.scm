@@ -35,7 +35,7 @@
                    (events-between s e (list->stream long-events)))))
          (date-range pre-start post-end (date day: 7))))
 
-  `((script "window.VIEW='month';")
+  `((script ,(lambda () (format #t "window.VIEW='month';")))
     (header (@ (class "table-head"))
             ,(string-titlecase (date->string start-date "~B ~Y")))
     (div (@ (class "caltable")

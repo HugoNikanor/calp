@@ -102,12 +102,11 @@
              (content ,(date->string  (date+ end-date (date day: 1)) "~s"))))
 
     (script
-     ,(format #f
-              "
+     ,(lambda () (format #t "
 EDIT_MODE=~:[false~;true~];
 window.default_calendar='~a';"
-              (edit-mode)
-              (base64encode ((@ (vcomponent) default-calendar)))))
+                    (edit-mode)
+                    (base64encode ((@ (vcomponent) default-calendar))))))
 
 
     (style ,(format #f "html {
