@@ -959,3 +959,11 @@ msgstr  "Vilka filer att läsa in. Tar en lista av filvägar eller en ensam "
 
 msgid   "Default calendar to use for operations. Set to empty string to unset"
 msgstr  "Standardkalendar att utgå från. En tom sträng \"rensar\" fältet"
+
+msgid   "<p><b>update-zoneinfo</b> in theory downloads and updates our local\n"
+        "zoneinfo database, but is currently broken.</p>"
+msgstr  "<p><b>update-zoneinfo</b> laddar i teori ner och uppdaterar vår "
+        "lokala zoninfo-databas, men är för tillfället trasig.</p>"
+
+msgid   "Return up"
+msgstr  "Återvänd uppåt"
