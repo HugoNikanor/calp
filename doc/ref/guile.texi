@@ -6,6 +6,7 @@
 @include guile/util.texi
 @include guile/util-path.texi
 @include guile/util-config.texi
+@include guile/web.texi
 @include guile/vcomponent.texi
 
 @node Errors and Conditions

@@ -1,0 +1,92 @@
+@node Web Stuff
+@section Web Stuff
+
+@subsection (web query)
+
+@defun parse-query query-string [encoding=''UTF-8'']
+Given a string like ``?key=value&other=something'', returns
+@code{(key: "value" other: "something")}. Performs uri-decoding of
+both key and value. A key without a value decodes to that key, with
+itself as its value
+@end defun
+
+
+@subsection (web uri-query)
+
+@defun encode-query-parameters parameters
+Given the association list @var{parameter}, encode it into a query
+string on the form ``key=value&...''.
+@end defun
+
+@subsection (web http make-routes)
+
+@defun parse-endpoint-string str
+Only really public for tests.
+@end defun
+
+@defmac make-routes routes ...
+Expands a number of endpoint specifiers into a procedure suitable for
+use as a handler in @xref{Web Server,run-server,run-server,guile}.
+
+Each form conists of
+@itemize
+@item the method (``GET'', ``POST'', ...),
+@item the path, possibly with embedded parameters,
+@item a list of parameters to capture, and
+@item the body.
+@end itemize
+
+@example
+(make-routes
+  (GET "/path/:a" (a b)
+    (return '((content-type text/plain))
+            (format #f "a=~a, b=~a" a b)))
+  ...)
+@end example
+
+The paths can contain embedded variables, which start with
+colon, and their name continues until the next slash or period (or end
+of string). Each path-embedded parameter must be present in the
+parameter list.
+
+The parameter list must contain all path-embedded parameters, and can
+contain any other parameters, which will be bound from the query
+parameters, or stay @code{#f} if not supplied by the browser.
+
+The body should return one to three values, either directly, or
+through an early return by calling the procedure @code{return}.
+
+@defun return headers [body] [new-state]
+@end defun
+
+Inside the body, the following variables are bound to enable producing
+the body:
+
+@defvar request
+@defvarx body
+The raw request headers and request body.
+@end defvar
+
+@defvar state
+The optional state.
+@end defvar
+
+@defvar r:method
+@defvarx r:uri
+@defvarx r:version
+@defvarx r:headers
+@defvarx r:meta
+The requests components
+@end defvar
+
+@defvar r:scheme
+@defvarx r:userinfo
+@defvarx r:host
+@defvarx r:port
+@defvarx r:path
+@defvarx r:query
+@defvarx r:fragment
+The request uri's components.
+@end defvar
+
+@end defmac
