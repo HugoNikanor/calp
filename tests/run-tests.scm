@@ -51,7 +51,8 @@ fi
 (define (yellow s) (escaped 33 s))
 (define (bold s)   (escaped  1 s))
 
-;;; TODO handle nested grups in a better fassion
+(define (make-indent depth)
+  (make-string (* 2 depth) #\space))
 
 (define (construct-test-runner)
   (define runner (test-runner-null))
@@ -62,11 +63,10 @@ fi
       (test-runner-aux-value! runner (transform-time-of-day (gettimeofday)))))
   (test-runner-on-test-end! runner
     (lambda (runner)
-      (when (verbose?)
-        (display (make-string (* 2 depth) #\space)))
+      (when (verbose?) (display (make-indent depth)))
       (case (test-result-kind runner)
         ((pass)  (display (green "X")))
-        ((fail)  (newline) (display (red "E")))
+        ((fail)  (display (red "E")))
         ((xpass) (display (yellow "X")))
         ((xfail) (display (yellow "E")))
         ((skip)  (display (yellow "-"))))
@@ -78,15 +78,19 @@ fi
                        => (lambda (p) (with-output-to-string (lambda () (display (bold "[SOURCE]: ")) (truncated-print p))))))))
       (when (eq? 'fail (test-result-kind))
         (cond ((test-result-ref runner 'actual-error)
-               => (lambda (err) (format #t "Error: ~s~%" err)))
+               => (lambda (err) (format #t "~aError: ~s~%" (make-indent (1+ depth)) err)))
               (else
-               (format #t "Expected: ~s~%Received: ~s~%"
-                       (test-result-ref runner 'expected-value "[UNKNOWN]")
-                       (test-result-ref runner 'actual-value "[UNKNOWN]"))))
-        (format #t "Near ~a:~a~%~y"
+               (format #t "~aExpected: ~s~%~aReceived: ~s~%"
+                       (make-indent (1+ depth)) (test-result-ref runner 'expected-value "[UNKNOWN]")
+                       (make-indent (1+ depth)) (test-result-ref runner 'actual-value "[UNKNOWN]"))))
+        (format #t "~aNear ~a:~a~%"
+                (make-indent (1+ depth))
                 (test-result-ref runner 'source-file)
-                (test-result-ref runner 'source-line)
-                (test-result-ref runner 'source-form)))
+                (test-result-ref runner 'source-line))
+        (pretty-print (test-result-ref runner 'source-form)
+                      (current-output-port)
+                      per-line-prefix: (string-append (make-indent (1+ depth)) "> ")
+                      ))
 
       (let ((start (test-runner-aux-value runner))
             (end (transform-time-of-day (gettimeofday))))
