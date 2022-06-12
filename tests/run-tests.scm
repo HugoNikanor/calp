@@ -55,12 +55,15 @@ fi
 
 (define (construct-test-runner)
   (define runner (test-runner-null))
+  (define depth 0)
   ;; end of individual test case
   (test-runner-on-test-begin! runner
     (lambda (runner)
       (test-runner-aux-value! runner (transform-time-of-day (gettimeofday)))))
   (test-runner-on-test-end! runner
     (lambda (runner)
+      (when (verbose?)
+        (display (make-string (* 2 depth) #\space)))
       (case (test-result-kind runner)
         ((pass)  (display (green "X")))
         ((fail)  (newline) (display (red "E")))
@@ -97,12 +100,19 @@ fi
   (test-runner-on-group-begin! runner
     ;; count is number of #f
     (lambda (runner name count)
-      (format #t "~a ~a ~a~%"
-              (make-string 10 #\=)
-              name
-              (make-string 10 #\=))))
+      (if (<= depth 1)
+          (format #t "~a ~a ~a~%"
+                  (make-string 10 #\=)
+                  name
+                  (make-string 10 #\=))
+          (when (verbose?)
+           (format #t "~a~a~%" (make-string (* depth 2) #\space) name)))
+      (set! depth (1+ depth))))
   (test-runner-on-group-end! runner
-    (lambda (runner) (newline)))
+    (lambda (runner)
+      (set! depth (1- depth))
+      (when (<= depth 1)
+        (newline))))
   ;; after everything else is done
   (test-runner-on-final! runner
     (lambda (runner)
