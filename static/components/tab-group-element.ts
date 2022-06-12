@@ -156,7 +156,7 @@ class TabGroupElement extends ComponentVEvent {
 
         /* hide all tab panels */
         for (let tabcontent of this.querySelectorAll('[role="tabpanel"]')) {
-            tabcontent.setAttribute('hidden', 'true');
+            tabcontent.setAttribute('hidden', 'hidden');
         }
         /* unselect all (selected) tab handles */
         for (let item of this.querySelectorAll('[aria-selected="true"]')) {
