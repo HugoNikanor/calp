@@ -29,7 +29,7 @@ class TabGroupElement extends ComponentVEvent {
     constructor(uid?: string) {
         super(uid);
 
-        this.menu = makeElement('menu', {}, {
+        this.menu = makeElement('div', {}, {
             role: 'tablist',
             'aria-label': 'Simple Tabs',
         })
@@ -105,10 +105,10 @@ class TabGroupElement extends ComponentVEvent {
             title: title,
             'aria-selected': false,
             'aria-controls': tab_id,
-            ... extra_attributes,
+            ...extra_attributes,
         })
 
-        let tabContainer = makeElement('article', {}, {
+        let tabContainer = makeElement('div', {}, {
             id: tab_id,
             role: 'tabpanel',
             tabindex: 0,
