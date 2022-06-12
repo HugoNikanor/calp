@@ -50,8 +50,10 @@
                     (time-b (timespec-time spec)))
                 (if (time< time-a time-b)
                     (make-timespec (time- time-b time-a)
+                                   '- (timespec-type done))
+                    (make-timespec (time- time-a time-b)
                                    '+ (timespec-type done))
-                    (set (timespec-time done) (time- time-b))))]
+                    ))]
              ;; + -
              [(and (eq? '+ (timespec-sign done))
                    (eq? '- (timespec-sign spec)))
@@ -60,7 +62,9 @@
                 (if (time< time-a time-b)
                     (make-timespec (time- time-b time-a)
                                    '- (timespec-type done))
-                    (set (timespec-time done) (time+ time-b))))]))
+                    (make-timespec (time- time-a time-b)
+                                   '+ (timespec-type done))
+                    ))]))
           (timespec-zero)
           specs))
 
