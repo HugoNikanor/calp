@@ -28,6 +28,12 @@
   )
 
 
+(define (xml-entities s)
+  (lambda ()
+    (for-each display
+     (map (lambda (c) (format #f "&#x~x;" (char->integer c)))
+          (string->list s)))))
+
 (define-public (format-summary ev str)
   ((summary-filter) ev str))
 
@@ -595,20 +601,20 @@
                          (title ,(_ "Fullscreen"))
                          ;; (aria-label "")
                          )
-                      "🗖")
+                      ,(xml-entities "🗖"))
               (button (@ (class "remove-button")
                          ;; Remove/Trash the event this popup represent
                          ;; Think garbage can
                          (title ,(_ "Remove")))
-                      "🗑"))
+                      ,(xml-entities "🗑")))
 
          (tab-group (@ (class "window-body"))
                     (vevent-description
-                     (@ (data-label "📅") (data-title ,(_ "Overview"))
+                     (@ (data-label ,(xml-entities "📅")) (data-title ,(_ "Overview"))
                         (class "vevent")))
 
                     (vevent-edit
-                     (@ (data-label "🖊")
+                     (@ (data-label ,(xml-entities "🖊"))
                         (data-title ,(_ "Edit"))
                         ;; Used by JavaScript to target this tab
                         (data-originaltitle "Edit")))
@@ -617,10 +623,10 @@
                     ;;  (@ (data-label "↺") (data-title "Upprepningar")))
 
                     (vevent-changelog
-                     (@ (data-label "📒")
+                     (@ (data-label ,(xml-entities "📒"))
                         (data-title ,(_ "Changelog"))))
 
                     ,@(when (debug)
                         `((vevent-dl
-                           (@ (data-label "🐸")
+                           (@ (data-label ,(xml-entities "🐸"))
                               (data-title ,(_ "Debug"))))))))))
