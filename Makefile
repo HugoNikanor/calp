@@ -26,6 +26,11 @@ GUILE_C_FLAGS = -Lmodule \
 PO_FILES = $(shell find po -type f -name \*.po -and -not -name new.po -and -not -name .\*)
 LOCALIZATIONS = $(PO_FILES:po/%.po=localization/%/LC_MESSAGES/calp.mo)
 
+# Limit test to these files
+LIMIT_FILES=$(LIMIT:%=--only %)
+# Skip these files when testing
+SKIP=--skip $(PWD)/tests/test/web-server.scm
+
 all: go_files README static $(LOCALIZATIONS)
 	$(MAKE) -C doc/ref
 
@@ -72,7 +77,7 @@ README: README.in
 	./main text < README.in | sed "s/<<today>>/`date -I`/" > README
 
 lcov.info: $(GO_FILES)
-	env DEBUG=0 tests/run-tests.scm --coverage=$@
+	env DEBUG=0 tests/run-tests.scm --coverage=$@ $(if $(VERBOSE),--verbose) $(SKIP) $(LIMIT_FILES)
 
 test: coverage
 
@@ -84,8 +89,5 @@ GENHTML_FLAGS=--show-details \
 coverage: lcov.info
 	genhtml $(GENHTML_FLAGS) --output-directory $@ $<
 
-
-LIMIT_FILES=$(LIMIT:%=--only %)
-
 check:
-	tests/run-tests.scm $(if $(VERBOSE),--verbose) --skip $(PWD)/tests/test/web-server.scm $(LIMIT_FILES)
+	tests/run-tests.scm $(if $(VERBOSE),--verbose) $(SKIP) $(LIMIT_FILES)
