@@ -23,7 +23,6 @@
   (btn class: '("test") "body"))
 
 ;; tabset
-;; with-label
 
 (test-equal '(link (@ (type "text/css") (rel "stylesheet") (href "style.css")))
   (include-css "style.css"))

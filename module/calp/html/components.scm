@@ -110,26 +110,6 @@
                 ,@inner-body)]))
 
 
-(define-public (with-label lbl . forms)
-
-  (define id (gensym "label"))
-
-  (cons `(label (@ (for ,id)) ,lbl)
-   (let recurse ((forms forms))
-     (map (lambda (form)
-            (cond [(not (list? form)) form]
-                  [(null? form) '()]
-                  [(eq? 'input (car form))
-                   ((set-attribute `((id ,id))) form)]
-                  [(list? (car form))
-                   (cons (recurse (car form))
-                         (recurse (cdr form)))]
-                  [else
-                   (cons (car form)
-                         (recurse (cdr form)))]))
-          forms))))
-
-
 (define-public (include-css path . extra-attributes)
   `(link (@ (type "text/css")
             (rel "stylesheet")
