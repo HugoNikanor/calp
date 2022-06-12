@@ -113,7 +113,7 @@ class TabGroupElement extends ComponentVEvent {
             role: 'tabpanel',
             tabindex: 0,
             hidden: 'hidden',
-            'aria-labeledby': label_id,
+            'aria-labelledby': label_id,
         })
 
         tabContainer.replaceChildren(child);
@@ -129,7 +129,7 @@ class TabGroupElement extends ComponentVEvent {
     }
 
     removeTab(tab: HTMLElement) {
-        let id = tab.getAttribute('aria-labeledby')!
+        let id = tab.getAttribute('aria-labelledby')!
         let label = document.getElementById(id)
         if (label) {
             if (label.ariaSelected === 'true') {
