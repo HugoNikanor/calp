@@ -9,13 +9,13 @@
 
 (define-module (test web-server)
   :use-module (srfi srfi-64)
+  :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module ((calp server routes) :select (make-make-routes))
   :use-module ((web server) :select (run-server))
   :use-module ((ice-9 threads)
                :select (call-with-new-thread cancel-thread))
   :use-module ((web client) :select (http-get))
-  :use-module ((hnh util) :select (let*))
   :use-module ((web response) :select (response-code response-location))
   :use-module ((web uri) :select (build-uri uri-path))
   :use-module ((guile)
@@ -71,39 +71,39 @@
       ;; This test should always fail, but should never be run
       (test-assert "Server returned unexpectedly" #f))))
 
-(let* ((response
-         _
-         (catch 'system-error
-                (lambda ()
-                  (http-get
-                    (build-uri 'http host: host port: port)))
-                (lambda (err proc fmt args data)
-                  (format
-                    (current-error-port)
-                    "~a (in ~a) ~?~%"
-                    err
-                    proc
-                    fmt
-                    args)
-                  (values (build-response code: 500) #f)))))
+(let ((response
+        _
+        (catch 'system-error
+               (lambda ()
+                 (http-get
+                   (build-uri 'http host: host port: port)))
+               (lambda (err proc fmt args data)
+                 (format
+                   (current-error-port)
+                   "~a (in ~a) ~?~%"
+                   err
+                   proc
+                   fmt
+                   args)
+                 (values (build-response code: 500) #f)))))
   (test-eqv
     "Basic connect"
     200
     (response-code response)))
 
-(let* ((response
-         body
-         (http-get
-           (build-uri
-             'http
-             host:
-             host
-             port:
-             port
-             path:
-             "/today"
-             query:
-             "view=week&date=2020-01-04"))))
+(let ((response
+        body
+        (http-get
+          (build-uri
+            'http
+            host:
+            host
+            port:
+            port
+            path:
+            "/today"
+            query:
+            "view=week&date=2020-01-04"))))
   (test-eqv
     "Redirect"
     302

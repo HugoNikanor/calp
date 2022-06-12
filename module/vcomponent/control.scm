@@ -9,7 +9,8 @@
 
   (define (set-temp-values! table component kvs)
     (for-each (lambda (kv)
-                (let* (((key val) kv))
+                (let ((key (car kv))
+                      (val (cadr kv)))
                   (when (prop component key)
                     (set! (href table key) (prop component key))
                     (set! (prop component key) val))))

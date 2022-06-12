@@ -4,6 +4,7 @@
   #:export (parse-recurrence-rule)
 
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-71)
   #:use-module (datetime)
   #:use-module (srfi srfi-26)
   #:use-module (vcomponent recurrence internal)
@@ -87,7 +88,8 @@
 (define* (parse-recurrence-rule str optional: (datetime-parser parse-ics-datetime))
   (fold
    (lambda (kv o)
-     (let* (((key val) kv))
+     (let ((key (car kv))
+           (val (cadr kv)))
        (let-lazy
         ((symb (string->symbol val))
          ;; NOTE until MUST have the same value type as DTSTART

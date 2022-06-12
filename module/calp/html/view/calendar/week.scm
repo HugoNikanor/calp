@@ -2,6 +2,7 @@
   :use-module (hnh util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
+  :use-module (srfi srfi-71)
   :use-module (rnrs records syntactic)
   :use-module (datetime)
   :use-module (calp html view calendar shared)
@@ -122,7 +123,7 @@
 ;; Lay out complete day (graphical)
 ;; (date . (events)) -> sxml
 (define (lay-out-day day)
-  (let* (((day-date . events) day)
+  (let* ((day-date events (car+cdr day))
          (time-obj (datetime date: day-date))
          (short-events (stream->list events))
          #;

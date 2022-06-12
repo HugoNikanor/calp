@@ -36,7 +36,6 @@
 
 (define-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-64)
-  :use-module (hnh util)
   :replace (test-error))
 
 (define %test-source-line2  (@@ (srfi srfi-64) %test-source-line2))

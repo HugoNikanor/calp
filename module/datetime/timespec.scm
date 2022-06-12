@@ -6,10 +6,11 @@
 (define-module (datetime timespec)
   :export (make-timespec
            timespec? timespec-time timespec-sign timespec-type)
-  :use-module ((hnh util) :select (set define*-public unless let*))
+  :use-module ((hnh util) :select (set define*-public unless))
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (datetime)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
   :use-module (srfi srfi-9 gnu)
   :use-module (calp translation)
   )
@@ -71,7 +72,7 @@
 
 (define*-public (parse-time-spec
                  string optional: (suffixes '(#\s #\w #\u #\g #\z)))
-  (let* ((type string
+  (let ((type string
           (cond [(string-rindex string (list->char-set suffixes))
                  => (lambda (idx)
                       (values (string-ref string idx)

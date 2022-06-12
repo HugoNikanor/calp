@@ -4,6 +4,7 @@
   :use-module (base64)
   :use-module (datetime)
   :use-module (srfi srfi-9 gnu)
+  :use-module (srfi srfi-71)
   :use-module (datetime timespec)
   :use-module (calp translation)
   )
@@ -62,7 +63,7 @@
 
 ;; PERIOD
 (define (parse-period props value)
-  (let* (((left right) (string-split value #\/)))
+  (let ((left right (apply values (string-split value #\/))))
     ;; TODO timezones? VALUE=DATE?
     (cons (parse-ics-datetime left)
           ((if (memv (string-ref right 0)

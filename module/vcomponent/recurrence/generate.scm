@@ -5,6 +5,7 @@
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
+  :use-module (srfi srfi-71)
   :use-module (vcomponent base)
   :use-module (vcomponent recurrence internal)
   :use-module (vcomponent recurrence parse)
@@ -128,7 +129,7 @@
   ;; can extend the recurrence set in weird ways.
   (branching-fold
    (lambda (rule dt)
-     (let* (((key . value) rule)
+     (let* ((key value (car+cdr rule))
             (d (if (date? dt) dt (get-date dt)))
             ;; NOTE It's proably an error to give BYHOUR, BYMINUTE, and BYSECOND
             ;; rules for a date object. This doesn't warn if those are given, but
@@ -158,7 +159,7 @@
               (to-dt (set (month d) value)))]
 
          [(BYDAY)
-          (let* (((offset . value) value))
+          (let* ((offset value (car+cdr value)))
             (case (freq rrule)
               [(WEEKLY)
                ;; set day to that day in the week which d lies within
@@ -167,7 +168,7 @@
                                                 7))))]
 
               [(MONTHLY)
-               (let* ((instances (all-wday-in-month value (start-of-month d))))
+               (let ((instances (all-wday-in-month value (start-of-month d))))
                  (catch 'out-of-range
                    (lambda ()
                      (cond [(eqv? #f offset)
@@ -281,9 +282,9 @@
    (let loop ((remaining limiters))
      (if (null? remaining)
          #t
-         (let* (((key . values) (car remaining))
-                (t (as-time dt))
-                (d (if (date? dt) dt (get-date dt))))
+         (let ((key values (car+cdr (car remaining)))
+               (t (as-time dt))
+               (d (if (date? dt) dt (get-date dt))))
            (and (case key
                   [(BYMONTH) (memv (month d) values)]
                   [(BYMONTHDAY) (memv (day d) (map (month-mod d) values))]

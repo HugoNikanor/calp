@@ -3,6 +3,7 @@
   :use-module (hnh util uuid)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
+  :use-module (srfi srfi-71)
   :use-module (srfi srfi-41 util)
   :use-module (datetime)
   :use-module (vcomponent base)
@@ -100,7 +101,7 @@
 
     (slot-set! this 'events (append #|removed|# remaining)))
 
-  (let* ((repeating regular (partition repeating? (slot-ref this 'events))))
+  (let ((repeating regular (partition repeating? (slot-ref this 'events))))
     (slot-set! this 'fixed-events     (sort*! regular   date/-time<? (extract 'DTSTART)))
     (slot-set! this 'repeating-events (sort*! repeating date/-time<? (extract 'DTSTART))))
 

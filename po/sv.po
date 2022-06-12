@@ -126,6 +126,8 @@ msgstr  "Grupper krävs i mallen"
 
 #. Week number prefix
 #. Cell 0, 0. The letter v. for week number
+#. Week number prefix
+#. Cell 0, 0. The letter v. for week number
 msgid   "v."
 msgstr  "v."
 
@@ -427,6 +429,8 @@ msgstr  "== Dagsvy ==\n"
 msgid   "Start"
 msgstr  "Start"
 
+#. Event start date-time terminal view
+#. Event end date-time terminal view
 #. Event start date-time terminal view
 #. Event end date-time terminal view
 #. Event start date-time terminal view
@@ -818,6 +822,13 @@ msgstr  "<p><b>benchmark</b> <i>modul</i><br/>Kör proceduren 'run-benchmark' "
 #. Generation data
 #. Compact event list date only
 #. Header for sidebar day
+#. Week view header format
+#. start date metainfo
+#. end date metainfo
+#. Generation data
+#. Compact event list date only
+#. Header for sidebar day
+#. start = end, only return one value
 #. Week view header format
 #. start date metainfo
 #. end date metainfo

@@ -26,10 +26,10 @@
 
 (define (glob str)
   (let ((bv (make-bytevector 100)))
-    (let*  ((globret (glob% (string->pointer str)
-                            glob-flags
-                            (procedure->pointer int glob-err (list '* int))
-                            (bytevector->pointer bv))))
+    (let ((globret (glob% (string->pointer str)
+                          glob-flags
+                          (procedure->pointer int glob-err (list '* int))
+                          (bytevector->pointer bv))))
       (unless (zero? globret)
         (scm-error 'misc-error "glob"
                    "Globret errror ~a"

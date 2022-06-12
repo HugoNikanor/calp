@@ -1,8 +1,9 @@
 (define-module (srfi srfi-41 util)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-41)
+  #:use-module (srfi srfi-71)
   #:use-module ((ice-9 sandbox) :select (call-with-time-limit))
-  #:use-module (hnh util) ; let*, find-min
+  #:use-module (hnh util) ; find-min
   #:export (stream-car+cdr interleave-streams
                            stream-timeslice-limit))
 

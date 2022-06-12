@@ -174,8 +174,8 @@
                                 (- height 8 5 (length events) 5)))))))
 
 (define (get-line prompt)
-  (let* ((attr (make-termios))
-         (input-string #f))
+  (let ((attr (make-termios))
+        (input-string #f))
     (tcgetattr! attr)
     (set! (lflag attr) (logior ECHO (lflag attr)))
     (tcsetattr! attr)

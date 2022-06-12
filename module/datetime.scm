@@ -8,10 +8,11 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
+  :use-module (srfi srfi-71)
 
   :use-module ((hnh util)
                :select (vector-last define*-public set! -> ->> swap case* set
-                                    span-upto let* set->))
+                                    span-upto set->))
 
   :use-module (srfi srfi-41)
   :use-module (ice-9 i18n)
@@ -334,8 +335,8 @@
 
 ;; 0 indexed, starting at sunday.
 (define-public (week-day date)
-  (let* ((J K (floor/ (year date) 100))
-         (m (month date)))
+  (let ((J K (floor/ (year date) 100))
+        (m (month date)))
     (if (memv m '(1 2))
         (zeller J (1- K) (+ m 12) (day date))
         (zeller J K (month date) (day date)))))
@@ -559,7 +560,7 @@
 
   (let ((date-diff
          (cond [start-date
-                (let* ((end-date (date+ start-date (get-date dt))))
+                (let ((end-date (date+ start-date (get-date dt))))
                   (1- (days-in-interval start-date end-date))) ]
                [(or (not (zero? (month (get-date dt))))
                     (not (zero? (year (get-date dt)))))
@@ -735,20 +736,20 @@ Returns -1 on failure"
               ]
              ;; month by name
              [(#\b #\B #\h)
-              (let* ((head post (cond ((null? (cddr fmt)) (values str '()))
-                                      ((eqv? #\~ (caddr fmt))
-                                       (cond ((null? (cdddr fmt))
-                                              (scm-error 'misc-error "string->datetime"
-                                                         "Unexpected ~ at end of fmt"
-                                                         #f #f))
-                                             ((eqv? #\~ (cadddr fmt))
-                                              (span (lambda (c) (not (eqv? #\~ c)))
-                                                    str))
-                                             (else (scm-error 'misc-error "string->datetime"
-                                                              "Can't have format specifier directly after month by name"
-                                                              #f #f))))
-                                      (else (span (lambda (c) (not (eqv? c (caddr fmt))))
-                                                  str)))))
+              (let ((head post (cond ((null? (cddr fmt)) (values str '()))
+                                     ((eqv? #\~ (caddr fmt))
+                                      (cond ((null? (cdddr fmt))
+                                             (scm-error 'misc-error "string->datetime"
+                                                        "Unexpected ~ at end of fmt"
+                                                        #f #f))
+                                            ((eqv? #\~ (cadddr fmt))
+                                             (span (lambda (c) (not (eqv? #\~ c)))
+                                                   str))
+                                            (else (scm-error 'misc-error "string->datetime"
+                                                             "Can't have format specifier directly after month by name"
+                                                             #f #f))))
+                                     (else (span (lambda (c) (not (eqv? c (caddr fmt))))
+                                                 str)))))
                 (loop post
                       (cddr fmt)
                       (as-dt (set (month date)
@@ -1156,7 +1157,7 @@ Returns -1 on failure"
   (define hour-almost-fixed (set (hour minute-fixed) = (+ (hour change))))
 
   (if (<= 24 (hour hour-almost-fixed))
-      (let* ((div remainder (floor/ (hour hour-almost-fixed) 24)))
+      (let ((div remainder (floor/ (hour hour-almost-fixed) 24)))
         (values (set (hour hour-almost-fixed) remainder) div))
       (values hour-almost-fixed 0)))
 
@@ -1164,7 +1165,7 @@ Returns -1 on failure"
 (define-public (time+ base . rest)
   (let ((sum 0))
     (let ((time (fold (lambda (next done)
-                        (let* ((next-time rem (time+% done next)))
+                        (let ((next-time rem (time+% done next)))
                           (set! sum = (+ rem))
                           next-time))
                       base rest)))
@@ -1214,7 +1215,7 @@ Returns -1 on failure"
 (define-public (time- base . rest)
   (let ((sum 0))
     (let ((time (fold (lambda (next done)
-                        (let* ((next-time rem (time-% done next)))
+                        (let ((next-time rem (time-% done next)))
                           (set! sum = (+ rem))
                           next-time))
                       base rest)))
@@ -1225,7 +1226,7 @@ Returns -1 on failure"
 
 
 (define-public (datetime+ base change)
-  (let* ((time overflow (time+ (get-time% base) (get-time% change))))
+  (let ((time overflow (time+ (get-time% base) (get-time% change))))
     (datetime date: (date+ (get-date base)
                            (get-date change)
                            (date day: overflow))
@@ -1234,7 +1235,7 @@ Returns -1 on failure"
               )))
 
 (define-public (datetime- base change)
-  (let* ((time underflow (time- (get-time% base) (get-time% change))))
+  (let ((time underflow (time- (get-time% base) (get-time% change))))
     (datetime date: (date- (get-date base)
                            (get-date change)
                            (date day: underflow))
@@ -1308,8 +1309,8 @@ Returns -1 on failure"
 ;; NOTE, this is only properly defined when end is greater than start.
 (define-public (datetime-difference end start)
   ;; NOTE Makes both start and end datetimes in the current local time.
-  (let* ((fixed-time overflow (time- (get-time% end)
-                                     (get-time% start))))
+  (let ((fixed-time overflow (time- (get-time% end)
+                                    (get-time% start))))
     (datetime date: (date-difference (date- (get-date end)
                                             (date day: overflow))
                                      (get-date start))

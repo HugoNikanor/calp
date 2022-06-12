@@ -6,6 +6,7 @@
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
+  :use-module (srfi srfi-71)
   :use-module (srfi srfi-9 gnu)
   :use-module (vcomponent base)
   :use-module (vcomponent geo)
@@ -218,7 +219,7 @@
           [(memv key '(GEO))
            ;; two semicolon sepparated floats
            (lambda (params value)
-             (let* (((left right) (string-split value #\;)))
+             (let ((left right (apply values (string-split value #\;))))
                (make-geo ((get-parser 'FLOAT) params left)
                          ((get-parser 'FLOAT) params right))))]
 
@@ -305,7 +306,7 @@
                                 (begin (add-child! (cadr stack) (car stack))
                                        (cdr stack))))]
                      [else
-                      (let* ((key value params (parse-itemline head)))
+                      (let ((key value params (parse-itemline head)))
                         (call-with-values (lambda () (build-vline key value params))
                           (lambda vlines
                             (for vline in vlines
@@ -349,7 +350,7 @@
                           (get-line linedata)
                           (get-file linedata))
                          (current-error-port))
-                (let* ((key value params (parse-itemline head)))
+                (let ((key value params (parse-itemline head)))
                   (set! (prop* (car stack) key)
                     (make-vline key value params))
                   (loop (cdr lst) stack)))))))))

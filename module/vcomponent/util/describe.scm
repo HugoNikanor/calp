@@ -1,5 +1,6 @@
 (define-module (vcomponent util describe)
   :use-module (hnh util)
+  :use-module (srfi srfi-71)
   :use-module (vcomponent base)
   :use-module (text util))
 
@@ -14,7 +15,7 @@
   (format #t "~aBEGIN ~a~%" ii (type vcomponent))
 
   (for-each (lambda (kv)
-              (let* (((key . values) kv))
+              (let ((key values (car+cdr kv)))
                 (define (out vline)
                   (format #t "~a~a = ~a"
                           iii

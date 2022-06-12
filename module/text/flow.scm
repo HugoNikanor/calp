@@ -7,6 +7,7 @@
   :use-module (hnh util)
   :use-module (text util)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
   )
 
 
@@ -23,12 +24,12 @@
 ;; str -> (str)
 (define* (justify-line line #:key (width 70))
   (let recur ((lst (words line)))
-    (let* ((head tail (span
-                       (let ((w 0))
-                         (lambda (word)    ; Take words until we are above the limit.
-                           (< (set/r! w = (+ 1 (true-string-length word)))
-                              width)))
-                       lst)))
+    (let ((head tail (span
+                      (let ((w 0))
+                        (lambda (word)    ; Take words until we are above the limit.
+                          (< (set/r! w = (+ 1 (true-string-length word)))
+                             width)))
+                      lst)))
       (cond ((null? tail) (list (unwords head))) ; Don't justify last line.
             ((null? head)
              ;; an empty head implies that we found a word longer

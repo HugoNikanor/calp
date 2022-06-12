@@ -1,6 +1,7 @@
 (define-module (text markup)
   :use-module (hnh util)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
   :use-module (ice-9 match)
   :use-module (ice-9 pretty-print)
   :use-module (text util)
@@ -70,20 +71,20 @@
     [(br) "\n"]
     [(hr) (string-append "     " (make-string 60 #\─) "     \n")]
     [(dl)
-     (let* ((dts dds (partition (lambda (x) (eq? 'dt (car x))) body)))
-       (let* ((dts* (map sxml->ansi-text dts))
-              (m (if (null? dts*) 0 (apply max (map true-string-length dts*)))))
-         (string-concatenate
-          (map (lambda (dt dd)
-                 (let ((dds (string-split dd #\newline)))
-                   (string-concatenate
-                    (map (lambda (left right)
-                           (string-append (true-string-pad left m) " │ " right "\n"))
-                         (cons dt (map (const "") (iota (1- (length dds)))))
-                         dds))))
-               dts*
-               (map (compose sxml->ansi-text (add-attributes `((width ,(- 70 m 5)))))
-                    dds)))))]
+     (let* ((dts dds (partition (lambda (x) (eq? 'dt (car x))) body))
+            (dts* (map sxml->ansi-text dts))
+            (m (if (null? dts*) 0 (apply max (map true-string-length dts*)))))
+       (string-concatenate
+        (map (lambda (dt dd)
+               (let ((dds (string-split dd #\newline)))
+                 (string-concatenate
+                  (map (lambda (left right)
+                         (string-append (true-string-pad left m) " │ " right "\n"))
+                       (cons dt (map (const "") (iota (1- (length dds)))))
+                       dds))))
+             dts*
+             (map (compose sxml->ansi-text (add-attributes `((width ,(- 70 m 5)))))
+                  dds))))]
     [(dt) (string-concatenate (map (compose sxml->ansi-text (add-attributes args))
                                    body))]
     [(dd)

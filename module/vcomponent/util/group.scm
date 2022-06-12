@@ -14,8 +14,8 @@
       stream-null
       (let loop ((days (day-stream (as-date (prop (stream-car in-stream) 'DTSTART))))
                  (stream in-stream))
-        (let* ((day (stream-car days))
-               (tomorow (stream-car (stream-cdr days))))
+        (let ((day (stream-car days))
+              (tomorow (stream-car (stream-cdr days))))
 
           (let ((head (stream-take-while (ein? day) stream))
                 (tail

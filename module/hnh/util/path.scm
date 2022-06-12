@@ -1,5 +1,6 @@
 (define-module (hnh util path)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
   :use-module (hnh util))
 
 (define // file-name-separator-string)
@@ -40,16 +41,16 @@
 ;; ⇒ ("" "usr" "lib" "test")
 ;; @end example
 (define-public (path-split path)
-  (let* ((head tail
-               (car+cdr
-                (reverse
-                 (map reverse-list->string
-                      (fold (lambda (c done)
-                              (if (/? c)
-                                  (cons '() done)
-                                  (cons (cons c (car done)) (cdr done))))
-                            '(())
-                            (string->list path)))))))
+  (let ((head tail
+              (car+cdr
+               (reverse
+                (map reverse-list->string
+                     (fold (lambda (c done)
+                             (if (/? c)
+                                 (cons '() done)
+                                 (cons (cons c (car done)) (cdr done))))
+                           '(())
+                           (string->list path)))))))
     (cons head (remove string-null? tail))))
 
 

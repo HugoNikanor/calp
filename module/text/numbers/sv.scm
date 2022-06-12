@@ -1,4 +1,5 @@
 (define-module (text numbers sv)
+  :use-module (srfi srfi-71)
   :use-module (hnh util))
 
 ;; only used in number->string-cardinal
@@ -41,37 +42,37 @@
         [(= n 20) "tjugo"]
         [(<= 21 n 29) (format #f "tjugo~a" (number->string-cardinal
                                            (- n 20)))]
-        [(<= 30 n 79) (let* ((big small (floor/ n 10)))
+        [(<= 30 n 79) (let ((big small (floor/ n 10)))
                        (format #f "~atio~a"
                                (number->string-cardinal big)
                                (number->string-cardinal small)))]
         [(= n 80) "åttio"]
-        [(<= 81 n 89) (let* ((_ small (floor/ n 10)))
+        [(<= 81 n 89) (let ((_ small (floor/ n 10)))
                        (format #f "åttio~a"
                                (number->string-cardinal small)))]
         [(= n 90) "nittio"]
-        [(<= 91 n 99) (let* ((_ small (floor/ n 10)))
+        [(<= 91 n 99) (let ((_ small (floor/ n 10)))
                        (format #f "nittio~a"
                                (number->string-cardinal small)))] 
         [(= n 100) "hundra"]
-        [(< 100 n 200) (let* ((_ small (floor/ n 100)))
+        [(< 100 n 200) (let ((_ small (floor/ n 100)))
                          (format #f "hundra~a"
                                  (number->string-cardinal small)))]
         [(= n 200) "tvåhundra"]
-        [(< 200 n 1000) (let* ((big small (floor/ n 100)))
+        [(< 200 n 1000) (let ((big small (floor/ n 100)))
                           (format #f "~ahundra~a"
                                   (number->string-cardinal big)
                                   (number->string-cardinal small)))]
         [(<= 1000 n 999999)
-         (let* ((big small (floor/ n 1000)))
+         (let ((big small (floor/ n 1000)))
            (format #f "~a tusen ~a~a"
                    (number->string-cardinal big)
                    (if (<= 100 small 199)
                        "ett " "")
                    (number->string-cardinal small)))]
         [(<= #e10e6 n (1- #e10e66))
-         (let* ((e (inexact->exact (floor (log10 n))))
-                (big small (floor/ n #e1e6)))
+         (let ((e (inexact->exact (floor (log10 n))))
+               (big small (floor/ n #e1e6)))
            (if (zero? big)
                (number->string-cardinal small)
                (format #f "~a ~a~a~a ~a"
@@ -121,7 +122,7 @@
                                   (- n 20)
                                   a-form?: a-form?)))]
         [(<= 30 n 99)
-         (let* ((big small (floor/ n 10)))
+         (let ((big small (floor/ n 10)))
            (format #f "~atio~a"
                    (case big
                      [(8) "åt"]
@@ -134,7 +135,7 @@
         [(= n 100) "hundrade"]
         [(= n 1000) "tusende"]
         [else
-         (let* ((big small (floor/ n 100)))
+         (let ((big small (floor/ n 100)))
            (string-append (number->string-cardinal (* big 100))
                           (if (zero? small)
                               "de"

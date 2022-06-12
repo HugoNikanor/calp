@@ -1,5 +1,6 @@
 (define-module (hnh util tree)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-71)
   #:use-module (hnh util)
   #:export (make-tree left-subtree
                       right-subtree
@@ -13,8 +14,8 @@
 ;; both it's children equal to @var{null}.
 (define (make-tree pred? lst)
   (unless (null? lst)
-    (let* ((head tail (partition (lambda (el) (pred? (car lst) el))
-                                 (cdr lst))))
+    (let ((head tail (partition (lambda (el) (pred? (car lst) el))
+                                (cdr lst))))
       (list (car lst)
             (make-tree pred? head)
             (make-tree pred? tail)))))

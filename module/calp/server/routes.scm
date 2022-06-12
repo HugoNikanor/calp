@@ -73,7 +73,7 @@
                                        path-join)))
                          ,(_ "Return up"))))
      ,@(map (lambda (k)
-              (let* ((stat (lstat (path-append prefix dir k))))
+              (let ((stat (lstat (path-append prefix dir k))))
                 `(tr (td ,(case (stat:type stat)
                             [(directory) "📁"]
                             [(regular) "📰"]
@@ -108,7 +108,7 @@
    (lambda (search-term)
      (aif (hash-ref query-pages search-term)
           it
-          (let* ((q (prepare-query
+          (let ((q (prepare-query
                      (build-query-proc search-term)
                      (get-event-set global-event-object))))
             (hash-set! query-pages search-term q)
@@ -150,7 +150,7 @@
    ;; TODO any exception in this causes the whole page to fail
    ;; It would be much better if most of the page could still make it.
    (GET "/week/:start-date.html" (start-date html)
-        (let* ((start-date (start-of-week (parse-iso-date start-date))))
+        (let ((start-date (start-of-week (parse-iso-date start-date))))
           (return `((content-type ,(content-type html)))
                   (with-output-to-string
                     (lambda ()
@@ -166,7 +166,7 @@
                                       )))))))
 
    (GET "/month/:start-date.html" (start-date html)
-        (let* ((start-date (start-of-month (parse-iso-date start-date))))
+        (let ((start-date (start-of-month (parse-iso-date start-date))))
           (return `((content-type ,(content-type html)))
                   (with-output-to-string
                     (lambda ()

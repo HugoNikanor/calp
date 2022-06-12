@@ -12,7 +12,7 @@
 ;;; Code:
 (define-module (datetime zic)
   :use-module ((hnh util)
-               :select (awhen group set when sort* iterate group-by let*))
+               :select (awhen group set when sort* iterate group-by))
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (datetime)
   :use-module (datetime timespec)
@@ -20,6 +20,7 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
+  :use-module (srfi srfi-71)
   :use-module ((vcomponent recurrence internal)
                :select (byday make-recur-rule bymonthday))
   :use-module (calp translation)
@@ -175,17 +176,16 @@
                     [(#\u #\g #\z) "UTC"]))))
 
 
-(define (parse-zone . args)
-  (let* (((stdoff rule format . until) args))
-    (make-zone-entry
-     (parse-time-spec stdoff)           ; stdoff
-     (cond [(string=? "-" rule) #f]     ; rule
-           [(char-alphabetic? (string-ref rule 0))
-            (string->symbol rule)]
-           [else (parse-time-spec rule)])
-     format                             ; format
-     (if (null? until)                  ; until
-         #f (apply parse-until until)))))
+(define (parse-zone stdoff rule format . until)
+  (make-zone-entry
+    (parse-time-spec stdoff)           ; stdoff
+    (cond [(string=? "-" rule) #f]     ; rule
+          [(char-alphabetic? (string-ref rule 0))
+           (string->symbol rule)]
+          [else (parse-time-spec rule)])
+    format                             ; format
+    (if (null? until)                  ; until
+      #f (apply parse-until until))))
 
 
 
@@ -211,11 +211,12 @@
     (let ((str (read-line port)))
       (if (eof-object? str)
           done
-          (let* ((tokens (tokenize (strip-comments str))))
+          (let ((tokens (tokenize (strip-comments str))))
             (cond [(null? tokens) (loop done continued)]
                   [continued
                    ;; Zone-continuation
-                   (let* (((name entries) continued)
+                   (let* ((name (car continued))
+                          (entries (cadr continued))
                           (zone-entry (apply parse-zone tokens))
                           (zone-entries (cons zone-entry entries)))
                     (if (zone-entry-until zone-entry)
@@ -224,11 +225,11 @@
                                     done)
                               #f)))]
                   [else
-                   (let* (((type . args) tokens))
+                   (let ((type args (car+cdr tokens)))
                      (case (string->symbol type)
 
                        [(Rule)
-                        (let* (((name from to type in on at save letters) args))
+                        (let ((name from to type in on at save letters (apply values args)))
                           (let ((parsed-from (parse-from from)))
                             (loop
                              (cons
@@ -257,7 +258,8 @@
                                     #f)))]
 
                        [(Link)
-                        (let* (((target name) args))
+                        (let ((target (car args))
+                              (name (cadr args)))
                           (loop (cons (make-link name target)
                                       done) #f))]
 
@@ -339,7 +341,7 @@
                        (lambda (d) (eqv? (cadr on) (week-day d)))
                        (set (day d) (days-in-month d)))]
              [else                      ; < | >
-              (let* (((<> wday base-day) on))
+              (let ((<> wday base-day (apply values on)))
                 (iterate (lambda (d) ((if (eq? '< <>)
                                      date- date+)
                                  d (date day: 1)))
@@ -389,7 +391,7 @@
               [else
                ;; Sun<=25
                ;; Sun>=8
-               (let* (((<> wday base-day) (rule-on rule)))
+               (let ((<> wday base-day (apply values (rule-on rule))))
                  (when (eq? '< <>)
                    (warning (_ "Counting backward for RRULES unsupported")))
                  ;; NOTE this only realy works when base-day = 7n + 1, n ∈ N

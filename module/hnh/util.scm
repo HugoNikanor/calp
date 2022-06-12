@@ -1,5 +1,6 @@
 (define-module (hnh util)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-71)
   #:use-module (srfi srfi-88)           ; postfix keywords
   #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module ((sxml fold) #:select (fold-values))
@@ -15,7 +16,7 @@
                 begin1
                 catch*
                 )
-  #:replace (let* set! define-syntax
+  #:replace (set! define-syntax
                   when unless))
 
 ((@ (guile) define-syntax) define-syntax
@@ -77,65 +78,6 @@
           <collection>))))
 
 
-
-;; Replace let* with a version that can bind from lists.
-;; Also supports SRFI-71 (extended let-syntax for multiple values)
-;; @lisp
-;; (let* ([a b (values 1 2)]               ; @r{SRFI-71}
-;;        [(c d) '(3 4)]                   ; @r{Let-list (mine)}
-;;        [(a b . c) (cons* 1 2 3)]        ; @r{Improper list matching (mine)}
-;;        [e 5])                           ; @r{Regular}
-;;   (list e d c b a))
-;; ;; => (5 4 3 2 1)
-;; @end lisp
-(define-syntax let*
-  (syntax-rules ()
-
-    ;; Base case
-    [(_ () body ...)
-     (begin body ...)]
-
-    ;; (let (((a b) '(1 2))) (list b a)) => (2 1)
-    [(_ (((k ... . (k*)) list-value) rest ...)
-        body ...)
-     (apply (lambda (k ... k*)
-              (let* (rest ...)
-                body ...))
-            list-value)]
-
-    ;; Improper list matching
-    ;; (let* (((a b . c) (cons* 1 2 3))) (list a c)) ; => (1 3)
-    [(_ (((k1 k ... . k*) imp-list) rest ...)
-        body ...)
-     (apply (lambda (k1 k ... k*)
-              (let* (rest ...)
-                body ...))
-            (improper->proper-list
-             imp-list (length (quote (k1 k ...)))))]
-
-    ;; "Regular" case
-    [(_ ((k value) rest ...) body ...)
-     (let ((k value))
-       (let* (rest ...)
-         body ...))]
-
-    ;; SRFI-71 let-values
-    [(_ ((k k* ... values) rest ...) body ...)
-     (call-with-values (lambda () values)
-       (lambda (k k* ...)
-         (let* (rest ...)
-           body ...)))]
-
-    ;; Declare variable without a value (actuall #f).
-    ;; Useful for inner mutation.
-    [(_ (v rest ...) body ...)
-     (let* ((v #f) rest ...) body ...)]
-    ))
-
-(define (improper->proper-list lst len)
-  (let* ((head tail (split-at lst len)))
-    (append head (list tail))))
-
 
 (define-syntax-rule (begin1 first rest ...)
   (call-with-values (lambda () first)
@@ -337,7 +279,7 @@
 ;; @end example
 (define-public (assq-merge a b)
   (fold (lambda (entry alist)
-          (let* (((k . v) entry)
+          (let* ((k v (car+cdr entry))
                  (o (assq-ref alist k)))
             (assq-set! alist k (append v (or o '())))))
         (copy-tree a) b))
@@ -415,7 +357,7 @@
 (define-public (cross-product . args)
   (if (null? args)
       '()
-      (let* ((last rest (car+cdr (reverse args))))
+      (let ((last rest (car+cdr (reverse args))))
         (reduce-right cross-product% '()
                       (reverse (cons (map list last) rest ))))))
 
@@ -508,7 +450,7 @@
 ;; Requires that width|(length list)
 (define-public (group list width)
   (unless (null? list)
-    (let* ((row rest (split-at list width)))
+    (let ((row rest (split-at list width)))
       (cons row (group rest width)))))
 
 ;; repeatedly apply @var{proc} to @var{base}

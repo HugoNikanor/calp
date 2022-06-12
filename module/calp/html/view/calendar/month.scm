@@ -7,6 +7,7 @@
   :use-module (calp html view calendar shared)
   :use-module (calp html config)
   :use-module (vcomponent)
+  :use-module (ice-9 match)
   :use-module ((vcomponent datetime)
                :select (really-long-event?
                         events-between))
@@ -47,15 +48,15 @@
                      long-event-groups))))
          ,@(map (lambda (d) `(div (@ (class "thead")) ,(string-titlecase (week-day-name d))))
                 (weekday-list))
-         ,@(map (lambda (group i)
-                  (let* (((s e . events) group))
-                    `(div (@ (class "cal-cell longevents event-container")
-                             (style "grid-area: long " ,i ";"
-                                    "grid-column: 1 / span 7;")
-                             (data-start ,(date->string s))
-                             (data-end ,(date->string (add-day e))))
-                          ,@(lay-out-long-events
-                             s e events))))
+         ,@(map (match-lambda*
+                  (((s e events ...) i)
+                   `(div (@ (class "cal-cell longevents event-container")
+                            (style "grid-area: long " ,i ";"
+                                   "grid-column: 1 / span 7;")
+                            (data-start ,(date->string s))
+                            (data-end ,(date->string (add-day e))))
+                         ,@(lay-out-long-events
+                            s e events))))
                 long-event-groups
                 (iota (length long-event-groups) 1))
 

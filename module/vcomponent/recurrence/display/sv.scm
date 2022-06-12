@@ -20,7 +20,7 @@
 ;; but 1MO, -1MO doesn't become "första och sista måndagen".
 ;; TODO also, grouping of -dagen. e.g. "första mån- och tisdagen"
 (define (format-byday-list lst)
-  (let* ((groups (group-by car lst)))
+  (let ((groups (group-by car lst)))
     (intersperse
      " samt "
      (map (lambda (group)

@@ -229,7 +229,8 @@
 
 ;; Single event in side bar (text objects)
 (define-public (fmt-day day)
-  (let* (((date . events) day))
+  (let ((date (car day))
+        (events (cdr day)))
     `(section (@ (class "text-day"))
               (header (h2 ,(let ((s (date->string date
                                                   ;; Header for sidebar day
@@ -265,10 +266,10 @@
   `(style
        ,(lambda () (format #t "~:{ [data-calendar=\"~a\"] { --color: ~a; --complement: ~a }~%~}"
                       (map (lambda (c)
-                             (let* ((name (base64encode (prop c 'NAME)))
-                                    (bg-color (prop c 'COLOR))
-                                    (fg-color (and=> (prop c 'COLOR)
-                                                     calculate-fg-color)))
+                             (let ((name (base64encode (prop c 'NAME)))
+                                   (bg-color (prop c 'COLOR))
+                                   (fg-color (and=> (prop c 'COLOR)
+                                                    calculate-fg-color)))
                                (list name (or bg-color 'white) (or fg-color 'black))))
                            calendars)))))
 

@@ -7,6 +7,7 @@
 (define-module (hnh util graph)
   :use-module (hnh util)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
   :use-module (srfi srfi-9 gnu))
 
 ;; Immutable directed graph
@@ -88,7 +89,7 @@
       (let loop ((graph graph))
         (if (graph-empty? graph)
             '()
-            (let* ((node graph* (find-and-remove-node-without-dependencies graph)))
+            (let ((node graph* (find-and-remove-node-without-dependencies graph)))
               (cons node (loop graph*))))))
     (lambda (err caller fmt args data)
       (car graph))))

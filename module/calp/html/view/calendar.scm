@@ -22,6 +22,7 @@
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
+  :use-module (srfi srfi-71)
 
   :use-module ((vcomponent recurrence) :select (repeating? generate-recurrence-set))
   :use-module ((vcomponent util group)

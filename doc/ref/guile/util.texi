@@ -46,18 +46,6 @@ If keys are a list, an match-lambda is used instead.
 @xref{Pattern Matching,,,guile}
 @end defmac
 
-@defmac let* forms body ...
-Replace let* with a version that can bind from lists.
-Also supports SRFI-71 (extended let-syntax for multiple values)
-@lisp
-(let* ([a b (values 1 2)]               ; @r{SRFI-71}
-       [(c d) '(3 4)]                   ; @r{Let-list (mine)}
-       [(a b . c) (cons* 1 2 3)]        ; @r{Improper list matching (mine)}
-       [e 5])                           ; @r{Regular}
-  (list e d c b a))
-;; => (5 4 3 2 1)
-@end lisp
-@end defmac
 
 @defmac print-and-return expr
 Prints @var{expr}, and then returns it.

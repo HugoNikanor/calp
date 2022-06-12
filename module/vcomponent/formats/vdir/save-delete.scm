@@ -38,7 +38,7 @@
                (list (prop calendar '-X-HNH-SOURCETYPE))
                #f))
 
-  (let* ((uid (or (prop event 'UID) (uuid))))
+  (let ((uid (or (prop event 'UID) (uuid))))
     (set! (prop event 'UID) uid)
     (unless (prop event 'X-HNH-FILENAME)
       (set! (prop event '-X-HNH-FILENAME)

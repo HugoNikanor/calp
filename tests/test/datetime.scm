@@ -5,12 +5,12 @@
 
 (define-module (test datetime)
   :use-module (srfi srfi-64)
+  :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module ((srfi srfi-41)
                :select (stream->list stream-take))
   :use-module (datetime)
   :use-module ((ice-9 format) :select (format))
-  :use-module ((hnh util) :select (let*))
   :use-module ((ice-9 i18n) :select (make-locale))
   :use-module ((guile) :select (LC_CTYPE LC_TIME)))
 
@@ -164,18 +164,18 @@
          (date day: 4)
          (date day: 5)))
 
-(let* ((diff overflow
-             (time- #10:20:30
-                    #10:20:30)))
+(let ((diff overflow
+            (time- #10:20:30
+                   #10:20:30)))
   (test-equal
     "time- self"
     #00:00:00
     diff)
   (test-equal "time- self overflow" 0 overflow))
 
-(let* ((diff overflow
-             (time- #10:00:00
-                    #10:00:01)))
+(let ((diff overflow
+            (time- #10:00:00
+                   #10:00:01)))
   (test-equal
     "time- overflow 1s"
     #23:59:59
@@ -185,9 +185,9 @@
     1
     overflow))
 
-(let* ((diff overflow
-             (time- #10:00:00
-                    (time hour: (+ 48 4)))))
+(let ((diff overflow
+            (time- #10:00:00
+                   (time hour: (+ 48 4)))))
   (test-equal
     "time- overflow multiple"
     #06:00:00

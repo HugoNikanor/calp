@@ -2,8 +2,10 @@
   :export (make-routes)
   :use-module (hnh util)
   :use-module (ice-9 regex)
+  :use-module (ice-9 match)
   :use-module (ice-9 curried-definitions)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
   )
 
 
@@ -36,26 +38,27 @@
 
 
 (define ((generate-case regex-table) defn)
-  (let* (((method uri param-list . body) defn)
-         (_ tokens (parse-endpoint-string uri))
-         (diff intersect (lset-diff+intersection eq? param-list tokens)))
-    `((and (eq? r:method (quote ,method))
-           (regexp-exec ,(car (assoc-ref regex-table uri)) r:path))
-      => (lambda (match-object)
-           ;; (assert
-           ;;  (= (1- (match:count match-object))
-           ;;     (length intersect)))
+  (match defn
+    ((method uri param-list body ...)
+     (let* ((_ tokens (parse-endpoint-string uri))
+               (diff intersect (lset-diff+intersection eq? param-list tokens)))
+          `((and (eq? r:method (quote ,method))
+                 (regexp-exec ,(car (assoc-ref regex-table uri)) r:path))
+            => (lambda (match-object)
+                 ;; (assert
+                 ;;  (= (1- (match:count match-object))
+                 ;;     (length intersect)))
 
-           ;; Those parameters which were present in the template uri
-           ((lambda ,intersect
-               ;; Those that only are in the query string
-               (lambda* (,@(unless (null? diff) `(#:key ,@diff #:allow-other-keys))
-                         #:rest rest)
-                 ,@body))
-            ,@(unless (null? intersect)
-                (map (lambda (i)
-                       `((@ (ice-9 regex) match:substring) match-object ,i))
-                     (cdr (iota (1+ (length intersect)))))))))))
+                 ;; Those parameters which were present in the template uri
+                 ((lambda ,intersect
+                    ;; Those that only are in the query string
+                    (lambda* (,@(unless (null? diff) `(#:key ,@diff #:allow-other-keys))
+                              #:rest rest)
+                      ,@body))
+                  ,@(unless (null? intersect)
+                      (map (lambda (i)
+                             `((@ (ice-9 regex) match:substring) match-object ,i))
+                           (cdr (iota (1+ (length intersect)))))))))))))
 
 (define-macro (make-routes . routes)
   ;; Ensures that all regexes are only compiled once.
