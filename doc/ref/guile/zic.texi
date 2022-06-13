@@ -1,0 +1,135 @@
+@node Timespec
+@section Timespec
+
+Specifiers of times, including their offset from some origin, and what
+kind they are.
+
+Refer to zic(8) and the AT field of rules.
+
+@defun make-timespec time sign type
+
+@defun timespec? x
+@end defun
+
+@defun timspec-time timespec
+Should be a time object.
+@end defun
+
+@defun timspec-sign timespec
+@code{'+} or @code{'-}
+@end defun
+
+@defun timspec-type timespec
+char
+@end defun
+@end defun
+
+@defun timespec-zero
+The ``empty'' timespec.
+@end defun
+
+@defun timespec-add specs ...
+@end defun
+
+@defun parse-time-spec string [suffixes='(#\s #\w #\u #\g #\z)]
+More or less follows the pattern @code{-?[0-9]@{2@}(:[0-9]@{2@})@{0,2@}[swugz]}.
+@end defun
+
+
+@node Zone Info Compiler
+@section Zone Info Compiler
+
+@defun read-zoneinfo ports-or-filenames
+Takes a (possibly mixed) list of ports and filenames, and calls
+@code{parse-zic-file} on each of them.
+@end defun
+
+@c @defun parse-zic-file port
+@c @end defun
+
+@defun zoneinfo?
+@end defun
+
+@defun get-zone zoneinfo name
+Takes a zoneinfo object, and a name as a string (probably something
+like ``Europe/Stockholm''), and returns a list of zone-entries.
+@end defun
+
+@defun get-rule zoneinfo name
+Gets a list of rule objects, sorted in chronological order.
+@var{name} is a symbol.
+@end defun
+
+@defun rule->dtstart rule
+Returns the first time a given rule happens.
+@end defun
+
+@defun rule->rrule rule
+Converts a given zoneinfo rule into a recurrence rule, of all times
+that change occurs.
+@end defun
+
+@defun zone-format fmt-string arg
+A special case of format, which handles the format strings containing
+``%s'' and ``%z''.
+@end defun
+
+
+
+@defun make-rule name from to in on at save letters
+
+See zic(8).
+
+@defun rule?
+@end defun
+
+@defun rule-name
+@end defun
+
+@defun rule-from
+@end defun
+
+@defun rule-to
+@end defun
+
+@c @defun rule-type
+@c @end defun
+
+@defun rule-in
+@end defun
+
+@defun rule-on
+@end defun
+
+@defun rule-at
+@end defun
+
+@defun rule-save
+@end defun
+
+@defun rule-letters
+@end defun
+
+@end defun
+
+
+@defun make-zone-entry stdoff rule format until
+
+See zic(8).
+
+@defun zone-entry?
+@end defun
+
+@defun zone-entry-stdoff
+@end defun
+
+@defun zone-entry-rule
+@end defun
+
+@defun zone-entry-format
+@end defun
+
+@defun zone-entry-until
+@end defun
+@end defun
+
