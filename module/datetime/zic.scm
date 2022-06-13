@@ -26,6 +26,7 @@
   )
 
 
+;; returns a <zoneinfo> object
 (define-public (read-zoneinfo ports-or-filenames)
   (parsed-zic->zoneinfo
    (concatenate
@@ -200,6 +201,7 @@
 (define (tokenize line)
   (remove string-null? (string-split line char-set:whitespace)))
 
+;; Returns a list of zones, rules, and links
 (define (parse-zic-file port)
   (let loop ((done '()) (continued #f))
     ;; NOTE
@@ -270,6 +272,8 @@
                        ))]))))))
 
 
+;; Takes a list of zones, rules, and links (as provided by parse-zic-file), and
+;; returns a zoneinfo object
 (define (parsed-zic->zoneinfo lst)
 
   (define zones (make-hash-table))
@@ -311,6 +315,7 @@
 
 
 
+;; The first time this rule was/will be applied
 (define-public (rule->dtstart rule)
   ;; NOTE 'minimum and 'maximum represent the begining and end of time.
   ;; since I don't have a way to represent those ideas I just set a very
@@ -343,7 +348,7 @@
      tz: (case (timespec-type (rule-at rule))
            ((#\w) #f)
            ((#\s) (warning (_ "what even is \"Standard time\"‽")) #f)
-           ((#\u #\g #\z) 'UTC))))
+           ((#\u #\g #\z) "UTC"))))
 
   (let ((timespec (rule-at rule)))
     ((case (timespec-sign timespec)
@@ -366,9 +371,6 @@
                               ((minimum) (scm-error 'misc-error "rule->rrule"
                                                     (_ "Check your input")
                                                     #f #f))
-                              ((only)
-                               (datetime
-                                date: (date year: (rule-from rule) month: 1 day: 1)))
                               (else
                                ;; NOTE I possibly need to check the start of
                                ;; the next rule to know when this rule really
@@ -416,7 +418,7 @@
                        ;; second is the whole string, third is the index
                        ;; of the faulty character.
                        (_ "Invalid format char ~s in ~s at position ~a")
-                       (list (string-index fmt-string (1+ idx))
+                       (list (string-ref fmt-string (1+ idx))
                              fmt-string
                              (1+ idx))
                        #f)])))
