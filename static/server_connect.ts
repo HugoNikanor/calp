@@ -4,6 +4,7 @@ import { jcal_to_xcal } from './jcal'
 import { VEvent } from './vevent'
 import { uid } from './types'
 import { vcal_objects } from './globals'
+import { PopupElement } from './components/popup-element'
 
 async function remove_event(uid: uid) {
     let element = vcal_objects.get(uid);
@@ -124,7 +125,7 @@ async function create_event(event: VEvent) {
 
     for (let r of event.registered) {
         r.classList.remove('generated');
-        if (r.tagName.toLowerCase() === 'popup-element') {
+        if (r instanceof PopupElement) {
             console.log(r);
             r.removeAttribute('visible');
         }

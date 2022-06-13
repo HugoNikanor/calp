@@ -13,7 +13,6 @@
   :use-module ((web uri-query) :select (encode-query-parameters))
   :use-module ((calp html util) :select (html-id calculate-fg-color))
   :use-module ((calp html config) :select (edit-mode debug))
-  :use-module ((calp html components) :select (with-label))
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
   :use-module ((vcomponent recurrence) :select (repeating?))
@@ -28,6 +27,12 @@
   :use-module (calp html filter)
   )
 
+
+(define (xml-entities s)
+  (lambda ()
+    (for-each display
+     (map (lambda (c) (format #f "&#x~x;" (char->integer c)))
+          (string->list s)))))
 
 (define-public (format-summary ev str)
   ((summary-filter) ev str))
@@ -400,64 +405,55 @@
                                             '((selected))))
                                      ,name))
                           calendars)))
-               (h3 (input (@ (type "text")
-                             (placeholder ,(_ "Summary"))
-                             (name "summary") (required)
-                             (data-property "summary")
+               (input (@ (type "text")
+                         (placeholder ,(_ "Summary"))
+                         (name "summary") (required)
+                         (data-property "summary")
                                         ; (value ,(prop ev 'SUMMARY))
-                             )))
+                         ))
 
                (div (@ (class "timeinput"))
 
-                    ,@(with-label
-                       (_ "Start time")
-                       '(date-time-input (@ (name "dtstart")
-                                            (data-property "dtstart")
-                                            )))
+                    (date-time-input (@ (name "dtstart")
+                                         (data-property "dtstart")
+                                         ))
 
-                    ,@(with-label
-                       (_ "End time")
-                       '(date-time-input (@ (name "dtend")
-                                            (data-property "dtend"))))
+                    (date-time-input (@ (name "dtend")
+                                         (data-property "dtend")))
 
                     (div (@ (class "checkboxes"))
-                         ,@(with-label
-                            (_ "Whole day?")
-                            `(input (@ (type "checkbox")
-                                       (name "wholeday")
-                                       )))
-                         ,@(with-label
-                            (_ "Recurring?")
-                            `(input (@ (type "checkbox")
-                                       (name "has_repeats")
-                                       ))))
+                         (input (@ (type "checkbox")
+                                   (name "wholeday")
+                                   (data-label ,(_ "Whole day?"))
+                                   ))
+                         (input (@ (type "checkbox")
+                                   (name "has_repeats")
+                                   (data-label ,(_ "Recurring?"))
+                                   )))
 
                     )
 
-               ,@(with-label
-                  (_ "Location")
-                  `(input (@ (placeholder ,(_ "Location"))
-                             (name "location")
-                             (type "text")
-                             (data-property "location")
+               (input (@ (placeholder ,(_ "Location"))
+                         (data-label ,(_ "Location"))
+                         (name "location")
+                         (type "text")
+                         (data-property "location")
                                         ; (value ,(or (prop ev 'LOCATION) ""))
-                             )))
+                         ))
 
-               ,@(with-label
-                  (_ "Description")
-                  `(textarea (@ (placeholder ,(_ "Description"))
-                                (data-property "description")
-                                (name "description"))
+               (textarea (@ (placeholder ,(_ "Description"))
+                            (data-label ,(_ "Description"))
+                            (data-property "description")
+                            (name "description"))
                                         ; ,(prop ev 'DESCRIPTION)
-                             ))
+                         )
 
-               ,@(with-label
-                  (_ "Categories")
-                  `(input-list
-                    (@ (name "categories")
-                       (data-property "categories"))
-                    (input (@ (type "text")
-                              (placeholder ,(_ "Category"))))))
+               (input-list
+                (@ (name "categories")
+                   (data-property "categories")
+                   (data-label ,(_ "Categories")))
+                (input (@ (type "text")
+                          (placeholder ,(_ "Category")))))
 
                ;; TODO This should be a "list" where any field can be edited
                ;; directly. Major thing holding us back currently is that
@@ -606,20 +602,20 @@
                          (title ,(_ "Fullscreen"))
                          ;; (aria-label "")
                          )
-                      "🗖")
+                      ,(xml-entities "🗖"))
               (button (@ (class "remove-button")
                          ;; Remove/Trash the event this popup represent
                          ;; Think garbage can
                          (title ,(_ "Remove")))
-                      "🗑"))
+                      ,(xml-entities "🗑")))
 
          (tab-group (@ (class "window-body"))
                     (vevent-description
-                     (@ (data-label "📅") (data-title ,(_ "Overview"))
+                     (@ (data-label ,(xml-entities "📅")) (data-title ,(_ "Overview"))
                         (class "vevent")))
 
                     (vevent-edit
-                     (@ (data-label "🖊")
+                     (@ (data-label ,(xml-entities "🖊"))
                         (data-title ,(_ "Edit"))
                         ;; Used by JavaScript to target this tab
                         (data-originaltitle "Edit")))
@@ -628,10 +624,10 @@
                     ;;  (@ (data-label "↺") (data-title "Upprepningar")))
 
                     (vevent-changelog
-                     (@ (data-label "📒")
+                     (@ (data-label ,(xml-entities "📒"))
                         (data-title ,(_ "Changelog"))))
 
                     ,@(when (debug)
                         `((vevent-dl
-                           (@ (data-label "🐸")
+                           (@ (data-label ,(xml-entities "🐸"))
                               (data-title ,(_ "Debug"))))))))))

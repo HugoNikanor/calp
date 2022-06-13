@@ -29,7 +29,7 @@ class TabGroupElement extends ComponentVEvent {
     constructor(uid?: string) {
         super(uid);
 
-        this.menu = makeElement('menu', {}, {
+        this.menu = makeElement('div', {}, {
             role: 'tablist',
             'aria-label': 'Simple Tabs',
         })
@@ -105,15 +105,15 @@ class TabGroupElement extends ComponentVEvent {
             title: title,
             'aria-selected': false,
             'aria-controls': tab_id,
-            ... extra_attributes,
+            ...extra_attributes,
         })
 
-        let tabContainer = makeElement('article', {}, {
+        let tabContainer = makeElement('div', {}, {
             id: tab_id,
             role: 'tabpanel',
             tabindex: 0,
             hidden: 'hidden',
-            'aria-labeledby': label_id,
+            'aria-labelledby': label_id,
         })
 
         tabContainer.replaceChildren(child);
@@ -129,7 +129,7 @@ class TabGroupElement extends ComponentVEvent {
     }
 
     removeTab(tab: HTMLElement) {
-        let id = tab.getAttribute('aria-labeledby')!
+        let id = tab.getAttribute('aria-labelledby')!
         let label = document.getElementById(id)
         if (label) {
             if (label.ariaSelected === 'true') {
@@ -156,7 +156,7 @@ class TabGroupElement extends ComponentVEvent {
 
         /* hide all tab panels */
         for (let tabcontent of this.querySelectorAll('[role="tabpanel"]')) {
-            tabcontent.setAttribute('hidden', 'true');
+            tabcontent.setAttribute('hidden', 'hidden');
         }
         /* unselect all (selected) tab handles */
         for (let item of this.querySelectorAll('[aria-selected="true"]')) {
@@ -174,7 +174,7 @@ class TabGroupElement extends ComponentVEvent {
     /* returns our rrule tab if we have one */
     has_rrule_tab(): Element | false {
         for (let child of this.children) {
-            if ((child.firstChild! as HTMLElement).tagName.toLowerCase() === 'vevent-edit-rrule') {
+            if (child.firstChild! instanceof EditRRule) {
                 return child;
             }
         }

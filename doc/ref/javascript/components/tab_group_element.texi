@@ -14,12 +14,12 @@ it, and a tab-element, which contains the actual content. These two
 should refer to each other as follows:
 
 @example
-+---------------+     +----------------+
-|   TabLabel    |     |       Tab      |
-+---------------+     +----------------+
-|            id |<----| aria-labeledby |
-| aria-controls |---->|             id |
-+---------------+     +----------------+
++---------------+     +-----------------+
+|   TabLabel    |     |       Tab       |
++---------------+     +-----------------+
+|            id |<----| aria-labelledby |
+| aria-controls |---->|              id |
++---------------+     +-----------------+
 @end example
 
 Further information about tabs in HTML can be found here:

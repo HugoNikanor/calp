@@ -7,7 +7,7 @@ import { DateTimeInput } from './date-time-input'
 import { vcal_objects } from '../globals'
 import { VEvent, RecurrenceRule } from '../vevent'
 import { create_event } from '../server_connect'
-import { to_boolean } from '../lib'
+import { to_boolean, gensym } from '../lib'
 
 /* <vevent-edit />
    Edit form for a given VEvent. Used as the edit tab of popups.
@@ -24,6 +24,14 @@ class ComponentEdit extends ComponentVEvent {
         let frag = this.template.content.cloneNode(true) as DocumentFragment
         let body = frag.firstElementChild!
         this.replaceChildren(body);
+
+        for (let el of this.querySelectorAll('[data-label]')) {
+            let label = document.createElement('label');
+            let id = el.id || gensym('input');
+            el.id = id;
+            label.htmlFor = id;
+            label.textContent = (el as HTMLElement).dataset.label!;
+        }
     }
 
     connectedCallback() {

@@ -19,7 +19,6 @@ abstract class ComponentVEvent extends HTMLElement {
 
         let real_uid;
 
-        // console.log(this.tagName);
         if (uid) {
             // console.log('Got UID directly');
             real_uid = uid;
