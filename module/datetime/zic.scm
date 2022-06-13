@@ -17,6 +17,7 @@
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module ((ice-9 rdelim) :select (read-line))
+  :use-module (ice-9 match)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
@@ -197,10 +198,6 @@
             (lambda (idx) (string-take str idx)))
      str))
 
-;; tokenize a single line
-(define (tokenize line)
-  (remove string-null? (string-split line char-set:whitespace)))
-
 ;; Returns a list of zones, rules, and links
 (define (parse-zic-file port)
   (let loop ((done '()) (continued #f))
@@ -211,7 +208,7 @@
     (let ((str (read-line port)))
       (if (eof-object? str)
           done
-          (let ((tokens (tokenize (strip-comments str))))
+          (let ((tokens (string-tokenize (strip-comments str))))
             (cond [(null? tokens) (loop done continued)]
                   [continued
                    ;; Zone-continuation
@@ -225,53 +222,45 @@
                                     done)
                               #f)))]
                   [else
-                   (let ((type args (car+cdr tokens)))
-                     (case (string->symbol type)
+                   (match tokens
+                     (("Rule" name from to type in on at save letters)
+                      (let ((parsed-from (parse-from from)))
+                        (loop
+                         (cons
+                          (make-rule (string->symbol name) ; name
+                                     parsed-from           ; from
+                                     ;; to
+                                     (if (string-prefix? to "only")
+                                         ;; parsed-from
+                                         'only
+                                         (parse-from to))
+                                     (month-name->number in) ; in
+                                     (parse-day-spec on)     ; on
+                                     (parse-time-spec at)    ; at
+                                     (parse-time-spec save '(#\s #\d)) ; save
+                                     (if (string= letters "-") ; letters
+                                         "" letters))
+                          done) #f)))
+                     (("Zone" name args ...)
+                      (let* ((zone-entry (apply parse-zone args))
+                             (zones (list zone-entry)))
+                        (if (zone-entry-until zone-entry)
+                            (loop done (list name zones))
+                            (loop (cons (make-zone name (reverse zones))
+                                        done)
+                                  #f))))
 
-                       [(Rule)
-                        (let ((name from to type in on at save letters (apply values args)))
-                          (let ((parsed-from (parse-from from)))
-                            (loop
-                             (cons
-                              (make-rule (string->symbol name) ; name
-                                         parsed-from           ; from
-                                         ;; to
-                                         (if (string-prefix? to "only")
-                                             ;; parsed-from
-                                             'only
-                                             (parse-from to))
-                                         (month-name->number in) ; in
-                                         (parse-day-spec on)     ; on
-                                         (parse-time-spec at)    ; at
-                                         (parse-time-spec save '(#\s #\d)) ; save
-                                         (if (string= letters "-") ; letters
-                                             "" letters))
-                              done) #f)))]
-
-                       [(Zone)
-                        (let* ((zone-entry (apply parse-zone (cdr args)))
-                               (zones (list zone-entry)))
-                          (if (zone-entry-until zone-entry)
-                              (loop done (list (car args) zones))
-                              (loop (cons (make-zone (car args) (reverse zones))
-                                          done)
-                                    #f)))]
-
-                       [(Link)
-                        (let ((target (car args))
-                              (name (cadr args)))
-                          (loop (cons (make-link name target)
-                                      done) #f))]
-
-                       [else
-                        ;; NOTE an earlier version of the code the parsers for those.
-                        ;; They were removed since they were unused, uneeded, and was
-                        ;; technical dept.
-                        (scm-error 'misc-error "parse-zic-file"
-                                   (_ "Invalid key ~s. Note that leap seconds and expries rules aren't yet implemented.")
-                                   (list type)
-                                   #f)]
-                       ))]))))))
+                     (("Link" target name)
+                      (loop (cons (make-link name target)
+                                  done) #f))
+                     (_
+                      ;; NOTE an earlier version of the code the parsers for those.
+                      ;; They were removed since they were unused, uneeded, and was
+                      ;; technical dept.
+                      (scm-error 'misc-error "parse-zic-file"
+                                 (_ "Invalid key ~s. Note that leap seconds and expries rules aren't yet implemented.")
+                                 (list type)
+                                 #f)))]))))))
 
 
 ;; Takes a list of zones, rules, and links (as provided by parse-zic-file), and
@@ -333,20 +322,18 @@
   (define dt
     (datetime
      date:
-     (let ((on (rule-on rule)))
-       (cond [(number? on)
-              (set (day d) on)]
-             [(eq? 'last (car on))
-              (iterate (lambda (d) (date- d (date day: 1)))
-                       (lambda (d) (eqv? (cadr on) (week-day d)))
-                       (set (day d) (days-in-month d)))]
-             [else                      ; < | >
-              (let ((<> wday base-day (apply values on)))
-                (iterate (lambda (d) ((if (eq? '< <>)
-                                     date- date+)
-                                 d (date day: 1)))
-                         (lambda (d) (eqv? wday (week-day d)))
-                         (set (day d) base-day)))]))
+     (match (rule-on rule)
+       ((? number? on) (set (day d) on))
+       (('last n)
+        (iterate (lambda (d) (date- d (date day: 1)))
+                 (lambda (d) (eqv? n (week-day d)))
+                 (set (day d) (days-in-month d))))
+       (((? (lambda (x) (memv x '(< >))) <>) wday base-day)
+        (iterate (lambda (d) ((if (eq? '< <>)
+                             date- date+)
+                         d (date day: 1)))
+                 (lambda (d) (eqv? wday (week-day d)))
+                 (set (day d) base-day))))
      tz: (case (timespec-type (rule-at rule))
            ((#\w) #f)
            ((#\s) (warning (_ "what even is \"Standard time\"‽")) #f)
@@ -381,27 +368,21 @@
                                 date: (date year: to month: 1 day: 1))))))))
 
 
-        (cond [(number? (rule-on rule))
-               (set (bymonthday base)
-                    (list (rule-on rule)))]
-
-              [(eqv? 'last (car (rule-on rule)))
-               (set (byday base) (list (cons -1 (cadr (rule-on rule)))))]
-
-              [else
-               ;; Sun<=25
-               ;; Sun>=8
-               (let ((<> wday base-day (apply values (rule-on rule))))
-                 (when (eq? '< <>)
-                   (warning (_ "Counting backward for RRULES unsupported")))
-                 ;; NOTE this only realy works when base-day = 7n + 1, n ∈ N
-                 ;; something like Sun>=5 is hard to fix, since we can only
-                 ;; say which sunday in the month we want (first sunday,
-                 ;; second sunday, ...).
-                 (set (byday base)
-                      (list
-                       (cons (ceiling-quotient base-day 7)
-                             wday))))]))))
+        (match (rule-on rule)
+          ((? number? d) (set (bymonthday base) (list d)))
+          (('last d)     (set (byday base) (list (cons -1 d))))
+          (('< wday base-day) (scm-error 'misc-error "rule->rrule" (_ "Counting backward for RRULES unsupported") #f #f))
+          (('> wday base-day)
+           ;; Sun<=25
+           ;; Sun>=8
+           ;; NOTE this only realy works when base-day = 7n + 1, n ∈ N
+           ;; something like Sun>=5 is hard to fix, since we can only
+           ;; say which sunday in the month we want (first sunday,
+           ;; second sunday, ...).
+           (set (byday base)
+                (list
+                 (cons (ceiling-quotient base-day 7)
+                       wday))))))))
 
 ;; special case of format which works with %s and %z
 (define-public (zone-format fmt-string arg)

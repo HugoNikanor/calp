@@ -294,8 +294,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                 "")))
 
             (test-equal "Crash on counting backwards from date"
-              '(warning "Counting backward for RRULES unsupported" ())
-              (catch 'warning
+              '(misc-error "rule->rrule" "Counting backward for RRULES unsupported" #f #f)
+              (catch 'misc-error
                 (lambda ()
                  (rule->rrule
                   ((@@ (datetime zic) make-rule) 'EU 1996 'maximum 10 `(< ,mon 2)
