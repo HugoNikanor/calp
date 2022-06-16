@@ -55,7 +55,8 @@
   `(div (@ (class "small-calendar"))
 
         ;; Cell 0, 0. The letter v. for week number
-        (div (@ (class "column-head row-head")) ,(_ "v."))
+        (div (@ (class "column-head row-head"))
+             ,(_ "v."))
 
         ;; top row, names of week days
         ,@(map (lambda (d) `(div (@ (class "column-head"))

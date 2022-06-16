@@ -69,9 +69,7 @@
                                    "unknown")))))
                    (time ,(let ((dt (prop event 'DTSTART)))
                             (if (datetime? dt)
-                                ;; Compact event list date + time
                                 (datetime->string dt (_ "~Y-~m-~d ~H:~M"))
-                                ;; Compact event list date only
                                 (date->string dt (_ "~Y-~m-~d") ))))
                    (a (@ (href ,(date->string (as-date (prop event 'DTSTART)) "/week/~Y-~m-~d.html")))
                       ;; Button for viewing calendar, accompanied by a calendar icon
@@ -237,9 +235,7 @@
   (let ((date (car day))
         (events (cdr day)))
     `(section (@ (class "text-day"))
-              (header (h2 ,(let ((s (date->string date
-                                                  ;; Header for sidebar day
-                                                  (_ "~Y-~m-~d"))))
+              (header (h2 ,(let ((s (date->string date (_ "~Y-~m-~d"))))
                              `(a (@ (href "#" ,s)
                                     (class "hidelink")) ,s))))
               ,@(stream->list

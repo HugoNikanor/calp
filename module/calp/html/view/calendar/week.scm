@@ -34,7 +34,6 @@
                 ;; Top left area
                 (div (@ (class "week-indicator"))
                      (span (@ (style "font-size: 50%"))
-                           ;; Week number prefix
                            ,(_ "v."))
                      ,@(->> (week-number start-date)
                             number->string string->list
@@ -48,7 +47,6 @@
                 ,@(map (lambda (day-date)
                          `(div (@ (class "meta"))
                                (span (@ (class "daydate"))
-                                     ;; Week view header format
                                      ,(date->string day-date (_ "~Y-~m-~d")))
                                (span (@ (class "dayname"))
                                      ;; TODO translation here?

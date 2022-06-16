@@ -157,7 +157,6 @@
               (let ((start (prop ev 'DTSTART)))
                 (if (datetime? start)
                     (datetime->string (prop ev 'DTSTART)
-                                      ;; Event start date-time terminal view
                                       (_ "~Y-~m-~d ~H:~M:~S"))
                     (date->string start))))
       (format #t "\x1b[1m~a:\x1b[m ~a~%~%"
@@ -165,7 +164,6 @@
               (let ((start (prop ev 'DTSTART)))
                 (if (datetime? start)
                     (datetime->string (prop ev 'DTSTART)
-                                      ;; Event end date-time terminal view
                                       (_ "~Y-~m-~d ~H:~M:~S"))
                     (date->string start))))
       (format #t "~a~%"

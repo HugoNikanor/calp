@@ -91,9 +91,7 @@
              (content "width=device-width, initial-scale=0.5")))
     (meta (@ (name description)
              (content ,(format #f (_ "Calendar for the dates between ~a and ~a")
-                               ;; start date metainfo
                                (date->string start-date (_ "~Y-~m-~d"))
-                               ;; end date metainfo
                                (date->string end-date   (_ "~Y-~m-~d"))))))
     ;; NOTE this is only for the time actually part of this calendar.
     ;; overflowing times from pre-start and post-end is currently ignored here.
@@ -155,7 +153,6 @@ window.default_calendar='~a';"
          (footer
           (@ (style "grid-area: footer"))
           (span ,(_ "Page generated ")
-                ;; Generation data
                 ,(date->string (current-date) (_ "~Y-~m-~d")))
           (span ,(_ "Current time ") (current-time (@ (interval 1))))
           (span (a (@ (href ,(repo-url)))

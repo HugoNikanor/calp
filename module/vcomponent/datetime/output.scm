@@ -58,8 +58,9 @@
          => (lambda (s)
               (cond [(prop ev 'DTEND)
                      => (lambda (e)
+                          ;; start = end, only return one value
                           (if (date= e (date+ s (date day: 1)))
-                              (_ "~Y-~m-~d")  ; start = end, only return one value
+                              (_ "~Y-~m-~d")
                               (values (_ "~Y-~m-~d")
                                       (_ "~Y-~m-~d"))))]
                     ;; no end value, just return start
@@ -72,6 +73,7 @@
                                   (_ "~H:~M")
                                   ;; Note the non-breaking space
                                   (_ "~Y-~m-~d ~H:~M"))))
+
                  (values fmt-str fmt-str))
                ;; Note the non-breaking space
                (_ "~Y-~m-~d ~H:~M")))]))
