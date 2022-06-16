@@ -10,7 +10,7 @@ class InputList extends HTMLElement {
 
     el: HTMLInputElement;
 
-    private _listeners: [string, (e: Event) => void][] = [];
+    #listeners: [string, (e: Event) => void][] = [];
 
     constructor() {
         super();
@@ -48,7 +48,7 @@ class InputList extends HTMLElement {
             }
         });
 
-        for (let [type, proc] of this._listeners) {
+        for (let [type, proc] of this.#listeners) {
             new_el.addEventListener(type, proc);
         }
 
@@ -113,7 +113,7 @@ class InputList extends HTMLElement {
     addEventListener(type: string, proc: ((e: Event) => void)) {
         // if (type != 'input') throw "Only input supported";
 
-        this._listeners.push([type, proc])
+        this.#listeners.push([type, proc])
 
         for (let child of this.children) {
             child.addEventListener(type, proc);

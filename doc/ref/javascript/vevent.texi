@@ -28,7 +28,7 @@ Component for a single instance of a calendar event. Almost all data
 access should go through @code{getProperty} and @code{setProperty},
 with the exception of the current calendar (which is accessed directly
 through @code{calendar}). Almost all changes through these interfaces
-are logged, and can be viewed in @var{_changelog}.
+are logged, and can be viewed through @var{changelog}.
 
 @deftypemethod VEvent {any?} getProperty {key: string}
 @anchor{VEvent.getProperty}
@@ -68,10 +68,14 @@ list, but only calls @var{redraw} once at the end.
 Returns an iterator of all our properties.
 @end deftypemethod
 
-@deftypeivar VEvent {ChangeLogEntry[]} {_changelog}
+@deftypeivar VEvent {ChangeLogEntry[]} {#changelog}
 Every write through getProperty gets logged here, and can be
 consumed. Hopefully this will one day turn into an undo system.
 @ref{ChangeLogEntry}.
+@end deftypeivar
+
+@deftypeivar VEvent {IterableIterator<[number, ChangeLogEntry]>} changelog
+Public (read only) interface to changelog.
 @end deftypeivar
 
 @deftypeivar VEvent {string?} calendar

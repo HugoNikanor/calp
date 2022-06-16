@@ -21,7 +21,7 @@ class VEventChangelog extends ComponentVEvent {
     redraw(data: VEvent) {
         /* TODO only redraw what is needed */
         let children = []
-        for (let el of data._changelog) {
+        for (let [_, el] of data.changelog) {
             let msg = '';
             switch (el.type) {
                 case 'property':

@@ -101,31 +101,37 @@ class VEvent {
      */
     registered: Redrawable[]
 
-    _calendar: string | null = null;
+    #calendar: string | null = null;
 
-    _changelog: ChangeLogEntry[] = []
+    #changelog: ChangeLogEntry[] = []
+
+    /* Iterator instead of direct return to ensure the receiver doesn't
+       modify the array */
+    get changelog(): IterableIterator<[number, ChangeLogEntry]> {
+        return this.#changelog.entries();
+    }
 
     addlog(entry: ChangeLogEntry) {
-        let len = this._changelog.length
-        let last = this._changelog[len - 1]
+        let len = this.#changelog.length
+        let last = this.#changelog[len - 1]
 
         // console.log('entry = ', entry, ', last = ', last);
 
         if (!last) {
             // console.log('Adding new entry', entry, this.getProperty('uid'));
-            this._changelog.push(entry);
+            this.#changelog.push(entry);
             return;
         }
 
         if (entry.type === last.type
             && entry.name === last.name
             && entry.from === last.to) {
-            this._changelog.pop();
+            this.#changelog.pop();
             entry.from = last.from
             // console.log('Changing old entry', entry, this.getProperty('uid'));
-            this._changelog.push(entry)
+            this.#changelog.push(entry)
         } else {
-            this._changelog.push(entry)
+            this.#changelog.push(entry)
         }
     }
 
@@ -244,17 +250,17 @@ class VEvent {
         this.addlog({
             type: 'calendar',
             name: '',
-            from: this._calendar,
+            from: this.#calendar,
             to: calendar,
         });
-        this._calendar = calendar;
+        this.#calendar = calendar;
         for (let el of this.registered) {
             el.redraw(this);
         }
     }
 
     get calendar(): string | null {
-        return this._calendar;
+        return this.#calendar;
     }
 
     register(htmlNode: Redrawable) {
