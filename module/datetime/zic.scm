@@ -224,23 +224,23 @@
                   [else
                    (match tokens
                      (("Rule" name from to type in on at save letters)
-                      (let ((parsed-from (parse-from from)))
-                        (loop
-                         (cons
-                          (make-rule (string->symbol name) ; name
-                                     parsed-from           ; from
-                                     ;; to
-                                     (if (string-prefix? to "only")
-                                         ;; parsed-from
-                                         'only
-                                         (parse-from to))
-                                     (month-name->number in) ; in
-                                     (parse-day-spec on)     ; on
-                                     (parse-time-spec at)    ; at
-                                     (parse-time-spec save '(#\s #\d)) ; save
-                                     (if (string= letters "-") ; letters
-                                         "" letters))
-                          done) #f)))
+                      (let* ((parsed-from (parse-from from))
+                             (rule
+                              (make-rule (string->symbol name) ; name
+                                         parsed-from           ; from
+                                         ;; to
+                                         (if (string-prefix? to "only")
+                                             ;; parsed-from
+                                             'only
+                                             (parse-from to))
+                                         (month-name->number in) ; in
+                                         (parse-day-spec on)     ; on
+                                         (parse-time-spec at)    ; at
+                                         (parse-time-spec save '(#\s #\d)) ; save
+                                         (if (string= letters "-") ; letters
+                                             "" letters))))
+                        (loop (cons rule done)
+                              #f)))
                      (("Zone" name args ...)
                       (let* ((zone-entry (apply parse-zone args))
                              (zones (list zone-entry)))
@@ -280,8 +280,11 @@
     ;; group rules and put in map
     (awhen (assoc-ref groups 'rule)
       (for-each (lambda (group)
-                  (hashq-set! rules (car group) (sort* (cadr group) (lambda (a b) (if (eq? 'minimum) #t (< a b)))
-                                                       rule-from)))
+                  (hashq-set! rules
+                              (car group)
+                              (sort* (cadr group)
+                                     (lambda (a b) (if (eq? 'minimum) #t (< a b)))
+                                     rule-from)))
                 (group-by rule-name (car it))))
 
     ;; put zones in map
