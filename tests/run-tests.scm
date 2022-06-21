@@ -208,7 +208,15 @@ fi
       ))
 
 (test-begin "suite")
-(finalizer (lambda () (for-each (lambda (f) (test-group f (load f))) files)))
+(finalizer (lambda () (for-each (lambda (f) (catch #t (lambda () (test-group f (load f)))
+                                    (case-lambda
+                                      ((err from msg args data)
+                                       (test-assert (format #f "~a in ~a: ~?" err from msg args)
+                                         #f))
+                                      (args
+                                       (test-assert (format #f "~a (~s)" f args)
+                                         #f)))))
+                           files)))
 (test-end "suite")
 
 (newline)
