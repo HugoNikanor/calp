@@ -120,7 +120,7 @@ window.default_calendar='~a';"
     (script (@ (src "/static/script.out.js")))
     (script (@ (src "/static/user/user-additions.js")))
 
-    ,(calendar-styles calendars)
+    (style ,(lambda () (calendar-styles calendars #t)))
 
     ,@(when (debug)
         '((style ":root { --background-color: pink; }"))))

@@ -272,18 +272,15 @@
 
 
 ;; Specific styles for each calendar.
-;; TODO only emit the CSS here, requiring the caller to handle the context,
-;; since that would allow us to use this in other contexts.
-(define-public (calendar-styles calendars)
-  `(style
-       ,(lambda () (format #t "~:{ [data-calendar=\"~a\"] { --color: ~a; --complement: ~a }~%~}"
-                      (map (lambda (c)
-                             (let ((name (base64encode (prop c 'NAME)))
-                                   (bg-color (prop c 'COLOR))
-                                   (fg-color (and=> (prop c 'COLOR)
-                                                    calculate-fg-color)))
-                               (list name (or bg-color 'white) (or fg-color 'black))))
-                           calendars)))))
+(define*-public (calendar-styles calendars optional: (port #f))
+  (format port "~:{ [data-calendar=\"~a\"] { --color: ~a; --complement: ~a }~%~}"
+          (map (lambda (c)
+                 (let ((name (base64encode (prop c 'NAME)))
+                       (bg-color (prop c 'COLOR))
+                       (fg-color (and=> (prop c 'COLOR)
+                                        calculate-fg-color)))
+                   (list name (or bg-color 'white) (or fg-color 'black))))
+               calendars)))
 
 ;; "Physical" block in calendar view
 (define*-public (make-block ev optional: (extra-attributes '()))
