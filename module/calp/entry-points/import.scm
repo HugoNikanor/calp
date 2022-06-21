@@ -6,8 +6,6 @@
   :use-module (ice-9 rdelim)
   :use-module (ice-9 format)
   :use-module (srfi srfi-1)
-  ;; TODO FIX
-  ;; :use-module (output vdir)
   :use-module ((vcomponent formats vdir save-delete) :select (save-event))
   :use-module (vcomponent)
   ;; :use-module ((vcomponent formats ical parse) :select (parse-cal-path))
