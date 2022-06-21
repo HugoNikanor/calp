@@ -165,10 +165,6 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
      (common target-directory count start (date month: 1) render-calendar-wide)]
 
     [(week)
-
-     ;; TODO The small calendar is always centered on months, it might
-     ;; be a good idea to instead center it on the current week, meaning
-     ;; that the active row is always in the center
      (common target-directory count (start-of-week start)
              (date day: 7)
              render-calendar-wide)]
