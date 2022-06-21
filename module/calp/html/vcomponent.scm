@@ -50,6 +50,16 @@
              (warning (_ "~a on formatting description, ~s") err args)
              str))))
 
+;; TODO replace with propper mimetype parser
+(define (mimetype-extension mimetype)
+  ((@ (ice-9 match) match) mimetype
+    ('() "unknown")
+    ('("image" "png") "png")
+    ('("image" "jpg") "jpg")
+    ('("image" "jpeg") "jpg")
+    ('("image" "gif") "gif")
+    ))
+
 ;; used by search view
 (define-public (compact-event-list list)
 
@@ -156,50 +166,51 @@
                ,@(awhen (prop* ev 'ATTACH)
                         ;; attach satisfies @code{vline?}
                         (for attach in it
-                             (if (and=> (param attach 'VALUE)
-                                        (lambda (p) (string=? "BINARY" (car p))))
-                                 ;; Binary data
-                                 ;; TODO guess datatype if FMTTYPE is missing
-                                 (awhen (and=> (param attach 'FMTTYPE)
-                                               (lambda (it) (string-split
-                                                        (car it) #\/)))
-                                        ;; TODO other file formats
-                                        (when (string=? "image" (car it))
-                                          (let* ((chk (-> (value attach)
-                                                          sha256
-                                                          checksum->string))
-                                                 (dname
-                                                  (path-append (xdg-runtime-dir)
-                                                               "calp-data" "images"))
-                                                 (filename (-> dname
-                                                               (path-append chk)
-                                                               ;; TODO second part of mimetypes
-                                                               ;; doesn't always result in a valid
-                                                               ;; file extension.
-                                                               ;; Take a look in mime.types.
-                                                               (string-append "." (cadr it)))))
-                                            (unless (file-exists? filename)
-                                              ;; TODO handle tmp directory globaly
-                                              (mkdir (dirname dname))
-                                              (mkdir dname)
-                                              (call-with-output-file filename
-                                                (lambda (port)
-                                                  (put-bytevector port (value attach)))))
-                                            (let ((link (path-append
-                                                         "/tmpfiles"
-                                                         ;; TODO better mimetype to extension
-                                                         (string-append chk "." (cadr it)))))
-                                              `(a (@ (href ,link))
-                                                  (img (@ (class "attach")
-                                                          (src ,link))))))))
-                                 ;; URI
-                                 (cond ((and=> (param attach 'FMTTYPE)
-                                               (lambda (p) (string=? (car p) "image" 0 5)))
-                                        `(img (@ (class "attach")
-                                                 (src ,(value attach)))))
-                                       (else `(a (@ (class "attach")
-                                                    (href ,(value attach)))
-                                                 ,(value attach)))))))
+                             (case (and=> (param attach 'VALUE) (compose string->symbol car))
+                               ((BINARY)
+                                ;; TODO guess datatype if FMTTYPE is missing
+                                (let ((fmt-type (and=> (param attach 'FMTTYPE)
+                                                       (lambda (p) (string-split (car p) #\/)))))
+                                  ;; TODO other file formats
+                                  (cond ((and fmt-type
+                                              (not (null? fmt-type))
+                                              (string=? "image" (car fmt-type)))
+                                         (let* ((chk (-> (value attach)
+                                                         sha256
+                                                         checksum->string))
+                                                (dname (path-append (xdg-runtime-dir)
+                                                                    "calp-data" "images"))
+                                                (filename (-> dname
+                                                              (path-append chk)
+                                                              (string-append "." (mimetype-extension fmt-type)))))
+                                           (unless (file-exists? filename)
+                                             ;; TODO handle tmp directory globaly
+                                             (mkdir (dirname dname))
+                                             (mkdir dname)
+                                             (call-with-output-file filename
+                                               (lambda (port) (put-bytevector port (value attach)))))
+                                           (let ((link (path-append "/tmpfiles" (string-append chk "." (mimetype-extension fmt-type)))))
+                                             `(a (@ (href ,link))
+                                                 (img (@ (class "attach")
+                                                         (src ,link)))))))
+                                        (else `(pre "As of yet unsupported file format" ,fmt-type)))))
+                               ((URI)
+                                (let ((fmt-type (and=> (param attach 'FMTTYPE)
+                                                       (lambda (p) (string-split (car p) #\/)))))
+                                  (cond ((and fmt-type
+                                              (not (null? fmt-type))
+                                              (string=? "image" (car fmt-type)))
+                                         `(img (@ (class "attach")
+                                                  (src ,(value attach)))))
+                                        (else `(a (@ (class "attach")
+                                                     (href ,(value attach)))
+                                                  ,(value attach))))))
+
+                               ;; Neither BINARY nor URI
+                               (else (scm-error 'misc-error "fmt-single-event"
+                                                "Unknown attachement type ~s, expected BINARY or UID"
+                                                (list (and=> (param attach 'VALUE) car))
+                                                #f)))))
 
                ,(awhen (prop ev 'CATEGORIES)
                        `(div (@ (class "categories"))
