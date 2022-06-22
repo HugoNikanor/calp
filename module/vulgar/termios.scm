@@ -99,22 +99,21 @@
 
 
 
-;; Macro for creating accessor bindings for slots in a list, which are wrapped
-;; inside a <termios> record. Called exactly once below.
-(define-macro (create-bindings! . symbols)
-  `(begin ,@(map
-             (lambda (symb i)
-               `(define-public ,symb
-                  (make-procedure-with-setter
-                   (lambda (t) (list-ref (as-list t) ,i))
-                   (lambda (t v) (let ((lst (as-list t)))
-                              (list-set! lst ,i v)
-                              (set-list! t lst))))))
-             symbols
-             (iota (length symbols)))))
+(define (make-termios-accessor idx)
+  (make-procedure-with-setter
+   (lambda (t) (list-ref (as-list t) idx))
+   (lambda (t v) (let ((lst (as-list t)))
+              (list-set! lst idx v)
+              (set-list! t lst)))))
 
-(create-bindings! ; accessors
- iflag oflag cflag lflag line cc ispeed ospeed)
+(define-public iflag  (make-termios-accessor 0))
+(define-public oflag  (make-termios-accessor 1))
+(define-public cflag  (make-termios-accessor 2))
+(define-public lflag  (make-termios-accessor 3))
+(define-public line   (make-termios-accessor 4))
+(define-public cc     (make-termios-accessor 5))
+(define-public ispeed (make-termios-accessor 6))
+(define-public ospeed (make-termios-accessor 7))
 
 
 
