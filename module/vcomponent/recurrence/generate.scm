@@ -366,19 +366,33 @@
       #f))
 
 
+(define (event-duration event)
+  ;; NOTE DTEND is an optional field.
+  (let ((end (prop event 'DTEND)))
+    (if end
+        (if (date? end)
+            (date-difference end (prop event 'DTSTART))
+            (datetime-difference end (prop event 'DTSTART)))
+        #f)))
+
+;; Return start-time + duration, wich some error checks
+(define (get-endtime start-time duration)
+ (cond [(date? start-time)
+        (unless (date? duration)
+          (warning "Expected date, got ~a" duration))
+        (date+ start-time (as-date duration))]
+       [(datetime? start-time)
+        (unless (datetime? duration)
+          (warning "Expected datetime, got ~a" duration))
+        (datetime+ start-time (as-datetime duration)) ]
+       [else (error "Bad type")]))
+
+
 ;; <vevent> -> (stream <vevent>)
+;; TODO memoize this?
 (define-public (generate-recurrence-set base-event)
 
-  (define duration
-    ;; NOTE DTEND is an optional field.
-    (let ((end (prop base-event 'DTEND)))
-      (if end
-          (if (date? end)
-              (date-difference end (prop base-event 'DTSTART))
-              (datetime-difference end (prop base-event 'DTSTART)))
-          #f)))
-
-
+  (define duration (event-duration base-event))
 
   (define rrule-stream-regular
     (if (prop base-event 'RRULE)
@@ -400,37 +414,26 @@
            alternative-times)))
 
   (stream-map
-   (aif (prop base-event '-X-HNH-ALTERNATIVES)
-        (lambda (dt)
-          (aif (hash-ref it dt)
-               it ; RECURRENCE-ID objects come with their own DTEND
-               (let ((ev (copy-vcomponent base-event)))
-                 (set! (prop ev 'DTSTART) dt)
-                 (when duration ; (and (not (prop ev 'DTEND)) duration)
-                   ;; p. 123 (3.8.5.3 Recurrence Rule)
-                   ;; specifies that the DTEND should be updated to match how the
-                   ;; initial dtend related to the initial DTSTART. It also notes
-                   ;; that an event of 1 day in length might be longer or shorter
-                   ;; than 24h depending on timezone shifts.
-                   (set! (prop ev 'DTEND)
-                     (cond [(date? dt)
-                            (unless (date? duration)
-                              (warning "Expected date, got ~a" duration))
-                            (date+ dt (as-date duration))]
-                           [(datetime? dt)
-                            (unless (datetime? duration)
-                              (warning "Expected datetime, got ~a" duration))
-                            (datetime+ dt (as-datetime duration)) ]
-                           [else (error "Bad type")])))
-                 ev)))
-        (lambda (dt)
-          (let ((ev (copy-vcomponent base-event)))
-            (set! (prop ev 'DTSTART) dt)
-            (when duration
-              (set! (prop ev 'DTEND) ((cond [(date? dt) date+]
-                                            [(datetime? dt) datetime+]
-                                            [else (error "Bad type")])
-                                      dt duration)))
-            ev)))
+   (lambda (dt)
+     (cond ((prop base-event '-X-HNH-ALTERNATIVES)
+            => (lambda (ht)
+                 (aif (hash-ref ht dt)
+                      it        ; RECURRENCE-ID objects come with their own DTEND
+                      (let ((ev (copy-vcomponent base-event)))
+                        (set! (prop ev 'DTSTART) dt)
+                        (when duration   ; (and (not (prop ev 'DTEND)) duration)
+                          ;; p. 123 (3.8.5.3 Recurrence Rule)
+                          ;; specifies that the DTEND should be updated to match how the
+                          ;; initial dtend related to the initial DTSTART. It also notes
+                          ;; that an event of 1 day in length might be longer or shorter
+                          ;; than 24h depending on timezone shifts.
+                          (set! (prop ev 'DTEND) (get-endtime dt duration)))
+                        ev))))
+           (else
+            (let ((ev (copy-vcomponent base-event)))
+              (set! (prop ev 'DTSTART) dt)
+              (when duration
+                (set! (prop ev 'DTEND) (get-endtime dt duration)))
+              ev))))
    rrule-stream))
 
