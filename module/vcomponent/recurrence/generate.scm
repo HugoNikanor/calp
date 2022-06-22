@@ -2,7 +2,6 @@
   :use-module (hnh util)
   :use-module (hnh util exceptions)
   :use-module (srfi srfi-1)
-  :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-71)
@@ -18,94 +17,83 @@
 
 
 
-;; a → b → (a . b)
-(define ((con x) y)
-  (cons x y))
 
-(eval-when (expand load compile eval)
- (define (stx->bystx symbol str-transformer)
-   (->> symbol
-        symbol->string
-        str-transformer
-        (string-append (str-transformer "by"))
-        string->symbol))
 
- (define (by-proc symbol)
-   (stx->bystx symbol string-downcase))
+;; Returns #t if any of the predicates return true when applied to object.
+(define (any-predicate object predicates)
+  ((@ (srfi srfi-1) any)
+   (lambda (pred) (pred object))
+   predicates))
 
- (define (by-symb symbol)
-   (stx->bystx symbol string-upcase))
+;; NOTE these should be renamed
+(define (all rrule . args) (filter-map (lambda (proc) (proc rrule)) args))
+(define (any rrule . args) (any-predicate rrule args))
 
- (use-modules (ice-9 match))
+;; Return #f or a procedure which conses @var{symbol} to each element returned
+;; by @var{accessor} applied to @var{rrule}.
+(define ((extender accessor symbol) rrule)
+  (and=> (accessor rrule) (lambda (v) (map (lambda (x) (cons symbol x)) v))))
 
- (define (make-extender-or-limiter extender? rr cases)
-   `(case (freq ,rr)
-      ,@(map (match-lambda
-               [(key '|| cc ...)
-                `((,key)
-                  (filter
-                   identity
-                   (list
-                    ,@(map (label self
-                            (match-lambda
-                              [('unless pred field)
-                               `(let ((yearday (,(by-proc 'yearday) ,rr))
-                                      (monthday (,(by-proc 'monthday) ,rr))
-                                      (weekno (,(by-proc 'weekno) ,rr))
-                                      (month (,(by-proc 'month) ,rr))
-                                      )
-                                  (if ,pred #f
-                                      ,(self field)))]
-                              [field
-                               `(and=> (,(by-proc field) ,rr)
-                                       ,(if extender?
-                                            `(cut map (con (quote ,(by-symb field)))
-                                                  <>)
-                                            `(con (quote ,(by-symb field)))))]))
-                           cc))))])
-             cases)))
-
- (define-macro (make-extenders rr . cases)
-   `(apply cross-product ,(make-extender-or-limiter #t rr cases)))
-
- (define-macro (make-limiters rr . cases)
-   (make-extender-or-limiter #f rr cases)))
-
+;; Return #f or a procedure which conses @var{symbol} to the return of
+;; @var{accessor} applied to @var{rrule}.
+(define ((limiter accessor symbol) rrule)
+  (and=> (accessor rrule) (lambda (v) (cons symbol v))))
 
 
 ;; rrule → (list extension-rule)
 (define (all-extenders rrule)
-  (make-extenders
-   rrule
-   [YEARLY  || month weekno yearday monthday
+  (let ((second    (extender bysecond   'BYSECOND))
+        (minute    (extender byminute   'BYMINUTE))
+        (hour      (extender byhour     'BYHOUR))
+        (day       (extender byday      'BYDAY))
+        (monthday  (extender bymonthday 'BYMONTHDAY))
+        (yearday   (extender byyearday  'BYYEARDAY))
+        (weekno    (extender byweekno   'BYWEEKNO))
+        (month     (extender bymonth    'BYMONTH))
+        ;; (bysetpos bysetpos)
+        )
+    (apply cross-product
+           (case (freq rrule)
+             ((YEARLY)   (all rrule month weekno yearday monthday
+                              ;; see Note 2, p. 44
+                              (if (any rrule yearday monthday
+                                       ;; weekno and month are still expanders. They however
+                                       ;; cause day to be omited here to prevent datetimes
+                                       ;; from being generated from both directions.
+                                       ;; They are instead handled under BYWEEKNO & BYMONTH
+                                       ;; respectively.
+                                       weekno month)
+                                  (const #f)
+                                  day)
+                              hour minute second))
+             ((MONTHLY)  (all rrule monthday (if (monthday rrule) (const #f) day) hour minute second))
+             ((WEEKLY)   (all rrule day hour minute second))
+             ((DAILY)    (all rrule hour minute second))
+             ((HOURLY)   (all rrule minute second))
+             ((MINUTELY) (all rrule second))
+             ((SECONDLY) (all rrule #| null |#))
+             ))))
 
-            ;; see Note 2, p. 44
-            (unless (or yearday monthday
-                        ;; weekno and month are still expanders. They however
-                        ;; cause day to be omited here to prevent datetimes
-                        ;; from being generated from both directions.
-                        ;; They are instead handled under BYWEEKNO & BYMONTH
-                        ;; respectively.
-                        weekno month) day)
-               hour minute second]
-   [MONTHLY || monthday (unless monthday day) hour minute second]
-   [WEEKLY  || day hour minute second]
-   [DAILY   || hour minute second]
-   [HOURLY  || minute second]
-   [MINUTELY || second]
-   [SECONDLY || #| null |#]))
 
 (define (all-limiters rrule)
-  (make-limiters
-   rrule
-   [YEARLY   || day #| setpos |#]
-   [MONTHLY  || month day #|setpos|#]
-   [WEEKLY   || month #|setpos|#]
-   [DAILY    || month monthday day #|setpos|#]
-   [HOURLY   || month yearday monthday day hour #|setpos|#]
-   [MINUTELY || month yearday monthday day hour minute #|setpos|#]
-   [SECONDLY || month yearday monthday day hour minute second #|setpos|#]
-   ))
+  (let ((second    (limiter bysecond   'BYSECOND))
+        (minute    (limiter byminute   'BYMINUTE))
+        (hour      (limiter byhour     'BYHOUR))
+        (day       (limiter byday      'BYDAY))
+        (monthday  (limiter bymonthday 'BYMONTHDAY))
+        (yearday   (limiter byyearday  'BYYEARDAY))
+        (weekno    (limiter byweekno   'BYWEEKNO))
+        (month     (limiter bymonth    'BYMONTH))
+        ;; (bysetpos bysetpos)
+        )
+    (case (freq rrule)
+      ((YEARLY)   (all rrule day #| setpos |#))
+      ((MONTHLY)  (all rrule month day #| setpos |#))
+      ((WEEKLY)   (all rrule month #| setpos |#))
+      ((DAILY)    (all rrule month monthday day #| setpos |#))
+      ((HOURLY)   (all rrule month yearday monthday day hour #| setpos |#))
+      ((MINUTELY) (all rrule month yearday monthday day hour minute #| setpos |#))
+      ((SECONDLY) (all rrule month yearday monthday day hour minute second #| setpos |#)))))
 
 ;; next, done
 ;; (a, a → values a), a, (list a) → values a
