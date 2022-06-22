@@ -4,14 +4,18 @@
   :export (lex))
 
 
-;; Like the regular define-peg-pattern. But evaluates the
-;; pattern before treating it as a peg rule.
-(define-macro (define-define-peg-pattern name capture expr)
-  `(define-peg-pattern ,name ,capture
-     ;; NOTE how does this work if we are in a different module?
-     ;; It currently however isn't a problem since we don't export
-     ;; this macro.
-     ,(eval expr (current-module))))
+;; Like define-peg-pattern, but body is evaluated
+(define-syntax define-peg-pattern*
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ sym accum pat)
+       #`(define sym
+           (let ((matchf (compile-peg-pattern (datum->syntax #'stx pat) 'accum)))
+             (let ((syn ((@ (ice-9 peg codegen) wrap-parser-for-users) #'stx matchf 'accum 'sym)))
+               ((@ (system base compile) compile)
+                ((@ (ice-9 peg cache) cg-cached-parser)
+                 syn)))))))))
+
 
 
 
@@ -61,7 +65,8 @@
 (define-peg-pattern char all
   (and (ignore "'") (or escaped-char peg-any) (ignore "'")))
 
-(define-define-peg-pattern operator all
+
+(define-peg-pattern* operator all
   `(or ,@(map symbol->string symbol-binary-operators)
        ,@(map (lambda (op) `(and ,(symbol->string op) ws))
               wordy-binary-operators)))
