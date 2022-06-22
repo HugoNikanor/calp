@@ -60,12 +60,6 @@
        #'(let ((it condition))
            (when it body ...)))]))
 
-#;
-(define-macro (awhen pred . body)
-  `(let ((it ,pred))
-     (when it
-       ,@body)))
-
 
 
 (define-syntax for
@@ -88,13 +82,13 @@
 
 
 
-(define-macro (print-and-return expr)
-  (let ((str (gensym "str"))
-        (result (gensym "result")))
-    `(let* ((,result ,expr)
-            (,str (format #f "~a [~a]~%" ,result (quote ,expr))))
-       (display ,str (current-error-port))
-       ,result)))
+
+(define-syntax-rule (print-and-return expr)
+  (let ((result expr))
+    (display (format #f "~a [~a]~%" result (quote expr))
+             (current-error-port))
+    result))
+
 
 
 
