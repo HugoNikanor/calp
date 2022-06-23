@@ -1,0 +1,20 @@
+@node Base64
+@section Base64
+
+@defun base64->bytevector bv
+@defunx bytevector->base64 bv
+Base procedure for all Base64 operations.
+Takes and returns bytevectors.
+@end defun
+
+@defun base64-string->bytevector string
+@defunx bytevector->base64-string bv
+Base64 side is strings, while data is bytevectors.
+@end defun
+
+
+@defun base64encode string [transcoder=(native-transcoder)]
+@defunx base64decode string [transcoder=(native-transcoder)]
+Highest level Base64 procedures. Both encoded and decoded data is
+strings.
+@end defun
