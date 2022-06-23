@@ -8,21 +8,22 @@
   :use-module (text util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
   :export (flow-text))
 
 
 ;; str -> (str)
-(define* (flow-text str #:key (width 70))
+(define* (flow-text str key: (width 70))
   (flatten
-   (map (lambda (line) (justify-line line #:width width))
+   (map (lambda (line) (justify-line line width: width))
         (lines str))))
 
 
 
-;; Splits and justifies the given line to @var{#:width}.
+;; Splits and justifies the given line to @var{width:}.
 ;; Returns a list of justified strings.
 ;; str -> (str)
-(define* (justify-line line #:key (width 70))
+(define* (justify-line line key: (width 70))
   (let recur ((lst (words line)))
     (let ((head tail (span
                       (let ((w 0))
@@ -36,11 +37,11 @@
              ;; than our max width. Add it as is and continue
              ;; (while crying).
              (cons (car tail) (recur (cdr tail))))
-            (else (cons (justify-line-helper head #:width width)
+            (else (cons (justify-line-helper head width: width)
                         (recur tail)))))))
 
 ;; (str) -> str
-(define* (justify-line-helper words #:key (width 70))
+(define* (justify-line-helper words key: (width 70))
   (let* ((phrase-length (true-string-length (string-concatenate/shared words)))
          (needed-spaces (- width phrase-length))
          (slots (1- (length words)))

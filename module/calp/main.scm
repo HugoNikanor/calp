@@ -104,7 +104,7 @@ zoneinfo database, but is currently broken.</p>")
       b a))
 
 (define (wrapped-main args)
-  (define opts (getopt-long args (getopt-opt options) #:stop-at-first-non-option #t))
+  (define opts (getopt-long args (getopt-opt options) stop-at-first-non-option: #t))
   (define stprof (option-ref opts 'statprof #f))
   (define repl (option-ref opts 'repl #f))
   (define altconfig (option-ref opts 'config #f))

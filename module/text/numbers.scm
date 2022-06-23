@@ -1,4 +1,5 @@
 (define-module (text numbers)
+  :use-module (srfi srfi-88)
   :export (number->string-cardinal
            number->string-ordinal
            each-string))
@@ -17,11 +18,11 @@
     2)))
 
 (define* (number->string-cardinal
-          n #:optional (language (resolve-language)))
+          n optional: (language (resolve-language)))
   ((get language 'number->string-cardinal) n))
 
 (define* (number->string-ordinal
-          n #:optional (language (resolve-language)))
+          n optional: (language (resolve-language)))
   ((get language 'number->string-ordinal) n))
 
 ;; TODO change API to allow language, and stop having random extra

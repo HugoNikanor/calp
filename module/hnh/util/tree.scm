@@ -1,12 +1,12 @@
 (define-module (hnh util tree)
-  #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-71)
-  #:use-module (hnh util)
-  #:export (make-tree left-subtree
-                      right-subtree
-                      tree-node
-                      length-of-longst-branch
-                      tree-map))
+  :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
+  :use-module (hnh util)
+  :export (make-tree left-subtree
+                     right-subtree
+                     tree-node
+                     length-of-longst-branch
+                     tree-map))
 
 ;; Constructs a binary tree where each node's children is partitioned
 ;; into a left and right branch using @var{pred?}.

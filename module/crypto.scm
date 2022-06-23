@@ -2,6 +2,7 @@
   :use-module (rnrs bytevectors)
   :use-module (system foreign)
   :use-module (ice-9 format)
+  :use-module (srfi srfi-88)
   :export (sha256 checksum->string))
 
 (define-once libcrypto (dynamic-link "libcrypto"))
@@ -30,7 +31,6 @@
           ((@ (system foreign) bytevector->pointer) md))
   md)
 
-(define* (checksum->string md #:optional port)
-  ((@ (ice-9 format) format) port
-   "~{~2'0x~}" (bytevector->u8-list md)))
+(define* (checksum->string md optional: port)
+  (format port "~{~2'0x~}" (bytevector->u8-list md)))
 

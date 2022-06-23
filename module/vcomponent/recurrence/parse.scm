@@ -1,16 +1,16 @@
 (define-module (vcomponent recurrence parse)
-  #:duplicates (last)                   ; Replace @var{count}
+  :duplicates (last)                   ; Replace @var{count}
 
-  #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-71)
-  #:use-module (datetime)
-  #:use-module (srfi srfi-26)
-  #:use-module (vcomponent recurrence internal)
-  #:use-module (hnh util)
-  #:use-module (hnh util exceptions)
-  #:use-module (ice-9 match)
+  :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
+  :use-module (datetime)
+  :use-module (srfi srfi-26)
+  :use-module (vcomponent recurrence internal)
+  :use-module (hnh util)
+  :use-module (hnh util exceptions)
+  :use-module (ice-9 match)
 
-  #:export (rfc->datetime-weekday
+  :export (rfc->datetime-weekday
             parse-recurrence-rule))
 
 

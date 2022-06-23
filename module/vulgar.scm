@@ -5,10 +5,10 @@
 ;;; Code:
 
 (define-module (vulgar)
-  #:use-module (srfi srfi-60)
-  #:use-module (vulgar termios)
-  #:use-module (hnh util)
-  #:export (cls set-cursor-pos with-vulgar))
+  :use-module (srfi srfi-60)
+  :use-module (vulgar termios)
+  :use-module (hnh util)
+  :export (cls set-cursor-pos with-vulgar))
 
 (define (cls)
   ;; [H]ome, [J]: clear everything after

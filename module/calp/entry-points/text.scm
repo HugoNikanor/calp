@@ -6,6 +6,7 @@
   :use-module (hnh util options)
   :use-module (calp translation)
   :use-module (sxml simple)
+  :use-module (srfi srfi-88)
   )
 
 
@@ -31,4 +32,4 @@
                                          (current-input-port)
                                          (open-input-file fname)))
                (@ (ice-9 rdelim) read-string))
-             #:width (or (string->number (option-ref opts 'width "")) 70))))
+             width: (or (string->number (option-ref opts 'width "")) 70))))

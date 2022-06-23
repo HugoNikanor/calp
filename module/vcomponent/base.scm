@@ -4,6 +4,7 @@
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-17)
+  :use-module (srfi srfi-88)
   :use-module (ice-9 hash-table)
   :export (make-vline
            vline?
@@ -70,7 +71,7 @@
   (make-procedure-with-setter
    get-source set-source!))
 
-(define* (make-vline key value #:optional (ht (make-hash-table)))
+(define* (make-vline key value optional: (ht (make-hash-table)))
   (make-vline% key value ht))
 
 (define-record-type <vcomponent>
@@ -94,7 +95,7 @@
   (make-procedure-with-setter
    get-component-parent set-component-parent!))
 
-(define* (make-vcomponent #:optional (type 'VIRTUAL))
+(define* (make-vcomponent optional: (type 'VIRTUAL))
   (make-vcomponent% type '() #f (make-hash-table)))
 
 (define (add-child! parent child)

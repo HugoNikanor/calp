@@ -1,14 +1,14 @@
 (define-module (vcomponent recurrence internal)
-  #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-71)
-  #:use-module (srfi srfi-88)           ; better keywords
-  #:use-module ((vcomponent base) :select (prop))
-  #:use-module (ice-9 i18n)
-  #:use-module (srfi srfi-9)
-  #:use-module (srfi srfi-9 gnu)
-  #:use-module (ice-9 format)
-  #:use-module (hnh util)
-  #:use-module (datetime)
+  :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)           ; better keywords
+  :use-module ((vcomponent base) :select (prop))
+  :use-module (ice-9 i18n)
+  :use-module (srfi srfi-9)
+  :use-module (srfi srfi-9 gnu)
+  :use-module (ice-9 format)
+  :use-module (hnh util)
+  :use-module (datetime)
 
   :replace (count)
   :export (repeating?

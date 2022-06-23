@@ -1,12 +1,12 @@
 (define-module (vcomponent util group)
-  #:use-module (vcomponent)
-  #:use-module (vcomponent datetime)
-  #:use-module (datetime)
-  #:use-module (srfi srfi-41)
-  #:use-module (srfi srfi-41 util)
-  #:export (group-stream
-            get-groups-between
-            group->event-list))
+  :use-module (vcomponent)
+  :use-module (vcomponent datetime)
+  :use-module (datetime)
+  :use-module (srfi srfi-41)
+  :use-module (srfi srfi-41 util)
+  :export (group-stream
+           get-groups-between
+           group->event-list))
 
 ;; TODO templetize this
 (define-stream (group-stream in-stream)

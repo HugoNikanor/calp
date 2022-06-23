@@ -3,6 +3,7 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
+  :use-module (srfi srfi-88)
   :use-module (datetime)
   :use-module (calp html view calendar shared)
   :use-module (calp html config)
@@ -19,7 +20,10 @@
   )
 
 ;; (stream event-group) -> sxml
-(define* (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
+(define* (render-calendar-table key: events
+                                start-date end-date
+                                pre-start post-end
+                                allow-other-keys:)
 
   (define-values (long-events short-events)
     ;; TODO should be really-long-event? or event-spanning-midnight

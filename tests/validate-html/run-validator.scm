@@ -14,6 +14,7 @@ exec $GUILE -e main -s "$0" -- "$@"
              (ice-9 regex)
              (ice-9 popen)
              (ice-9 format)
+             (srfi srfi-88
              ((hnh util) :select (group-by ->)))
 
 (define (error-string error)
@@ -63,8 +64,8 @@ exec $GUILE -e main -s "$0" -- "$@"
                            "raw.xhtml"
                            ))
   (define data (xml->sxml pipe
-                          #:trim-whitespace? #t
-                          #:namespaces
+                          trim-whitespace?: #t
+                          namespaces:
                           '((nu . "http://n.validator.nu/messages/")
                             (xhtml . "http://www.w3.org/1999/xhtml"))))
   (close-pipe pipe)

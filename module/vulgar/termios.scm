@@ -6,6 +6,7 @@
   :use-module (ice-9 format)
   :use-module (ice-9 rdelim)
   :use-module (srfi srfi-9)             ; records
+  :use-module (srfi srfi-88)
   :use-module (c cpp)
   :use-module (hnh util)
   :export (make-termios
@@ -49,7 +50,7 @@
   (ptr as-ptr)
   (list as-list))
 
-(define* (make-termios #:optional (data (empty-values struct-termios)))
+(define* (make-termios optional: (data (empty-values struct-termios)))
   (%make-termios (make-c-struct struct-termios data) data))
 
 (define (copy-termios termios)
@@ -156,7 +157,7 @@
 (define-foreign (tcsetattr int int *) → int
   (dynamic-func "tcsetattr" lib))
 
-(define* (tcsetattr! termios  #:optional
+(define* (tcsetattr! termios optional:
                      (port (current-input-port))
                      (when TCSANOW))
   (with-termios termios (lambda (ptr) (tcsetattr (port->fdes port) when ptr))))
@@ -165,7 +166,7 @@
 (define-foreign (tcgetattr int *) → int
   (dynamic-func "tcgetattr" lib))
 
-(define* (tcgetattr! termios #:optional (port (current-input-port)))
+(define* (tcgetattr! termios optional: (port (current-input-port)))
   (with-termios termios (lambda (ptr) (tcgetattr (port->fdes port) ptr))))
 
 

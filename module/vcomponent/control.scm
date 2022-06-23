@@ -1,7 +1,7 @@
 (define-module (vcomponent util control)
-  #:use-module (hnh util)
-  #:use-module (vcomponent)
-  #:export (with-replaced-properties))
+  :use-module (hnh util)
+  :use-module (vcomponent)
+  :export (with-replaced-properties))
 
 
 (eval-when (expand load)                ; No idea why I must have load here.

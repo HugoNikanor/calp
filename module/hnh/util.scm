@@ -1,69 +1,69 @@
 (define-module (hnh util)
-  #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-71)
-  #:use-module (srfi srfi-88)           ; postfix keywords
-  #:use-module ((sxml fold) #:select (fold-values))
-  #:use-module ((srfi srfi-9 gnu) #:select (set-fields))
-  #:re-export (fold-values)
-  #:export (aif
-            awhen
-            for
-            begin1
-            print-and-return
-            swap
-            case*
-            set/r!
-            label
-            sort* sort*!
-            find-extreme find-min find-max
-            filter-sorted
-            !=
-            take-to
-            string-take-to
-            string-first
-            string-last
-            as-symb
-            enumerate
-            unval
-            flatten
-            let-lazy
-            map/dotted
+  :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)           ; postfix keywords
+  :use-module ((sxml fold) :select (fold-values))
+  :use-module ((srfi srfi-9 gnu) :select (set-fields))
+  :re-export (fold-values)
+  :export (aif
+           awhen
+           for
+           begin1
+           print-and-return
+           swap
+           case*
+           set/r!
+           label
+           sort* sort*!
+           find-extreme find-min find-max
+           filter-sorted
+           !=
+           take-to
+           string-take-to
+           string-first
+           string-last
+           as-symb
+           enumerate
+           unval
+           flatten
+           let-lazy
+           map/dotted
 
-            assq-merge
-            kvlist->assq
-            assq-limit
+           assq-merge
+           kvlist->assq
+           assq-limit
 
-            group-by
-            split-by
+           group-by
+           split-by
 
-            span-upto
-            cross-product
+           span-upto
+           cross-product
 
-            string-flatten
-            intersperse
-            insert-ordered
+           string-flatten
+           intersperse
+           insert-ordered
 
-            -> ->>
-            set set->
-            and=>>
+           -> ->>
+           set set->
+           and=>>
 
-            downcase-symbol
-            group
-            iterate
-            valued-map
+           downcase-symbol
+           group
+           iterate
+           valued-map
 
-            assoc-ref-all
-            assq-ref-all
-            assv-ref-all
+           assoc-ref-all
+           assq-ref-all
+           assv-ref-all
 
-            vector-last
+           vector-last
 
-            ->str ->string ->quoted-string
+           ->str ->string ->quoted-string
 
-            catch*
-            )
-  #:replace (set! define-syntax
-                  when unless))
+           catch*
+           )
+  :replace (set! define-syntax
+                 when unless))
 
 ((@ (guile) define-syntax) define-syntax
   (syntax-rules ()
@@ -212,14 +212,14 @@
 
 
 ;; This function borrowed from web-ics (calendar util)
-(define* (sort* items comperator #:optional (get identity))
+(define* (sort* items comperator optional: (get identity))
   "A sort function more in line with how python's sorted works"
   (sort items (lambda (a b)
                 (comperator (get a)
                             (get b)))))
 
 ;; Sorts the list @var{items}. @emph{May} destroy the input list in the process
-(define* (sort*! items comperator #:optional (get identity))
+(define* (sort*! items comperator optional: (get identity))
   "A sort function more in line with how python's sorted works"
   (sort! items (lambda (a b)
                  (comperator (get a)
@@ -284,7 +284,7 @@
 ;; Takes a procedure returning multiple values, and returns a procedure which
 ;; takes the same arguments as the original procedure, but only returns one of
 ;; the return values. Which value to return can be sent as an additional parameter.
-(define* (unval proc #:optional (n 0))
+(define* (unval proc optional: (n 0))
   (lambda args
     (call-with-values (lambda () (apply proc args))
       (lambda args (list-ref args n)))))

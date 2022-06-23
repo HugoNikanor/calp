@@ -1,10 +1,10 @@
 (define-module (hnh util exceptions)
-  #:use-module (srfi srfi-1)
-  #:use-module (hnh util)
-  #:use-module (ice-9 format)
+  :use-module (srfi srfi-1)
+  :use-module (hnh util)
+  :use-module (ice-9 format)
 
-  #:use-module ((system vm frame)
-                :select (frame-bindings binding-ref))
+  :use-module ((system vm frame)
+               :select (frame-bindings binding-ref))
 
   :export (warning-handler
            warnings-are-errors

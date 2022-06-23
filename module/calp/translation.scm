@@ -2,6 +2,7 @@
   :use-module (ice-9 i18n)
   :use-module (ice-9 regex)
   :use-module (ice-9 match)
+  :use-module (srfi srfi-88)
   :export (_ translate yes-no-check))
 
 (bindtextdomain "calp" "/home/hugo/code/calp/localization/")
@@ -20,7 +21,7 @@
 (define (_ . msg)
   (translate (string-join msg)))
 
-(define* (yes-no-check string #:optional (locale %global-locale))
+(define* (yes-no-check string optional: (locale %global-locale))
   (cond ((string-match (locale-yes-regexp locale) string) 'yes)
         ((string-match (locale-no-regexp  locale) string) 'no)
         (else #f)))

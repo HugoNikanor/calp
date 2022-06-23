@@ -1,31 +1,31 @@
 (define-module (vcomponent datetime)
-  #:use-module (srfi srfi-1)
-  #:use-module (vcomponent base)
-  #:use-module (datetime)
-  #:use-module (datetime timespec)
-  #:use-module (datetime zic)
-  #:use-module (hnh util)
+  :use-module (srfi srfi-1)
+  :use-module (vcomponent base)
+  :use-module (datetime)
+  :use-module (datetime timespec)
+  :use-module (datetime zic)
+  :use-module (hnh util)
 
   :use-module (ice-9 curried-definitions)
 
-  #:export (#;parse-datetime
-            event-overlaps?
-            overlapping?
-            event-contains?
-            event-zero-length?
-            ev-time<?
+  :export (#;parse-datetime
+           event-overlaps?
+           overlapping?
+           event-contains?
+           event-zero-length?
+           ev-time<?
 
-            event-length
-            event-length/clamped
-            event-length/day
+           event-length
+           event-length/clamped
+           event-length/day
 
-            long-event?
-            really-long-event?
+           long-event?
+           really-long-event?
 
-            events-between
+           events-between
 
-            zoneinfo->vtimezone
-            ))
+           zoneinfo->vtimezone
+           ))
 
 ;;; date time pointer
 #;

@@ -5,13 +5,14 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
+  :use-module (srfi srfi-41)
   :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
 
   :use-module ((hnh util)
                :select (vector-last set! -> ->> swap case* set
                                     span-upto set->))
 
-  :use-module (srfi srfi-41)
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
   :use-module (ice-9 regex)
@@ -420,10 +421,10 @@
 (define (datetime-max a b)
   (if (datetime< a b) b a))
 
-(define* (month+ date-object #:optional (change 1))
+(define* (month+ date-object optional: (change 1))
   (date+ date-object (date month: change)))
 
-(define* (month- date-object #:optional (change 1))
+(define* (month- date-object optional: (change 1))
   (date- date-object (date month: change)))
 
 ;; https://projecteuclid.org/euclid.acta/1485888738

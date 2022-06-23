@@ -11,6 +11,7 @@
 ;;; Code:
 
 (use-modules (srfi srfi-1)
+             (srfi srfi-88)
              (web client)
              (web response)
              (ice-9 rdelim)
@@ -51,7 +52,7 @@
 ;; Open a HTTP request to the given URL, and return the
 ;; response body as a port.
 (define (open-input-url url)
-  (define-values (response body) (http-get url #:streaming? #t))
+  (define-values (response body) (http-get url streaming?: #t))
 
   (unless (= 200 (response-code response))
     (format #t "Fetching index failed with ~a ~a~%"

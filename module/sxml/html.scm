@@ -17,12 +17,13 @@
 ;; https://dthompson.us/rendering-html-with-sxml-and-gnu-guile.html
 
 (define-module (sxml html)
- #:use-module (sxml simple)
- #:use-module (srfi srfi-26)
- #:use-module (ice-9 match)
- #:use-module (ice-9 format)
- #:use-module (ice-9 hash-table)
- #:export (sxml->html))
+ :use-module (sxml simple)
+ :use-module (srfi srfi-26)
+ :use-module (srfi srfi-88)
+ :use-module (ice-9 match)
+ :use-module (ice-9 format)
+ :use-module (ice-9 hash-table)
+ :export (sxml->html))
 
 (define %void-elements
  '(area
@@ -350,7 +351,7 @@ ist ATTRS and the child nodes in BODY."
 (define (pi->html type body port)
   (format port "<?~a ~a?>" type body))
 
-(define* (sxml->html tree #:optional (port (current-output-port)))
+(define* (sxml->html tree optional: (port (current-output-port)))
   "Write the serialized HTML form of TREE to PORT."
   (match tree
     (() *unspecified*)

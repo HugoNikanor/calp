@@ -5,6 +5,7 @@
   :use-module (ice-9 curried-definitions)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
   :export (parse-endpoint-string
            make-routes)
   )
@@ -53,8 +54,8 @@
                  ;; Those parameters which were present in the template uri
                  ((lambda ,intersect
                     ;; Those that only are in the query string
-                    (lambda* (,@(unless (null? diff) `(#:key ,@diff #:allow-other-keys))
-                              #:rest rest)
+                    (lambda* (,@(unless (null? diff) `(key: ,@diff allow-other-keys:))
+                              rest: rest)
                       ,@body))
                   ,@(unless (null? intersect)
                       (map (lambda (i)
@@ -70,7 +71,7 @@
         (map cadr routes)))
 
   `(let ,(map cdr routes-regexes)
-       (lambda* (request body #:optional state)
+       (lambda* (request body optional: state)
          ;; (format (current-error-port) "~a~%"  request)
          ;; All these bindings generate compile time warnings since the expansion
          ;; of the macro might not use them. This isn't really a problem.

@@ -1,36 +1,37 @@
 (define-module (calp terminal)
-  #:use-module (srfi srfi-1)
-  #:use-module (datetime)
-  #:use-module (srfi srfi-17)
-  #:use-module (srfi srfi-26)
-  #:use-module ((srfi srfi-41) :select (stream-car))
-  #:use-module (hnh util)
-  #:use-module (vulgar)
-  #:use-module (vulgar info)
-  #:use-module (vulgar color)
-  #:use-module (vulgar components)
+  :use-module (srfi srfi-1)
+  :use-module (datetime)
+  :use-module (srfi srfi-17)
+  :use-module (srfi srfi-26)
+  :use-module ((srfi srfi-41) :select (stream-car))
+  :use-module (srfi srfi-88)
+  :use-module (hnh util)
+  :use-module (vulgar)
+  :use-module (vulgar info)
+  :use-module (vulgar color)
+  :use-module (vulgar components)
 
-  #:use-module (vcomponent)
-  #:use-module (vcomponent datetime)
-  #:use-module (vcomponent util search)
-  #:use-module (vcomponent util group)
+  :use-module (vcomponent)
+  :use-module (vcomponent datetime)
+  :use-module (vcomponent util search)
+  :use-module (vcomponent util group)
 
-  #:use-module (text util)
-  #:use-module (text flow)
+  :use-module (text util)
+  :use-module (text flow)
 
-  #:use-module (ice-9 format)
-  #:use-module (ice-9 readline)
-  #:use-module (ice-9 match)
+  :use-module (ice-9 format)
+  :use-module (ice-9 readline)
+  :use-module (ice-9 match)
 
-  #:use-module (vulgar termios)
+  :use-module (vulgar termios)
 
-  #:use-module (oop goops)
-  #:use-module (oop goops describe)
-  #:use-module (calp translation)
+  :use-module (oop goops)
+  :use-module (oop goops describe)
+  :use-module (calp translation)
 
-  #:autoload (vcomponent util instance) (global-event-object)
+  :autoload (vcomponent util instance) (global-event-object)
 
-  #:export (main-loop))
+  :export (main-loop))
 
 
 ;;; TODO change all hard coded escape sequences to proper markup
@@ -45,7 +46,7 @@
   (reduce (lambda (str done) (string-append done (string intersection) str))
           "" (map (cut make-string <> line) lengths)))
 
-(define* (display-event-table events #:key
+(define* (display-event-table events key:
                               (active-element -1)
                               ;; (summary-width 30)
                               (date-width 17)
@@ -168,7 +169,7 @@
                     (date->string start))))
       (format #t "~a~%"
               (unlines (take-to (flow-text (or (prop ev 'DESCRIPTION) "")
-                                           #:width (min 70 width))
+                                           width: (min 70 width))
                                 (- height 8 5 (length events) 5)))))))
 
 (define (get-line prompt)
@@ -268,8 +269,8 @@
   ;; display event list
   (display-event-table
    page
-   #:active-element (active-element this)
-   #:location-width 15)
+   active-element: (active-element this)
+   location-width: 15)
 
   (paginator->sub-list
    paginator (current-page this)

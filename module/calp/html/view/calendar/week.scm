@@ -3,6 +3,7 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
   :use-module (rnrs records syntactic)
   :use-module (datetime)
   :use-module (calp html view calendar shared)
@@ -26,7 +27,7 @@
   )
 
 
-(define* (render-calendar key: calendars events start-date end-date #:allow-other-keys)
+(define* (render-calendar key: calendars events start-date end-date allow-other-keys:)
   (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))
          (range (date-range start-date end-date)))
     `((script ,(lambda () (format #t "window.VIEW='week';")))

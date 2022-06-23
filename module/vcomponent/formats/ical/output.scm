@@ -10,6 +10,7 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
+  :use-module (srfi srfi-88)
   :use-module (vcomponent)
   :use-module (vcomponent datetime)
   :use-module (vcomponent geo)
@@ -118,7 +119,7 @@
 ;; not a problem.
 ;; Setting the wrap-len to slightly lower than allowed also help
 ;; us not overshoot.
-(define* (ical-line-fold string #:key (wrap-len 70))
+(define* (ical-line-fold string key: (wrap-len 70))
   (cond [(< wrap-len (string-length string))
          (format #f "~a\r\n ~a"
                  (string-take string wrap-len)
