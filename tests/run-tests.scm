@@ -78,7 +78,17 @@ fi
                        => (lambda (p) (with-output-to-string (lambda () (display (bold "[SOURCE]: ")) (truncated-print p))))))))
       (when (eq? 'fail (test-result-kind))
         (cond ((test-result-ref runner 'actual-error)
-               => (lambda (err) (format #t "~aError: ~s~%" (make-indent (1+ depth)) err)))
+               => (lambda (err)
+                    (if (and (list? err)
+                             (= 5 (length err)))
+                        (let ((err (list-ref err 0))
+                              (proc (list-ref err 1))
+                              (fmt (list-ref err 2))
+                              (args (list-ref err 3)))
+                         (format #t "~a~a in ~a: ~?~%"
+                                 (make-indent (1+ depth))
+                                 err proc fmt args))
+                        (format #t "~aError: ~s~%" (make-indent (1+ depth)) err))))
               (else
                (format #t "~aExpected: ~s~%~aReceived: ~s~%"
                        (make-indent (1+ depth)) (test-result-ref runner 'expected-value "[UNKNOWN]")
@@ -207,15 +217,24 @@ fi
       (lambda (thunk) (thunk))
       ))
 
+;;; Catch/print-trace should intercept thrown exceptions, print them prettily with a stack trace, and then continue
+
+#;
+(define (catch/print-trace proc)
+  (catch #t proc
+    (case-lambda
+      ((err from msg args data)
+       (test-assert (format #f "~a in ~a: ~?" err from msg args)
+         #f))
+      (args
+       (test-assert (format #f "~a (~s)" f args)
+         #f)))))
+
+(define (catch/print-trace proc)
+  (proc))
+
 (test-begin "suite")
-(finalizer (lambda () (for-each (lambda (f) (catch #t (lambda () (test-group f (load f)))
-                                    (case-lambda
-                                      ((err from msg args data)
-                                       (test-assert (format #f "~a in ~a: ~?" err from msg args)
-                                         #f))
-                                      (args
-                                       (test-assert (format #f "~a (~s)" f args)
-                                         #f)))))
+(finalizer (lambda () (for-each (lambda (f) (catch/print-trace (lambda () (test-group f (load f)))))
                            files)))
 (test-end "suite")
 
