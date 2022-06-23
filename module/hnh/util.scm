@@ -58,7 +58,7 @@
 
            vector-last
 
-           ->str ->string ->quoted-string
+           ->string
 
            catch*
            )
@@ -530,13 +530,8 @@
 (define (vector-last v)
   (vector-ref v (1- (vector-length v))))
 
-(define (->str any)
+(define (->string any)
   (with-output-to-string (lambda () (display any))))
-
-(define ->string ->str)
-
-(define (->quoted-string any)
-  (with-output-to-string (lambda () (write any))))
 
 
 

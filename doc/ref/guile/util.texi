@@ -310,15 +310,9 @@ non-unique keys, returning all mathing records (instead of just the first).
 Returns the last element of @var{v}.
 @end defun
 
-@defun ->str any
-@defunx ->string any
+@defun ->string any
 Converts @var{any} to a string, as per @var{display}.
 @end defun
-
-@defun ->quoted-string any
-Converts @var{any} to a string, as per @var{write}.
-@end defun
-
 
 
 @defmac let-env bindings body ...

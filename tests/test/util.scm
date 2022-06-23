@@ -226,10 +226,6 @@
 
 (test-equal "5" (->string "5"))
 
-(test-equal "5" (->quoted-string 5))
-
-(test-equal "\"5\"" (->quoted-string "5"))
-
 (test-equal
   "no slashes"
   "home/user"

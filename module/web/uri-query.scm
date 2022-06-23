@@ -1,5 +1,4 @@
 (define-module (web uri-query)
-  :use-module ((hnh util) :select (->quoted-string))
   :use-module ((web uri) :select (uri-encode))
   :export (encode-query-parameters)
   )
@@ -14,7 +13,7 @@
    (map (lambda (p)
           (format #f "~a=~a"
                   (car p)
-                  (uri-encode (->quoted-string (cdr p)))))
+                  (uri-encode (with-output-to-string (lambda () (write (cdr p)))))))
         parameters)
    "&"))
 

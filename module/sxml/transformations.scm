@@ -31,7 +31,7 @@
   (attribute-transformer
    tree
    `((href . ,(lambda (_ . content)
-                `(href ,@(transformer (string-concatenate (map ->str content))))
+                `(href ,@(transformer (string-concatenate (map ->string content))))
                 )))))
 
 (define (href-prefixer tree prefix)
