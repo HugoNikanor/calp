@@ -1,5 +1,4 @@
 (define-module (calp entry-points html)
-  :export (main)
   :use-module (hnh util)
   :use-module ((hnh util exceptions) :select (warning))
   :use-module ((hnh util path) :select (path-append))
@@ -8,6 +7,7 @@
   :use-module (datetime)
   :use-module (ice-9 getopt-long)
   :use-module ((ice-9 regex) :select (string-match regexp-substitute))
+  :use-module (ice-9 format)
 
   :use-module ((srfi srfi-41) :select (stream-take stream-for-each))
   :use-module ((calp html view calendar) :select (html-generate))
@@ -25,6 +25,7 @@
   :use-module (calp translation)
 
   :autoload (vcomponent util instance) (global-event-object)
+  :export (main)
   )
 
 
