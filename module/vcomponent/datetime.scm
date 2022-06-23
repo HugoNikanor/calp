@@ -59,7 +59,7 @@ Event must have the DTSTART and DTEND protperty set."
 (define (event-contains? ev date/-time)
   "Does event overlap the date that contains time."
   (let* ((start (as-date date/-time))
-         (end (add-day start)))
+         (end (date+ start (date day: 1))))
     (event-overlaps? ev start end)))
 
 (define (event-zero-length? ev)

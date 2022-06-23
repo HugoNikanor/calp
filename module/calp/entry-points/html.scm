@@ -122,7 +122,8 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
                                 next-start: (lambda (d) (date+ d chunk-length))
                                 prev-start: (lambda (d) (date- d chunk-length))
                                 start-date: start-date
-                                end-date: (remove-day (date+ start-date chunk-length))
+                                end-date: (date- (date+ start-date chunk-length)
+                                                 (date day: 1))
                                 render-calendar: render-calendar
                                 extra-args))))))
    (stream-take count (date-stream chunk-length start-date))

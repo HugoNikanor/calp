@@ -43,7 +43,7 @@
                 ,@(time-marker-div)
                 (div (@ (class "longevents event-container")
                         (data-start ,(date->string start-date) )
-                        (data-end ,(date->string (add-day end-date)) )
+                        (data-end ,(date->string (date+ end-date (date day: 1))) )
                         (style "grid-column-end: span " ,(days-in-interval start-date end-date)))
                      ,@(lay-out-long-events start-date end-date long-events))
                 ,@(map (lambda (day-date)
@@ -139,7 +139,7 @@
 
     `(div (@ (class "events event-container") (id ,(date-link day-date))
              (data-start ,(date->string day-date))
-             (data-end ,(date->string (add-day day-date)) ))
+             (data-end ,(date->string (date+ day-date (date day: 1))) ))
           ,@(map (lambda (time)
                    `(div (@ (class "clock clock-" ,time))))
                  (iota 12 0 2))

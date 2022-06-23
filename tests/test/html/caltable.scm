@@ -101,5 +101,8 @@
            (time (@ (datetime "2022-05-01")) 1)))
 
   (parameterize ((week-start mon))
-    (cal-table start-date: #2022-04-01 end-date: #2022-04-30 next-start: month+ prev-start: month-)))
+    (cal-table start-date: #2022-04-01
+               end-date: #2022-04-30
+               next-start: (lambda (d) (date+ d (date month: 1)))
+               prev-start: (lambda (d) (date- d (date month: 1))))))
 

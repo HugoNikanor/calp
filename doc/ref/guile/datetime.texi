@@ -282,11 +282,6 @@ Returns a stream of each week from @var{start-day}
 Returns the smaller (or larger) of @var{a} or @var{b}.
 @end defun
 
-@defun month+ date [change=1]
-@defunx month- date [change=1]
-Equivalent to @code{(date+ date (date month: change))}.
-@end defun
-
 @defun week-day date
 Returns an integer representing the week day of @var{date}.
 @ref{sunday}
@@ -353,11 +348,6 @@ month-date and end of month.
 
 @defun all-wday-in-year week-day year-date
 Returns a list of all instances of @var{week-day} in @var{year-date}.
-@end defun
-
-@defun add-day date
-@defunx remove-day date
-@code{@var{date} ± (date day: 1)}
 @end defun
 
 @defun in-date-range? start-date end-date → date → boolean

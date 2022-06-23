@@ -85,7 +85,7 @@
                                 (lambda (d) (date<= d date (next-start d)))
                                 start-date))
                              "#" ,(date-link date)))))
-               (date-range pre-start (remove-day start-date)))
+               (date-range pre-start (date- start-date (date day: 1))))
 
 
         ,@(map (td (lambda (date) `((href "#" ,(date-link date)))))
@@ -101,4 +101,4 @@
                                 (lambda (d) (and (date<= d date)
                                             (date< date (next-start d))))
                                 start-date)) "#" ,(date-link date)))))
-               (date-range (add-day end-date) post-end))))
+               (date-range (date+ end-date (date day: 1)) post-end))))

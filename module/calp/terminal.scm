@@ -191,12 +191,12 @@
 
   (case char
     ((#\L #\l right)
-     (set! (current-page this) = add-day
+     (set! (current-page this) = (date+ (date day: 1))
            (cached-events this) #f
            (active-element this) 0))
 
     ((#\h #\H left)
-     (set! (current-page this) = remove-day
+     (set! (current-page this) = (date- (date day: 1))
            (cached-events this) #f
            (active-element this) 0))
 

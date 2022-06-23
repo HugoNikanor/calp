@@ -59,7 +59,7 @@
                             (style "grid-area: long " ,i ";"
                                    "grid-column: 1 / span 7;")
                             (data-start ,(date->string s))
-                            (data-end ,(date->string (add-day e))))
+                            (data-end ,(date->string (date+ e (date day: 1)))))
                          ,@(lay-out-long-events
                             s e events))))
                 long-event-groups
@@ -76,7 +76,7 @@
                `(div (@ (style "grid-area:short " ,i)
                         (class "cal-cell cal-cell-short event-container")
                         (data-start ,(date->string day-date))
-                        (data-end ,(date->string (add-day day-date))))
+                        (data-end ,(date->string (date+ day-date (date day: 1)))))
                      (div (@ (style "overflow-y:auto;"))
                       ,@(map make-small-block (stream->list events)))))
              short-event-groups

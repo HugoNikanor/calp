@@ -175,10 +175,10 @@
                        (html-generate calendars: (get-calendars global-event-object)
                                       events: (get-event-set global-event-object)
                                       start-date: start-date
-                                      end-date: (date- (month+ start-date)
+                                      end-date: (date- (date+ start-date (date month: 1))
                                                        (date day: 1))
-                                      next-start: month+
-                                      prev-start: month-
+                                      next-start: (lambda (d) (date+ d (date month: 1)))
+                                      prev-start: (lambda (d) (date- d (date month: 1)))
                                       render-calendar: (@ (calp html view calendar month)
                                                           render-calendar-table)
                                       pre-start: (start-of-week start-date)

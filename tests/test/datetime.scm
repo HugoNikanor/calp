@@ -380,34 +380,6 @@
   (datetime-max (datetime)
                 (datetime hour: 1)))
 
-;; month± mostly here for coverage,
-;; actual tests are for date±
-(test-equal "month+ dflt"
-  (date month: 3 day: 1)
-  (month+ (date month: 2 day: 1)))
-
-(test-equal "month+ given change"
-  (date month: 4 day: 1)
-  (month+ (date month: 2 day: 1) 2))
-
-(test-equal "month- dflt"
-  (date month: 1 day: 1)
-  (month- (date month: 2 day: 1)))
-
-(test-equal "month- given change"
-  (date month: 2 day: 1)
-  (month- (date month: 4 day: 1) 2))
-
-;; same for {add,remove}-day; mostly here for coverage.
-
-(test-equal "add-day"
-  (date month: 1 day: 2)
-  (add-day (date month: 1 day: 1)))
-
-(test-equal "remove-day"
-  (date month: 1 day: 1)
-  (remove-day (date month: 1 day: 2)))
-
 ;; TODO more week-number tests
 (test-equal "Week 53"
   53 (week-number #2020-12-28 mon))

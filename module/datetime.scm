@@ -66,9 +66,6 @@
            datetime-min
            datetime-max
 
-           month+
-           month-
-
            week-day
            week-1-start
            week-number
@@ -79,8 +76,6 @@
            find-first-week-day
            all-wday-in-month
            all-wday-in-year
-           add-day
-           remove-day
            in-date-range?
 
            weekday-list
@@ -421,12 +416,6 @@
 (define (datetime-max a b)
   (if (datetime< a b) b a))
 
-(define* (month+ date-object optional: (change 1))
-  (date+ date-object (date month: change)))
-
-(define* (month- date-object optional: (change 1))
-  (date- date-object (date month: change)))
-
 ;; https://projecteuclid.org/euclid.acta/1485888738
 ;; 1. Begel.
 ;; J sei die Zahl des Jahrhunderts,
@@ -575,11 +564,6 @@
     (lambda (d) (= (year d) (year year-date)))
     (week-stream (find-first-week-day wday year-date)))))
 
-(define (add-day d)
-  (date+ d (date day: 1)))
-
-(define (remove-day d)
-  (date- d (date day: 1)))
 
 (define (in-date-range? start-date end-date)
   (lambda (date)
@@ -631,15 +615,15 @@
 ;; ; ⇒ (2020-04-01 ... 2020-04-05)
 ;; @end lisp
 ;; Ignores day component of @var{date}.
-(define* (month-days date optional: (week-start (week-start)))
-  (let* ((month-len (days-in-month date))
-         (prev-month-len (days-in-month (month- date)))
-         (month-start (modulo (- (week-day date) week-start) 7)))
+(define* (month-days date* optional: (week-start (week-start)))
+  (let* ((month-len (days-in-month date*))
+         (prev-month-len (days-in-month (date- date* (date month: 1))))
+         (month-start (modulo (- (week-day date*) week-start) 7)))
     (values
-     (map (lambda (d) (set (day (month- date)) d))
+     (map (lambda (d) (set (day (date- date* (date month: 1))) d))
           (iota month-start (1+ (- prev-month-len month-start))))
-     (map (lambda (d) (set (day date) d)) (iota month-len 1))
-     (map (lambda (d) (set (day (month+ date)) d))
+     (map (lambda (d) (set (day date*) d)) (iota month-len 1))
+     (map (lambda (d) (set (day (date+ date* (date month: 1))) d))
           (iota (modulo (- (* 7 5) month-len month-start) 7) 1)))))
 
 
