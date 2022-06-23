@@ -31,6 +31,9 @@
            get-date
            get-timezone
 
+           date-zero?
+           time-zero?
+
            datetime->unix-time
            unix-time->datetime
 
@@ -41,9 +44,6 @@
            as-date
            as-time
            as-datetime
-
-           date-zero?
-           time-zero?
 
            leap-year?
            days-in-month
@@ -210,6 +210,12 @@
                (hour r) (minute r) (second r))))))
 
 
+(define (date-zero? date)
+  (= 0 (year date) (month date) (day date)))
+
+(define (time-zero? time)
+  (= 0 (hour time) (minute time) (second time)))
+
 ;;; DATETIME
 
 (define-immutable-record-type <datetime>
@@ -344,12 +350,6 @@
                      #f)]))
 
 
-
-(define (date-zero? date)
-  (= 0 (year date) (month date) (day date)))
-
-(define (time-zero? time)
-  (= 0 (hour time) (minute time) (second time)))
 
 ;; int -> bool
 (define (leap-year? year)
