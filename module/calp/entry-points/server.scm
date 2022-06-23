@@ -54,10 +54,9 @@ and <i>[::]</i> for IPv6</group>"))))
   ;; update address if it was left blank. A bit clumsy since
   ;; @var{addr} & @var{family} depend on each other.
   ;; placed after load-calendars to keep Guile 2.2 compability.
-  (set! addr
-    (if addr addr
-        (if (eqv? family AF_INET6)
-            "::" "0.0.0.0")))
+  (unless addr
+    (set! addr (if (eqv? family AF_INET6)
+                   "::" "0.0.0.0")))
 
   (when (option-ref opts 'sigusr #f)
     (format (current-error-port) (_ "Listening for SIGUSR1~%"))
