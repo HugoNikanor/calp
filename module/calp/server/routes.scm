@@ -356,6 +356,7 @@
                         query:
                         (encode-query-parameters
                          `((q . (regexp-exec
+                                 ;; TODO shouldn't q always be a string?
                                  (make-regexp ,(->string q)
                                               regexp/icase)
                                  (prop event 'SUMMARY)))))
