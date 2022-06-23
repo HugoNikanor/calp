@@ -10,7 +10,11 @@
   :use-module (hnh util)
   :use-module (hnh util env)
   :use-module ((hnh util path)
-               :select (path-append path-split file-hidden? realpath)))
+               :select (path-append
+                        path-split
+                        file-hidden?
+                        realpath
+                        filename-extension)))
 
 (test-equal "when"
   1 (when #t 1))
@@ -274,6 +278,8 @@
 (test-assert (not (file-hidden? "/visible/.in/hidden")))
 (test-assert (not (file-hidden? "")))
 
+;; TODO test realpath with .. and similar
+
 (test-equal "Realpath for path fragment"
   "/home/hugo"
   (with-working-directory
@@ -291,3 +297,29 @@
   (with-working-directory
    "/tmp"
    (lambda () (realpath "/home/hugo"))))
+
+
+(test-equal "Extension of simple file"
+  "txt" (filename-extension "file.txt"))
+
+(test-equal "Extension of file with directory"
+  "txt" (filename-extension "/direcotry/file.txt"))
+
+(test-equal "Extension of file with multiple"
+  "gz" (filename-extension "filename.tar.gz"))
+
+(test-equal "Filename extension when none is present"
+  "" (filename-extension "filename"))
+
+(test-equal "Filename extension when none is present, but directory has"
+  "" (filename-extension "config.d/filename"))
+
+(test-equal "Filename extension of directory"
+  "d" (filename-extension "config.d/"))
+
+
+(test-equal "Extension of hidden file"
+  "sh" (filename-extension ".bashrc.sh"))
+
+(test-equal "Extension of hidden file without extension"
+  "bashrc" (filename-extension ".bashrc"))

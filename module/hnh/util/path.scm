@@ -66,7 +66,13 @@
        (char=? #\. (string-ref base 0))))
 
 (define (filename-extension filename)
-  (car (reverse (string-split filename #\.))))
+  (let ((components (-> filename
+                        ;; Path split removes potential trailing directory separator
+                        path-split last
+                        basename
+                        (string-split #\.))))
+    (if (>= 1 (length components))
+        "" (last components))))
 
 (define (realpath filename)
   (unless (string? filename)
