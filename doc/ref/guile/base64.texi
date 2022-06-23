@@ -5,6 +5,8 @@
 @defunx bytevector->base64 bv
 Base procedure for all Base64 operations.
 Takes and returns bytevectors.
+
+Throws @code{decoding-error} on invalid input.
 @end defun
 
 @defun base64-string->bytevector string

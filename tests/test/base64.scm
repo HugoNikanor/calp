@@ -28,14 +28,12 @@
 
 ;; Other tests
 
-;; TODO normalize base64 errors
-
 (test-error "Invalid base64"
   'decoding-error
   (base64decode "@@@@"))
 
 (test-error "To short base64"
-  'out-of-range
+  'decoding-error
   (base64decode "="))
 
 (test-equal "AAECAw==" (bytevector->base64-string #vu8(0 1 2 3)))
