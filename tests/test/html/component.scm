@@ -12,7 +12,7 @@
   (btn onclick: "onclick" "Body"))
 
 (test-equal "href button, without body"
-    '(a (@ (class "btn") (href "href")) #f)
+    '(a (@ (class "btn") (href "href")))
   (btn href: "href"))
 
 (test-error 'wrong-type-arg

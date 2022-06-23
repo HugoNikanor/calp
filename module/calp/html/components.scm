@@ -41,36 +41,35 @@
         ,(format #f "document.documentElement.style.setProperty('--~a', this.value + '~a')"
                  variable unit)))))
 
+
+;; Takes a (flat list which may contains keywords followed by items.
+;; Return a new list where each of the keyword-value pairs have been removed.
+(define (remove-key-values list)
+  (cond ((null? list) '())
+        ((keyword? (car list)) (remove-key-values (cddr list)))
+        (else (cons (car list) (remove-key-values (cdr list))))))
+
 ;; Generates a button or button-like link.
 (define* (btn key: onclick href (class '())
-              allow-other-keys:
               rest: args)
   (when (and onclick href)
     (scm-error 'wrong-type-arg "btn"
                (_ "href and onclick are mutually exclusive. href = ~s, onclick = ~s.")
                (list href onclick)
                #f))
-
-  (let ((body #f))
-    `(,(cond [href 'a]
-             [else 'button])
-      (@ (class ,(string-join (cons "btn" class) " "))
-         ,@(cond [onclick `((onclick ,onclick))]
-                 [href `((href ,href))]
-                 [else '()])
-         ,@(let loop ((rem args))
-             (cond
-              [(null? rem) '()]
-              [(memv (car rem) '(onclick: href: class:))
-               (loop (cddr rem))]
-              [(keyword? (car rem))
-               (cons* `(,(keyword->symbol (car rem))
-                        ,(cadr rem))
-                      (loop (cddr rem)))]
-              [else
-               (set! body (car rem))
-               (loop (cdr rem))])))
-      ,body)))
+  (let ((classes (string-join (cons "btn" class) " "))
+        (body (remove-key-values args)))
+    (cond (href
+           `(a (@ (class ,classes)
+                  (href ,href))
+               ,@body))
+          (onclick
+           `(button (@ (class ,classes)
+                       (onclick ,onclick))
+                    ,@body))
+          (else
+           `(button (@ (class ,classes))
+                    ,@body)))))
 
 
 (define ((set-attribute attr) el)
