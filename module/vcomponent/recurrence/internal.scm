@@ -1,14 +1,18 @@
 (define-module (vcomponent recurrence internal)
   #:export (repeating? format-recur-rule make-recur-rule)
 
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
   #:use-module (srfi srfi-88)           ; better keywords
   #:use-module ((vcomponent base) :select (prop))
+  #:use-module (ice-9 i18n)
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-9 gnu)
   #:use-module (ice-9 format)
   #:use-module (hnh util)
+  #:use-module (datetime)
   )
+
 
 ;; EXDATE is also a property linked to recurense rules
 ;; but that property alone don't create a recuring event.
@@ -87,9 +91,6 @@
       (week-day-name day 2
                      locale: (make-locale (list LC_TIME) "C"))))))
 
-(use-modules (ice-9 i18n)
-             (datetime)
-             (srfi srfi-1))
 
 (define (field->string field value)
   (case field

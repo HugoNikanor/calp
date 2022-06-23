@@ -38,26 +38,23 @@
 
 
 (define-module (calp entry-points tidsrapport)
-  :export (main)
   :use-module (hnh util)
   :use-module (hnh util options)
   :use-module (ice-9 getopt-long)
   :use-module (calp translation)
   :use-module (sxml simple)
   :use-module (datetime)
-  )
-
-(use-modules (srfi srfi-41)
-             (srfi srfi-41 util)
-             (srfi srfi-1)
-             (vcomponent)
-             (datetime)
-             (vcomponent util instance)
-             (vcomponent util instance methods)
-             (hnh util)
-             (ice-9 regex)
-             (ice-9 popen)
-             )
+  :use-module (srfi srfi-41)
+  :use-module (srfi srfi-41 util)
+  :use-module (srfi srfi-1)
+  :use-module (vcomponent)
+  :use-module (datetime)
+  :use-module (vcomponent util instance)
+  :use-module (vcomponent util instance methods)
+  :use-module (hnh util)
+  :use-module (ice-9 regex)
+  :use-module (ice-9 popen)
+  :export (main))
 
 
 (define event-set
