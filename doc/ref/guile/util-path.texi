@@ -30,3 +30,13 @@ kept. Meaning that
 Splits path into a list of components.
 The first component will be @code{""} if path is absolute.
 @end defun
+
+
+@defun filename-extension filename
+Returns the extension of the filename, or the empty string if none exists.
+@end defun
+
+@defun realpath path
+Equivalent of realpath(3). Absolute file names are returned as is,
+while relative filenames gets expanded to absolute filenames.
+@end defun
