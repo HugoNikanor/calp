@@ -92,5 +92,5 @@
            (make-timespec (string->time (string-drop string 1) "~H:~M:~S")
                           '- type)]
           [else
-           (make-timespec (string->time string "~H:~M:~S")
+           (make-timespec (string->time string "~H:~M:~S" return-trailing: #t)
                           '+ type)])))

@@ -11,11 +11,12 @@
 
   :use-module ((hnh util)
                :select (vector-last set! -> ->> swap case* set
-                                    span-upto set->))
+                                    label span-upto set->))
 
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
   :use-module (ice-9 regex)
+  :use-module (ice-9 match)
   :use-module (calp util config)
 
   :export (date
@@ -52,7 +53,6 @@
            start-of-month
            end-of-month
            start-of-year
-           end-of-year
 
            date-stream
            day-stream
@@ -181,13 +181,7 @@
   (make-date year month day))
 
 (set-record-type-printer!
- <date>
- (lambda (r p)
-   (catch 'misc-error
-     (lambda () (display (date->string r "#~Y-~m-~d") p))
-     (lambda (err proc fmt args data)
-       (format p "#<<date> BAD year=~s month=~s day=~s>"
-               (year r) (month r) (day r))))))
+ <date> (lambda (r p) (display (date->string r "#~1") p)))
 
 
 ;;; TIME
@@ -198,16 +192,16 @@
   (hour hour) (minute minute) (second second))
 
 (define* (time key: (hour 0) (minute 0) (second 0))
+  (unless (and (integer? hour) (integer? minute) (integer? second))
+    (scm-error 'wrong-type-arg "time"
+               "Hour, minute, and second must all be integers. ~s, ~s, ~s"
+               (list hour minute second)
+               #f))
   (make-time hour minute second))
 
 (set-record-type-printer!
  <time>
- (lambda (r p)
-   (catch 'misc-error
-     (lambda () (display (time->string r "#~H:~M:~S") p))
-     (lambda (err _ fmt args rest)
-       (format p "#<<time> hour=~s minute=~s second=~s>"
-               (hour r) (minute r) (second r))))))
+ (lambda (r p) (display (time->string r "#~3") p)))
 
 
 (define (date-zero? date)
@@ -235,21 +229,24 @@
           (year 0) (month 0) (day 0)
           (hour 0) (minute 0) (second 0)
           tz)
-  (make-datetime (or date (make-date year month day))
-                 (or time (make-time hour minute second))
-                 tz))
+  (let ((date (or date (make-date year month day)))
+        (time (or time (make-time hour minute second))))
+    (unless (date? date)
+      (scm-error 'wrong-type-arg "datetime"
+                 "Date must be a date object, got ~s"
+                 (list date) (list date)))
+    (unless (time? time)
+      (scm-error 'wrong-type-arg "datetime"
+                 "Time must be a time object, got ~s"
+                 (list time) (list time)))
+   (make-datetime date time tz)))
 
 (set-record-type-printer!
  <datetime>
  (lambda (r p)
-   (catch 'misc-error
-     (lambda ()
-      (if (and (tz r) (not (string=? "UTC" (tz r))))
-          (write (datetime->sexp r) p)
-          (display (datetime->string r "#~1T~3~Z") p)))
-     (lambda (err _ fmt args . rest)
-       (format p "#<<datetime> BAD date=~s time=~s tz=~s>"
-               (get-date r) (get-time% r) (tz r))))))
+   (if (and (tz r) (not (string=? "UTC" (tz r))))
+       (write (datetime->sexp r) p)
+       (display (datetime->string r "#~1T~3~Z") p))))
 
 
 
@@ -629,6 +626,11 @@
 
 ;; The amount of days in the given interval, both end pointts inclusive
 (define (days-in-interval start-date end-date)
+  (unless (date<= start-date end-date)
+    (scm-error 'misc-error "days-in-interval"
+               "End date must be greater (or equal) to start date: ~s, ~s"
+               (list start-date end-date)
+               #f))
   (let ((diff (date-difference (date+ end-date (date day: 1)) start-date)))
     (->> (month-stream start-date)
          (stream-take (+ (month diff)
@@ -680,7 +682,9 @@
 
 (define* (datetime->string
           datetime
-          optional: (fmt "~Y-~m-~dT~H:~M:~S")
+          optional:
+          (fmt "~1T~3")
+          (locale %global-locale)
           key: allow-unknown?)
   (define date (get-date datetime))
   (define time (get-time% datetime))
@@ -698,17 +702,15 @@
                    ((#\Y) (format #t "~4'0d" (year date)))
                    ((#\m) (format #t "~2'0d" (month date)))
                    ((#\d) (format #t "~2'0d" (day date)))
+                   ((#\e) (format #t "~2' d" (day date)))
                    ;; Should be same as ~_d
                    ((#\s) (display (datetime->unix-time datetime))) ; epoch time!
-                   ((#\e) (format #t "~2' d" (day date)))
-                   ((#\1) (format #t "~4'0d-~2'0d-~2'0d"
-                                  (year date) (month date) (day date)))
-                   ((#\3) (format #t "~2'0d:~2'0d:~2'0d"
-                                  (hour time) (minute time) (second time)))
-                   ((#\A) (display (week-day-name (week-day date))))
-                   ((#\a) (display (week-day-name (week-day date) 3)))
-                   ((#\b) (display (locale-month-short (month date))))
-                   ((#\B) (display (locale-month (month date))))
+                   ((#\1) (display (datetime->string datetime "~Y-~m-~d")))
+                   ((#\3) (display (datetime->string datetime "~H:~M:~S")))
+                   ((#\A) (display (week-day-name (week-day date)   locale: locale)))
+                   ((#\a) (display (week-day-name (week-day date) 3 locale: locale)))
+                   ((#\B) (display (locale-month       (month date) locale)))
+                   ((#\b) (display (locale-month-short (month date) locale)))
                    ((#\Z) (when (equal? "UTC" (get-timezone datetime)) (display "Z")))
                    (else (unless allow-unknown?
                            (scm-error 'misc-error "datetime->string"
@@ -720,17 +722,17 @@
             #f
             (string->list fmt)))))
 
-(define* (date->string date
-                              optional: (fmt "~Y-~m-~d")
-                              key: allow-unknown?)
+(define* (date->string date optional: (fmt "~1") (locale %global-locale)
+                       key: allow-unknown?)
   (datetime->string (datetime date: date)
-                    fmt allow-unknown?: allow-unknown?))
+                    fmt locale
+                    allow-unknown?: allow-unknown?))
 
-(define* (time->string time
-                              optional: (fmt "~H:~M:~S")
-                              key: allow-unknown?)
+(define* (time->string time optional: (fmt "~3") (locale %global-locale)
+                       key: allow-unknown?)
   (datetime->string (datetime time: time)
-                    fmt allow-unknown?: allow-unknown?))
+                    fmt locale
+                    allow-unknown?: allow-unknown?))
 
 
 
@@ -750,59 +752,61 @@ Returns -1 on failure"
          (iota 12 1))
    -1))
 
+(define* (string->datetime string optional: (format-specifier "~Y-~m-~dT~H:~M:~S~Z")
+                           (locale %global-locale)
+                           key: return-trailing)
 
-(define* (string->datetime str optional: (fmt "~Y-~m-~dT~H:~M:~S~Z")
-                                  (locale %global-locale))
-  (let loop* ((str (string->list str))
-             (fmt (string->list fmt))
-             (dt (datetime))
-             (ampm identity))
+  (define (err fmt . args)
+    (scm-error 'misc-error "string->datetime"
+               (string-append "When parsing ~s as ~s; " fmt)
+               (cons* string format-specifier args)
+               (list string format-specifier)))
+
+  (let loop* ((str (string->list string))
+              (fmt (string->list format-specifier))
+              (dt (datetime))
+              (ampm identity))
 
     (define* (loop str fmt dt optional: (ampm ampm))
       (loop* str fmt dt ampm))
 
     (define time (get-time% dt))
     (define date (get-date dt))
+    (define zone (get-timezone dt))
     (define (as-dt dt)
-      (cond [(date? dt) (datetime date: dt time: time)]
-            [(time? dt) (datetime date: date time: dt)]
+      (cond [(date? dt) (datetime date: dt time: time tz: zone)]
+            [(time? dt) (datetime date: date time: dt tz: zone)]
             [else dt]))
 
-    (cond [(null? str)
-           ;; TODO should this be considered an error?
-           ;; Should it be toggleable through a flag.
-           ;; It's sometimes useful to allow it, since it allows optional
-           ;; trailing fields, but sometimes useful to disallow it, since
-           ;; it gives a better check that the data is valid
-           ;; ((@ (hnh util exceptions) warning)
-           ;;  "Premature end of string, still got fmt = ~s"
-           ;;  fmt)
+    (cond [(and (null? str) (null? fmt))
            (ampm dt)]
+          [(null? str)
+           ;; TODO it would be preferable to error out here. However, that fails for
+           ;; optional specifiers (e.g. ~Z).
+           ;; Also see the disabled test in "Premature end of string to parse"
+           (ampm dt)
+           #; (err "Premature end of string, trailing fmt: ~s" fmt)]
           [(null? fmt)
-           ;; ((@ (hnh util exceptions) warning)
-           ;;  "Unsparsed characters at end of string")
-           (ampm dt)]
+           (if return-trailing
+               (values (ampm dt) str)
+               (err "trailing characters: ~s" str))]
+          [(and (eq? #\~ (car fmt))
+                (null? (cdr fmt)))
+           (err "Stray ~ at end of fmt")]
           [(eq? #\~ (car fmt))
            (case (cadr fmt)
              [(#\~) (if (eq? #\~ (car str))
                         (loop (cdr str)
                               (cddr fmt)
                               dt)
-                        ;; TODO name the loop-local variables something
-                        ;; other than the top level, to allow better error
-                        ;; messages.
-                        (scm-error 'misc-error "string->datetime"
-                               "Mismatched symbol, expected ~s got ~s"
-                               (list #\~ (car str))
-                               #f))]
-             ;; TODO is this lost if not at the end?
+                        (err "mismatched symbol, expected ~s got ~s" #\~ (car str)))]
              [(#\Z)
               (if (eq? #\Z (car str))
                   (loop (cdr str)
-                        (cdr fmt)
+                        (cddr fmt)
                         (set (tz dt) "UTC"))
                   (loop str
-                        (cdr fmt)
+                        (cddr fmt)
                         dt))]
              ;; AM/PM
              [(#\p)
@@ -831,20 +835,15 @@ Returns -1 on failure"
               ]
              ;; month by name
              [(#\b #\B #\h)
-              (let ((head post (cond ((null? (cddr fmt)) (values str '()))
-                                     ((eqv? #\~ (caddr fmt))
-                                      (cond ((null? (cdddr fmt))
-                                             (scm-error 'misc-error "string->datetime"
-                                                        "Unexpected ~ at end of fmt"
-                                                        #f #f))
-                                            ((eqv? #\~ (cadddr fmt))
-                                             (span (lambda (c) (not (eqv? #\~ c)))
-                                                   str))
-                                            (else (scm-error 'misc-error "string->datetime"
-                                                             "Can't have format specifier directly after month by name"
-                                                             #f #f))))
-                                     (else (span (lambda (c) (not (eqv? c (caddr fmt))))
-                                                 str)))))
+              (let ((head post
+                          (match (cddr fmt)
+                            (()                   (values str '()))
+                            ;; Manual check so remaining cases becomes clearer
+                            ((#\~)                (err "Unexpected ~ at end of fmt"))
+                            ((#\~ #\~ rest ...)   (span (lambda (c) (not (eqv? #\~ c))) str))
+                            ;; Dissalowed, since we otherwise have no idea where the month name ends.
+                            ((#\~ rest ...)       (err "Can't have format specifier directly after month by name"))
+                            ((next-char rest ...) (span (lambda (c) (not (eqv? c next-char))) str)))))
                 (loop post
                       (cddr fmt)
                       (as-dt (set (month date)
@@ -867,33 +866,32 @@ Returns -1 on failure"
                     [(#\d) (set (day date)    num)]))))]
 
              [(#\Y)
-              (let* ((pre post (split-at str 4))
+              (let* ((pre post (span-upto 4 char-numeric? str))
                      (num (-> pre list->string string->number)))
                 (loop
                  post
                  (cddr fmt)
                  (as-dt (set (year date) num))))]
 
-             [else
-              (scm-error 'misc-error "string->datetime"
-                     "Unimplemented or incorrect parse token ~S"
-                     (list str)
-                     #f)])]
+             [else (err "Unimplemented or incorrect parse token ~S" str)])]
           [else
            (if (eq? (car str) (car fmt))
                (loop (cdr str)
                      (cdr fmt)
                      dt)
-               (scm-error 'misc-error "string->datetime"
-                      "Mismatched symbol, expected ~s got ~s"
-                      (list (car fmt) (car str))
-                      #f))])))
+               (err "Mismatched symbol, expected ~s got ~s" (car fmt) (car str)))])))
 
-(define* (string->time str optional: (fmt "~H:~M:~S") (locale %global-locale))
-  (get-time% (string->datetime str fmt locale)))
 
-(define* (string->date str optional: (fmt "~Y-~m-~d") (locale %global-locale))
-  (get-date (string->datetime str fmt locale)))
+;; TODO both string->time and string->date accepts format tokens which are invalid for them.
+;; Should this be filtered out?
+
+(define* (string->time str optional: (fmt "~H:~M:~S") (locale %global-locale)
+                       key: return-trailing)
+  (get-time% (string->datetime str fmt locale return-trailing: return-trailing)))
+
+(define* (string->date str optional: (fmt "~Y-~m-~d") (locale %global-locale)
+                       key: return-trailing)
+  (get-date (string->datetime str fmt locale return-trailing: return-trailing)))
 
 ;; Parse @var{string} as either a date, time, or date-time.
 ;; String MUST be on iso-8601 format.
@@ -903,7 +901,10 @@ Returns -1 on failure"
 
   (cond [string (contains "T") => string->datetime]
         [string (contains ":") => string->time]
-        [string (contains "-") => string->date]))
+        [string (contains "-") => string->date]
+        [else (scm-error 'misc-error "string->date/-time"
+                         "String doesn't look like a date, time or datetime: ~s"
+                         (list string) (list string))]))
 
 
 (define (parse-ics-date str)
@@ -947,7 +948,7 @@ Returns -1 on failure"
 
 
 (define (date-reader chr port)
-  (define (dt->sexp dt) (datetime->sexp dt #t) )
+  (define (dt->sexp dt) (datetime->sexp dt #t))
   (unread-char chr port)
   (let ((data (string->date/-time (symbol->string (read port)))))
     (cond [data datetime? => dt->sexp]
@@ -993,64 +994,72 @@ Returns -1 on failure"
 (define time=? time=)
 (define datetime=? datetime=)
 
-(define (date<% a b)
-  (let ((ay (year a))
-        (by (year b)))
-    (if (= ay by)
-        (let ((am (month a))
-              (bm (month b)))
-          (if (= am bm)
-              (< (day a) (day b))
-              (< am bm)))
-        (< ay by))))
+
+;; Extends a binary comparison procedure to work on any
+;; number of arguments.
+(define (fold-comparator <)
+  (label this
+   (case-lambda
+     [() #t]
+     [(_) #t]
+     [(first second . rest)
+      (and (< first second)
+           (apply this second rest))])))
 
 (define date<
-  (case-lambda
-    [() #t]
-    [(_) #t]
-    [(first second . rest)
-     (and (date<% first second)
-          (apply date< second rest))]))
-
-(define (date<=% a b)
-  (or (date= a b)
-      (date< a b)))
+  (fold-comparator
+   (lambda (a b)
+     (let ((ay (year a))
+           (by (year b)))
+       (if (= ay by)
+           (let ((am (month a))
+                 (bm (month b)))
+             (if (= am bm)
+                 (< (day a) (day b))
+                 (< am bm)))
+           (< ay by))))))
 
 (define date<=
-  (case-lambda
-    [() #t]
-    [(_) #t]
-    [(first second . rest)
-     (and (date<=% first second)
-          (apply date<= second rest))]))
+  (fold-comparator
+   (lambda (a b) (or (date= a b)
+                (date< a b)))))
 
-(define (time< a b)
-  (let ((ah (hour a))
-        (bh (hour b)))
-    (if (= ah bh)
-        (let ((am (minute a))
-              (bm (minute b)))
-          (if (= am bm)
-              (< (second a) (second b))
-              (< am bm)))
-        (< ah bh))))
+(define time<
+  (fold-comparator
+   (lambda (a b)
+     (let ((ah (hour a))
+           (bh (hour b)))
+       (if (= ah bh)
+           (let ((am (minute a))
+                 (bm (minute b)))
+             (if (= am bm)
+                 (< (second a) (second b))
+                 (< am bm)))
+           (< ah bh))))))
 
-(define (time<= a b)
-  (or (time= a b)
-      (time< a b)))
+(define time<=
+  (fold-comparator
+   (lambda (a b)
+     (or (time= a b)
+         (time< a b)))))
 
-(define (datetime< a b)
-  (if (date= (get-date a) (get-date b))
-      (time< (get-time% a) (get-time% b))
-      (date< (get-date a) (get-date b))))
+(define datetime<
+  (fold-comparator
+   (lambda (a b)
+     (if (date= (get-date a) (get-date b))
+         (time< (get-time% a) (get-time% b))
+         (date< (get-date a) (get-date b))))))
 
-(define (datetime<= a b)
-  (if (date= (get-date a) (get-date b))
-      (time<= (get-time% a) (get-time% b))
-      (date<= (get-date a) (get-date b))))
+(define datetime<=
+  (fold-comparator
+   (lambda (a b)
+     (if (date= (get-date a) (get-date b))
+         (time<= (get-time% a) (get-time% b))
+         (date<= (get-date a) (get-date b))))))
 
-(define (date/-time< a b)
-  (datetime< (as-datetime a) (as-datetime b)))
+(define date/-time<
+  (fold-comparator
+   (lambda (a b) (datetime< (as-datetime a) (as-datetime b)))))
 
 (define date<?        date<)
 
@@ -1382,21 +1391,25 @@ Returns -1 on failure"
 
 
 
-;; NOTE, this is only properly defined when b is greater than a.
-(define (date-difference b a)
-  (when (or (negative? (month b))
-            (negative? (day   b))
-            (negative? (month a))
-            (negative? (day   a)) )
+;; Earlier date after later date to have same semantics as subtraction
+(define (date-difference later-date earlier-date)
+  (when (date< later-date earlier-date)
+    (scm-error 'misc-error "date-difference"
+               "The earlier of the two dates must come after. later-date: ~a, earlier-date: ~a"
+               (list later-date earlier-date) #f))
+  (when (or (negative? (month later-date))
+            (negative? (day   later-date))
+            (negative? (month earlier-date))
+            (negative? (day   earlier-date)) )
     (scm-error 'misc-error "date-difference"
            "~a or ~a contains negative months or days"
-           (list a b)
+           (list earlier-date later-date)
            #f))
 
-  (date-difference% (set-> b
+  (date-difference% (set-> later-date
                            (month = (- 1))
                            (day = (- 1)))
-                    (set-> a
+                    (set-> earlier-date
                            (month = (- 1))
                            (day = (- 1)))))
 
