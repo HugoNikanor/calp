@@ -3,10 +3,13 @@
   :use-module (ice-9 match)
   :use-module (srfi srfi-1)
   :use-module (text markup)
-  )
+  :export (getopt-opt
+           format-arg-help
+           print-arg-help
+           ))
 
 ;; option-assoc → getopt-valid option-assoc
-(define-public (getopt-opt options)
+(define (getopt-opt options)
   (define ice-9-names '(single-char required? value predicate))
   (for (option-name flags ...) in options
        (cons option-name
@@ -38,8 +41,8 @@
                         `((blockquote ,@it)
                           (br))))))))
 
-(define-public (format-arg-help options)
+(define (format-arg-help options)
   (sxml->ansi-text (cons '*TOP* (map sxml->ansi-text (map fmt-help options)))))
 
-(define*-public (print-arg-help options optional: (port (current-error-port)))
+(define* (print-arg-help options optional: (port (current-error-port)))
   (display (format-arg-help options) port))

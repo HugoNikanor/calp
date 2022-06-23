@@ -31,6 +31,8 @@
 
   :use-module (ice-9 format)
   :use-module (calp translation)
+
+  :export (html-generate)
   )
 
 
@@ -49,21 +51,21 @@
 ;; TODO document what @var{render-calendar} is supposed to take and return.
 ;; Can at least note that @var{render-calendar} is strongly encouraged to include
 ;; (script "const VIEW='??';"), where ?? is replaced by the name of the view.
-(define*-public (html-generate
-                 key:
-                 (intervaltype 'all)    ; 'week | 'month | 'all
-                 calendars  ; All calendars to work on, probably (get-calendars global-event-object)
-                 events     ; All events which can be worked on, probably (get-event-set global-event-object)
-                 start-date             ; First date in interval to show
-                 end-date               ; Last  date in interval to show
-                 render-calendar        ; (bunch of kv args) → (list sxml)
-                 next-start             ; date → date
-                 prev-start             ; date → date
-                 ;; The pre and post dates are if we want to show some dates just
-                 ;; outside our actuall interval. Primarily for whole month views,
-                 ;; which needs a bit on each side.
-                 (pre-start start-date)
-                 (post-end end-date))
+(define* (html-generate
+          key:
+          (intervaltype 'all)    ; 'week | 'month | 'all
+          calendars  ; All calendars to work on, probably (get-calendars global-event-object)
+          events     ; All events which can be worked on, probably (get-event-set global-event-object)
+          start-date             ; First date in interval to show
+          end-date               ; Last  date in interval to show
+          render-calendar        ; (bunch of kv args) → (list sxml)
+          next-start             ; date → date
+          prev-start             ; date → date
+          ;; The pre and post dates are if we want to show some dates just
+          ;; outside our actuall interval. Primarily for whole month views,
+          ;; which needs a bit on each side.
+          (pre-start start-date)
+          (post-end end-date))
 
   ;; NOTE maybe don't do this again for every month
   (define evs (get-groups-between (group-stream events)

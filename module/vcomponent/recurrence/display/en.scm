@@ -6,7 +6,8 @@
   :use-module (vcomponent recurrence display common)
   :use-module ((datetime) :select (time time->string
                                         datetime->string
-                                        week-day-name)))
+                                        week-day-name))
+  :export (format-recurrence-rule))
 
 
 
@@ -41,7 +42,7 @@
          (map number->string-ordinal lst))))
 
 
-(define-public  (format-recurrence-rule rrule)
+(define (format-recurrence-rule rrule)
   (string-trim
    (string-flatten
     (list

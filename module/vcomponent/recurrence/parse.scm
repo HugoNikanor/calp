@@ -1,8 +1,6 @@
 (define-module (vcomponent recurrence parse)
   #:duplicates (last)                   ; Replace @var{count}
 
-  #:export (parse-recurrence-rule)
-
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
   #:use-module (datetime)
@@ -10,11 +8,14 @@
   #:use-module (vcomponent recurrence internal)
   #:use-module (hnh util)
   #:use-module (hnh util exceptions)
-  #:use-module (ice-9 match))
+  #:use-module (ice-9 match)
+
+  #:export (rfc->datetime-weekday
+            parse-recurrence-rule))
 
 
 ;; transform into weekday objects from
-(define-public (rfc->datetime-weekday symbol)
+(define (rfc->datetime-weekday symbol)
   (case symbol
     [(SU) sun]
     [(MO) mon]

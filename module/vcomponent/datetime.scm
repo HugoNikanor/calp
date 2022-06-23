@@ -12,8 +12,20 @@
             event-overlaps?
             overlapping?
             event-contains?
-            ev-time<?)
-  )
+            event-zero-length?
+            ev-time<?
+
+            event-length
+            event-length/clamped
+            event-length/day
+
+            long-event?
+            really-long-event?
+
+            events-between
+
+            zoneinfo->vtimezone
+            ))
 
 ;;; date time pointer
 #;
@@ -50,16 +62,16 @@ Event must have the DTSTART and DTEND protperty set."
          (end (add-day start)))
     (event-overlaps? ev start end)))
 
-(define-public (event-zero-length? ev)
+(define (event-zero-length? ev)
   (and (datetime? (prop ev 'DTSTART))
        (not (prop ev 'DTEND))))
 
-(define-public (ev-time<? a b)
+(define (ev-time<? a b)
   (date/-time<? (prop a 'DTSTART)
                 (prop b 'DTSTART)))
 
 ;; Returns length of the event @var{e}, as a time-duration object.
-(define-public (event-length e)
+(define (event-length e)
   (if (not (prop e 'DTEND))
       (if (date? (prop e 'DTSTART))
           (date day: 1)
@@ -75,7 +87,7 @@ Event must have the DTSTART and DTEND protperty set."
 ;;     |X|      part of event within that time (X)
 ;; 
 ;; Returns the length of the interval (X).
-(define-public (event-length/clamped start-date end-date e)
+(define (event-length/clamped start-date end-date e)
   (let ((end (or (prop e 'DTEND)
                  (if (date? (prop e 'DTSTART))
                      (date+ (prop e 'DTSTART) (date day: 1))
@@ -94,7 +106,7 @@ Event must have the DTSTART and DTEND protperty set."
 ;; starting at the time @var{start-of-day}.
 ;; currently the secund argument is a date, but should possibly be changed
 ;; to a datetime to allow for more explicit TZ handling?
-(define-public (event-length/day date e)
+(define (event-length/day date e)
   (if (not (prop e 'DTEND))
       (if (date? (prop e 'DTSTART))
           (time hour: 24)
@@ -121,7 +133,7 @@ Event must have the DTSTART and DTEND protperty set."
 ;; or if the total length of the event is greater than 24h.
 ;; For practical purposes, an event being long means that it shouldn't be rendered as a part
 ;; of a regular day.
-(define-public (long-event? ev)
+(define (long-event? ev)
   (if (date? (prop ev 'DTSTART))
       #t
       (aif (prop ev 'DTEND)
@@ -129,7 +141,7 @@ Event must have the DTSTART and DTEND protperty set."
                        (datetime-difference it (prop ev 'DTSTART)))
            #f)))
 
-(define-public (really-long-event? ev)
+(define (really-long-event? ev)
   (let ((start (prop ev 'DTSTART))
         (end (prop ev 'DTEND)))
    (if (date? start)
@@ -153,7 +165,7 @@ Event must have the DTSTART and DTEND protperty set."
             #f))))
 
 ;; date, date, [sorted-stream events] → [sorted-stream events]
-(define-public (events-between start-date end-date events)
+(define (events-between start-date end-date events)
   (define (overlaps e)
     (timespan-overlaps? start-date (date+ end-date (date day: 1))
                         (prop e 'DTSTART) (or (prop e 'DTEND)
@@ -212,7 +224,7 @@ Event must have the DTSTART and DTEND protperty set."
              (<= (rule-from rule) start-y (rule-to rule))])))
 
 ;; event is for limiter
-(define-public (zoneinfo->vtimezone zoneinfo zone-name event)
+(define (zoneinfo->vtimezone zoneinfo zone-name event)
   (define vtimezone (make-vcomponent 'VTIMEZONE))
   (define last-until (datetime date: (date month: 1 day: 1)))
   (define last-offset (timespec-zero))

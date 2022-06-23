@@ -32,7 +32,20 @@
   :use-module (srfi srfi-41 util)
   :use-module ((ice-9 sandbox)
                :select (make-sandbox-module
-                        all-pure-bindings)))
+                        all-pure-bindings))
+  :export (prepare-string
+           build-query-proc
+           execute-query
+           prepare-query
+
+           paginator?
+           get-query get-max-page true-max-page?
+
+           next-page
+           paginator->list
+           paginator->sub-list
+
+           get-page))
 
 
 ;; Takes a string and appends closing parenthese until all parenthese are
@@ -49,7 +62,7 @@
 
 ;; Prepares a string to be sent to build-query-proc
 ;; sexp-like string -> sexp
-(define-public (prepare-string str)
+(define (prepare-string str)
   (call-with-input-string (close-parenthese str) read))
 
 ;; TODO place this in a proper module
@@ -64,7 +77,7 @@
 ;; eval-in-sandbox is possibly slow, and that would prevent easy caching by the
 ;; caller.
 ;; sexp -> (event → bool)
-(define-public (build-query-proc . expressions)
+(define (build-query-proc . expressions)
   ;; TODO does this eval help? Or will the body of the procedure
   ;; be evalutade later?
   (eval `(lambda (event) ,@expressions)
@@ -80,7 +93,7 @@
 ;; Returns a new stream which is the result of filtering the input set with the
 ;; query procedure.
 ;; (a → bool), (stream a) → (stream a)
-(define-public (execute-query query-proc event-set)
+(define (execute-query query-proc event-set)
   (stream-timeslice-limit
    (stream-filter query-proc event-set)
    ;; .5s, tested on my laptop. .1s sometimes doesn't get to events on
@@ -89,7 +102,7 @@
 
 ;; Creates a prepared query wrappend in a paginator.
 ;; (event → bool), (stream event) → <paginator>
-(define*-public (prepare-query query-proc event-set optional: (page-size 10))
+(define* (prepare-query query-proc event-set optional: (page-size 10))
   (make-paginator (stream-paginate (execute-query query-proc event-set)
                                    page-size)))
 
@@ -106,29 +119,27 @@
 (define (unset-true-max-page! paginator)
   (%set-true-max-page! paginator #f))
 
-(export paginator? get-query get-max-page true-max-page?)
-
 (define (make-paginator query)
   (make-paginator% query 0 #f))
 
 ;; a fancy version of 1+ which caps at max page
 ;; <paginator>, int → int
-(define*-public (next-page paginator optional: (page (get-max-page paginator)))
+(define* (next-page paginator optional: (page (get-max-page paginator)))
   (if (true-max-page? paginator)
       (min (1+ page) (get-max-page paginator))
       (1+ page)))
 
-(define-public (paginator->list paginator proc tail-proc)
+(define (paginator->list paginator proc tail-proc)
   (if (true-max-page? paginator)
       (map proc (iota (1+ (get-max-page paginator))))
       (append (map proc (iota (1+ (get-max-page paginator))))
               (list (tail-proc (next-page paginator))))))
 
 
-(define*-public (paginator->sub-list paginator current-page proc
-                                     key: head-proc tail-proc
-                                     (ahead 5) (behind 5)
-                                     )
+(define* (paginator->sub-list paginator current-page proc
+                              key: head-proc tail-proc
+                              (ahead 5) (behind 5)
+                              )
 
   (let ((start (max 0 (- current-page behind)))
         (end (min (+ current-page ahead)
@@ -143,7 +154,7 @@
 ;; returns the contents of the requested page, or throws 'max-page with the
 ;; highest known available page.
 ;; <paginator>, int → (list event) throws ('max-page <int>)
-(define-public (get-page paginator page)
+(define (get-page paginator page)
   (catch 'wrong-type-arg
     (lambda () (let ((q (get-query paginator)))
             (if (stream-null? q)

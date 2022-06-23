@@ -2,7 +2,7 @@
   :use-module (hnh util)
   :use-module (calp translation)
   :use-module ((vcomponent util instance methods) :select (make-instance))
-  :export (global-event-object)
+  :export (global-event-object reload)
 )
 
 
@@ -14,6 +14,6 @@
 (define-once global-event-object
   (make-instance ((@ (vcomponent config) calendar-files))))
 
-(define-public (reload)
+(define (reload)
   (begin (set! global-event-object (make-instance ((@ (vcomponent config) calendar-files))))
          (format (current-error-port) (_ "Reload done~%"))))

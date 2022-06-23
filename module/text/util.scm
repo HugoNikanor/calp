@@ -3,18 +3,22 @@
 ;;; Code:
 
 (define-module (text util)
-  :use-module ((hnh util) :select (define*-public intersperse) )
-  )
+  :use-module ((hnh util) :select (intersperse))
+  :export (words unwords lines unlines
+                 true-string-length
+                 true-string-pad
+                 trim-to-width
+                 add-enumeration-punctuation))
 
-(define-public (words str) (string-split str #\space))
-(define-public (unwords list) (string-join list " " 'infix))
+(define (words str) (string-split str #\space))
+(define (unwords list) (string-join list " " 'infix))
 
-(define-public (lines str) (string-split str #\newline))
-(define-public (unlines list) (string-join list "\n" 'infix))
+(define (lines str) (string-split str #\newline))
+(define (unlines list) (string-join list "\n" 'infix))
 
 ;; Alternative string-length whith counts ANSI escapes as 0-length.
 ;; NOTE Some way to opt in and out of different features would be nice.
-(define-public (true-string-length word)
+(define (true-string-length word)
   (let loop ((chars (string->list word)))
     (if (null? chars)
         0
@@ -23,7 +27,7 @@
               (loop (cdr (memv #\m chars)))
               (1+ (loop (cdr chars))))))))
 
-(define*-public (true-string-pad str len optional: (chr #\space))
+(define* (true-string-pad str len optional: (chr #\space))
   (let ((strlen (true-string-length str)))
     (if (> strlen len)
         str
@@ -31,7 +35,7 @@
                        str))))
 
 
-(define-public (trim-to-width str len)
+(define (trim-to-width str len)
   (let ((trimmed (string-pad-right str len)))
     (if (< (string-length trimmed)
            (string-length str))
@@ -40,7 +44,7 @@
         trimmed)))
 
 ;; TODO more options for infix strings
-(define*-public (add-enumeration-punctuation
+(define* (add-enumeration-punctuation
                  list optional: (final-delim "&"))
   (cond [(null? list) ""]
         [(= 1 (length list)) (car list)]

@@ -2,20 +2,66 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
   #:use-module (srfi srfi-88)           ; postfix keywords
-  #:use-module ((ice-9 optargs) #:select (define*-public))
   #:use-module ((sxml fold) #:select (fold-values))
   #:use-module ((srfi srfi-9 gnu) #:select (set-fields))
-  #:re-export (define*-public fold-values)
-  #:export (for sort* sort*!
-                set/r!
-                -> ->> set set-> aif awhen
-                let-lazy
-                case*
-                and=>> label
-                print-and-return
-                begin1
-                catch*
-                )
+  #:re-export (fold-values)
+  #:export (aif
+            awhen
+            for
+            begin1
+            print-and-return
+            swap
+            case*
+            set/r!
+            label
+            sort* sort*!
+            find-extreme find-min find-max
+            filter-sorted
+            !=
+            take-to
+            string-take-to
+            string-first
+            string-last
+            as-symb
+            enumerate
+            unval
+            flatten
+            let-lazy
+            map/dotted
+
+            assq-merge
+            kvlist->assq
+            assq-limit
+
+            group-by
+            split-by
+
+            span-upto
+            cross-product
+
+            string-flatten
+            intersperse
+            insert-ordered
+
+            -> ->>
+            set set->
+            and=>>
+
+            downcase-symbol
+            group
+            iterate
+            valued-map
+
+            assoc-ref-all
+            assq-ref-all
+            assv-ref-all
+
+            vector-last
+
+            ->str ->string ->quoted-string
+
+            catch*
+            )
   #:replace (set! define-syntax
                   when unless))
 
@@ -92,7 +138,7 @@
 
 
 
-(define-public (swap f)
+(define (swap f)
   (lambda args (apply f (reverse args))))
 
 
@@ -183,7 +229,7 @@
 ;; Returns 2 values. The extremest item in @var{items},
 ;; and the other items in some order.
 ;; Ord b => (list a) [, (b, b -> bool), (a -> b)] -> a, (list a)
-(define*-public (find-extreme items optional: (< <) (access identity))
+(define* (find-extreme items optional: (< <) (access identity))
   (when (null? items)
     (scm-error 'wrong-type-arg "find-extreme"
                "Can't find extreme in an empty list"
@@ -199,51 +245,51 @@
    ;; seeds:
    (car items) '()))
 
-(define*-public (find-min list optional: (access identity))
+(define* (find-min list optional: (access identity))
   (find-extreme list < access))
 
-(define*-public (find-max list optional: (access identity))
+(define* (find-max list optional: (access identity))
   (find-extreme list > access))
 
-(define-public (filter-sorted proc list)
+(define (filter-sorted proc list)
   (take-while
    proc (drop-while
          (negate proc) list)))
 
 ;; (define (!= a b) (not (= a b)))
-(define-public != (negate =))
+(define != (negate =))
 
-(define-public (take-to lst i)
+(define (take-to lst i)
   "Like @var{take}, but might lists shorter than length."
   (if (> i (length lst))
       lst (take lst i)))
 
-(define-public (string-take-to str i)
+(define (string-take-to str i)
   (if (> i (string-length str))
       str (string-take str i)))
 
-(define-public (string-first str)
+(define (string-first str)
   (string-ref str 0))
 
-(define-public (string-last str)
+(define (string-last str)
   (string-ref str (1- (string-length str))))
 
-(define-public (as-symb s)
+(define (as-symb s)
   (if (string? s) (string->symbol s) s))
 
-(define-public (enumerate lst)
+(define (enumerate lst)
   (zip (iota (length lst))
        lst))
 
 ;; Takes a procedure returning multiple values, and returns a procedure which
 ;; takes the same arguments as the original procedure, but only returns one of
 ;; the return values. Which value to return can be sent as an additional parameter.
-(define*-public (unval proc #:optional (n 0))
+(define* (unval proc #:optional (n 0))
   (lambda args
     (call-with-values (lambda () (apply proc args))
       (lambda args (list-ref args n)))))
 
-(define-public (flatten lst)
+(define (flatten lst)
   (fold (lambda (subl done)
           (append done ((if (list? subl) flatten list) subl)))
         '() lst))
@@ -256,7 +302,7 @@
        (let-syntax ((field (identifier-syntax (force field))) ...)
          body ...))]))
 
-(define-public (map/dotted proc dotted-list)
+(define (map/dotted proc dotted-list)
   (cond ((null? dotted-list) '())
         ((not-pair? dotted-list) (proc dotted-list))
         (else
@@ -271,24 +317,24 @@
 ;; (assq-merge '((k 1)) '((k 2)))
 ;; => ((k 2 1))
 ;; @end example
-(define-public (assq-merge a b)
+(define (assq-merge a b)
   (fold (lambda (entry alist)
           (let* ((k v (car+cdr entry))
                  (o (assq-ref alist k)))
             (assq-set! alist k (append v (or o '())))))
         (copy-tree a) b))
 
-(define-public (kvlist->assq kvlist)
+(define (kvlist->assq kvlist)
   (map (lambda (pair)
          (cons (keyword->symbol (car pair)) (cdr pair)))
        (group kvlist 2)))
 
-(define*-public (assq-limit alist optional: (number 1))
+(define* (assq-limit alist optional: (number 1))
   (map (lambda (pair)
          (take-to pair (1+ number)))
        alist))
 
-(define-public (group-by proc lst)
+(define (group-by proc lst)
   (let ((h (make-hash-table)))
     (for value in lst
          (let ((key (proc value)))
@@ -298,7 +344,7 @@
 
 ;; (split-by '(0 1 2 3 4 2 5 6) 2)
 ;; ⇒ ((0 1) (3 4) (5 6))
-(define-public (split-by list item)
+(define (split-by list item)
   (let loop ((done '())
              (current '())
              (rem list))
@@ -325,7 +371,7 @@
 ;; ⇒ ()
 ;; ⇒ (#\H #\1 #\2 #\3 #\4 #\5 #\6)
 ;; @end example
-(define-public (span-upto count predicate list)
+(define (span-upto count predicate list)
   (let loop ((remaining count)
              (taken '())
              (list list))
@@ -348,7 +394,7 @@
                l2))
         l1)))
 
-(define-public (cross-product . args)
+(define (cross-product . args)
   (if (null? args)
       '()
       (let ((last rest (car+cdr (reverse args))))
@@ -357,12 +403,12 @@
 
 ;; Given an arbitary tree, do a pre-order traversal, appending all strings.
 ;; non-strings allso allowed, converted to strings and also appended.
-(define-public (string-flatten tree)
+(define (string-flatten tree)
   (cond [(string? tree) tree]
         [(list? tree) (string-concatenate (map string-flatten tree))]
         [else (format #f "~a" tree)]))
 
-(define-public (intersperse item list)
+(define (intersperse item list)
   (let loop ((flipflop #f)
              (rem list))
     (if (null? rem)
@@ -376,7 +422,7 @@
 ;; (insert-ordered 5 (iota 10))
 ;; ⇒ (0 1 2 3 4 5 5 6 7 8 9)
 ;; @end example
-(define*-public (insert-ordered item collection optional: (< <))
+(define* (insert-ordered item collection optional: (< <))
   (cond [(null? collection)
          (list item)]
         [(< item (car collection))
@@ -430,7 +476,7 @@
      (and=>> (and=> value proc)
              rest ...)]))
 
-(define-public (downcase-symbol symb)
+(define (downcase-symbol symb)
   (-> symb
       symbol->string
       string-downcase
@@ -442,7 +488,7 @@
 ;; ⇒ ((0 1) (2 3) (4 5) (6 7) (8 9))
 ;; @end example
 ;; Requires that width|(length list)
-(define-public (group list width)
+(define (group list width)
   (unless (null? list)
     (let ((row rest (split-at list width)))
       (cons row (group rest width)))))
@@ -450,14 +496,14 @@
 ;; repeatedly apply @var{proc} to @var{base}
 ;; unitl @var{until} is satisfied.
 ;; (a → a), (a → bool), a → a
-(define-public (iterate proc until base)
+(define (iterate proc until base)
   (let loop ((o base))
     (if (until o)
         o
         (loop (proc o)))))
 
 ;; (a → values a), list ... → values a
-(define-public (valued-map proc . lists)
+(define (valued-map proc . lists)
   (apply values
    (apply append-map
           (lambda args
@@ -474,22 +520,22 @@
 ;; (assoc-ref-all '((a . 1) (b . 2) (a . 3)) 'a)
 ;; ⇒ (1 3)
 ;; @end
-(define-public (assoc-ref-all alist key) (ass%-ref-all alist key equal?))
-(define-public (assq-ref-all alist key)  (ass%-ref-all alist key eq?))
-(define-public (assv-ref-all alist key)  (ass%-ref-all alist key eqv?))
+(define (assoc-ref-all alist key) (ass%-ref-all alist key equal?))
+(define (assq-ref-all alist key)  (ass%-ref-all alist key eq?))
+(define (assv-ref-all alist key)  (ass%-ref-all alist key eqv?))
 
 
 
 
-(define-public (vector-last v)
+(define (vector-last v)
   (vector-ref v (1- (vector-length v))))
 
-(define-public (->str any)
+(define (->str any)
   (with-output-to-string (lambda () (display any))))
 
-(define-public ->string ->str)
+(define ->string ->str)
 
-(define-public (->quoted-string any)
+(define (->quoted-string any)
   (with-output-to-string (lambda () (write any))))
 
 

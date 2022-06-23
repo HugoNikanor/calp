@@ -1,19 +1,23 @@
 (define-module (hnh util io)
   :use-module ((hnh util) :select (begin1))
-  :use-module ((ice-9 rdelim) :select (read-line)))
+  :use-module ((ice-9 rdelim) :select (read-line))
+  :export (open-input-port
+           open-output-port
+           read-lines
+           with-atomic-output-to-file))
 
-(define-public (open-input-port str)
+(define (open-input-port str)
   (if (string=? "-" str)
       (current-input-port)
       (open-input-file str)))
 
-(define-public (open-output-port str)
+(define (open-output-port str)
   (if (string=? "-" str)
       (current-output-port)
       (open-output-file str)))
 
 
-(define-public (read-lines port)
+(define (read-lines port)
   (let ((line (read-line port)))
     (if (eof-object? line)
         '() (cons line (read-lines port)))))
@@ -26,7 +30,7 @@
 ;; 
 ;; propagates the return value of @var{thunk} upon successfully writing
 ;; the file, and @code{#f} otherwise.
-(define-public (with-atomic-output-to-file filename thunk)
+(define (with-atomic-output-to-file filename thunk)
   ;; copy to enusre writable string
   (define tmpfile (string-copy (string-append
                                 (dirname filename)

@@ -6,7 +6,10 @@
   :use-module (ice-9 match)
   :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-1)
-  :export (duration parse-duration))
+  :export (duration
+           parse-duration
+           format-duration
+           ))
 
 (define-immutable-record-type <duration>
   (make-duration sign week day dur-time)
@@ -26,7 +29,7 @@
   (make-duration sign week day time))
 
 
-(define-public (format-duration duration)
+(define (format-duration duration)
   (with-output-to-string
     (lambda ()
       (unless (eq? '+ (duration-sign duration))

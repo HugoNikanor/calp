@@ -25,11 +25,32 @@
   :use-module ((vcomponent recurrence internal)
                :select (byday make-recur-rule bymonthday))
   :use-module (calp translation)
-  )
+  :export (read-zoneinfo
+
+           #| note that make-rule isn't exported |#
+           rule?
+           rule-name rule-from rule-to rule-in
+           rule-on rule-at rule-save rule-letters
+
+           #| note that make-zone-entry isn't exported |#
+           zone-entry?
+           zone-entry-stdoff zone-entry-rule
+           zone-entry-format zone-entry-until
+
+           zoneinfo?
+
+           get-zone
+           get-rule
+
+           rule->dtstart
+           rule->rrule
+
+           zone-format
+           ))
 
 
 ;; returns a <zoneinfo> object
-(define-public (read-zoneinfo ports-or-filenames)
+(define (read-zoneinfo ports-or-filenames)
   (parsed-zic->zoneinfo
    (concatenate
     (map (lambda (port-or-filename)
@@ -57,7 +78,6 @@
   (letters rule-letters)                 ; string
   )
 
-(export rule? rule-name rule-from rule-to rule-in rule-on rule-at rule-save rule-letters)
 
 (define-immutable-record-type <zone-entry> ; EXPORTED
   (make-zone-entry stdoff rule format until)
@@ -66,8 +86,6 @@
   (rule zone-entry-rule)                       ; #f | symbol | <timespec>
   (format zone-entry-format)                   ; string
   (until zone-entry-until))                    ; <datetime> | #f
-
-(export zone-entry? zone-entry-stdoff zone-entry-rule zone-entry-format zone-entry-until)
 
 
 (define-immutable-record-type <zone>    ; INTERNAL
@@ -88,19 +106,17 @@
   (rules zoneinfo-rules)                ; (map symbol (list <rule>))
   (zones zoneinfo-zones))               ; (map string (list <zone-entry>))
 
-(export zoneinfo?)
-
 ;; @example
 ;; (get-zone zoneinfo "Europe/Stockholm")
 ;; @end example
-(define-public (get-zone zoneinfo name)
+(define (get-zone zoneinfo name)
   (or (hash-ref (zoneinfo-zones zoneinfo) name)
       (scm-error 'misc-error "get-zone" "No zone ~a" (list name) #f)))
 
 ;; @example
 ;; (get-rule zoneinfo 'EU)
 ;; @end example
-(define-public (get-rule zoneinfo name)
+(define (get-rule zoneinfo name)
   (or (hashq-ref (zoneinfo-rules zoneinfo) name)
       (scm-error 'misc-error "get-rule" "No rule ~a" (list name) #f)))
 
@@ -310,7 +326,7 @@
 
 
 ;; The first time this rule was/will be applied
-(define-public (rule->dtstart rule)
+(define (rule->dtstart rule)
   ;; NOTE 'minimum and 'maximum represent the begining and end of time.
   ;; since I don't have a way to represent those ideas I just set a very
   ;; high and a very low year here. What 'maximum even entails for a start
@@ -350,7 +366,7 @@
      (datetime time: (timespec-time timespec)))
     ))
 
-(define-public (rule->rrule rule)
+(define (rule->rrule rule)
   (if (eq? 'only (rule-to rule))
       #f
       (let ((base (make-recur-rule
@@ -388,7 +404,7 @@
                        wday))))))))
 
 ;; special case of format which works with %s and %z
-(define-public (zone-format fmt-string arg)
+(define (zone-format fmt-string arg)
   (let ((idx (string-index fmt-string #\%)))
     (case (string-ref fmt-string (1+ idx))
       [(#\s) (string-replace fmt-string arg

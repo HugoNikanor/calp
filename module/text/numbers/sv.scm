@@ -1,6 +1,9 @@
 (define-module (text numbers sv)
   :use-module (srfi srfi-71)
-  :use-module (hnh util))
+  :use-module (hnh util)
+  :export (number->string-cardinal
+           number->string-ordinal
+           each-string))
 
 ;; only used in number->string-cardinal
 (define (large-prefix e)
@@ -17,7 +20,7 @@
    [(<= 60 e 65) "dec"]
    ))
 
-(define-public (number->string-cardinal n)
+(define (number->string-cardinal n)
   (cond [(< n 0) (string-append "minus " (number->string-cardinal (- n)))]
         [(= n 0) "noll"]
         [(= n 1) "ett"]
@@ -89,7 +92,7 @@
          (string-append "det stora talet "
                         (number->string n))]))
 
-(define*-public (number->string-ordinal
+(define* (number->string-ordinal
                  n key: a-form?)
   (define a-string (if a-form? "a" "e"))
   (cond [(>= -3 n) (format #f "~a sista" (number->string-ordinal (- n)))]
@@ -146,7 +149,7 @@
 ;; (each-string 2) ; => "varannan"
 ;; (each-string 3) ; => "var tredje"
 ;; (each-string 3 #t) ; => "vart tredje"
-(define*-public (each-string count optional: neutrum)
+(define* (each-string count optional: neutrum)
   (string-flatten
    (cons
     "var"

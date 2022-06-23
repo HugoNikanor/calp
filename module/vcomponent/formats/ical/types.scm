@@ -6,7 +6,7 @@
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (calp translation)
-  )
+  :export (escape-chars get-writer))
 
 ;; TODO shouldn't these really take vline:s?
 
@@ -45,7 +45,7 @@
   ((@ (vcomponent recurrence internal)
       recur-rule->rrule-string) value))
 
-(define-public (escape-chars str)
+(define (escape-chars str)
   (define (escape char)
     (string #\\ char))
   (string-concatenate
@@ -92,6 +92,6 @@
 (hashq-set! type-writers 'URI write-uri)
 (hashq-set! type-writers 'UTC-OFFSET write-utc-offset)
 
-(define-public (get-writer type)
+(define (get-writer type)
   (or (hashq-ref type-writers type #f)
       (error (_ "No writer for type") type)))

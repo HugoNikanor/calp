@@ -1,12 +1,18 @@
 (define-module (hnh util path)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
-  :use-module (hnh util))
+  :use-module (hnh util)
+  :export (path-append
+           path-join
+           path-split
+           file-hidden?
+           filename-extension
+           realpath))
 
 (define // file-name-separator-string)
 (define /? file-name-separator?)
 
-(define-public (path-append . strings)
+(define (path-append . strings)
   (fold (lambda (s done)
           (string-append
            done
@@ -28,7 +34,7 @@
         (cdr strings)
         ))
 
-(define-public (path-join lst) (apply path-append lst))
+(define (path-join lst) (apply path-append lst))
 
 ;; @example
 ;; (path-split "usr/lib/test")
@@ -40,7 +46,7 @@
 ;; (path-split "//usr////lib/test")
 ;; ⇒ ("" "usr" "lib" "test")
 ;; @end example
-(define-public (path-split path)
+(define (path-split path)
   (let ((head tail
               (car+cdr
                (reverse
@@ -54,16 +60,15 @@
     (cons head (remove string-null? tail))))
 
 
-(define-public (file-hidden? path)
+(define (file-hidden? path)
   (define base (basename path))
   (and (not (string-null? base))
        (char=? #\. (string-ref base 0))))
 
-(define-public (filename-extension filename)
+(define (filename-extension filename)
   (car (reverse (string-split filename #\.))))
 
-
-(define-public (realpath filename)
+(define (realpath filename)
   (unless (string? filename)
     (scm-error 'wrong-type-arg "realpath"
                "filename not a string: ~a"

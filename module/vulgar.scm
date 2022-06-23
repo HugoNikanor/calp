@@ -8,13 +8,13 @@
   #:use-module (srfi srfi-60)
   #:use-module (vulgar termios)
   #:use-module (hnh util)
-  #:export (with-vulgar))
+  #:export (cls set-cursor-pos with-vulgar))
 
-(define-public (cls)
+(define (cls)
   ;; [H]ome, [J]: clear everything after
   (display "\x1b[H\x1b[J"))
 
-(define-public (set-cursor-pos x y)
+(define (set-cursor-pos x y)
   (format #t "\x1b[~a;~aH"
           (1+ y) (1+ x)))
 

@@ -5,7 +5,34 @@
   :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-17)
   :use-module (ice-9 hash-table)
-  :use-module ((ice-9 optargs) :select (define*-public))
+  :export (make-vline
+           vline?
+           vline-key
+           vline-source
+
+           make-vcomponent
+           vcomponent?
+           children type parent
+
+           add-child! remove-child!
+
+           delete-property!
+           prop* prop
+           extract extract*
+
+           delete-parameter!
+           value
+           param
+
+           parameters
+           properties
+
+           copy-vcomponent
+           x-property?
+           internal-field?
+
+
+           )
   )
 
 
@@ -31,8 +58,6 @@
   (source get-source set-source!)
   )
 
-(export vline? vline-key)
-
 (set-record-type-printer!
  <vline>
  (lambda (v p)
@@ -41,11 +66,11 @@
            (get-vline-value v)
            (hash-map->list list (get-vline-parameters v)))))
 
-(define-public vline-source
+(define vline-source
   (make-procedure-with-setter
    get-source set-source!))
 
-(define*-public (make-vline key value #:optional (ht (make-hash-table)))
+(define* (make-vline key value #:optional (ht (make-hash-table)))
   (make-vline% key value ht))
 
 (define-record-type <vcomponent>
@@ -55,7 +80,6 @@
   (children children set-component-children!)
   (parent get-component-parent set-component-parent!)
   (properties get-component-properties))
-(export vcomponent? children type)
 
 ((@ (srfi srfi-9 gnu) set-record-type-printer!)
  <vcomponent>
@@ -66,18 +90,18 @@
            (and=> (get-component-parent c) type))))
 
 ;; TODO should this also update the parent
-(define-public parent
+(define parent
   (make-procedure-with-setter
    get-component-parent set-component-parent!))
 
-(define*-public (make-vcomponent #:optional (type 'VIRTUAL))
+(define* (make-vcomponent #:optional (type 'VIRTUAL))
   (make-vcomponent% type '() #f (make-hash-table)))
 
-(define-public (add-child! parent child)
+(define (add-child! parent child)
   (set-component-children! parent (cons child (children parent)))
   (set-component-parent! child parent))
 
-(define-public (remove-child! parent-component child)
+(define (remove-child! parent-component child)
   (unless (eq? parent-component (parent child))
     (scm-error
      'wrong-type-arg "remove-child!" "Child doesn't belong to parent"
@@ -97,7 +121,7 @@
 
 
 ;; vline → value
-(define-public value
+(define value
   (make-procedure-with-setter
    get-vline-value set-vline-value!))
 
@@ -110,12 +134,12 @@
   (hashq-set! (get-component-properties component)
               (as-symb key) value))
 
-(define-public prop*
+(define prop*
   (make-procedure-with-setter
    get-prop*
    set-prop*!))
 
-(define-public (delete-property! component key)
+(define (delete-property! component key)
   (hashq-remove! (get-component-properties component)
                  (as-symb key)))
 
@@ -131,13 +155,13 @@
 (define (set-prop! component key value)
   (set-property! component (as-symb key) value))
 
-(define-public prop
+(define prop
   (make-procedure-with-setter
    get-prop
    set-prop!))
 
 
-(define-public param
+(define param
   (make-procedure-with-setter
    (lambda (vline parameter-key)
      ;; TODO `list' is a hack since a bit to much code depends
@@ -150,17 +174,17 @@
                  (as-symb parameter-key) val))))
 
 
-(define-public (delete-parameter! vline parameter-key)
+(define (delete-parameter! vline parameter-key)
   (hashq-remove! (get-vline-parameters vline)
                  (as-symb parameter-key)))
 
 
 ;; Returns the parameters of a property as an assoc list.
 ;; @code{(map car <>)} leads to available parameters.
-(define-public (parameters vline)
+(define (parameters vline)
   (hash-map->list list (get-vline-parameters vline)))
 
-(define-public (properties component)
+(define (properties component)
   (hash-map->list cons (get-component-properties component)))
 
 (define (copy-vline vline)
@@ -169,7 +193,7 @@
               ;; TODO deep-copy on parameters?
               (get-vline-parameters vline)))
 
-(define-public (copy-vcomponent component)
+(define (copy-vcomponent component)
   (make-vcomponent%
    (type component)
    ;; TODO deep copy?
@@ -183,16 +207,16 @@
                                     (copy-vline value))))
                     (get-component-properties component)))))
 
-(define-public (extract field)
+(define (extract field)
   (lambda (e) (prop e field)))
 
-(define-public (extract* field)
+(define (extract* field)
   (lambda (e) (prop* e field)))
 
-(define-public (x-property? symb)
+(define (x-property? symb)
   (string=? "X-" (string-take (symbol->string symb) 2)))
 
-(define*-public (internal-field? symbol optional: (prefix "-"))
+(define* (internal-field? symbol optional: (prefix "-"))
   (string=? prefix
             (string-take-to (symbol->string symbol)
                             (string-length prefix))))

@@ -15,7 +15,11 @@
                :select (make-block format-summary))
   :use-module (ice-9 format)
   :use-module (calp translation)
-  )
+
+  :export (fix-event-widths!
+           lay-out-long-events
+           create-top-block
+           ))
 
 
 
@@ -25,7 +29,7 @@
 
 ;; Takes a list of vcomponents, sets their widths and x-positions to optimally
 ;; fill out the space, without any overlaps.
-(define*-public (fix-event-widths! lst key: event-length-key (event-length-comperator date/-time>?))
+(define* (fix-event-widths! lst key: event-length-key (event-length-comperator date/-time>?))
   ;; The tree construction is greedy. This means
   ;; that if  a smaller  event preceeds a longer
   ;; event it would capture  the longer event to
@@ -51,7 +55,7 @@
         (inner x (right-subtree tree))))))
 
 
-(define-public (lay-out-long-events start end events)
+(define (lay-out-long-events start end events)
   (fix-event-widths! events event-length-key: event-length
                      event-length-comperator: date/-time>)
   (map (lambda (e) (create-top-block start end e))
@@ -61,7 +65,7 @@
 ;; get hours.  This means that a day is always assumed to be 24h, even when that's
 ;; wrong. This might lead to some weirdness when the timezon switches (DST), but it
 ;; makes everything else behave MUCH better.
-(define-public (create-top-block start-date end-date ev)
+(define (create-top-block start-date end-date ev)
 
   (define total-length
     (* 24 (days-in-interval start-date end-date)))

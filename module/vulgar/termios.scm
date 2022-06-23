@@ -10,7 +10,10 @@
   :use-module (hnh util)
   :export (make-termios
            copy-termios
-           tcsetattr! tcgetattr! cfmakeraw!))
+           tcsetattr! tcgetattr! cfmakeraw!
+
+           iflag oflag cflag lflag line cc ispeed ospeed
+           ))
 
 
 
@@ -106,14 +109,14 @@
               (list-set! lst idx v)
               (set-list! t lst)))))
 
-(define-public iflag  (make-termios-accessor 0))
-(define-public oflag  (make-termios-accessor 1))
-(define-public cflag  (make-termios-accessor 2))
-(define-public lflag  (make-termios-accessor 3))
-(define-public line   (make-termios-accessor 4))
-(define-public cc     (make-termios-accessor 5))
-(define-public ispeed (make-termios-accessor 6))
-(define-public ospeed (make-termios-accessor 7))
+(define iflag  (make-termios-accessor 0))
+(define oflag  (make-termios-accessor 1))
+(define cflag  (make-termios-accessor 2))
+(define lflag  (make-termios-accessor 3))
+(define line   (make-termios-accessor 4))
+(define cc     (make-termios-accessor 5))
+(define ispeed (make-termios-accessor 6))
+(define ospeed (make-termios-accessor 7))
 
 
 

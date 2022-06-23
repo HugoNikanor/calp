@@ -6,11 +6,12 @@
   :use-module (ice-9 pretty-print)
   :use-module (text util)
   :use-module (text flow)
-  :use-module (texinfo string-utils))
+  :use-module (texinfo string-utils)
+  :export (sxml->ansi-text))
 
 ;; Takes an HTML-like sxml coded tree, and produces a string with
 ;; appropriate spacing and ANSI-escapes for different tags.
-(define-public (sxml->ansi-text tree)
+(define (sxml->ansi-text tree)
   ((parse-tree ontree onleaf) tree))
 
 

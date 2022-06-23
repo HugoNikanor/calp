@@ -2,9 +2,10 @@
   :use-module (hnh util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
-  :use-module (web uri))
+  :use-module (web uri)
+  :export (parse-query))
 
-(define*-public (parse-query query-string optional: (encoding "UTF-8"))
+(define* (parse-query query-string optional: (encoding "UTF-8"))
   (unless (or (not query-string) (string-null? query-string))
     (fold (lambda (str list)
             ;; only split on the first equal.

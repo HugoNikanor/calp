@@ -4,7 +4,9 @@
   #:use-module (datetime)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-41 util)
-  #:export (group-stream get-groups-between))
+  #:export (group-stream
+            get-groups-between
+            group->event-list))
 
 ;; TODO templetize this
 (define-stream (group-stream in-stream)
@@ -67,5 +69,5 @@
         [else good-part]))
 
 
-(define-public (group->event-list group)
+(define (group->event-list group)
   (stream->list (cdr group)))

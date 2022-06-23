@@ -1,6 +1,4 @@
 (define-module (vcomponent recurrence internal)
-  #:export (repeating? format-recur-rule make-recur-rule)
-
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
   #:use-module (srfi srfi-88)           ; better keywords
@@ -11,7 +9,27 @@
   #:use-module (ice-9 format)
   #:use-module (hnh util)
   #:use-module (datetime)
-  )
+
+  :replace (count)
+  :export (repeating?
+
+           make-recur-rule
+           freq until interval bysecond byminute byhour
+           byday bymonthday byyearday byweekno bymonth bysetpos
+           wkst
+
+           recur-rule->rrule-string
+           recur-rule->rrule-sxml
+
+           weekdays
+           intervals
+           ))
+
+(define weekdays
+  (weekday-list sun))
+
+(define intervals
+  '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))
 
 
 ;; EXDATE is also a property linked to recurense rules
@@ -47,19 +65,16 @@
   (wkst wkst)                           ; weekday
   )
 
-(export freq until interval bysecond byminute byhour
-        byday bymonthday byyearday byweekno bymonth bysetpos
-        wkst)
-(export! count)
+
 
 ;; Interval and wkst have default values, since those are assumed
 ;; anyways, and having them set frees us from having to check them at
 ;; the use site.
-(define*-public (make-recur-rule
-                 key:
-                 freq until count (interval 1) bysecond byminute byhour
-                 byday bymonthday byyearday byweekno bymonth bysetpos
-                 (wkst monday))
+(define* (make-recur-rule
+          key:
+          freq until count (interval 1) bysecond byminute byhour
+          byday bymonthday byyearday byweekno bymonth bysetpos
+          (wkst monday))
   ;; TODO possibly validate fields here
   ;; to prevent creation of invalid rules.
   ;; This was made apparent when wkst was (incorrectly) set to MO,
@@ -117,7 +132,7 @@
          #f (proc field (get field))))
    (record-type-fields <recur-rule>)))
 
-(define-public (recur-rule->rrule-string rrule)
+(define (recur-rule->rrule-string rrule)
   (string-join
    (map-fields
     (lambda (field value)
@@ -127,7 +142,7 @@
     rrule)
    ";"))
 
-(define-public (recur-rule->rrule-sxml rrule)
+(define (recur-rule->rrule-sxml rrule)
   (map-fields
    (lambda (field value)
      (cond [(string-ci=? "UNTIL" (symbol->string field))
@@ -152,12 +167,3 @@
             `(,(downcase-symbol field)
               ,(field->string field value))]))
    rrule))
-
-
-
-
-(define-public weekdays
-  (weekday-list sun))
-
-(define-public intervals
-  '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))

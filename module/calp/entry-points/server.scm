@@ -34,7 +34,7 @@ and <i>[::]</i> for IPv6</group>"))))
 (define-config port 8080
   description: (_ "Port to which the web server should bind."))
 
-(define-public (main args)
+(define (main args)
 
   (define opts (getopt-long args (getopt-opt options)))
   (define addr (option-ref opts 'addr #f))

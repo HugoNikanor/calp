@@ -6,11 +6,12 @@
   :use-module ((vcomponent formats ical parse)
                :select (parse-calendar))
   :use-module ((vcomponent formats vdir parse)
-               :select (parse-vdir)))
+               :select (parse-vdir))
+  :export (parse-cal-path))
 
 
 ;; Parse a vdir or ics file at the given path.
-(define-public (parse-cal-path path)
+(define (parse-cal-path path)
   ;; TODO check (access? path R_OK) ?
   (define st (stat path))
   (define cal

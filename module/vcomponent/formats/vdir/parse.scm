@@ -18,7 +18,8 @@
   :use-module (calp translation)
 
   :use-module (vcomponent formats ical parse)
-  )
+
+  :export (parse-vdir))
 
 
 
@@ -26,7 +27,7 @@
 ;; All VTIMEZONE's seem to be in "local" time in relation to
 ;; themselves. Therefore, a simple comparison should work,
 ;; and then the TZOFFSETTO properties can be subtd.
-(define-public (parse-vdir path)
+(define (parse-vdir path)
   ;; TODO empty files here cause "#<eof>" to appear in the output XML, which is *really* bad.
   (let ((color
          (catch 'system-error

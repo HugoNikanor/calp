@@ -1,6 +1,7 @@
 (define-module (sxml namespace)
   :use-module (hnh util)
-  :use-module (sxml transform))
+  :use-module (sxml transform)
+  :export (move-to-namespace))
 
 (define* (symbol-split symbol key: (sep #\:))
   (->> (-> symbol
@@ -29,7 +30,7 @@
 ;; => (c:a (c:b))
 ;; @end example
 ;; sxml, (U symbol string #f (alist (U #f symbol) (U symbol string #f))) → sxml
-(define-public (move-to-namespace sxml namespace-map)
+(define (move-to-namespace sxml namespace-map)
 
   (define (nssymb key)
     (define namespace

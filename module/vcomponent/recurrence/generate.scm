@@ -10,13 +10,14 @@
   :use-module (vcomponent recurrence parse)
 
   :use-module (datetime)
-  :use-module (ice-9 curried-definitions) )
+  :use-module (ice-9 curried-definitions)
 
-
+  :export (rrule-instances
+           final-event-occurence
+           generate-recurrence-set))
 
 
 
-
 
 
 ;; Returns #t if any of the predicates return true when applied to object.
@@ -354,10 +355,8 @@
           (stream-remove (lambda (dt) (member dt exdates)) items)
           items))))
 
-(export rrule-instances)
 
-
-(define-public (final-event-occurence event)
+(define (final-event-occurence event)
   (define rrule (prop event 'RRULE))
 
   (if (or (count rrule) (until rrule))
@@ -390,7 +389,7 @@
 
 ;; <vevent> -> (stream <vevent>)
 ;; TODO memoize this?
-(define-public (generate-recurrence-set base-event)
+(define (generate-recurrence-set base-event)
 
   (define duration (event-duration base-event))
 

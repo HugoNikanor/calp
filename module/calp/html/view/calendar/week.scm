@@ -22,10 +22,11 @@
   :use-module ((vcomponent util group)
                :select (group-stream get-groups-between))
   :use-module (ice-9 format)
+  :export (render-calendar)
   )
 
 
-(define*-public (render-calendar key: calendars events start-date end-date #:allow-other-keys)
+(define* (render-calendar key: calendars events start-date end-date #:allow-other-keys)
   (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))
          (range (date-range start-date end-date)))
     `((script ,(lambda () (format #t "window.VIEW='week';")))

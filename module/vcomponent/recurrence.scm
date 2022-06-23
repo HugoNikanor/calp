@@ -4,4 +4,4 @@
   #:use-module (vcomponent recurrence internal)
   #:re-export (generate-recurrence-set
                parse-recurrence-rule
-               repeating? format-recur-rule make-recur-rule))
+               repeating? make-recur-rule))

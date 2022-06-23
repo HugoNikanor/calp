@@ -17,7 +17,11 @@
   :use-module (vcomponent recurrence)
   :use-module (calp translation)
   :autoload (vcomponent util instance) (global-event-object)
-  )
+  :export (component->ical-string
+           print-components-with-fake-parent
+           print-all-events
+           print-events-in-interval
+           ))
 
 (define (prodid)
   (format #f "-//hugo//calp ~a//EN"
@@ -140,7 +144,7 @@
           (parameters vline)))
     ":" (value-format key vline))))
 
-(define-public (component->ical-string component)
+(define (component->ical-string component)
   (format #t "BEGIN:~a\r\n" (type component))
   (for-each
    ;; Special cases depending on key.
@@ -192,7 +196,7 @@ CALSCALE:GREGORIAN\r
    '("dummy" "local")))
 
 
-(define-public (print-components-with-fake-parent events)
+(define (print-components-with-fake-parent events)
 
   ;; The events are probably sorted before, but until I can guarantee
   ;; that we sort them again here. We need them sorted from earliest
@@ -216,7 +220,7 @@ CALSCALE:GREGORIAN\r
   (print-footer))
 
 
-(define-public (print-all-events)
+(define (print-all-events)
   (print-components-with-fake-parent
    (append (get-fixed-events global-event-object)
            ;; TODO RECCURENCE-ID exceptions
@@ -225,7 +229,7 @@ CALSCALE:GREGORIAN\r
            ;; the given date range.
            (get-repeating-events global-event-object))))
 
-(define-public (print-events-in-interval start end)
+(define (print-events-in-interval start end)
   (print-components-with-fake-parent
    (append (fixed-events-in-range start end)
            ;; TODO RECCURENCE-ID exceptions

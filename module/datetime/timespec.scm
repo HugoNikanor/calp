@@ -4,16 +4,23 @@
 ;;; Code:
 
 (define-module (datetime timespec)
-  :export (make-timespec
-           timespec? timespec-time timespec-sign timespec-type)
-  :use-module ((hnh util) :select (set define*-public unless))
+  :use-module ((hnh util) :select (set unless))
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-9 gnu)
   :use-module (calp translation)
-  )
+  :export (make-timespec
+           timespec?
+           timespec-time
+           timespec-sign
+           timespec-type
+
+           timespec-zero
+           timespec-add
+           parse-time-spec
+           ))
 
 
 ;; timespec as defined by the TZ-database
@@ -30,10 +37,10 @@
   ;; u, g, z - Universal time
   (type timespec-type))                 ; char
 
-(define-public (timespec-zero)
+(define (timespec-zero)
   (make-timespec (time) '+ #\w))
 
-(define-public (timespec-add . specs)
+(define (timespec-add . specs)
   (unless (apply eqv? (map timespec-type specs))
     (warning (_ "Adding timespecs of differing types")))
 
@@ -70,7 +77,7 @@
           specs))
 
 
-(define*-public (parse-time-spec
+(define* (parse-time-spec
                  string optional: (suffixes '(#\s #\w #\u #\g #\z)))
   (let ((type string
           (cond [(string-rindex string (list->char-set suffixes))

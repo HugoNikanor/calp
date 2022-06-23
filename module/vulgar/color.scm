@@ -1,5 +1,5 @@
 (define-module (vulgar color)
-  :export (color-if))
+  :export (color-if color-escape))
 
 (define-public STR-YELLOW "\x1b[0;33m")
 (define-public STR-RESET "\x1b[m")
@@ -11,7 +11,7 @@
             (begin body ...)
             (if pred-value STR-RESET ""))))
 
-(define-public (color-escape n)
+(define (color-escape n)
   (cond ((not n) "")
         ((char=? #\# (string-ref n 0))
          (let* ((str (string-drop n 1))

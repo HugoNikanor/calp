@@ -1,5 +1,4 @@
 (define-module (base64)
-  :use-module ((ice-9 optargs) :select (define*-public))
   :use-module ((srfi srfi-71) :select (let*))
   :use-module (srfi srfi-88) ; suffix keywords
   :use-module ((rnrs bytevectors)
@@ -12,7 +11,14 @@
                         bytevector->string
                         make-transcoder
                         latin-1-codec
-                        native-transcoder)))
+                        native-transcoder))
+  :export (base64->bytevector
+           bytevector->base64
+           base64-string->bytevector
+           bytevector->base64-string
+           base64encode
+           base64decode
+           ))
 
 (define table
   (list->vector
@@ -49,7 +55,7 @@
    bytevector-u8-ref
    bytevector-u8-set!))
 
-(define-public (base64->bytevector bv)
+(define (base64->bytevector bv)
   (let ((len* (bytevector-length bv)))
     (if (zero? len*)
         (make-bytevector 0)
@@ -93,7 +99,7 @@
 
           ret))))
 
-(define-public (bytevector->base64 bv)
+(define (bytevector->base64 bv)
   (let* ((len (bytevector-length bv))
          (iterations rest (floor/ len 3)))
     (define ret (make-bytevector (+ (* 4 iterations)
@@ -137,23 +143,23 @@
     ret))
 
 ;; string -> bv
-(define-public (base64-string->bytevector string)
+(define (base64-string->bytevector string)
   (base64->bytevector
    (string->bytevector string (make-transcoder (latin-1-codec)))))
 
 ;; bv -> string
-(define-public (bytevector->base64-string bv)
+(define (bytevector->base64-string bv)
   (bytevector->string (bytevector->base64 bv)
                       (make-transcoder (latin-1-codec))))
 
 ;; string -> string
-(define*-public (base64encode string optional: (transcoder (native-transcoder)))
+(define* (base64encode string optional: (transcoder (native-transcoder)))
   (bytevector->string
    (bytevector->base64 (string->bytevector string transcoder))
    (make-transcoder (latin-1-codec))))
 
 ;; string -> string
-(define*-public (base64decode string optional: (transcoder (native-transcoder)))
+(define* (base64decode string optional: (transcoder (native-transcoder)))
   (bytevector->string
    (base64->bytevector
     (string->bytevector string (make-transcoder (latin-1-codec))))

@@ -7,7 +7,7 @@
   :use-module (srfi srfi-71)
   :use-module (datetime timespec)
   :use-module (calp translation)
-  )
+  :export (get-parser))
 
 ;; BINARY
 (define (parse-binary props value)
@@ -136,7 +136,7 @@
 (hashq-set! type-parsers 'URI parse-uri)
 (hashq-set! type-parsers 'UTC-OFFSET parse-utc-offset)
 
-(define-public (get-parser type)
+(define (get-parser type)
   (or (hashq-ref type-parsers type #f)
       (scm-error 'misc-error "get-parser" (_ "No parser for type ~a")
                  (list type) #f)))

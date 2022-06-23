@@ -15,7 +15,9 @@
 
   :use-module (calp translation)
 
-  :export (add-event
+  :export (load-calendars
+
+           add-event
            remove-event
 
            make-instance
@@ -33,7 +35,7 @@
            add-calendars
            ))
 
-(define-public (load-calendars calendar-files)
+(define (load-calendars calendar-files)
   (map parse-cal-path calendar-files))
 
 

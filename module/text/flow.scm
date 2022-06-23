@@ -8,11 +8,11 @@
   :use-module (text util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
-  )
+  :export (flow-text))
 
 
 ;; str -> (str)
-(define*-public (flow-text str #:key (width 70))
+(define* (flow-text str #:key (width 70))
   (flatten
    (map (lambda (line) (justify-line line #:width width))
         (lines str))))

@@ -9,6 +9,7 @@
   :use-module ((calp html vcomponent)
                :select (compact-event-list))
   :use-module (calp translation)
+  :export (search-result-page)
   )
 
 ;; Display the result of a search term, but doesn't do any searching
@@ -21,8 +22,8 @@
 ;; @var{search-result} : The list of matched events
 ;; @var{page} : Which page we are on
 ;; @var{paginator} : A paginator object
-(define-public (search-result-page
-                errors has-query? search-term search-result page paginator)
+(define (search-result-page
+         errors has-query? search-term search-result page paginator)
   (xhtml-doc
    (@ (lang sv))
    (head (title ,(_ "Search results"))

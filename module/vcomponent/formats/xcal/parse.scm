@@ -10,6 +10,7 @@
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (calp translation)
+  :export (sxcal->vcomponent)
   )
 
 ;; symbol, ht, (list a) -> non-list
@@ -179,7 +180,7 @@
 ;; are possibilities, which other parts of the code will crash on.
 ;; TODO
 ;; since we are feeding user input into this it really should be fixed.
-(define-public (sxcal->vcomponent sxcal)
+(define (sxcal->vcomponent sxcal)
   (define type (symbol-upcase (car sxcal)))
   (define component (make-vcomponent type))
 

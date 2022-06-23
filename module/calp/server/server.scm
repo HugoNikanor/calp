@@ -1,9 +1,10 @@
 (define-module (calp server server)
-
   :use-module (hnh util)
   :use-module (web server)
   :use-module ((calp server routes) :select (make-make-routes))
-  :use-module (ice-9 threads))
+  :use-module (ice-9 threads)
+
+  :export (start-server))
 
 ;; NOTE The default make-default-socket is broken for IPv6.
 ;; A patch has been submitted to the mailing list. 2020-03-31
@@ -22,7 +23,7 @@
 ;; (define server (open-server impl open-params))
 
 
-(define-public (start-server open-params)
+(define (start-server open-params)
   (run-server handler 'http open-params 1)
   ;; NOTE at first this seems to work, but it quickly deteriorates.
   ;; (for i in (iota 16)

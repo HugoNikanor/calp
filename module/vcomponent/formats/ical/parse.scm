@@ -12,7 +12,7 @@
   :use-module (vcomponent geo)
   :use-module (vcomponent formats common types)
   :use-module (calp translation)
- )
+  :export (parse-calendar))
 
 (define string->symbol
   (let ((ht (make-hash-table 1000)))
@@ -23,7 +23,7 @@
             symb)))))
 
 ;; TODO rename to parse-vcomponent, or parse-ical (?).
-(define-public (parse-calendar port)
+(define (parse-calendar port)
   (parse (map tokenize (read-file port))))
 
 (define-immutable-record-type <line>

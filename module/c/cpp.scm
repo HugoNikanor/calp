@@ -11,6 +11,7 @@
   :use-module (c lex)
   :use-module (c parse)
   :use-module (c operators)
+  :export (do-funcall replace-symbols include#)
   )
 
 
@@ -31,7 +32,7 @@
                (list header-line) #f)))
 
 
-(define-public (do-funcall function arguments)
+(define (do-funcall function arguments)
   (if (list? arguments)
       (apply function arguments)
       (function arguments)))
@@ -45,7 +46,7 @@
     (!= . (negate =))
     ))
 
-(define-public (replace-symbols tree dict)
+(define (replace-symbols tree dict)
   (if (not (list? tree))
       (or (assoc-ref dict tree) tree)
       (map (lambda (node) (replace-symbols node dict))
@@ -139,6 +140,3 @@
   `(begin
      ,@(map (lambda (pair) `(,define-form ,(car pair) ,(cdr pair)))
             (resolve-dependency-graph graph))))
-
-
-(export include#)

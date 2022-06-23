@@ -2,9 +2,10 @@
   :use-module (hnh util)
   :use-module (srfi srfi-71)
   :use-module (vcomponent base)
-  :use-module (text util))
+  :use-module (text util)
+  :export (describe))
 
-(define*-public (describe vcomponent optional: (indent 0))
+(define* (describe vcomponent optional: (indent 0))
   (define ii (make-string indent #\space))
   (define iii (make-string (1+ indent) #\space))
 
@@ -39,7 +40,6 @@
                    (compose symbol->string car)))
 
   (for child in (children vcomponent)
-
        (describe child (+ indent 2)))
 
   (format #t "~aEND   ~a~%" ii (type vcomponent)))

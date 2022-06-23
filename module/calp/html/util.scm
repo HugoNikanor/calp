@@ -1,15 +1,16 @@
 (define-module (calp html util)
   :use-module (hnh util)
-  :use-module (calp translation))
+  :use-module (calp translation)
+  :export (date-link html-id calculate-fg-color))
 
 
-(define-public (date-link date)
+(define (date-link date)
   ((@ (datetime) date->string) date "~Y-~m-~d"))
 
 
 ;; Generate an html id for an event.
 ;; TODO? same event placed multiple times, when spanning multiple cells
-(define-public html-id
+(define html-id
   (let ((id (make-object-property)))
     (lambda (ev)
       (or (id ev)
@@ -17,7 +18,7 @@
 
 ;; Returns a color with good contrast to the given background color.
 ;; https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color/1855903#1855903
-(define-public (calculate-fg-color c)
+(define (calculate-fg-color c)
   ;; TODO what errors can actually appear here?
   (catch #t
     (lambda ()

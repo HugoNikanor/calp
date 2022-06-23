@@ -29,6 +29,7 @@
 
   :use-module (calp translation)
 
+  :export (main)
   )
 
 
@@ -207,7 +208,7 @@ zoneinfo database, but is currently broken.</p>")
 
 
 
-(define-public (main args)
+(define (main args)
   ((@ (calp util time) report-time!) (_ "Program start"))
   (with-throw-handler #t
     (lambda ()

@@ -1,9 +1,9 @@
 (define-module (vulgar components)
   #:use-module (datetime)
   #:use-module (hnh util)
-  #:export ())
+  #:export (display-calendar-header!))
 
-(define-public (display-calendar-header! date)
+(define (display-calendar-header! date)
   (let ((day   (number->string (day   date)))
         (month (number->string (month date)))
         (year  (number->string (year  date))))

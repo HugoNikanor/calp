@@ -3,13 +3,15 @@
   :use-module ((hnh util path) :select (path-append))
   :use-module (glob)
   :use-module (statprof)
+  :use-module (datetime)
 
   :use-module ((srfi srfi-1) :select (concatenate))
   :use-module ((ice-9 ftw) :select (scandir))
 
+  :export (run-benchmark)
   )
 
-(define-public (run-benchmark)
+(define (run-benchmark)
   (define all-calendar-files
     (statprof
      (lambda ()

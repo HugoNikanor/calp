@@ -25,7 +25,19 @@
   :use-module (ice-9 format)
   :use-module (calp translation)
   :use-module (calp html filter)
-  )
+  :export (format-summary
+           format-description
+           compact-event-list
+           fmt-single-event
+           fmt-day
+           calendar-styles
+           make-block
+           output-uid
+           edit-template
+           description-template
+           vevent-edit-rrule-template
+           popup-template
+           ))
 
 
 (define (xml-entities s)
@@ -34,12 +46,12 @@
      (map (lambda (c) (format #f "&#x~x;" (char->integer c)))
           (string->list s)))))
 
-(define-public (format-summary ev str)
+(define (format-summary ev str)
   ((summary-filter) ev str))
 
 ;; NOTE this should have information about context (html/term/...)
 ;; And then be moved somewhere else.
-(define-public (format-description ev str)
+(define (format-description ev str)
   (catch* (lambda () ((description-filter) ev str))
           (configuration-error
            (lambda (key subr msg args data)
@@ -61,7 +73,7 @@
     ))
 
 ;; used by search view
-(define-public (compact-event-list list)
+(define (compact-event-list list)
 
   (define calendars
    (delete-duplicates!
@@ -101,9 +113,9 @@
 ;; Note that the <vevent-description/> tag is bound as a JS custem element, which
 ;; will re-render all this, through description-template. This also means that
 ;; the procedures output is intended to be static, and to NOT be changed by JavaScript.
-(define*-public (fmt-single-event ev
-                                  optional: (attributes '())
-                                  key: (fmt-header list))
+(define* (fmt-single-event ev
+                           optional: (attributes '())
+                           key: (fmt-header list))
   ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
   `(vevent-description
     (@ ,@(assq-merge
@@ -242,7 +254,7 @@
 
 
 ;; Single event in side bar (text objects)
-(define-public (fmt-day day)
+(define (fmt-day day)
   (let ((date (car day))
         (events (cdr day)))
     `(section (@ (class "text-day"))
@@ -272,7 +284,7 @@
 
 
 ;; Specific styles for each calendar.
-(define*-public (calendar-styles calendars optional: (port #f))
+(define* (calendar-styles calendars optional: (port #f))
   (format port "~:{ [data-calendar=\"~a\"] { --color: ~a; --complement: ~a }~%~}"
           (map (lambda (c)
                  (let ((name (base64encode (prop c 'NAME)))
@@ -283,7 +295,7 @@
                calendars)))
 
 ;; "Physical" block in calendar view
-(define*-public (make-block ev optional: (extra-attributes '()))
+(define* (make-block ev optional: (extra-attributes '()))
 
   ;; surrounding <a /> element which allows something to happen when an element
   ;; is clicked with JS turned off. Our JS disables this, and handles clicks itself.
@@ -355,7 +367,7 @@
 ;; Return a unique identifier for a specific instance of an event.
 ;; Allows us to reference each instance of a repeating event separately
 ;; from any other
-(define-public (output-uid event)
+(define (output-uid event)
   (string-concatenate
    (cons
     (prop event 'UID)
@@ -393,7 +405,7 @@
 
 
 ;; edit tab of popup
-(define-public (edit-template calendars)
+(define (edit-template calendars)
   `(template
     (@ (id "vevent-edit"))
     (div (@ (class " eventtext edit-tab "))
@@ -481,7 +493,7 @@
 
 ;; description in sidebar / tab of popup
 ;; Template data for <vevent-description />
-(define-public (description-template)
+(define (description-template)
   `(template
     (@ (id "vevent-description"))
     (div (@ (class " vevent eventtext summary-tab " ()))
@@ -532,7 +544,7 @@
                                         ; "2021-09-29 19:56"
                         ))))))
 
-(define-public (vevent-edit-rrule-template)
+(define (vevent-edit-rrule-template)
   `(template
     (@ (id "vevent-edit-rrule"))
     (div (@ (class "eventtext"))
@@ -588,7 +600,7 @@
 
 
 ;; Based on popup:s output
-(define-public (popup-template)
+(define (popup-template)
   `(template
     (@ (id "popup-template"))
     ;; becomes the direct child of <popup-element/>

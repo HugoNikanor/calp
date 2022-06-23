@@ -40,6 +40,7 @@
 
   :use-module ((calp html components) :select (xhtml-doc include-css))
 
+  :export (make-make-routes)
   )
 
 
@@ -128,7 +129,7 @@
 ;; TODO ensure encoding on all fields which take user provided data.
 ;; Possibly a fallback which strips everything unknown, and treats
 ;; the bytevector as ascii.
-(define-public (make-make-routes)
+(define (make-make-routes)
   (make-routes
 
    ;; Manual redirect to not reserve root.

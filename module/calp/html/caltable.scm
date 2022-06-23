@@ -6,6 +6,8 @@
   :use-module (srfi srfi-41)
 
   :use-module (calp translation)
+
+  :export (cal-table)
   )
 
 ;; Small calendar similar to the one below.
@@ -30,7 +32,7 @@
 ;; prev-start and next-start will generate links for the next interval,
 ;; they can't be infered from start and end date, mostly due to months having
 ;; different lengths
-(define*-public (cal-table key: start-date end-date next-start prev-start)
+(define* (cal-table key: start-date end-date next-start prev-start)
 
   (define (->link date)
     (date->string date "~Y-~m-~d.html"))

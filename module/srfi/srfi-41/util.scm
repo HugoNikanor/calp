@@ -4,8 +4,20 @@
   #:use-module (srfi srfi-71)
   #:use-module ((ice-9 sandbox) :select (call-with-time-limit))
   #:use-module (hnh util) ; find-min
-  #:export (stream-car+cdr interleave-streams
-                           stream-timeslice-limit))
+  #:export (stream-car+cdr
+            interleave-streams
+            stream-insert
+            filter-sorted-stream
+            filter-sorted-stream*
+            get-stream-interval
+            stream-find
+            stream-remove
+            stream->values
+            repeating-naturals
+            stream-partition
+            stream-split
+            stream-paginate
+            stream-timeslice-limit))
 
 (define (stream-car+cdr stream)
   (values (stream-car stream)
@@ -24,7 +36,7 @@
                (m ms (stream-car+cdr min)))
           (stream-cons m (interleave-streams < (cons ms other)))))))
 
-(define-public (stream-insert < item s)
+(define (stream-insert < item s)
   (interleave-streams < (list (stream item) s)))
 
 ;; Requires that stream is a total order in regards to what we filter
@@ -35,7 +47,7 @@
 ;; The collection is sorted on start time, and we want all events overlapping the
 ;; interval 2020-02-01 to 2020-02-29. We would get the long event, but then probably
 ;; stop because all regular small events in january.
-(define-public (filter-sorted-stream pred stream)
+(define (filter-sorted-stream pred stream)
   (stream-take-while
    pred (stream-drop-while
          (negate pred) stream)))
@@ -44,7 +56,7 @@
 ;; Simmilar to the regular @code{filter-sorted-stream}, but once an
 ;; element satisfies @code{keep-remaning?} then the remaining tail
 ;; of the stream is all assumed to be good.
-(define-public (filter-sorted-stream* pred? keep-remaining? stream)
+(define (filter-sorted-stream* pred? keep-remaining? stream)
   (cond [(stream-null? stream) stream-null]
         [(keep-remaining? (stream-car stream)) stream]
         [(pred? (stream-car stream))
@@ -58,7 +70,7 @@
 
 ;; returns all object in stream from the first object satisfying
 ;; start-pred, until the last object which sattisfies end-pred.
-(define-public (get-stream-interval start-pred end-pred stream)
+(define (get-stream-interval start-pred end-pred stream)
   (stream-take-while
    end-pred (stream-drop-while
              (negate start-pred)
@@ -67,20 +79,20 @@
 
 ;; Finds the first element in stream satisfying pred.
 ;; Returns #f if nothing was found
-(define-public (stream-find pred stream)
+(define (stream-find pred stream)
   (cond ((stream-null? stream) #f)
         ((pred (stream-car stream)) (stream-car stream))
         (else (stream-find pred (stream-cdr stream)))))
 
-(define-public (stream-remove pred stream)
+(define (stream-remove pred stream)
   (stream-filter (negate pred) stream))
 
-(define-public (stream->values stream)
+(define (stream->values stream)
   (apply values (stream->list stream)))
 
 
 ;; Natural numbers from 1 and up, each number repeated 7 times.
-(define-public (repeating-naturals from repeats)
+(define (repeating-naturals from repeats)
   (stream-unfold
    cdr                      ; map
    (const #t)               ; continue?
@@ -94,14 +106,14 @@
 ;; which satisfiy @var{pred}, and a stream of those elements
 ;; that don't. @var{pred} is called once per value in the
 ;; input stream.
-(define-public (stream-partition pred stream)
+(define (stream-partition pred stream)
   (let ((strm (stream-zip (stream-map pred stream)
                           stream)))
     (values
      (stream-map cadr (stream-filter car strm))
      (stream-map cadr (stream-remove car strm)))))
 
-(define-public (stream-split idx stream)
+(define (stream-split idx stream)
   (stream-cons (stream-take idx stream)
                (stream-drop idx stream)))
 
@@ -114,7 +126,7 @@
                       page
                       (stream-paginate rest page-size))))))
 
-(define*-public (stream-paginate stream optional: (page-size 10))
+(define* (stream-paginate stream optional: (page-size 10))
   (stream-paginate% stream page-size))
 
 

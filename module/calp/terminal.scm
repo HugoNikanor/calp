@@ -322,7 +322,7 @@
                   (current-page this))))
     (else (next-method))))
 
-(define-public (main-loop date)
+(define (main-loop date)
   (define state (list (day-view (get-event-set global-event-object) date)))
 
   (while #t

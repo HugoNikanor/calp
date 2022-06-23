@@ -1,7 +1,4 @@
 (define-module (datetime)
-  :export (date? year month day
-                 hour minute second
-                 time? datetime?)
   ;; To resolve colision with cadr-second from srfi-1
   :replace (second)
 
@@ -11,7 +8,7 @@
   :use-module (srfi srfi-71)
 
   :use-module ((hnh util)
-               :select (vector-last define*-public set! -> ->> swap case* set
+               :select (vector-last set! -> ->> swap case* set
                                     span-upto set->))
 
   :use-module (srfi srfi-41)
@@ -19,6 +16,121 @@
   :use-module (ice-9 format)
   :use-module (ice-9 regex)
   :use-module (calp util config)
+
+  :export (date
+           date?
+           year month day
+
+           time
+           time?
+           hour minute second
+
+           datetime
+           datetime?
+           get-date
+           get-timezone
+
+           datetime->unix-time
+           unix-time->datetime
+
+           current-datetime
+           current-date
+
+           get-datetime
+           as-date
+           as-time
+           as-datetime
+
+           date-zero?
+           time-zero?
+
+           leap-year?
+           days-in-month
+           days-in-year
+
+           start-of-month
+           end-of-month
+           start-of-year
+           end-of-year
+
+           date-stream
+           day-stream
+           month-stream
+           week-stream
+
+           time-min
+           time-max
+           date-min
+           date-max
+           datetime-min
+           datetime-max
+
+           month+
+           month-
+
+           week-day
+           week-1-start
+           week-number
+           date-starting-week
+           week-day-name
+
+           timespan-overlaps?
+           find-first-week-day
+           all-wday-in-month
+           all-wday-in-year
+           add-day
+           remove-day
+           in-date-range?
+
+           weekday-list
+           start-of-week
+           end-of-week
+           month-days
+           days-in-interval
+           year-day
+
+           time->decimal-hour
+           datetime->decimal-hour
+
+           date-range
+
+           datetime->string
+           date->string
+           time->string
+
+           parse-month
+           string->datetime
+           string->time
+           string->date
+           string->date/-time
+           parse-ics-date
+           parse-ics-time
+           parse-ics-datetime
+           parse-iso-date
+           parse-iso-time
+           parse-iso-datetime
+
+           parse-freeform-date
+
+           date= date=?
+           time= time=?
+           datetime= datetime=?
+
+           date< date<? date<= date<=?
+           date> date>? date>= date>=?
+           time< time<? time<= time<=?
+           time> time>? time>= time>=?
+           datetime< datetime<? datetime<= datetime<=?
+           datetime> datetime>? datetime>= datetime>=?
+           date/-time< date/-time<? date/-time<= date/-time<=?
+           date/-time> date/-time>? date/-time>= date/-time>=?
+
+           date+ date-
+           time+ time-
+           datetime+ datetime-
+           date-difference
+           datetime-difference
+           )
   :re-export (locale-month locale-month-short))
 
 
@@ -64,7 +176,7 @@
   date?
   (year year) (month month) (day day))
 
-(define*-public (date key: (year 0) (month 0) (day 0))
+(define* (date key: (year 0) (month 0) (day 0))
   (unless (and (integer? year) (integer? month) (integer? day))
     (scm-error 'wrong-type-arg "date"
                "Year, month, and day must all be integers. ~s, ~s, ~s"
@@ -89,7 +201,7 @@
   time?
   (hour hour) (minute minute) (second second))
 
-(define*-public (time key: (hour 0) (minute 0) (second 0))
+(define* (time key: (hour 0) (minute 0) (second 0))
   (make-time hour minute second))
 
 (set-record-type-printer!
@@ -112,17 +224,15 @@
   (tz tz) ; #f for localtime, "UTC", "Europe/Stockholm", ...
   )
 
-(export get-date)
-
-(define-public (get-timezone datetime)
+(define (get-timezone datetime)
   (tz datetime))
 
 
-(define*-public (datetime
-                 key: date time
-                 (year 0) (month 0) (day 0)
-                 (hour 0) (minute 0) (second 0)
-                 tz)
+(define* (datetime
+          key: date time
+          (year 0) (month 0) (day 0)
+          (hour 0) (minute 0) (second 0)
+          tz)
   (make-datetime (or date (make-date year month day))
                  (or time (make-time hour minute second))
                  tz))
@@ -170,13 +280,13 @@
             tz:     (tm:zone tm)))
 
 
-(define-public (datetime->unix-time dt)
+(define (datetime->unix-time dt)
   (let ((tm (datetime->tm dt)))
     (car (if (tz dt)
              (mktime tm (vector-last tm))
              (mktime tm)))))
 
-(define-public (unix-time->datetime n)
+(define (unix-time->datetime n)
   ;; tm->datetime returns GMT here (as hinted by the
   ;; name @var{gmtime}). Blindly change it to UTC.
   (set (tz (tm->datetime (gmtime n)))
@@ -184,10 +294,10 @@
 
 
 ;; this returns UTC time, with a TZ component set to "UTC"
-(define-public (current-datetime)
+(define (current-datetime)
   (unix-time->datetime ((@ (guile) current-time))))
 
-(define-public (current-date)
+(define (current-date)
   (get-date (current-datetime)))
 
 
@@ -198,7 +308,7 @@
 ;; (as defined by the environment variable TZ).
 ;; This means that given UTC 10:00 new years day
 ;; would return 11:00 new years day if ran in sweden.
-(define-public (get-datetime dt)
+(define (get-datetime dt)
   (let ((v (datetime->tm dt)))
     (let ((tm
            (localtime ; localtime convertion since the returned tm object is
@@ -209,7 +319,7 @@
       ;; strip tz-name, to conform with my local time.
       (set (tz (tm->datetime tm)) #f))))
 
-(define-public (as-date date/-time)
+(define (as-date date/-time)
   (cond [(datetime? date/-time) (get-date date/-time)]
         [(date? date/-time) date/-time]
         [(time? date/-time) (date)]
@@ -219,7 +329,7 @@
                      (list date/-time)
                      #f)]))
 
-(define-public (as-time date/-time)
+(define (as-time date/-time)
   (cond [(datetime? date/-time) (get-time% date/-time)]
         [(date? date/-time) (time)]
         [(time? date/-time) date/-time]
@@ -228,7 +338,7 @@
                      (list date/-time)
                      #f)]))
 
-(define-public (as-datetime dt)
+(define (as-datetime dt)
   (cond [(datetime? dt) dt]
         [(date? dt) (datetime date: dt time: (time))]
         [(time? dt) (datetime time: dt date: (date))]
@@ -239,20 +349,20 @@
 
 
 
-(define-public (date-zero? date)
+(define (date-zero? date)
   (= 0 (year date) (month date) (day date)))
 
-(define-public (time-zero? time)
+(define (time-zero? time)
   (= 0 (hour time) (minute time) (second time)))
 
 ;; int -> bool
-(define-public (leap-year? year)
+(define (leap-year? year)
   (and (zero? (remainder year 4))
        (or (zero? (remainder year 400))
            (not (zero? (remainder year 100))))))
 
 ;; Returns number of days month for a given date. Just looks at the year and month components.
-(define-public (days-in-month date)
+(define (days-in-month date)
   (case* (month date)
          ((jan mar may jul aug oct dec) 31)
          ((apr jun sep nov) 30)
@@ -264,56 +374,56 @@
                       (list (month date) date)
                       #f))))
 
-(define-public (days-in-year date)
+(define (days-in-year date)
   (if (leap-year? (year date))
       366 365))
 
-(define-public (start-of-month date)
+(define (start-of-month date)
   (set (day date) 1))
 
-(define-public (end-of-month date)
+(define (end-of-month date)
   (set (day date) (days-in-month date)))
 
-(define-public (start-of-year date)
+(define (start-of-year date)
   (set-> date
          (day 1)
          (month 1)))
 
-(define-public (date-stream date-increment start-day)
+(define (date-stream date-increment start-day)
   (stream-iterate (lambda (d) (date+ d date-increment))
                   start-day))
 
-(define-public (day-stream start-day)
+(define (day-stream start-day)
   (date-stream (date day: 1) start-day))
 
-(define-public (month-stream start-day)
+(define (month-stream start-day)
   (date-stream (date month: 1) start-day))
 
-(define-public (week-stream start-day)
+(define (week-stream start-day)
   (date-stream (date day: 7) start-day))
 
-(define-public (time-min a b)
+(define (time-min a b)
   (if (time<? a b) a b))
 
-(define-public (time-max a b)
+(define (time-max a b)
   (if (time<? a b) b a))
 
-(define-public (date-min a b)
+(define (date-min a b)
   (if (date< a b) a b))
 
-(define-public (date-max a b)
+(define (date-max a b)
   (if (date< a b) b a))
 
-(define-public (datetime-min a b)
+(define (datetime-min a b)
   (if (datetime< a b) a b))
 
-(define-public (datetime-max a b)
+(define (datetime-max a b)
   (if (datetime< a b) b a))
 
-(define*-public (month+ date-object #:optional (change 1))
+(define* (month+ date-object #:optional (change 1))
   (date+ date-object (date month: change)))
 
-(define*-public (month- date-object #:optional (change 1))
+(define* (month- date-object #:optional (change 1))
   (date- date-object (date month: change)))
 
 ;; https://projecteuclid.org/euclid.acta/1485888738
@@ -334,7 +444,7 @@
           7))
 
 ;; 0 indexed, starting at sunday.
-(define-public (week-day date)
+(define (week-day date)
   (let ((J K (floor/ (year date) 100))
         (m (month date)))
     (if (memv m '(1 2))
@@ -348,7 +458,7 @@
 ;; (week-1-start #2020-01-01 mon)
 ;; ⇒ 2019-12-30
 ;; @end example
-(define*-public (week-1-start d optional: (wkst (week-start)))
+(define* (week-1-start d optional: (wkst (week-start)))
   (let* ((ystart (start-of-year d))
          (day-index (modulo (- (week-day ystart) wkst) 7)))
     (if (> day-index 3)
@@ -357,7 +467,7 @@
 
 ;; (week-number #2020-01-01 mon) ; => 1
 ;; (week-number #2019-12-31 mon) ; => 1
-(define*-public (week-number d optional: (wkst (week-start)))
+(define* (week-number d optional: (wkst (week-start)))
   ;; Calculating week number for starts of week was much simpler.
   ;; We can both skip the special cases for Jan 1, 2 & 3. It also
   ;; solved some weird bug that was here before.
@@ -376,15 +486,15 @@
                               7)))
        (1+ week))])))
 
-(define*-public (date-starting-week
-                 week-number d
-                 optional: (wkst (week-start)))
+(define* (date-starting-week
+          week-number d
+          optional: (wkst (week-start)))
   (date+ (week-1-start d wkst)
          (date day: (* (1- week-number) 7))))
 
 
-(define*-public (week-day-name week-day-number optional: truncate-to
-                               key: (locale %global-locale))
+(define* (week-day-name week-day-number optional: truncate-to
+                        key: (locale %global-locale))
 
   ;; NOTE this allows days larger than 7 (sunday if counting from monday).
   (let ((str (locale-day (1+ (modulo week-day-number 7)) locale)))
@@ -408,7 +518,7 @@
 ;; @end verbatim
 ;; 
 ;; E is covered by both case A and B.
-(define-public (timespan-overlaps? s1-begin s1-end s2-begin s2-end)
+(define (timespan-overlaps? s1-begin s1-end s2-begin s2-end)
   "Return whetever or not two timespans overlap."
   (or
    ;; A
@@ -437,7 +547,7 @@
 ;; (find-first-week-day mon #2020-04-30)
 ;; => #2020-05-04
 ;; @end example
-(define-public (find-first-week-day wday d)
+(define (find-first-week-day wday d)
   (let* ((start-day (week-day d))
          (diff (- wday start-day)))
     (date+ d (date day: (modulo diff 7)))))
@@ -451,26 +561,26 @@
 ;; => (#2020-06-15 #2020-06-22 #2020-06-29)
 ;; @end example
 ;; week-day, date → (list date)
-(define-public (all-wday-in-month wday month-date)
+(define (all-wday-in-month wday month-date)
   (stream->list
    (stream-take-while
     (lambda (d) (= (month d) (month month-date)))
     (week-stream (find-first-week-day wday month-date)))))
 
 
-(define-public (all-wday-in-year wday year-date)
+(define (all-wday-in-year wday year-date)
   (stream->list
    (stream-take-while
     (lambda (d) (= (year d) (year year-date)))
     (week-stream (find-first-week-day wday year-date)))))
 
-(define-public (add-day d)
+(define (add-day d)
   (date+ d (date day: 1)))
 
-(define-public (remove-day d)
+(define (remove-day d)
   (date- d (date day: 1)))
 
-(define-public (in-date-range? start-date end-date)
+(define (in-date-range? start-date end-date)
   (lambda (date)
     (date<= start-date date end-date)))
 
@@ -480,21 +590,21 @@
 ;; (weekday-list sun)
 ;; => (0 1 2 3 4 5 6)
 ;; @end exampl
-(define*-public (weekday-list optional: (week-start (week-start)))
+(define* (weekday-list optional: (week-start (week-start)))
   (take (drop (apply circular-list (iota 7))
               week-start)
         7))
 
 ;; returns the date the week containing d started.
 ;; (start-of-week #2020-04-02 sun) ; => 2020-03-29
-(define*-public (start-of-week d optional: (week-start (week-start)))
+(define* (start-of-week d optional: (week-start (week-start)))
   (date- d (date day: (modulo (- (week-day d)
                                  week-start)
                               7))))
 
 ;; (end-of-week #2020-04-01 mon)
 ;; => 2020-04-05
-(define*-public (end-of-week d optional: (week-start (week-start)))
+(define* (end-of-week d optional: (week-start (week-start)))
   (date+ (start-of-week d week-start)
          (date day: 6)))
 
@@ -520,7 +630,7 @@
 ;; ; ⇒ (2020-04-01 ... 2020-04-05)
 ;; @end lisp
 ;; Ignores day component of @var{date}.
-(define*-public (month-days date optional: (week-start (week-start)))
+(define* (month-days date optional: (week-start (week-start)))
   (let* ((month-len (days-in-month date))
          (prev-month-len (days-in-month (month- date)))
          (month-start (modulo (- (week-day date) week-start) 7)))
@@ -533,7 +643,7 @@
 
 
 ;; The amount of days in the given interval, both end pointts inclusive
-(define-public (days-in-interval start-date end-date)
+(define (days-in-interval start-date end-date)
   (let ((diff (date-difference (date+ end-date (date day: 1)) start-date)))
     (->> (month-stream start-date)
          (stream-take (+ (month diff)
@@ -544,19 +654,19 @@
 
 ;; Day from start of the year, so 1 feb would be day 32.
 ;; Also known as Julian day.
-(define-public (year-day date)
+(define (year-day date)
   (days-in-interval (start-of-year date) date))
 
 
 ;; @example
 ;; (time->decimal-hour #10:30:00) ; => 10.5
 ;; @end example
-(define-public (time->decimal-hour time)
+(define (time->decimal-hour time)
   (exact->inexact (+ (hour time)
                      (/ (minute time) 60)
                      (/ (second time) 3600))))
 
-(define*-public (datetime->decimal-hour dt optional: start-date)
+(define* (datetime->decimal-hour dt optional: start-date)
 
   (let ((date-diff
          (cond [start-date
@@ -575,7 +685,7 @@
 ;; Returns a list of all dates from start to end.
 ;; both inclusive
 ;; date, date → [list date]
-(define*-public (date-range start end optional: (increment (date day: 1)))
+(define* (date-range start end optional: (increment (date day: 1)))
   (stream->list
    (stream-take-while (lambda (d) (date<= d end))
                       (date-stream increment start))))
@@ -583,10 +693,10 @@
 
 ;;; Output
 
-(define*-public (datetime->string
-                 datetime
-                 optional: (fmt "~Y-~m-~dT~H:~M:~S")
-                 key: allow-unknown?)
+(define* (datetime->string
+          datetime
+          optional: (fmt "~Y-~m-~dT~H:~M:~S")
+          key: allow-unknown?)
   (define date (get-date datetime))
   (define time (get-time% datetime))
   (with-output-to-string
@@ -625,13 +735,13 @@
             #f
             (string->list fmt)))))
 
-(define*-public (date->string date
+(define* (date->string date
                               optional: (fmt "~Y-~m-~d")
                               key: allow-unknown?)
   (datetime->string (datetime date: date)
                     fmt allow-unknown?: allow-unknown?))
 
-(define*-public (time->string time
+(define* (time->string time
                               optional: (fmt "~H:~M:~S")
                               key: allow-unknown?)
   (datetime->string (datetime time: time)
@@ -641,7 +751,7 @@
 
 ;;; Input
 
-(define*-public (parse-month str optional: (locale %global-locale))
+(define* (parse-month str optional: (locale %global-locale))
   "Get month number from a (shortened) monthname.
 Returns -1 on failure"
   (or
@@ -656,7 +766,7 @@ Returns -1 on failure"
    -1))
 
 
-(define*-public (string->datetime str optional: (fmt "~Y-~m-~dT~H:~M:~S~Z")
+(define* (string->datetime str optional: (fmt "~Y-~m-~dT~H:~M:~S~Z")
                                   (locale %global-locale))
   (let loop* ((str (string->list str))
              (fmt (string->list fmt))
@@ -794,15 +904,15 @@ Returns -1 on failure"
                       (list (car fmt) (car str))
                       #f))])))
 
-(define*-public (string->time str optional: (fmt "~H:~M:~S") (locale %global-locale))
+(define* (string->time str optional: (fmt "~H:~M:~S") (locale %global-locale))
   (get-time% (string->datetime str fmt locale)))
 
-(define*-public (string->date str optional: (fmt "~Y-~m-~d") (locale %global-locale))
+(define* (string->date str optional: (fmt "~Y-~m-~d") (locale %global-locale))
   (get-date (string->datetime str fmt locale)))
 
 ;; Parse @var{string} as either a date, time, or date-time.
 ;; String MUST be on iso-8601 format.
-(define-public (string->date/-time string)
+(define (string->date/-time string)
   (define (contains symb)
     (lambda (string) (string-contains string symb)))
 
@@ -811,28 +921,28 @@ Returns -1 on failure"
         [string (contains "-") => string->date]))
 
 
-(define-public (parse-ics-date str)
+(define (parse-ics-date str)
   (string->date str "~Y~m~d"))
 
-(define-public (parse-ics-time str)
+(define (parse-ics-time str)
   (string->time str "~H~M~S"))
 
-(define*-public (parse-ics-datetime str optional: zone)
+(define* (parse-ics-datetime str optional: zone)
   (let ((dt (string->datetime str "~Y~m~dT~H~M~S~Z")))
     (if (tz dt)
         dt
         (set (tz dt) zone))))
 
-(define-public (parse-iso-date str)
+(define (parse-iso-date str)
   (string->date str))
 
-(define-public (parse-iso-time str)
+(define (parse-iso-time str)
   (string->time str))
 
-(define-public (parse-iso-datetime str)
+(define (parse-iso-datetime str)
   (string->datetime str))
 
-(define-public (parse-freeform-date str)
+(define (parse-freeform-date str)
   (parse-iso-datetime str))
 
 (define (date->sexp d)
@@ -868,7 +978,7 @@ Returns -1 on failure"
 
 ;;; EQUIALENCE
 
-(define-public (date= . args)
+(define (date= . args)
   (reduce (lambda (a b)
             (and b ; did a previous iteration return false?
                  (= (year a) (year b))
@@ -878,7 +988,7 @@ Returns -1 on failure"
                  a))
           #t args))
 
-(define-public (time= . args)
+(define (time= . args)
   (reduce (lambda (a b)
             (and b
                  (= (hour a) (hour b))
@@ -887,16 +997,16 @@ Returns -1 on failure"
                  a))
           #t args))
 
-(define-public (datetime= . args)
+(define (datetime= . args)
   (reduce (lambda (a b)
             (and (date= (get-date a) (get-date b))
                  (time= (get-time% a) (get-time% b))
                  a))
           #t args))
 
-(define-public date=? date=)
-(define-public time=? time=)
-(define-public datetime=? datetime=)
+(define date=? date=)
+(define time=? time=)
+(define datetime=? datetime=)
 
 (define (date<% a b)
   (let ((ay (year a))
@@ -909,7 +1019,7 @@ Returns -1 on failure"
               (< am bm)))
         (< ay by))))
 
-(define-public date<
+(define date<
   (case-lambda
     [() #t]
     [(_) #t]
@@ -921,7 +1031,7 @@ Returns -1 on failure"
   (or (date= a b)
       (date< a b)))
 
-(define-public date<=
+(define date<=
   (case-lambda
     [() #t]
     [(_) #t]
@@ -929,7 +1039,7 @@ Returns -1 on failure"
      (and (date<=% first second)
           (apply date<= second rest))]))
 
-(define-public (time< a b)
+(define (time< a b)
   (let ((ah (hour a))
         (bh (hour b)))
     (if (= ah bh)
@@ -940,63 +1050,63 @@ Returns -1 on failure"
               (< am bm)))
         (< ah bh))))
 
-(define-public (time<= a b)
+(define (time<= a b)
   (or (time= a b)
       (time< a b)))
 
-(define-public (datetime< a b)
+(define (datetime< a b)
   (if (date= (get-date a) (get-date b))
       (time< (get-time% a) (get-time% b))
       (date< (get-date a) (get-date b))))
 
-(define-public (datetime<= a b)
+(define (datetime<= a b)
   (if (date= (get-date a) (get-date b))
       (time<= (get-time% a) (get-time% b))
       (date<= (get-date a) (get-date b))))
 
-(define-public (date/-time< a b)
+(define (date/-time< a b)
   (datetime< (as-datetime a) (as-datetime b)))
 
-(define-public date<?        date<)
+(define date<?        date<)
 
-(define-public date>         (swap date<))
-(define-public date>?        (swap date<))
+(define date>         (swap date<))
+(define date>?        (swap date<))
 
-(define-public date<=?       date<=)
+(define date<=?       date<=)
 
-(define-public date>=        (swap date<=))
-(define-public date>=?       (swap date<=))
+(define date>=        (swap date<=))
+(define date>=?       (swap date<=))
 
-(define-public time<?        time<)
+(define time<?        time<)
 
-(define-public time>         (swap time<))
-(define-public time>?        (swap time<))
+(define time>         (swap time<))
+(define time>?        (swap time<))
 
-(define-public time<=?       time<=)
+(define time<=?       time<=)
 
-(define-public time>=        (swap time<=))
-(define-public time>=?       (swap time<=))
+(define time>=        (swap time<=))
+(define time>=?       (swap time<=))
 
-(define-public datetime<?    datetime<)
+(define datetime<?    datetime<)
 
-(define-public datetime>     (swap datetime<))
-(define-public datetime>?    (swap datetime<))
+(define datetime>     (swap datetime<))
+(define datetime>?    (swap datetime<))
 
-(define-public datetime<=?   datetime<=)
+(define datetime<=?   datetime<=)
 
-(define-public datetime>=    (swap datetime<=))
-(define-public datetime>=?   (swap datetime<=))
+(define datetime>=    (swap datetime<=))
+(define datetime>=?   (swap datetime<=))
 
-(define-public date/-time<?  date/-time<)
+(define date/-time<?  date/-time<)
 
-(define-public date/-time>   (swap date/-time<))
-(define-public date/-time>?  (swap date/-time<))
+(define date/-time>   (swap date/-time<))
+(define date/-time>?  (swap date/-time<))
 
-(define-public date/-time<=  (negate  date/-time>))
-(define-public date/-time<=? (negate  date/-time>))
+(define date/-time<=  (negate  date/-time>))
+(define date/-time<=? (negate  date/-time>))
 
-(define-public date/-time>=  (negate  date/-time<))
-(define-public date/-time>=? (negate  date/-time<))
+(define date/-time>=  (negate  date/-time<))
+(define date/-time>=? (negate  date/-time<))
 
 
 
@@ -1070,7 +1180,7 @@ Returns -1 on failure"
 
 ;; @var{base} MUST be a valid real date. all rest arguments can however
 ;; be "invalid" dates, such as 0000-00-10
-(define-public (date+ base . rest)
+(define (date+ base . rest)
   (fold date+% base rest))
 
 (define (date-%% change base)
@@ -1125,7 +1235,7 @@ Returns -1 on failure"
   )
 
 ;;; Only use this with extreme caution
-(define-public (date- base . rest)
+(define (date- base . rest)
   (fold date-% base rest))
 
 ;;; time
@@ -1162,7 +1272,7 @@ Returns -1 on failure"
       (values hour-almost-fixed 0)))
 
 ;;; PLUS
-(define-public (time+ base . rest)
+(define (time+ base . rest)
   (let ((sum 0))
     (let ((time (fold (lambda (next done)
                         (let ((next-time rem (time+% done next)))
@@ -1212,7 +1322,7 @@ Returns -1 on failure"
 ;; (time- #10:00:00 (time hour: 48)) ; => 10:00:00 => 2
 ;; (time- #10:00:00 (time hour: (+ 48 4))) ; => 06:00:00 => 2
 ;; @end lisp
-(define-public (time- base . rest)
+(define (time- base . rest)
   (let ((sum 0))
     (let ((time (fold (lambda (next done)
                         (let ((next-time rem (time-% done next)))
@@ -1225,7 +1335,7 @@ Returns -1 on failure"
 ;;; DATETIME
 
 
-(define-public (datetime+ base change)
+(define (datetime+ base change)
   (let ((time overflow (time+ (get-time% base) (get-time% change))))
     (datetime date: (date+ (get-date base)
                            (get-date change)
@@ -1234,7 +1344,7 @@ Returns -1 on failure"
               tz: (get-timezone base)
               )))
 
-(define-public (datetime- base change)
+(define (datetime- base change)
   (let ((time underflow (time- (get-time% base) (get-time% change))))
     (datetime date: (date- (get-date base)
                            (get-date change)
@@ -1288,7 +1398,7 @@ Returns -1 on failure"
 
 
 ;; NOTE, this is only properly defined when b is greater than a.
-(define-public (date-difference b a)
+(define (date-difference b a)
   (when (or (negative? (month b))
             (negative? (day   b))
             (negative? (month a))
@@ -1307,7 +1417,7 @@ Returns -1 on failure"
 
 
 ;; NOTE, this is only properly defined when end is greater than start.
-(define-public (datetime-difference end start)
+(define (datetime-difference end start)
   ;; NOTE Makes both start and end datetimes in the current local time.
   (let ((fixed-time overflow (time- (get-time% end)
                                     (get-time% start))))

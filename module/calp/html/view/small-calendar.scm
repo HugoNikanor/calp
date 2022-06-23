@@ -2,9 +2,10 @@
   :use-module ((calp html components) :select (xhtml-doc include-css))
   :use-module ((calp html caltable) :select (cal-table))
   :use-module ((datetime) :select (month- month+ remove-day date->string))
+  :export (render-small-calendar)
   )
 
-(define-public (render-small-calendar month standalone)
+(define (render-small-calendar month standalone)
   (define table (cal-table
                  start-date: month
                  end-date: (remove-day (month+ month))

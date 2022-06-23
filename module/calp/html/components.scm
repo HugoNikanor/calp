@@ -3,8 +3,14 @@
   :use-module (ice-9 curried-definitions)
   :use-module (ice-9 match)
   :use-module (calp translation)
-  :export (xhtml-doc)
-  )
+  :export (xhtml-doc
+           slider-input
+           btn
+           tabset
+           include-css
+           include-alt-css
+           input-plus-minus
+           ))
 
 ;; Wraps a number of sxml forms into a valid sxhtml-tree.
 (define-syntax xhtml-doc
@@ -20,12 +26,12 @@
 
 
 ;; Add a slider with an associated number input. Keeps the two in sync.
-(define*-public (slider-input key: variable
-                              (min 0)
-                              (max 10)
-                              (step 1)
-                              (value 1)
-                              (unit ""))
+(define* (slider-input key: variable
+                       (min 0)
+                       (max 10)
+                       (step 1)
+                       (value 1)
+                       (unit ""))
 
   `(slider-input
     (@ (min ,min)
@@ -37,7 +43,7 @@
                  variable unit)))))
 
 ;; Generates a button or button-like link.
-(define*-public (btn key: onclick href (class '())
+(define* (btn key: onclick href (class '())
               allow-other-keys:
               rest: args)
   (when (and onclick href)
@@ -80,7 +86,7 @@
 ;; @end example
 ;; Creates a tab with an calendar emoji as icon, "Översikt" is sent as the
 ;; extra argument #:title, and the body is the return from fmt-single-event.
-(define-public (tabset elements)
+(define (tabset elements)
   (define tabgroup (symbol->string (gensym "tabgroup")))
 
   `(div (@ (class "tabgroup"))
@@ -110,21 +116,21 @@
                 ,@inner-body)]))
 
 
-(define-public (include-css path . extra-attributes)
+(define (include-css path . extra-attributes)
   `(link (@ (type "text/css")
             (rel "stylesheet")
             (href ,path)
             ,@extra-attributes)))
 
 
-(define-public (include-alt-css path . extra-attributes)
+(define (include-alt-css path . extra-attributes)
   `(link (@ (type "text/css")
             (rel "alternate stylesheet")
             (href ,path)
             ,@extra-attributes)))
 
 
-(define-public (input-plus-minus positive?)
+(define (input-plus-minus positive?)
   (define id (gensym "id"))
   `(span (@ (class "input-timespan"))
          (input (@ (type "checkbox")

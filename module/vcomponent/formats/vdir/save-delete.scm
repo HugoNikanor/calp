@@ -17,10 +17,11 @@
   :use-module (vcomponent)
   :use-module (calp translation)
   :use-module ((hnh util io) :select (with-atomic-output-to-file))
+  :export (save-event remove-event)
   )
 
 
-(define-public (save-event event)
+(define (save-event event)
   (define calendar (parent event))
 
   (unless calendar
@@ -50,7 +51,7 @@
     uid))
 
 
-(define-public (remove-event event)
+(define (remove-event event)
   (define calendar (parent event))
   (unless (eq? 'vdir (prop calendar '-X-HNH-SOURCETYPE))
     (scm-error 'wrong-type-arg "remove-event"

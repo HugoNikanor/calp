@@ -15,10 +15,11 @@
                :select (make-block output-uid))
   :use-module ((vcomponent util group)
                :select (group-stream get-groups-between))
+  :export (render-calendar-table)
   )
 
 ;; (stream event-group) -> sxml
-(define*-public (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
+(define* (render-calendar-table key: events start-date end-date pre-start post-end #:allow-other-keys)
 
   (define-values (long-events short-events)
     ;; TODO should be really-long-event? or event-spanning-midnight

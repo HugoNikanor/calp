@@ -1,16 +1,17 @@
 (define-module (web http make-routes)
-  :export (make-routes)
   :use-module (hnh util)
   :use-module (ice-9 regex)
   :use-module (ice-9 match)
   :use-module (ice-9 curried-definitions)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
+  :export (parse-endpoint-string
+           make-routes)
   )
 
 
 
-(define-public (parse-endpoint-string str)
+(define (parse-endpoint-string str)
   (let ((rx (make-regexp ":([^/.]+)(\\{([^}]+)\\})?([.])?")))
     (let loop ((str str)
                (string "")

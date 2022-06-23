@@ -8,9 +8,10 @@
   :use-module ((calp util hooks) :select (shutdown-hook))
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (calp translation)
+  :export (repl-start)
   )
 
-(define-public (repl-start address)
+(define (repl-start address)
   (define lst (string->list address))
   (format (current-error-port)
           (_ "Starting REPL server at ~a~%") address)

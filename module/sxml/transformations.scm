@@ -9,10 +9,13 @@
   :use-module (hnh util)
   :use-module ((srfi srfi-1) :select (concatenate))
   :use-module ((sxml transform) :select (pre-post-order))
-  )
+  :export (attribute-transformer
+           href-transformer
+           href-prefixer
+           ))
 
 ;; sxml, bindings → sxml
-(define-public (attribute-transformer
+(define (attribute-transformer
                 tree attribute-bindings)
 
   (define bindings
@@ -24,13 +27,13 @@
   (pre-post-order tree bindings))
 
 
-(define-public (href-transformer tree transformer)
+(define (href-transformer tree transformer)
   (attribute-transformer
    tree
    `((href . ,(lambda (_ . content)
                 `(href ,@(transformer (string-concatenate (map ->str content))))
                 )))))
 
-(define-public (href-prefixer tree prefix)
+(define (href-prefixer tree prefix)
   (href-transformer
    tree (lambda (str) (string-append prefix str))))

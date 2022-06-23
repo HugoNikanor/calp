@@ -8,7 +8,7 @@
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (calp translation)
-  )
+  :export (vcomponent->sxcal ns-wrap))
 
 
 (define (vline->value-tag vline)
@@ -94,7 +94,7 @@
   (unless (null? outparams)
     `(parameters ,@outparams)))
 
-(define-public (vcomponent->sxcal component)
+(define (vcomponent->sxcal component)
 
   (define tagsymb (downcase-symbol (type component)))
 
@@ -129,6 +129,6 @@
      ,(unless (null? (children component))
         `(components ,@(map vcomponent->sxcal (children component)))))))
 
-(define-public (ns-wrap sxml)
+(define (ns-wrap sxml)
   `(icalendar (@ (xmlns "urn:ietf:params:xml:ns:icalendar-2.0"))
               ,sxml))

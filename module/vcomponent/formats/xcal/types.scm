@@ -3,7 +3,7 @@
   :use-module (vcomponent formats ical types)
   :use-module (datetime)
   :use-module (calp translation)
-  )
+  :export (get-writer))
 
 (define (write-boolean _ v)
   `(boolean ,(if v "true" "false")))
@@ -50,6 +50,6 @@
 (hashq-set! sxml-writers 'RECUR write-recur)
 (hashq-set! sxml-writers 'TEXT write-text)
 
-(define-public (get-writer type)
+(define (get-writer type)
   (or (hashq-ref sxml-writers type #f)
       (error (_ "No writer for type") type)))
