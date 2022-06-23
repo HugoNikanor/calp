@@ -6,7 +6,6 @@
   :export (xhtml-doc
            slider-input
            btn
-           tabset
            include-css
            include-alt-css
            input-plus-minus
@@ -73,38 +72,6 @@
                (loop (cdr rem))])))
       ,body)))
 
-
-;; Creates a group of tabs from a given specification. The specification
-;; @var{elements} should be a list, where each element is a sublist on
-;; the form
-;; @example
-;; ("tab icon" arguments ... tab-body)
-;; @end example
-;; where arguments are zero or more pairs of keyword arguments. For example:
-;; @example
-;; ("📅" title: "Översikt" ,(fmt-single-event ev))
-;; @end example
-;; Creates a tab with an calendar emoji as icon, "Översikt" is sent as the
-;; extra argument #:title, and the body is the return from fmt-single-event.
-(define (tabset elements)
-  (define tabgroup (symbol->string (gensym "tabgroup")))
-
-  `(div (@ (class "tabgroup"))
-        ,@(for (i (key args ... body)) in (enumerate elements)
-               (define id (symbol->string (gensym "tab")))
-               `(div (@ (class "tab"))
-                     (input (@ (type "radio") (id ,id) (name ,tabgroup)
-                               ,@(when (zero? i) '((checked)))))
-                     ;; It would be preferable to place the labels in a separate
-                     ;; div and set that to have fixed position, since we could
-                     ;; then just flow them. That hovever doesn't work since we
-                     ;; need a css-selector for the label to the selected radio
-                     ;; option.
-                     (label (@ ,@(assq-merge `((for ,id)
-                                               (style "top: calc(var(--tab-size) * " ,i ")"))
-                                             (kvlist->assq args)))
-                            ,key)
-                     (div (@ (class "content")) ,body)))))
 
 (define ((set-attribute attr) el)
   (match el

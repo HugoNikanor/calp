@@ -10,7 +10,7 @@
   :use-module (datetime)
   :use-module (calp html config)
   :use-module ((calp html components)
-               :select (btn tabset))
+               :select (btn))
   :use-module ((calp html vcomponent)
                :select (make-block format-summary))
   :use-module (ice-9 format)
