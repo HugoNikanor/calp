@@ -27,6 +27,7 @@
   :use-module ((datetime)
                :select (parse-ics-datetime
                         datetime
+                        datetime-date
                         time
                         date
                         datetime->string))

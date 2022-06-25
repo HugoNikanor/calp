@@ -119,7 +119,7 @@
   (branching-fold
    (lambda (rule dt)
      (let* ((key value (car+cdr rule))
-            (d (if (date? dt) dt (get-date dt)))
+            (d (if (date? dt) dt (datetime-date dt)))
             ;; NOTE It's proably an error to give BYHOUR, BYMINUTE, and BYSECOND
             ;; rules for a date object. This doesn't warn if those are given, but
             ;; instead silently discards them.
@@ -128,8 +128,8 @@
                      (if (date? dt)
                          (if (date? o) o d)
                          (if (date? o)
-                             (datetime date: o time: t tz: (get-timezone dt))
-                             (datetime date: d time: o tz: (get-timezone dt)))))))
+                             (datetime date: o time: t tz: (tz dt))
+                             (datetime date: d time: o tz: (tz dt)))))))
        (case key
          [(BYMONTH)
           (if (and (eq? 'YEARLY (freq rrule))
@@ -141,11 +141,11 @@
                (concatenate
                 (map (lambda (wday)
                        (all-wday-in-month
-                        wday (start-of-month (set (month d) value))))
+                        wday (start-of-month (month d value))))
                      (map cdr (byday rrule)))))
 
               ;; else
-              (to-dt (set (month d) value)))]
+              (to-dt (month d value)))]
 
          [(BYDAY)
           (let* ((offset value (car+cdr value)))
@@ -201,12 +201,12 @@
          [(BYYEARDAY) (to-dt (date+ (start-of-year d)
                                     (date day: (1- value))))]
          [(BYMONTHDAY)
-          (to-dt (set (day d)
+          (to-dt (day d
                       (if (positive? value)
                           value (+ 1 value (days-in-month d)))))]
-         [(BYHOUR) (to-dt (set (hour t) value))]
-         [(BYMINUTE) (to-dt (set (minute t) value))]
-         [(BYSECOND) (to-dt (set (second t) value))]
+         [(BYHOUR) (to-dt (hour t value))]
+         [(BYMINUTE) (to-dt (minute t value))]
+         [(BYSECOND) (to-dt (second t value))]
          [else (scm-error 'wrong-type-arg "update"
                           "Unrecognized by-extender ~s"
                           key #f)])))
@@ -254,7 +254,7 @@
    (extend-recurrence-set
     rrule
     (if (date? base-date)
-        (date+ base-date (get-date (make-date-increment rrule)))
+        (date+ base-date (datetime-date (make-date-increment rrule)))
         (datetime+ base-date (make-date-increment rrule))))))
 
 (define ((month-mod d) value)
@@ -273,7 +273,7 @@
          #t
          (let ((key values (car+cdr (car remaining)))
                (t (as-time dt))
-               (d (if (date? dt) dt (get-date dt))))
+               (d (if (date? dt) dt (datetime-date dt))))
            (and (case key
                   [(BYMONTH) (memv (month d) values)]
                   [(BYMONTHDAY) (memv (day d) (map (month-mod d) values))]

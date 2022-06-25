@@ -73,7 +73,7 @@
          (let ((s (prop ev 'DTSTART))
                (e (prop ev 'DTEND)))
            (if e
-               (let ((fmt-str (if (date= (get-date s) (get-date e))
+               (let ((fmt-str (if (date= (datetime-date s) (datetime-date e))
                                   (_ "~H:~M")
                                   ;; Note the non-breaking space
                                   (_ "~Y-~m-~d ~H:~M"))))
