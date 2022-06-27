@@ -90,9 +90,16 @@ fi
                                  err proc fmt args))
                         (format #t "~aError: ~s~%" (make-indent (1+ depth)) err))))
               (else
-               (format #t "~aExpected: ~s~%~aReceived: ~s~%"
-                       (make-indent (1+ depth)) (test-result-ref runner 'expected-value "[UNKNOWN]")
-                       (make-indent (1+ depth)) (test-result-ref runner 'actual-value "[UNKNOWN]"))))
+               (let ((unknown-expected (gensym))
+                     (unknown-actual (gensym)))
+                 (let ((expected (test-result-ref runner 'expected-value unknown-expected))
+                       (actual (test-result-ref runner 'actual-value unknown-actual)))
+                   (if (eq? expected unknown-expected)
+                       (format #t "~aAssertion failed, received ~s~%"
+                               (make-indent (1+ depth)) actual)
+                       (format #t "~aExpected: ~s~%~aReceived: ~s~%"
+                               (make-indent (1+ depth)) expected
+                               (make-indent (1+ depth)) actual))))))
         (format #t "~aNear ~a:~a~%"
                 (make-indent (1+ depth))
                 (test-result-ref runner 'source-file)
