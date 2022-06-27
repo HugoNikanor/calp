@@ -1,4 +1,8 @@
-(use-modules ((crypto) :select (sha256 checksum->string)))
+(define-module (test crypto)
+  :use-module (srfi srfi-64)
+  :use-module (srfi srfi-64 test-error)
+  :use-module (srfi srfi-88)
+  :use-module ((crypto) :select (sha256 checksum->string)))
 
 (test-equal "sha256"
   #vu8(24 95 141 179 34 113 254 37 245 97 166 252 147 139 46 38 67 6 236 48 78 218 81 128 7 209 118 72 38 56 25 105)
