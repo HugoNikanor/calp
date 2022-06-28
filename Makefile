@@ -17,6 +17,9 @@ GUILE_CCACHE_DIR=$(shell $(GUILE) -c "(display (%site-ccache-dir))")
 SCM_FILES = $(shell find module/ -type f -name \*.scm)
 GO_FILES = $(SCM_FILES:module/%.scm=obj-$(GUILE_VERSION)/%.go)
 
+GUILE_ENV = GUILE_LOAD_PATH=$(PWD)/module \
+			GUILE_LOAD_COMPILED_PATH=$(PWD)/obj-$(GUILE_VERSION)
+
 GUILE_C_FLAGS = -Lmodule \
 				-Wshadowed-toplevel -Wunbound-variable \
 				-Wmacro-use-before-definition -Warity-mismatch \
@@ -41,7 +44,7 @@ static:
 
 obj-$(GUILE_VERSION)/%.go: module/%.scm
 	@echo $(GUILD) $(GUILE_VERSION) compile $<
-	@$(GUILD) compile $(GUILE_C_FLAGS) -o $@ $< >/dev/null
+	@env $(GUILE_ENV) $(GUILD) compile $(GUILE_C_FLAGS) -o $@ $< >/dev/null
 
 # Phony target used by test/run-tests.scm and main to
 # automatically compile everything before they run.
