@@ -9,21 +9,23 @@
   :use-module (srfi srfi-88)
   :use-module (base64))
 
-;; Tests borrowed directly from RFC4648
-(test-equal "" (base64encode ""))
-(test-equal "Zg==" (base64encode "f"))
-(test-equal "Zm8=" (base64encode "fo"))
-(test-equal "Zm9v" (base64encode "foo"))
-(test-equal "Zm9vYg==" (base64encode "foob"))
-(test-equal "Zm9vYmE=" (base64encode "fooba"))
-(test-equal "Zm9vYmFy" (base64encode "foobar"))
-(test-equal "" (base64decode ""))
-(test-equal "f" (base64decode "Zg=="))
-(test-equal "fo" (base64decode "Zm8="))
-(test-equal "foo" (base64decode "Zm9v"))
-(test-equal "foob" (base64decode "Zm9vYg=="))
-(test-equal "fooba" (base64decode "Zm9vYmE="))
-(test-equal "foobar" (base64decode "Zm9vYmFy"))
+(test-group "Tests from RFC 4648"
+  (test-group "Decoding tests"
+    (test-equal "" (base64encode ""))
+    (test-equal "Zg==" (base64encode "f"))
+    (test-equal "Zm8=" (base64encode "fo"))
+    (test-equal "Zm9v" (base64encode "foo"))
+    (test-equal "Zm9vYg==" (base64encode "foob"))
+    (test-equal "Zm9vYmE=" (base64encode "fooba"))
+    (test-equal "Zm9vYmFy" (base64encode "foobar")))
+  (test-group "Encoding tests"
+    (test-equal "" (base64decode ""))
+    (test-equal "f" (base64decode "Zg=="))
+    (test-equal "fo" (base64decode "Zm8="))
+    (test-equal "foo" (base64decode "Zm9v"))
+    (test-equal "foob" (base64decode "Zm9vYg=="))
+    (test-equal "fooba" (base64decode "Zm9vYmE="))
+    (test-equal "foobar" (base64decode "Zm9vYmFy"))))
 
 
 ;; Other tests
