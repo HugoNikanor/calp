@@ -10,8 +10,18 @@
   :use-module (srfi srfi-88)
 
   :use-module ((hnh util)
-               :select (vector-last set! -> ->> swap case* set
-                                    label span-upto set->))
+               :select (
+                        vector-last
+                        set!
+                        ->
+                        ->>
+                        swap
+                        case*
+                        set
+                        label
+                        span-upto
+                        set->
+                        ))
 
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
