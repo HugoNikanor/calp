@@ -12,7 +12,6 @@
   :use-module ((hnh util)
                :select (
                         vector-last
-                        set!
                         ->
                         ->>
                         swap
@@ -1274,14 +1273,15 @@ Returns -1 on failure"
       (values hour-almost-fixed 0)))
 
 ;;; PLUS
-(define (time+ base . rest)
-  (let ((sum 0))
-    (let ((time (fold (lambda (next done)
-                        (let ((next-time rem (time+% done next)))
-                          (set! sum = (+ rem))
-                          next-time))
-                      base rest)))
-      (values time sum))))
+(define (time± proc)
+  (lambda (base . rest)
+   (let loop ((time-accumulated base) (overflow 0) (remaining rest))
+     (if (null? remaining)
+         (values time-accumulated overflow)
+         (let ((next-time rem (proc time-accumulated (car remaining))))
+           (loop next-time (+ overflow rem) (cdr remaining)))))))
+
+(define time+ (time± time+%))
 
 ;; time, Δtime → time, hour
 (define (time-% base change)
@@ -1324,14 +1324,7 @@ Returns -1 on failure"
 ;; (time- #10:00:00 (time hour: 48)) ; => 10:00:00 => 2
 ;; (time- #10:00:00 (time hour: (+ 48 4))) ; => 06:00:00 => 2
 ;; @end lisp
-(define (time- base . rest)
-  (let ((sum 0))
-    (let ((time (fold (lambda (next done)
-                        (let ((next-time rem (time-% done next)))
-                          (set! sum = (+ rem))
-                          next-time))
-                      base rest)))
-      (values time sum))))
+(define time- (time± time-%))
 
 
 ;;; DATETIME
