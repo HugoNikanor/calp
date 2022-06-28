@@ -9,14 +9,15 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-9 gnu)
+  :use-module (ice-9 format)
   :export (make-graph
            rebuild-graph
            graph-empty?
            add-node
            get-node
            remove-node
-           find-node-without-dependencies
-           find-and-remove-node-without-dependencies
+           find-dangling-node
+           pop-dangling-node
            resolve-dependency-graph))
 
 ;; Immutable directed graph
@@ -70,22 +71,24 @@
                            (eq? key (cdr edge))))
              (graph-edges graph)))))
 
+;; A dangling node is a node which nothing depends on.
+
 ;; NOTE this is O(n^2) (maybe, sort of?)
 ;; Getting it faster would require building an index, which
 ;; is hard since there isn't a total order on symbols.
-(define (find-node-without-dependencies graph)
+(define (find-dangling-node graph)
   (find (lambda (node)
           (let ((key ((node-key-proc graph) node)))
             (not (find (lambda (edge) (eq? key (car edge))) (graph-edges graph)))))
         (graph-nodes graph)))
 
 ;; graph → node x graph
-(define (find-and-remove-node-without-dependencies graph)
-  (let ((node (find-node-without-dependencies graph)))
+(define (pop-dangling-node graph)
+  (let ((node (find-dangling-node graph)))
     (unless node
-      (scm-error 'graph-error "find-and-remove-node-without-dependencies"
+      (scm-error 'graph-error "pop-dangling-node"
                  "No node without dependencies in graph"
-                 #f (list graph)))
+                 '() (list graph)))
     (values node (remove-node graph node))))
 
 ;; Assumes that the edges of the graph are dependencies.
@@ -95,10 +98,15 @@
 (define (resolve-dependency-graph graph)
   (catch 'graph-error
     (lambda ()
-      (let loop ((graph graph))
+      (let loop ((graph graph) (done '()))
         (if (graph-empty? graph)
-            '()
-            (let ((node graph* (find-and-remove-node-without-dependencies graph)))
-              (cons node (loop graph*))))))
-    (lambda (err caller fmt args data)
-      (car graph))))
+            (reverse done)
+            (let ((node graph* (pop-dangling-node graph)))
+              (loop graph* (cons node done))))))
+    (lambda (err proc fmt args data)
+      (format (current-error-port)
+              "~a in ~a: ~?~%"
+              err proc fmt args)
+      (format (current-error-port)
+              "~s~%" (car data))
+      )))
