@@ -75,7 +75,7 @@ fi
                 (cond ((test-runner-test-name runner)
                        (negate string-null?) => identity)
                       ((test-result-ref runner 'expected-value)
-                       => (lambda (p) (with-output-to-string (lambda () (display (bold "[SOURCE]: ")) (truncated-print p))))))))
+                       => (lambda (p) (with-output-to-string (lambda () (display (bold "[SOURCE]: ")) (truncated-print p width: 60))))))))
       (when (eq? 'fail (test-result-kind))
         (cond ((test-result-ref runner 'actual-error)
                => (lambda (err)
