@@ -48,6 +48,30 @@
         (else
          (tree-get (right tree) k))))
 
+;; in-order traversal
+(define (tree->list tree)
+  (if (tree-terminal? tree)
+      '()
+      (append (tree->list (left tree))
+              (list (cons (key tree) (value tree)))
+              (tree->list (right tree)))))
+
+;; undefined order, probably pre-order
+(define (tree-map f tree)
+  (if (tree-terminal? tree)
+      '()
+      (tree-node (key tree)
+                 (f (key tree) (value tree))
+                 (tree-map f (left tree))
+                 (tree-map f (right tree)))))
+
+;; pre-order
+(define (tree-fold f init tree)
+  (if (tree-terminal? tree)
+      init
+      (let ((a (f (key tree) (value tree) init)))
+        (let ((b (tree-fold f a (left tree))))
+          (tree-fold f b (right tree))))))
 
 (define (alist->tree alist)
   (fold (lambda (kv tree) (apply tree-put tree kv))
