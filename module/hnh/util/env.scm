@@ -22,6 +22,8 @@
                      env-pairs))))]))
 
 
+;; TODO this probably isn't threadsafe... pthreads(7) notes
+;; that chdir is shared between all threads.
 (define-syntax-rule (with-working-directory directory thunk)
   (let ((old-cwd #f))
    (dynamic-wind
