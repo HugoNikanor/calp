@@ -13,12 +13,16 @@
   (parse-endpoint-string "/static/:dir/:file"))
 
 ;; Checks that parsing produces correct results
-(let ((path args (parse-endpoint-string "/static/:dir/:file")))
-  (test-equal "/static/([^/.]+)/([^/.]+)" path)
-  (test-equal '(dir file) args))
+(test-group
+  "Simple parameters"
+  (let ((path args (parse-endpoint-string "/static/:dir/:file")))
+    (test-equal "Path" "/static/([^/.]+)/([^/.]+)" path)
+    (test-equal "Parameters" '(dir file) args)))
 
 ;; Checks that parsing with custom regex works
 ;; along with literal periods.
-(let ((path args (parse-endpoint-string "/static/:filename{.*}.:ext")))
-  (test-equal "/static/(.*)\\.([^/.]+)" path)
-  (test-equal '(filename ext) args))
+(test-group
+  "Custom regex for parameters"
+  (let ((path args (parse-endpoint-string "/static/:filename{.*}.:ext")))
+    (test-equal "Path" "/static/(.*)\\.([^/.]+)" path)
+    (test-equal "Parameters" '(filename ext) args)))

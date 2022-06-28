@@ -18,6 +18,10 @@
                :select (vcomponent->sxcal))
   )
 
+;; TODO clean up this whole test
+
+;; TODO possibly change parsing
+
 (define v
   (call-with-input-string
     "BEGIN:DUMMY

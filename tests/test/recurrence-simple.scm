@@ -23,6 +23,8 @@
                         make-recur-rule
                         generate-recurrence-set)))
 
+;; TODO evaluate format for direct events
+
 ;;; Test that basic parsing or recurrence rules work.
 
 (test-equal (make-recur-rule freq: 'HOURLY wkst: mon interval: 1)

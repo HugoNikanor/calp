@@ -3,8 +3,6 @@
   :use-module (srfi srfi-88)
   :use-module ((web query) :select (parse-query)))
 
-(test-begin "Web Query")
-
 (test-equal "Empty query gives empty assoc list"
   '() (parse-query ""))
 (test-equal "Simple key-value query"
@@ -34,5 +32,3 @@
 ;; I don't know if HTTP allows this, but my code works like this
 (test-equal "Value with equal in it"
   '(key: "=") (parse-query "key=="))
-
-(test-end "Web Query")

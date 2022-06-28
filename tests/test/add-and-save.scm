@@ -14,6 +14,8 @@
                         remove-event
                         )))
 
+;; TODO is this how I want to format direct components?
+
 (define timezone
   '(vtimezone
     (properties (tzid (text "Europe/Stockholm")))

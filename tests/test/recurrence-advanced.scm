@@ -34,20 +34,20 @@
   :use-module ((srfi srfi-41) :select (stream->list))
   :use-module ((srfi srfi-88) :select (keyword->string)))
 
-(test-expect-fail "RSET: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
+(test-expect-fail "REC: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
 
 (test-expect-fail "STR: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
 
-(test-expect-fail "RSET: The second-to-last weekday of the month")
+(test-expect-fail "REC: The second-to-last weekday of the month")
 
 (test-expect-fail "STR: The second-to-last weekday of the month")
 
 ;; TODO this test is really slow, figure out why (takes approx. 25s to run)
-(test-skip "RSET: Every day in January, for 3 years (alt 2)")
+(test-skip "REC: Every day in January, for 3 years (alt 2)")
 
 (define (run-test comp)
   (test-equal
-    (string-append "RSET: " (prop comp 'SUMMARY))
+    (string-append "REC: " (prop comp 'SUMMARY))
     (prop comp 'X-SET)
     (let ((r (generate-recurrence-set comp)))
       (map (extract 'DTSTART)
