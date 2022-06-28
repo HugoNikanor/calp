@@ -760,7 +760,30 @@ date/-time> date/-time>? date/-time>= date/-time>=?
         (test-equal "Add"     #22:00:00 (time+ #20:00:00 (time hour: 2)))
         (test-equal "Remove"  #20:00:00 (time- #22:00:00 (time hour: 2)))))
 
-    ))
+    (test-group "Overflowing cases"
+      (test-group "Addition"
+        (test-group "Single overflow"
+          (call-with-values (lambda () (time+ #20:00:00 (time hour: 5)))
+            (lambda (result overflow)
+              (test-equal "Time" (time hour: 1) result)
+              (test-equal "Overflow" 1 overflow))))
+        (test-group "Mulitple overflows"
+          (call-with-values (lambda () (time+ #20:00:00 (time hour: 5) (time hour: 24)))
+            (lambda (result overflow)
+              (test-equal "Time" (time hour: 1) result)
+              (test-equal "Overflow" 2 overflow)))))
+
+      (test-group "Subtraction"
+        (test-group "Single overflow"
+          (call-with-values (lambda () (time- #20:00:00 (time hour: 25)))
+            (lambda (result overflow)
+              (test-equal "Time" (time hour: 19) result)
+              (test-equal "Overflow" 1 overflow))))
+        (test-group "Mulitple overflows"
+          (call-with-values (lambda () (time- (time hour: 4) (time hour: 10) (time hour: 24)))
+            (lambda (result overflow)
+              (test-equal "Time" (time hour: 18) result)
+              (test-equal "Overflow" 2 overflow))))))))
 
 ;; TODO
 datetime+ datetime-
