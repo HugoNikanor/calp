@@ -199,8 +199,6 @@ fi
 (awhen (option-ref options 'only #f)
        (set! files (list (path-append "test" it))))
 
-(awhen (option-ref options 'skip #f)
-       (set! files (delete it files)))
 
 ((@ (hnh util exceptions) warnings-are-errors) #t)
 
@@ -234,8 +232,14 @@ fi
   (proc))
 
 (test-begin "suite")
+
+(awhen (option-ref options 'skip #f)
+       (format #t "Skipping ~s~%" it)
+       (test-skip it))
+
 (finalizer (lambda () (for-each (lambda (f) (catch/print-trace (lambda () (test-group f (load f)))))
                            files)))
+
 (test-end "suite")
 
 (newline)
