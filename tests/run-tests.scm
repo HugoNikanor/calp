@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 # -*- mode: scheme; geiser-scheme-implementation: guile -*-
 
 here=$(dirname $(realpath $0))
