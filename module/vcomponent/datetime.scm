@@ -1,11 +1,14 @@
 (define-module (vcomponent datetime)
   :use-module (srfi srfi-1)
+  :use-module ((srfi srfi-41) :select (stream-filter))
+  :use-module ((srfi srfi-41 util) :select (get-stream-interval))
   :use-module (vcomponent base)
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (datetime zic)
   :use-module (hnh util)
-
+  :use-module ((vcomponent recurrence generate)
+               :select (final-event-occurence))
   :use-module (ice-9 curried-definitions)
 
   :export (#;parse-datetime
@@ -137,7 +140,7 @@ Event must have the DTSTART and DTEND protperty set."
   (if (date? (prop ev 'DTSTART))
       #t
       (aif (prop ev 'DTEND)
-           (datetime<= (datetime date: (date day: 1))
+           (datetime<= (datetime day: 1)
                        (datetime-difference it (prop ev 'DTSTART)))
            #f)))
 
@@ -147,7 +150,7 @@ Event must have the DTSTART and DTEND protperty set."
    (if (date? start)
        (and end (date< (date+ start (date day: 1)) end))
        (and end
-            (datetime< (datetime date: (date day: 1))
+            (datetime< (datetime day: 1)
                        (datetime-difference end start))))))
 
 
@@ -156,8 +159,7 @@ Event must have the DTSTART and DTEND protperty set."
 (define (final-spanned-time event)
   (if (not ((@ (vcomponent recurrence) repeating?) event))
       (or (prop event 'DTEND) (prop event 'DTSTART))
-      (let ((final ((@ (vcomponent recurrence generate) final-event-occurence)
-                    event)))
+      (let ((final (final-event-occurence event)))
         (if final
             (aif (prop event 'DTEND)
                  (datetime+ (as-datetime final) (as-datetime it))
@@ -171,9 +173,9 @@ Event must have the DTSTART and DTEND protperty set."
                         (prop e 'DTSTART) (or (prop e 'DTEND)
                                               (prop e 'DTSTART))))
 
-  ((@ (srfi srfi-41) stream-filter)
+  (stream-filter
    overlaps
-   ((@ (srfi srfi-41 util) get-stream-interval)
+   (get-stream-interval
     overlaps
     (lambda (e) (not (date< end-date (as-date (prop e 'DTSTART)))))
     events)))
