@@ -1,5 +1,7 @@
-#!/usr/bin/guile \
--e main -s
+#!/usr/bin/env bash
+GUILE=${GUILE:-guile}
+set -x
+exec $GUILE -e main -s "$0" "$@"
 !#
 
 ;;; Commentary:
