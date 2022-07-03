@@ -3,6 +3,7 @@
   :use-module (srfi srfi-71)
   :use-module (hnh util)
   :export (path-append
+           path-absolute?
            path-join
            path-split
            file-hidden?
@@ -11,6 +12,8 @@
 
 (define // file-name-separator-string)
 (define /? file-name-separator?)
+
+(define path-absolute? absolute-file-name?)
 
 (define (path-append . strings)
   (fold (lambda (s done)

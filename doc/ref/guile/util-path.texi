@@ -3,7 +3,10 @@
 
 Provided by the module @code{(hnh util path)}.
 
-See also @code{absolute-file-name?} from Guile.
+
+@defun path-absolute? string
+Alias of @code{absolute-file-name?} from Guile.
+@end defun
 
 @defun path-append strings ...
 Joins all strings into a path, squeezing duplicated delimiters, but
