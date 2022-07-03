@@ -5,6 +5,8 @@
   :use-module (hnh util)
   :export (define-type))
 
+
+
 ;; If given a syntax list extract the first lexeme, if given a "symbol", return that.
 (define (syntax-first stx)
   (syntax-case stx ()
@@ -36,9 +38,15 @@
 ;; DSL for specifying type predicates
 ;; Basically a procedure body, but the variable to test is implicit.
 (define-syntax build-validator-body
-  (syntax-rules (and or)
+  (syntax-rules (and or list-of)
     ((_ variable (and clauses ...))  (and (build-validator-body variable clauses) ...))
     ((_ variable (or clauses ...))   (or (build-validator-body variable clauses) ...))
+    ((_ variable (list-of (proc args ...)))
+     (and (list? variable)
+          (every (lambda (x) (build-validator-body x (proc args ...)))
+                 variable)))
+    ((_ variable (list-of proc))     (and (list? variable)
+                                          (every proc variable)))
     ((_ variable (proc args ...))    (proc variable args ...))
     ((_ variable proc)               (proc variable))))
 
