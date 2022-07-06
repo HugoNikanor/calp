@@ -27,6 +27,7 @@ fi
              (ice-9 pretty-print)
              (ice-9 getopt-long)
              (ice-9 match)
+             (ice-9 regex)
              (system vm coverage)
              ((all-modules) :select (fs-find))
              )
@@ -224,9 +225,6 @@ fi
 
 ;; (format #t "Running on:~%~y~%" files)
 
-(awhen (option-ref options 'only #f)
-       (set! files (list (path-append "test" it))))
-
 
 ((@ (hnh util exceptions) warnings-are-errors) #t)
 
@@ -261,9 +259,38 @@ fi
 
 (test-begin "suite")
 
-(awhen (option-ref options 'skip #f)
-       (format #t "Skipping ~s~%" it)
-       (test-skip it))
+
+(define onlies
+  (let %loop ((args (command-line)) (onlies '()))
+    (define* (loop args key: only)
+      (if only
+          (%loop args (cons only onlies))
+          (%loop args onlies)))
+    (if (null? args)
+        onlies
+        (cond ((string-match "^--skip(=.*)?$" (car args))
+               => (lambda (m)
+                    (cond ((match:substring m 1)
+                           => (lambda (s)
+                                (format #t "Skipping ~s~%" s)
+                                (test-skip s)
+                                (loop (cdr args))))
+                          (else (format #t "Skipping ~s~%" (cadr args))
+                                (test-skip (cadr args))
+                                (loop (cddr args))))))
+              ((string-match "^--only(=.*)?$" (car args))
+               => (lambda (m)
+                    (cond ((match:substring m 1)
+                           => (lambda (s)
+                                (loop (cdr args)  only: s)))
+                          (else (loop (cddr args) only: (cadr args))))))
+              (else (loop (cdr args)))))))
+
+(unless (null? onlies)
+  (set! files
+    (map (lambda (x) (path-append "test" x))
+         ;; reverse only until I have built a dependency graph for tests
+         (reverse onlies))))
 
 (finalizer (lambda () (for-each (lambda (f) (catch/print-trace (lambda () (test-group f (load f)))))
                            files)))
