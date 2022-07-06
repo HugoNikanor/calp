@@ -54,6 +54,24 @@ fi
 (define (make-indent depth)
   (make-string (* 2 depth) #\space))
 
+(define (string-replace-head s1 s2)
+  (string-replace s1 s2
+                  0 (string-length s2)))
+
+(define (pp form indent prefix-1)
+  (let ((prefix (make-string (+ (string-length indent)
+                                (string-length prefix-1))
+                             #\space)))
+    (display
+     (string-replace-head
+      (with-output-to-string
+        (lambda () (pretty-print
+               form
+               per-line-prefix: prefix
+               width: (- 79 (string-length indent)))))
+      (string-append indent prefix-1)))))
+
+
 (define (construct-test-runner)
   (define runner (test-runner-null))
   (define depth 0)
@@ -75,7 +93,10 @@ fi
                 (cond ((test-runner-test-name runner)
                        (negate string-null?) => identity)
                       ((test-result-ref runner 'expected-value)
-                       => (lambda (p) (with-output-to-string (lambda () (display (bold "[SOURCE]: ")) (truncated-print p width: 60))))))))
+                       => (lambda (p) (with-output-to-string
+                                   (lambda ()
+                                     (display (bold "[SOURCE]: "))
+                                     (truncated-print p width: 60))))))))
       (when (eq? 'fail (test-result-kind))
         (cond ((test-result-ref runner 'actual-error)
                => (lambda (err)
@@ -94,12 +115,12 @@ fi
                      (unknown-actual (gensym)))
                  (let ((expected (test-result-ref runner 'expected-value unknown-expected))
                        (actual (test-result-ref runner 'actual-value unknown-actual)))
-                   (if (eq? expected unknown-expected)
-                       (format #t "~aAssertion failed, received ~s~%"
-                               (make-indent (1+ depth)) actual)
-                       (format #t "~aExpected: ~s~%~aReceived: ~s~%"
-                               (make-indent (1+ depth)) expected
-                               (make-indent (1+ depth)) actual))))))
+                   (let ((indent (make-indent (1+ depth))))
+                     (if (eq? expected unknown-expected)
+                         (format #t "~aAssertion failed~%" indent)
+                         (begin
+                           (pp expected indent "Expected: ")
+                           (pp actual indent "Received: "))))))))
         (format #t "~aNear ~a:~a~%"
                 (make-indent (1+ depth))
                 (test-result-ref runner 'source-file)
