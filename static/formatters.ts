@@ -3,18 +3,21 @@ export {
 }
 
 import { makeElement } from './lib'
+import { VEvent } from './vevent'
+
+type formatter = (e: HTMLElement, d: VEvent, s: any) => void
 
 declare global {
     interface Window {
-        formatters: Map<string, (e: HTMLElement, s: any) => void>;
+        formatters: Map<string, formatter>;
     }
 }
 
-let formatters: Map<string, (e: HTMLElement, s: any) => void>;
+let formatters: Map<string, formatter>;
 formatters = window.formatters = new Map();
 
 
-formatters.set('categories', (el, d) => {
+formatters.set('categories', (el, _, d) => {
     for (let item of d) {
         let q = encodeURIComponent(
             `(member "${item}" (or (prop event (quote CATEGORIES)) (quote ())))`)
@@ -25,7 +28,7 @@ formatters.set('categories', (el, d) => {
     }
 })
 
-function format_time_tag(el: HTMLElement, d: any): void {
+function format_time_tag(el: HTMLElement, ev: VEvent, d: any): void {
     if (el instanceof HTMLTimeElement) {
         if (d instanceof Date) {
             let fmt = '';
@@ -40,13 +43,13 @@ function format_time_tag(el: HTMLElement, d: any): void {
         }
     }
 
-    formatters.get('default')!(el, d);
+    formatters.get('default')!(el, ev, d);
 }
 
 formatters.set('dtstart', format_time_tag)
 formatters.set('dtend', format_time_tag)
 
-formatters.set('default', (el, d) => {
+formatters.set('default', (el, _, d) => {
     let fmt;
     if ((fmt = el.dataset.fmt)) {
         el.textContent = d.format(fmt);

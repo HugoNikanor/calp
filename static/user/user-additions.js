@@ -1,4 +1,4 @@
-window.formatters.set('description', (el, d) => {
+window.formatters.set('description', (el, ev, d) => {
     if (/<\/?\w+( +\w+(=["']?\w+["']?)?)* *\/?>/.exec(d)) {
         /* Assume that the text is HTML if it contains something which looks
            like an HTML tag */
@@ -40,7 +40,7 @@ window.salar = new Promise((resolve, reject) =>
 )
 
 
-window.formatters.set('location', async function(el, d) {
+window.formatters.set('location', async function(el, _, d) {
     let rx = /Lokal: (.*)/
     let m = rx.exec(d)
     if (! m) {

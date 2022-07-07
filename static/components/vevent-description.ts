@@ -28,8 +28,8 @@ class ComponentDescription extends ComponentVEvent {
             if ((d = data.getProperty(p))) {
                 let key = p.toLowerCase();
                 let f = formatters.get(key);
-                if (f) f(el, d);
-                else window.formatters.get('default')!(el, d);
+                if (f) f(el, data, d);
+                else window.formatters.get('default')!(el, data, d);
             }
         }
 
