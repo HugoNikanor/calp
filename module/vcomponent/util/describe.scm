@@ -1,5 +1,6 @@
 (define-module (vcomponent util describe)
   :use-module (hnh util)
+  :use-module ((srfi srfi-1) :select (car+cdr))
   :use-module (srfi srfi-71)
   :use-module (vcomponent base)
   :use-module (text util)
