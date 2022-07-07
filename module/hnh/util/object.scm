@@ -47,6 +47,9 @@
                  variable)))
     ((_ variable (list-of proc))     (and (list? variable)
                                           (every proc variable)))
+    ((_ variable (pair-of a b))      (and (pair? variable)
+                                          (build-validator-body (car variable) a)
+                                          (build-validator-body (cdr variable) b)))
     ((_ variable (proc args ...))    (proc variable args ...))
     ((_ variable proc)               (proc variable))))
 
