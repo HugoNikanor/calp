@@ -1,5 +1,39 @@
 window.formatters.set('description', (el, ev, d) => {
-    if (/<\/?\w+( +\w+(=["']?\w+["']?)?)* *\/?>/.exec(d)) {
+    if (ev.getProperty('X-MICROSOFT-SKYPETEAMSMEETINGURL')) {
+        /* parse Microsoft Teams meeting entries */
+        /* Replace lines with propper <hr> tags */
+        let rx1 = /^_+$/gm
+        /* Merge URL:s into a tags */
+        let rx2 = /(?<pipe>^|[|])\s*(?<name>[^|<\n]*)<(?<url>[^>]*)>/gm
+
+        let rxs = [`(?<line>${rx1.source})`,
+                   `(?<link>${rx2.source})`,
+                  ].join('|')
+        let rx = new RegExp(`(${rxs})`, 'gm')
+
+        let children = []
+        let idx = 0
+        for (let match of d.matchAll(rx)) {
+            children.push(d.substring(idx, match.index))
+
+            if (match.groups.line) {
+                children.push(document.createElement('hr'))
+                children.push(document.createElement('br'))
+            } else if (match.groups.link) {
+                if (match.groups.pipe === '|') {
+                    children.push('| ');
+                }
+                let a = document.createElement('a')
+                a.textContent = match.groups.name || match.groups.url
+                a.href = match.groups.url
+                children.push(a)
+            }
+
+            idx = match.index + match[0].length
+        }
+        children.push(d.substring(idx));
+	el.replaceChildren(...children);
+    } else if (/<\/?\w+( +\w+(=["']?\w+["']?)?)* *\/?>/.exec(d)) {
         /* Assume that the text is HTML if it contains something which looks
            like an HTML tag */
         let parser = new DOMParser();
