@@ -3,7 +3,9 @@
   :use-module (srfi srfi-9 gnu)
   :use-module (ice-9 curried-definitions)
   :use-module (hnh util)
-  :export (define-type))
+  :export (define-type
+            build-validator-body
+            list-of pair-of))
 
 
 
@@ -35,21 +37,26 @@
 
 
 
+(define-syntax list-of
+  (syntax-rules ()
+    ((_ variable (rule ...))
+     (and (list? variable)
+          (every (lambda (x) (build-validator-body x (rule ...))) variable)))
+    ((_ variable rule)
+     (and (list? variable)
+          (every rule variable)))))
+
+(define-syntax-rule (pair-of variable a b)
+  (and (pair? variable)
+       (build-validator-body (car variable) a)
+       (build-validator-body (cdr variable) b)))
+
 ;; DSL for specifying type predicates
 ;; Basically a procedure body, but the variable to test is implicit.
 (define-syntax build-validator-body
   (syntax-rules (and or list-of)
     ((_ variable (and clauses ...))  (and (build-validator-body variable clauses) ...))
     ((_ variable (or clauses ...))   (or (build-validator-body variable clauses) ...))
-    ((_ variable (list-of (proc args ...)))
-     (and (list? variable)
-          (every (lambda (x) (build-validator-body x (proc args ...)))
-                 variable)))
-    ((_ variable (list-of proc))     (and (list? variable)
-                                          (every proc variable)))
-    ((_ variable (pair-of a b))      (and (pair? variable)
-                                          (build-validator-body (car variable) a)
-                                          (build-validator-body (cdr variable) b)))
     ((_ variable (proc args ...))    (proc variable args ...))
     ((_ variable proc)               (proc variable))))
 
