@@ -1,11 +1,9 @@
 (define-module (hnh util object)
-  :use-module (srfi srfi-1)
   :use-module (srfi srfi-9 gnu)
   :use-module (ice-9 curried-definitions)
   :use-module (hnh util)
-  :export (define-type
-            build-validator-body
-            list-of pair-of))
+  :use-module (hnh util type)
+  :export (define-type))
 
 
 
@@ -36,30 +34,6 @@
     (_ #f)))
 
 
-
-(define-syntax list-of
-  (syntax-rules ()
-    ((_ variable (rule ...))
-     (and (list? variable)
-          (every (lambda (x) (build-validator-body x (rule ...))) variable)))
-    ((_ variable rule)
-     (and (list? variable)
-          (every rule variable)))))
-
-(define-syntax-rule (pair-of variable a b)
-  (and (pair? variable)
-       (build-validator-body (car variable) a)
-       (build-validator-body (cdr variable) b)))
-
-;; DSL for specifying type predicates
-;; Basically a procedure body, but the variable to test is implicit.
-(define-syntax build-validator-body
-  (syntax-rules (and or list-of)
-    ((_ variable (and clauses ...))  (and (build-validator-body variable clauses) ...))
-    ((_ variable (or clauses ...))   (or (build-validator-body variable clauses) ...))
-    ((_ variable (proc args ...))    (proc variable args ...))
-    ((_ variable proc)               (proc variable))))
-
 
 ;; Given (x type: predicate?), expand to a single `unless' form (otherwise #f)
 (define-syntax (validator stx)
