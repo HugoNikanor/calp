@@ -7,6 +7,8 @@
 @include guile/util.texi
 @include guile/util-path.texi
 @include guile/util-config.texi
+@include guile/util-type.texi
+@include guile/util-object.texi
 @include guile/base64.texi
 @include guile/web.texi
 @include guile/vcomponent.texi
