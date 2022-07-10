@@ -1,4 +1,4 @@
-window.formatters.set('description', (el, ev, d) => {
+window.formatters.set('description', async (el, ev, d) => {
     if (ev.getProperty('X-MICROSOFT-SKYPETEAMSMEETINGURL')) {
         /* parse Microsoft Teams meeting entries */
         /* Replace lines with propper <hr> tags */

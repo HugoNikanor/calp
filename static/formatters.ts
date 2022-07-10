@@ -1,11 +1,11 @@
 export {
-    formatters,
+    format
 }
 
 import { makeElement } from './lib'
 import { VEvent } from './vevent'
 
-type formatter = (e: HTMLElement, d: VEvent, s: any) => void
+type formatter = (e: HTMLElement, d: VEvent, s: any) => Promise<void>
 
 declare global {
     interface Window {
@@ -16,8 +16,24 @@ declare global {
 let formatters: Map<string, formatter>;
 formatters = window.formatters = new Map();
 
+async function format(targetElement: HTMLElement, data: VEvent, key: string): Promise<void> {
+    let d = data.getProperty(key);
+    if (!d) return
+    let formatter = formatters.get(key.toLowerCase());
+    if (formatter) {
+        try {
+            await formatter(targetElement, data, d);
+        } catch (error) {
+            console.warn('Formatter failed')
+            console.warn(error);
+            formatters.get('default')!(targetElement, data, d);
+        }
+    } else {
+        formatters.get('default')!(targetElement, data, d);
+    }
+}
 
-formatters.set('categories', (el, _, d) => {
+formatters.set('categories', async (el, _, d) => {
     for (let item of d) {
         let q = encodeURIComponent(
             `(member "${item}" (or (prop event (quote CATEGORIES)) (quote ())))`)
@@ -28,7 +44,7 @@ formatters.set('categories', (el, _, d) => {
     }
 })
 
-function format_time_tag(el: HTMLElement, ev: VEvent, d: any): void {
+async function format_time_tag(el: HTMLElement, ev: VEvent, d: any): Promise<void> {
     if (el instanceof HTMLTimeElement) {
         if (d instanceof Date) {
             let fmt = '';
@@ -49,7 +65,7 @@ function format_time_tag(el: HTMLElement, ev: VEvent, d: any): void {
 formatters.set('dtstart', format_time_tag)
 formatters.set('dtend', format_time_tag)
 
-formatters.set('default', (el, _, d) => {
+formatters.set('default', async (el, _, d) => {
     let fmt;
     if ((fmt = el.dataset.fmt)) {
         el.textContent = d.format(fmt);

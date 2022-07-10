@@ -2,7 +2,7 @@ export { ComponentDescription }
 
 import { VEvent } from '../vevent'
 import { ComponentVEvent } from './vevent'
-import { formatters } from '../formatters'
+import { format } from '../formatters'
 
 /*
   <vevent-description />
@@ -23,14 +23,7 @@ class ComponentDescription extends ComponentVEvent {
 
         for (let el of body.querySelectorAll('[data-property]')) {
             if (!(el instanceof HTMLElement)) continue;
-            let p = el.dataset.property!;
-            let d;
-            if ((d = data.getProperty(p))) {
-                let key = p.toLowerCase();
-                let f = formatters.get(key);
-                if (f) f(el, data, d);
-                else window.formatters.get('default')!(el, data, d);
-            }
+            format(el, data, el.dataset.property!);
         }
 
         let repeating = body.getElementsByClassName('repeating')[0] as HTMLElement

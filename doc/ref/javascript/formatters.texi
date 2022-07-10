@@ -4,6 +4,12 @@
 Formatting procedures used by some components.
 @c TODO can we have a backref of every node containing @ref{formatters-proc}?
 
+@deftypefun void format(targetElement:HTMLElement, data:VEvent, key:string)
+Checks if a specific formatter exists for the given key, and executes
+it.
+Defaults to 'default', and also runs that if the regular formatter throws.
+@end deftypefun
+
 @deftypevar {Map<string, (e:HTMLElement, d:VEvent, s:any) => void>} formatters
 @anchor{formatters-proc}
 
