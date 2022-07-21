@@ -19,35 +19,29 @@
              (ice-9 getopt-long)
              (sxml gumbo)
              (sxml match)
-             ((hnh util) :select (->))
+             ((sxml xpath) :select (sxpath))
+             ((hnh util) :select (-> ->>))
              (json))
 
 
 ;; Parse string as HTML, find all links which are "map links",
 ;; and return them as an association list from name to url-fragments.
-(define (get-data string)
-  (define data (html->sxml string))
-
+(define (extract-data string)
   (define rx (make-regexp "^karta\\?"))
 
-  (define links
-    (map (lambda (node)
-           (sxml-match node
-                       [(a (@ (href ,href)) ,b0 ,body ...)
-                        (cons href b0)]))
-         (((@ (sxml xpath) sxpath) '(// a)) data)))
+  ;; for (let el of document.querySelectorAll('a[href*="karta?"]')) {
+  ;; 	ret[el.textContent.trim().toUpperCase()] = el.href
+  ;; }
 
-  (define map-links (filter (lambda (pair) (regexp-exec rx (car pair)))
-                            links))
-
-  (define link-table (make-hash-table))
-  (for-each (lambda (pair) (hash-set! link-table (string-upcase (string-trim-both (cdr pair)))
-                                      (car pair)))
-            map-links)
-
-  (hash-map->list (lambda (name frag)
-                    `(,name . ,frag))
-                  link-table))
+  (->> (html->sxml string)
+       ((sxpath '(// a)))
+       (map (lambda (node)
+              (sxml-match node
+                          [(a (@ (href ,href)) ,b0 ,body ...)
+                           (cons href b0)])))
+       (filter (lambda (pair) (regexp-exec rx (car pair))))
+       (map (lambda (pair) (cons (string-upcase (string-trim-both (cdr pair)))
+                            (car pair))))))
 
 ;; Open a HTTP request to the given URL, and return the
 ;; response body as a port.
@@ -85,9 +79,9 @@
 
   (let ((port
          (cond ((option-ref options 'url #f)  => open-input-url)
-               ((and=> (option-ref options 'file #f) (lambda (s) (string=? s "-")))
+               ((string=? "-" (option-ref options 'file ""))
                 (current-input-port))
                ((option-ref options 'file #f) => open-input-file)
                (else (open-input-url "https://old.liu.se/karta/list?l=sv")))))
-    (-> port read-string get-data scm->json)
+    (-> port read-string extract-data scm->json)
     (newline)))
