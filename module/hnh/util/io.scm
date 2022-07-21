@@ -4,7 +4,8 @@
   :export (open-input-port
            open-output-port
            read-lines
-           with-atomic-output-to-file))
+           with-atomic-output-to-file
+           call-with-tmpfile))
 
 (define (open-input-port str)
   (if (string=? "-" str)
@@ -62,3 +63,12 @@
         ;; counted on, since anything with an unspecified return
         ;; value might as well return #f)
         #f))))
+
+(define* (call-with-tmpfile proc key: (tmpl "/tmp/file-XXXXXXX"))
+  (let* ((filename (string-copy tmpl))
+         (port (mkstemp! filename)))
+    (with-continuation-barrier
+     (lambda ()
+       (begin1
+        (proc port filename)
+        (close-port port))))))
