@@ -22,12 +22,17 @@ fi
              (srfi srfi-64)
              (srfi srfi-88)
              (hnh util)
+             ((hnh util io) :select (call-with-tmpfile))
              (ice-9 ftw)
              (ice-9 format)
              (ice-9 pretty-print)
              (ice-9 getopt-long)
              (ice-9 match)
              (ice-9 regex)
+             ((ice-9 popen)
+              :select (open-pipe*
+                       close-pipe))
+             ((ice-9 rdelim) :select (read-string))
              (system vm coverage)
              ((all-modules) :select (fs-find))
              )
@@ -59,18 +64,29 @@ fi
   (string-replace s1 s2
                   0 (string-length s2)))
 
+(define (diff s1 s2)
+  (let ((filename1 (call-with-tmpfile (lambda (p f) (display s1 p) f)))
+        (filename2 (call-with-tmpfile (lambda (p f) (display s2 p) f))))
+    (let ((pipe (open-pipe*
+              OPEN_READ
+              ;; "git" "diff" "--no-index"
+              "diff"
+              filename1 filename2)))
+      (begin1 (begin
+                (read-string pipe))
+              (close-pipe pipe)))))
+
 (define (pp form indent prefix-1)
   (let ((prefix (make-string (+ (string-length indent)
                                 (string-length prefix-1))
                              #\space)))
-    (display
-     (string-replace-head
-      (with-output-to-string
-        (lambda () (pretty-print
-               form
-               per-line-prefix: prefix
-               width: (- 79 (string-length indent)))))
-      (string-append indent prefix-1)))))
+    (string-replace-head
+     (with-output-to-string
+       (lambda () (pretty-print
+              form
+              per-line-prefix: prefix
+              width: (- 79 (string-length indent)))))
+     (string-append indent prefix-1))))
 
 
 (define (construct-test-runner)
@@ -120,8 +136,15 @@ fi
                      (if (eq? expected unknown-expected)
                          (format #t "~aAssertion failed~%" indent)
                          (begin
-                           (pp expected indent "Expected: ")
-                           (pp actual indent "Received: "))))))))
+                           (display (pp expected indent "Expected: "))
+                           (display (pp actual indent "Received: "))
+                           (let ((d (diff (pp expected "" "")
+                                          (pp actual "" ""))))
+                             (display
+                              (string-join
+                               (map (lambda (line) (string-append indent "|" line))
+                                    (string-split d #\newline))
+                               "\n" 'suffix))))))))))
         (format #t "~aNear ~a:~a~%"
                 (make-indent (1+ depth))
                 (test-result-ref runner 'source-file)
