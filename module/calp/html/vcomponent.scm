@@ -98,7 +98,7 @@
                       ,(_ "View") " 📅")
                    (span ,(prop event 'SUMMARY)))))
   (cons
-   (calendar-styles calendars)
+   `(style ,(lambda () (calendar-styles calendars #t)))
    (for event in list
         `(details
           ,(summary event)
