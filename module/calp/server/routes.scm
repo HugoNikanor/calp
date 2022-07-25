@@ -404,7 +404,7 @@
                      (set! error
                        (format #f "~?~%" fmt arg))))))
 
-        (return `((content-type (content-type html)))
+        (return `((content-type ,(content-type html)))
                 (with-output-to-string
                   (lambda ()
                     ((sxml->output html)
