@@ -1,22 +1,29 @@
-.PHONY: all install clean watch
+.PHONY: all install clean watch watch-esbuild
 
-TARGETS := style.css smallcal.css script.out.js directory-listing.css
+TARGETS := style.css smallcal.css script.js directory-listing.css
 WATCH=
 
 TS_FILES = $(shell find . -type f -name \*.ts -not -path */node_modules/*)
 JS_FILES = $(TS_FILES:%.ts=%.js)
 
+ESBUILD_LOGLEVEL=warning
+# Variable for adding extra flags
+ESBUILD_FLAGS =
+# Used flags
+__ESBUILD_FLAGS = --log-level=$(ESBUILD_LOGLEVEL) \
+				  --sourcemap --bundle --outdir=$(CURDIR) \
+				  $(ESBUILD_FLAGS)
+
 export PATH := $(shell npm bin):$(PATH)
 
 all: $(TARGETS)
 
-%.map.json: %.out.js
-	tail -n1 $< | tail -c+65 | base64 --decode | jq '.' > $@
-
-# r!browserify --list script.ts -p tsify | xargs -L1 basename | tac
 # script explicitly named, since that is our entry point
-script.out.js: script.ts $(TS_FILES)
-	browserify $< -p tsify --noImplicitAny --debug -o $@
+script.js: script.ts $(TS_FILES)
+	esbuild $< $(__ESBUILD_FLAGS)
+
+watch-esbuild:
+	$(MAKE) ESBUILD_FLAGS+='--watch' ESBUILD_LOGLEVEL=info -B script.js
 
 deps.svg: $(TS_FILES)
 	madge --image $@ $^

@@ -119,7 +119,7 @@ window.default_calendar='~a';"
     ,(include-alt-css "/static/dark.css"  '(title "Dark"))
     ,(include-alt-css "/static/light.css" '(title "Light"))
 
-    (script (@ (src "/static/script.out.js")))
+    (script (@ (src "/static/script.js")))
     (script (@ (src "/static/user/user-additions.js")))
 
     (style ,(lambda () (calendar-styles calendars #t)))

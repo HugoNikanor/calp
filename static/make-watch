@@ -8,15 +8,14 @@ cd "$here" || {
 
 export PATH="$here/node_modules/.bin:$PATH"
 
-# Note that 'tsc --watch' doesn't provide the files we are using. It's
-# just here for debug.
 if [ -n "$TMUX" ]; then
 	tmux new-window "scss --watch -I. style.scss:style.css"
 	tmux new-window "tsc --watch"
 else
 	tmux \
 		 new-session "scss --watch -I. style.scss:style.css" \; \
-		 split-window "tsc --watch" \; \
+		 split-window "tsc --watch --noEmit" \; \
+		 split-window "make watch-esbuild" \; \
 		 rename-session "calp watch" \; \
 		 select-layout even-vertical
 
