@@ -34,7 +34,7 @@ LIMIT_FILES=$(LIMIT:%=--only %)
 # Skip these files when testing
 SKIP=--skip $(PWD)/tests/test/web-server.scm
 
-all: go_files README static $(LOCALIZATIONS)
+all: go_files static $(LOCALIZATIONS)
 	$(MAKE) -C doc/ref
 
 XGETTEXT_FLAGS = --from-code=UTF-8 --add-comments --indent -k_
@@ -71,12 +71,9 @@ install: all
 	$(MAKE) -C static install
 	$(MAKE) -C system install
 	$(MAKE) -C doc/ref install
-	install -m 644 -D -t $(DESTDIR)/usr/share/doc/calp README
+	install -m 644 -D -t $(DESTDIR)/usr/share/doc/calp README.md
 	install -m 755 -D -t $(DESTDIR)/usr/lib/calp/ scripts/tzget
 	install -m755 -D production-main $(DESTDIR)/usr/bin/calp
-
-README: README.in
-	./main text < README.in | sed "s/<<today>>/`date -I`/" > README
 
 lcov.info: $(GO_FILES)
 	env DEBUG=0 tests/run-tests.scm --coverage=$@ $(if $(VERBOSE),--verbose) $(SKIP) $(LIMIT_FILES)
