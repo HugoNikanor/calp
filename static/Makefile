@@ -28,7 +28,7 @@ install: all
 	install -m644 -t $(DESTDIR)/usr/share/calp/www/ $(TARGETS)
 
 clean:
-	rm $(TARGETS)
+	-rm $(TARGETS)
 
 %.css: %.scss
 	scss $(WATCH) -I. $< $@
