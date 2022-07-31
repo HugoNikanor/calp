@@ -25,6 +25,7 @@ watch:
 	./make-watch
 
 install: all
+	install -d $(DESTDIR)/usr/share/calp/www
 	install -m644 -t $(DESTDIR)/usr/share/calp/www/ $(TARGETS)
 
 clean:

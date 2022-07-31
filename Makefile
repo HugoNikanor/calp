@@ -68,7 +68,6 @@ install: all
 	install -d $(DESTDIR)$(GUILE_SITE_DIR)  $(DESTDIR)$(GUILE_CCACHE_DIR)
 	rsync -a module/ $(DESTDIR)$(GUILE_SITE_DIR)
 	rsync -a obj-$(GUILE_VERSION)/ $(DESTDIR)$(GUILE_CCACHE_DIR)
-	install -d $(DESTDIR)/usr/share/calp/www
 	$(MAKE) -C static install
 	$(MAKE) -C system install
 	$(MAKE) -C doc/ref install
