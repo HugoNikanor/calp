@@ -91,7 +91,7 @@ class ComponentBlock extends ComponentVEvent {
 
         if (data.getProperty('rrule') !== undefined) {
             let rep = this.getElementsByClassName('repeating')
-            if (rep && rep.length !== 0) {
+            if (rep.length !== 0) {
                 (rep[0] as HTMLElement).innerText = '↺'
             }
         }

@@ -20,7 +20,7 @@ declare global {
         EDIT_MODE: boolean;
         default_calendar: string;
 
-        addNewEvent: ((e: any) => void);
+        addNewEvent(): void;
     }
 }
 window.vcal_objects = vcal_objects;

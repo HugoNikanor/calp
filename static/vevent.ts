@@ -9,7 +9,7 @@ export {
 
 /* Something which can be redrawn */
 interface Redrawable extends HTMLElement {
-    redraw: ((data: VEvent) => void)
+    redraw(data: VEvent): void
 }
 
 function isRedrawable(x: HTMLElement): x is Redrawable {
@@ -26,7 +26,7 @@ class VEventValue {
     value: any
     parameters: Map<string, any>
 
-    constructor(type: ical_type, value: any, parameters = new Map()) {
+    constructor(type: ical_type, value: any, parameters = new Map) {
         this.type = type;
         this.value = value;
         this.parameters = parameters;
@@ -76,7 +76,7 @@ class VEventValue {
     }
 }
 
-/* maybe ... */
+/* TODO maybe ... */
 class VEventDuration extends VEventValue {
 }
 
@@ -514,7 +514,7 @@ function xml_to_vcal(xml: Element): VEvent {
 
     let property_map: Map<string, VEventValue | VEventValue[]> = new Map;
     if (properties) {
-        property_loop:
+        /* property_loop: */
         for (var i = 0; i < properties.childElementCount; i++) {
             let tag = properties.childNodes[i];
             if (!(tag instanceof Element)) continue;

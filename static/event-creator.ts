@@ -9,11 +9,11 @@ import { ical_type } from './types'
 class EventCreator {
 
     /* Event which we are trying to create */
-    ev: VEvent | null = null;
+    ev?: VEvent
 
     /* Graphical block for event. Only here so we can find its siblings,
        and update pointer events accordingly */
-    event: Element | null = null;
+    event?: Element
 
     event_start: { x: number, y: number } = { x: NaN, y: NaN }
     down_on_event: boolean = false
@@ -160,7 +160,7 @@ class EventCreator {
 
     create_event_finisher(callback: ((ev: VEvent) => void)) {
         let that = this;
-        return function create_event_up(e: MouseEvent) {
+        return function create_event_up(_: MouseEvent) {
             if (!that.ev) return;
 
             /* Restore pointer events for all existing events.
@@ -171,8 +171,8 @@ class EventCreator {
             }
 
             let localevent = that.ev;
-            that.ev = null
-            that.event = null;
+            that.ev = undefined
+            that.event = undefined;
 
             callback(localevent);
 

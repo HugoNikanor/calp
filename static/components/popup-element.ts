@@ -71,10 +71,12 @@ class PopupElement extends ComponentVEvent {
         return ['visible'];
     }
 
-    attributeChangedCallback(name: string, oldValue?: string, newValue?: string) {
+    attributeChangedCallback(name: string, _?: string, newValue?: string) {
         switch (name) {
             case 'visible':
-                this.onVisibilityChange()
+                if (newValue !== null)
+                    /* Only run resize code when showing the popup */
+                    this.onVisibilityChange()
                 break;
         }
     }
@@ -92,6 +94,7 @@ class PopupElement extends ComponentVEvent {
     }
 
     private onVisibilityChange() {
+        console.log('here');
 
         /* TODO better way to find root */
         let root;

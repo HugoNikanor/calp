@@ -24,14 +24,14 @@ class SliderInput extends HTMLElement {
     constructor(min?: number, max?: number, step?: number, value?: number) {
         super();
 
-        this.min = min || parseFloat(this.getAttribute('min') || ""+dflt['min']);
-        this.max = max || parseFloat(this.getAttribute('max') || ""+dflt['max']);
-        this.step = step || parseFloat(this.getAttribute('step') || ""+dflt['step']);
+        this.min = min || parseFloat(this.getAttribute('min') || "" + dflt['min']);
+        this.max = max || parseFloat(this.getAttribute('max') || "" + dflt['max']);
+        this.step = step || parseFloat(this.getAttribute('step') || "" + dflt['step']);
         // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/range#value
         const defaultValue
             = (this.max < this.min)
-            ? this.min
-            : this.min + (this.max - this.min)/2;
+                ? this.min
+                : this.min + (this.max - this.min) / 2;
 
         this.slider = makeElement('input', {
             type: 'range',
@@ -48,8 +48,8 @@ class SliderInput extends HTMLElement {
             value: this.value,
         }) as HTMLInputElement
 
-        this.slider.addEventListener('input', (e) => this.propagate(e));
-        this.textIn.addEventListener('input', (e) => this.propagate(e));
+        this.slider.addEventListener('input', e => this.propagate(e));
+        this.textIn.addEventListener('input', e => this.propagate(e));
 
         /* MUST be after sub components are bound */
         this.value = "" + (value || this.getAttribute('value') || defaultValue);
@@ -64,7 +64,7 @@ class SliderInput extends HTMLElement {
         return ['min', 'max', 'step']
     }
 
-    attributeChangedCallback(name: Attribute, _: string|null, to: string|null): void {
+    attributeChangedCallback(name: Attribute, _?: string, to?: string): void {
         if (to) {
             this.slider.setAttribute(name, to);
             this.textIn.setAttribute(name, to);
@@ -72,7 +72,7 @@ class SliderInput extends HTMLElement {
             this.slider.removeAttribute(name);
             this.textIn.removeAttribute(name);
         }
-        this[name] = parseFloat(to || ""+dflt[name])
+        this[name] = parseFloat(to || "" + dflt[name])
     }
 
     propagate(e: Event) {

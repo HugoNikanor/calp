@@ -49,7 +49,7 @@ class ComponentEdit extends ComponentVEvent {
         // return;
 
         /* Handle calendar dropdown */
-        for (let el of this.getElementsByClassName('calendar-selection')) {
+        for (let el of this.querySelectorAll('select.calendar-selection')) {
             for (let opt of el.getElementsByTagName('option')) {
                 opt.selected = false;
             }
@@ -57,7 +57,7 @@ class ComponentEdit extends ComponentVEvent {
                 (el as HTMLSelectElement).value = data.calendar;
             }
 
-            el.addEventListener('change', (e) => {
+            el.addEventListener('change', e => {
                 let v = (e.target as HTMLSelectElement).selectedOptions[0].value
                 let obj = vcal_objects.get(this.uid)!
                 obj.calendar = v;
@@ -69,9 +69,8 @@ class ComponentEdit extends ComponentVEvent {
         // for (let el of this.getElementsByClassName("interactive")) {
         for (let el of this.querySelectorAll("[data-property]")) {
             // console.log(el);
-            el.addEventListener('input', (e) => {
+            el.addEventListener('input', () => {
                 let obj = vcal_objects.get(this.uid)
-                // console.log(el, e);
                 if (obj === undefined) {
                     throw 'No object with uid ' + this.uid
                 }
@@ -83,7 +82,6 @@ class ComponentEdit extends ComponentVEvent {
                     console.log(el, 'not an HTMLInputElement');
                     return;
                 }
-                // console.log(`obj[${el.dataset.property!}] = `, el.value);
                 obj.setProperty(
                     el.dataset.property!,
                     el.value)

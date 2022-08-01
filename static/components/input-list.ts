@@ -1,7 +1,5 @@
 export { InputList }
 
-/* This file replaces input_list.js */
-
 /*
   TODO allow each item to be a larger unit, possibly containing multiple input
   fields.

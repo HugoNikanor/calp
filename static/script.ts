@@ -6,7 +6,7 @@ import {
 import { vcal_objects, event_calendar_mapping } from './globals'
 import { EventCreator } from './event-creator'
 import { PopupElement, setup_popup_element } from './components/popup-element'
-import { initialize_components } from './elements'
+import { initialize_components } from './components'
 
 /*
   calp specific stuff
