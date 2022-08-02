@@ -14,6 +14,7 @@
                         path-split
                         file-hidden?
                         realpath
+                        relative-to
                         filename-extension)))
 
 (test-equal "when"
@@ -293,6 +294,30 @@
   (with-working-directory
    "/tmp"
    (lambda () (realpath "/home/hugo"))))
+
+
+(test-group "Relative to"
+
+  (test-group "With relative child"
+    (test-equal "/some/path" (relative-to "/some" "path")))
+
+  ;; Relative parent just adds (getcwd) to start of parent,
+  ;; but this is "hard" to test.
+  ;; (test-group "With relative parent")
+
+  (test-group "With absolute child"
+    (test-error 'misc-error (relative-to "" "/some/path"))
+    (test-equal "some/path" (relative-to "/" "/some/path"))
+    (test-group "Without trailing slashes"
+      (test-equal "path" (relative-to "/some" "/some/path"))
+      (test-equal "../path" (relative-to "/some" "/other/path")))
+    (test-group "With trailing slashes"
+      (test-equal "path" (relative-to "/some" "/some/path/"))
+      (test-equal "../path" (relative-to "/some" "/other/path/"))))
+
+  (test-equal "/a/b" (relative-to "/a/b/c" "/a/b"))
+
+  )
 
 
 (test-equal "Extension of simple file"

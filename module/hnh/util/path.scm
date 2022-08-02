@@ -8,7 +8,8 @@
            path-split
            file-hidden?
            filename-extension
-           realpath))
+           realpath
+           relative-to))
 
 (define // file-name-separator-string)
 (define /? file-name-separator?)
@@ -90,3 +91,31 @@
   (if (absolute-file-name? filename)
       filename
       (path-append (getcwd) filename)))
+
+
+(define (relative-to base path)
+  ;; (typecheck base string?)
+  ;; (typecheck path string?)
+
+  (when (string-null? base)
+    (error "Base can't be empty" ))
+
+  (let ((base (if (absolute-file-name? base)
+                  base
+                  (path-append (getcwd) base))))
+
+    (cond ((equal? '("") base) path)
+          ((not (absolute-file-name? path))
+           (path-append base path))
+          (else
+           (let loop ((a (path-split base))
+                      (b (path-split path)))
+             (cond
+              ((null? a) (path-join b))
+              ((null? b) path)
+              ((string=? (car a) (car b)) (loop (cdr a) (cdr b)))
+              (else
+               (path-join
+                (append
+                 (make-list (length a) "..")
+                 (drop b (length a)))))))))))

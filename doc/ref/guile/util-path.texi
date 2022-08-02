@@ -43,3 +43,20 @@ Returns the extension of the filename, or the empty string if none exists.
 Equivalent of realpath(3). Absolute file names are returned as is,
 while relative filenames gets expanded to absolute filenames.
 @end defun
+
+@defun relative-to base path
+Returns @var{path} as a relative path relative to @var{base}.
+
+base must be non-empty
+@example
+(relative-to "/some" "/some/path")
+;; ⇒ "path"
+
+(relative-to "/some" "/other/path/")
+;; ⇒ "../path"
+
+(relative-to "/a/b/c" "/a/b")
+;; ⇒ "/a/b"
+@end example
+
+@end defun
