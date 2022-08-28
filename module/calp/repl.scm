@@ -5,6 +5,7 @@
 (define-module (calp repl)
   :use-module (system repl server)
   :use-module (ice-9 regex)
+  :use-module (ice-9 format)
   :use-module ((calp util hooks) :select (shutdown-hook))
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (calp translation)

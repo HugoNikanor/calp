@@ -163,8 +163,7 @@
                                       next-start: (lambda (d) (date+ d (date day: 7)))
                                       prev-start: (lambda (d) (date- d (date day: 7)))
                                       render-calendar: (@ (calp html view calendar week) render-calendar)
-                                      intervaltype: 'week
-                                      )))))))
+                                      intervaltype: 'week)))))))
 
    (GET "/month/:start-date.html" (start-date html)
         (let ((start-date (start-of-month (parse-iso-date start-date))))

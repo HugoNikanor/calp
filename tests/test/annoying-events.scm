@@ -17,12 +17,9 @@
 ;; TODO remove this
 (define* (event key: summary dtstart dtend)
   (define ev (make-vcomponent 'VEVENT))
-  (set! (prop ev 'SUMMARY)
-    summary
-    (prop ev 'DTSTART)
-    dtstart
-    (prop ev 'DTEND)
-    dtend)
+  (set! (prop ev 'SUMMARY) summary
+        (prop ev 'DTSTART) dtstart
+        (prop ev 'DTEND) dtend)
   ev)
 
 (define start
