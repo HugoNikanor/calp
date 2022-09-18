@@ -17,7 +17,8 @@
 (use-modules (hnh util)
              ((srfi srfi-1) :select (lset-difference))
              (rnrs lists)
-             (module-introspection))
+             (module-introspection)
+             ((static-util) :select (get-forms)))
 
 
 ;;; Module use high scores

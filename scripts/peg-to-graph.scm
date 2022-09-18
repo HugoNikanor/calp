@@ -9,7 +9,8 @@ exec $GUILE -e main -s "$0" "$@"
 
 
 (use-modules ((graphviz) :prefix #{gv:}#)
-             ((module-introspection) :select (get-forms unique-symbols))
+             ((module-introspection) :select (unique-symbols))
+             ((static-util) :select (get-forms))
              (srfi srfi-1)
              (ice-9 match))
 

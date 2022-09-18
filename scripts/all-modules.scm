@@ -5,6 +5,7 @@
   :use-module (ice-9 match)
   :use-module (hnh util path)
   :use-module (module-introspection)
+  :use-module ((static-util) :select (get-forms))
   :export (all-files-and-modules-under-directory
            all-modules-under-directory
            fs-find-base fs-find))

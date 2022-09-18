@@ -25,7 +25,8 @@ exec $GUILE -e main -s "$0" "$@"
              (srfi srfi-71)
              (ice-9 ftw)
              (texinfo string-utils)
-             (module-introspection))
+             (module-introspection)
+             ((static-util) :select (get-forms)))
 
 (define cstat (make-object-property))
 

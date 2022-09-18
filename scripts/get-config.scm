@@ -20,6 +20,8 @@
 
   (all-modules)
   (module-introspection)
+  ((static-util)
+   :select (get-forms))
 
   ((calp translation)
    :select (translate))
