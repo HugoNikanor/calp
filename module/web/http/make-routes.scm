@@ -74,9 +74,10 @@
                           (cdr (iota (1+ (length intersect)))))))))))))
 
 
+
 (define-syntax (make-routes stx)
   (syntax-case stx ()
-    ((_ routes ...)
+    ((_ options-and-routes ...)
      (with-syntax ((r:method   (datum->syntax stx 'r:method))
                    (r:uri      (datum->syntax stx 'r:uri))
                    (r:version  (datum->syntax stx 'r:version))
@@ -96,6 +97,19 @@
                    (state   (datum->syntax stx 'state))
                    )
 
+       (define-values (options routes)
+         (let loop ((options '()) (items #'(options-and-routes ...)))
+           (when (null? items)
+             (scm-error 'misc-error "make-routes"
+                        "Needs at least one route" '() #f))
+           ;; (format #t "options: ~s, items: ~s~%" options items)
+           (let ((kv (syntax->datum (car items))))
+             (if (keyword? kv)
+                 (loop (cons (cons kv (cadr items))
+                             options)
+                       (cddr items))
+                 (values (reverse options) items)))))
+
        ;; Ensures that all regexes are only compiled once.
        ;; Given (GET "/today/" (view date) body ...)
        ;; returns ("/today/" #'*random-symbol* #'(make-regexp "^/today//?$" regexp/icase))
@@ -106,11 +120,10 @@
                    (let ((regex _ (parse-endpoint-string (syntax->datum #'uri))))
                      (list regex (datum->syntax stx (gensym "rx-"))
                            #`(make-regexp #,(string-append "^" regex "/?$") regexp/icase))))))
-              #'(routes ...)))
+              routes))
 
        #`(let #,(map cdr routes-regexes)
            (lambda* (request body optional: state)
-             ;; (format (current-error-port) "~a~%"  request)
              ;; All these bindings generate compile time warnings since the expansion
              ;; of the macro might not use them. This isn't really a problem.
              (let ((r:method  ((@ (web request) request-method)  request))
@@ -137,27 +150,27 @@
                           (current-error-port))
 
                  (call-with-values
-                     (lambda ()
-                       (call/ec
-                        (lambda (return)
-                          (apply
-                           (cond #,@(map (generate-case routes-regexes #'r:method #'r:path) #'(routes ...))
-                                 (else (lambda* _ (return (build-response code: 404)
-                                                          "404 Not Fonud"))))
-                           (append
-                            (parse-query r:query)
+                     (call/ec (lambda (return)
+                                (apply
+                                 (with-throw-handler #t
+                                   (lambda ()
+                                     (cond #,@(map (generate-case routes-regexes #'r:method #'r:path) routes)
+                                           (else (lambda* _ (return (build-response code: 404)
+                                                                    "404 Not Fonud")))))
+                                   #,(assoc-ref options with-throw-handler:))
+                                 (append
+                                  (parse-query r:query)
 
-                            ;; When content-type is application/x-www-form-urlencoded,
-                            ;; decode them, and add it to the argument list
-                            (let ((content-type (assoc-ref r:headers 'content-type)))
-                              (when content-type
-                                (let ((type args (car+cdr content-type)))
-                                  (when (eq? type 'application/x-www-form-urlencoded)
-                                    (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
-                                      (parse-query (bytevector->string body encoding)
-                                                   encoding)))))))))))
+                                  ;; When content-type is application/x-www-form-urlencoded,
+                                  ;; decode them, and add it to the argument list
+                                  (let ((content-type (assoc-ref r:headers 'content-type)))
+                                    (when content-type
+                                      (let ((type args (car+cdr content-type)))
+                                        (when (eq? type 'application/x-www-form-urlencoded)
+                                          (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
+                                            (parse-query (bytevector->string body encoding)
+                                                         encoding))))))))))
 
                    (case-lambda ((headers body new-state) (values headers body new-state))
                                 ((headers body)           (values headers body state))
                                 ((headers)                (values headers "" state))))))))))))
-
