@@ -68,7 +68,7 @@ window.formatters.set('description', async (el, ev, d) => {
 
 window.salar = new Promise((resolve, reject) =>
     fetch('/static/user/salar.json')
-    .then(resp => { if (! resp.ok) reject("404"); else resp.json() })
+    .then(resp => ! resp.ok ? reject("404") : resp.json())
     .then(d => resolve(d))
     .catch(err => reject(err))
 )
