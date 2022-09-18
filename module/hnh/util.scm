@@ -55,6 +55,12 @@
            assq-ref-all
            assv-ref-all
 
+           uniqx
+           uniq
+           univ
+           uniqv
+           unique
+
            vector-last
 
            ->string
@@ -505,6 +511,19 @@
 (define (assq-ref-all alist key)  (ass%-ref-all alist key eq?))
 (define (assv-ref-all alist key)  (ass%-ref-all alist key eqv?))
 
+
+(define (uniqx = lst)
+  (cond ((null? lst) lst)
+        ((null? (cdr lst)) lst)
+        ((and (pair? lst)
+              (= (car lst) (cadr lst)))
+         (uniqx = (cons (car lst) (cddr lst))))
+        (else (cons (car lst)
+                    (uniqx = (cdr lst))))))
+
+(define (uniq lst) (uniqx eq? lst))
+(define (univ lst) (uniqx eqv? lst))
+(define (unique lst) (uniqx equal? lst))
 
 
 
