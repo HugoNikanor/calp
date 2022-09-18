@@ -6,8 +6,19 @@ XDG_CONFIG_HOME
 Liknande för cache, genererade filer, med mera
 Både när programmet körs som användare och som systemtjänst.
 
+Byt lagringsplats för kalenderfiler
+-----------------------------------
+~/.local/var/cal
+borde vara ~/.local/share/cal
+kanske...
+
+Kalenderfilerna "tillhör" inte det här programmet...
+
 HTML
 ====
+
+Vallidering att DTEND > DTSTART
+-------------------------------
 
 Mycket små events
 -----------------
@@ -45,6 +56,22 @@ Vid utmatning av en VCALENDAR måste dock alla använda tidszoner redovisas.
 Antingen:
 - spara undan de inlästa, eller
 - generera nya from tzdb.
+
+
+quoted-string i params
+----------------------
+	LOCATION;ALTREP="https://old.liu.se/karta/?l=sv&px_type=2&px_id=399":Ada Lovelace
+Bör tolkas som
+	key: LOCATION
+	params:
+	  ALTREP: https://old.liu.se/karta/?l=sv&px_type=2&px_id=399
+	value: Ada Lovelace
+Men tolkas för nuvarande som
+	key: LOCATION
+	params:
+		ALTREP: HTTPS
+	value: //old.liu.se/karta/?l=sv&px_type=2&px_id=399":Ada Lovelace
+
 
 
 Text
