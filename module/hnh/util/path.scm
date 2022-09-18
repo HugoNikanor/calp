@@ -16,6 +16,7 @@
 
 (define path-absolute? absolute-file-name?)
 
+;; TODO remove intermidiate period components
 (define (path-append . strings)
   (fold (lambda (s done)
           (string-append

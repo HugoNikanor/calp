@@ -8,7 +8,9 @@
   :use-module ((static-util) :select (get-forms))
   :export (all-files-and-modules-under-directory
            all-modules-under-directory
-           fs-find-base fs-find))
+           fs-find-base fs-find
+           module-file-mapping
+           ))
 
 (define (fs-find dir)
   (define files '())
@@ -43,3 +45,11 @@ level modules in those files"
   (values
    (map car pairs)
    (filter identity (map cadr pairs))))
+
+;; Returns an association list from module names the modules
+;; containing filename
+(define (module-file-mapping dir)
+  (filter
+   car
+   (map (lambda (pair) (cons (cadr pair) (car pair)))
+        (all-files-and-modules-under-directory dir))))
