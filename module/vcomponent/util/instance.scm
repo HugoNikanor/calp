@@ -1,4 +1,5 @@
 (define-module (vcomponent util instance)
+  :use-module (srfi srfi-88)
   :use-module (hnh util)
   :use-module (calp translation)
   :use-module ((vcomponent util instance methods) :select (make-instance))
@@ -14,6 +15,6 @@
 (define-once global-event-object
   (make-instance ((@ (vcomponent config) calendar-files))))
 
-(define (reload)
-  (begin (set! global-event-object (make-instance ((@ (vcomponent config) calendar-files))))
+(define* (reload optional: (files ((@ (vcomponent config) calendar-files))))
+  (begin (set! global-event-object (make-instance files))
          (format (current-error-port) (_ "Reload done~%"))))
