@@ -32,7 +32,7 @@ window.formatters.set('description', async (el, ev, d) => {
             idx = match.index + match[0].length
         }
         children.push(d.substring(idx));
-	el.replaceChildren(...children);
+        el.replaceChildren(...children);
     } else if (/<\/?\w+( +\w+(=["']?\w+["']?)?)* *\/?>/.exec(d)) {
         /* Assume that the text is HTML if it contains something which looks
            like an HTML tag */
@@ -73,32 +73,36 @@ window.salar = new Promise((resolve, reject) =>
     .catch(err => reject(err))
 )
 
-
 window.formatters.set('location', async function(el, _, d) {
-    let rx = /Lokal: (.*)/
-    let m = rx.exec(d)
-    if (! m) {
-        el.textContent = d;
-        return;
-    }
+    let salar;
 
     try {
-        let salar = await window.salar;
+        salar = await window.salar;
     } catch (e) {
         console.warn("Location formatter failed", e);
         return;
     }
 
-    let name = m[1]
-    let frag = salar[name];
-    if (frag) {
-        let anch = document.createElement('a');
-        anch.href = `https://old.liu.se/karta/${frag}`
-        anch.target = '_blank'
-        anch.textContent = name;
-        el.append('Lokal: ');
-        el.append(anch);
-    } else {
-        el.textContent = `Lokal: ${name}`
+    let rx = /Lokal: ([A-Za-z0-9]*)?/g
+
+    let idx = 0;
+    let children = []
+    for (let match of d.matchAll(rx)) {
+        children.push(d.substring(idx, match.index))
+        let name = match[1]
+        let frag = salar[name.toUpperCase()];
+        if (frag) {
+            let anch = document.createElement('a');
+            anch.href = `https://old.liu.se/karta/${frag}`
+            anch.target = '_blank'
+            anch.textContent = name;
+            children.push('Lokal: ');
+            children.push(anch);
+        } else {
+            children.push(`Lokal: ${name}`)
+        }
+        idx = match.index + match[0].length
     }
+    children.push(d.substring(idx));
+    el.replaceChildren(...children)
 })
