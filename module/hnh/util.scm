@@ -326,7 +326,9 @@
     (for value in lst
          (let ((key (proc value)))
            (hash-set! h key (cons value (hash-ref h key '())))))
-    ;; NOTE changing this list to cons allows the output to work with assq-merge.
+    ;; TODO change this 'list' to 'cons'.
+    ;; It will give a "proper" alist, and also allows the output to work
+    ;; with assq-merge
     (hash-map->list list h)))
 
 ;; (split-by '(0 1 2 3 4 2 5 6) 2)
