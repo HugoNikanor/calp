@@ -16,8 +16,7 @@
   :export (main)
   )
 
-;; (define %summary "")
-(define %include-in-guild-list #t)
+(define %summary "List imports, and how many are used.")
 (define %synopsis "module-imports filename")
 
 ;;; Module use high scores
@@ -36,6 +35,7 @@
   ;; (format #t "~y" (find-module-declaration forms))
   ;; (format #t "~a~%" symbs)
 
+  ;; TODO parameterize this to a command line argument
   (define skip-list '((guile)
                       (guile-user)
                       (srfi srfi-1)

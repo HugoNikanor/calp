@@ -11,6 +11,8 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (ice-9 ftw)
+  :use-module (ice-9 curried-definitions)
+  :use-module (ice-9 format)
   :use-module (texinfo string-utils)
   :use-module (hnh module-introspection)
   :use-module ((hnh module-introspection static-util) :select (get-forms))
@@ -44,12 +46,9 @@
 (define (regular-file? filename)
   (eq? 'regular (stat:type (cstat filename))))
 
-(define (filename-extension? ext)
-  (let ((re (make-regexp (string-append ((@ (texinfo string-utils)
-                                            escape-special-chars)
-                                         ext "^$[]()*." #\\)
-                                        "$") regexp/icase)))
-    (lambda (filename) (regexp-exec re filename))))
+;; Does @var{filename} have the extension @var{ext}?
+(define ((filename-extension? ext) filename)
+  (string=? ext (filename-extension filename)))
 
 
 (define (main . args)
@@ -64,32 +63,36 @@
   (define edges
    (concatenate
     (map (lambda (file)
-           (define forms (call-with-input-file file get-forms))
-           (define module (and=> (-> forms find-module-declaration) resolve-module))
-           (define source-symbols (unique-symbols forms))
+           (catch #t
+            (lambda ()
+              (define forms (call-with-input-file file get-forms))
+              (define module (and=> (-> forms find-module-declaration) resolve-module))
+              (define source-symbols (unique-symbols forms))
 
-           (when module
-             (awhen (find (lambda (module)
-                            (equal? target-module
-                                    (module-name module)))
-                          (module-uses module))
-                    (let ((module-symbols (module-map (lambda (key value) key) it)))
-                      ;; (display "    ")
-                      (map (lambda (symb)
-                             (cons file symb))
-                           (lset-intersection eq? source-symbols module-symbols))
-                      )))
-           )
+              (when module
+                (awhen (find (lambda (module)
+                               (equal? target-module
+                                       (module-name module)))
+                             (module-uses module))
+                       (let ((module-symbols (module-map (lambda (key value) key) it)))
+                         ;; (display "    ")
+                         (map (lambda (symb)
+                                (cons file symb))
+                              (lset-intersection eq? source-symbols module-symbols))
+                         ))))
+            ;; TODO many of these errors are due to the 'prefix and 'postfix
+            ;;      read options being set for modules which expect them to be off.
+            (lambda (err proc fmt args data)
+              (format (current-error-port)
+                      "ERROR when reading ~a: ~a in ~a: ~?~%" file err proc fmt args)
+              '())))
+
          (delete target-file
-                 (filter (filename-extension? ".scm")
+                 (filter (filename-extension? "scm")
                          (filter regular-file?
                                  (append-map (lambda (module-dir)
                                                (find-all-files-under module-dir))
-                                             ;; TODO this should be %load-path, but get-forms claims
-                                             ;;      some files contains invalid syntax.
-                                             #; %load-path
-                                             '("module")
-                                             )))))))
+                                             %load-path)))))))
 
 
   (define file-uses (make-hash-table))
