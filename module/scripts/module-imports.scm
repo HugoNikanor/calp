@@ -1,7 +1,3 @@
-#!/usr/bin/guile \
--e main -s
-!#
-
 ;;; Commentary:
 ;;;
 ;;; Scripts which finds unused imports in each file.
@@ -11,22 +7,24 @@
 ;;;
 ;;; Code:
 
-(add-to-load-path (string-append (dirname (dirname (current-filename))) "/module"))
-(add-to-load-path (dirname (current-filename)))
+(define-module (scripts module-imports)
+  :use-module ((srfi srfi-1) :select (lset-difference))
+  :use-module ((rnrs lists) :select (remp filter partition))
+  :use-module ((hnh module-introspection) :select (module-declaration? unique-symbols))
+  :use-module ((hnh module-introspection static-util) :select (get-forms))
+  :use-module ((hnh module-introspection module-uses) :select (module-uses*))
+  :export (main)
+  )
 
-(use-modules ((srfi srfi-1) :select (lset-difference))
-             ((rnrs lists) :select (remp filter partition))
-             ((module-introspection) :select (module-declaration? unique-symbols))
-             ((static-util) :select (get-forms))
-             ((module-uses) :select (module-uses*))
-             )
-
+;; (define %summary "")
+(define %include-in-guild-list #t)
+(define %synopsis "module-imports filename")
 
 ;;; Module use high scores
 ;;; $ grep -Ho '#\?:use-module' -R module | uniq -c | sort -n
 
-(define (main args)
-  (define filename (cadr args))
+(define (main . args)
+  (define filename (car args))
   (define-values (module-declaration-list forms)
     (partition module-declaration?
                (reverse (call-with-input-file filename get-forms))))

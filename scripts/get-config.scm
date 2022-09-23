@@ -8,8 +8,7 @@
 ;;; Code:
 
 
-(add-to-load-path "module")
-(add-to-load-path "scripts")
+(add-to-load-path (string-append (dirname (dirname (current-filename))) "/module"))
 
 (use-modules
   (hnh util)
@@ -18,9 +17,9 @@
   (srfi srfi-1)
   (srfi srfi-88)
 
-  (all-modules)
-  (module-introspection)
-  ((static-util)
+  (hnh module-introspection all-modules)
+  (hnh module-introspection module-introspection)
+  ((hnh module-introspection static-util)
    :select (get-forms))
 
   ((calp translation)

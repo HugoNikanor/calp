@@ -1,11 +1,11 @@
-(define-module (all-modules)
+(define-module (hnh module-introspection all-modules)
   :use-module (ice-9 regex)
   :use-module (srfi srfi-1)
   :use-module (ice-9 ftw)
   :use-module (ice-9 match)
   :use-module (hnh util path)
-  :use-module (module-introspection)
-  :use-module ((static-util) :select (get-forms))
+  :use-module (hnh module-introspection)
+  :use-module ((hnh module-introspection static-util) :select (get-forms))
   :export (all-files-and-modules-under-directory
            all-modules-under-directory
            fs-find-base fs-find

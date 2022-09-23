@@ -1,4 +1,4 @@
-(define-module (module-uses)
+(define-module (hnh module-introspection module-uses)
   :use-module (ice-9 match)
   :export (module-uses*))
 

@@ -1,9 +1,3 @@
-#!/usr/bin/env bash
-GUILE=${GUILE:-guile}
-set -x
-exec $GUILE -e main -s "$0" "$@"
-!#
-
 ;;; Commentary:
 ;;;
 ;;; For a given module in the project, finds all other modules who uses that
@@ -11,25 +5,21 @@ exec $GUILE -e main -s "$0" "$@"
 ;;;
 ;;; Code:
 
-(define module-dir (string-append
-                    (dirname (dirname (current-filename)))
-                    "/module"))
+(define-module (scripts module-dependants)
+  :use-module (hnh util)
+  :use-module (hnh util path)
+  :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
+  :use-module (ice-9 ftw)
+  :use-module (texinfo string-utils)
+  :use-module (hnh module-introspection)
+  :use-module ((hnh module-introspection static-util) :select (get-forms))
+  :export (main))
 
-(add-to-load-path module-dir)
-(add-to-load-path (dirname (current-filename)))
-
-
-(use-modules (hnh util)
-             (hnh util path)
-             (srfi srfi-1)
-             (srfi srfi-71)
-             (ice-9 ftw)
-             (texinfo string-utils)
-             (module-introspection)
-             ((static-util) :select (get-forms)))
+(define %summary "Print all modules which depend on module specified in target file.")
+(define %synopsis "module-dependants TARGET-FILE")
 
 (define cstat (make-object-property))
-
 
 (define (find-all-files-under directory)
   (file-system-fold
@@ -62,8 +52,8 @@ exec $GUILE -e main -s "$0" "$@"
     (lambda (filename) (regexp-exec re filename))))
 
 
-(define (main args)
-  (define target-file (realpath (cadr args)))
+(define (main . args)
+  (define target-file (realpath (car args)))
   (define target-forms
     (reverse (call-with-input-file target-file get-forms)))
   (define target-module
@@ -93,7 +83,13 @@ exec $GUILE -e main -s "$0" "$@"
          (delete target-file
                  (filter (filename-extension? ".scm")
                          (filter regular-file?
-                                 (find-all-files-under module-dir)))))))
+                                 (append-map (lambda (module-dir)
+                                               (find-all-files-under module-dir))
+                                             ;; TODO this should be %load-path, but get-forms claims
+                                             ;;      some files contains invalid syntax.
+                                             #; %load-path
+                                             '("module")
+                                             )))))))
 
 
   (define file-uses (make-hash-table))

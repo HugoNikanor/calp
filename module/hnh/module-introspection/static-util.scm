@@ -1,4 +1,4 @@
-(define-module (static-util)
+(define-module (hnh module-introspection static-util)
   :export (get-forms))
 
 (define (get-forms port)

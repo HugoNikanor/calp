@@ -16,7 +16,6 @@ fi
 
 (define here (dirname (current-filename)))
 (use-modules (hnh util path))
-(add-to-load-path (path-append (dirname here) "scripts"))
 
 (use-modules (srfi srfi-1)
              (srfi srfi-64)
@@ -34,7 +33,7 @@ fi
                        close-pipe))
              ((ice-9 rdelim) :select (read-string))
              (system vm coverage)
-             ((all-modules) :select (fs-find))
+             ((hnh module-introspection all-modules) :select (fs-find))
              )
 
 

@@ -1,4 +1,4 @@
-(define-module (module-introspection)
+(define-module (hnh module-introspection)
   :use-module (srfi srfi-1)
   :use-module (hnh util)
   :export (unique-symbols

@@ -6,7 +6,7 @@
 ;;; `c' to clear screen, `q' to quit.
 ;;; Code:
 
-(add-to-load-path "module")
+(add-to-load-path (string-append (dirname (dirname (current-filename))) "/module"))
 (use-modules (vulgar))
 
 (define chrlist '())
