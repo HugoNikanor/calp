@@ -275,7 +275,7 @@
                       ;; technical dept.
                       (scm-error 'misc-error "parse-zic-file"
                                  (G_ "Invalid key ~s. Note that leap seconds and expries rules aren't yet implemented.")
-                                 (list type)
+                                 (list (car tokens))
                                  #f)))]))))))
 
 

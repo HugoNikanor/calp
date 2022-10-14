@@ -40,7 +40,7 @@
                        (unique-symbols (list body)))))))
 
 (define (main . args)
-  (define options (getopt-long (cons "peg-to-graph" argrs)
+  (define options (getopt-long (cons "peg-to-graph" args)
                                (getopt-opt option-spec)))
   (define engine (option-ref options 'engine "dot"))
   (define output-file (option-ref options 'output "lex2.pdf"))

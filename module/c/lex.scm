@@ -65,15 +65,15 @@
 (define-peg-pattern char all
   (and (ignore "'") (or escaped-char peg-any) (ignore "'")))
 
+;; whitespace
+(define-peg-pattern ws none
+  (or " " "	" "\n"))
+
 
 (define-peg-pattern* operator all
   `(or ,@(map symbol->string symbol-binary-operators)
        ,@(map (lambda (op) `(and ,(symbol->string op) ws))
               wordy-binary-operators)))
-
-;; whitespace
-(define-peg-pattern ws none
-  (or " " "	" "\n"))
 
 ;; space (for when whitespace is optional)
 (define-peg-pattern sp none (* ws))
