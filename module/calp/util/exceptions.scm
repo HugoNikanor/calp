@@ -4,6 +4,6 @@
   :use-module (hnh util exceptions))
 
 (define-config warnings-are-errors #f
-  description: (_ "Crash on warnings.")
+  description: (G_ "Crash on warnings.")
   post: (@ (hnh util exceptions) warnings-are-errors)
   )

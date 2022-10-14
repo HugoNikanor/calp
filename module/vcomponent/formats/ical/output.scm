@@ -96,7 +96,7 @@
       (get-writer 'TEXT)]
 
      [else
-      (warning (_ "Unknown key ~a") key)
+      (warning (G_ "Unknown key ~a") key)
       (get-writer 'TEXT)]))
 
   (catch #t #; 'wrong-type-arg

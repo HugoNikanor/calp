@@ -11,7 +11,7 @@
 ;; Not the most robust test, but at least it shows us when we break something
 (test-equal "Whole fucking caltable"
   `(div (@ (class "small-calendar"))
-        (div (@ (class "column-head row-head")) ,(_ "v."))
+        (div (@ (class "column-head row-head")) ,(G_ "v."))
         (div (@ (class "column-head")) "Må")
         (div (@ (class "column-head")) "Ti")
         (div (@ (class "column-head")) "On")

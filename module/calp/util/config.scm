@@ -19,7 +19,7 @@
        args))
 
 (define %configuration-error
-  (_ "Pre-property failed when setting ~s to ~s"))
+  (G_ "Pre-property failed when setting ~s to ~s"))
 
 (define-syntax-rule (define-once-public symbol binding)
   (begin (define-once symbol binding)
@@ -27,7 +27,7 @@
 
 (define-syntax (define-config stx)
   (syntax-case stx ()
-    ((_ name default kw ...)
+    ((G_ name default kw ...)
      (let ((pre  (cond ((memv pre:  (fix-keywords #'(kw ...))) => cadr) (else #f)))
            (post (cond ((memv post: (fix-keywords #'(kw ...))) => cadr) (else #f))))
        #`(define-once-public name

@@ -26,25 +26,25 @@
          errors has-query? search-term search-result page paginator)
   (xhtml-doc
    (@ (lang sv))
-   (head (title ,(_ "Search results"))
+   (head (title ,(G_ "Search results"))
          ,(include-css "/static/style.css"))
    (body
-    (a (@ (href ("/today"))) ,(_ "Show today"))
-    (h2 ,(_ "Search term"))
+    (a (@ (href ("/today"))) ,(G_ "Show today"))
+    (h2 ,(G_ "Search term"))
     (form
      (pre (textarea (@ (name "q") (rows 5) (spellcheck false)
                        (style "width:100%"))
                     ,(when has-query?
                        (with-output-to-string
                          (lambda () (pretty-print search-term))))))
-     (label (@ (for "onlyfuture")) ,(_ "limit to future occurences"))
+     (label (@ (for "onlyfuture")) ,(G_ "limit to future occurences"))
      (input (@ (name "onlyfuture") (id "onlyfuture") (type checkbox)))
      (input (@ (type submit))))
     ,@(if errors
-          `((h2 ,(_ "Error searching"))
+          `((h2 ,(G_ "Error searching"))
             (div (@ (class "error"))
                  (pre ,errors)))
-          `((h2 ,(format #f (_ "Result (page ~a)") page))
+          `((h2 ,(format #f (G_ "Result (page ~a)") page))
             (ul ,@(compact-event-list search-result))
             (div (@ (class "paginator"))
                  ,@(paginator->list

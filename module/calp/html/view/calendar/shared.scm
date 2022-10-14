@@ -36,7 +36,7 @@
 
   (unless event-length-key
     (scm-error 'wrong-type-arg "fix-event-widths!"
-               (_ "event-length-key is required")
+               (G_ "event-length-key is required")
                #f #f))
 
   ;; @var{x} is how for left in the container we are.

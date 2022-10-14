@@ -12,9 +12,9 @@
 (define opt-spec
   `((from (value #t) (single-char #\F))
     (to (value #t) (single-char #\T)
-        (description ,(_ "Returns all elements between these two dates.")))
+        (description ,(G_ "Returns all elements between these two dates.")))
     (help (single-char #\h)
-          (description ,(_ "Print this help.")))))
+          (description ,(G_ "Print this help.")))))
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt opt-spec)))

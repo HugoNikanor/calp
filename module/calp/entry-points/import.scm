@@ -16,11 +16,11 @@
 
 (define options
   `((calendar (value #t) (single-char #\c)
-              (description ,(_ "Name of calendar to import into")))
+              (description ,(G_ "Name of calendar to import into")))
     (file (value #t) (single-char #\f)
-          (description ,(_ "ics file to import")))
+          (description ,(G_ "ics file to import")))
     (help (single-char #\h)
-          (description ,(_ "Print this help.")))))
+          (description ,(G_ "Print this help.")))))
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt options)))
@@ -39,18 +39,18 @@
                      (get-calendars global-event-object)))))
 
     (unless calendar
-      (format (current-error-port) (_ "No calendar named ~s~%") cal-name)
+      (format (current-error-port) (G_ "No calendar named ~s~%") cal-name)
       (throw 'return))
 
     (let ((new-events (parse-cal-path fname)))
 
-      (format #t (_ "About to import the following ~a events into ~a~%")
+      (format #t (G_ "About to import the following ~a events into ~a~%")
               (length (children new-events))
               (prop calendar 'NAME))
       (format #t "~{~a~^~%~}~%"
               (map (extract 'SUMMARY) (children new-events)))
 
-      (format #t (_ "Continue? [Y/n] "))
+      (format #t (G_ "Continue? [Y/n] "))
 
       (let loop ((line (read-line)))
         (case (if (string-null? line) 'yes (yes-no-check line))

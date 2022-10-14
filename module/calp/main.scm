@@ -35,11 +35,11 @@
 
 (define options
   `((statprof (value display-style)
-              (description ,(xml->sxml (_ "<group>Run the program within Guile's built in statical
+              (description ,(xml->sxml (G_ "<group>Run the program within Guile's built in statical
 profiler. Display style is one of <b>flat</b> or <b>tree</b>.</group>"))))
     (repl (value address)
           (description
-           ,(xml->sxml (_ "<group>Start a Guile repl which can be connected to, defaults to the
+           ,(xml->sxml (G_ "<group>Start a Guile repl which can be connected to, defaults to the
 unix socket <i>/run/user/${UID}/calp-${PID}</i>, but it can be bound to any
 unix or TCP socket. ((@ (vcomponent util instance) global-event-object)) should
 contain all events.
@@ -48,22 +48,22 @@ contain all events.
 
     (config (value #t)
             (description
-             ,(_ "Path to alterantive configuration file to load instead of the default one.")))
+             ,(G_ "Path to alterantive configuration file to load instead of the default one.")))
 
     (debug (single-char #\d)
            (description
-            ,(_ "Turns on debug mode for HTML output")))
+            ,(G_ "Turns on debug mode for HTML output")))
 
     (edit-mode
      (description
-      ,(_ "Makes generated HTML user editable (through JS)")))
+      ,(G_ "Makes generated HTML user editable (through JS)")))
 
     (version (single-char #\v)
-             (description ,(format #f (_ "Display version, which is ~a btw.")
+             (description ,(format #f (G_ "Display version, which is ~a btw.")
                                    (@ (calp) version))))
 
     (help (single-char #\h)
-          (description ,(_ "Print this help")))
+          (description ,(G_ "Print this help")))
 
     ))
 
@@ -73,30 +73,30 @@ contain all events.
     "<group><br/>
 <center><b>" "Calp" "</b></center>
 <br/><br/>
-" (_ "Usage: <b>calp</b> [ <i>flags</i> ] <i>mode</i> [ <i>mode flags</i> ]") "<br/>
+" (G_ "Usage: <b>calp</b> [ <i>flags</i> ] <i>mode</i> [ <i>mode flags</i> ]") "<br/>
 <hr/>"
 ;; Header for following list of modes of operation
-    "<center><b>" (_ "Modes") "</b></center>
+    "<center><b>" (G_ "Modes") "</b></center>
 <br/><br/>"
-    (_ "<p><b>html</b> reads calendar files from disk, and writes them to static HTML files.</p>")
-    (_ "<p><b>terminal</b> loads the calendars, and starts an interactive terminal interface.</p>")
-    (_ "[UNTESTED]<br/><p><b>import</b>s a calendar object into the database.</p>")
-    (_ "<p><b>text</b> formats and justifies what it's given on standard input,
+    (G_ "<p><b>html</b> reads calendar files from disk, and writes them to static HTML files.</p>")
+    (G_ "<p><b>terminal</b> loads the calendars, and starts an interactive terminal interface.</p>")
+    (G_ "[UNTESTED]<br/><p><b>import</b>s a calendar object into the database.</p>")
+    (G_ "<p><b>text</b> formats and justifies what it's given on standard input,
 and writes it to standard output. Similar to this text.</p>")
-    (_ "<p><b>ical</b> loads the calendar database, and immediately
+    (G_ "<p><b>ical</b> loads the calendar database, and immediately
 re-serializes it back into iCAL format. Useful for merging calendars.</p>")
-    (_ "<p><b>benchmark</b> <i>module</i><br/>Runs the procedure 'run-benchmark'
+    (G_ "<p><b>benchmark</b> <i>module</i><br/>Runs the procedure 'run-benchmark'
 from the module (calp benchmark <i>module</i>).</p>")
-    (_ "<p><b>server</b> starts an HTTP server which dynamically loads and
+    (G_ "<p><b>server</b> starts an HTTP server which dynamically loads and
 displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs
 the same output code as <b>html</b>. While the <i>/calendar/{uid}.ics</i> uses
 the same code as <b>ical</b>.</p>")
-    (_ "<p><b>update-zoneinfo</b> in theory downloads and updates our local
+    (G_ "<p><b>update-zoneinfo</b> in theory downloads and updates our local
 zoneinfo database, but is currently broken.</p>")
     "<hr/><br/>"
     ;; Header for list of available flags.
     ;; Actual list is auto generated elsewhere.
-    "<center><b>" (_ "Flags") "</b></center>
+    "<center><b>" (G_ "Flags") "</b></center>
 <br/></group>")))
 
 (define (ornull a b)
@@ -115,7 +115,7 @@ zoneinfo database, but is currently broken.</p>")
                altconfig
                (scm-error 'misc-error
                           "wrapped-main"
-                          (_ "Configuration file ~a missing")
+                          (G_ "Configuration file ~a missing")
                           (list altconfig)
                           #f))]
          ;; altconfig could be placed in the list below. But I want to raise an error
@@ -141,7 +141,7 @@ zoneinfo database, but is currently broken.</p>")
               ;; Two arguments:
               ;; Configuration file path,
               ;; thrown error arguments
-              (_ "Failed loading config file ~a~%~s~%")
+              (G_ "Failed loading config file ~a~%~s~%")
               config-file
               args
               )))
@@ -162,7 +162,7 @@ zoneinfo database, but is currently broken.</p>")
          (throw 'return))
 
   (when (option-ref opts 'version #f)
-    (format #t (_ "Calp version ~a~%") (@ (calp) version))
+    (format #t (G_ "Calp version ~a~%") (@ (calp) version))
     (throw 'return))
 
   ;; always load zoneinfo if available.
@@ -194,7 +194,7 @@ zoneinfo database, but is currently broken.</p>")
        ((update-zoneinfo) (@ (calp entry-points update-zoneinfo) main))
        (else => (lambda (s)
                   (format (current-error-port)
-                          (_ "Unsupported mode of operation: ~a~%")
+                          (G_ "Unsupported mode of operation: ~a~%")
                           s)
                   (exit 1))))
      ropt))
@@ -209,7 +209,7 @@ zoneinfo database, but is currently broken.</p>")
 
 
 (define (main args)
-  ((@ (calp util time) report-time!) (_ "Program start"))
+  ((@ (calp util time) report-time!) (G_ "Program start"))
   (with-throw-handler #t
     (lambda ()
       (dynamic-wind (lambda () 'noop)

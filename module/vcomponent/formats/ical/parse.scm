@@ -14,6 +14,9 @@
   :use-module (calp translation)
   :export (parse-calendar))
 
+;;; TODO a few translated strings here contain explicit newlines. Check if that
+;;;      is preserved through the translation.
+
 (define string->symbol
   (let ((ht (make-hash-table 1000)))
     (lambda (str)
@@ -124,7 +127,7 @@
       (let ((vv (parser params value)))
         (when (list? vv)
           (scm-error 'parse-error "enum-parser"
-                     (_ "List in enum field")
+                     (G_ "List in enum field")
                      #f #f))
         (let ((v (string->symbol vv)))
           (unless (memv v enum)
@@ -160,7 +163,7 @@
            (lambda (params value)
              (let ((v ((get-parser 'TEXT) params value)))
                (unless (= 1 (length v))
-                 (warning (_ "List in non-list field: ~s") v))
+                 (warning (G_ "List in non-list field: ~s") v))
                (string-join v ",")))]
 
           ;; TEXT, but allow a list
@@ -198,7 +201,7 @@
 
           [(memv key '(REQUEST-STATUS))
            (scm-error 'parse-error "build-vline"
-                      (_ "TODO Implement REQUEST-STATUS")
+                      (G_ "TODO Implement REQUEST-STATUS")
                       #f #f)]
 
           [(memv key '(ACTION))
@@ -233,7 +236,7 @@
            (compose car (get-parser 'TEXT))]
 
           [else
-           (warning (_ "Unknown key ~a") key)
+           (warning (G_ "Unknown key ~a") key)
            (compose car (get-parser 'TEXT))])))
 
     ;; If we produced a list create multiple VLINES from it.
@@ -286,7 +289,7 @@
                         ;; ~?
                         ;; source line
                         ;; source file
-                        (_ "WARNING parse error around ~a
+                        (G_ "WARNING parse error around ~a
   ~?
   line ~a ~a~%")
                         (get-string linedata)
@@ -341,7 +344,7 @@
                           ;; ~?
                           ;; source line
                           ;; source file
-                          (_ "ERROR parse error around ~a
+                          (G_ "ERROR parse error around ~a
   ~?
   line ~a ~a
   Defaulting to string~%")

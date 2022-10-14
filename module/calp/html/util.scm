@@ -33,6 +33,6 @@
                       #xFF))
             "#000000" "#FFFFFF")))
     (lambda args
-      (format (current-error-port) (_ "Error calculating foreground color?~%~s~%") args)
+      (format (current-error-port) (G_ "Error calculating foreground color?~%~s~%") args)
       "#FF0000"
       )))

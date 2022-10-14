@@ -17,4 +17,4 @@
 
 (define* (reload optional: (files ((@ (vcomponent config) calendar-files))))
   (begin (set! global-event-object (make-instance files))
-         (format (current-error-port) (_ "Reload done~%"))))
+         (format (current-error-port) (G_ "Reload done~%"))))

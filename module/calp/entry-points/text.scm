@@ -12,11 +12,11 @@
 
 (define options
   `((width (value #t) (single-char #\w)
-           (description ,(_ "Width of written text, defaults to 70 chars.")))
+           (description ,(G_ "Width of written text, defaults to 70 chars.")))
     (file (value #t) (single-char #\f)
-          (description ,(xml->sxml (_ "<group>Read from <i>file</i> instead of standard input.</group>"))))
+          (description ,(xml->sxml (G_ "<group>Read from <i>file</i> instead of standard input.</group>"))))
     (help (single-char #\h)
-          (description ,(_ "Prints this help.")))))
+          (description ,(G_ "Prints this help.")))))
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt options)))

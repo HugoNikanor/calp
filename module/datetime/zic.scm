@@ -186,7 +186,7 @@
                           day:   (string->number day))
               time: (timespec-time timespec)
               tz: (case (timespec-type timespec)
-                    [(#\s) (warning (_ "what even is \"Standard time\"‽")) ""]
+                    [(#\s) (warning (G_ "what even is \"Standard time\"‽")) ""]
                     [(#\w) #f]
                     ;; Since we might represent times before UTC existed
                     ;; this is a bit of a lie. But it should work.
@@ -274,7 +274,7 @@
                       ;; They were removed since they were unused, uneeded, and was
                       ;; technical dept.
                       (scm-error 'misc-error "parse-zic-file"
-                                 (_ "Invalid key ~s. Note that leap seconds and expries rules aren't yet implemented.")
+                                 (G_ "Invalid key ~s. Note that leap seconds and expries rules aren't yet implemented.")
                                  (list type)
                                  #f)))]))))))
 
@@ -316,7 +316,7 @@
                          (target (link-target link))
                          (target-item (hash-ref zones target #f)))
                     (if (not target-item)
-                        (warning (_ "Unresolved link, target missing ~a -> ~a") name target)
+                        (warning (G_ "Unresolved link, target missing ~a -> ~a") name target)
                         (hash-set! zones name target-item))))
                 (car it)))
 
@@ -355,7 +355,7 @@
                  (set (day d) base-day))))
      tz: (case (timespec-type (rule-at rule))
            ((#\w) #f)
-           ((#\s) (warning (_ "what even is \"Standard time\"‽")) #f)
+           ((#\s) (warning (G_ "what even is \"Standard time\"‽")) #f)
            ((#\u #\g #\z) "UTC"))))
 
   (let ((timespec (rule-at rule)))
@@ -377,7 +377,7 @@
                             (case to
                               ((maximum) #f)
                               ((minimum) (scm-error 'misc-error "rule->rrule"
-                                                    (_ "Check your input")
+                                                    (G_ "Check your input")
                                                     #f #f))
                               (else
                                ;; NOTE I possibly need to check the start of
@@ -390,7 +390,7 @@
         (match (rule-on rule)
           ((? number? d) (set (bymonthday base) (list d)))
           (('last d)     (set (byday base) (list (cons -1 d))))
-          (('< wday base-day) (scm-error 'misc-error "rule->rrule" (_ "Counting backward for RRULES unsupported") #f #f))
+          (('< wday base-day) (scm-error 'misc-error "rule->rrule" (G_ "Counting backward for RRULES unsupported") #f #f))
           (('> wday base-day)
            ;; Sun<=25
            ;; Sun>=8
@@ -412,14 +412,14 @@
       [(#\z)
        ;; NOTE No zones seem to currently use %z formatting.
        ;; '%z' is NOT a format string, but information about another format string.
-       (warning (_ "%z not yet implemented"))
+       (warning (G_ "%z not yet implemented"))
        fmt-string]
 
       [else (scm-error 'misc-error "zone-format"
                        ;; first slot is the errornous character,
                        ;; second is the whole string, third is the index
                        ;; of the faulty character.
-                       (_ "Invalid format char ~s in ~s at position ~a")
+                       (G_ "Invalid format char ~s in ~s at position ~a")
                        (list (string-ref fmt-string (1+ idx))
                              fmt-string
                              (1+ idx))

@@ -11,8 +11,8 @@
 
 (define options
   `((date (value #t) (single-char #\d)
-          (description ,(_ "Which date to start on.")))
-    (help (single-char #\t) (description ,(_ "Print this help.")))
+          (description ,(G_ "Which date to start on.")))
+    (help (single-char #\t) (description ,(G_ "Print this help.")))
     ))
 
 (define (main args)

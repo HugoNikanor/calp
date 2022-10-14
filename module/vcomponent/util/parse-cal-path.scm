@@ -21,14 +21,14 @@
          (set! (prop comp '-X-HNH-SOURCETYPE) 'file)
          comp) ]
       [(directory)
-       (report-time! (_ "Parsing ~a") path)
+       (report-time! (G_ "Parsing ~a") path)
        (let ((comp (parse-vdir path)))
          (set! (prop comp '-X-HNH-SOURCETYPE) 'vdir
                (prop comp '-X-HNH-DIRECTORY) path)
          comp)]
       [(block-special char-special fifo socket unknown symlink)
        => (lambda (t) (scm-error 'misc-error "parse-cal-path"
-                            (_ "Can't parse file of type ~s")
+                            (G_ "Can't parse file of type ~s")
                             (list t)
                             #f))]))
 

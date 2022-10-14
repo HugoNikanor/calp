@@ -56,10 +56,10 @@
           (configuration-error
            (lambda (key subr msg args data)
              (format (current-error-port)
-                     (_ "Error retrieving configuration, ~?~%") msg args)))
+                     (G_ "Error retrieving configuration, ~?~%") msg args)))
           (#t ; for errors when running the filter
            (lambda (err . args)
-             (warning (_ "~a on formatting description, ~s") err args)
+             (warning (G_ "~a on formatting description, ~s") err args)
              str))))
 
 ;; TODO replace with propper mimetype parser
@@ -91,11 +91,11 @@
                                    "unknown")))))
                    (time ,(let ((dt (prop event 'DTSTART)))
                             (if (datetime? dt)
-                                (datetime->string dt (_ "~Y-~m-~d ~H:~M"))
-                                (date->string dt (_ "~Y-~m-~d") ))))
+                                (datetime->string dt (G_ "~Y-~m-~d ~H:~M"))
+                                (date->string dt (G_ "~Y-~m-~d") ))))
                    (a (@ (href ,(date->string (as-date (prop event 'DTSTART)) "/week/~Y-~m-~d.html")))
                       ;; Button for viewing calendar, accompanied by a calendar icon
-                      ,(_ "View") " 📅")
+                      ,(G_ "View") " 📅")
                    (span ,(prop event 'SUMMARY)))))
   (cons
    `(style ,(lambda () (calendar-styles calendars #t)))
@@ -166,7 +166,7 @@
 
           (div (@ (class "fields"))
                ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
-                  `(div (b ,(_ "Location: "))
+                  `(div (b ,(G_ "Location: "))
                         (div (@ (class "location") (data-property "location"))
                              ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
                                           (prop ev 'LOCATION)))))
@@ -244,10 +244,10 @@
                              ,@(format-recurrence-rule ev)))
 
                ,(when (prop ev 'LAST-MODIFIED)
-                  `(div (@ (class "last-modified")) ,(_ "Last modified") " "
+                  `(div (@ (class "last-modified")) ,(G_ "Last modified") " "
                         ,(datetime->string (prop ev 'LAST-MODIFIED)
                                            ;; Last modified datetime
-                                           (_ "~1 ~H:~M")))))
+                                           (G_ "~1 ~H:~M")))))
 
           ))))
 
@@ -258,7 +258,7 @@
   (let ((date (car day))
         (events (cdr day)))
     `(section (@ (class "text-day"))
-              (header (h2 ,(let ((s (date->string date (_ "~Y-~m-~d"))))
+              (header (h2 ,(let ((s (date->string date (G_ "~Y-~m-~d"))))
                              `(a (@ (href "#" ,s)
                                     (class "hidelink")) ,s))))
               ,@(stream->list
@@ -340,7 +340,7 @@
 ;; TODO possibly unused?
 (define (repeat-info event)
   `(div (@ (class "eventtext"))
-        (h2 ,(_ "Recurrences"))
+        (h2 ,(G_ "Recurrences"))
         (table (@ (class "recur-components"))
                ,@((@@ (vcomponent recurrence internal) map-fields)
                   (lambda (key value)
@@ -412,7 +412,7 @@
          (form (@ (class "edit-form"))
                (select (@ (class "calendar-selection"))
                  ;; NOTE flytta "muffarna" utanför
-                 (option ,(_ "- Choose a Calendar -"))
+                 (option ,(G_ "- Choose a Calendar -"))
                  ,@(let ((dflt ((@ (vcomponent) default-calendar))))
                      (map (lambda (calendar)
                             (define name (prop calendar 'NAME))
@@ -422,7 +422,7 @@
                                      ,name))
                           calendars)))
                (input (@ (type "text")
-                         (placeholder ,(_ "Summary"))
+                         (placeholder ,(G_ "Summary"))
                          (name "summary") (required)
                          (data-property "summary")
                                         ; (value ,(prop ev 'SUMMARY))
@@ -440,25 +440,25 @@
                     (div (@ (class "checkboxes"))
                          (input (@ (type "checkbox")
                                    (name "wholeday")
-                                   (data-label ,(_ "Whole day?"))
+                                   (data-label ,(G_ "Whole day?"))
                                    ))
                          (input (@ (type "checkbox")
                                    (name "has_repeats")
-                                   (data-label ,(_ "Recurring?"))
+                                   (data-label ,(G_ "Recurring?"))
                                    )))
 
                     )
 
-               (input (@ (placeholder ,(_ "Location"))
-                         (data-label ,(_ "Location"))
+               (input (@ (placeholder ,(G_ "Location"))
+                         (data-label ,(G_ "Location"))
                          (name "location")
                          (type "text")
                          (data-property "location")
                                         ; (value ,(or (prop ev 'LOCATION) ""))
                          ))
 
-               (textarea (@ (placeholder ,(_ "Description"))
-                            (data-label ,(_ "Description"))
+               (textarea (@ (placeholder ,(G_ "Description"))
+                            (data-label ,(G_ "Description"))
                             (data-property "description")
                             (name "description"))
                                         ; ,(prop ev 'DESCRIPTION)
@@ -467,9 +467,9 @@
                (input-list
                 (@ (name "categories")
                    (data-property "categories")
-                   (data-label ,(_ "Categories")))
+                   (data-label ,(G_ "Categories")))
                 (input (@ (type "text")
-                          (placeholder ,(_ "Category")))))
+                          (placeholder ,(G_ "Category")))))
 
                ;; TODO This should be a "list" where any field can be edited
                ;; directly. Major thing holding us back currently is that
@@ -518,7 +518,7 @@
                                         ; "20:56"
                          ))
               (div (@ (class "fields"))
-                   (div (b ,(_ "Location: "))
+                   (div (b ,(G_ "Location: "))
                         (div (@ (class "location")
                                 (data-property "location"))
                                         ; "Alsättersgatan 13"
@@ -540,7 +540,7 @@
                    ;;      "varje vecka"
                    ;;      ".")
                    (div (@ (class "last-modified"))
-                        ,(_ "Last Modified") " -"
+                        ,(G_ "Last Modified") " -"
                                         ; "2021-09-29 19:56"
                         ))))))
 
@@ -548,21 +548,21 @@
   `(template
     (@ (id "vevent-edit-rrule"))
     (div (@ (class "eventtext"))
-         (h2 ,(_ "Recurrences"))
+         (h2 ,(G_ "Recurrences"))
          (dl
-          (dt ,(_ "Frequency"))
+          (dt ,(G_ "Frequency"))
           (dd (select (@ (name "freq"))
                 (option "-")
                 ,@(map (lambda (x) `(option (@ (value ,x)) ,(string-titlecase (symbol->string x))))
                        '(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY))))
 
-          (dt ,(_ "Until"))
+          (dt ,(G_ "Until"))
           (dd (date-time-input (@ (name "until"))))
 
-          (dt ,(_ "Conut"))
+          (dt ,(G_ "Conut"))
           (dd (input (@ (type "number") (name "count") (min 0))))
 
-          (dt ,(_ "Interval"))
+          (dt ,(G_ "Interval"))
           (dd (input (@ (type "number") (name "interval") ; min and max depend on FREQ
                         )))
 
@@ -576,14 +576,14 @@
                       (dd (input-list (@ (name ,name))
                                       (input (@ (type "number")
                                                 (min ,min) (max ,max)))))))
-                  `((bysecond ,(_ "By Second") 0 60)
-                    (byminute ,(_ "By Minute") 0 59)
-                    (byhour ,(_ "By Hour") 0 23)
-                    (bymonthday ,(_ "By Month Day") -31 31) ; except 0
-                    (byyearday ,(_ "By Year Day") -366 366) ; except 0
-                    (byweekno ,(_ "By Week Number") -53 53) ; except 0
-                    (bymonth ,(_ "By Month") 1 12)
-                    (bysetpos ,(_ "By Set Position") -366 366) ; except 0
+                  `((bysecond ,(G_ "By Second") 0 60)
+                    (byminute ,(G_ "By Minute") 0 59)
+                    (byhour ,(G_ "By Hour") 0 23)
+                    (bymonthday ,(G_ "By Month Day") -31 31) ; except 0
+                    (byyearday ,(G_ "By Year Day") -366 366) ; except 0
+                    (byweekno ,(G_ "By Week Number") -53 53) ; except 0
+                    (bymonth ,(G_ "By Month") 1 12)
+                    (bysetpos ,(G_ "By Set Position") -366 366) ; except 0
                     )))
 
           ;; (dt "By Week Day")
@@ -594,7 +594,7 @@
           ;;                 ,(week-day-select '())
           ;;                 ))
 
-          (dt ,(_ "Weekstart"))
+          (dt ,(G_ "Weekstart"))
           (dd ,(week-day-select '((name "wkst")))))))
   )
 
@@ -610,29 +610,29 @@
          (nav (@ (class "popup-control"))
               (button (@ (class "close-button")
                          ;; Close this popup
-                         (title ,(_ "Close"))
+                         (title ,(G_ "Close"))
                          (aria-label "Close"))
                       "×")
               (button (@ (class "maximize-button")
                          ;; Make this popup occupy the entire screen
-                         (title ,(_ "Fullscreen"))
+                         (title ,(G_ "Fullscreen"))
                          ;; (aria-label "")
                          )
                       ,(xml-entities "🗖"))
               (button (@ (class "remove-button")
                          ;; Remove/Trash the event this popup represent
                          ;; Think garbage can
-                         (title ,(_ "Remove")))
+                         (title ,(G_ "Remove")))
                       ,(xml-entities "🗑")))
 
          (tab-group (@ (class "window-body"))
                     (vevent-description
-                     (@ (data-label ,(xml-entities "📅")) (data-title ,(_ "Overview"))
+                     (@ (data-label ,(xml-entities "📅")) (data-title ,(G_ "Overview"))
                         (class "vevent")))
 
                     (vevent-edit
                      (@ (data-label ,(xml-entities "🖊"))
-                        (data-title ,(_ "Edit"))
+                        (data-title ,(G_ "Edit"))
                         ;; Used by JavaScript to target this tab
                         (data-originaltitle "Edit")))
 
@@ -641,9 +641,9 @@
 
                     (vevent-changelog
                      (@ (data-label ,(xml-entities "📒"))
-                        (data-title ,(_ "Changelog"))))
+                        (data-title ,(G_ "Changelog"))))
 
                     ,@(when (debug)
                         `((vevent-dl
                            (@ (data-label ,(xml-entities "🐸"))
-                              (data-title ,(_ "Debug"))))))))))
+                              (data-title ,(G_ "Debug"))))))))))

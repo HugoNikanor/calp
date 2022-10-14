@@ -9,7 +9,7 @@
   :export (zoneinfo))
 
 (define-config tz-list '()
-  description: (_ "List of default zoneinfo files to be parsed"))
+  description: (G_ "List of default zoneinfo files to be parsed"))
 
 ;; TODO see (vcomponent uil instance), this has a similar problem with early load
 ;; Takes a list of zoneinfo files relative
@@ -25,7 +25,7 @@
              (()
               (define tz-list (tz-list))
               (if (null? tz-list)
-                (warning (_ "Default zoneinfo only available when tz-dir and tz-list are configured"))
+                (warning (G_ "Default zoneinfo only available when tz-dir and tz-list are configured"))
                 (self tz-list)))
              ((file-list)
               (provide 'zoneinfo)

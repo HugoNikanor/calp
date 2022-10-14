@@ -64,7 +64,7 @@
               ;; by RECURRENCE-ID. As far as I can tell this goes against
               ;; the standard. Section 3.8.4.4.
               (case (length events)
-                [(0) (warning (_ "No events in component~%~a")
+                [(0) (warning (G_ "No events in component~%~a")
                               (prop item '-X-HNH-FILENAME))]
                 [(1) (add-child! calendar (car events))]
 

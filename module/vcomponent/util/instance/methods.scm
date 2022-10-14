@@ -80,7 +80,7 @@
 (define-method (initialize (this <events>) args)
   (next-method)
 
-  (format (current-error-port) (_ "Building <events> from~%"))
+  (format (current-error-port) (G_ "Building <events> from~%"))
   (for calendar in (slot-ref this 'calendar-files)
        (format (current-error-port) "  - ~a~%" calendar))
 
@@ -196,13 +196,13 @@
          ;; save-event sets -X-HNH-FILENAME from the UID. This is fine
          ;; since the two events are guaranteed to have the same UID.
          (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
-           (throw 'misc-error (_ "Saving event to disk failed.")))
+           (throw 'misc-error (G_ "Saving event to disk failed.")))
 
 
          (unless (eq? calendar (parent old-event))
            ;; change to a new calendar
            (format (current-error-port)
-                   (_ "Unlinking old event from ~a~%")
+                   (G_ "Unlinking old event from ~a~%")
                    (prop old-event '-X-HNH-FILENAME))
            ;; NOTE that this may fail, leading to a duplicate event being
            ;; created (since we save beforehand). This is just a minor problem
@@ -212,7 +212,7 @@
 
 
          (format (current-error-port)
-                 (_ "Event updated ~a~%") (prop event 'UID)))]
+                 (G_ "Event updated ~a~%") (prop event 'UID)))]
 
    [else
     (add-event this calendar event)
@@ -222,7 +222,7 @@
     ;; NOTE Posibly defer save to a later point.
     ;; That would allow better asyncronous preformance.
     (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
-      (throw 'misc-error (_ "Saving event to disk failed.")))
+      (throw 'misc-error (G_ "Saving event to disk failed.")))
 
     (format (current-error-port)
-            (_ "Event inserted ~a~%") (prop event 'UID))]))
+            (G_ "Event inserted ~a~%") (prop event 'UID))]))

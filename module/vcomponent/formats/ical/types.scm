@@ -37,7 +37,7 @@
 
 ;; TODO
 (define (write-period _ value)
-  (warning (_ "PERIOD writer not yet implemented"))
+  (warning (G_ "PERIOD writer not yet implemented"))
   (with-output-to-string
     (lambda () (write value))))
 
@@ -94,4 +94,4 @@
 
 (define (get-writer type)
   (or (hashq-ref type-writers type #f)
-      (error (_ "No writer for type") type)))
+      (error (G_ "No writer for type") type)))

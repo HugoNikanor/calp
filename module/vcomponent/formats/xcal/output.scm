@@ -70,7 +70,7 @@
      (get-writer 'TEXT)]
 
     [else
-     (warning (_ "Unknown key ~a") key)
+     (warning (G_ "Unknown key ~a") key)
      (get-writer 'TEXT)]))
 
   (writer ((@@ (vcomponent base) get-vline-parameters) vline) (value vline)))

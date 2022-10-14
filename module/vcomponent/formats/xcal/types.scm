@@ -52,4 +52,4 @@
 
 (define (get-writer type)
   (or (hashq-ref sxml-writers type #f)
-      (error (_ "No writer for type") type)))
+      (error (G_ "No writer for type") type)))

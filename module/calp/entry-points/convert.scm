@@ -12,12 +12,12 @@
 
 (define opt-spec
   `((from (single-char #\f) (value (options "xcal" "ical"))
-          (description ,(xml->sxml (_ "<group>Input format (otherwise infered from <i>infile</i>)</group>"))))
+          (description ,(xml->sxml (G_ "<group>Input format (otherwise infered from <i>infile</i>)</group>"))))
     (to (single-char #\t) (value (options "xcal" "ical"))
-        (description ,(xml->sxml (_ "<group>Output format (otherwise infered from <i>outfile</i>)</group>"))))
-    (infile (value #t) (single-char #\i) (description ,(_ "Input file")))
-    (outfile (value #t) (single-char #\o) (description ,(_ "Output file")))
-    (help (single-char #\h) (description ,(_ "Print this help.")))))
+        (description ,(xml->sxml (G_ "<group>Output format (otherwise infered from <i>outfile</i>)</group>"))))
+    (infile (value #t) (single-char #\i) (description ,(G_ "Input file")))
+    (outfile (value #t) (single-char #\o) (description ,(G_ "Output file")))
+    (help (single-char #\h) (description ,(G_ "Print this help.")))))
 
 
 (define (filename-to-type filename)
@@ -71,7 +71,7 @@
          ;; TODO strip *TOP*
          xml->sxml)]
        [else (scm-error 'misc-error "convert-main"
-                        (_ "Unexpected parser type: ~a")
+                        (G_ "Unexpected parser type: ~a")
                         (list from) #f)]
        ))
 
@@ -90,7 +90,7 @@
                       component)
                      port))]
        [else (scm-error 'misc-error "convert-main"
-                        (_ "Unexpected writer type: ~a")
+                        (G_ "Unexpected writer type: ~a")
                         (list to) #f)]))
 
 

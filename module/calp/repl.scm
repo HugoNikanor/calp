@@ -15,7 +15,7 @@
 (define (repl-start address)
   (define lst (string->list address))
   (format (current-error-port)
-          (_ "Starting REPL server at ~a~%") address)
+          (G_ "Starting REPL server at ~a~%") address)
   (spawn-server
    (case (cond [(memv (car lst) '(#\. #\/)) 'UNIX]
                [(string-match "(\\d{1,3}\\.){3}\\d{1,3}(:\\d+)?" address) 'IPv4]
@@ -25,17 +25,17 @@
      [(UNIX)
       (add-hook! shutdown-hook (lambda () (catch 'system-error (lambda () (delete-file address))
                                        (lambda (err proc fmt args data)
-                                         (warning (string-append (format #f (_ "Failed to unlink ~a") address)
+                                         (warning (string-append (format #f (G_ "Failed to unlink ~a") address)
                                                                  (format #f ": ~?" fmt args)))
                                          err))))
       (make-unix-domain-server-socket path: address)]
      [(IPv4) (apply (case-lambda
-                      [() (error (_ "Empty address?"))]
+                      [() (error (G_ "Empty address?"))]
                       [(address)      (make-tcp-server-socket host: address)]
                       [(address port) (make-tcp-server-socket host: address port: port)])
                     (string-split address #\:))]
      ;; currently impossible
-     [(IPv6) (error (_ "How did you get here?"))]))
+     [(IPv6) (error (G_ "How did you get here?"))]))
 
   ;; TODO setup repl environment here
 

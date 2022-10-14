@@ -165,19 +165,19 @@ trailer
 
 (define opt-spec
   `((pdf (value #t)
-         (description ,(_ "Input pdf file")))
+         (description ,(G_ "Input pdf file")))
     (output (single-char #\o) (value optional)
-            (description ,(_ "Output file")))
+            (description ,(G_ "Output file")))
 
     (data (value optional)
-          (description ,(_ "Static data to fill fields with"))
+          (description ,(G_ "Static data to fill fields with"))
           )
     (template (value optional)
-              (description ,(xml->sxml (_ "<group>Map between real field names and human readable names.<br/>
+              (description ,(xml->sxml (G_ "<group>Map between real field names and human readable names.<br/>
 If data is given, but not trans, then data is assumed to be in a correct format</group>"))))
     (search (value #t)
             (description
-             ,(_ "Search term for dynamic filling. Supports basic globbing")))))
+             ,(G_ "Search term for dynamic filling. Supports basic globbing")))))
 
 (define (parse-search str)
   (cond [(string-match "\\{(.*)\\}" str)
@@ -203,7 +203,7 @@ If data is given, but not trans, then data is assumed to be in a correct format<
   (define template
     (call-with-input-file
      (or (option-ref opts 'template #f)
-         (error (_ "Template required")))
+         (error (G_ "Template required")))
      read))
 
   (define prepared-data
@@ -231,9 +231,9 @@ If data is given, but not trans, then data is assumed to be in a correct format<
             (define days
               (let ((days (assoc-ref group 'days)))
                 (cond ((not (list? days))
-                       (error (_ "Needs list, not pair")))
+                       (error (G_ "Needs list, not pair")))
                       ((null? days)
-                       (error (_ "Need more days")))
+                       (error (G_ "Need more days")))
                       ((and (list? (car days)) (eqv? '- (caar days)))
                        (map (lambda (s) (string-append prefix (->string s)))
                             (iota (1+ (- (list-ref (car days) 2)
@@ -249,7 +249,7 @@ If data is given, but not trans, then data is assumed to be in a correct format<
               ,@(build-alist work-hours days)
               (,sum ,(apply + work-hours))))
           (or (assoc-ref template 'groups)
-              (error (_ "Groups required in template")))
+              (error (G_ "Groups required in template")))
           search)))
 
   (define report

@@ -3,7 +3,7 @@
   :use-module (ice-9 regex)
   :use-module (ice-9 match)
   :use-module (srfi srfi-88)
-  :export (_ translate yes-no-check))
+  :export (G_ translate yes-no-check))
 
 (bindtextdomain "calp" "/home/hugo/code/calp/localization/")
 
@@ -18,7 +18,7 @@
               (gettext string "calp")))
 
 ;; Mark string for translation, and also make it discoverable for gettext
-(define (_ . msg)
+(define (G_ . msg)
   (translate (string-join msg)))
 
 (define* (yes-no-check string optional: (locale %global-locale))

@@ -14,7 +14,7 @@
   :use-module (calp translation))
 
 (define opt-spec
-  `((help (single-char #\h) (description ,(_ "Print this help.")))))
+  `((help (single-char #\h) (description ,(G_ "Print this help.")))))
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt opt-spec)))
@@ -27,7 +27,7 @@
                                  (path-append (xdg-data-home) "tzget")))
          (filename (or (find file-exists? locations)
                               (scm-error 'missing-helper "update-zoneinfo"
-                                         (_ "tzget not installed, please put it in one of ~a")
+                                         (G_ "tzget not installed, please put it in one of ~a")
                                          (list locations)
                                          (list "tzget" locations))))
 

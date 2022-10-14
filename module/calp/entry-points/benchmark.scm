@@ -17,9 +17,9 @@
 (define opt-spec
   `((enable-output (single-char #\o)
                    (description
-                    ,(_ "Output is by default supressed, since many fields contain way to much data to read. This turns it on again.")
+                    ,(G_ "Output is by default supressed, since many fields contain way to much data to read. This turns it on again.")
                     ))
-    (help (single-char #\h) (description ,(_ "Print this help.")))))
+    (help (single-char #\h) (description ,(G_ "Print this help.")))))
 
 
 (define (main args)

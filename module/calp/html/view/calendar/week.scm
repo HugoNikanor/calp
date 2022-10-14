@@ -36,7 +36,7 @@
                 ;; Top left area
                 (div (@ (class "week-indicator"))
                      (span (@ (style "font-size: 50%"))
-                           ,(_ "v."))
+                           ,(G_ "v."))
                      ,@(->> (week-number start-date)
                             number->string string->list
                             (map (lambda (c) `(span ,(string c))))))
@@ -49,7 +49,7 @@
                 ,@(map (lambda (day-date)
                          `(div (@ (class "meta"))
                                (span (@ (class "daydate"))
-                                     ,(date->string day-date (_ "~Y-~m-~d")))
+                                     ,(date->string day-date (G_ "~Y-~m-~d")))
                                (span (@ (class "dayname"))
                                      ;; TODO translation here?
                                      ,(string-titlecase (date->string day-date "~a")))))

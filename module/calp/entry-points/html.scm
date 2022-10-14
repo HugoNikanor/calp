@@ -31,21 +31,21 @@
 
 (define opt-spec
   `((from (value #t) (single-char #\F)
-          (description ,(_ "Start date of output."))
+          (description ,(G_ "Start date of output."))
           )
     (count (value #t)
-           (description ,(xml->sxml (_ "<group>How many pages should be rendered.
+           (description ,(xml->sxml (G_ "<group>How many pages should be rendered.
 If --style=<b>week</b> and --from=<b>2020-04-27</b>;
 then --count=<b>4</b> would render the four pages
 2020-04-27, 2020-05-04, 2020-05-11, and 2020-05-25.
 Defaults to 12 to give a whole year when --style=<b>month</b></group>"))))
 
     (target (single-char #\t) (value #t)
-            (description ,(xml->sxml (_ "<group>Directory where html files should end up. Default to <b>./html</b></group>"))))
+            (description ,(xml->sxml (G_ "<group>Directory where html files should end up. Default to <b>./html</b></group>"))))
 
     (style (value #t) (predicate ,(lambda (v) (memv (string->symbol v)
                                             '(small wide week table))))
-           (description ,(xml->sxml (_ "<group>How the body of the HTML page should be layed out.
+           (description ,(xml->sxml (G_ "<group>How the body of the HTML page should be layed out.
 <br/><b>week</b>
 gives a horizontally scrolling page with 7 elements, where each has events
 graphically laid out hour by hour.
@@ -56,10 +56,10 @@ given day, in order of start time. They are however not graphically sized.
 is the same as week, but gives a full month.</group>"))))
 
     (standalone
-     (description ,(xml->sxml (_ "<group>Creates a standalone document instead of an HTML fragment
+     (description ,(xml->sxml (G_ "<group>Creates a standalone document instead of an HTML fragment
 for embedding in a larger page. Currently only applies to the <i>small</i> style</group>"))))
 
-    (help (single-char #\h) (description ,(_ "Print this help.")))))
+    (help (single-char #\h) (description ,(G_ "Print this help.")))))
 
 
 
@@ -81,9 +81,9 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
             ((= errno EEXIST)
              (let ((st (lstat link)))
                (cond ((not (eq? 'symlink (stat:type st)))
-                      (warning (_ "File ~s exists, but isn't a symlink") link))
+                      (warning (G_ "File ~s exists, but isn't a symlink") link))
                      ((not (string=? target (readlink link)))
-                      (warning (_ "~s is a symlink, but points to ~s instead of expected ~s")
+                      (warning (G_ "~s is a symlink, but points to ~s instead of expected ~s")
                                link (readlink link) target))))
              ;; else, file exists as a symlink, and points where we want,
              ;; which is expected. Do nothing and be happy.
@@ -113,7 +113,7 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
   (stream-for-each
    (lambda (start-date)
      (define fname (path-append target-directory (date->string start-date "~1.xml")))
-     (format (current-error-port) (_ "Writing to [~a]~%") fname)
+     (format (current-error-port) (G_ "Writing to [~a]~%") fname)
      (with-output-to-file fname
        (lambda () (sxml->xml (re-root-static
                          (apply html-generate
@@ -178,7 +178,7 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
              pre-start: (start-of-week start)
              post-end: (end-of-week (end-of-month start)))]
     [else
-     (scm-error 'misc-error "html-main" (_ "Unknown html style: ~a") (list style) #f)])
+     (scm-error 'misc-error "html-main" (G_ "Unknown html style: ~a") (list style) #f)])
 
-  ((@ (calp util time) report-time!) (_ "all done"))
+  ((@ (calp util time) report-time!) (G_ "all done"))
   )

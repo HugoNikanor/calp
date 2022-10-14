@@ -17,22 +17,22 @@
 
 (define options
   `((port (value #t) (single-char #\p)
-          (description ,(xml->sxml (_ "<group>Bind to TCP port, defaults to <i>8080</i>.
+          (description ,(xml->sxml (G_ "<group>Bind to TCP port, defaults to <i>8080</i>.
 <br/>Can also be set through the config variable
 <i>port</i>.</group>"))))
     (addr (value #t)
-          (description ,(xml->sxml (_ "<group>Address to use, defaults to <i>0.0.0.0</i> for IPv4,
+          (description ,(xml->sxml (G_ "<group>Address to use, defaults to <i>0.0.0.0</i> for IPv4,
 and <i>[::]</i> for IPv6</group>"))))
     ;; numbers as single-char doesn't work.
-    (six (description ,(_ "Use IPv6.")))
-    (four (description ,(_ "Use IPv4.")))
-    (sigusr (description ,(_ "Reload events on SIGUSR1")))
+    (six (description ,(G_ "Use IPv6.")))
+    (four (description ,(G_ "Use IPv4.")))
+    (sigusr (description ,(G_ "Reload events on SIGUSR1")))
     (help (single-char #\h)
-          (description ,(_ "Print this help.")))))
+          (description ,(G_ "Print this help.")))))
 
 
 (define-config port 8080
-  description: (_ "Port to which the web server should bind."))
+  description: (G_ "Port to which the web server should bind."))
 
 (define (main args)
 
@@ -59,12 +59,12 @@ and <i>[::]</i> for IPv6</group>"))))
                    "::" "0.0.0.0")))
 
   (when (option-ref opts 'sigusr #f)
-    (format (current-error-port) (_ "Listening for SIGUSR1~%"))
+    (format (current-error-port) (G_ "Listening for SIGUSR1~%"))
     ;; NOTE this uses the main thread, and does therefore block HTTP requests
     ;; while reloading. However, it appears to not cause any race conditions.
     (sigaction SIGUSR1
       (lambda _
-        (format (current-error-port) (_ "Received SIGUSR1, reloading calendars~%"))
+        (format (current-error-port) (G_ "Received SIGUSR1, reloading calendars~%"))
         ((@ (vcomponent util instance) reload)))))
 
 
@@ -74,7 +74,7 @@ and <i>[::]</i> for IPv6</group>"))))
   ;; Port which we listen to
   ;; PID of this process
   ;; PWD of this process
-  (format #t (_ "Starting server on ~a:~a~%I'm ~a, runing from ~a~%")
+  (format #t (G_ "Starting server on ~a:~a~%I'm ~a, runing from ~a~%")
           addr port%
           (getpid) (getcwd))
 

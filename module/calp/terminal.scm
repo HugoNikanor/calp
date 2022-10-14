@@ -76,7 +76,7 @@
        " │ "
        (if (prop ev 'LOCATION) "" "\x1b[1;30m")
        (trim-to-width
-        (or (prop ev 'LOCATION) (_ "NO LOCATION")) location-width)
+        (or (prop ev 'LOCATION) (G_ "NO LOCATION")) location-width)
        STR-RESET
        "\n")))
    events
@@ -127,7 +127,7 @@
 
   (cls)
 
-  (display (_ "== Day View =="))
+  (display (G_ "== Day View =="))
   (newline)
 
   (display-calendar-header! (current-page this))
@@ -148,24 +148,24 @@
       (awhen (prop ev 'LOCATION)
              (format #t
                      "\x1b[1m~a:\x1b[m ~a~%"
-                     (_ "Location")
+                     (G_ "Location")
                      it))
       ;; NOTE RFC 5545 says that DTSTART and DTEND MUST
       ;; have the same type. However we believe that is
       ;; another story.
       (format #t "\x1b[1m~a:\x1b[m ~a	"
-              (_ "Start")
+              (G_ "Start")
               (let ((start (prop ev 'DTSTART)))
                 (if (datetime? start)
                     (datetime->string (prop ev 'DTSTART)
-                                      (_ "~Y-~m-~d ~H:~M:~S"))
+                                      (G_ "~Y-~m-~d ~H:~M:~S"))
                     (date->string start))))
       (format #t "\x1b[1m~a:\x1b[m ~a~%~%"
-              (_ "End")
+              (G_ "End")
               (let ((start (prop ev 'DTSTART)))
                 (if (datetime? start)
                     (datetime->string (prop ev 'DTSTART)
-                                      (_ "~Y-~m-~d ~H:~M:~S"))
+                                      (G_ "~Y-~m-~d ~H:~M:~S"))
                     (date->string start))))
       (format #t "~a~%"
               (unlines (take-to (flow-text (or (prop ev 'DESCRIPTION) "")
@@ -208,14 +208,14 @@
            (active-element this) 0))
 
     ((#\/) (set-cursor-pos 0 (1- height))
-     (let ((search-term (get-line (_ "quick search: "))))
+     (let ((search-term (get-line (G_ "quick search: "))))
        `(push ,(search-view
                 (format #f "(regexp-exec (make-regexp \"~a\" regexp/icase) (prop event 'SUMMARY))"
                         search-term)
                 (get-event-set this)))))
 
     ((#\() (set-cursor-pos 0 (1- height))
-     (let ((search-term (get-line (_ "search: "))))
+     (let ((search-term (get-line (G_ "search: "))))
        `(push ,(search-view search-term (get-event-set this)))))
 
     (else (next-method))))
@@ -261,7 +261,7 @@
 
   (cls)
 
-  (display (_ "== Search View ==\n"))
+  (display (G_ "== Search View ==\n"))
 
   ;; display search term
   (format #t "~y" (search-term this))
@@ -317,7 +317,7 @@
                                                  'DTSTART)))))
     ((#\h left) (set! (current-page this) = ((lambda (old) (max 0 (1- old))))))
     ((#\l right)
-     (format #t "~% ~a~%" (_ "loading..."))
+     (format #t "~% ~a~%" (G_ "loading..."))
      (set! (current-page this)
        (next-page (slot-ref this 'search-result)
                   (current-page this))))

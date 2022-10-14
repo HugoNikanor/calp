@@ -13,7 +13,7 @@
 (define (parse-binary props value)
   ;; p 30
   (unless (string=? "BASE64" (hashq-ref props 'ENCODING))
-    (warning (_ "Binary field not marked ENCODING=BASE64")))
+    (warning (G_ "Binary field not marked ENCODING=BASE64")))
 
   ;; For icalendar no extra whitespace is allowed in a
   ;; binary field (except for line wrapping). This differs
@@ -25,7 +25,7 @@
   (cond
    [(string=? "TRUE" value) #t]
    [(string=? "FALSE" value) #f]
-   [else (warning (_ "~a invalid boolean") value)]))
+   [else (warning (G_ "~a invalid boolean") value)]))
 
 ;; CAL-ADDRESS ⇒ uri
 
@@ -58,7 +58,7 @@
 (define (parse-integer props value)
   (let ((n (string->number value)))
     (unless (integer? n)
-      (warning (_ "Non integer as integer")))
+      (warning (G_ "Non integer as integer")))
     n))
 
 ;; PERIOD
@@ -89,7 +89,7 @@
            (case (cadr rem)
              [(#\n #\N) (loop (cddr rem) (cons #\newline str) done)]
              [(#\; #\, #\\) => (lambda (c) (loop (cddr rem) (cons c str) done))]
-             [else => (lambda (c) (warning (_ "Non-escapable character: ~a") c)
+             [else => (lambda (c) (warning (G_ "Non-escapable character: ~a") c)
                          (loop (cddr rem) str done))])]
           [(#\,)
            (loop (cdr rem) '() (cons (reverse-list->string str) done))]
@@ -138,5 +138,5 @@
 
 (define (get-parser type)
   (or (hashq-ref type-parsers type #f)
-      (scm-error 'misc-error "get-parser" (_ "No parser for type ~a")
+      (scm-error 'misc-error "get-parser" (G_ "No parser for type ~a")
                  (list type) #f)))

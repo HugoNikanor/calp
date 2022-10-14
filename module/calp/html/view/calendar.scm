@@ -78,10 +78,10 @@
              ,display)))
 
   (unless next-start
-    (scm-error 'misc-error "html-generate" (_ "Next-start needs to be a procedure") #f #f))
+    (scm-error 'misc-error "html-generate" (G_ "Next-start needs to be a procedure") #f #f))
 
   (unless prev-start
-    (scm-error 'misc-error "html-generate" (_ "Prev-start needs to be a procedure") #f #f))
+    (scm-error 'misc-error "html-generate" (G_ "Prev-start needs to be a procedure") #f #f))
 
   (xhtml-doc
    (@ (lang sv))
@@ -92,9 +92,9 @@
     (meta (@ (name viewport)
              (content "width=device-width, initial-scale=0.5")))
     (meta (@ (name description)
-             (content ,(format #f (_ "Calendar for the dates between ~a and ~a")
-                               (date->string start-date (_ "~Y-~m-~d"))
-                               (date->string end-date   (_ "~Y-~m-~d"))))))
+             (content ,(format #f (G_ "Calendar for the dates between ~a and ~a")
+                               (date->string start-date (G_ "~Y-~m-~d"))
+                               (date->string end-date   (G_ "~Y-~m-~d"))))))
     ;; NOTE this is only for the time actually part of this calendar.
     ;; overflowing times from pre-start and post-end is currently ignored here.
     (meta (@ (name start-time)
@@ -154,11 +154,11 @@ window.default_calendar='~a';"
          ;; Page footer
          (footer
           (@ (style "grid-area: footer"))
-          (span ,(_ "Page generated ")
-                ,(date->string (current-date) (_ "~Y-~m-~d")))
-          (span ,(_ "Current time ") (current-time (@ (interval 1))))
+          (span ,(G_ "Page generated ")
+                ,(date->string (current-date) (G_ "~Y-~m-~d")))
+          (span ,(G_ "Current time ") (current-time (@ (interval 1))))
           (span (a (@ (href ,(repo-url)))
-                   ,(_ "Source Code"))))
+                   ,(G_ "Source Code"))))
 
          ;; Small calendar and navigation
          (nav (@ (class "calnav") (style "grid-area: nav"))
@@ -169,11 +169,11 @@ window.default_calendar='~a';"
                                     start-date)
                                 "/week/~1.html")
                          ;; Button to view week
-                         (_ "Week"))
+                         (G_ "Week"))
 
                    ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
                          ;; button to view month
-                         (_ "Month"))
+                         (G_ "Month"))
 
                    (today-button
                     (a (@ (class "btn")
@@ -183,7 +183,7 @@ window.default_calendar='~a';"
                                               [(week) "view=week"]
                                               [else ""]))))
                        ;; Button to go to today
-                       ,(_ "Today"))))
+                       ,(G_ "Today"))))
 
               (date-jump
                ;; Firefox's accessability complain about each date
@@ -203,11 +203,11 @@ window.default_calendar='~a';"
                      ,(btn "➔"))))
 
          (details (@ (open) (style "grid-area: cal"))
-                  (summary ,(_ "Month overview"))
+                  (summary ,(G_ "Month overview"))
                   (div (@ (class "smallcall-head"))
                        ,(string-titlecase (date->string start-date
                                                         ;; Header of small calendar
-                                                        (_ "~B ~Y"))))
+                                                        (G_ "~B ~Y"))))
                   ;; NOTE it might be a good idea to put the navigation buttons
                   ;; earlier in the DOM-tree/tag order. At least Vimium's
                   ;; @key{[[} keybind sometimes finds parts of events instead.
@@ -233,16 +233,16 @@ window.default_calendar='~a';"
                     (input (@ (type "text")
                               (name "q")
                               ;; Search placeholder
-                              (placeholder ,(_ "Search"))))
+                              (placeholder ,(G_ "Search"))))
                     (input (@ (type "submit")
                               (value ">"))))
 
               ,(when (or (debug) (edit-mode))
                  `(details (@ (class "sliders"))
-                           (summary ,(_ "Option sliders"))
+                           (summary ,(G_ "Option sliders"))
 
                            ,@(when (edit-mode)
-                               `((label ,(_ "Event blankspace"))
+                               `((label ,(G_ "Event blankspace"))
                                  ,(slider-input
                                    variable: "editmode"
                                    min: 0
@@ -251,7 +251,7 @@ window.default_calendar='~a';"
                                    value: 1)))
 
                            ,@(when (debug)
-                               `((label ,(_ "Fontsize"))
+                               `((label ,(G_ "Fontsize"))
                                  ,(slider-input
                                    unit: "pt"
                                    min: 1
@@ -262,7 +262,7 @@ window.default_calendar='~a';"
 
               ;; List of calendars
               (details (@ (class "calendarlist"))
-                       (summary ,(_ "Calendar list"))
+                       (summary ,(G_ "Calendar list"))
                        (ul ,@(map
                               (lambda (calendar)
                                 `(li (@ (data-calendar ,(base64encode (prop calendar 'NAME))))
@@ -288,7 +288,7 @@ window.default_calendar='~a';"
               ;; Events which started before our start point,
               ;; but "spill" into our time span.
               (section (@ (class "text-day"))
-                       (header (h2 ,(_ "Earlier")))
+                       (header (h2 ,(G_ "Earlier")))
                        ;; TODO this group gets styles applied incorrectly.
                        ;; Figure out way to merge it with the below call.
                        ,@(stream->list

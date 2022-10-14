@@ -37,7 +37,7 @@ SKIP=--skip $(PWD)/tests/test/web-server.scm
 all: go_files static $(LOCALIZATIONS)
 	$(MAKE) -C doc/ref
 
-XGETTEXT_FLAGS = --from-code=UTF-8 --add-comments --indent -k_
+XGETTEXT_FLAGS = --from-code=UTF-8 --add-comments --indent -kG_
 
 static:
 	$(MAKE) -C static

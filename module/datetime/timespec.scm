@@ -42,7 +42,7 @@
 
 (define (timespec-add . specs)
   (unless (apply eqv? (map timespec-type specs))
-    (warning (_ "Adding timespecs of differing types")))
+    (warning (G_ "Adding timespecs of differing types")))
 
   (reduce (lambda (spec done)
             (cond

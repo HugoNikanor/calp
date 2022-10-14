@@ -61,18 +61,18 @@
   `(table (@ (class "directory-table"))
           (thead
            (tr (th "")
-               (th ,(_ "Name"))
+               (th ,(G_ "Name"))
                ;; File permissions, should be about as long as three digits
-               (th ,(_ "Perm"))
+               (th ,(G_ "Perm"))
                ;; File size
-               (th ,(_ "Size"))))
+               (th ,(G_ "Size"))))
     (tbody
      (tr (td "↩️") (td (@ (colspan 3))
                       (a (@ (href ,(-> (path-split dir)
                                        (drop-right 1)
                                        (xcons "/static")
                                        path-join)))
-                         ,(_ "Return up"))))
+                         ,(G_ "Return up"))))
      ,@(map (lambda (k)
               (let ((stat (lstat (path-append prefix dir k))))
                 `(tr (td ,(case (stat:type stat)
@@ -95,7 +95,7 @@
                       (scm-error
                        'misc-error
                        "directory-table"
-                       (_ "Scandir argument invalid or not directory: ~s")
+                       (G_ "Scandir argument invalid or not directory: ~s")
                        (list dir) '())))))))
 
 
@@ -118,7 +118,7 @@
 
 
 (define-config static-dir "static"
-  description: (_ "Where static files for the web server are located"))
+  description: (G_ "Where static files for the web server are located"))
 
 
 (define ical-namespace '(IC . "urn:ietf:params:xml:ns:icalendar-2.0"))
@@ -140,7 +140,7 @@
                   (lambda ()
                    ((sxml->output html)
                     (xhtml-doc
-                     (body (a (@ (href "/today")) ,(_ "Go to Today"))
+                     (body (a (@ (href "/today")) ,(G_ "Go to Today"))
                            (script ,(lambda () (display root-script))))))))))
 
    (GET "/favicon.ico" ()
@@ -188,7 +188,7 @@
    (POST "/remove" (uid)
          (unless uid
            (return (build-response code: 400)
-                   (_ "uid required")))
+                   (G_ "uid required")))
 
          (aif (get-event-by-uid global-event-object uid)
               (begin
@@ -200,10 +200,10 @@
                 (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
                 (unless ((@ (vcomponent formats vdir save-delete) save-event) it)
                   (return (build-response code: 500)
-                          (_ "Saving event to disk failed.")))
+                          (G_ "Saving event to disk failed.")))
                 (return (build-response code: 204)))
               (return (build-response code: 400)
-                      (format #f (_ "No event with UID '~a'") uid))))
+                      (format #f (G_ "No event with UID '~a'") uid))))
 
    ;; TODO this fails when dtstart is <date>.
    ;; @var{cal} should be the name of the calendar encoded in base64.
@@ -211,7 +211,7 @@
 
          (unless (and cal data)
            (return (build-response code: 400)
-                   (string-append (_ "Both 'cal' and 'data' required") "\r\n")))
+                   (string-append (G_ "Both 'cal' and 'data' required") "\r\n")))
 
          ;; NOTE that this leaks which calendar exists,
          ;; but you can only query for existance.
@@ -222,7 +222,7 @@
 
            (unless calendar
              (return (build-response code: 400)
-                     (format #f "~@?\r\n" (_ "No calendar with name [~a]")
+                     (format #f "~@?\r\n" (G_ "No calendar with name [~a]")
                              calendar-name)))
 
            ;; Expected form of data (but in XML) is:
@@ -253,12 +253,12 @@
                       (lambda (err port . args)
                         (return (build-response code: 400)
                                 (format #f "~a ~{~a~}\r\n"
-                                        (_ "XML parse error")
+                                        (G_ "XML parse error")
                                         args)))))))
 
              (unless (eq? 'VEVENT (type event))
                (return (build-response code: 400)
-                       (string-append (_ "Object not a VEVENT") "\r\n")))
+                       (string-append (G_ "Object not a VEVENT") "\r\n")))
 
              ;; NOTE add-event uses the given UID if one is given,
              ;; but generates its own if not. It might be a good idea
@@ -334,7 +334,7 @@
                        ;; and "program parent" into different fields.
                        (lambda () (sxml->xml ((@ (vcomponent formats xcal output) vcomponent->sxcal) it)))))
              (return (build-response code: 404)
-                     (format #f (_ "No component with UID=~a found.") uid))))
+                     (format #f (G_ "No component with UID=~a found.") uid))))
 
    (GET "/calendar/:uid{.*}.ics" (uid)
         (aif (get-event-by-uid global-event-object uid)
@@ -343,7 +343,7 @@
                        (lambda () (print-components-with-fake-parent
                               (list it)))))
              (return (build-response code: 404)
-                     (format #f (_ "No component with UID=~a found.") uid))))
+                     (format #f (G_ "No component with UID=~a found.") uid))))
 
    (GET "/search/text" (q)
         (return (build-response
@@ -448,7 +448,7 @@
                    (lambda ()
                      ((sxml->output html)
                       (xhtml-doc
-                       (head (title ,(_ "Calp directory listing for ") path)
+                       (head (title ,(G_ "Calp directory listing for ") path)
                              ,(include-css
                                "/static/directory-listing.css"))
                        (body ,(directory-table (static-dir) path))))))))

@@ -84,7 +84,7 @@
                         bymonth bysetpos)
                  (string->number value))
                 (else (scm-error 'key-error "handle-value"
-                       (_ "Invalid type ~a, with value ~a")
+                       (G_ "Invalid type ~a, with value ~a")
                        (list type value)
                        #f))))))
 
@@ -157,7 +157,7 @@
   (case tag-name
     [(request-status)
      ;; TODO
-     (warning (_ "Request status not yet implemented"))
+     (warning (G_ "Request status not yet implemented"))
      #f]
 
     ((transp) (parse-enum

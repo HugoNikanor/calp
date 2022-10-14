@@ -54,7 +54,7 @@
               rest: args)
   (when (and onclick href)
     (scm-error 'wrong-type-arg "btn"
-               (_ "href and onclick are mutually exclusive. href = ~s, onclick = ~s.")
+               (G_ "href and onclick are mutually exclusive. href = ~s, onclick = ~s.")
                (list href onclick)
                #f))
   (let ((classes (string-join (cons "btn" class) " "))
