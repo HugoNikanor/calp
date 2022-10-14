@@ -28,9 +28,13 @@
   :use-module ((xdg basedir) :prefix xdg-)
 
   :use-module (calp translation)
+  :use-module ((calp load-config) :select (load-config find-config-file))
 
   :export (main)
   )
+
+
+
 
 
 (define options
@@ -109,42 +113,11 @@ zoneinfo database, but is currently broken.</p>")
   (define repl (option-ref opts 'repl #f))
   (define altconfig (option-ref opts 'config #f))
 
-  (define config-file
-    (cond [altconfig
-           (if (file-exists? altconfig)
-               altconfig
-               (scm-error 'misc-error
-                          "wrapped-main"
-                          (G_ "Configuration file ~a missing")
-                          (list altconfig)
-                          #f))]
-         ;; altconfig could be placed in the list below. But I want to raise an error
-         ;; if an explicitly given config is missing.
-         [(find file-exists?
-                (list
-                 (path-append (xdg-config-home) "calp" "config.scm")
-                 (path-append (xdg-sysconfdir) "calp" "config.scm")))
-          => identity]))
+  (define config-file (find-config-file altconfig))
 
   (when stprof (statprof-start))
 
-
-
-  ;; Load config
-  ;; Sandbox and "stuff" not for security from the user. The config script is
-  ;; assumed to be "safe". Instead it's so we can control the environment in
-  ;; which it is executed.
-  (catch #t
-    (lambda () (load config-file))
-    (lambda args
-      (format (current-error-port)
-              ;; Two arguments:
-              ;; Configuration file path,
-              ;; thrown error arguments
-              (G_ "Failed loading config file ~a~%~s~%")
-              config-file
-              args
-              )))
+  (load-config config-file)
 
   (awhen (option-ref opts 'edit-mode #f)
          ((@ (calp html config) edit-mode) #t))
