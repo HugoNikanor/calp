@@ -1,10 +1,10 @@
 ;; -*- geiser-scheme-implementation: guile -*-
 (define-module (calp main)
-  :use-module (hnh util)
+  :use-module ((hnh util) :select (awhen))
   :use-module ((hnh util path) :select (path-append))
 
   :use-module (srfi srfi-1)
-  :use-module (srfi srfi-88)             ; keyword syntax
+  :use-module ((srfi srfi-88) :select ()) ; keyword syntax
 
   :use-module (hnh util options)
   :use-module ((calp util hooks) :select (shutdown-hook))
@@ -16,10 +16,6 @@
   :use-module ((calp util exceptions) :select ())
 
   :use-module (ice-9 getopt-long)
-  :use-module (ice-9 regex)
-  :use-module ((ice-9 popen) :select (open-input-pipe))
-  :use-module ((ice-9 sandbox) :select
-               (make-sandbox-module all-pure-and-impure-bindings))
 
   :use-module (statprof)
   :use-module (calp repl)
