@@ -24,6 +24,7 @@
 
 (define (main . args)
   (define filename (car args))
+  ;; TODO Module declaration can reside inside a cond-expand block
   (define-values (module-declaration-list forms)
     (partition module-declaration?
                (reverse (call-with-input-file filename get-forms))))
@@ -41,15 +42,21 @@
                       (srfi srfi-1)
                       ))
 
-
   (define modules
+    ;; If we didn't find the module declaration
     (if (null? module-declaration-list)
-        (map resolve-interface
-             (remp (lambda (mod) (member mod skip-list))
-                   (module-uses* forms)))
-        (remp (lambda (mod) (member (module-name mod) skip-list))
-              (module-uses (resolve-module
-                            (cadr (car module-declaration-list)))))))
+        ;; Find symbols by best effort
+        (begin
+          (format #t "Using our make-shift module introspection~%")
+          (map (lambda (mod) (apply resolve-interface mod))
+               (remp (lambda (mod) (member (car mod) skip-list))
+                     (module-uses* forms))))
+        ;; If we did find the declaration, use the actual symbol in
+        (begin
+          (format #t "Using guile's true module introspection~%")
+          (remp (lambda (mod) (member (module-name mod) skip-list))
+                (module-uses (resolve-module
+                              (cadr (car module-declaration-list))))))))
 
   (format #t "=== ~a ===~%" filename)
   (for-each (lambda (mod)
