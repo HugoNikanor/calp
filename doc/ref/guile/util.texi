@@ -188,6 +188,8 @@ pairs of symbols and values.
 Calls @var{proc} on each element in @var{lst}, and return a
 association list which @code{(proc e)} as its keys, and all elements
 which mapped to that value.
+
+The values returned by @var{proc} are compared as per @code{equal?}.
 @end defun
 
 @defun split-by lst element
