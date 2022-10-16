@@ -216,7 +216,9 @@
 
 
          (format (current-error-port)
-                 (G_ "Event updated ~a~%") (prop event 'UID)))]
+                 (G_ "Event ~a updated in ~a~%")
+                 (prop event 'UID)
+                 (prop calendar 'NAME)))]
 
    [else
     (add-event this calendar event)
@@ -229,4 +231,6 @@
       (throw 'misc-error (G_ "Saving event to disk failed.")))
 
     (format (current-error-port)
-            (G_ "Event inserted ~a~%") (prop event 'UID))]))
+            (G_ "Event ~a added to ~a~%")
+            (prop event 'UID)
+            (prop calendar 'NAME))]))

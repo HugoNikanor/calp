@@ -64,7 +64,7 @@ async function create_event(event: VEvent) {
         return;
     }
 
-    console.log('calendar=', calendar/*, xml*/);
+    console.log('calendar =', atob(calendar)/*, xml*/);
 
     let data = new URLSearchParams();
     data.append("cal", calendar);

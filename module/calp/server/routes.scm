@@ -124,7 +124,7 @@
 (define ical-namespace '(IC . "urn:ietf:params:xml:ns:icalendar-2.0"))
 
 
-(define root-script "window.onload = () => document.getElementsByTagName('a')[0].click()")
+(define root-script "window.onload = () => document.querySelector('a').click()")
 
 ;; TODO ensure encoding on all fields which take user provided data.
 ;; Possibly a fallback which strips everything unknown, and treats
