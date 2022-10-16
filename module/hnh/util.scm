@@ -538,9 +538,12 @@
 
 
 (define-syntax catch*
-  (syntax-rules ()
+  (syntax-rules (pre-unwind)
+    ((_ thunk ((pre-unwind key) handler))
+     (with-throw-handler (quote key) thunk handler))
     ((_ thunk (key handler))
      (catch (quote key) thunk handler))
-    ((_ thunk (key handler) rest ...)
-     (catch* (lambda () (catch (quote key) thunk handler))
+
+    ((_ thunk pair rest ...)
+     (catch* (lambda () (catch* thunk pair))
              rest ...))))

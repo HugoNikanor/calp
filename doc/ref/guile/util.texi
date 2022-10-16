@@ -321,6 +321,9 @@ body. Restores the old values once we leave.
 Macro allowing multiple exception types to be caught. Each (symbol
 proc) pair expands to a regular @code{catch}, with the leftmost being
 innermost.
+
+@var{Symbol} can also be on the form @code{(pre-unwind @var{symbol})},
+then @code{with-throw-handler} is used instead of @code{catch}.
 @end defmac
 
 @subsection UUID generation
