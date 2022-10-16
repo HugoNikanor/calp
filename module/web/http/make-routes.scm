@@ -150,26 +150,27 @@
                           (current-error-port))
 
                  (call-with-values
-                     (call/ec (lambda (return)
-                                (apply
-                                 (with-throw-handler #t
-                                   (lambda ()
-                                     (cond #,@(map (generate-case routes-regexes #'r:method #'r:path) routes)
-                                           (else (lambda* _ (return (build-response code: 404)
-                                                                    "404 Not Fonud")))))
-                                   #,(assoc-ref options with-throw-handler:))
-                                 (append
-                                  (parse-query r:query)
+                     (lambda ()
+                      (call/ec (lambda (return)
+                                 (apply
+                                  (with-throw-handler #t
+                                    (lambda ()
+                                      (cond #,@(map (generate-case routes-regexes #'r:method #'r:path) routes)
+                                            (else (lambda* _ (return (build-response code: 404)
+                                                                     "404 Not Fonud")))))
+                                    #,(assoc-ref options with-throw-handler:))
+                                  (append
+                                   (parse-query r:query)
 
-                                  ;; When content-type is application/x-www-form-urlencoded,
-                                  ;; decode them, and add it to the argument list
-                                  (let ((content-type (assoc-ref r:headers 'content-type)))
-                                    (when content-type
-                                      (let ((type args (car+cdr content-type)))
-                                        (when (eq? type 'application/x-www-form-urlencoded)
-                                          (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
-                                            (parse-query (bytevector->string body encoding)
-                                                         encoding))))))))))
+                                   ;; When content-type is application/x-www-form-urlencoded,
+                                   ;; decode them, and add it to the argument list
+                                   (let ((content-type (assoc-ref r:headers 'content-type)))
+                                     (when content-type
+                                       (let ((type args (car+cdr content-type)))
+                                         (when (eq? type 'application/x-www-form-urlencoded)
+                                           (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
+                                             (parse-query (bytevector->string body encoding)
+                                                          encoding)))))))))))
 
                    (case-lambda ((headers body new-state) (values headers body new-state))
                                 ((headers body)           (values headers body state))
