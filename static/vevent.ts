@@ -37,7 +37,7 @@ class VEventValue {
         let v = this.value;
         switch (this.type) {
             case 'binary':
-                /* TOOD */
+                /* TODO */
                 value = 'BINARY DATA GOES HERE';
                 break;
             case 'date-time':
