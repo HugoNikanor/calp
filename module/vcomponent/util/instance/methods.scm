@@ -177,10 +177,11 @@
   (cond
    [(get-event-by-uid this (prop event 'UID))
     => (lambda (old-event)
+         (define old-calendar (parent old-event))
 
          ;; remove old instance of event from runtime
          (remove-event this old-event)
-         (remove-child! (parent old-event) old-event)
+         (remove-child! old-calendar old-event)
 
          ;; Add new event to runtime,
          ;; MUST be done after since the two events SHOULD share UID.
@@ -198,8 +199,8 @@
          (unless ((@ (vcomponent formats vdir save-delete) save-event) event)
            (throw 'misc-error (G_ "Saving event to disk failed.")))
 
-
-         (unless (eq? calendar (parent old-event))
+         #;
+         (unless (eq? calendar old-calendar)
            ;; change to a new calendar
            (format (current-error-port)
                    (G_ "Unlinking old event from ~a~%")
