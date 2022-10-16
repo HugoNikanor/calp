@@ -25,6 +25,11 @@ class ComponentEdit extends ComponentVEvent {
         let body = frag.firstElementChild!
         this.replaceChildren(body);
 
+        let data = vcal_objects.get(this.uid)
+        if (!data) {
+            throw `Data missing for uid ${this.dataset.uid}.`
+        }
+
         for (let el of this.querySelectorAll('[data-label]')) {
             let label = document.createElement('label');
             let id = el.id || gensym('input');
@@ -32,21 +37,6 @@ class ComponentEdit extends ComponentVEvent {
             label.htmlFor = id;
             label.textContent = (el as HTMLElement).dataset.label!;
         }
-    }
-
-    connectedCallback() {
-
-        /* Edit tab is rendered here. It's left blank server-side, since
-           it only makes sense to have something here if we have javascript */
-
-        let data = vcal_objects.get(this.uid)
-
-        if (!data) {
-            throw `Data missing for uid ${this.dataset.uid}.`
-        }
-
-
-        // return;
 
         /* Handle calendar dropdown */
         for (let el of this.querySelectorAll('select.calendar-selection')) {
@@ -64,7 +54,6 @@ class ComponentEdit extends ComponentVEvent {
             });
         }
 
-        this.redraw(data);
 
         // for (let el of this.getElementsByClassName("interactive")) {
         for (let el of this.querySelectorAll("[data-property]")) {
@@ -131,6 +120,22 @@ class ComponentEdit extends ComponentVEvent {
             e.preventDefault();
             return false;
         });
+    }
+
+    connectedCallback() {
+
+        /* Edit tab is rendered here. It's left blank server-side, since
+           it only makes sense to have something here if we have javascript */
+
+        let data = vcal_objects.get(this.uid)
+
+        if (!data) {
+            throw `Data missing for uid ${this.dataset.uid}.`
+        }
+
+        this.redraw(data);
+
+        // return;
     }
 
     redraw(data: VEvent) {
