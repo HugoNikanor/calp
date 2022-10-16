@@ -23,6 +23,31 @@
              ((hnh util) :select (-> ->>))
              (json))
 
+;; Fallback to ensure we have HTTPS
+(define http-get
+ (catch 'gnutls-not-available
+   (lambda ()
+     ((@@ (web client) ensure-gnutls))
+     (@ (web client) http-get))
+   (lambda _
+     (use-modules (ice-9 popen)
+                  (web http))
+
+     (lambda (url . _)
+       (let ((pipe (open-pipe* OPEN_READ "curl" "--include" "--http1.1" url)))
+         (let ((intro (string-split (read-line pipe) #\space)) ; HTTP/1.1 200 OK\r
+               (headers (read-headers pipe)))
+           (let ((response
+                  (build-response
+                   version:  (parse-http-version (list-ref intro 0))
+                   code: (string->number (list-ref intro 1))
+                   reason-phrase: (string-trim-right
+                                   (string-join (drop intro 2) " " 'infix)
+                                   char-whitespace?)
+                   headers: headers
+                   port: pipe
+                   validate-headers?: #t)))
+             (values response pipe))))))))
 
 ;; Parse string as HTML, find all links which are "map links",
 ;; and return them as an association list from name to url-fragments.
