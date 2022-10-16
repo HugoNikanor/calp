@@ -4,6 +4,8 @@
 
 (define-module (calp repl)
   :use-module (system repl server)
+  :use-module ((system repl common) :select (repl-default-option-set!))
+  :use-module ((ice-9 pretty-print) :select (truncated-print))
   :use-module (ice-9 regex)
   :use-module (ice-9 format)
   :use-module ((calp util hooks) :select (shutdown-hook))
@@ -37,7 +39,12 @@
      ;; currently impossible
      [(IPv6) (error (G_ "How did you get here?"))]))
 
-  ;; TODO setup repl environment here
+  (repl-default-option-set!
+   'print
+   (lambda (repl obj)
+     (truncated-print obj)
+     (newline)))
 
+  ;; TODO setup repl environment here
 
   )
