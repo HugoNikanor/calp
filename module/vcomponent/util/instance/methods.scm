@@ -174,6 +174,9 @@
 
 
 (define-method (add-and-save-event (this <events>) calendar event)
+
+  ((@ (vcomponent validate) validate-event) event)
+
   (cond
    [(get-event-by-uid this (prop event 'UID))
     => (lambda (old-event)

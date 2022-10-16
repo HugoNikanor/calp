@@ -1,0 +1,16 @@
+(define-module (vcomponent validate)
+  :use-module (vcomponent)
+  :use-module (datetime)
+  :use-module ((hnh util exceptions)
+               :select (warning))
+  :use-module (calp translation)
+  :export (validate-event))
+
+(define (validate-event component)
+  (unless (date/-time<=
+           (prop component 'DTSTART)
+           (prop component 'DTEND))
+    (warning (G_ "end (~a) must be equal to or greater than start (~a)")
+             (prop component 'DTEND)
+             (prop component 'DTSTART)))
+  )
