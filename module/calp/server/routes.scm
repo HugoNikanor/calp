@@ -271,6 +271,10 @@
                (catch*
                 (lambda () (add-and-save-event global-event-object
                                           calendar event))
+                ((pre-unwind #t)
+                 (lambda _
+                   (let ((stack (make-stack #t)))
+                     (display-backtrace stack (current-error-port)))))
                 (warning
                  (lambda (err fmt args)
                    (define str (format #f "~?" fmt args))
