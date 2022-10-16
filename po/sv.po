@@ -940,3 +940,15 @@ msgstr  "<p><b>update-zoneinfo</b> laddar i teori ner och uppdaterar vår "
 
 msgid   "Return up"
 msgstr  "Återvänd uppåt"
+
+#, scheme-format
+msgid   "Event ~a updated in ~a~%"
+msgstr  "Händelse ~a uppdaterad i ~a~%"
+
+#, scheme-format
+msgid   "Event ~a added to ~a~%"
+msgstr  "Händelse ~a tillagd till ~a~%"
+
+#, scheme-format
+msgid   "end (~a) must be equal to or greater than start (~a)"
+msgstr  "slut (~a) måste vara större en eller lika med start (~a)"
