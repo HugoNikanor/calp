@@ -168,7 +168,9 @@
 
   ;; If we have alternatives, splice them in here.
   (cond [(prop component '-X-HNH-ALTERNATIVES)
-         => (lambda (alts) (hash-map->list (lambda (_ comp) (component->ical-string comp))
+         => (lambda (alts) (hash-map->list (lambda (_ comp)
+                                        (unless (eq? component comp)
+                                          (component->ical-string comp)))
                                       alts))]))
 
 

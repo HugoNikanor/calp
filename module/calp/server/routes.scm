@@ -142,6 +142,17 @@
          `((content-type image/svg+xml))
          (call-with-input-file "static/calendar.svg" read-string)))
 
+   (GET "/everything.ics" (start end)
+        (let ((start (or start (date- (current-date) (date day: 14))))
+              (end (or end (date+ (current-date) (date year: 1)))))
+          (let ((events (append
+                         (fixed-events-in-range global-event-object start end)
+                         (get-repeating-events global-event-object))))
+            (format (current-error-port) "Collected ~a events~%" (length events))
+            (return '((content-type text/calendar))
+                    (with-output-to-string
+                      (lambda () (print-components-with-fake-parent events)))))))
+
    ;; TODO any exception in this causes the whole page to fail
    ;; It would be much better if most of the page could still make it.
    (GET "/week/:start-date.html" (start-date html)
@@ -342,6 +353,7 @@
                               (list it)))))
              (return (build-response code: 404)
                      (format #f (G_ "No component with UID=~a found.") uid))))
+
 
    (GET "/search/text" (q)
         (return (build-response
