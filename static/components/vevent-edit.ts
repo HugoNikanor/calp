@@ -36,6 +36,7 @@ class ComponentEdit extends ComponentVEvent {
             el.id = id;
             label.htmlFor = id;
             label.textContent = (el as HTMLElement).dataset.label!;
+            el.parentElement!.insertBefore(label, el);
         }
 
         /* Handle calendar dropdown */
