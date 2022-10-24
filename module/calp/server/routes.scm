@@ -124,7 +124,6 @@
 (define ical-namespace '(IC . "urn:ietf:params:xml:ns:icalendar-2.0"))
 
 
-(define root-script "window.onload = () => document.querySelector('a').click()")
 
 ;; TODO ensure encoding on all fields which take user provided data.
 ;; Possibly a fallback which strips everything unknown, and treats
@@ -132,16 +131,11 @@
 (define (make-make-routes)
   (make-routes
 
-   ;; Manual redirect to not reserve root.
-   ;; Also reason for really ugly frontend redirect.
    (GET "/" (html)
-        (return `((content-type ,(content-type html)))
-                (with-output-to-string
-                  (lambda ()
-                   ((sxml->output html)
-                    (xhtml-doc
-                     (body (a (@ (href "/today")) ,(G_ "Go to Today"))
-                           (script ,(lambda () (display root-script))))))))))
+        (return (build-response code: 307
+                                headers: `((Location . "/today/")
+                                           (content-type tex/plain)))
+                (G_ "Redirecting to today, might take some time if server was just restarted.")))
 
    (GET "/favicon.ico" ()
         (return
