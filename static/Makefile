@@ -39,4 +39,4 @@ clean:
 	-rm $(TARGETS)
 
 %.css: %.scss
-	scss $(WATCH) -I. $< $@
+	scss -E UTF-8 $(WATCH) -I. $< $@
