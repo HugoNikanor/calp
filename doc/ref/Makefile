@@ -6,7 +6,7 @@ INFOFLAGS := --no-split
 all: calp.info
 
 calp.info: $(TEXI_FILES)
-	makeinfo -o $@ $(INFOFLAGS) calp.texi
+	$(MAKEINFO) -o $@ $(INFOFLAGS) calp.texi
 
 install: all
 	install -m644 -D -t $(DESTDIR)/usr/share/info/ calp.info
