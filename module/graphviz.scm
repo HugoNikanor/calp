@@ -79,6 +79,10 @@
            renderdata
            write))
 
-;; (load-extension "libgv_guile.so" "SWIG_init")
+(define lib "graphviz/guile/libgv_guile")
 
-(load-extension "/usr/lib/graphviz/guile/libgv_guile.so" "SWIG_init")
+(load-extension
+ (format #f "~a/~a.so"
+         "/usr/lib" ; LIBRARY PATH
+         lib)
+ "SWIG_init")
