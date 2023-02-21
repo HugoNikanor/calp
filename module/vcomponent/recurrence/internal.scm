@@ -79,9 +79,18 @@
   ;; to prevent creation of invalid rules.
   ;; This was made apparent when wkst was (incorrectly) set to MO,
   ;; which later crashed generate-recurrence-set.
-  (make-recur-rule% freq until count interval bysecond byminute byhour
-                    byday bymonthday byyearday byweekno bymonth bysetpos
-                    wkst))
+
+  ;; Allow `(cons #f day)' to be written as just `day'.
+  (let ((byday* (if byday
+                    (map (lambda (day)
+                           (if (number? day)
+                               (cons #f day)
+                               day))
+                         byday)
+                    #f)))
+    (make-recur-rule% freq until count interval bysecond byminute byhour
+                      byday* bymonthday byyearday byweekno bymonth bysetpos
+                      wkst)))
 
 ;; only print fields with actual values.
 (set-record-type-printer!
