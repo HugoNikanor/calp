@@ -298,16 +298,16 @@
       (for-each (lambda (group)
                   (hashq-set! rules
                               (car group)
-                              (sort* (cadr group)
+                              (sort* (cdr group)
                                      (lambda (a b) (if (eq? 'minimum) #t (< a b)))
                                      rule-from)))
-                (group-by rule-name (car it))))
+                (group-by rule-name it)))
 
     ;; put zones in map
     (awhen (assoc-ref groups 'zone)
       (for-each (lambda (zone)
                   (hash-set! zones (zone-name zone) (zone-entries zone)))
-                (car it)))
+                it))
 
     ;; resolve links to extra entries in the zone map
     (awhen (assoc-ref groups 'link)
@@ -318,7 +318,7 @@
                     (if (not target-item)
                         (warning (G_ "Unresolved link, target missing ~a -> ~a") name target)
                         (hash-set! zones name target-item))))
-                (car it)))
+                it))
 
     (make-zoneinfo rules zones)))
 

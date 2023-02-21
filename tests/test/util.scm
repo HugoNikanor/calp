@@ -127,7 +127,6 @@
 
 
 (test-group "Arrows"
-
   (test-equal "->" 9 (-> 1 (+ 2) (* 3)))
   (test-equal "-> order dependant" -1 (-> 1 (- 2)))
   (test-equal "->> order dependant" 1 (->> 1 (- 2))))
@@ -154,12 +153,12 @@
     (assq-merge '((k 1) (v 2)) '((k 2))))
 
   (test-equal "kvlist->assq"
-    '((a 1) (b 2))
+    '((a . 1) (b . 2))
     (kvlist->assq '(a: 1 b: 2)))
 
 
   (test-equal "kvlist->assq repeated key"
-    '((a 1) (b 2) (a 3))
+    '((a . 1) (b . 2) (a . 3))
     (kvlist->assq '(a: 1 b: 2 a: 3))))
 
 (test-equal "vector-last"

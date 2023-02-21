@@ -93,7 +93,7 @@
                                            (as-time
                                             (datetime-difference (prop e 'DTEND)
                                                                  (prop e 'DTSTART)))))
-                                        (cadr group))))))
+                                        (cdr group))))))
             instances)
 
 

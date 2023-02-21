@@ -186,8 +186,8 @@ pairs of symbols and values.
 
 @lisp
 (kvlist->assq '(#:a 1 #:b "Hello"))
-⇒ ((a 1)
-   (b "Hello"))
+⇒ ((a . 1)
+   (b . "Hello"))
 @end lisp
 @end defun
 
