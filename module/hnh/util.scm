@@ -313,7 +313,8 @@
 
 (define (kvlist->assq kvlist)
   (map (lambda (pair)
-         (cons (keyword->symbol (car pair)) (cdr pair)))
+         (cons (keyword->symbol (car pair))
+               (cadr pair)))
        (group kvlist 2)))
 
 (define* (assq-limit alist optional: (number 1))
