@@ -306,7 +306,7 @@
                             (if (null? (cdr stack))
                                 ;; return
                                 (car stack)
-                                (begin (add-child! (cadr stack) (car stack))
+                                (begin (reparent! (cadr stack) (car stack))
                                        (cdr stack))))]
                      [else
                       (let ((key value params (parse-itemline head)))

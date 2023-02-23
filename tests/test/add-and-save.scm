@@ -112,7 +112,7 @@
 
 
 (test-equal "Correct amount of children in calendar"
-  2 (length (children calendar)))
+  5 (length (children calendar)))
 
 
 (define get-events (@@ (vcomponent util instance methods) get-events))

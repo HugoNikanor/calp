@@ -100,7 +100,7 @@
                 (upcase-keys (kvlist->assq attrs)))
 
       ;; Attach children
-      (for-each (lambda (child) (add-child! component child))
+      (for-each (lambda (child) (reparent! component child))
                 children)))
 
   component)

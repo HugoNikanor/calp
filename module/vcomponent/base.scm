@@ -15,7 +15,9 @@
            vcomponent?
            children type parent
 
-           add-child! remove-child!
+           reparent!
+           abandon!
+           orphan!
 
            delete-property!
            prop* prop
@@ -75,40 +77,38 @@
   (make-vline% key value ht))
 
 (define-record-type <vcomponent>
-  (make-vcomponent% type children parent properties)
+  (make-vcomponent% type children properties)
   vcomponent?
   (type type)
   (children children set-component-children!)
-  (parent get-component-parent set-component-parent!)
   (properties get-component-properties))
 
 ((@ (srfi srfi-9 gnu) set-record-type-printer!)
  <vcomponent>
  (lambda (c p)
-   (format p "#<<vcomponent> ~a, len(child)=~a, parent=~a>"
+   (format p "#<<vcomponent> ~a, len(child)=~a>"
            (type c)
            (length (children c))
-           (and=> (get-component-parent c) type))))
+           )))
 
-;; TODO should this also update the parent
-(define parent
-  (make-procedure-with-setter
-   get-component-parent set-component-parent!))
+
+(define parent% (make-object-property))
+(define (parent x) (parent% x))
 
 (define* (make-vcomponent optional: (type 'VIRTUAL))
-  (make-vcomponent% type '() #f (make-hash-table)))
+  (make-vcomponent% type '() (make-hash-table)))
 
-(define (add-child! parent child)
+(define (reparent! parent child)
   (set-component-children! parent (cons child (children parent)))
-  (set-component-parent! child parent))
+  (set! (parent% child) parent))
 
-(define (remove-child! parent-component child)
-  (unless (eq? parent-component (parent child))
-    (scm-error
-     'wrong-type-arg "remove-child!" "Child doesn't belong to parent"
-     (list parent-component child) #f))
+(define (abandon! parent-component child)
   (set-component-children! parent-component (delq1! child (children parent-component)))
-  (set-component-parent! child #f))
+  (when (eq? parent-component (parent% child))
+    (orphan! child)))
+
+(define (orphan! child)
+  (set! (parent% child) #f))
 
 ;;; TODO key=DTSTART, (date? value) => #t
 ;;; KRÄVER att (props vline 'VALUE) <- "DATE"
@@ -195,18 +195,21 @@
               (get-vline-parameters vline)))
 
 (define (copy-vcomponent component)
-  (make-vcomponent%
-   (type component)
-   ;; TODO deep copy?
-   (children component)
-   (parent component)
-   ;; properties
-   (alist->hashq-table
-    (hash-map->list (lambda (key value)
-                      (cons key (if (list? value)
-                                    (map copy-vline value)
-                                    (copy-vline value))))
-                    (get-component-properties component)))))
+  (let ((ev
+         (make-vcomponent%
+          (type component)
+          (children component)
+          ;; properties
+          (alist->hashq-table
+           (hash-map->list (lambda (key value)
+                             (cons key (if (list? value)
+                                           (map copy-vline value)
+                                           (copy-vline value))))
+                           (get-component-properties component))))))
+    (when (parent component)
+      (reparent! (parent component) ev))
+    ev))
+
 
 (define (extract field)
   (lambda (e) (prop e field)))

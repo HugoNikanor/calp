@@ -258,6 +258,6 @@
   ;; children
   (awhen (assoc-ref sxcal 'components)
          (for child in (map sxcal->vcomponent it)
-              (add-child! component child)))
+              (reparent! component child)))
 
   component)

@@ -125,7 +125,7 @@
 ;;; with the same UID, which is BAD.
 (define-method (add-event (this <events>) calendar event)
 
-  (add-child! calendar event)
+  (reparent! calendar event)
   (unless (prop event 'UID)
     (set! (prop event 'UID) (uuid)))
 
@@ -184,7 +184,7 @@
 
          ;; remove old instance of event from runtime
          (remove-event this old-event)
-         (remove-child! old-calendar old-event)
+         (abandon! old-calendar old-event)
 
          ;; Add new event to runtime,
          ;; MUST be done after since the two events SHOULD share UID.

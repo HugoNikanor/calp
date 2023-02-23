@@ -106,6 +106,8 @@ Curried version of @var{prop}.
 @end deftp
 
 @defun copy-vcomponent vcomponent
+Creates a shallow copy of @var{vcomponent}. If the source object has a
+parent, then than parent adopts the new event also.
 @end defun
 
 

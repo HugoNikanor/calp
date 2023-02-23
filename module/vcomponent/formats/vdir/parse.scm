@@ -66,7 +66,7 @@
               (case (length events)
                 [(0) (warning (G_ "No events in component~%~a")
                               (prop item '-X-HNH-FILENAME))]
-                [(1) (add-child! calendar (car events))]
+                [(1) (reparent! calendar (car events))]
 
                 ;; two or more
                 [else
@@ -108,7 +108,7 @@
                            ;; we need to filter duplicates either way.
                            (map (extract 'RECURRENCE-ID) (cons head rest))
                            (cons head rest))))
-                   (add-child! calendar head))])
+                   (reparent! calendar head))])
 
               ;; return
               calendar)

@@ -245,7 +245,7 @@ Event must have the DTSTART and DTEND protperty set."
                            (prop component 'TZNAME) (zone-entry-format zone-entry)
                            last-until (zone-entry-until zone-entry)
                            last-offset new-timespec)
-                     (add-child! vtimezone component)))]
+                     (reparent! vtimezone component)))]
 
              [(zone-entry-rule zone-entry)
               => (lambda (rule-name)
@@ -278,7 +278,7 @@ Event must have the DTSTART and DTEND protperty set."
                             (awhen (rule->rrule rule)
                                    (set! (prop component 'RRULE) it))
 
-                            (add-child! vtimezone component)))
+                            (reparent! vtimezone component)))
                         ;; some of the rules might not apply to us since we only
                         ;; started using that rule set later. It's also possible
                         ;; that we stopped using a ruleset which continues existing.
@@ -297,5 +297,5 @@ Event must have the DTSTART and DTEND protperty set."
                       (prop component 'TZNAME) (zone-entry-format zone-entry)
                       last-until (zone-entry-until zone-entry)
                       last-offset (zone-entry-stdoff zone-entry))
-                (add-child! vtimezone component))]))
+                (reparent! vtimezone component))]))
   vtimezone)

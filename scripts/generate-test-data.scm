@@ -63,8 +63,8 @@
   (prop cal 'PRODID) "-//hugo//calp TEST//EN"
   (prop cal 'VERSION) "2.0")
 
-(add-child! cal zoneinfo)
-(add-child! cal ev)
+(reparent! cal zoneinfo)
+(reparent! cal ev)
 
 (define sxcal
   `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"UTF-8\"")
