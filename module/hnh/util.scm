@@ -133,6 +133,19 @@
                         b1 body ...)))])
                  <collection>)))))
 
+    ((for (<var> <vars> ... . <tail>) in <collection> b1 body ...)
+     #'(call/ec
+        (lambda (break)
+          (map ((@ (ice-9 match) match-lambda)
+                [(<var> <vars> ... . <tail>)
+                 (call/ec
+                  (lambda (raw-continue)
+                    (let ((continue
+                           (case-lambda
+                             (() #f)
+                             (args (apply raw-continue args)))))
+                      b1 body ...)))])
+               <collection>))))
     ((for <var> in <collection> b1 body ...)
      (with-syntax ((break (datum->syntax stx 'break))
                    (continue (datum->syntax stx 'continue)))

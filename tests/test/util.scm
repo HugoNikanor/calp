@@ -51,6 +51,16 @@
    (for (x c) in (zip (iota 12) (string->list "Hello, World"))
         x))
 
+ (test-equal "for with improper list elements"
+   `(3 7)
+   (for (a . b) in '((1 . 2) (3 . 4))
+        (+ a b)))
+
+ (test-equal "for with longer improper list elements"
+   '(1 2 4)
+   (for (a b . c) in '((1 -1 . 1) (2 -2 . 2) (4 -4 . 4))
+        (* c (+ 1 a b))))
+
  (test-equal "for break"
    'x
    (for x in (iota 10)
