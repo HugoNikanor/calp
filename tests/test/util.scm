@@ -132,6 +132,25 @@
 
 ;; TODO assq-limit ?
 
+(test-group "group by"
+  ;; Extra roundabout tests since groups-by doesn't guarantee order of the keys
+  (test-group "Two simple groups"
+    (let ((groups (group-by even? (iota 10))))
+      (test-assert (lset= eq? '(#f #t) (map car groups)))
+      (test-assert (lset= = '(0 2 4 6 8) (assq-ref groups #t)))
+      (test-assert (lset= = '(1 3 5 7 9) (assq-ref groups #f)))))
+
+  (test-group "Identity groups"
+    (let ((groups (group-by identity (iota 5))))
+      (test-assert "Correct keys"
+        (lset= = (iota 5) (map car groups)))
+      (test-group "Correct amount in each group"
+        (for-each (lambda (g) (test-equal 1 (length (cdr g)))) groups))))
+
+  (test-equal "Null case"
+    '()
+    (group-by (lambda _ (/ 0)) '())))
+
 (test-equal "->" 9 (-> 1 (+ 2) (* 3)))
 (test-equal "-> order dependant" -1 (-> 1 (- 2)))
 (test-equal "->> order dependant" 1 (->> 1 (- 2)))

@@ -31,7 +31,7 @@
                (list "varje "
                      (add-enumeration-punctuation
                       (map (lambda (d) (list (week-day-name (cdr d))))
-                           (cadr group)
+                           (cdr group)
                            )))]
               [else
                (list (number->string-ordinal
@@ -40,7 +40,7 @@
                      " "
                      (add-enumeration-punctuation
                       (map (lambda (d) (list (week-day-name (cdr d)) "en"))
-                           (cadr group))))])
+                           (cdr group))))])
             )
           groups))))
 

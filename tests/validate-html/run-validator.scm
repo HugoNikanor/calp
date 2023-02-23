@@ -80,6 +80,6 @@ exec $GUILE -e main -s "$0" -- "$@"
         (begin
          (for-each (lambda (group)
                      (format #t "~a~%" (-> group car (assoc-ref 'url) car))
-                     (for-each display-entry (cadr group)))
+                     (for-each display-entry (cdr group)))
                    (group-by-file filtered-data))
          (exit 1)))))
