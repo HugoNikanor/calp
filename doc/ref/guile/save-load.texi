@@ -1,0 +1,63 @@
+@node Saving and Loading
+@section Saving and Loading
+
+@subsection Data Formats
+A data format is some way that an individual event may get serialized
+to disk. The default is iCalendar (TODO reference RFC 5545), but
+others might be available (TODO footnote and reference xcal).
+
+Each available format should be included as
+@code{(vcomponent formats @var{format-name})}.
+Which module corresponds to what file type is currently defined out of band.
+
+Each module should expose the following procedures.
+
+@deffn serialize component port
+Write a serialized representation of @var{component} to @var{port}.
+@end deffn
+
+@deffn deserialize port
+Read a serialized representation of a component from @var{port}, and
+return the deserialized instance of this object.
+@end deffn
+
+@subsubsection iCalendar
+RFC 5545
+
+@subsubsection xCal
+
+@subsection Data Stores
+Data stores are persistant stores for events, such as databases or the
+file system. Each data store can support any number of data formats,
+but which is an implementation detail of that format and shouldn't be
+needed information from the high level view.
+@footnote{It is however important for interoperability with other programs}.
+
+@c (make <calendar-store> #:path ``hello'')
+
+@deffn path store
+@end deffn
+
+@deffn get-calendar this
+Returns a vcomponent object of type @code{VCALENDAR}. Should contain
+all @code{VEVENT} components of this calendar.
+@end deffn
+
+@deffn get-by-uid this uid
+Return the event object with UID equal to the string @var{uid}.
+@end deffn
+
+@deffn queue-save this event
+Queue a save event of @var{event} to the store.
+@end deffn
+
+@deffn flush this
+Force write of all queued actions.
+@end deffn
+
+@subsubsection VDir
+[VDIR]: http://vdirsyncer.pimutils.org/en/latest/vdir.html
+
+@subsubsection File
+
+@subsubsection SQLite

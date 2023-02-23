@@ -1,3 +1,5 @@
+;;; TODO remove this module, it should be part of the vdir interface
+
 (define-module (vcomponent util parse-cal-path)
   :use-module (hnh util)
   :use-module ((calp util time) :select (report-time!))
