@@ -71,14 +71,12 @@
            #2021-12-21T11:45:00)
    ))
 
-;; TODO tmpnam is deprecated
-(define directory (tmpnam))
+(define directory (mkdtemp (string-copy"/tmp/guile-test-XXXXXX")))
+(format #t "Using ~a~%" directory)
 
 (define event-object ((@ (oop goops) make)
                       (@@ (vcomponent util instance methods) <events>)))
 
-(mkdir directory)
-(format #t "Using ~a~%" directory)
 
 (define calendar
   (vcalendar

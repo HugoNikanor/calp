@@ -70,6 +70,10 @@
   :replace (set! define-syntax
                  when unless))
 
+(cond-expand
+  (guile-3 (use-modules ((ice-9 copy-tree) :select (copy-tree))))
+  (else))
+
 ((@ (guile) define-syntax) define-syntax
   (syntax-rules ()
     ((_ (name args ...) body ...)

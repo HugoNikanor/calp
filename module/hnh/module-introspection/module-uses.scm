@@ -82,6 +82,8 @@
     (_ '())))
 
 ;; find all use-modules forms, and return what they pull in
+;; NOTE this will pull in all forms looking like a (use-modules ...)
+;; form, even if they are quoted, or in a cond-expand
 (define (module-use-module-uses forms)
   (match forms
     (('use-modules modules ...)
