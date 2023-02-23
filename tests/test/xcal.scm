@@ -6,12 +6,13 @@
 (define-module (test xcal)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
+  :use-module (datetime)
+  :use-module ((vcomponent create)
+               :select (vcalendar vevent with-parameters))
   :use-module ((vcomponent formats xcal parse)
                :select (sxcal->vcomponent))
   :use-module ((vcomponent formats xcal output)
                :select (vcomponent->sxcal))
-  :use-module ((vcomponent formats ical parse)
-               :select (parse-calendar))
   :use-module ((hnh util) :select (->))
   :use-module ((vcomponent base)
                :select (parameters prop* children)))
@@ -19,25 +20,25 @@
 ;;; Some different types, same parameters
 
 (define ev
-  (call-with-input-string
-    "BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//calparse-test
-BEGIN:VEVENT
-SUMMARY:Test event
-DTSTART;TZID=Europe/Stockholm:20200625T133000
-DTEND:20200625T143000Z
-DTSTAMP:20200609T131418Z
-UID:1
-SEQUENCE:0
-CREATED:20200609T081725Z
-DESCRIPTION:Short description
-LAST-MODIFIED:20200609T081725Z
-STATUS;X-TEST-PARAM=10:CONFIRMED
-TRANSP:OPAQUE
-END:VEVENT
-END:VCALENDAR"
-    parse-calendar))
+  (vcalendar
+   version: "2.0"
+   prodid: "-//calparse-test"
+   (list (vevent
+          summary: "Test event"
+          dtstart: (with-parameters
+                    tzid: "Europe/Stockholm"
+                    #2020-06-25T13:30:00)
+          dtend: #2020-06-25T14:30:00Z
+          dtstamp: #2020-06-09T13:14:18Z
+          uid: "1"
+          sequence: 0
+          created: #2020-06-09T08:17:25Z
+          description: "Short description"
+          last-modified: #2020-06-09T08:17:25Z
+          status: (with-parameters
+                   x-test-param: 10
+                   'CONFIRMED)
+          transp: 'OPAQUE))))
 
 (define twice-converted
   (-> ev vcomponent->sxcal sxcal->vcomponent))

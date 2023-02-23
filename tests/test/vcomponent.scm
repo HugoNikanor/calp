@@ -7,14 +7,12 @@
   :use-module (srfi srfi-88)
   :use-module ((vcomponent base)
                :select (prop make-vcomponent add-child! remove-child!
-                             children))
-  :use-module ((vcomponent formats ical parse)
-               :select (parse-calendar)))
+                             children)))
 
 (define ev
-  (call-with-input-string
-    "BEGIN:DUMMY\nX-KEY:value\nEND:DUMMY"
-    parse-calendar))
+  (let ((ev (make-vcomponent 'DUMMY)))
+    (set! (prop ev 'X-KEY) "value")
+    ev))
 
 (test-assert (eq? #f (prop ev 'MISSING)))
 

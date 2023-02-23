@@ -8,15 +8,12 @@
   :use-module (srfi srfi-88)
   :use-module ((datetime) :select (date time datetime))
   :use-module ((vcomponent datetime) :select (event-length/clamped))
-  :use-module ((vcomponent formats ical parse) :select (parse-calendar)))
+  :use-module ((vcomponent create) :select (vevent)))
 
 (define ev
-  (call-with-input-string
-    "BEGIN:VEVENT
-DTSTART:20200329T170000
-DTEND:20200401T100000
-END:VEVENT"
-    parse-calendar))
+  (vevent
+   dtstart: #2020-03-29T17:00:00
+   dtend: #2020-04-01T10:00:00))
 
 
 ;; |-----------------| test interval
@@ -31,12 +28,9 @@ END:VEVENT"
     ev))
 
 (define utc-ev
-  (call-with-input-string
-    "BEGIN:VEVENT
-DTSTART:20200329T150000Z
-DTEND:20200401T080000Z
-END:VEVENT"
-    parse-calendar))
+  (vevent
+   dtstart: #2020-03-29T15:00:00Z
+   dtend: #2020-04-01T08:00:00Z))
 
 (test-equal
   "Correct clamping UTC"

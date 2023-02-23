@@ -14,8 +14,8 @@
 (define-module (test recurrence-advanced)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
-  :use-module ((vcomponent recurrence parse)
-               :select (parse-recurrence-rule))
+  :use-module ((vcomponent recurrence)
+               :select (make-recur-rule))
   :use-module ((vcomponent recurrence generate)
                :select (generate-recurrence-set))
   :use-module ((vcomponent recurrence display)
@@ -24,11 +24,13 @@
                :select (count until))
   :use-module ((vcomponent base)
                :select (make-vcomponent prop prop* extract make-vline))
+  :use-module (vcomponent create)
   :use-module ((datetime)
-               :select (parse-ics-datetime
-                        datetime
+               :select (datetime
                         time
                         date
+                        jan feb mar apr may jun jul aug sep oct nov dec
+                        mon tue wed thu fri sat sun
                         datetime->string))
   :use-module ((hnh util) :select (-> set!))
   :use-module ((srfi srfi-41) :select (stream->list))
@@ -63,36 +65,16 @@
     ;; TODO possibly test with other languages
     (format-recurrence-rule (prop comp 'RRULE) 'sv)))
 
-;; TODO remove this makeshift parser (and all others), and replace them with a
-;; properly specified syntax for easily creating objects.
-(define (vevent . rest)
-  (define v (make-vcomponent 'VEVENT))
-  (let loop ((rem rest))
-    (unless
-      (null? rem)
-      (let ((symb (-> (car rem)
-                      keyword->string
-                      string-upcase
-                      string->symbol)))
-        ;; TODO extend to allow dates (without time)
-        (case symb
-          ((EXDATE RDATE) (set! (prop* v symb)
-                            (map (lambda (dt) (make-vline symb dt (make-hash-table)))
-                                 (map parse-ics-datetime (cadr rem)))))
-          ((DTSTART) (set! (prop v symb) (parse-ics-datetime (cadr rem))))
-          ((RRULE)   (set! (prop v symb) (parse-recurrence-rule (cadr rem))))
-          (else      (set! (prop v symb) (cadr rem)))))
-      (loop (cddr rem))))
-  v)
-
 (map run-test
      (list (vevent
              summary:
              "Daily for 10 occurrences"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=DAILY;COUNT=10"
+             (make-recur-rule
+              freq: 'DAILY
+              count: 10)
              x-summary:
              "dagligen, totalt 10 gånger"
              x-set:
@@ -110,9 +92,11 @@
              summary:
              "Daily until December 24, 1997"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=DAILY;UNTIL=19971224T000000Z"
+             (make-recur-rule
+              freq: 'DAILY
+              until: #1997-12-24T00:00:00Z)
              x-summary:
              "dagligen, till och med den 24 december, 1997 kl.  0:00"
              x-set:
@@ -233,9 +217,11 @@
              summary:
              "Every other day - forever"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=DAILY;INTERVAL=2"
+             (make-recur-rule
+              freq: 'DAILY
+              interval: 2)
              x-summary:
              "varannan dag"
              x-set:
@@ -263,9 +249,12 @@
              summary:
              "Every 10 days, 5 occurrences"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=DAILY;INTERVAL=10;COUNT=5"
+             (make-recur-rule
+              freq: 'DAILY
+              interval: 10
+              count: 5)
              x-summary:
              "var tionde dag, totalt 5 gånger"
              x-set:
@@ -278,9 +267,13 @@
              summary:
              "Every day in January, for 3 years (alt 1)"
              dtstart:
-             "19980101T090000"
+             #1998-01-01T09:00:00
              rrule:
-             "FREQ=YEARLY;UNTIL=20000131T140000Z;BYMONTH=1;BYDAY=SU,MO,TU,WE,TH,FR,SA"
+             (make-recur-rule
+              freq: 'YEARLY
+              until: #2000-01-31T14:00:00Z
+              bymonth: (list jan)
+              byday: (list sun mon tue wed thu fri sat))
              x-summary:
              "varje lördag, fredag, torsdag, onsdag, tisdag, måndag & söndag i januari, årligen, till och med den 31 januari, 2000 kl. 14:00"
              x-set:
@@ -381,9 +374,12 @@
              summary:
              "Every day in January, for 3 years (alt 2)"
              dtstart:
-             "19980101T090000"
+             #1998-01-01T09:00:00
              rrule:
-             "FREQ=DAILY;UNTIL=20000131T140000Z;BYMONTH=1"
+             (make-recur-rule
+              freq: 'DAILY
+              until: #2000-01-31T14:00:00Z
+              bymonth: 1)
              x-summary:
              "dagligen, till och med den 31 januari, 2000 kl. 14:00"
              x-set:
@@ -484,9 +480,11 @@
              summary:
              "Weekly for 10 occurrences"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=WEEKLY;COUNT=10"
+             (make-recur-rule
+              freq: 'WEEKLY
+              count: 10)
              x-summary:
              "varje vecka, totalt 10 gånger"
              x-set:
@@ -504,9 +502,11 @@
              summary:
              "Weekly until December 24, 1997"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=WEEKLY;UNTIL=19971224T000000Z"
+             (make-recur-rule
+              freq: 'WEEKLY
+              until: #1997-12-24T00:00:00Z)
              x-summary:
              "varje vecka, till och med den 24 december, 1997 kl.  0:00"
              x-set:
@@ -531,9 +531,12 @@
              summary:
              "Every other week - forever"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=WEEKLY;INTERVAL=2;WKST=SU"
+             (make-recur-rule
+              freq: 'WEEKLY
+              interval: 2
+              wkst: sun)
              x-summary:
              "varannan vecka"
              x-set:
@@ -561,9 +564,13 @@
              summary:
              "Weekly on Tuesday and Thursday for five weeks (alt 1)"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=WEEKLY;UNTIL=19971007T000000Z;WKST=SU;BYDAY=TU,TH"
+             (make-recur-rule
+              freq: 'WEEKLY
+              until: #1997-10-07T00:00:00Z
+              wkst: sun
+              byday: (list tue thu))
              x-summary:
              "varje tisdag & torsdag, till och med den 07 oktober, 1997 kl.  0:00"
              x-set:
@@ -581,9 +588,13 @@
              summary:
              "Weekly on Tuesday and Thursday for five weeks (alt 2)"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=WEEKLY;COUNT=10;WKST=SU;BYDAY=TU,TH"
+             (make-recur-rule
+              freq: 'WEEKLY
+              count: 10
+              wkst: sun
+              byday: (list tue thu))
              x-summary:
              "varje tisdag & torsdag, totalt 10 gånger"
              x-set:
@@ -601,9 +612,14 @@
              summary:
              "Every other week on Monday, Wednesday, and Friday until December 24, 1997, starting on Monday, September 1, 1997:"
              dtstart:
-             "19970901T090000"
+             #1997-09-01T09:00:00
              rrule:
-             "FREQ=WEEKLY;INTERVAL=2;UNTIL=19971224T000000Z;WKST=SU;BYDAY=MO,WE,FR"
+             (make-recur-rule
+              freq: 'WEEKLY
+              interval: 2
+              until: #1997-12-24T00:00:00Z
+              wkst: sun
+              byday: (list mon wed fri))
              x-summary:
              "varannan måndag, onsdag & fredag, till och med den 24 december, 1997 kl.  0:00"
              x-set:
@@ -636,9 +652,14 @@
              summary:
              "Every other week on Tuesday and Thursday, for 8 occurrences"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=WEEKLY;INTERVAL=2;COUNT=8;WKST=SU;BYDAY=TU,TH"
+             (make-recur-rule
+              freq: 'WEEKLY
+              interval: 2
+              count: 8
+              wkst: sun
+              byday: (list tue thu))
              x-summary:
              "varannan tisdag & torsdag, totalt 8 gånger"
              x-set:
@@ -654,9 +675,12 @@
              summary:
              "Monthly on the first Friday for 10 occurrences"
              dtstart:
-             "19970905T090000"
+             #1997-09-05T09:00:00
              rrule:
-             "FREQ=MONTHLY;COUNT=10;BYDAY=1FR"
+             (make-recur-rule
+              freq: 'MONTHLY
+              count: 10
+              byday: (list (cons 1 fri)))
              x-summary:
              "första fredagen varje månad, totalt 10 gånger"
              x-set:
@@ -674,9 +698,12 @@
              summary:
              "Monthly on the first Friday until December 24, 1997"
              dtstart:
-             "19970905T090000"
+             #1997-09-05T09:00:00
              rrule:
-             "FREQ=MONTHLY;UNTIL=19971224T000000Z;BYDAY=1FR"
+             (make-recur-rule
+              freq: 'MONTHLY
+              until: #1997-12-24T00:00:00Z
+              byday: (list (cons 1 fri)))
              x-summary:
              "första fredagen varje månad, till och med den 24 december, 1997 kl.  0:00"
              x-set:
@@ -688,9 +715,14 @@
              summary:
              "Every other month on the first and last Sunday of the month for 10 occurrences"
              dtstart:
-             "19970907T090000"
+             #1997-09-07T09:00:00
              rrule:
-             "FREQ=MONTHLY;INTERVAL=2;COUNT=10;BYDAY=1SU,-1SU"
+             (make-recur-rule
+              freq: 'MONTHLY
+              interval: 2
+              count: 10
+              byday: (list (cons 1 sun)
+                           (cons -1 sun)))
              x-summary:
              "första söndagen samt sista söndagen varannan månad, totalt 10 gånger"
              x-set:
@@ -708,9 +740,12 @@
              summary:
              "Monthly on the second-to-last Monday of the month for 6 months"
              dtstart:
-             "19970922T090000"
+             #1997-09-22T09:00:00
              rrule:
-             "FREQ=MONTHLY;COUNT=6;BYDAY=-2MO"
+             (make-recur-rule
+              freq: 'MONTHLY
+              count: 6
+              byday: (list (cons -2 mon)))
              x-summary:
              "näst sista måndagen varje månad, totalt 6 gånger"
              x-set:
@@ -724,9 +759,11 @@
              summary:
              "Monthly on the third-to-the-last day of the month, forever"
              dtstart:
-             "19970928T090000"
+             #1997-09-28T09:00:00
              rrule:
-             "FREQ=MONTHLY;BYMONTHDAY=-3"
+             (make-recur-rule
+              freq: 'MONTHLY
+              bymonthday: (list -3))
              x-summary:
              "den tredje sista varje månad"
              x-set:
@@ -754,9 +791,12 @@
              summary:
              "Monthly on the 2nd and 15th of the month for 10 occurrences"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=MONTHLY;COUNT=10;BYMONTHDAY=2,15"
+             (make-recur-rule
+              freq: 'MONTHLY
+              count: 10
+              bymonthday: (list 2 15))
              x-summary:
              "den andre & femtonde varje månad, totalt 10 gånger"
              x-set:
@@ -774,9 +814,12 @@
              summary:
              "Monthly on the first and last day of the month for 10 occurrences"
              dtstart:
-             "19970930T090000"
+             #1997-09-30T09:00:00
              rrule:
-             "FREQ=MONTHLY;COUNT=10;BYMONTHDAY=1,-1"
+             (make-recur-rule
+              freq: 'MONTHLY
+              count: 10
+              bymonthday: (list 1 -1))
              x-summary:
              "den förste & sista varje månad, totalt 10 gånger"
              x-set:
@@ -794,9 +837,13 @@
              summary:
              "Every 18 months on the 10th thru 15th of the month for 10 occurrences"
              dtstart:
-             "19970910T090000"
+             #1997-09-10T09:00:00
              rrule:
-             "FREQ=MONTHLY;INTERVAL=18;COUNT=10;BYMONTHDAY=10,11,12,13,14,15"
+             (make-recur-rule
+              freq: 'MONTHLY
+              interval: 18
+              count: 10
+              bymonthday: (list 10 11 12 13 14 15))
              x-summary:
              "den tionde, elfte, tolfte, trettonde, fjortonde & femtonde var artonde månad, totalt 10 gånger"
              x-set:
@@ -814,9 +861,12 @@
              summary:
              "Every Tuesday, every other month"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=MONTHLY;INTERVAL=2;BYDAY=TU"
+             (make-recur-rule
+              freq: 'MONTHLY
+              interval: 2
+              byday: (list tue))
              x-summary:
              "varje tisdag varannan månad"
              x-set:
@@ -844,9 +894,12 @@
              summary:
              "Yearly in June and July for 10 occurrences:\n: Since none of the BYDAY, BYMONTHDAY, or BYYEARDAY\nonents are specified, the day is gotten from \"DTSTART\""
              dtstart:
-             "19970610T090000"
+             #1997-06-10T09:00:00
              rrule:
-             "FREQ=YEARLY;COUNT=10;BYMONTH=6,7"
+             (make-recur-rule
+              freq: 'YEARLY
+              count: 10
+              bymonth: (list 6 7))
              x-summary:
              "juni & juli, årligen, totalt 10 gånger"
              x-set:
@@ -864,9 +917,13 @@
              summary:
              "Every other year on January, February, and March for 10 occurrences"
              dtstart:
-             "19970310T090000"
+             #1997-03-10T09:00:00
              rrule:
-             "FREQ=YEARLY;INTERVAL=2;COUNT=10;BYMONTH=1,2,3"
+             (make-recur-rule
+              freq: 'YEARLY
+              interval: 2
+              count: 10
+              bymonth: (list jan feb mar))
              x-summary:
              "januari, februari & mars vartannat år, totalt 10 gånger"
              x-set:
@@ -884,9 +941,13 @@
              summary:
              "Every third year on the 1st, 100th, and 200th day for 10 occurrences"
              dtstart:
-             "19970101T090000"
+             #1997-01-01T09:00:00
              rrule:
-             "FREQ=YEARLY;INTERVAL=3;COUNT=10;BYYEARDAY=1,100,200"
+             (make-recur-rule
+              freq: 'YEARLY
+              interval: 3
+              count: 10
+              byyearday: (list 1 100 200))
              x-summary:
              "dag 1, 100 & 200 vart tredje år, totalt 10 gånger"
              x-set:
@@ -904,9 +965,11 @@
              summary:
              "Every 20th Monday of the year, forever"
              dtstart:
-             "19970519T090000"
+             #1997-05-19T09:00:00
              rrule:
-             "FREQ=YEARLY;BYDAY=20MO"
+             (make-recur-rule
+              freq: 'YEARLY
+              byday: (list (cons 20 mon)))
              x-summary:
              "tjugonde måndagen, årligen"
              x-set:
@@ -934,9 +997,12 @@
              summary:
              "Monday of week number 20 (where the default start of the week is Monday), forever"
              dtstart:
-             "19970512T090000"
+             #1997-05-12T09:00:00
              rrule:
-             "FREQ=YEARLY;BYWEEKNO=20;BYDAY=MO"
+             (make-recur-rule
+              freq: 'YEARLY
+              byweekno: (list 20)
+              byday: (list mon))
              x-summary:
              "varje måndag v.20, årligen"
              x-set:
@@ -964,9 +1030,12 @@
              summary:
              "Every Thursday in March, forever"
              dtstart:
-             "19970313T090000"
+             #1997-03-13T09:00:00
              rrule:
-             "FREQ=YEARLY;BYMONTH=3;BYDAY=TH"
+             (make-recur-rule
+              freq: 'YEARLY
+              bymonth: (list mar)
+              byday: (list thu))
              x-summary:
              "varje torsdag i mars, årligen"
              x-set:
@@ -994,9 +1063,12 @@
              summary:
              "Every Thursday, but only during June, July, and August, forever"
              dtstart:
-             "19970605T090000"
+             #1997-06-05T09:00:00
              rrule:
-             "FREQ=YEARLY;BYDAY=TH;BYMONTH=6,7,8"
+             (make-recur-rule
+              freq: 'YEARLY
+              byday: (list thu)
+              bymonth: (list 6 7 8))
              x-summary:
              "varje torsdag i juni, juli & augusti, årligen"
              x-set:
@@ -1024,11 +1096,15 @@
              summary:
              "Every Friday the 13th, forever"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              exdate:
-             (list "19970902T090000")
+             (as-list
+              (list #1997-09-02T09:00:00))
              rrule:
-             "FREQ=MONTHLY;BYDAY=FR;BYMONTHDAY=13"
+             (make-recur-rule
+              freq: 'MONTHLY
+              byday: (list fri)
+              bymonthday: (list 13))
              x-summary:
              "varje fredag den trettonde varje månad"
              x-set:
@@ -1056,9 +1132,12 @@
              summary:
              "The first Saturday that follows the first Sunday of the month, forever"
              dtstart:
-             "19970913T090000"
+             #1997-09-13T09:00:00
              rrule:
-             "FREQ=MONTHLY;BYDAY=SA;BYMONTHDAY=7,8,9,10,11,12,13"
+             (make-recur-rule
+              freq: 'MONTHLY
+              byday: (list sat)
+              bymonthday: (list 7 8 9 10 11 12 13))
              x-summary:
              "varje lördag den sjunde, åttonde, nionde, tionde, elfte, tolfte & trettonde varje månad"
              x-set:
@@ -1086,9 +1165,14 @@
              summary:
              "Every 4 years, the first Tuesday after a Monday in November,\nver (U.S. Presidential Election day)"
              dtstart:
-             "19961105T090000"
+             #1996-11-05T09:00:00
              rrule:
-             "FREQ=YEARLY;INTERVAL=4;BYMONTH=11;BYDAY=TU;BYMONTHDAY=2,3,4,5,6,7,8"
+             (make-recur-rule
+              freq: 'YEARLY
+              interval: 4
+              bymonth: (list nov)
+              byday: (list tue)
+              bymonthday: (list 2 3 4 5 6 7 8))
              x-summary:
              "varje tisdag den andre, tredje, fjärde, femte, sjätte, sjunde eller åttonde i november vart fjärde år"
              x-set:
@@ -1116,9 +1200,13 @@
              summary:
              "The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months"
              dtstart:
-             "19970904T090000"
+             #1997-09-04T09:00:00
              rrule:
-             "FREQ=MONTHLY;COUNT=3;BYDAY=TU,WE,TH;BYSETPOS=3"
+             (make-recur-rule
+              freq: 'MONTHLY
+              count: 3
+              byday: (list tue wed thu)
+              bysetpos: (list 3))
              x-summary:
              "NOT YET IMPLEMENTED"
              x-set:
@@ -1129,9 +1217,12 @@
              summary:
              "The second-to-last weekday of the month"
              dtstart:
-             "19970929T090000"
+             #1997-09-29T09:00:00
              rrule:
-             "FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-2"
+             (make-recur-rule
+              freq: 'MONTHLY
+              byday: (list mon tue wed thu fri)
+              bysetpos: (list -2))
              x-summary:
              "NOT YET IMPLEMENTED"
              x-set:
@@ -1144,9 +1235,12 @@
              summary:
              "Every 3 hours from 9:00 AM to 5:00 PM on a specific day"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=HOURLY;INTERVAL=3;UNTIL=19970902T170000Z"
+             (make-recur-rule
+              freq: 'HOURLY
+              interval: 3
+              until: #1997-09-02T17:00:00Z)
              x-summary:
              "var tredje timme, till och med den 02 september, 1997 kl. 17:00"
              x-set:
@@ -1157,9 +1251,12 @@
              summary:
              "Every 15 minutes for 6 occurrences"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=MINUTELY;INTERVAL=15;COUNT=6"
+             (make-recur-rule
+              freq: 'MINUTELY
+              interval: 15
+              count: 6)
              x-summary:
              "varje kvart, totalt 6 gånger"
              x-set:
@@ -1173,9 +1270,12 @@
              summary:
              "Every hour and a half for 4 occurrences"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=MINUTELY;INTERVAL=90;COUNT=4"
+             (make-recur-rule
+              freq: 'MINUTELY
+              interval: 90
+              count: 4)
              x-summary:
              "var sjätte kvart, totalt 4 gånger"
              x-set:
@@ -1187,9 +1287,12 @@
              summary:
              "Every 20 minutes from 9:00 AM to 4:40 PM every day (alt 1)"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=DAILY;BYHOUR=9,10,11,12,13,14,15,16;BYMINUTE=0,20,40"
+             (make-recur-rule
+              freq: 'DAILY
+              byhour: (list 9 10 11 12 13 14 15 16)
+              byminute: (list 0 20 40))
              x-summary:
              "dagligen kl. 09:00, 09:20, 09:40, 10:00, 10:20, 10:40, 11:00, 11:20, 11:40, 12:00, 12:20, 12:40, 13:00, 13:20, 13:40, 14:00, 14:20, 14:40, 15:00, 15:20, 15:40, 16:00, 16:20 & 16:40"
              x-set:
@@ -1217,9 +1320,12 @@
              summary:
              "Every 20 minutes from 9:00 AM to 4:40 PM every day (alt 2)"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              rrule:
-             "FREQ=MINUTELY;INTERVAL=20;BYHOUR=9,10,11,12,13,14,15,16"
+             (make-recur-rule
+              freq: 'MINUTELY
+              interval: 20
+              byhour: (list 9 10 11 12 13 14 15 16))
              x-summary:
              "var tjugonde minut kl. 9, 10, 11, 12, 13, 14, 15 & 16"
              x-set:
@@ -1247,9 +1353,14 @@
              summary:
              "An example where the days generated makes a difference because of WKST"
              dtstart:
-             "19970805T090000"
+             #1997-08-05T09:00:00
              rrule:
-             "FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=MO"
+             (make-recur-rule
+              freq: 'WEEKLY
+              interval: 2
+              count: 4
+              byday: (list tue sun)
+              wkst: mon)
              x-summary:
              "varannan tisdag & söndag, totalt 4 gånger"
              x-set:
@@ -1261,9 +1372,14 @@
              summary:
              "changing only WKST from MO to SU, yields different results.."
              dtstart:
-             "19970805T090000"
+             #1997-08-05T09:00:00
              rrule:
-             "FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=SU"
+             (make-recur-rule
+              freq: 'WEEKLY
+              interval: 2
+              count: 4
+              byday: (list tue sun)
+              wkst: sun)
              x-summary:
              "varannan tisdag & söndag, totalt 4 gånger"
              x-set:
@@ -1275,9 +1391,12 @@
              summary:
              "An example where an invalid date (i.e., February 30) is ignored"
              dtstart:
-             "20070115T090000"
+             #2007-01-15T09:00:00
              rrule:
-             "FREQ=MONTHLY;BYMONTHDAY=15,30;COUNT=5"
+             (make-recur-rule
+              freq: 'MONTHLY
+              bymonthday: (list 15 30)
+              count: 5)
              x-summary:
              "den femtonde & tretionde varje månad, totalt 5 gånger"
              x-set:
@@ -1290,11 +1409,15 @@
              summary:
              "Every Friday & Wednesday the 13th, forever"
              dtstart:
-             "19970902T090000"
+             #1997-09-02T09:00:00
              exdate:
-             (list "19970902T090000")
+             (as-list
+              (list #1997-09-02T09:00:00))
              rrule:
-             "FREQ=MONTHLY;BYDAY=FR,WE;BYMONTHDAY=13"
+             (make-recur-rule
+              freq: 'MONTHLY
+              byday: (list fri wed)
+              bymonthday: (list 13))
              x-summary:
              "varje onsdag & fredag den trettonde varje månad"
              x-set:
@@ -1322,9 +1445,12 @@
              summary:
              "Monday & Wednesday of week number 20 (where the default start of the week is Monday), forever"
              dtstart:
-             "19970512T090000"
+             #1997-05-12T09:00:00
              rrule:
-             "FREQ=YEARLY;BYWEEKNO=20;BYDAY=MO,WE"
+             (make-recur-rule
+              freq: 'YEARLY
+              byweekno: (list 20)
+              byday: (list mon wed))
              x-summary:
              "varje onsdag & måndag v.20, årligen"
              x-set:
@@ -1350,8 +1476,8 @@
                    #2006-05-17T09:00:00))
            (vevent
             summary: "Each second, for ever"
-            dtstart: "20201010T100000"
-            rrule: "FREQ=SECONDLY"
+            dtstart: #2020-10-10T10:00:00
+            rrule: (make-recur-rule freq: 'SECONDLY)
             x-summary: "varje sekund"
             x-set: (list #2020-10-10T10:00:00
                          #2020-10-10T10:00:01
@@ -1377,9 +1503,9 @@
            ;; instances may be present.
            (vevent
             summary: "Exdates are applied AFTER rrule's"
-            dtstart: "20220610T100000"
-            rrule: "FREQ=DAILY;COUNT=5"
-            exdate: (list "20220612T100000")
+            dtstart: #2022-06-10T10:00:00
+            rrule: (make-recur-rule freq: 'DAILY count: 5)
+            exdate: (as-list (list #2022-06-12T10:00:00))
             x-summary: "dagligen, totalt 5 gånger"
             x-set: (list #2022-06-10T10:00:00
                          #2022-06-11T10:00:00
@@ -1389,9 +1515,9 @@
                          ))
            (vevent
             summary: "RDATE:s add to the recurrence rule"
-            dtstart: "20220610T100000"
-            rrule: "FREQ=DAILY;COUNT=5"
-            rdate: (list "20220620T100000")
+            dtstart: #2022-06-10T10:00:00
+            rrule: (make-recur-rule freq: 'DAILY count: 5)
+            rdate: (as-list (list #2022-06-20T10:00:00))
             x-summary: "dagligen, totalt 5 gånger"
             x-set: (list #2022-06-10T10:00:00
                          #2022-06-11T10:00:00
@@ -1403,10 +1529,10 @@
             )
            (vevent
             summary: "RDATE:s add to the recurrence rule"
-            dtstart: "20220610T100000"
-            rrule: "FREQ=DAILY;COUNT=5"
-            exdate: (list "20220620T100000")
-            rdate: (list "20220620T100000")
+            dtstart: #2022-06-10T10:00:00
+            rrule: (make-recur-rule freq: 'DAILY count: 5)
+            exdate: (as-list (list #2022-06-20T10:00:00))
+            rdate: (as-list (list #2022-06-20T10:00:00))
             x-summary: "dagligen, totalt 5 gånger"
             x-set: (list #2022-06-10T10:00:00
                          #2022-06-11T10:00:00

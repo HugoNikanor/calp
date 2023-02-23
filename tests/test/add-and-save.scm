@@ -3,71 +3,75 @@
   :use-module (srfi srfi-88)
   :use-module (hnh util)
   :use-module (datetime)
+  :use-module (datetime timespec)
   ;; :use-module ((vcomponent) :select (prop))
   :use-module ((vcomponent base) :select (prop type children make-vcomponent))
   :use-module ((srfi srfi-1) :select (find))
   :use-module ((vcomponent formats vdir save-delete) :select (save-event))
-  :use-module ((vcomponent formats xcal parse) :select (sxcal->vcomponent))
+  :use-module ((vcomponent create)
+               :select (with-parameters
+                        vcalendar vevent
+                        vtimezone standard daylight))
+  :use-module (vcomponent recurrence)
   :use-module ((vcomponent util instance methods)
                :select (add-calendars
                         add-and-save-event
                         remove-event
                         )))
 
-;; TODO is this how I want to format direct components?
-
 (define timezone
-  '(vtimezone
-    (properties (tzid (text "Europe/Stockholm")))
-    (components
-     (standard
-      (properties
-       (tzoffsetto (utc-offset "+0100"))
-       (dtstart (date-time "1996-10-27T01:00:00"))
-       (tzname (text "CET"))
-       (tzoffsetfrom (utc-offset "+0200"))
-       (rrule (recur (freq "YEARLY")
-                     (interval "1")
-                     ((byday "-1SU"))
-                     ((bymonth 10))))))
-     (daylight
-      (properties
-       (tzoffsetto (utc-offset "+0200"))
-       (dtstart (date-time "1981-03-29T01:00:00"))
-       (tzname (text "CEST"))
-       (tzoffsetfrom (utc-offset "+0000"))
-       (rrule (recur (freq "YEARLY")
-                     (interval "1")
-                     ((byday "-1SU"))
-                     ((bymonth 3))))))))  )
+  (vtimezone
+   tzid: "Europe/Stockholm"
+   (list
+    (standard
+     tzoffsetto: (parse-time-spec "01:00")
+     dtstart: #1996-10-27T01:00:00
+     tzname: "CET"
+     tzoffsetfrom: (parse-time-spec "02:00")
+     rrule: (make-recur-rule
+             freq: 'YEARLY
+             interval: 1
+             byday: (list (cons -1 sun))
+             bymonth: (list 10)
+             ))
+    (daylight
+     tzoffsetto: (parse-time-spec "02:00")
+     dtstart: #1981-03-29T01:00:00
+     tzname: "CEST"
+     tzoffsetfrom: (parse-time-spec "00:00")
+     rrule: (make-recur-rule
+             freq: 'YEARLY
+             interval: 1
+             byday: (list (cons -1 sun))
+             bymonth: (list 3))))))
 
 (define ev
-  (sxcal->vcomponent
-   '(vevent
-     (properties
-      (uid (text "3da506ad-8d27-4810-94b3-6ab341baa1f2"))
-      (summary (text "Test Event #1"))
-      (dtstart
-       (parameters (tzid (text "Europe/Stockholm")))
-       (date-time "2021-12-21T10:30:00"))
-      (dtstamp (date-time "2021-12-21T14:10:56Z"))
-      (dtend (parameters (tzid (text "Europe/Stockholm")))
-             (date-time "2021-12-21T11:45:00"))))))
+  (vevent
+   uid: "3da506ad-8d27-4810-94b3-6ab341baa1f2"
+   summary: "Test Event #1"
+   dtstart: (with-parameters
+             tzid: "Europe/Stockholm"
+             #2021-12-21T10:30:00)
+   dtstamp: #2021-12-21T14:10:56Z
+   dtend: (with-parameters
+           tzid: "Europe/Stockholm"
+           #2021-12-21T11:45:00)))
 
 (define rep-ev
-  (sxcal->vcomponent
-    '(vevent
-      (properties
-       (uid (text "4ebd6632-d192-4bf4-a33a-7a8388185914"))
-       (summary (text "Repeating Test Event #1"))
-       (rrule (recur (freq "DAILY")))
-       (dtstart
-        (parameters (tzid (text "Europe/Stockholm")))
-        (date-time "2021-12-21T10:30:00"))
-       (dtstamp (date-time "2021-12-21T14:10:56Z"))
-       (dtend (parameters (tzid (text "Europe/Stockholm")))
-              (date-time "2021-12-21T11:45:00"))))))
+  (vevent
+   uid: "4ebd6632-d192-4bf4-a33a-7a8388185914"
+   summary: "Repeating Test Event #1"
+   rrule: (make-recur-rule freq: 'DAILY)
+   dtstart: (with-parameters
+             tzid: "Europe/Stockholm"
+             #2021-12-21T10:30:00)
+   dtstamp: #2021-12-21T14:10:56Z
+   dtend: (with-parameters
+           tzid: "Europe/Stockholm"
+           #2021-12-21T11:45:00)
+   ))
 
+;; TODO tmpnam is deprecated
 (define directory (tmpnam))
 
 (define event-object ((@ (oop goops) make)
@@ -76,10 +80,11 @@
 (mkdir directory)
 (format #t "Using ~a~%" directory)
 
-(define calendar (make-vcomponent 'VCALENDAR))
-
-(set! (prop calendar '-X-HNH-SOURCETYPE) 'vdir
-      (prop calendar '-X-HNH-DIRECTORY) directory)
+(define calendar
+  (vcalendar
+   #:-X-HNH-SOURCETYPE 'vdir
+   #:-X-HNH-DIRECTORY directory
+   ))
 
 (add-calendars event-object calendar)
 
