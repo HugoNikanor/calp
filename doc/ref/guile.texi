@@ -10,6 +10,7 @@
 @include guile/base64.texi
 @include guile/web.texi
 @include guile/vcomponent.texi
+@include guile/sxml.texi
 
 @node Errors and Conditions
 @section Errors and Conditions

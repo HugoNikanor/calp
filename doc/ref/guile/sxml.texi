@@ -1,0 +1,97 @@
+@node sxml namespaced
+@section Namespaced SXML
+
+Namespaces is a variant to ``regular'' SXML. Difference being that
+instead of representing XML-tags as symbols, they are instead actual
+objects.
+
+For example
+@example
+`(a (b "Content"))
+@end example
+
+Would be represented as
+@example
+`(,(xml 'a)
+  (,(xml 'b)
+   "Content"))
+@end example
+
+@defun namespaced-sxml->sxml tree [namespace-prefixes='()]
+Takes a tree of namespaced-sxml, and optionally an assoc list from
+namespace symbols, to prefered prefix.
+
+Returns a sxml tree, with xmlns:<prefix>=namespace attributes
+@end defun
+
+@defun namespaced-sxml->xml tree [namespaces='()] [port='(current-output-port)]
+Serializes the namespaced sxml tree to port. @var{namespaces} should
+be an association list from namespace symbols, to prefered prefixes.
+@end defun
+
+@defun namespaced-sxml->sxml/namespaces tree [namespace-prefixes='()]
+Returns two values:
+@itemize
+@item An SXML tree (which doesn't have namespace attributes)
+@item an association list from namespace symbols, to used prefixes.
+@end itemize
+@end defun
+
+@c xml->namespcaed-sxml and sxml->namespaced-sxml don't share
+@c implementation, despite doing almost the same thing. This is since
+@c xml->namespaced-sxml directly uses the ssax parser, giving us great
+@c controll, while sxml->namespaced-sxml attempt to look at symbols.
+
+@defun xml->namespaced-sxml port-or-string
+Reads xml from port, and return a namespaced SXML tree.
+@end defun
+
+@defun sxml->namespaced-sxml tree namespaces
+Converts a ``regular'' SXML tree into a namespaced sxml tree.
+@var{namespaces} must be an association list which maps each prefix
+used in @var{tree} onto a full XML namespace.
+@end defun
+
+@defun xml tag
+@defunx xml ns tag [attrs]
+@anchor{xml-tag}
+       A single XML element, suitable to go as the car of a list to
+       create a full object.
+
+       @var{xml} is a shorthand to @code{make-xml-element}, which
+       either takes just a tag (for non-namespaced elements), or a
+       namespace, a tag, and a list of attributes.
+
+       @itemize
+       @item @var{tag} should be a symbol.
+       @item @var{ns} should be a symbol.
+       @item @var{attrs} should be a hash table.
+       @end itemize
+
+       @defun make-xml-element tagname namespace attributes
+       @end defun
+
+       @defun xml-element? x
+       @end defun
+
+       @defun xml-element-tagname el
+       @end defun
+
+       @defun xml-element-namespace el
+       @end defun
+
+       @defun xml-element-attributes el
+       @end defun
+@end defun
+
+
+@defun make-pi-element tag body
+       @defun pi-element? x
+       @end defun
+
+       @defun pi-tag pi
+       @end defun
+
+       @defun pi-body pi
+       @end defun
+@end defun
