@@ -31,6 +31,8 @@
    (body
     (a (@ (href ("/today"))) ,(G_ "Show today"))
     (h2 ,(G_ "Search term"))
+    ;; TODO add blurb documenting available variables here,
+    ;; and link to full documentation page
     (form
      (pre (textarea (@ (name "q") (rows 5) (spellcheck false)
                        (style "width:100%"))

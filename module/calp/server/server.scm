@@ -7,6 +7,7 @@
 
   :export (start-server))
 
+;;; TODO Do I really want this hardcoded here?
 (define handler (make-make-routes))
 
 ;; NOTE The default make-default-socket is broken for IPv6.

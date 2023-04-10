@@ -98,6 +98,8 @@
 (define* (make-vcomponent optional: (type 'VIRTUAL))
   (make-vcomponent% type '() (make-hash-table)))
 
+;; TODO should this be renamed to `adopt!'? Adopting a child better implies
+;; that the old parent should no longer be considered its parent.
 (define (reparent! parent child)
   (set-component-children! parent (cons child (children parent)))
   (set! (parent% child) parent))
@@ -107,6 +109,8 @@
   (when (eq? parent-component (parent% child))
     (orphan! child)))
 
+;; TODO should this exist? It's really weird to remove our reference to our
+;; parent, without the parent removing their reference to us.
 (define (orphan! child)
   (set! (parent% child) #f))
 

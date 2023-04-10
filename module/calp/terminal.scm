@@ -290,6 +290,7 @@
          ">")))
   (newline))
 
+;;; TODO what is this view?
 (define-method (input (this <view>) char)
   (case char
     ((#\j #\J down) (unless (= (active-element this) (1- (page-length this)))
@@ -300,6 +301,9 @@
     ((#\g) (set! (active-element this) 0))
     ((#\G) (set! (active-element this) (1- (page-length this))))
 
+    ;; TODO Launch edit mode!
+    ;; TODO should edit mode be here?
+    ((#\e) 'NOOP)
 
     ((#\q) '(pop)))
 
