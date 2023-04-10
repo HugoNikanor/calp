@@ -162,11 +162,11 @@
                     (date->string start))))
       (format #t "\x1b[1m~a:\x1b[m ~a~%~%"
               (G_ "End")
-              (let ((start (prop ev 'DTSTART)))
-                (if (datetime? start)
-                    (datetime->string (prop ev 'DTSTART)
+              (let ((end (prop ev 'DTEND)))
+                (if (datetime? end)
+                    (datetime->string (prop ev 'DTEND)
                                       (G_ "~Y-~m-~d ~H:~M:~S"))
-                    (date->string start))))
+                    (date->string end))))
       (format #t "~a~%"
               (unlines (take-to (flow-text (or (prop ev 'DESCRIPTION) "")
                                            width: (min 70 width))
