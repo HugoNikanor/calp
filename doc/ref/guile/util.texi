@@ -221,7 +221,9 @@ list, whose indices matches the order of the inputs
 @end defun
 
 @defun string-flatten tree
-@c TODO document me
+Given an arbitary tree, do a pre-order traversal, appending all strings.
+
+Non-strings are converted to strings, and also appended.
 @end defun
 
 @defun intersperse item list
@@ -229,7 +231,7 @@ Inserts @var{item} between each element in @var{list}.
 @end defun
 
 
-@defun insert-ordered item collection [<=<]
+@defun insert-ordered item collection [<]
 Inserts @var{item} into @var{collection}, such that collection
 remainins sorted if it was sorted beforehand.
 @end defun
@@ -365,6 +367,7 @@ the file, and @code{#f} otherwise.
 @defun call-with-tmpfile proc [#:tmpl ``/tmp/file-XXXXXXX'']
 @end defun
 
+@c Is this even a procedure?
 @defun read-file path
 Open file at path, and return its content as a string.
 @end defun

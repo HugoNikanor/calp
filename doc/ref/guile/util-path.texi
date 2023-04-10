@@ -36,7 +36,13 @@ The first component will be @code{""} if path is absolute.
 
 
 @defun filename-extension filename
-Returns the extension of the filename, or the empty string if none exists.
+Returns the extension of the filename without a leading period, or the
+empty string if none exists.
+
+@example
+(filename-extension "file.tar.gz")
+⇒ "gz"
+@end example
 @end defun
 
 @defun realpath path
