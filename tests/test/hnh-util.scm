@@ -11,14 +11,39 @@
   :use-module (hnh util env)
   )
 
+(define (unreachable)
+  (throw 'unreachable))
+
 
 ;;; Changed core bindings
 
 (test-group "set!"
-  'TODO)
+  (let ((x 10))
+    (set! x 20)
+    (test-eqv "Regular set! still works" 20 x))
 
-(test-group "define-syntax"
-  'TODO)
+  (test-group "Multiple set! at once works"
+    (let ((x 10) (y 20))
+      (set! x 20
+            y 30)
+      (test-eqv x 20)
+      (test-eqv y 30)))
+
+  (test-group "Set! is ordered"
+    (let ((x 10))
+      (set! x 20
+            x (* x 2))
+      (test-eqv x 40)))
+
+  ;; TODO
+  ;; (test-group "set! ="
+  ;;   )
+
+  )
+
+;;; Nonscensical to test
+;; (test-group "define-syntax"
+;;   )
 
 (test-group "when"
  (test-equal "when"
@@ -39,7 +64,13 @@
 ;;; New bindings
 
 (test-group "aif"
-  'TODO)
+  (aif (+ 1 2)
+       (test-eqv 3 it)
+       (unreachable))
+
+  (aif #f
+       (unreachable)
+       (test-assert #t)))
 
 (test-group "awhen"
  (test-equal "awhen it"
@@ -88,10 +119,18 @@
      10 x)))
 
 (test-group "print-and-return"
-  'TODO)
+  (let ((p (open-output-string)))
+    (let ((v (with-error-to-port p
+               (lambda () (print-and-return (+ 1 2))))))
+      (test-equal "Printed value"
+        "3 [(+ 1 2)]\n" (get-output-string p))
+      (test-eqv "Returned value"
+        3 v))))
 
 (test-group "swap"
-  'TODO)
+  (test-equal
+      '(3 2 1)
+    ((swap list) 1 2 3)))
 
 (test-group "set/r!"
  (test-equal
@@ -163,22 +202,25 @@
  (test-assert "not equal"
    (!= 1 2)))
 
-
 (test-group "take-to"
  (test-equal "Take to"
    '() (take-to '() 5)))
 
 (test-group "string-take-to"
-  'TODO)
+  (test-equal "Hello"
+    (string-take-to "Hello, World!" 5)))
 
 (test-group "string-first"
-  'TODO)
+  (test-eqv #\H (string-first "Hello, World!")))
 
 (test-group "string-last"
-  'TODO)
+  (test-eqv #\! (string-last "Hello, World!")))
 
 (test-group "as-symb"
-  'TODO)
+  (test-eq "From string" 'hello (as-symb "hello"))
+  (test-eq "From symbol" 'hello (as-symb 'hello))
+  (test-eq "NOTE that others pass right through"
+    '() (as-symb '())))
 
 
 (test-group "enumerate"
@@ -262,7 +304,7 @@
 
   (test-equal "Null case"
     '()
-    (group-by (lambda _ (/ 0)) '())))
+    (group-by (lambda _ (unreachable)) '())))
 
 (test-group "split-by"
   'TODO)
@@ -292,7 +334,33 @@
        (test-equal '(#\H #\1 #\2 #\3 #\4 #\5 #\6) tail)))))
 
 (test-group "cross-product"
-  'TODO)
+  (test-equal "Basic case"
+      '((1 4)
+        (1 5)
+        (1 6)
+        (2 4)
+        (2 5)
+        (2 6)
+        (3 4)
+        (3 5)
+        (3 6))
+   (cross-product
+    '(1 2 3)
+    '(4 5 6)))
+
+  (test-equal "Single input list"
+    '((1) (2) (3))
+    (cross-product '(1 2 3)))
+
+  (test-equal "More than two"
+    '((1 3 5) (1 3 6)
+      (1 4 5) (1 4 6)
+      (2 3 5) (2 3 6)
+      (2 4 5) (2 4 6))
+    (cross-product
+     '(1 2)
+     '(3 4)
+     '(5 6))))
 
 (test-group "string-flatten"
   'TODO)
