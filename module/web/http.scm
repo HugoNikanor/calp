@@ -17,6 +17,8 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA
 
+;; Copyright (C) 2023 Hugo Hörnquist.
+
 ;;; Commentary:
 ;;;
 ;;; This module has a number of routines to parse textual
@@ -30,7 +32,7 @@
 ;;; Code:
 
 (define-module (web http)
-  #:use-module ((srfi srfi-1) #:select (append-map! map!))
+  #:use-module ((srfi srfi-1) #:select (append-map! map! find))
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-19)
   #:use-module (ice-9 rdelim)
@@ -59,6 +61,7 @@
             read-headers
             write-headers
 
+            declare-method!
             parse-http-method
             parse-http-version
             parse-request-uri
@@ -1104,6 +1107,11 @@ pair. For example, ‘HTTP/1.1’ parses as the pair of integers,
  '("HTTP/1.0" "HTTP/1.1"))
 
 
+(define *declared-methods* '())
+
+(define (declare-method! str symb)
+  (set! *declared-methods* (acons str symb *declared-methods*)))
+
 ;; Request-URI = "*" | absoluteURI | abs_path | authority
 ;;
 ;; The `authority' form is only permissible for the CONNECT method, so
@@ -1113,17 +1121,20 @@ pair. For example, ‘HTTP/1.1’ parses as the pair of integers,
 (define* (parse-http-method str #:optional (start 0) (end (string-length str)))
   "Parse an HTTP method from STR.  The result is an upper-case
 symbol, like ‘GET’."
-  (cond
-   ((string= str "GET" start end) 'GET)
-   ((string= str "HEAD" start end) 'HEAD)
-   ((string= str "POST" start end) 'POST)
-   ((string= str "PUT" start end) 'PUT)
-   ((string= str "DELETE" start end) 'DELETE)
-   ((string= str "OPTIONS" start end) 'OPTIONS)
-   ((string= str "TRACE" start end) 'TRACE)
-   ((string= str "CONNECT" start end) 'CONNECT)
-   ((string= str "PATCH" start end) 'PATCH)
-   (else (bad-request "Invalid method: ~a" (substring str start end)))))
+  (cdr
+   (or (find (lambda (pair) (string= str (car pair) start end))
+             *declared-methods*)
+       (bad-request "Invalid method: ~a" (substring str start end)))))
+
+(declare-method! "GET" 'GET)
+(declare-method! "HEAD" 'HEAD)
+(declare-method! "POST" 'POST)
+(declare-method! "PUT" 'PUT)
+(declare-method! "DELETE" 'DELETE)
+(declare-method! "OPTIONS" 'OPTIONS)
+(declare-method! "TRACE" 'TRACE)
+(declare-method! "CONNECT" 'CONNECT)
+(declare-method! "PATCH" 'PATCH)
 
 (define* (parse-request-uri str #:optional (start 0) (end (string-length str)))
   "Parse a URI from an HTTP request line.  Note that URIs in requests do
