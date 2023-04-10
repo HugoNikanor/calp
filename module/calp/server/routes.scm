@@ -294,11 +294,11 @@
                            str)))))
 
              (return '((content-type application/xml))
-                     (with-output-to-string
-                       (lambda ()
-                         (sxml->xml
-                          `(properties
-                            (uid (text ,(prop event 'UID)))))))))))
+                     (lambda (port)
+                       (sxml->xml
+                        `(properties
+                          (uid (text ,(prop event 'UID))))
+                        port))))))
 
    ;; Get specific page by query string instead of by path.
    ;; Useful for <form>'s, since they always submit in this form, but also
@@ -332,16 +332,16 @@
    (GET "/calendar/:uid{.*}.xcs" (uid)
         (aif (get-event-by-uid global-event-object uid)
              (return '((content-type application/calendar+xml))
-                     ;; TODO sxml->xml takes a port, would be better
-                     ;; to give it the return port imidiately.
-                     (with-output-to-string
-                       ;; TODO this is just the vevent part.
-                       ;; A surounding vcalendar is required, as well as
-                       ;; a doctype.
-                       ;; Look into changing how events carry around their
-                       ;; parent information, possibly splitting "source parent"
-                       ;; and "program parent" into different fields.
-                       (lambda () (sxml->xml ((@ (vcomponent formats xcal output) vcomponent->sxcal) it)))))
+                     ;; TODO this is just the vevent part.
+                     ;; A surounding vcalendar is required, as well as
+                     ;; a doctype.
+                     ;; Look into changing how events carry around their
+                     ;; parent information, possibly splitting "source parent"
+                     ;; and "program parent" into different fields.
+                     (lambda (port)
+                       (sxml->xml
+                        ((@ (vcomponent formats xcal output) vcomponent->sxcal) it)
+                        port)))
              (return (build-response code: 404)
                      (format #f (G_ "No component with UID=~a found.") uid))))
 
@@ -414,13 +414,13 @@
                        (format #f "~?~%" fmt arg))))))
 
         (return `((content-type ,(content-type html)))
-                (with-output-to-string
-                  (lambda ()
-                    ((sxml->output html)
-                     (search-result-page
-                      error
-                      (and=> q (negate string-null?))
-                      search-term search-result page paginator))))))
+                (lambda (port)
+                  ((sxml->output html)
+                   (search-result-page
+                    error
+                    (and=> q (negate string-null?))
+                    search-term search-result page paginator)
+                   port))))
 
    ;; NOTE this only handles files with extensions. Limited, but since this
    ;; is mostly for development, and something like nginx should be used in
