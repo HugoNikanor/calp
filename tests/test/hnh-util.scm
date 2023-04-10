@@ -202,6 +202,9 @@
  (test-assert "not equal"
    (!= 1 2)))
 
+(test-group "init+last"
+  'TODO)
+
 (test-group "take-to"
  (test-equal "Take to"
    '() (take-to '() 5)))

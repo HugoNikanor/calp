@@ -17,6 +17,7 @@
            find-extreme find-min find-max
            filter-sorted
            !=
+           init+last
            take-to
            string-take-to
            string-first
@@ -150,9 +151,12 @@
 
 
 
+;; TODO this is called flip in Haskell land
 (define (swap f)
   (lambda args (apply f (reverse args))))
-
+;; Swap would be
+;; (define (swap p)
+;;   (xcons (car p) (cdr p)))
 
 ;; Allow set to work on multiple values at once,
 ;; similar to Common Lisp's @var{setf}
@@ -252,6 +256,12 @@
 
 ;; (define (!= a b) (not (= a b)))
 (define != (negate =))
+
+
+(define (init+last l)
+  (let ((last rest (car+cdr (reverse l))))
+    (values (reverse rest) last)))
+
 
 (define (take-to lst i)
   "Like @var{take}, but might lists shorter than length."
@@ -396,7 +406,7 @@
                       (reverse (cons (map list last) rest ))))))
 
 ;; Given an arbitary tree, do a pre-order traversal, appending all strings.
-;; non-strings allso allowed, converted to strings and also appended.
+;; non-strings also allowed, converted to strings and also appended.
 (define (string-flatten tree)
   (cond [(string? tree) tree]
         [(list? tree) (string-concatenate (map string-flatten tree))]

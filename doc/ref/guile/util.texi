@@ -113,6 +113,11 @@ See @var{find-extreme}
 @end lisp
 @end defun
 
+@defun init+last list
+Returns two values: everything except the last element of @var{list},
+and the last element of @var{list}.
+@end defun
+
 @defun take-to lst n
 Equivalent to @var{take}, but return everything (instead of crash) if
 n > (length lst).
