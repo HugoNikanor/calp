@@ -13,7 +13,8 @@
   :use-module (ice-9 curried-definitions)
   :replace (do mod)
   :export (with-temp-state
-           <$> return get get* put put* sequence lift))
+           <$> return get get* put put* sequence lift
+           eval-state exec-state))
 
 (define-syntax do
   (syntax-rules (<- let =)
@@ -98,3 +99,22 @@
 (define (lift proc . arguments)
   (do xs <- (sequence arguments)
       (return (apply proc xs))))
+
+
+;; Run state, returning value
+(define (eval-state st init)
+  (call-with-values
+      (lambda ()
+        (if (procedure? init)
+            (call-with-values init st)
+            (st init)))
+    (lambda (r . _) r)))
+
+;; Run state, returning state
+(define (exec-state st init)
+  (call-with-values
+      (lambda ()
+       (if (procedure? init)
+           (call-with-values init st)
+           (st init)))
+    (lambda (_ . v) (apply values v))))
