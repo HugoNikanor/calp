@@ -372,6 +372,11 @@ the file, and @code{#f} otherwise.
 @defun call-with-tmpfile proc [#:tmpl ``/tmp/file-XXXXXXX'']
 @end defun
 
+@defun ->port port-or-strings
+If @var{port-or-string} is a port, return it directly. If it's a
+string, instead return an input string containing the strings content.
+@end defun
+
 @c Is this even a procedure?
 @defun read-file path
 Open file at path, and return its content as a string.

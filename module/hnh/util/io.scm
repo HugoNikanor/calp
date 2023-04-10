@@ -5,7 +5,8 @@
            open-output-port
            read-lines
            with-atomic-output-to-file
-           call-with-tmpfile))
+           call-with-tmpfile
+           ->port))
 
 (define (open-input-port str)
   (if (string=? "-" str)
@@ -72,3 +73,10 @@
        (begin1
         (proc port filename)
         (close-port port))))))
+
+(define (->port port-or-string)
+  (cond ((port? port-or-string) port-or-string)
+        ((string? port-or-string) (open-input-string port-or-string))
+        (else (scm-error 'misc-error "->port"
+                         "Not a port or string"
+                         (list port-or-string) #f))))
