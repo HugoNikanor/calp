@@ -1,0 +1,289 @@
+@node WebDAV
+@section WebDAV
+
+For a complete view of WebDAV, please see @cite{RFC4918 (HTTP
+Extensions for Web Distributed Authoring and Versioning (WebDAV))},
+but in short, and specifc for this implementation.
+
+A DAV tree consists of resources, which are analogous to files and
+directories. A resource is referenced by its href.
+
+Each resources is either a collection and have children, or have
+content. Parts of this implementation allows a collection to also have
+contents, while other does not. The standard doesn't seem to mind
+either way.
+
+Each resource also has a set of properties, modelling metadata and
+extra data about the resource.
+
+@emph{href}'s are internally represented as lists of strings, where the
+root element ``/'' is an empty list, and all other cases are mapped
+like:
+@example
+"/a/b" ⇒ '("a" "b")
+@end example
+
+@emph{resources} are GOOPS objects, which the base class
+@code{<resource>}.
+
+The user (of the library) is assumed to designate one resource
+instance as the root of the resource tree. All other resources are
+then added as (grand-)children to that resource. Each resource has a
+field @var{name}, which is the normative name used when searching by
+name in the tree@footnote{This means that one resource can't easily
+exist at multiple points in the tree}.
+
+@emph{properties} are split into live and dead properties, where live
+properties have extra handling by the server, while dead properties
+are simply carried along after the end-user put them on a resource.
+
+Live properties are handled through GOOPS methods.
+
+Dead properties are (by default) stored directly inside each resource.
+
+@node WebDAV Properties
+@subsection Properties
+
+@itemize
+@item @code{(calp webdav property)}
+@item @code{(calp webdav propfind)}
+@end itemize
+
+@subsubsection Default Live Properties
+
+@deftp {GOOPS method} creationdate
+@end deftp
+
+@deftp {GOOPS method} displayname
+@end deftp
+
+@deftp {GOOPS method} getcontentlanguage
+@end deftp
+
+@deftp {GOOPS method} getcontentlength
+@end deftp
+
+@deftp {GOOPS method} getcontenttype
+@end deftp
+
+@deftp {GOOPS method} getetag
+@end deftp
+
+@deftp {GOOPS method} getlastmodified
+@end deftp
+
+@deftp {GOOPS method} lockdiscovery
+@end deftp
+
+@deftp {GOOPS method} resourcetype
+@end deftp
+
+@deftp {GOOPS method} supportedlock
+@end deftp
+
+
+@node WebDAV Resources
+@subsection Resources
+
+@deftp {GOOPS class} <resource>
+Base type for all WebDAV resources.
+
+The base class shouldn't be directly instanciated.
+
+    @defun resource? x
+    Is the given object a <resource>, or decendant?
+    @end defun
+@end deftp
+
+@deftp {GOOPS method} name resource
+The name of a resource is the local part of a href.
+@end deftp
+
+@deftp {GOOPS method} children resource
+All direct children of a resource, as a list.
+@end deftp
+
+@deftp {GOOPS method} add-child! (parent <resource>) (child <resource>) [(overwrite? <boolean>)
+Adds a resource as a child of another resource.
+
+Currently doesn't do anything more, but will eventually call a
+bookkeeping procedure on the two resources.
+
+If @var{overwrite?} is present, then the parent will be checked for a
+child which already has that name, and take action accordingly.
+It will return one of: @code{'replaced} if a resource already existed
+with that name, but it has been replaced, @code{'collision}, if the
+old one was kept, and @code{'created} if the new resource was added
+without collisions.
+
+If @var{overwrite?} is absent then the method always returns @var{'created}.
+@end deftp
+
+@deftp {GOOPS method} add-resource! (self <resource>) (name <string>) content
+Creates a new resource with the given name, and make it a child of
+@var{self}. Setting its initial content to @var{content}.
+
+This method exists alongside @code{add-child!}, due to historical
+reasons (and that @code{add-resource!} is easier to override if custom
+setup code needs to be run.
+
+@c TODO Document throw
+@c TODO Document return
+@end deftp
+
+@deftp {GOOPS method} add-collection! (self <resource>) name
+Similar to @code{add-resource!} but the created resource is instead a collection.
+@end deftp
+
+
+@deftp {GOOPS method} is-collection? resource
+Is the given resource a collection.
+
+The base implementation simply checks if the resource has any children.
+@end deftp
+
+@deftp {GOOPS method} content resource
+@deftpx {GOOPS method} set-content! resource content
+Get and set the content of a given resource. @var{content}s type can
+be anything that the given resource type accepts. Overrides of this
+procedure should preferably save its contents properly.
+@end deftp
+
+@c 
+
+@defun get-property resource xml-tag
+@defunx get-live-property resource xml-tag
+@defunx get-dead-property resource xml-tag
+@end defun
+
+
+@defun set-property resource xml-el
+@defunx set-property! resource xml-el
+@defunx set-dead-property resource xml-el
+@defunx set-dead-property! resource xml-el
+@defunx set-live-property resource xml-el
+@defunx set-live-property! resource xml-el
+@end defun
+
+
+@defun remove-property resource xml-tag
+@defunx remove-property! resource xml-tag
+@defunx remove-dead-property resource xml-tag
+@defunx remove-dead-property! resource xml-tag
+@defunx remove-live-property resource xml-tag
+@defunx remove-live-property! resource xml-tag
+@end defun
+
+@c 
+
+@deftp {GOOPS method} copy-resource (resource <resource>) include-children? [name]
+Create a new resource which looks as similar as possible to the given
+resource. The new resource will have the same (GOOPS) class as the
+source, displayname, contentlanguage and all dead properties are
+transfered, other live properties are currently not explicitly
+transfered (but probably still transfered implicitly).
+
+The new resources name is @var{name} if given, and the name of the
+original resource otherwise.
+
+If @var{include-children?} is true then a deep copy is performed,
+otherwise no children are copied, and the resulting resource will be a
+leaf node.
+
+Content is copied verbatim.
+
+@b{NOTE} currently no helper method is called, which means that extra
+resources held by the resource object can't be copied.
+For example, FILE can't create a copy (but it also shouldn't do that
+here, but rathen when the element is ``mounted'' into the tree).
+@end deftp
+
+@c 
+
+@defun lookup-resource root-resource path
+@end defun
+
+
+@defun all-resources-under resource [prefix='()]
+Returns the given resource, and all its children in a flat list.
+
+Currently depth first, but that might change.
+The root resource is however guaranteed to be first.
+@end defun
+
+@c 
+
+@c TODO
+           make-live-property
+           live-property?
+           property-getter
+
+           property-setter-generator
+           property-remover-generator
+
+           prepare-update-properties
+
+           live-properties
+           dead-properties
+
+           webdav-properties
+
+
+@node WebDAV Resource Types
+@subsection Resource Types
+
+@subsubsection @code{(calp webdav resource base)}
+
+Implementation of @code{(calp webdav resource)}. Exists to possibly
+avoid dependency loops.
+
+@subsubsection @code{(calp webdav resource calendar)}
+@subsubsection @code{(calp webdav resource file)}
+
+Resources backed by the file system.
+
+@defun file-resource? x
+@end defun
+
+@deftp {GOOPS method} children <file-resource>
+@end deftp
+
+@deftp {GOOPS method} is-collection? <file-resource>
+@end deftp
+
+@deftp {GOOPS method} creationdate <file-resource>
+Retrived directly from the file through @command{stat -c %W $@{filename@}}.
+@end deftp
+
+@deftp {GOOPS method} content <file-resource>
+@deftpx {GOOPS method} set-content! <file-resource> data
+Directly interfaced with the file.
+
+Data can't be retrieved for collections, and will always be
+returned as a bytevector for non-collections.
+
+Data can be set either as a string or a bytevector. When a string is
+used Guile's current encoding will be used.
+@end deftp
+
+@subsubsection @code{(calp webdav resource virtual)}
+
+@node WebDAV Utilities
+@subsection Utilities
+@defun xml-element-hash-key xml-tag
+Given an xml tag object @ref{xml-tag}, return a suitable key for
+@code{hash-ref} and family.
+
+These key objects should preferably not be carried around for
+long. Prefer to keep the @emph{real} xml-tag object, and only call
+this while directly referencing the hash table.
+@end defun
+
+@defun href->string href
+HREF's are represented as lists of strings. The root resource (``/'')
+is the empty list.
+@end defun
+
+@defun string->href string
+Return a href list back into a string. A leading slash will always be added.
+@end defun

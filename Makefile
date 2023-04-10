@@ -1,5 +1,6 @@
 .PHONY: all clean test \
 	check \
+	litmus \
 	static \
 	go_files \
 	lcov.info
@@ -90,3 +91,6 @@ coverage: lcov.info
 
 check:
 	tests/run-tests.scm $(if $(VERBOSE),--verbose) $(SKIP) $(LIMIT_FILES)
+
+litmus:
+	tests/litmus.scm $(path)

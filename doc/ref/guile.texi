@@ -12,6 +12,7 @@
 @include guile/web.texi
 @include guile/vcomponent.texi
 @include guile/sxml.texi
+@include guile/webdav.texi
 
 @node Errors and Conditions
 @section Errors and Conditions
