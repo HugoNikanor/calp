@@ -6,4 +6,4 @@ fi
 
 VERSION=$1
 sed -i "s/^pkgver=.*/pkgver=$VERSION/" system/PKGBUILD
-sed -i "s/^(define-public version.*/(define-public version \"$VERSION\")/" module/calp.scm
+sed -i "s/^(define version.*/(define version \"$VERSION\")/" module/calp.scm

@@ -10,9 +10,8 @@
 
 
 (define (serialize component port)
-  (display (component->ical-string component)
-           port))
+  (with-output-to-port port
+    (lambda () (component->ical-string component))))
 
 (define (deserialize port)
-  (parse-calendar port)
-  )
+  (parse-calendar port))

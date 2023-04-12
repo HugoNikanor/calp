@@ -30,6 +30,7 @@
            parameters
            properties
 
+           copy-as-orphan
            copy-vcomponent
            x-property?
            internal-field?
@@ -198,22 +199,24 @@
               ;; TODO deep-copy on parameters?
               (get-vline-parameters vline)))
 
+(define (copy-as-orphan component)
+  (make-vcomponent%
+   (type component)
+   (children component)
+   ;; properties
+   (alist->hashq-table
+    (hash-map->list (lambda (key value)
+                      (cons key (if (list? value)
+                                    (map copy-vline value)
+                                    (copy-vline value))))
+                    (get-component-properties component)))))
+
+
 (define (copy-vcomponent component)
-  (let ((ev
-         (make-vcomponent%
-          (type component)
-          (children component)
-          ;; properties
-          (alist->hashq-table
-           (hash-map->list (lambda (key value)
-                             (cons key (if (list? value)
-                                           (map copy-vline value)
-                                           (copy-vline value))))
-                           (get-component-properties component))))))
+  (let ((ev (copy-as-orphan component)))
     (when (parent component)
       (reparent! (parent component) ev))
     ev))
-
 
 (define (extract field)
   (lambda (e) (prop e field)))

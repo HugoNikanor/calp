@@ -16,6 +16,7 @@
   :use-module (vcomponent geo)
   :use-module (vcomponent formats ical types)
   :use-module (vcomponent recurrence)
+  :use-module ((calp) :select (prodid))
   :use-module (calp translation)
   :autoload (vcomponent util instance) (global-event-object)
   :export (component->ical-string
@@ -23,10 +24,6 @@
            print-all-events
            print-events-in-interval
            ))
-
-(define (prodid)
-  (format #f "-//hugo//calp ~a//EN"
-          (@ (calp) version)))
 
 
 ;; Format value depending on key type.

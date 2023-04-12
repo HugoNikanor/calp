@@ -14,6 +14,9 @@
       (sxml->xml port)
       ))
 
+(define (serialize/object component)
+  (call-with-output-string (lambda (p) (serialize component p))))
+
 
 (define (deserialize port)
   (-> (xml->sxml port)
