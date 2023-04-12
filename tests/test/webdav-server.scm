@@ -264,7 +264,9 @@
   (parameterize ((root-resource (make <virtual-resource> name: "*root*")))
     (add-resource! (root-resource) "a" "Content of A")
     (let ((a (lookup-resource (root-resource) '("a"))))
-      (set-property! a `(,(xml prop-ns 'test) "prop-value")))
+      (set-property! a `(,(xml prop-ns 'test) "prop-value"))
+      ;; Extra child added to ensure deep copy works
+      (add-resource! a "d" "Content of d"))
 
     (test-group "cp /a /c"
       (let ((response _
@@ -309,9 +311,9 @@
         (test-eqv "Check that reported replaced"
           204 (response-code response))
         (test-equal "Check that recursive resources where created"
-          '("/" "/a" "/c"
+          '("/" "/a" "/a/d" "/c"
             ;; New resources. Note that /c/c doesn't create an infinite loop
-            "/c/a" "/c/c")
+            "/c/a" "/c/a/d" "/c/c")
           (map car
            (sort* (map (lambda (p) (cons (href->string (car p)) (cdr p)))
                        (all-resources-under (root-resource) '()))

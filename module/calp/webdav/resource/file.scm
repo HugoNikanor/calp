@@ -27,6 +27,14 @@
   (root getter: root setter: set-root! init-value: "/" init-keyword: root:)
   (path getter: path setter: set-path! init-value: "/" init-keyword: path:))
 
+(define-method (write (self <file-resource>) port)
+  (display
+   (format #f "#<<file-resource> name=~s, root=~s, path=~s>"
+           (name self)
+           (root self)
+           (path self))
+   port))
+
 (define (file-resource? x)
   (is-a? x <file-resource>))
 
@@ -102,20 +110,16 @@
                          (list data) #f))))
 
 
-;; This is currently ONLY called from add-resource! which creates a
-;; child from the type of the parent.
 (define-method (setup-new-resource! (self <file-resource>)
                                     (parent <file-resource>))
+  (next-method)
   (set-root! self (root parent))
   (set-path! self (path-append (path parent) (name self))))
 
-
-(define-method (add-collection! (self <file-resource>) new-name)
-  (let ((resource (next-method)))
-    (set-root! resource (root self))
-    (set-path! resource (path-append (path self) new-name))
-    (mkdir (path-append (root resource) (path resource)))
-    resource))
+(define-method (setup-new-collection! (self <file-resource>)
+                                      (parent <file-resource>))
+  (next-method)
+  (mkdir (filepath self)))
 
 (define-method (cleanup-resource (self <file-resource>))
   ((if (is-collection? self)

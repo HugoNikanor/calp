@@ -45,6 +45,9 @@
            remove-property!
 
 
+           setup-new-resource!
+           setup-new-collection!
+
 
 
            live-properties
@@ -57,6 +60,7 @@
            set-content!
 
            copy-resource
+           copy-to-location!
            cleanup-resource
            delete-child!
            move-resource!
@@ -174,7 +178,6 @@
       (display ; Make output atomic
        (call-with-output-string
          (lambda (port)
-           ;; (define o (dereference self))
            (format port "#<~a name=~s"
                    (class-name (class-of self))
                    (name self))
@@ -187,48 +190,77 @@
       (format port "#<~a>" (class-name (class-of self))))))
 
 
-;;; TODO should add-resource! be kept? It would probably be better to merge it
-;;; with add-child!
-
-
-
-;; Possibly change this to a fixed procedure
-(define-method (add-resource! (self <resource>)
-                              (new-name <string>)
-                              content)
+(define (add-resource! self new-name content)
   (if (lookup-resource self (list new-name))
       (throw 'resource-exists)
       (let ((resource (make (class-of self) name: new-name)))
-        (setup-new-resource! resource self)
-        (add-child! self resource)
+        (add-child! self resource collection?: #f)
         (set-content! resource content)
         resource)))
 
-;; Possibly change this to a fixed procedure,
-;; adding a setup method instead
-(define-method (add-collection! (self <resource>) new-name)
+(define (add-collection! self new-name)
   (if (lookup-resource self (list new-name))
       (throw 'resource-exists)
       (let ((resource (make (class-of self) name: new-name)))
-        (add-child! self resource)
+        (add-child! self resource collection?: #t)
         resource)))
+
+(define (initialize-copied-resource! source copy)
+  (for-each (lambda (tag) (set-dead-property! copy tag))
+            (dead-properties source))
+  (set! (displayname* copy)    (displayname* source)
+        (contentlanguage copy) (contentlanguage source))
+  ;; (format (current-error-port) "Setting content! ~s (~s)~%" copy source)
+  (when (content source)
+    (set-content! copy (content source)))
+  ;; resource-cache should never be copied
+  )
 
 (define-method (copy-resource (self <resource>) include-children?)
   (copy-resource self include-children? #f))
 
 (define-method (copy-resource (self <resource>) include-children? new-name)
   (let ((resource (make (class-of self) name: (or new-name (name self)))))
-    (for-each (lambda (tag) (set-dead-property! resource tag))
-              (dead-properties self))
-    (set! (displayname* resource)    (displayname* self)
-          (contentlanguage resource) (contentlanguage self))
-    (set-content! resource (content self))
+    (initialize-copied-resource! self resource)
     (when include-children?
       (for-each (lambda (c) (add-child! resource c))
                 (map (lambda (c) (copy-resource c #t))
                      (children self))))
-    ;; resource-cache should never be copied
     resource))
+
+;; source and target-parent should be resource instances
+;; new-name a string
+;; include-children? and overwrite? booleans
+(define* (copy-to-location! source target-parent
+                            key:
+                            (new-name (name source))
+                            include-children?
+                            overwrite?
+                            )
+  (let ((copy (make (class-of source) name: new-name))
+        ;; Take copy if child list. If we run `cp -r / /c` then;
+        ;; (at least when /c already exists) our child list gets
+        ;; updated, leading to an infinite loop if we use
+        ;; `(children source)` directly below.
+        (children-before (children source)))
+    (let ((status (add-child! target-parent copy
+                              ;; (is-collection? copy) doesn't work for
+                              ;; all types, since it's not quite yet
+                              ;; added (for example: <file-resoure>
+                              ;; checks if the target resource is a
+                              ;; directory on the file system).
+                              collection?: (is-collection? source)
+                              overwrite?: overwrite?)))
+      (case status
+        ((created replaced)
+         (initialize-copied-resource! source copy)
+         (when include-children?
+           (for-each (lambda (c) (copy-to-location!
+                             c copy
+                             include-children?: #t))
+                     children-before))
+         status)
+        ((collision) 'collision)))))
 
 (define (xml-element-hash-key tag)
   "Returns a value suitable as a key to hash-ref (and family)"
@@ -364,26 +396,30 @@
 (define-method (setup-new-resource! (this <resource>) (parent <resource>))
   'noop)
 
-(define-method (add-child! (this <resource>) (child <resource>))
-  ;; TODO this should call a method on child, allowing it to be updated
-  ;; with aditional context
-  ;; (prepare-for-add! child this)
-  (set! (resource-children this)
-    (cons child (resource-children this)))
-  'created)
+(define-method (setup-new-collection! (this <resource>) (parent <resource>))
+  'noop)
 
-(define-method (add-child! (this <resource>) (child <resource>) (overwrite? <boolean>))
+(define (add-child* this child collection?)
+  (setup-new-resource! child this)
+  (when collection?
+    (setup-new-collection! child this))
+  (set! (resource-children this)
+    (cons child (resource-children this))))
+
+(define* (add-child! this child
+                     key:
+                     overwrite?
+                     (collection? (is-collection? child)))
   (let ((existing (lookup-resource this (list (name child)))))
     (cond ((and overwrite? existing)
-           (set! (resource-children this)
-             ;; TODO properly remove the old node, similar to mov DELETE
-             ;; will do it (calling cleanup, and so on).
-             (cons child (delete existing (children this))))
+           (delete-child! this existing)
+           (add-child* this child collection?)
            'replaced)
           (existing 'collision)
           (else
-           (add-child! this child)
+           (add-child* this child collection?)
            'created))))
+
 
 ;; Free any aditional system resources held by this object.
 ;; For example, file resources will remove the underlying file here.
@@ -417,8 +453,9 @@
         ;; [RFC4918] 9.9.3 specifies that the server MUST run a DELETE
         ;; on the target if overwrite is true, but I actually don't
         ;; see the difference between that and a propper move...
-        (let ((status (add-child! dest-parent (copy-resource source #t dest-name)
-                                  overwrite?)))
+        (let ((status (add-child! dest-parent
+                                  (copy-resource source #t dest-name)
+                                  overwrite?: overwrite?)))
           (case status
             ((created replaced)
              (delete-child! from-parent source)

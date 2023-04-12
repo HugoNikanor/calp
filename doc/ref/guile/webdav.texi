@@ -103,11 +103,13 @@ The name of a resource is the local part of a href.
 All direct children of a resource, as a list.
 @end deftp
 
-@deftp {GOOPS method} add-child! (parent <resource>) (child <resource>) [(overwrite? <boolean>)
+@defun add-child! parent child [#:overwrite?] [#:collection?=(is-collection? child)]
 Adds a resource as a child of another resource.
 
-Currently doesn't do anything more, but will eventually call a
-bookkeeping procedure on the two resources.
+Before adding the resource to the parents child set,
+@code{(setup-new-resource! child parent)} is called. If
+@var{collection?} is true, then
+@code{(setup-new-collection! child parent)} is also called.
 
 If @var{overwrite?} is present, then the parent will be checked for a
 child which already has that name, and take action accordingly.
@@ -117,24 +119,34 @@ old one was kept, and @code{'created} if the new resource was added
 without collisions.
 
 If @var{overwrite?} is absent then the method always returns @var{'created}.
-@end deftp
+@end defun
 
-@deftp {GOOPS method} add-resource! (self <resource>) (name <string>) content
+@defun add-resource! resource name content
 Creates a new resource with the given name, and make it a child of
 @var{self}. Setting its initial content to @var{content}.
 
-This method exists alongside @code{add-child!}, due to historical
-reasons (and that @code{add-resource!} is easier to override if custom
-setup code needs to be run.
-
+Calls @code{add-resource!}, so the same book-keeping procedures are called.
 @c TODO Document throw
 @c TODO Document return
-@end deftp
+@end defun
 
-@deftp {GOOPS method} add-collection! (self <resource>) name
+@defun add-collection! resource name
 Similar to @code{add-resource!} but the created resource is instead a collection.
+@end defun
+
+@deftp {GOOPS method} setup-new-resource! (self <resource>) (parent <resource>)
+Book-keeping procedure called by @code{add-resource!} on @emph{all}
+added resources.
+
+Base implementation in a no-op.
 @end deftp
 
+@deftp {GOOPS method} setup-new-collection! (self <resource>) (parent <resource>)
+Book-keeping procedure called by @code{add-resource!} if
+@var{collection?} is true.
+
+Base implementation is a no-op.
+@end deftp
 
 @deftp {GOOPS method} is-collection? resource
 Is the given resource a collection.

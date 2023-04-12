@@ -414,21 +414,19 @@
                                     headers: '((content-type . (text/plain))))
                                    "One or more parent components of destination are missing")))))
 
-          (let ((copy (copy-resource source-resource
-                                     (case depth
-                                       ((0) #f)
-                                       ((infinity) #t)
-                                       (else (throw 'invalid-request)))
-                                     dest-name)))
-            (case (add-child! destination-parent-resource
-                              copy
-                              overwrite?)
-              ((created)
-               (values (build-response code: 201) ""))
-              ((replaced)
-               (values (build-response code: 204) ""))
-              ((collision)
-               (values (build-response code: 412) ""))))))))))
+          (case (copy-to-location! source-resource destination-parent-resource
+                                   new-name: dest-name
+                                   include-children?: (case depth
+                                                        ((0) #f)
+                                                        ((infinity) #t)
+                                                        (else (throw 'invalid-requeqst)))
+                                   overwrite?: overwrite?)
+            ((created)
+             (values (build-response code: 201) ""))
+            ((replaced)
+             (values (build-response code: 204) ""))
+            ((collision)
+             (values (build-response code: 412) "")))))))))
 
 
 (define (run-delete href request)
