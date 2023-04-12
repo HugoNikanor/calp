@@ -1,5 +1,7 @@
 (define-module (hnh util env)
-  :export (let-env with-working-directory))
+  :export (let-env
+           with-working-directory
+           with-locale1))
 
 (define-syntax let-env
   (syntax-rules ()
@@ -33,3 +35,12 @@
      thunk
      (lambda () (chdir old-cwd)))))
 
+
+(define-syntax-rule (with-locale1 category locale thunk)
+  (let ((old #f))
+    (dynamic-wind
+      (lambda ()
+        (set! old (setlocale category))
+        (setlocale category locale))
+      thunk
+      (lambda () (setlocale category old)))))

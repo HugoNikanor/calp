@@ -45,3 +45,5 @@
 (test-group "with-working-directory"
   'TODO)
 
+(test-group "with-locale"
+  'TODO)

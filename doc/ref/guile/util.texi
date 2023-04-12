@@ -324,6 +324,11 @@ Similar to @var{let}, but sets environment variables for the code in
 body. Restores the old values once we leave.
 @end defmac
 
+@defmac with-locale1 category locale thunk
+Run @var{thunk} with the locale @var{category} temporarily set to
+@var{locale}.
+@end defmac
+
 @defmac catch* thunk (symbol proc) ...
 Macro allowing multiple exception types to be caught. Each (symbol
 proc) pair expands to a regular @code{catch}, with the leftmost being
