@@ -61,9 +61,9 @@
 
            copy-resource
            copy-to-location!
+           move-to-location!
            cleanup-resource
            delete-child!
-           move-resource!
            setup-new-resource!
            ;; prepare-for-add!
 
@@ -262,6 +262,20 @@
          status)
         ((collision) 'collision)))))
 
+(define* (move-to-location! source-parent source target-parent
+                            key:
+                            (new-name (name source))
+                            overwrite?)
+  (let ((status (copy-to-location! source target-parent
+                                   new-name: new-name
+                                   include-children?: #t
+                                   overwrite?: overwrite?)))
+    (case status
+      ((created replaced)
+       (delete-child! source-parent source)
+       status)
+      ((collision) 'collision))))
+
 (define (xml-element-hash-key tag)
   "Returns a value suitable as a key to hash-ref (and family)"
   (cons (xml-element-namespace tag)
@@ -433,36 +447,6 @@
               (delete-child! child grandchild))
             (children child))
   (cleanup-resource child))
-
-
-(define-method (move-resource! (root <resource>)
-                               from to
-                               (overwrite? <boolean>))
-  (let* ((dest-path dest-name (init+last to))
-         (from-path from-name (init+last from))
-         (dest-parent (or (lookup-resource root dest-path)
-                          (throw 'target-parent-not-found)))
-         (from-parent (or (lookup-resource root from-path)
-                          (throw 'source-not-found)))
-         (source (or (lookup-resource from-parent (list from-name))
-                     (throw 'source-not-found))))
-    (if (and (is-collection? source)
-             (not overwrite?))
-        'collision
-        ;; run move by running a  copy followed by a delete.
-        ;; [RFC4918] 9.9.3 specifies that the server MUST run a DELETE
-        ;; on the target if overwrite is true, but I actually don't
-        ;; see the difference between that and a propper move...
-        (let ((status (add-child! dest-parent
-                                  (copy-resource source #t dest-name)
-                                  overwrite?: overwrite?)))
-          (case status
-            ((created replaced)
-             (delete-child! from-parent source)
-             status)
-            (else status))))))
-
-
 
 
 

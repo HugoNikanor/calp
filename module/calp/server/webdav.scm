@@ -445,37 +445,42 @@
            (values (build-response code: 404) "")))))
 
 
-;;; TODO read spec
 (define (run-move href request)
   ;; TODO href="/"
-  ;; (format (current-error-port)
-  ;;         "MOVE ~s: ~s~%" href request)
-  (catch*
-   (lambda ()
-    (let ((to (-> (request-headers request)
-                  (assoc-ref 'destination)
-                  uri-path
-                  string->href))
-          (overwrite? (cond ((assoc 'overwrite request) => cdr)
-                            (else #t))))
-      (case (move-resource! (root-resource) href to overwrite?)
-        ((created)   (values (build-response code: 201) ""))
-        ((replaced)  (values (build-response code: 204) ""))
-        ((collision) (values (build-response code: 412
-                                             headers: '((content-type . (text/plain))))
-                             "Something already exists there")))
-      ))
-   (source-not-found
-    (lambda _ (values (build-response code: 404))))
-   (target-parent-not-found
-    (lambda _ (values (build-response code: 409))))))
+  (define headers (request-headers request))
+  (call/ec
+   (lambda (return)
+     (define-values (path name) (init+last href))
+     (define parent (or (lookup-resource (root-resource) path)
+                        (return (build-response code: 404)
+                                "Source Parent not found")))
+     (define child (or (lookup-resource parent (list name))
+                       (return (build-response code: 404)
+                               "Source not found")))
+     (define-values (dest-path dest-name)
+       (-> headers (assoc-ref 'destination)
+           uri-path string->href init+last))
+     (define dest-parent (or (lookup-resource (root-resource) dest-path)
+                             (return (build-response code: 404)
+                                     "Dest Parent not found")))
+     (define overwrite? (cond ((assoc 'overwrite headers) => cdr)
+                              (else #t)))
+     (define status (move-to-location! parent child
+                                       dest-parent
+                                       new-name: dest-name
+                                       overwrite?: overwrite?))
+
+     (case status
+       ((created)
+        (values (build-response code: 201) ""))
+       ((replaced)
+        (values (build-response code: 204) ""))
+       ((collision)
+        (values (build-response code: 412) ""))))))
 
 
 
 ;; (define (run-report href request request-body))
-
-
-
 
 
 
