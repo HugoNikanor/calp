@@ -1,5 +1,4 @@
 (define-module (vcomponent data-stores sqlite)
-  :use-module (sqlite3)
   :use-module (oop goops)
   :use-module (vcomponent data-stores common)
   :use-module (srfi srfi-71)
@@ -8,6 +7,13 @@
   :use-module ((vcomponent formats ical) :prefix #{ical:}#)
   :use-module ((hnh util) :select (aif))
   )
+
+
+(catch 'misc-error
+  (lambda ()
+    (use-modules (sqlite3))
+    (provide 'data-store-sqlite))
+  (lambda args 'no-op))
 
 ;; (define (sqlite-exec db str)
 ;;   (display str)
