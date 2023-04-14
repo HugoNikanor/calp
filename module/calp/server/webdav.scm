@@ -568,7 +568,7 @@
                   'headers (request-headers request)
                   'request request)
 
-  (catch #t
+  (catch*
     (lambda ()
       ;; TODO also log result of execution
       (call-with-values
@@ -601,25 +601,41 @@
           (emit-log!)
           (values head body))))
 
-    (case-lambda ((err proc fmt args data)
-                  (let ((head (build-response
-                               code: 500
-                               headers: '((content-type . (text/plain)))))
-                        (errmsg (if proc
-                                    (format #f "Error in ~a: ~?~%" proc fmt args)
-                                    (format #f "~?~%" fmt args))))
-                    (log-table-add! 'response head
-                                    'response-code 500
-                                    'msg errmsg)
-                    (emit-log!)
-                    (values head errmsg)))
-                 (err
-                  (let ((errmsg (format #f "General error: ~s~%" err)))
-                    (log-table-add! 'response-code 500
-                                    'msg errmsg)
-                    (emit-log!)
-                    (values (build-response code: 500)
-                            errmsg))))))
+    (parser-error
+     (lambda (err port msg . args)
+       (define head (build-response code: 400
+                                    headers: '((content-type . (text/plain)))))
+       (define errmsg
+         (with-output-to-string
+           (lambda ()
+             (display msg)
+             (for-each display args))))
+       (log-table-add! 'response head
+                       'response-code 400
+                       'msg errmsg)
+       (emit-log!)
+       (values head errmsg)))
+
+    (#t
+     (case-lambda ((err proc fmt args data)
+                   (let ((head (build-response
+                                code: 500
+                                headers: '((content-type . (text/plain)))))
+                         (errmsg (if proc
+                                     (format #f "Error in ~a: ~?~%" proc fmt args)
+                                     (format #f "~?~%" fmt args))))
+                     (log-table-add! 'response head
+                                     'response-code 500
+                                     'msg errmsg)
+                     (emit-log!)
+                     (values head errmsg)))
+                  (err
+                   (let ((errmsg (format #f "General error: ~s~%" err)))
+                     (log-table-add! 'response-code 500
+                                     'msg errmsg)
+                     (emit-log!)
+                     (values (build-response code: 500)
+                             errmsg)))))))
 
 
 
