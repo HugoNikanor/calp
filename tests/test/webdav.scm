@@ -137,8 +137,8 @@
 
 (test-group "parse-propfind"
   (test-group "propname"
-   (let ((props (parse-propfind `(d:propfind (d:propname))
-                                `((d . ,webdav))
+    (let ((props (parse-propfind `(,(xml webdav 'propfind)
+                                   (,(xml webdav 'propname)))
                                 resource)))
 
 
@@ -169,8 +169,9 @@
 
 
   (test-group "direct property list"
-    (let ((props (parse-propfind `(d:propfind (d:prop (d:displayname)))
-                                 `((d . ,webdav))
+    (let ((props (parse-propfind `((xml webdav 'propfind)
+                                   (,(xml webdav 'prop)
+                                    (,(xml webdav 'displayname))))
                                  resource)))
       (test-equal "Simple lookup"
         (list (propstat 404 (list (list (xml webdav 'displayname)
@@ -181,8 +182,8 @@
   ;; TODO test that non-native caldav propreties aren't reported by allprop
 
   (test-group "allprop"
-    (let ((props (parse-propfind '(d:propfind (d:allprop))
-                                 `((d . ,webdav))
+    (let ((props (parse-propfind `(,(xml webdav 'propfind)
+                                   (,(xml webdav 'allprop)))
                                  resource)))
 
 
@@ -213,8 +214,9 @@
 
 
   (test-group "allprop with include"
-    (let ((props (parse-propfind '(d:propfind (d:allprop) (d:include))
-                                 `((d . ,webdav))
+    (let ((props (parse-propfind `((xml webdav 'propfind)
+                                   (,(xml webdav 'allprop))
+                                   (,(xml webdav 'include)))
                                  resource)))
 
 
@@ -244,10 +246,10 @@
         (sort-propstats props)))
 
 
-    (let ((props (parse-propfind `(d:propfind (d:allprop)
-                                              (d:include (x:isvirtual)))
-                                 `((d . ,webdav)
-                                   (x . ,virtual-ns))
+    (let ((props (parse-propfind `(,(xml webdav 'propfind)
+                                   (,(xml webdav 'allprop))
+                                   (,(xml webdav 'include)
+                                    (,(xml virtual-ns 'isvirtual))))
                                  resource)))
 
       (test-equal "Include isvirtual"
@@ -311,10 +313,8 @@
                     `((,(xml webdav 'checked-in))
                       (,(xml webdav 'checked-out))
                       (,(xml (string->symbol "http://apache.org/dav/props/") 'executable)))))
-  (let ((request namespaces
-                 (namespaced-sxml->sxml/namespaces
-                  (xml->namespaced-sxml
-                   "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+  (let ((request (xml->namespaced-sxml
+                  "<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <propfind xmlns=\"DAV:\">
   <prop>
     <getcontentlength/>
@@ -324,10 +324,9 @@
     <checked-in/>
     <checked-out/>
   </prop>
-</propfind>")
-                  `((,(string->symbol "DAV:") . d)))))
+</propfind>")))
 
-    (sort-propstats (parse-propfind (caddr request) (map swap namespaces) resource))))
+    (sort-propstats (parse-propfind (caddr request) resource))))
 
 
 

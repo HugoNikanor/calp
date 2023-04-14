@@ -1,7 +1,8 @@
 (define-module (calp webdav propfind)
   :use-module (calp webdav property)
   :use-module (calp webdav resource)
-  :use-module (sxml match)
+  :use-module (calp namespaces)
+  :use-module (srfi srfi-1)
   :use-module (sxml namespaced)
   :export (propfind-selected-properties
            propfind-all-live-properties
@@ -48,46 +49,50 @@
 
 
 
+(define (find-element target list)
+  (define target* (xml-element-hash-key target))
+  (find (lambda (x) (and (list? x)
+                    (not (null? x))
+                    (xml-element? (car x))
+                    (equal? target* (xml-element-hash-key (car x)))))
+        list))
 
 ;; Takes a propfind xml element (tree), and a webdav resource object.
 ;; Returns a list of <propstat> objects.
-(define (parse-propfind sxml namespaces resource)
-  (merge-propstats
-   ;; TODO Allow *TOP* and *PI*?
-   (sxml-match sxml
-     ((d:propfind (d:propname))
-      ;; Return the list of available properties
-      (list (propstat
-             200
-             ;; car to get tagname, list to construct a valid xml element
-             (map (compose list car)
-                  (append
-                   (dead-properties resource)
-                   (live-properties resource))))))
-
-     ((d:propfind (d:allprop))
-      ;; Return "all" properties
-      (append
-       (propfind-most-live-properties resource)
-       (propfind-all-dead-properties resource)))
-
-     ((d:propfind (d:allprop) (d:include ,properties ...))
-      ;; Return "all" properties + those noted by <include/>
-      (append
-       (propfind-most-live-properties resource)
-       (propfind-all-dead-properties resource)
-       (propfind-selected-properties
-        resource
-        (map (lambda (prop) (car (sxml->namespaced-sxml prop namespaces)))
-             properties))))
-
-     ((d:propfind (d:prop ,properties ...))
-      ;; Return the properties listed
-      (propfind-selected-properties
-       resource
-       (map (lambda (prop) (car (sxml->namespaced-sxml prop namespaces)))
-            properties)))
-
-     (,default (scm-error 'bad-request "parse-propfind"
-                      "Invalid search query ~s" (list default) (list default)))
-     )))
+(define (parse-propfind sxml resource)
+  ;; (assert (list? sxml))
+  ;; (assert (not (null? sxml)))
+  ;; (assert eq? 'd:propfid (car sxml))
+  (let ((propname (find-element (xml webdav 'propname) (cdr sxml)))
+        (allprop  (find-element (xml webdav 'allprop)  (cdr sxml)))
+        (include  (find-element (xml webdav 'include)  (cdr sxml)))
+        (prop     (find-element (xml webdav 'prop)     (cdr sxml))))
+    (merge-propstats
+     (cond ((and allprop include)
+            ;; Return "all" properties + those noted by <include/>
+            (append (propfind-most-live-properties resource)
+                    (propfind-all-dead-properties resource)
+                    (propfind-selected-properties
+                     resource
+                     (map car (cdr include)))))
+           (allprop
+            ;; Return "all" properties
+            (append (propfind-most-live-properties resource)
+                    (propfind-all-dead-properties resource)))
+           (propname
+            ;; Return the list of available properties
+            (list (propstat
+                   200
+                   ;; car to get tagname, list to construct a valid xml element
+                   (map (compose list car)
+                        (append
+                         (dead-properties resource)
+                         (live-properties resource))))))
+           (prop
+            ;; Return the properties listed
+            (propfind-selected-properties
+             resource
+             (map car (cdr prop))))
+           (else
+            (scm-error 'bad-request "parse-propfind"
+                       "Invalid search query ~s" (list sxml) (list sxml)))))))

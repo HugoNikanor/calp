@@ -135,6 +135,21 @@
     [(*TOP* ,root) root]
     [,root root]))
 
+(define (root-element/namespaced sxml)
+  (cond ((not (list? sxml)) (scm-error 'misc-error "root-element/namespaced"
+                                       "Argument is invalid sxml: ~s"
+                                       (list sxml) #f))
+        ((null? (car sxml)) (scm-error 'misc-error "root-element/namespaced"
+                                       "No root in an empty list"
+                                       '() #f))
+        ((eq? '*TOP* (car sxml))
+         (let ((children (cdr sxml)))
+           (cond ((null? children) #f)
+                 ((pi-element? (car children))
+                  (cadr children))
+                 (else (car children)))))
+        (else sxml)))
+
 
 (define root-resource (make-parameter #f))
 
@@ -227,18 +242,16 @@
                   ((infinity) (all-resources-under resource href))))
 
               ;; Body, if it exists, MUST have be a DAV::propfind object
-              (define-values (property-request namespaces*)
+              (define property-request
                 (cond ((string? body)
-                       (-> body
-                           xml->namespaced-sxml
-                           (namespaced-sxml->sxml/namespaces (map swap namespaces))))
+                       (xml->namespaced-sxml body))
                       ((bytevector? body)
                        (-> body
-                           (bytevector->string (make-transcoder (utf-8-codec)))
-                           xml->namespaced-sxml
-                           (namespaced-sxml->sxml/namespaces (map swap namespaces))))
-                      (else (values '(d:propfind (d:allprop))
-                                    `((d . ,webdav))))))
+                           (bytevector->string
+                            (make-transcoder (utf-8-codec)))
+                           xml->namespaced-sxml))
+                      (else `(,(xml webdav 'propfind)
+                              (,(xml webdav 'allprop))))))
 
 
               (catch 'bad-request
@@ -254,8 +267,7 @@
                                       `(,(xml webdav 'response)
                                         (,(xml webdav 'href) ,(href->string href))
                                         ,@(map propstat->namespaced-sxml
-                                               (parse-propfind (root-element property-request)
-                                                               (map swap namespaces*)
+                                               (parse-propfind (root-element/namespaced property-request)
                                                                resource)))))
                              namespaces: output-namespaces
                              port: port)
