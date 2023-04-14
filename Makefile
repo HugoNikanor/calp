@@ -19,7 +19,8 @@ SCM_FILES = $(shell find module/ -type f -name \*.scm)
 GO_FILES = $(SCM_FILES:module/%.scm=obj-$(GUILE_VERSION)/%.go)
 
 GUILE_ENV = GUILE_LOAD_PATH=$(PWD)/module \
-			GUILE_LOAD_COMPILED_PATH=$(PWD)/obj-$(GUILE_VERSION)
+			GUILE_LOAD_COMPILED_PATH=$(PWD)/obj-$(GUILE_VERSION) \
+			GUILE_AUTO_COMPILE=0
 
 GUILE_C_FLAGS = -Lmodule \
 				-Wshadowed-toplevel -Wunbound-variable \
