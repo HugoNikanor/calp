@@ -98,6 +98,7 @@ fi
       (test-runner-aux-value! runner (transform-time-of-day (gettimeofday)))))
   (test-runner-on-test-end! runner
     (lambda (runner)
+      (flush-all-ports)
       (when (verbose?) (display (make-indent depth)))
       (case (test-result-kind runner)
         ((pass)  (display (green "X")))
