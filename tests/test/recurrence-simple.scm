@@ -12,6 +12,9 @@
                :select (stream-take stream-map stream->list stream-car))
   :use-module ((datetime) :select (day-stream mon))
   :use-module ((vcomponent base) :select (extract prop))
+  :use-module ((sxml namespaced) :select (sxml->namespaced-sxml))
+  :use-module ((calp namespaces) :select (xcal))
+  :use-module ((hnh util) :select (->))
   :use-module ((hnh util exceptions)
                :select (warnings-are-errors warning-handler))
   :use-module ((vcomponent formats ical parse)
@@ -261,9 +264,8 @@ END:VCALENDAR"
    '((freq "WEEKLY") (interval "1") (wkst "MO"))))
 
 (define ev
-  (sxcal->vcomponent
-    '(vevent
-       (properties
+  (-> '(vevent
+        (properties
          (summary (text "reptest"))
          (dtend (date-time "2021-01-13T02:00:00"))
          (dtstart (date-time "2021-01-13T01:00:00"))
@@ -273,7 +275,9 @@ END:VCALENDAR"
                        (wkst "MO")))
          (dtstamp (date-time "2021-01-13T01:42:20Z"))
          (sequence (integer "0")))
-       (components))))
+        (components))
+      (sxml->namespaced-sxml `((#f . ,xcal)))
+      sxcal->vcomponent))
 
 (test-assert
   "Check that recurrence rule commint from xcal also works"

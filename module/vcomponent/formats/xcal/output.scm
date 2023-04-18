@@ -8,6 +8,9 @@
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (calp translation)
+  :use-module (calp namespaces)
+  :use-module (sxml namespaced)
+  :use-module (sxml namespaced util)
   :export (vcomponent->sxcal ns-wrap))
 
 
@@ -56,7 +59,7 @@
 
     [(memv key '(GEO))
      (lambda (_ v)
-       `(geo
+       `(,(xml xcal 'geo)
          (latitude ,(geo-latitude v))
          (longitude ,(geo-longitude v))))]
 
@@ -73,16 +76,17 @@
      (warning (G_ "Unknown key ~a") key)
      (get-writer 'TEXT)]))
 
-  (writer ((@@ (vcomponent base) get-vline-parameters) vline) (value vline)))
+  (writer ((@@ (vcomponent base) get-vline-parameters) vline)
+          (value vline)))
 
 (define (property->value-tag tag . values)
   (if (or (eq? tag 'VALUE)
           (internal-field? tag))
       #f
-      `(,(downcase-symbol tag)
+      `(,(xml xcal (downcase-symbol tag))
         ,@(map (lambda (v)
                  ;; TODO parameter types!!!! (rfc6321 3.5.)
-                 `(text ,(->string v)))
+                 `(,(xml xcal 'text) ,(->string v)))
                values))))
 
 ;; ((key value ...) ...) -> `(parameters , ... )
@@ -92,15 +96,14 @@
                      parameters))
 
   (unless (null? outparams)
-    `(parameters ,@outparams)))
+    `(,(xml xcal 'parameters) ,@outparams)))
 
 (define (vcomponent->sxcal component)
 
   (define tagsymb (downcase-symbol (type component)))
 
-
   (remove null?
-   `(,tagsymb
+   `(,(xml xcal tagsymb)
      ;; only have <properties> when it's non-empty.
      ,(let ((props
              (filter-map
@@ -109,7 +112,7 @@
 
                 [(key vlines ...)
                  (remove null?
-                         `(,(downcase-symbol key)
+                         `(,(xml xcal (downcase-symbol key))
                            ,(parameters-tag (reduce assq-merge
                                                     '() (map parameters vlines)))
                            ,@(for vline in vlines
@@ -117,18 +120,22 @@
 
                 [(key . vline)
                  (remove null?
-                         `(,(downcase-symbol key)
+                         `(,(xml xcal (downcase-symbol key))
                            ,(parameters-tag (parameters vline))
                            ,(vline->value-tag vline)))])
-              (properties component))))
+              ;; NOTE this sort is unnecesasary, but here so tests can work
+              ;; Possibly add it as a flag instead
+              (sort* (properties component)
+                     string< (compose symbol->string car)))))
         (unless (null? props)
-          `(properties
+          `(,(xml xcal 'properties)
             ;; NOTE
             ;; (x-hnh-calendar-name (text ,(prop (parent component) 'NAME)))
             ,@props)))
      ,(unless (null? (children component))
-        `(components ,@(map vcomponent->sxcal (children component)))))))
+        `(,(xml xcal 'components)
+          ,@(map vcomponent->sxcal (children component)))))))
 
 (define (ns-wrap sxml)
-  `(icalendar (@ (xmlns "urn:ietf:params:xml:ns:icalendar-2.0"))
-              ,sxml))
+  `(,(xml xcal 'icalendar)
+    ,sxml))

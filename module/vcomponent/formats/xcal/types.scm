@@ -3,16 +3,18 @@
   :use-module (vcomponent formats ical types)
   :use-module (datetime)
   :use-module (calp translation)
+  :use-module ((calp namespaces) :select (xcal))
+  :use-module ((sxml namespaced) :select (xml))
   :export (get-writer))
 
 (define (write-boolean _ v)
-  `(boolean ,(if v "true" "false")))
+  `(,(xml xcal 'boolean) ,(if v "true" "false")))
 
 (define (write-date _ v)
-  `(date ,(date->string v "~Y-~m-~d")))
+  `(,(xml xcal 'date) ,(date->string v "~Y-~m-~d")))
 
 (define (write-datetime p v)
-  `(date-time
+  `(,(xml xcal 'date-time)
     ,(datetime->string
       (hashq-ref p '-X-HNH-ORIGINAL v)
       ;; 'Z' should be included for UTC,
@@ -21,17 +23,17 @@
       "~Y-~m-~dT~H:~M:~S~Z")))
 
 (define (write-time _ v)
-  `(time ,(time->string v "~H:~M:S")))
+  `(,(xml xcal 'time) ,(time->string v "~H:~M:S")))
 
 (define (write-recur _ v)
-  `(recur ,@((@@ (vcomponent recurrence internal) recur-rule->rrule-sxml) v)))
+  `(,(xml xcal 'recur) ,@((@@ (vcomponent recurrence internal) recur-rule->rrule-sxml) v)))
 
 ;; sepparate since this text shouldn't be escaped
 (define (write-text _ v)
   ;; TODO out type should be xsd:string.
   ;; Look into what that means, and escape
   ;; from there
-  `(text ,v))
+  `(,(xml xcal 'text) ,v))
 
 
 
@@ -40,7 +42,7 @@
                              #| TODO PERIOD |# URI UTC-OFFSET)
      (hashq-set! sxml-writers simple-type
                  (lambda (p v)
-                   `(,(downcase-symbol simple-type)
+                   `(,(xml xcal (downcase-symbol simple-type))
                      ,(((@ (vcomponent formats ical types) get-writer) simple-type) p v)))))
 
 (hashq-set! sxml-writers 'BOOLEAN write-boolean)
