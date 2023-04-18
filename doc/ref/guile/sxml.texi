@@ -50,6 +50,9 @@ Reads xml from port, and return a namespaced SXML tree.
 Converts a ``regular'' SXML tree into a namespaced sxml tree.
 @var{namespaces} must be an association list which maps each prefix
 used in @var{tree} onto a full XML namespace.
+
+The key @code{#f} can be used to map non-namespaced elements into a
+namespace.
 @end defun
 
 @defun xml tag
