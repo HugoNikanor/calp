@@ -2,7 +2,7 @@ PUT /home/lisa/calendars/events/qwue23489.ics HTTP/1.1
 If-None-Match: *
 Host: cal.example.com
 Content-Type: text/calendar
-Content-Length: xxxx
+Content-Length: 0
 
 BEGIN:VCALENDAR
 VERSION:2.0

@@ -2,7 +2,7 @@ REPORT /bernard/work/ HTTP/1.1
 Host: cal.example.com
 Depth: 1
 Content-Type: application/xml; charset="utf-8"
-Content-Length: xxxx
+Content-Length: 0
 
 <?xml version="1.0" encoding="utf-8" ?>
 <C:calendar-query xmlns:D="DAV:"

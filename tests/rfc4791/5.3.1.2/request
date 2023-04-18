@@ -1,7 +1,7 @@
 MKCALENDAR /home/lisa/calendars/events/ HTTP/1.1
 Host: cal.example.com
 Content-Type: application/xml; charset="utf-8"
-Content-Length: xxxx
+Content-Length: 0
 
 <?xml version="1.0" encoding="utf-8" ?>
 <C:mkcalendar xmlns:D="DAV:"
