@@ -4,6 +4,7 @@
   :use-module (rnrs bytevectors)
   :use-module (hnh util)
   :use-module (sxml namespaced)
+  :use-module (sxml namespaced util)
   :use-module (calp webdav resource)
   :use-module (calp webdav property)
   :use-module (calp namespaces)

@@ -5,6 +5,7 @@
   :use-module (srfi srfi-88)
   :use-module (oop goops)
   :use-module (sxml namespaced)
+  :use-module (sxml namespaced util)
   :use-module (calp webdav property)
   :use-module (calp namespaces)
   :use-module ((hnh util) :select (unless))
@@ -22,7 +23,6 @@
            ;; resource-children
            resource?
            children
-           xml-element-hash-key
 
 
 
@@ -276,10 +276,6 @@
        status)
       ((collision) 'collision))))
 
-(define (xml-element-hash-key tag)
-  "Returns a value suitable as a key to hash-ref (and family)"
-  (cons (xml-element-namespace tag)
-        (xml-element-tagname tag)))
 
 ;; Only tagname and namespaces are checked on the <xml-element> for the {get,set}-property
 

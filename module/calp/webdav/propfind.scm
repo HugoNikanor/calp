@@ -4,6 +4,7 @@
   :use-module (calp namespaces)
   :use-module (srfi srfi-1)
   :use-module (sxml namespaced)
+  :use-module (sxml namespaced util)
   :export (propfind-selected-properties
            propfind-all-live-properties
            propfind-most-live-properties

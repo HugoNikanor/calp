@@ -15,10 +15,13 @@
            namespaced-sxml->sxml/namespaces
            sxml->namespaced-sxml
            xml
+           attribute
 
            make-xml-element
            xml-element?
-           xml-element-tagname xml-element-namespace xml-element-attributes
+           xml-element-tagname
+           xml-element-namespace
+           xml-element-attributes
 
            make-pi-element
            pi-element?
@@ -51,6 +54,9 @@
     ((tag) (make-xml-element tag #f '()))
     ((ns tag) (make-xml-element tag ns '()))
     ((ns tag attrs) (make-xml-element tag ns attrs))))
+
+(define (attribute xml attr)
+  (assoc-ref (xml-element-attributes xml) attr))
 
 
 (define* (parser key: trim-whitespace?)
@@ -226,7 +232,8 @@
 (define* (namespaced-sxml->xml tree key:
                                (namespaces '())
                                (port (current-output-port)))
-  ((@ (sxml simple) sxml->xml) (namespaced-sxml->sxml tree namespaces) port))
+  ((@ (sxml simple) sxml->xml)
+   (namespaced-sxml->sxml tree namespaces) port))
 
 ;; Takes a tree of namespaced-sxml, and optionally an assoc list from namespace symbols, to prefered prefix.
 ;; Returns two values: a sxml tree without declared namespaces
@@ -256,3 +263,4 @@
 ;;; TODO Figure out how to still use (sxml match) and (sxml xpath) with these
 ;;;      new trees (probably rewriting to a "regular" sxml tree, and keeping
 ;;;      a strict mapping of namespaces)
+
