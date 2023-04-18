@@ -39,6 +39,10 @@ fi
 
 
 
+(define diff-cmd '("diff")
+  ;; '("git" "diff" "--no-index" "--word-diff=color")
+  )
+
 (define (µs x)
   (* x #e1e6))
 
@@ -64,15 +68,12 @@ fi
                   0 (string-length s2)))
 
 (define (diff s1 s2)
-  (let ((filename1 (call-with-tmpfile (lambda (p f) (display s1 p) f)))
-        (filename2 (call-with-tmpfile (lambda (p f) (display s2 p) f))))
-    (let ((pipe (open-pipe*
-              OPEN_READ
-              ;; "git" "diff" "--no-index"
-              "diff"
-              filename1 filename2)))
-      (begin1 (begin
-                (read-string pipe))
+  (let ((filename1 (call-with-tmpfile (lambda (p f) (pretty-print s1 p display?: #t) f)))
+        (filename2 (call-with-tmpfile (lambda (p f) (pretty-print s2 p display?: #t) f))))
+    (let ((pipe (apply open-pipe*
+                 OPEN_READ
+                 (append diff-cmd (list filename1 filename2)))))
+      (begin1 (read-string pipe)
               (close-pipe pipe)))))
 
 (define (pp form indent prefix-1)
