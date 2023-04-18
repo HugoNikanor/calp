@@ -1,0 +1,62 @@
+HTTP/1.1 207 Multi-Status
+Date: Sat, 11 Nov 2006 09:32:12 GMT
+Content-Type: application/xml; charset="utf-8"
+Content-Length: xxxx
+
+<?xml version="1.0" encoding="utf-8" ?>
+<D:multistatus xmlns:D="DAV:"
+               xmlns:C="urn:ietf:params:xml:ns:caldav">
+  <D:response>
+    <D:href>http://cal.example.com/bernard/work/abcd4.ics</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:getetag>"fffff-abcd4"</D:getetag>
+        <C:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VTODO
+DTSTAMP:20060205T235335Z
+DUE;VALUE=DATE:20060104
+STATUS:NEEDS-ACTION
+SUMMARY:Task #1
+UID:DDDEEB7915FA61233B861457@example.com
+BEGIN:VALARM
+ACTION:AUDIO
+TRIGGER;RELATED=START:-PT10M
+END:VALARM
+END:VTODO
+END:VCALENDAR
+</C:calendar-data>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+
+  <D:response>
+    <D:href>http://cal.example.com/bernard/work/abcd5.ics</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:getetag>"fffff-abcd5"</D:getetag>
+        <C:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VTODO
+DTSTAMP:20060205T235300Z
+DUE;VALUE=DATE:20060106
+LAST-MODIFIED:20060205T235308Z
+SEQUENCE:1
+STATUS:NEEDS-ACTION
+SUMMARY:Task #2
+UID:E10BA47467C5C69BB74E8720@example.com
+BEGIN:VALARM
+ACTION:AUDIO
+TRIGGER;RELATED=START:-PT10M
+END:VALARM
+END:VTODO
+END:VCALENDAR
+</C:calendar-data>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+</D:multistatus>

@@ -1,0 +1,11 @@
+HTTP/1.1 403 Forbidden
+Date: Sat, 11 Nov 2005 09:32:12 GMT
+Content-Type: application/xml; charset="utf-8"
+Content-Length: xxxx
+
+<?xml version="1.0" encoding="utf-8" ?>
+<D:error>
+  <C:supported-filter>
+    <C:prop-filter name="X-ABC-GUID"/>
+  </C:supported-filter>
+</D:error>

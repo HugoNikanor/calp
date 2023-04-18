@@ -1,0 +1,17 @@
+PUT /home/lisa/calendars/events/qwue23489.ics HTTP/1.1
+If-None-Match: *
+Host: cal.example.com
+Content-Type: text/calendar
+Content-Length: xxxx
+
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VEVENT
+UID:20010712T182145Z-123401@example.com
+DTSTAMP:20060712T182145Z
+DTSTART:20060714T170000Z
+DTEND:20060715T040000Z
+SUMMARY:Bastille Day Party
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,11 @@
+REPORT /bernard/work/ HTTP/1.1
+Host: cal.example.com
+Depth: 1
+Content-Type: application/xml; charset="utf-8"
+Content-Length: xxxx
+
+<?xml version="1.0" encoding="utf-8" ?>
+<C:free-busy-query xmlns:C="urn:ietf:params:xml:ns:caldav">
+  <C:time-range start="20060104T140000Z"
+                  end="20060105T220000Z"/>
+</C:free-busy-query>
