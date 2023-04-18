@@ -12,14 +12,14 @@ Which module corresponds to what file type is currently defined out of band.
 
 Each module should expose the following procedures.
 
-@deffn serialize component port
+@defun serialize component port
 Write a serialized representation of @var{component} to @var{port}.
-@end deffn
+@end defun
 
-@deffn deserialize port
+@defun deserialize port
 Read a serialized representation of a component from @var{port}, and
 return the deserialized instance of this object.
-@end deffn
+@end defun
 
 @subsubsection iCalendar
 RFC 5545
@@ -35,25 +35,25 @@ needed information from the high level view.
 
 @c (make <calendar-store> #:path ``hello'')
 
-@deffn path store
-@end deffn
+@defun path store
+@end defun
 
-@deffn get-calendar this
+@deftp {GOOPS method} get-calendar this
 Returns a vcomponent object of type @code{VCALENDAR}. Should contain
 all @code{VEVENT} components of this calendar.
-@end deffn
+@end deftp
 
-@deffn get-by-uid this uid
+@deftp {GOOPS method} get-by-uid this uid
 Return the event object with UID equal to the string @var{uid}.
-@end deffn
+@end deftp
 
-@deffn queue-save this event
+@deftp {GOOPS method} queue-save this event
 Queue a save event of @var{event} to the store.
-@end deffn
+@end deftp
 
-@deffn flush this
+@deftp {GOOPS method} flush this
 Force write of all queued actions.
-@end deffn
+@end deftp
 
 @subsubsection VDir
 [VDIR]: http://vdirsyncer.pimutils.org/en/latest/vdir.html
