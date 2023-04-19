@@ -17,6 +17,7 @@
            ;; href
            href->string
            string->href
+           href-relative
            ;; local-path
            name
            dead-properties
@@ -149,6 +150,14 @@
 (define (string->href s)
   (remove string-null?
           (string-split s #\/)))
+
+;; parent must be the head of child, elements in child after that is "free range"
+(define (href-relative parent child)
+  (cond ((null? parent) child)
+        ((null? child) (scm-error 'misc-error "href-relative" "Not a sub-href" '() #f))
+        ((equal? (car parent) (car child))
+         (href-relative (cdr parent) (cdr child)))
+        (else (scm-error 'misc-error "href-relative" "Not a sub-href" '() #f))))
 
 (define-method (children (self <resource>))
   (resource-children self))
