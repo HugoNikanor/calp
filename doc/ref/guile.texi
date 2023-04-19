@@ -1,7 +1,8 @@
 @node Guile
 @chapter Guile
 
-@include guile/save-load.texi
+@include guile/data-formats.texi
+@include guile/data-stores.texi
 @include guile/datetime.texi
 @include guile/zic.texi
 @include guile/srfi-41.texi

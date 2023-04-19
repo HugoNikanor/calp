@@ -1,32 +1,5 @@
-@node Saving and Loading
-@section Saving and Loading
-
-@subsection Data Formats
-A data format is some way that an individual event may get serialized
-to disk. The default is iCalendar (TODO reference RFC 5545), but
-others might be available (TODO footnote and reference xcal).
-
-Each available format should be included as
-@code{(vcomponent formats @var{format-name})}.
-Which module corresponds to what file type is currently defined out of band.
-
-Each module should expose the following procedures.
-
-@defun serialize component port
-Write a serialized representation of @var{component} to @var{port}.
-@end defun
-
-@defun deserialize port
-Read a serialized representation of a component from @var{port}, and
-return the deserialized instance of this object.
-@end defun
-
-@subsubsection iCalendar
-RFC 5545
-
-@subsubsection xCal
-
-@subsection Data Stores
+@node Data Stores
+@section Data Stores
 Data stores are persistant stores for events, such as databases or the
 file system. Each data store can support any number of data formats,
 but which is an implementation detail of that format and shouldn't be
@@ -55,9 +28,9 @@ Queue a save event of @var{event} to the store.
 Force write of all queued actions.
 @end deftp
 
-@subsubsection VDir
+@subsection VDir
 [VDIR]: http://vdirsyncer.pimutils.org/en/latest/vdir.html
 
-@subsubsection File
+@subsection File
 
-@subsubsection SQLite
+@subsection SQLite

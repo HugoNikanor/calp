@@ -1,0 +1,25 @@
+@node Data Formats
+@section Data Formats
+A data format is some way that an individual event may get serialized
+to disk. The default is iCalendar (TODO reference RFC 5545), but
+others might be available (TODO footnote and reference xcal).
+
+Each available format should be included as
+@code{(vcomponent formats @var{format-name})}.
+Which module corresponds to what file type is currently defined out of band.
+
+Each module should expose the following procedures.
+
+@defun serialize component port
+Write a serialized representation of @var{component} to @var{port}.
+@end defun
+
+@defun deserialize port
+Read a serialized representation of a component from @var{port}, and
+return the deserialized instance of this object.
+@end defun
+
+@subsection iCalendar
+RFC 5545
+
+@subsection xCal
