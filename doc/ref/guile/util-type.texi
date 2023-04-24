@@ -1,0 +1,62 @@
+@node Type utilities
+@section Type utilities
+
+Provided by the module @code{(hnh util type)}
+
+@subsection Type Clauses
+@anchor{type-clause}
+@cindex type-clause
+
+Type clauses are an effective way of writing compound predicates
+without explicitly mentioning the variable at all steps.
+
+The simplest type predicate is a single symbol, which is directly
+called on the object:
+@example
+predicate? ⇒ (predicate? x)
+@end example
+
+Otherwise, if the predicate is a list then the variable is spliced
+into the argument list in the first position:
+@example
+(proc args ...) ⇒ (proc x args ...)
+@end example
+
+The two primitives @code{and} and @code{or} are also available, which
+both take an arbitrary number of predicates, and calls them in order,
+with Scheme's usual short-circuiting rules.
+@footnote{@code{and} and @code{or} doesn't have to be primitives, but
+we would otherwise have one hell of a namespace conflict}
+
+@defmac list-of variable type-clause
+Checks if @var{variable} is a list, and that every element satisfies type-clause.
+@end defmac
+
+@defmac pair-of variable car-type-clause cdr-type-clause
+Check if @var{variable} is a cons-pair, and that the car satisfies
+@var{car-type-clause}, and that the cdr satisfies @var{cdr-type-clause}.
+@end defmac
+
+@subsection Deffinitions
+
+@defmac build-validator-body variable type-clause
+``Entry point'' of type clauses. Inserts variable into the
+type-clause, returning something ready to be passed along the eval (or
+rather, spliced into another macro).
+
+Also used if new ``primitives'' are to be added, such as list-of.
+@end defmac
+
+@defmac typecheck variable type-clause [procedure-name=(current-procedure-name)]
+Checks @var{variable} against @var{type-clause}, and raises
+@code{'wrong-type-argument} if it fails. @var{procedure-name} is used
+as the calling procedure for @code{scm-error}.
+
+Useful at the start of procedures.
+@end defmac
+
+
+@defmac current-procedure-name
+Returns the current procedure name as a symbol, or @code{#f} if not found.
+@end defmac
+

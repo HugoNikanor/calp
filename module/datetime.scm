@@ -3,8 +3,6 @@
   :replace (second)
 
   :use-module (srfi srfi-1)
-  :use-module (srfi srfi-9)
-  :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -15,11 +13,12 @@
                         ->
                         ->>
                         swap
-                        set
                         label
                         span-upto
-                        set->
                         ))
+
+  :use-module (hnh util object)
+  :use-module (hnh util lens)
 
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
@@ -37,8 +36,11 @@
 
            datetime
            datetime?
-           get-date
-           get-timezone
+           ;; get-date
+           ;; get-timezone
+           datetime-date
+           datetime-time
+           tz
 
            date-zero?
            time-zero?
@@ -171,45 +173,40 @@
   pre: (ensure (lambda (x) (<= sun x sat))))
 
 
+
 ;;; RECORD TYPES
 
-;;; DATE
+(define-type (date printer: (lambda (r p) (display (date->string r "#~1") p)))
+  (year  default: 0 type: integer?)
+  (month default: 0 type: integer?)
+  (day   default: 0 type: integer?))
 
-(define-immutable-record-type <date>
-  (make-date year month day)
-  date?
-  (year year) (month month) (day day))
+(define-type (time printer: (lambda (r p) (display (time->string r "#~3") p)))
+  (hour   default: 0 type: integer?)
+  (minute default: 0 type: integer?)
+  (second default: 0 type: integer?))
 
-(define* (date key: (year 0) (month 0) (day 0))
-  (unless (and (integer? year) (integer? month) (integer? day))
-    (scm-error 'wrong-type-arg "date"
-               "Year, month, and day must all be integers. ~s, ~s, ~s"
-               (list year month day)
-               #f))
-  (make-date year month day))
+(define (datetime-constructor-constructor constructor validator)
+  (let ((date% date)
+        (time% time))
+   (lambda* (key: date time tz
+                  (year 0) (month 0) (day 0)
+                  (hour 0) (minute 0) (second 0))
+     (let ((date (or date (date% year: year month: month day: day)))
+           (time (or time (time% hour: hour minute: minute second: second))))
+       (validator date time tz)
+       (constructor date time tz)))))
 
-(set-record-type-printer!
- <date> (lambda (r p) (display (date->string r "#~1") p)))
+(define-type (datetime
+              constructor: datetime-constructor-constructor
+              printer: (lambda (r p)
+                         (if (and (tz r) (not (string=? "UTC" (tz r))))
+                             (write (datetime->sexp r) p)
+                             (display (datetime->string r "#~1T~3~Z") p))))
 
-
-;;; TIME
-
-(define-immutable-record-type <time>
-  (make-time hour minute second)
-  time?
-  (hour hour) (minute minute) (second second))
-
-(define* (time key: (hour 0) (minute 0) (second 0))
-  (unless (and (integer? hour) (integer? minute) (integer? second))
-    (scm-error 'wrong-type-arg "time"
-               "Hour, minute, and second must all be integers. ~s, ~s, ~s"
-               (list hour minute second)
-               #f))
-  (make-time hour minute second))
-
-(set-record-type-printer!
- <time>
- (lambda (r p) (display (time->string r "#~3") p)))
+  (datetime-date type: date?)
+  (datetime-time type: time?)
+  tz)
 
 
 (define (date-zero? date)
@@ -218,53 +215,14 @@
 (define (time-zero? time)
   (= 0 (hour time) (minute time) (second time)))
 
-;;; DATETIME
-
-(define-immutable-record-type <datetime>
-  (make-datetime date time tz)
-  datetime?
-  (date get-date)
-  (time get-time%)
-  (tz tz) ; #f for localtime, "UTC", "Europe/Stockholm", ...
-  )
-
-(define (get-timezone datetime)
-  (tz datetime))
-
-
-(define* (datetime
-          key: date time
-          (year 0) (month 0) (day 0)
-          (hour 0) (minute 0) (second 0)
-          tz)
-  (let ((date (or date (make-date year month day)))
-        (time (or time (make-time hour minute second))))
-    (unless (date? date)
-      (scm-error 'wrong-type-arg "datetime"
-                 "Date must be a date object, got ~s"
-                 (list date) (list date)))
-    (unless (time? time)
-      (scm-error 'wrong-type-arg "datetime"
-                 "Time must be a time object, got ~s"
-                 (list time) (list time)))
-   (make-datetime date time tz)))
-
-(set-record-type-printer!
- <datetime>
- (lambda (r p)
-   (if (and (tz r) (not (string=? "UTC" (tz r))))
-       (write (datetime->sexp r) p)
-       (display (datetime->string r "#~1T~3~Z") p))))
-
-
 
 
 ;; NOTE there isn't any stable way to craft the tm objects.
 ;; I could call mktime on some date, and replace the fields
 ;; with the set-tm:*, but that is worse that breaking the API.
 (define (datetime->tm datetime)
-  (let ((t (get-time% datetime))
-        (d (get-date  datetime)))
+  (let ((t (datetime-time datetime))
+        (d (datetime-date datetime)))
     (vector (second t)
             (minute t)
             (hour t)
@@ -296,8 +254,8 @@
 (define (unix-time->datetime n)
   ;; tm->datetime returns GMT here (as hinted by the
   ;; name @var{gmtime}). Blindly change it to UTC.
-  (set (tz (tm->datetime (gmtime n)))
-       "UTC"))
+  (-> (tm->datetime (gmtime n))
+      (tz "UTC")))
 
 
 ;; this returns UTC time, with a TZ component set to "UTC"
@@ -305,7 +263,7 @@
   (unix-time->datetime ((@ (guile) current-time))))
 
 (define (current-date)
-  (get-date (current-datetime)))
+  (datetime-date (current-datetime)))
 
 
 
@@ -324,10 +282,11 @@
                    [(string=? "local" (tz dt)) (mktime v)]
                    [else (mktime v (tz dt))])))))
       ;; strip tz-name, to conform with my local time.
-      (set (tz (tm->datetime tm)) #f))))
+      (-> (tm->datetime tm)
+          (tz #f)))))
 
 (define (as-date date/-time)
-  (cond [(datetime? date/-time) (get-date date/-time)]
+  (cond [date/-time datetime? => datetime-date]
         [(date? date/-time) date/-time]
         [(time? date/-time) (date)]
         [else (scm-error 'wrong-type-arg
@@ -337,7 +296,7 @@
                      #f)]))
 
 (define (as-time date/-time)
-  (cond [(datetime? date/-time) (get-time% date/-time)]
+  (cond [date/-time datetime? => datetime-time]
         [(date? date/-time) (time)]
         [(time? date/-time) date/-time]
         [else (scm-error 'wrong-type-arg "as-time"
@@ -379,15 +338,15 @@
       366 365))
 
 (define (start-of-month date)
-  (set (day date) 1))
+  (-> date (day 1)))
 
 (define (end-of-month date)
-  (set (day date) (days-in-month date)))
+  (-> date (day (days-in-month date))))
 
 (define (start-of-year date)
-  (set-> date
-         (day 1)
-         (month 1)))
+  (-> date
+      (day 1)
+      (month 1)))
 
 (define (date-stream date-increment start-day)
   (stream-iterate (lambda (d) (date+ d date-increment))
@@ -624,10 +583,10 @@
          (prev-month-len (days-in-month (date- date* (date month: 1))))
          (month-start (modulo (- (week-day date*) week-start) 7)))
     (values
-     (map (lambda (d) (set (day (date- date* (date month: 1))) d))
+     (map (lambda (d) (-> date* (date- (date month: 1)) (day d)))
           (iota month-start (1+ (- prev-month-len month-start))))
-     (map (lambda (d) (set (day date*) d)) (iota month-len 1))
-     (map (lambda (d) (set (day (date+ date* (date month: 1))) d))
+     (map (lambda (d) (day date* d)) (iota month-len 1))
+     (map (lambda (d) (-> date* (date+ (date month: 1)) (day d)))
           (iota (modulo (- (* 7 5) month-len month-start) 7) 1)))))
 
 
@@ -664,17 +623,17 @@
 
   (let ((date-diff
          (cond [start-date
-                (let ((end-date (date+ start-date (get-date dt))))
-                  (1- (days-in-interval start-date end-date))) ]
-               [(or (not (zero? (month (get-date dt))))
-                    (not (zero? (year (get-date dt)))))
+                (let ((end-date (date+ start-date (datetime-date dt))))
+                  (1- (days-in-interval start-date end-date)))]
+               [(or (not (zero? (month (datetime-date dt))))
+                    (not (zero? (year  (datetime-date dt)))))
                 (scm-error 'misc-error "datetime->decimal-hour"
                        "Multi-month intervals only supported when start-date is given (~a)"
                        (list dt)
                        #f)]
-               [else (day (get-date dt))])))
-    (+ (time->decimal-hour (get-time% dt))
-       (* date-diff 24))))
+               [else (-> dt datetime-date day)])))
+    (-> dt datetime-time time->decimal-hour
+        (+ (* date-diff 24)))))
 
 ;; Returns a list of all dates from start to end.
 ;; both inclusive
@@ -693,8 +652,8 @@
           (fmt "~1T~3")
           (locale %global-locale)
           key: allow-unknown?)
-  (define date (get-date datetime))
-  (define time (get-time% datetime))
+  (define date (datetime-date datetime))
+  (define time (datetime-time datetime))
   (with-output-to-string
     (lambda ()
       (fold (lambda (token state)
@@ -718,7 +677,7 @@
                    ((#\a) (display (week-day-name (week-day date) 3 locale: locale)))
                    ((#\B) (display (locale-month       (month date) locale)))
                    ((#\b) (display (locale-month-short (month date) locale)))
-                   ((#\Z) (when (equal? "UTC" (get-timezone datetime)) (display "Z")))
+                   ((#\Z) (when (equal? "UTC" (tz datetime)) (display "Z")))
                    (else (unless allow-unknown?
                            (scm-error 'misc-error "datetime->string"
                                   "Invalid format token ~a"
@@ -777,14 +736,6 @@ Returns -1 on failure"
     (define* (loop str fmt dt optional: (ampm ampm))
       (loop* str fmt dt ampm))
 
-    (define time (get-time% dt))
-    (define date (get-date dt))
-    (define zone (get-timezone dt))
-    (define (as-dt dt)
-      (cond [(date? dt) (datetime date: dt time: time tz: zone)]
-            [(time? dt) (datetime date: date time: dt tz: zone)]
-            [else dt]))
-
     (cond [(and (null? str) (null? fmt))
            (ampm dt)]
           [(null? str)
@@ -811,7 +762,7 @@ Returns -1 on failure"
               (if (eq? #\Z (car str))
                   (loop (cdr str)
                         (cddr fmt)
-                        (set (tz dt) "UTC"))
+                        (tz dt "UTC"))
                   (loop str
                         (cddr fmt)
                         dt))]
@@ -825,17 +776,13 @@ Returns -1 on failure"
                                 (case (string-ref (match:substring m 1) 0)
                                   ((#\a #\A)
                                    (lambda (dt)
-                                     (datetime date: (get-date dt)
-                                               time: (if (= 12 (hour (get-time% dt)))
-                                                         (set (hour (get-time% dt)) 0)
-                                                         (get-time% dt)))))
+                                     (modify* dt datetime-time hour
+                                              (lambda (x) (if (= x 12) 0 x)))))
                                   ((#\p #\P)
                                    (lambda (dt)
-                                     (datetime date: (get-date dt)
-                                               time: (if (= 12 (hour (get-time% dt)))
-                                                         (get-time% dt)
-                                                         (set (hour (get-time% dt))
-                                                              (+ 12 (hour (get-time% dt))))))))))
+                                     (modify* dt datetime-time hour
+                                              (lambda (x) (if (= x 12)
+                                                         x (+ x 12))))))))
                           ))
                     ;; fail here?
                     (else (loop str (cddr fmt) dt)))
@@ -853,8 +800,8 @@ Returns -1 on failure"
                             ((next-char rest ...) (span (lambda (c) (not (eqv? c next-char))) str)))))
                 (loop post
                       (cddr fmt)
-                      (as-dt (set (month date)
-                                  (parse-month (list->string head) locale)))))]
+                      (set dt datetime-date month
+                           (parse-month (list->string head) locale))))]
              [(#\H #\M #\S #\m #\d)
               ;; This captures both the possibility of a date with a single digit,
               ;; e.g. 7 may, but also compact, digits only, form without delimiters,
@@ -864,13 +811,14 @@ Returns -1 on failure"
                 (loop
                  post
                  (cddr fmt)
-                 (as-dt
-                  (case (cadr fmt)
-                    [(#\H) (set (hour time)   num)]
-                    [(#\M) (set (minute time) num)]
-                    [(#\S) (set (second time) num)]
-                    [(#\m) (set (month date)  num)]
-                    [(#\d) (set (day date)    num)]))))]
+                 (let ((lens
+                        (case (cadr fmt)
+                          [(#\H) (lens-compose datetime-time hour)]
+                          [(#\M) (lens-compose datetime-time minute)]
+                          [(#\S) (lens-compose datetime-time second)]
+                          [(#\m) (lens-compose datetime-date month)]
+                          [(#\d) (lens-compose datetime-date day)])))
+                   (set dt lens num))))]
 
              [(#\Y)
               (let* ((pre post (span-upto 4 char-numeric? str))
@@ -878,7 +826,7 @@ Returns -1 on failure"
                 (loop
                  post
                  (cddr fmt)
-                 (as-dt (set (year date) num))))]
+                 (set dt datetime-date year num)))]
 
              [else (err "Unimplemented or incorrect parse token ~S" str)])]
           [else
@@ -894,11 +842,11 @@ Returns -1 on failure"
 
 (define* (string->time str optional: (fmt "~H:~M:~S") (locale %global-locale)
                        key: return-trailing)
-  (get-time% (string->datetime str fmt locale return-trailing: return-trailing)))
+  (datetime-time (string->datetime str fmt locale return-trailing: return-trailing)))
 
 (define* (string->date str optional: (fmt "~Y-~m-~d") (locale %global-locale)
                        key: return-trailing)
-  (get-date (string->datetime str fmt locale return-trailing: return-trailing)))
+  (datetime-date (string->datetime str fmt locale return-trailing: return-trailing)))
 
 ;; Parse @var{string} as either a date, time, or date-time.
 ;; String MUST be on iso-8601 format.
@@ -924,7 +872,7 @@ Returns -1 on failure"
   (let ((dt (string->datetime str "~Y~m~dT~H~M~S~Z")))
     (if (tz dt)
         dt
-        (set (tz dt) zone))))
+        (tz dt zone))))
 
 (define (parse-iso-date str)
   (string->date str))
@@ -949,8 +897,8 @@ Returns -1 on failure"
          second: ,(second t)))
 
 (define* (datetime->sexp dt optional: verbose)
-  `(datetime date: ,(if verbose (date->sexp (get-date dt)) (get-date dt))
-             time: ,(if verbose (time->sexp (get-time% dt)) (get-time% dt))
+  `(datetime date: ,(if verbose (date->sexp (datetime-date dt)) (datetime-date dt))
+             time: ,(if verbose (time->sexp (datetime-time dt)) (datetime-time dt))
              tz: ,(tz dt)))
 
 
@@ -992,8 +940,8 @@ Returns -1 on failure"
 
 (define (datetime= . args)
   (reduce (lambda (a b)
-            (and (date= (get-date a) (get-date b))
-                 (time= (get-time% a) (get-time% b))
+            (and (date= (datetime-date a) (datetime-date b))
+                 (time= (datetime-time a) (datetime-time b))
                  a))
           #t args))
 
@@ -1053,16 +1001,16 @@ Returns -1 on failure"
 (define datetime<
   (fold-comparator
    (lambda (a b)
-     (if (date= (get-date a) (get-date b))
-         (time< (get-time% a) (get-time% b))
-         (date< (get-date a) (get-date b))))))
+     (if (date= (datetime-date a) (datetime-date b))
+         (time< (datetime-time a) (datetime-time b))
+         (date< (datetime-date a) (datetime-date b))))))
 
 (define datetime<=
   (fold-comparator
    (lambda (a b)
-     (if (date= (get-date a) (get-date b))
-         (time<= (get-time% a) (get-time% b))
-         (date<= (get-date a) (get-date b))))))
+     (if (date= (datetime-date a) (datetime-date b))
+         (time<= (datetime-time a) (datetime-time b))
+         (date<= (datetime-date a) (datetime-date b))))))
 
 (define date/-time<
   (fold-comparator
@@ -1126,19 +1074,20 @@ Returns -1 on failure"
     (let loop ((target base) (change change))
       (if (>= (days-in-month target) (+ (day change) (day target)))
           ;; No date overflow, just add the change
-          (values (set-> target (day = (+ (day change))))
-                  (set-> change (day 0)))
+          (values (-> target (day (+ (day target)
+                                     (day change))))
+                  (day change 0))
           ;; Date (and possibly year) overflow
           (loop (if (= 12 (month target))
-                    (set-> target
-                           (year = (+ 1))
-                           (month 1)
-                           (day 1))
-                    (set-> target
-                           (month = (+ 1))
-                           (day 1)))
-                (set-> change
-                       (day = (- (1+ (- (days-in-month target) (day target))))))))))
+                    (-> (modify target year 1+)
+                        (month 1)
+                        (day 1))
+                    (-> (modify target month 1+)
+                        (day 1)))
+                (modify change day -
+                        (- (day target))
+                        (days-in-month target)
+                        1)))))
 
   (define-values (month-fixed change**)
     (if (date-zero? change*)
@@ -1146,20 +1095,19 @@ Returns -1 on failure"
      (let loop ((target days-fixed) (change change*))
        (if (< 12 (+ (month change) (month target)))
            ;; if we overflow into the next year
-           (loop (set-> target
-                        (year = (+ 1))
-                        (month 1))
-                 (set (month change) = (- (- 13 (month target)))))
-
+           (loop (-> (modify target year 1+)
+                     (month 1))
+                 (modify change month
+                         + (month target) -13))
            ;; if we don't overflow our date
-           (values (set (month target) = (+ (month change)))
-                   (set (month change) 0))
+           (values (modify target month + (month change))
+                   (month change 0))
 
            ))))
 
   ;; change** should here should have both month and date = 0
 
-  (set (year month-fixed) = (+ (year change**))))
+  (year month-fixed (+ (year month-fixed) (year change**))))
 
 (define (date+% change base)
 
@@ -1188,33 +1136,30 @@ Returns -1 on failure"
   (define-values (days-fixed change*)
     (let loop ((target base) (change change))
       (if (>= (day change) (day target))
-          (let ((new-change (set (day change) = (- (day target)))))
+          (let ((new-change (modify change day - (day target))))
             (loop (if (= 1 (month target))
-                      (set-> target
-                             (year = (- 1))
-                             (month 12)
-                             (day 31)              ; days in december
-                             )
-                      (set-> target
-                             (month = (- 1))
-                             (day (days-in-month (set (month target) = (- 1))))))
+                      (-> (modify target year 1-)
+                          (month 12)
+                          (day 31)              ; days in december
+                          )
+                      (let ((nm (modify target month 1-)))
+                        (day nm (days-in-month nm))))
                   new-change))
-          (values (set (day target) = (- (day change)))
-                  (set (day change) 0)))))
+          (values (modify target day - (day change))
+                  (day change 0)))))
 
   (define-values (month-fixed change**)
     (let loop ((target days-fixed) (change change*))
       (if (>= (month change) (month target))
-          (loop (set-> target
-                       (year = (- 1))
-                       (month 12))
-                (set (month change) = (- (month target))))
-          (values (set (month target) = (- (month change)))
-                  (set (month change) 0)))))
+          (loop (-> (modify target year 1-)
+                    (month 12))
+                (modify change month - (month target)))
+          (values (modify target month - (month change))
+                  (month change 0)))))
 
   ;; change** should here should have both month and date = 0
 
-  (set (year month-fixed) = (- (year change**))))
+  (modify month-fixed year - (year change**)))
 
 (define (date-% change base)
 
@@ -1248,28 +1193,28 @@ Returns -1 on failure"
   ;; while (day base) > (days-in-month base)
   ;;     month++; days -= (days-in-month base)
   (define second-fixed
-    (let loop ((target (set (second base) = (+ (second change)))))
+    (let loop ((target (modify base second + (second change))))
       (if (>= (second target) 60)
-          (loop (set-> target
-                       (minute = (+ 1))
-                       (second = (- 60))))
+          (loop (-> target
+                    (modify minute 1+)
+                    (modify second - 60)))
           target)))
 
   ;; while (month base) > 12
   ;;     year++; month -= 12
   (define minute-fixed
-    (let loop ((target (set (minute second-fixed) = (+ (minute change)))))
+    (let loop ((target (modify second-fixed minute + (minute change))))
       (if (>= (minute target) 60)
-          (loop (set-> target
-                       (hour = (+ 1))
-                       (minute = (- 60))))
+          (loop (-> target
+                    (modify hour 1+)
+                    (modify minute - 60)))
           target)))
 
-  (define hour-almost-fixed (set (hour minute-fixed) = (+ (hour change))))
+  (define hour-almost-fixed (modify minute-fixed hour + (hour change)))
 
   (if (<= 24 (hour hour-almost-fixed))
       (let ((div remainder (floor/ (hour hour-almost-fixed) 24)))
-        (values (set (hour hour-almost-fixed) remainder) div))
+        (values (hour hour-almost-fixed remainder) div))
       (values hour-almost-fixed 0)))
 
 ;;; PLUS
@@ -1289,28 +1234,26 @@ Returns -1 on failure"
   (define-values (second-fixed change*)
     (let loop ((target base) (change change))
       (if (> (second change) (second target))
-          (loop (set-> target
-                       (minute = (- 1))
-                       (second 60))
-                (set (second change) = (- (second target))))
-          (values (set (second target) = (- (second change)))
-                  (set (second change) 0)))))
+          (loop (-> (modify target minute 1-)
+                    (second 60))
+                (modify change second - (second target)))
+          (values (modify target second - (second change))
+                  (second change 0)))))
 
   (define-values (minute-fixed change**)
     (let loop ((target second-fixed) (change change*))
       (if (> (minute change) (minute target))
-          (loop (set-> target
-                       (hour = (- 1))
-                       (minute 60))
-                (set (minute change) = (- (minute target))))
-          (values (set (minute target) = (- (minute change)))
-                  (set (minute change) 0)))))
+          (loop (-> (modify target hour 1-)
+                    (minute 60))
+                (modify change minute - (minute target)))
+          (values (modify target minute - (minute change))
+                  (minute change 0)))))
 
   (if (>= (hour minute-fixed) (hour change**))
-      (values (set (hour minute-fixed) = (- (hour change**))) 0)
+      (values (modify minute-fixed hour - (hour change**)) 0)
       (let ((diff (- (hour minute-fixed)
                      (hour change**))))
-        (values (set (hour minute-fixed) (modulo diff 24))
+        (values (hour minute-fixed (modulo diff 24))
                 (abs (floor (/ diff 24)))))))
 
 ;; Goes backwards from base, returning the two values:
@@ -1331,21 +1274,20 @@ Returns -1 on failure"
 
 
 (define (datetime+ base change)
-  (let ((time overflow (time+ (get-time% base) (get-time% change))))
-    (datetime date: (date+ (get-date base)
-                           (get-date change)
-                           (date day: overflow))
-              time: time
-              tz: (get-timezone base)
-              )))
+  (let ((time* overflow (time+ (datetime-time base) (datetime-time change))))
+    (-> base
+        (modify datetime-date date+
+                (datetime-date change)
+                (date day: overflow))
+        (datetime-time time*))))
 
 (define (datetime- base change)
-  (let ((time underflow (time- (get-time% base) (get-time% change))))
-    (datetime date: (date- (get-date base)
-                           (get-date change)
-                           (date day: underflow))
-              time: time
-              tz: (tz base))))
+  (let ((time* underflow (time- (datetime-time base) (datetime-time change))))
+    (-> base
+        (modify datetime-date date-
+                (datetime-date change)
+                (date day: underflow))
+        (datetime-time time*))))
 
 ;;; the *-difference procedures takes two actual datetimes.
 ;;; date- instead takes a date and a delta (but NOT an actual date).
@@ -1357,20 +1299,18 @@ Returns -1 on failure"
   (define-values (b* a*)
     (let loop ((b b) (a a))
       (if (> (day a) (day b))
-          (let ((new-a (set (day a) = (- (1+ (day b))))))
+          (let ((new-a (day a (- (day a) (day b) 1))))
             (loop (if (= 0 (month b))
-                      (set-> b
-                             (year = (- 1))
-                             (month 11)
-                             (day 30)   ; Last day in december
-                             )
-                      (set-> b
-                             (month = (- 1))
-                             (day (1- (days-in-month b))))) ; last in prev month
+                      (-> (modify b year 1-)
+                          (month 11)
+                          (day 30)   ; Last day in december
+                          )
+                      (-> (modify b month 1-)
+                          (day (1- (days-in-month b))))) ; last in prev month
                   new-a))
           ;; elif (> (day b) (day a))
-          (values (set (day b) = (- (day a)))
-                  (set (day a) 0)))))
+          (values (day b (- (day b) (day a)))
+                  (day a 0)))))
 
 
   ;; (day a*) should be 0 here.
@@ -1378,17 +1318,16 @@ Returns -1 on failure"
   (define-values (b** a**)
     (let loop ((b b*) (a a*))
       (if (> (month a) (month b))
-          (loop (set-> b
-                       (year = (- 1))
-                       (month 11))
-                (set (month a) = (- (1+ (month b)))))
+          (loop (-> (modify b year 1-)
+                    (month 11))
+                (modify a month - 1 (month b)))
           ;; elif (> (month b) (month a))
-          (values (set (month b) = (- (month a)))
-                  (set (month a) 0)))))
+          (values (modify b month - (month a))
+                  (month a 0)))))
 
   ;; a** should here should have both month and date = 0
 
-  (set (year b**) = (- (year a**))))
+  (year b** (- (year b**) (year a**))))
 
 
 
@@ -1407,20 +1346,21 @@ Returns -1 on failure"
            (list earlier-date later-date)
            #f))
 
-  (date-difference% (set-> later-date
-                           (month = (- 1))
-                           (day = (- 1)))
-                    (set-> earlier-date
-                           (month = (- 1))
-                           (day = (- 1)))))
+  (let ((proc (lambda (d) (-> d
+                         (modify month 1-)
+                         (modify day 1-)))))
+    (date-difference% (proc later-date)
+                      (proc earlier-date))))
 
 
 ;; NOTE, this is only properly defined when end is greater than start.
 (define (datetime-difference end start)
   ;; NOTE Makes both start and end datetimes in the current local time.
-  (let ((fixed-time overflow (time- (get-time% end)
-                                    (get-time% start))))
-    (datetime date: (date-difference (date- (get-date end)
+  (let ((fixed-time overflow (time- (datetime-time end)
+                                    (datetime-time start))))
+    (datetime date: (date-difference (date- (datetime-date end)
                                             (date day: overflow))
-                                     (get-date start))
-              time: fixed-time)))
+                                     (datetime-date start))
+              time: fixed-time
+              ;; TODO TZ
+              )))

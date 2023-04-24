@@ -26,7 +26,9 @@
                :select (make-vcomponent prop prop* extract make-vline))
   :use-module (vcomponent create)
   :use-module ((datetime)
-               :select (datetime
+               :select (parse-ics-datetime
+                        datetime
+                        datetime-date
                         time
                         date
                         jan feb mar apr may jun jul aug sep oct nov dec

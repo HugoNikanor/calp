@@ -171,7 +171,7 @@ window.default_calendar='~a';"
                          ;; Button to view week
                          (G_ "Week"))
 
-                   ,(btn href: (date->string (set (day start-date) 1) "/month/~1.html")
+                   ,(btn href: (date->string (day start-date 1) "/month/~1.html")
                          ;; button to view month
                          (G_ "Month"))
 

@@ -70,45 +70,44 @@
       (test-error "Invalid second" 'wrong-type-arg (time second: #f))))
 
   (test-group "Datetime"
-    (let ((get-time% (@@ (datetime) get-time%)))
+    (let ()
       (test-group "Empty datetime"
         (let ((dt (datetime)))
-          ;; TODO figure out propper export of get-time%
-          (test-assert "Datetime date is date" (date? (get-date dt)))
-          (test-assert "Datetime date is zero" (date-zero? (get-date dt)))
-          (test-assert "Datetime time is time" (time? (get-time% dt)))
-          (test-assert "Datetime time is zero" (time-zero? (get-time% dt)))
-          (test-eqv "Defalut timezone is #f" #f (get-timezone dt))))
+          (test-assert "Datetime date is date" (date? (datetime-date dt)))
+          (test-assert "Datetime date is zero" (date-zero? (datetime-date dt)))
+          (test-assert "Datetime time is time" (time? (datetime-time dt)))
+          (test-assert "Datetime time is zero" (time-zero? (datetime-time dt)))
+          (test-eqv "Defalut timezone is #f" #f (tz dt))))
 
       (test-group "Datetime with keys"
         (let ((dt (datetime date: (date day: 10)
                             time: (time minute: 20))))
           (test-equal "Given date is stored"
-            10 (day (get-date dt)))
+            10 (day (datetime-date dt)))
           (test-equal "Given time is stored"
-            20 (minute (get-time% dt))))
+            20 (minute (datetime-time dt))))
         (test-error "Date must be a date" 'wrong-type-arg (datetime date: 1))
         (test-error "Date must be a date" 'wrong-type-arg (datetime date: (time)))
-        (test-assert "Date: #f gives still constructs a date" (date? (get-date (datetime date: #f))))
+        (test-assert "Date: #f gives still constructs a date" (date? (datetime-date (datetime date: #f))))
         (test-error "Time must be a time" 'wrong-type-arg (datetime time: 1))
         (test-error "Time must be a time" 'wrong-type-arg (datetime time: (date)))
-        (test-assert "Time: #f gives still constructs a time" (time? (get-time% (datetime time: #f))))
+        (test-assert "Time: #f gives still constructs a time" (time? (datetime-time (datetime time: #f))))
 
         (let ((dt (datetime hour: 20 day: 30)))
-          (test-equal "Time objects can be implicitly created" 20 (hour (get-time% dt)))
-          (test-equal "Date objects can be implicitly created" 30 (day (get-date dt))))
+          (test-equal "Time objects can be implicitly created" 20 (hour (datetime-time dt)))
+          (test-equal "Date objects can be implicitly created" 30 (day (datetime-date dt))))
         (let ((dt (datetime day: 30 time: (time hour: 20))))
           (test-equal "\"Upper\" and \"lower\" keys can be mixed"
-            20 (hour (get-time% dt)))
+            20 (hour (datetime-time dt)))
           (test-equal "\"Upper\" and \"lower\" keys can be mixed"
-            30 (day (get-date dt))))
+            30 (day (datetime-date dt))))
 
         (let ((dt (datetime hour: 30 time: (time hour: 20))))
           (test-equal "time: has priority over hour: (and the like)"
-            20 (hour (get-time% dt)))))
+            20 (hour (datetime-time dt)))))
       (let ((dt (datetime day: 30 date: (date day: 20))))
         (test-equal "date: has priority over day: (and the like)"
-          20 (day (get-date dt)))))))
+          20 (day (datetime-date dt)))))))
 
 ;; Before the general parser, since it's a dependency string->datetime.
 (test-group "Parse Month"
@@ -384,7 +383,7 @@
 (test-assert "Current datetime returns a datetime"
   (datetime? (current-datetime)))
 (test-equal "Current datetime returns with tz: UTC"
-  "UTC" (get-timezone (current-datetime)))
+  "UTC" (tz (current-datetime)))
 (test-assert "Current-date returns a date"
   (date? (current-date)))
 
@@ -705,6 +704,11 @@ date-range
         (datetime< (datetime day: 1) (datetime day: 2) (datetime day: 3)))
       (test-assert "negative comparison"
         (not (datetime< (datetime day: 1) (datetime day: 2) (datetime day: 1)))))))
+
+;; TODO
+date<=
+time<=
+datetime<=
 
 ;; TODO
 date/-time< date/-time<? date/-time<= date/-time<=?
