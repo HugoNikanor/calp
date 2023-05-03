@@ -1,4 +1,4 @@
-(define-module (test lens)
+(define-module (test hnh-util-lens)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
