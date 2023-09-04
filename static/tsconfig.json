@@ -30,5 +30,11 @@
 
     /* Completeness */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
+  },
+  "include": ["**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"],
+  "typedocOptions": {
+	  "entryPoints": ["./src"],
+	  "out": "docs"
   }
 }

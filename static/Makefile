@@ -1,4 +1,4 @@
-.PHONY: all install clean watch watch-esbuild
+.PHONY: all install clean watch watch-esbuild doc
 
 TARGETS := style.css smallcal.css script.js directory-listing.css
 WATCH=
@@ -40,3 +40,6 @@ clean:
 
 %.css: %.scss
 	scss -E UTF-8 $(WATCH) -I. $< $@
+
+doc:
+	typedoc --logLevel Verbose --excludeExternals  --entryPointStrategy expand .

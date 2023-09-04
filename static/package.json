@@ -1,4 +1,7 @@
 {
+  "name": "calp",
+  "version": "0.1",
+  "private": true,
   "devDependencies": {
     "@types/uuid": "^8.3.1"
   },
@@ -6,6 +9,8 @@
     "madge": "^5.0.1"
   },
   "dependencies": {
+    "@microsoft/tsdoc": "^0.14.2",
+    "typedoc": "^0.24.6",
     "uuid": "^8.3.2"
   }
 }
