@@ -34,7 +34,9 @@
   "include": ["**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"],
   "typedocOptions": {
-	  "entryPoints": ["./src"],
+	  "entryPointStrategy": "expand",
+	  "entryPoints": ["./ts"],
+	  "exclude": ["node_modules"],
 	  "out": "docs"
   }
 }
