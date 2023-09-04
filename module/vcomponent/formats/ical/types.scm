@@ -2,6 +2,7 @@
 (define-module (vcomponent formats ical types)
   :use-module (hnh util)
   :use-module (hnh util exceptions)
+  :use-module (hnh util table)
   :use-module (base64)
   :use-module (datetime)
   :use-module (datetime timespec)
@@ -23,7 +24,8 @@
   ;; NOTE We really should output TZID from param here, but
   ;; we first need to change so these writers can output
   ;; parameters.
-  (datetime->string (hashq-ref param '-X-HNH-ORIGINAL value)
+  (datetime->string (or (table-get param '-X-HNH-ORIGINAL)
+                        value)
                     "~Y~m~dT~H~M~S~Z"))
 
 (define (write-duration _ value)

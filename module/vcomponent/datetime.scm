@@ -227,75 +227,89 @@ Event must have the DTSTART and DTEND protperty set."
 
 ;; event is for limiter
 (define (zoneinfo->vtimezone zoneinfo zone-name event)
-  (define vtimezone (make-vcomponent 'VTIMEZONE))
   (define last-until (datetime date: (date month: 1 day: 1)))
   (define last-offset (timespec-zero))
-  (set! (prop vtimezone 'TZID) zone-name)
 
-  (for zone-entry in (filter (relevant-zone-entry? event) (get-zone zoneinfo zone-name))
-       (cond [(zone-entry-rule zone-entry) timespec?
-              => (lambda (inline-rule)
-                   (let ((component (make-vcomponent 'DAYLIGHT))
-                         (new-timespec (timespec-add
-                                        (zone-entry-stdoff zone-entry)
-                                        inline-rule)))
-                     (set! (prop component 'DTSTART) last-until
-                           (prop component 'TZOFFSETFROM) last-offset
-                           (prop component 'TZOFFSETTO) new-timespec
-                           (prop component 'TZNAME) (zone-entry-format zone-entry)
-                           last-until (zone-entry-until zone-entry)
-                           last-offset new-timespec)
-                     (reparent! vtimezone component)))]
+  (fold (lambda (zone-entry vtimezone)
+          (cond [(zone-entry-rule zone-entry) timespec?
+                 => (lambda (inline-rule)
+                      (let ((component (vcomponent type: 'DAYLIGHT))
+                            (new-timespec (timespec-add
+                                           (zone-entry-stdoff zone-entry)
+                                           inline-rule)))
+                        (let ((component
+                               (set-properties
+                                component
+                                (cons 'DTSTART last-until)
+                                (cons 'TZOFFSETFROM last-offset)
+                                (cons 'TZOFFSETTO new-timespec)
+                                (cons 'TZNAME (zone-entry-format zone-entry)))))
+                          (set! last-until (zone-entry-until zone-entry)
+                                last-offset new-timespec)
+                          (add-child vtimezone component))))]
 
-             [(zone-entry-rule zone-entry)
-              => (lambda (rule-name)
-                   (map (lambda (rule)
-                          (let ((component (make-vcomponent
-                                            ;; NOTE the zoneinfo database doesn't
-                                            ;; come with information if a given
-                                            ;; rule is in standard or daylight time,
-                                            ;; since that's mostly nonsencical
-                                            ;; (e.g. war- and peacetime).
-                                            ;; But the ical standard requires that,
-                                            ;; so this is a fair compromize.
-                                            (if (string-null? (rule-letters rule))
-                                                'STANDARD 'DAYLIGHT)))
-                                (new-timespec (timespec-add
-                                               (zone-entry-stdoff zone-entry)
-                                               (rule-save rule))))
+                [(zone-entry-rule zone-entry)
+                 => (lambda (rule-name)
+                      (fold (lambda (rule vtimezone)
+                              (let ((component (vcomponent
+                                                type:
+                                               ;; NOTE the zoneinfo database doesn't
+                                               ;; come with information if a given
+                                               ;; rule is in standard or daylight time,
+                                               ;; since that's mostly nonsencical
+                                               ;; (e.g. war- and peacetime).
+                                               ;; But the ical standard requires that,
+                                               ;; so this is a fair compromize.
+                                               (if (string-null? (rule-letters rule))
+                                                   'STANDARD 'DAYLIGHT)))
+                                   (new-timespec (timespec-add
+                                                  (zone-entry-stdoff zone-entry)
+                                                  (rule-save rule))))
 
-                            (set! (prop component 'DTSTART) (rule->dtstart rule)
-                                  (prop component 'TZOFFSETFROM) last-offset
-                                  (prop component 'TZOFFSETTO) new-timespec
-                                  (prop component 'TZNAME) (zone-format
-                                                            (zone-entry-format zone-entry)
-                                                            (rule-letters rule))
-                                  ;; NOTE this can both be a number or the
-                                  ;; symbol 'maximum
-                                  last-until (zone-entry-until zone-entry)
-                                  last-offset new-timespec)
+                                (let ((component
+                                       (set-properties
+                                        component
+                                        (cons 'DTSTART (rule->dtstart rule))
+                                        (cons 'TZOFFSETFROM last-offset)
+                                        (cons 'TZOFFSETTO new-timespec)
+                                        (cons 'TZNAME (zone-format
+                                                       (zone-entry-format zone-entry)
+                                                       (rule-letters rule))))))
 
-                            (awhen (rule->rrule rule)
-                                   (set! (prop component 'RRULE) it))
+                                  (set! ;; NOTE this can both be a number or the
+                                      ;; symbol 'maximum
+                                      last-until (zone-entry-until zone-entry)
+                                      last-offset new-timespec)
 
-                            (reparent! vtimezone component)))
-                        ;; some of the rules might not apply to us since we only
-                        ;; started using that rule set later. It's also possible
-                        ;; that we stopped using a ruleset which continues existing.
-                        ;;
-                        ;; Both these are filtered here.
-                        (filter
-                         (relevant-zone-rule? event)
-                         (get-rule zoneinfo rule-name))))]
+                                  (add-child
+                                   vtimezone
+                                   (cond ((rule->rrule rule)
+                                          => (lambda (it) (prop component 'RRULE it)))
+                                         (else component))))))
+                            vtimezone
+                           ;; some of the rules might not apply to us since we only
+                           ;; started using that rule set later. It's also possible
+                           ;; that we stopped using a ruleset which continues existing.
+                           ;;
+                           ;; Both these are filtered here.
+                           (filter
+                            (relevant-zone-rule? event)
+                            (get-rule zoneinfo rule-name))))]
 
-             [else                      ; no rule
-              (let ((component (make-vcomponent 'STANDARD)))
-                ;; DTSTART MUST be a datetime in local time
-                (set! (prop component 'DTSTART) last-until
-                      (prop component 'TZOFFSETFROM) last-offset
-                      (prop component 'TZOFFSETTO) (zone-entry-stdoff zone-entry)
-                      (prop component 'TZNAME) (zone-entry-format zone-entry)
-                      last-until (zone-entry-until zone-entry)
-                      last-offset (zone-entry-stdoff zone-entry))
-                (reparent! vtimezone component))]))
-  vtimezone)
+                [else                      ; no rule
+                 ;; DTSTART MUST be a datetime in local time
+                 (let ((component
+                        (set-properties
+                         (vcomponent type: 'STANDARD)
+                         (cons 'DTSTART last-until)
+                         (cons 'TZOFFSETFROM last-offset)
+                         (cons 'TZOFFSETTO (zone-entry-stdoff zone-entry))
+                         (cons 'TZNAME (zone-entry-format zone-entry)))))
+                   (set! last-until (zone-entry-until zone-entry)
+                         last-offset (zone-entry-stdoff zone-entry))
+                   (add-child vtimezone component))
+                 ])
+          )
+        (prop (vcomponent type: 'VTIMEZONE) 'TZID zone-name)
+        (filter (relevant-zone-entry? event) (get-zone zoneinfo zone-name))
+        ))

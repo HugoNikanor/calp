@@ -1,41 +1,39 @@
 (define-module (vcomponent base)
   :use-module (hnh util)
   :use-module (srfi srfi-1)
-  :use-module (srfi srfi-9)
-  :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-17)
   :use-module (srfi srfi-88)
-  :use-module (ice-9 hash-table)
-  :export (make-vline
+  :use-module (hnh util object)
+  :use-module (hnh util lens)
+  :use-module (hnh util table)
+  :use-module (hnh util uuid)
+  :export (vline
            vline?
-           vline-key
+           vline-value
+           key
+           vline-parameters
            vline-source
 
-           make-vcomponent
+           vcomponent
            vcomponent?
            children type parent
+           add-child
 
-           reparent!
-           abandon!
-           orphan!
-
-           delete-property!
+           remove-property
            prop* prop
            extract extract*
 
-           delete-parameter!
-           value
+           set-properties
+
+           remove-parameter
+           ;; value
            param
 
            parameters
            properties
 
-           copy-as-orphan
-           copy-vcomponent
            x-property?
            internal-field?
-
-
            )
   )
 
@@ -53,170 +51,95 @@
 ;;; </vcomponent>
 ;;;
 
-(define-record-type <vline>
-  (make-vline% key value parameters)
-  vline?
-  (key vline-key)
-  (value get-vline-value set-vline-value!)
-  (parameters get-vline-parameters)
-  (source get-source set-source!)
-  )
+(define (print-vline v p)
+  (format p "#<<vline> key: ~s value: ~s parameters: ~s>"
+          (key v)
+          (vline-value v)
+          #f
+          ;; (hash-map->list list (get-vline-parameters v))
+          ))
 
-(set-record-type-printer!
- <vline>
- (lambda (v p)
-   (format p "#<<vline> key: ~s value: ~s parameters: ~s>"
-           (vline-key v)
-           (get-vline-value v)
-           (hash-map->list list (get-vline-parameters v)))))
+(define-type (vline printer: print-vline)
+  (key type: symbol?)
+  (vline-value)
+  (vline-parameters default: (table) type: table?)
+  (vline-source default: "" type: string?))
 
-(define vline-source
-  (make-procedure-with-setter
-   get-source set-source!))
-
-(define* (make-vline key value optional: (ht (make-hash-table)))
-  (make-vline% key value ht))
-
-(define-record-type <vcomponent>
-  (make-vcomponent% type children properties)
-  vcomponent?
-  (type type)
-  (children children set-component-children!)
-  (properties get-component-properties))
-
-((@ (srfi srfi-9 gnu) set-record-type-printer!)
- <vcomponent>
- (lambda (c p)
-   (format p "#<<vcomponent> ~a, len(child)=~a>"
-           (type c)
-           (length (children c))
-           )))
+(define (print-vcomponent c p)
+  (format p "#<<vcomponent> ~a>"
+          (type c)))
 
 
-(define parent% (make-object-property))
-(define (parent x) (parent% x))
+(define false? not)
 
-(define* (make-vcomponent optional: (type 'VIRTUAL))
-  (make-vcomponent% type '() (make-hash-table)))
+(define-type (vcomponent printer: print-vcomponent)
+  (type                        type: symbol?)
+  (vcomponent-children
+              default: (table) type: table?)
+  (component-properties
+              default: (table) type: table?)
+  (parent     default: #f      type: (or false? vcomponent?)))
 
-;; TODO should this be renamed to `adopt!'? Adopting a child better implies
-;; that the old parent should no longer be considered its parent.
-(define (reparent! parent child)
-  (set-component-children! parent (cons child (children parent)))
-  (set! (parent% child) parent))
+(define prop*
+  (case-lambda
+    ((object key)
+     (table-get (component-properties object) key))
+    ((object key value)
+     (component-properties object
+      (table-put (component-properties object) key value)))))
 
-(define (abandon! parent-component child)
-  (set-component-children! parent-component (delq1! child (children parent-component)))
-  (when (eq? parent-component (parent% child))
-    (orphan! child)))
+(define (children c)
+  (map cdr (table->list (vcomponent-children c))))
 
-;; TODO should this exist? It's really weird to remove our reference to our
-;; parent, without the parent removing their reference to us.
-(define (orphan! child)
-  (set! (parent% child) #f))
-
-;;; TODO key=DTSTART, (date? value) => #t
-;;; KRÄVER att (props vline 'VALUE) <- "DATE"
-(define (set-property! component key value)
-  (let ((ht (get-component-properties component)))
-   (cond [(hashq-ref ht key #f)
-          => (lambda (vline) (set-vline-value! vline value))]
-         [else (hashq-set! ht key (make-vline key value))])))
-
+(define (add-child parent* child)
+  (modify parent* vcomponent-children
+          (lambda (table)
+            (let ((child
+                   (if (prop child 'UID)
+                       child
+                       (prop child 'UID (uuid)))))
+              (table-put table
+                         (as-symb (prop child 'UID))
+                         (parent child parent*))))))
 
 
 
-;; vline → value
-(define value
-  (make-procedure-with-setter
-   get-vline-value set-vline-value!))
-
-;; vcomponent x (or str symb) → vline
-(define (get-prop* component prop)
-  (hashq-ref (get-component-properties component)
-             (as-symb prop)))
-
-(define (set-prop*! component key value)
-  (hashq-set! (get-component-properties component)
-              (as-symb key) value))
-
-(define prop*
-  (make-procedure-with-setter
-   get-prop*
-   set-prop*!))
-
-(define (delete-property! component key)
-  (hashq-remove! (get-component-properties component)
-                 (as-symb key)))
-
-
-;; vcomponent x (or str symb) → value
-(define (get-prop component key)
-  (let ((props (get-prop* component key)))
-    (cond [(not props) #f]
-          [(list? props) (map value props)]
-          [else (value props)])))
-
-;; TODO do something sensible here
-(define (set-prop! component key value)
-  (set-property! component (as-symb key) value))
-
+;; (define prop (compose-lens vline-value prop*))
 (define prop
-  (make-procedure-with-setter
-   get-prop
-   set-prop!))
+  (case-lambda
+    ((comp key) (and=> (prop* comp key) vline-value))
+    ((comp k v)
+     (cond ((prop* comp k)
+            => (lambda (vline)
+                 (prop* comp k (vline-value vline v))))
+           (else
+            (prop* comp k (vline key: k vline-value: v)))))))
 
+(define (remove-property component key)
+  (component-properties component
+              (table-remove (component-properties component) key)))
 
 (define param
-  (make-procedure-with-setter
-   (lambda (vline parameter-key)
-     ;; TODO `list' is a hack since a bit to much code depends
-     ;; on prop always returning a list of values.
-     (and=> (hashq-ref (get-vline-parameters vline)
-                       (as-symb parameter-key))
-            list))
-   (lambda (vline parameter-key val)
-     (hashq-set! (get-vline-parameters vline)
-                 (as-symb parameter-key) val))))
+  ;; TODO list?
+  (case-lambda ((vline key) (and=> (table-get (vline-parameters vline) key) list))
+               ((vline k v) (vline-parameters
+                             vline
+                             (table-put (vline-parameters vline) k v)))))
 
-
-(define (delete-parameter! vline parameter-key)
-  (hashq-remove! (get-vline-parameters vline)
-                 (as-symb parameter-key)))
+(define (remove-parameter vline key)
+  (vline-parameters vline
+              (table-remove (vline-parameters vline) key)))
 
 
 ;; Returns the parameters of a property as an assoc list.
 ;; @code{(map car <>)} leads to available parameters.
 (define (parameters vline)
-  (hash-map->list list (get-vline-parameters vline)))
+  (map (compose list car+cdr)
+       (table->list (vline-parameters vline))))
 
 (define (properties component)
-  (hash-map->list cons (get-component-properties component)))
-
-(define (copy-vline vline)
-  (make-vline (vline-key vline)
-              (get-vline-value vline)
-              ;; TODO deep-copy on parameters?
-              (get-vline-parameters vline)))
-
-(define (copy-as-orphan component)
-  (make-vcomponent%
-   (type component)
-   (children component)
-   ;; properties
-   (alist->hashq-table
-    (hash-map->list (lambda (key value)
-                      (cons key (if (list? value)
-                                    (map copy-vline value)
-                                    (copy-vline value))))
-                    (get-component-properties component)))))
-
-
-(define (copy-vcomponent component)
-  (let ((ev (copy-as-orphan component)))
-    (when (parent component)
-      (reparent! (parent component) ev))
-    ev))
+  (map (compose list car+cdr)
+       (table->list (component-properties component))))
 
 (define (extract field)
   (lambda (e) (prop e field)))
@@ -231,3 +154,10 @@
   (string=? prefix
             (string-take-to (symbol->string symbol)
                             (string-length prefix))))
+
+
+(define (set-properties component . pairs)
+  ;; (format (current-error-port) "component: ~s, pairs: ~s~%" component pairs)
+  (fold (lambda (pair component) (prop component (car pair) (cdr pair)))
+        component
+        pairs))

@@ -15,24 +15,24 @@
 
 
 (define (vline->value-tag vline)
-  (define key (vline-key vline))
+  (define k (key vline))
 
   (define writer
    (cond
     [(and=> (param vline 'VALUE) (compose string->symbol car))
      => get-writer]
-    [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID
+    [(memv k '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID
                         CREATED DTSTAMP LAST-MODIFIED
                         ACKNOWLEDGED EXDATE))
      (get-writer 'DATE-TIME)]
 
-    [(memv key '(TRIGGER DURATION))
+    [(memv k '(TRIGGER DURATION))
      (get-writer 'DURATION)]
 
-    [(memv key '(FREEBUSY))
+    [(memv k '(FREEBUSY))
      (get-writer 'PERIOD)]
 
-    [(memv key '(CALSCALE METHOD PRODID COMMENT DESCRIPTION
+    [(memv k '(CALSCALE METHOD PRODID COMMENT DESCRIPTION
                        LOCATION SUMMARY TZID TZNAME
                        CONTACT RELATED-TO UID
 
@@ -41,39 +41,39 @@
                        VERSION))
      (get-writer 'TEXT)]
 
-    [(memv key '(TRANSP
+    [(memv k '(TRANSP
               CLASS
               PARTSTAT
               STATUS
               ACTION))
      (lambda (p v) ((get-writer 'TEXT) p (symbol->string v)))]
 
-    [(memv key '(TZOFFSETFROM TZOFFSETTO))
+    [(memv k '(TZOFFSETFROM TZOFFSETTO))
      (get-writer 'UTC-OFFSET)]
 
-    [(memv key '(ATTACH TZURL URL))
+    [(memv k '(ATTACH TZURL URL))
      (get-writer 'URI)]
 
-    [(memv key '(PERCENT-COMPLETE PRIORITY REPEAT SEQUENCE))
+    [(memv k '(PERCENT-COMPLETE PRIORITY REPEAT SEQUENCE))
      (get-writer 'INTEGER)]
 
-    [(memv key '(GEO))
+    [(memv k '(GEO))
      (lambda (_ v)
        `(,(xml xcal 'geo)
          (latitude ,(geo-latitude v))
          (longitude ,(geo-longitude v))))]
 
-    [(memv key '(RRULE))
+    [(memv k '(RRULE))
      (get-writer 'RECUR)]
 
-    [(memv key '(ORGANIZER ATTENDEE))
+    [(memv k '(ORGANIZER ATTENDEE))
      (get-writer 'CAL-ADDRESS)]
 
-    [(x-property? key)
+    [(x-property? k)
      (get-writer 'TEXT)]
 
     [else
-     (warning (G_ "Unknown key ~a") key)
+     (warning (G_ "Unknown key ~a") k)
      (get-writer 'TEXT)]))
 
   (writer ((@@ (vcomponent base) get-vline-parameters) vline)
@@ -92,7 +92,7 @@
 ;; ((key value ...) ...) -> `(parameters , ... )
 (define (parameters-tag parameters)
   (define outparams (filter-map
-                     (lambda (x) (apply property->value-tag x))
+                     (lambda (x) (property->value-tag x))
                      parameters))
 
   (unless (null? outparams)
@@ -111,10 +111,12 @@
                 [(? (compose internal-field? car)) #f]
 
                 [(key vlines ...)
+                 (format (current-error-port) "vlines: ~s~%" vlines)
                  (remove null?
                          `(,(xml xcal (downcase-symbol key))
                            ,(parameters-tag (reduce assq-merge
-                                                    '() (map parameters vlines)))
+                                                    '()
+                                                    (map parameters vlines)))
                            ,@(for vline in vlines
                                   (vline->value-tag vline))))]
 

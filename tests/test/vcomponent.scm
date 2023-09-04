@@ -1,52 +1,103 @@
 ;;; Commentary:
-;; Test that vcomponent parsing works at all.
+;; Test base functionallity of vcomponent structures.
 ;;; Code:
 
 (define-module (test vcomponent)
   :use-module (srfi srfi-17)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
-  :use-module ((vcomponent base)
-               :select (prop make-vcomponent reparent! abandon!
-                             copy-vcomponent
-                             type parent children)))
+  :use-module (hnh util table)
+  :use-module (datetime)
+  :use-module (vcomponent base))
+
+
+
 
 (define ev
-  (let ((ev (make-vcomponent 'DUMMY)))
-    (set! (prop ev 'X-KEY) "value")
-    ev))
+  (prop (vcomponent type: 'DUMMY)
+        'X-KEY "value"))
 
-(test-assert (eq? #f (prop ev 'MISSING)))
+(test-eqv "Non-existant properties return #f"
+  #f (prop ev 'MISSING))
 
-(test-assert (prop ev 'X-KEY))
+(test-assert "Existing property is non-false"
+  (prop ev 'X-KEY))
 
-(test-equal "value" (prop ev 'X-KEY))
+(test-equal "Getting value of existing property"
+  "value" (prop ev 'X-KEY))
 
-(define calendar (make-vcomponent 'VCALENDAR))
+(define calendar (add-child (vcomponent type: 'VCALENDAR)
+                            ev))
 
-(reparent! calendar ev)
 (test-equal 1 (length (children calendar)))
-(abandon! calendar ev)
-(test-equal 0 (length (children calendar)))
+
+;;; TODO remove child
+;; (abandon! calendar ev)
+;; (test-equal 0 (length (children calendar)))
+
+
+
+(define vline*
+  (vline
+   key: 'DTSTART
+   vline-value: #2020-01-02
+   vline-parameters: (alist->table
+                      '((VALUE . "DATE")))
+   vline-source: "DTSTART;VALUE=DATE:2020-01-02"))
+
+(test-group "vline"
+ (test-assert "Type check works as expected"
+   (vline? vline*)))
+
+(define vcomponent*
+  (vcomponent type: 'VEVENT))
+
+(test-assert "Type check works as expected"
+  (vcomponent? vcomponent*))
+
+(define child
+  (vcomponent type: 'CHILD))
 
 
-(test-group "Copy VComponent"
-  (let ((ev1 (make-vcomponent 'A))
-        (ev2 (make-vcomponent 'B))
-        (ev3 (make-vcomponent 'C)))
-    (set! (prop ev3 'TEST) (list 1 2 3))
-    (reparent! ev1 ev2)
-    (reparent! ev2 ev3)
-    (let* ((ev2* (copy-vcomponent ev2))
-           (ev3* (car (children ev2*))))
-      ;; NOTE replace this with `vcomponent=?' if that gets written
-      (test-group "New object is equivalent to old one"
-        (test-equal (type ev2) (type ev2*))
-        (test-equal (length (children ev2)) (length (children ev2*))))
-      (test-eq ev1 (parent ev2))
+(test-eqv
+    "An added component extends length"
+  1 (length (children (add-child vcomponent* child))))
 
-      (set! (car (prop ev3* 'TEST)) 10)
-      (test-equal "Property values aren't deep copied"
-        '(10 2 3) (prop ev3 'TEST))
-      (test-equal '(10 2 3) (prop ev3* 'TEST))
-      )))
+(test-eqv
+    "But the source isn't modified"
+  0 (length (children vcomponent*)))
+
+(test-equal "Setting property"
+  (list (list 'KEY (vline key: 'KEY vline-value: "Value")))
+  (properties
+   (prop vcomponent* 'KEY "Value")))
+
+(let ((vl (vline key: 'KEY vline-value: "Value")))
+  (test-equal "Setting property vline"
+    (list (list 'KEY vl))
+    (properties
+     (prop* vcomponent* 'KEY vl))))
+
+(test-equal "Set properties test"
+  '(K1 K2)
+  (map car
+   (properties
+    (apply set-properties
+           vcomponent*
+           `((K1 . "V1")
+             (K2 . "V2"))))))
+
+;; remove-property
+
+;; extract extract*
+
+
+;; remove-parameter
+;; value
+;; param
+
+;; parameters
+;; properties
+
+;; x-property?
+;; internal-field?

@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS event_instances_valid_range
 
 (define-method (get-calendar (this <sqlite-data-store>))
   (let ((db (database this))
-        (calendar (make-vcomponent 'VCALENDAR)))
+        (calendar (vcomponent type: 'VCALENDAR)))
     (let ((stmt (sqlite-prepare db "
 SELECT key, value FROM calendar_properties cp
 LEFT JOIN calendar c ON cp.calendar = c.id

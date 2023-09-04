@@ -15,6 +15,7 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (calp translation)
+  :use-module (hnh util table)
   :export (sxcal->vcomponent)
   )
 
@@ -146,18 +147,17 @@
   ;; (assert (element-matches? (xml xcal 'parameters)
   ;;                           parameters))
 
-  (define ht (make-hash-table))
-
-  (for param in (cdr parameters)
-       (define ptag (xml-element-tagname (car param)))
-       ;; (define-values (ptype pvalue) (car+cdr cdr))
-       ;; TODO multi-valued parameters!!!
-       (define-values (pytpe pvalue) (car+cdr (cadr param)))
-       ;; TODO parameter type (rfc6321 3.5.)
-       ;; TODO namespaces
-       (hashq-set! ht (symbol-upcase ptag)
-                   (concatenate pvalue)))
-  ht)
+  (fold (lambda (param table)
+          (define ptag (xml-element-tagname (car param)))
+          ;; (define-values (ptype pvalue) (car+cdr cdr))
+          ;; TODO multi-valued parameters!!!
+          (define-values (pytpe pvalue) (car+cdr (cadr param)))
+          ;; TODO parameter type (rfc6321 3.5.)
+          ;; TODO namespaces
+          (table-put table (symbol-upcase ptag)
+                    (concatenate pvalue)))
+        (table)
+        (cdr parameters)))
 
 (define* (parse-enum str enum optional: (allow-other #t))
   (let ((symb (string->symbol str)))
@@ -189,7 +189,7 @@
                data '(AUDIO DISPLAY EMAIL NONE)))
     [else data]))
 
-(define (handle-single-property! component tree)
+(define (handle-single-property component tree)
   (define xml-tag (car tree))
   (define tag (xml-element-tagname xml-tag))
   (define tag* (symbol-upcase tag))
@@ -205,12 +205,13 @@
         (values (make-hash-table)
                 body)))
 
-  (for typetag in data
-       (define type (xml-element-tagname (car typetag)))
-       ;; TODO multi valued data
-       (define raw-value (cdr typetag))
-       (define vline
-         (make-vline tag* (handle-tag
+  (fold (lambda (typetag component)
+          (define type (xml-element-tagname (car typetag)))
+          ;; TODO multi valued data
+          (define raw-value (cdr typetag))
+          (define vline*
+            (vline type: tag*
+                   value: (handle-tag
                            xml-tag
                            (let ((v (handle-value type parameters raw-value)))
                              ;; TODO possibly more list fields
@@ -219,18 +220,19 @@
                              ;;     v)
 
                              v))
-                     parameters))
-       (if (memv tag* '(ATTACH ATTENDEE CATEGORIES
-                            COMMENT CONTACT EXDATE
-                            REQUEST-STATUS RELATED-TO
-                            RESOURCES RDATE
-                            ;; x-prop
-                            ;; iana-prop
-                            ))
-           (aif (prop* component tag*)
-                (set! (prop* component tag*) (cons vline it))
-                (set! (prop* component tag*) (list vline)))
-           (set! (prop* component tag*) vline))))
+                   parameters: parameters))
+          (if (memv tag* '(ATTACH ATTENDEE CATEGORIES
+                               COMMENT CONTACT EXDATE
+                               REQUEST-STATUS RELATED-TO
+                               RESOURCES RDATE
+                               ;; x-prop
+                               ;; iana-prop
+                               ))
+              (aif (prop* component tag*)
+                   (prop* component tag* (cons vline* it))
+                   (prop* component tag* (list vline*)))
+              (prop* component tag* vline*)))
+        component data))
 
 ;; Note
 ;; This doesn't verify the inter-field validity of the object,
@@ -244,24 +246,25 @@
 
   (define xml-tag (car sxcal))
   (define type (symbol-upcase (xml-element-tagname xml-tag)))
-  (define component (make-vcomponent type))
 
-  (awhen (find-element (xml xcal 'properties) (cdr sxcal))
-         ;; Loop over multi valued fields, creating one vline
-         ;; for every value. So
-         ;;     KEY;p=1:a,b
-         ;; would be expanded into
-         ;;     KEY;p=1:a
-         ;;     KEY;p=1:b
-         (map (lambda (x) (handle-single-property! component x))
-              (cdr it)))
+  (let ((component
+         (aif (find-element (xml xcal 'properties) (cdr sxcal))
+              ;; Loop over multi valued fields, creating one vline
+              ;; for every value. So
+              ;;     KEY;p=1:a,b
+              ;; would be expanded into
+              ;;     KEY;p=1:a
+              ;;     KEY;p=1:b
+              (fold swap handle-single-property
+                    (vcomponent type: type) (cdr it))
+              (vcomponent type: type))))
 
-  ;; children
-  (awhen (find-element (xml xcal 'components) (cdr sxcal))
-         ;; NOTE Order of children is insignificant, but this allows
-         ;;      diffs to be stable (which is used by the format tests).
-         (for child in (map sxcal->vcomponent
-                            (reverse (cdr it)))
-              (reparent! component child)))
-
-  component)
+    ;; children
+    (aif (find-element (xml xcal 'components) (cdr sxcal))
+           ;; NOTE Order of children is insignificant, but this allows
+           ;;      diffs to be stable (which is used by the format tests).
+         (fold (swap add-child)
+               component
+               (map sxcal->vcomponent
+                    (reverse (cdr it))))
+         component)))

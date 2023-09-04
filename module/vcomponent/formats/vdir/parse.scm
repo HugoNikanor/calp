@@ -44,13 +44,14 @@
                 (partition (lambda (e) (eq? 'VEVENT (type e)))
                            (children item)))
 
-
               (unless (eq? 'VCALENDAR (type item))
                 (scm-error 'misc-error "parse-vdir"
                            "Unexepected top level component. Expected VCALENDAR, got ~a. In file ~s"
                            (list (type item) (prop item '-X-HNH-FILENAME))
                            #f))
 
+              ;; TODO
+              #;
               (for child in (children item)
                    (set! (prop child '-X-HNH-FILENAME)
                      (prop (parent child) '-X-HNH-FILENAME)))
@@ -65,8 +66,9 @@
               ;; the standard. Section 3.8.4.4.
               (case (length events)
                 [(0) (warning (G_ "No events in component~%~a")
-                              (prop item '-X-HNH-FILENAME))]
-                [(1) (reparent! calendar (car events))]
+                              (prop item '-X-HNH-FILENAME))
+                 calendar]
+                [(1) (add-child calendar (car events))]
 
                 ;; two or more
                 [else
@@ -93,35 +95,36 @@
                                   (car events)))
                         (rest (delete head events eq?)))
 
-                   (set! (prop head '-X-HNH-ALTERNATIVES)
-                     (alist->hash-table
-                      (map cons
-                           ;; head is added back to the collection to simplify
-                           ;; generation of recurrences. The recurrence
-                           ;; generation assumes that the base event either
-                           ;; contains an RRULE property, OR is in the
-                           ;; -X-HNH-ALTERNATIVES set. This might produce
-                           ;; duplicates, since the base event might also
-                           ;; get included through an RRULE. This however
-                           ;; is almost a non-problem, since RDATES and RRULES
-                           ;; can already produce duplicates, meaning that
-                           ;; we need to filter duplicates either way.
-                           (map (extract 'RECURRENCE-ID) (cons head rest))
-                           (cons head rest))))
-                   (reparent! calendar head))])
+                   (add-child
+                    calendar
+                    ;; TODO this is really ugly
+                    (prop head '-X-HNH-ALTERNATIVES
+                          (alist->hash-table
+                           (map cons
+                                ;; head is added back to the collection to simplify
+                                ;; generation of recurrences. The recurrence
+                                ;; generation assumes that the base event either
+                                ;; contains an RRULE property, OR is in the
+                                ;; -X-HNH-ALTERNATIVES set. This might produce
+                                ;; duplicates, since the base event might also
+                                ;; get included through an RRULE. This however
+                                ;; is almost a non-problem, since RDATES and RRULES
+                                ;; can already produce duplicates, meaning that
+                                ;; we need to filter duplicates either way.
+                                (map (extract 'RECURRENCE-ID) (cons head rest))
+                                (cons head rest))))))])
 
               ;; return
               calendar)
-            (make-vcomponent)
+            (vcomponent type: 'VIRTUAL)
             (map #; (@ (ice-9 threads) par-map)
              (lambda (fname)
                (let ((fullname (path-append path fname)))
-                 (let ((cal (call-with-input-file fullname
-                              parse-calendar)))
-                   (set! (prop cal 'COLOR) color
-                         (prop cal 'NAME) name
-                         (prop cal '-X-HNH-FILENAME) fullname)
-                   cal)))
+                 (set-properties (call-with-input-file fullname
+                                   parse-calendar)
+                                 (cons 'COLOR color)
+                                 (cons 'NAME name)
+                                 (cons '-X-HNH-FILENAME fullname))))
              (scandir path (lambda (s) (and (not (string= "." (string-take s 1)))
                                        (string= "ics" (string-take-right s 3)))))))))
 

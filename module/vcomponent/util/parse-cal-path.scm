@@ -19,24 +19,21 @@
   (define cal
     (case (stat:type st)
       [(regular)
-       (let ((comp (call-with-input-file path parse-calendar)))
-         (set! (prop comp '-X-HNH-SOURCETYPE) 'file)
-         comp) ]
+       (prop (call-with-input-file path parse-calendar)
+             '-X-HNH-SOURCETYPE 'file)]
       [(directory)
        (report-time! (G_ "Parsing ~a") path)
-       (let ((comp (parse-vdir path)))
-         (set! (prop comp '-X-HNH-SOURCETYPE) 'vdir
-               (prop comp '-X-HNH-DIRECTORY) path)
-         comp)]
+       (set-properties (parse-vdir path)
+                       (cons '-X-HNH-SOURCETYPE 'vdir)
+                       (cons '-X-HNH-DIRECTORY path))]
       [(block-special char-special fifo socket unknown symlink)
        => (lambda (t) (scm-error 'misc-error "parse-cal-path"
                             (G_ "Can't parse file of type ~s")
                             (list t)
                             #f))]))
 
-  (unless (prop cal "NAME")
-    (set! (prop cal "NAME")
-      (or (prop cal "X-WR-CALNAME")
-          (string-append "[" (basename path) "]"))))
-
-  cal)
+  (if (prop cal 'NAME)
+      cal
+      (prop cal 'NAME
+            (or (prop cal 'X-WR-CALNAME)
+                (string-append "[" (basename path) "]")))))

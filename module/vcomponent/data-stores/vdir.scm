@@ -7,6 +7,9 @@
   :use-module (hnh util path)
   :use-module ((vcomponent formats ical) :select (serialize deserialize))
   :use-module ((ice-9 ftw) :select (scandir))
+  :use-module (ice-9 rdelim)
+  :use-module (srfi srfi-1)
+  :use-module (vcomponent base)
   :export ())
 
 (define-class <vdir-data-store> (<calendar-data-store>)
@@ -29,23 +32,23 @@
 
 (define-method (get-all (this <vdir-data-store>))
   (let ((files (scandir (path this) (lambda (item) (string-ci=? "ics" (filename-extension item)))))
-        (calendar (make-vcomponent 'VCALENDAR)))
-    (set! (prop calendar 'NAME)  (get-attribute (path this) "displayname")
-          (prop calendar 'COLOR) (get-attribute (path this) "color" "#FFFFFF"))
-    (for-each (lambda (item) (reparent! calendar item))
-              (append-map (lambda (file)
-                            (define cal
-                              (call-with-input-file (path-append (path this) file)
-                                deserialize))
-                            (unless (eq? 'VCALENDAR (type cal))
-                              (scm-error 'misc-error "get-all<vdir-data-store>"
-                                         "Unexpected top level component. Expected VCALENDAR, got ~a. In file ~s"
-                                         (list (type cal) file)))
-                            (for-each (lambda (child)
-                                        (set! (prop child '-X-HNH-FILENAME) file))
-                                      (children cal))
-                            )
-                          files))
+        (calendar
+         (fold (swap add-child)
+               (set-properties (vcomponent type: 'VCALENDAR)
+                               (cons 'NAME  (get-attribute (path this) "displayname"))
+                               (cons 'COLOR (get-attribute (path this) "color" "#FFFFFF")))
+               (append-map (lambda (file)
+                             (define cal
+                               (call-with-input-file (path-append (path this) file)
+                                 deserialize))
+                             (unless (eq? 'VCALENDAR (type cal))
+                               (scm-error 'misc-error "get-all<vdir-data-store>"
+                                          "Unexpected top level component. Expected VCALENDAR, got ~a. In file ~s"
+                                          (list (type cal) file)))
+                             (each cal children
+                                   (lambda (child)
+                                     (prop child '-X-HNH-FILENAME file))))
+                           files))))
     (set! (loaded-calendar this) calendar)
     calendar))
 
@@ -63,13 +66,12 @@
 
 
 (define (wrap-for-output . vcomponents)
-  (let ((calendar (make-vcomponent 'VCALENDAR)))
-    (set! (prop calendar 'VERSION) "2.0"
-          (prop calendar 'PRODID) (prodid)
-          (prop calendar 'CALSCALE) "GREGORIAN")
-    (for-each (lambda (vcomponent) (reparent! calendar vcomponent))
-              vcomponents)
-    calendar))
+  (fold (swap add-child)
+        (set-properties (vcomponent type: 'VCALENDAR)
+                        (cons 'VERSION "2.0")
+                        (cons 'PRODID (prodid))
+                        (cons 'CALSCALE "GREGORIAN"))
+        vcomponents))
 
 (define-method (queue-write (this <vdir-data-store>) vcomponent)
   ;; TODO Multiple components

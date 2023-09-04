@@ -23,7 +23,7 @@
   :use-module ((vcomponent recurrence internal)
                :select (count until))
   :use-module ((vcomponent base)
-               :select (make-vcomponent prop prop* extract make-vline))
+               :select (prop prop* extract))
   :use-module (vcomponent create)
   :use-module ((datetime)
                :select (parse-ics-datetime

@@ -14,7 +14,8 @@
   :use-module (vcomponent)
   :use-module (vcomponent datetime)
   :use-module (vcomponent geo)
-  :use-module (vcomponent formats ical types)
+  :use-module ((vcomponent formats ical types)
+               :select (escape-chars get-writer))
   :use-module (vcomponent recurrence)
   :use-module ((calp) :select (prodid))
   :use-module (calp translation)
@@ -98,11 +99,12 @@
 
   (catch #t #; 'wrong-type-arg
     (lambda ()
-      (writer ((@@ (vcomponent base) get-vline-parameters) vline)
-              (value vline)))
+      (writer
+       (vline-parameters vline)
+       (vline-value vline)))
     (lambda (err caller fmt args call-args)
       (define fallback-string
-        (with-output-to-string (lambda () (display value))))
+        (with-output-to-string (lambda () (display (vline-value vline)))))
       (warning "key = ~a, caller = ~s, call-args = ~s~%~k~%Falling back to ~s"
                key caller call-args fmt args
                fallback-string)
@@ -126,11 +128,10 @@
 
 
 (define (vline->string vline)
-  (define key (vline-key vline))
   (ical-line-fold
    ;; Expected output: key;p1=v;p3=10:value
    (string-append
-    (symbol->string key)
+    (symbol->string (key vline))
     (string-concatenate
      (map (match-lambda
             [(? (compose internal-field? car)) ""]
@@ -140,7 +141,7 @@
               (string-join (map (compose escape-chars ->string) values)
                            "," 'infix))])
           (parameters vline)))
-    ":" (value-format key vline))))
+    ":" (value-format (key vline) vline))))
 
 (define (component->ical-string component)
   (format #t "BEGIN:~a\r\n" (type component))

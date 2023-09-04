@@ -79,15 +79,15 @@ exec $GUILE -s "$0" "$@"
               (call-with-output-string
                 (lambda (p) (serialize component p)))))
 
-           (test-equal "Deserialized object serializes back into source"
-             (sanitize-string component-str)
-             (sanitize-string
-              (call-with-output-string
-                (lambda (p)
-                  (serialize
-                   (call-with-input-string
-                       component-str deserialize)
-                   p)))))
+           (test-group "Deserialize"
+             (let ((object (call-with-input-string component-str deserialize)))
+               (test-assert "Deserialize worked" (vcomponent? object))
+
+               (test-equal "Deserialized object serializes back into source"
+                 (sanitize-string component-str)
+                 (sanitize-string
+                  (call-with-output-string
+                    (lambda (p) (serialize object p)))))))
 
 
            (test-assert "Serialized string can still be read back in"

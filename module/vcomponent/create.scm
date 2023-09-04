@@ -1,13 +1,15 @@
 (define-module (vcomponent create)
-  :use-module (vcomponent base)
-  :use-module ((srfi srfi-1) :select (last drop-right car+cdr))
+  :use-module ((vcomponent base) :prefix vcs-)
+  :use-module ((vcomponent base)
+               :select (vline key add-child prop* vline?))
+  :use-module ((srfi srfi-1) :select (fold last drop-right car+cdr))
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-17)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
-  :use-module ((ice-9 hash-table) :select (alist->hashq-table))
-  :use-module ((hnh util) :select (kvlist->assq ->))
+  :use-module ((hnh util table) :select (alist->table))
+  :use-module ((hnh util) :select (swap init+last kvlist->assq ->))
   :export (with-parameters
            as-list
            vcomponent
@@ -40,26 +42,17 @@
 
 
 
-(define-immutable-record-type <almost-vline>
-  (make-almost-vline parameters value)
-  almost-vline?
-  (parameters almost-vline-parameters)
-  (value almost-vline-value))
-
-(define (almost-vline->vline key almost-vline)
-  (make-vline key
-              (almost-vline-value almost-vline)
-              (almost-vline-parameters almost-vline)))
-
-(define (with-parameters . args*)
-  (define parameters (drop-right args* 1))
-  (define value (last args*))
-  (make-almost-vline
+(define (with-parameters . args)
+  (define-values (parameters value)
+    (init+last args))
+  (vline
+   key: 'PLACEHOLDER
+   vline-value: value
+   vline-parameters:
    (-> parameters
        kvlist->assq
        upcase-keys
-       alist->hashq-table)
-   value))
+       alist->table)))
 
 
 
@@ -74,36 +67,26 @@
 
 
 (define (vcomponent type . attrs*)
-  (define component (make-vcomponent type))
-  (define attrs*-len (length attrs*))
-  (unless (zero? attrs*-len)
-    (let ((attrs children
-                 (if (and (list? (list-ref attrs* (- attrs*-len 1)))
-                          (or (= 1 attrs*-len)
-                              (not (keyword? (list-ref attrs* (- attrs*-len 2))))))
-                     (values (drop-right attrs* 1)
-                             (last attrs*))
-                     (values attrs* '()))))
-      (for-each (lambda (pair)
-                  (let ((key value (car+cdr pair)))
-                    (cond
-                     ((almost-vline? value)
-                      (set! (prop* component key)
-                        (almost-vline->vline key value)))
-                     ((list-value? value)
-                      (set! (prop* component key)
-                        (map (lambda (value)
-                               (make-vline key value (make-hash-table)))
-                             (list-value-value value))))
-                     (else
-                      (set! (prop component key) value)))))
-                (upcase-keys (kvlist->assq attrs)))
-
-      ;; Attach children
-      (for-each (lambda (child) (reparent! component child))
-                children)))
-
-  component)
+  (define-values (attrs children)
+    (cond ((null? attrs*)          (values '() '()))
+          ((even? (length attrs*)) (values attrs* '()))
+          (else                    (init+last attrs*))))
+  ;; TODO add-child requires a UID on the child
+  ;; Possibly just genenerate one here if missing
+  (fold (swap add-child)
+        (fold (lambda (pair component)
+                (let ((k value (car+cdr pair)))
+                  (prop* component k
+                         (cond ((vline? value)
+                                (key value k))
+                               ((list-value? value)
+                                (map (lambda (value) (vline key: k vline-value: value))
+                                     (list-value-value value)))
+                               (else (vline key: k vline-value: value))))))
+              (vcs-vcomponent
+               type: type)
+              (upcase-keys (kvlist->assq attrs)))
+        children))
 
 (define (vcalendar . attrs)
   (apply vcomponent 'VCALENDAR attrs))

@@ -9,7 +9,7 @@
              stream-filter
              stream-take-while))
   :use-module ((vcomponent base)
-   :select (extract prop make-vcomponent))
+   :select (extract prop))
   :use-module ((vcomponent datetime) :select (event-overlaps?))
   :use-module ((datetime) :select (date date+ date<))
   :use-module ((hnh util) :select (set!))

@@ -9,7 +9,9 @@
            compose-lenses
            lens-compose
 
-           ref car* cdr*))
+           ref car* cdr*
+
+           each))
 
 
 (define (modify object lens f . args)
@@ -97,3 +99,7 @@
 
 (define car* (make-lens car (lambda (pair value) (cons value (cdr pair)))))
 (define cdr* (make-lens cdr (lambda (pair value) (cons (car pair) value))))
+
+(define (each obj lens proc)
+  (modify obj lens
+          (lambda (lst) (map proc lst))))

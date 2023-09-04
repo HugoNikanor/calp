@@ -2,12 +2,21 @@
   :use-module (hnh util)
   :use-module (vcomponent base)
   :use-module (vcomponent config)
-  ;; :use-module ((vcomponent util instance methods)
-  ;;              :select (make-vcomponent))
   :use-module ((vcomponent util parse-cal-path)
                :select (parse-cal-path))
-  :re-export (make-vcomponent
+  :re-export (
+              vcomponent
+              set-properties
+              properties
+              children
+              type
+              prop
+              prop*
               parse-cal-path
+              param
+              ;; value
+              vline?
+              vline-parameters
               ;; configuration items
               calendar-files default-calendar))
 

@@ -126,6 +126,7 @@
 (declare-method! "LOCK" 'LOCK)
 (declare-method! "UNLOCK" 'UNLOCK)
 (declare-method! "REPORT" 'REPORT)
+(declare-method! "MKCALENDAR" 'REPORT)
 
 
 

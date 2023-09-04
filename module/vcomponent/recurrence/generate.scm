@@ -339,10 +339,10 @@
                      (rrule-instances-raw rrule (prop event 'DTSTART))))
                (else stream-null)))
         (rdates
-         (cond ((prop* event 'RDATE) => (lambda (v) (map value v)))
+         (cond ((prop* event 'RDATE) => (lambda (v) (map vline-value v)))
                (else '())))
         (exdates
-         (cond ((prop* event 'EXDATE) => (lambda (v) (map value v)))
+         (cond ((prop* event 'EXDATE) => (lambda (v) (map vline-value v)))
                (else #f))))
 
     (let ((items (interleave-streams
@@ -418,21 +418,19 @@
             => (lambda (ht)
                  (aif (hash-ref ht dt)
                       it        ; RECURRENCE-ID objects come with their own DTEND
-                      (let ((ev (copy-vcomponent base-event)))
-                        (set! (prop ev 'DTSTART) dt)
-                        (when duration   ; (and (not (prop ev 'DTEND)) duration)
-                          ;; p. 123 (3.8.5.3 Recurrence Rule)
-                          ;; specifies that the DTEND should be updated to match how the
-                          ;; initial dtend related to the initial DTSTART. It also notes
-                          ;; that an event of 1 day in length might be longer or shorter
-                          ;; than 24h depending on timezone shifts.
-                          (set! (prop ev 'DTEND) (get-endtime dt duration)))
-                        ev))))
+                      (let ((ev (prop base-event 'DTSTART dt)))
+                        (if duration  ; (and (not (prop ev 'DTEND)) duration)
+                            ;; p. 123 (3.8.5.3 Recurrence Rule)
+                            ;; specifies that the DTEND should be updated to match how the
+                            ;; initial dtend related to the initial DTSTART. It also notes
+                            ;; that an event of 1 day in length might be longer or shorter
+                            ;; than 24h depending on timezone shifts.
+                            (prop ev 'DTEND (get-endtime dt duration))
+                            ev)))))
            (else
-            (let ((ev (copy-vcomponent base-event)))
-              (set! (prop ev 'DTSTART) dt)
-              (when duration
-                (set! (prop ev 'DTEND) (get-endtime dt duration)))
-              ev))))
+            (let ((ev (prop base-event 'DTSTART dt)))
+              (if duration
+                  (prop ev 'DTEND (get-endtime dt duration))
+                  ev)))))
    rrule-stream))
 

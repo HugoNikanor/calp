@@ -8,6 +8,8 @@
   :export ((make-tree . table)
            (tree-get . table-get)
            (tree-put . table-put)
+           (tree-remove . table-remove)
+           (tree->list . table->list)
            (tree? . table?)
            (alist->tree . alist->table)))
 
@@ -41,12 +43,29 @@
                  tree-put k v))))
 
 (define (tree-get tree k)
-  (cond ((tree-terminal? tree) (throw 'out-of-range))
+  (cond ((tree-terminal? tree) #f ; (throw 'out-of-range)
+         )
         ((eq? k (key tree)) (value tree))
         ((symbol<? k (key tree))
          (tree-get (left tree) k))
         (else
          (tree-get (right tree) k))))
+
+(define (tree-remove tree k)
+  (cond ((tree-terminal? tree) tree)
+        ((eq? k (key tree))
+         (merge-trees (left tree) (right tree)))
+        ((symbol<? k (key tree))
+         (modify tree left (lambda (t) (tree-remove t k))))
+        (else
+         (modify tree right (lambda (t) (tree-remove t k))))))
+
+(define (merge-trees a b)
+  ;; TODO write a better version of this
+  (fold (lambda (item tree)
+          (apply tree-put tree item))
+        a
+        b))
 
 ;; in-order traversal
 (define (tree->list tree)
@@ -60,10 +79,10 @@
 (define (tree-map f tree)
   (if (tree-terminal? tree)
       '()
-      (tree-node (key tree)
-                 (f (key tree) (value tree))
-                 (tree-map f (left tree))
-                 (tree-map f (right tree)))))
+      (tree-node key:   (key tree)
+                 value: (f (key tree) (value tree))
+                 left:  (tree-map f (left tree))
+                 right: (tree-map f (right tree)))))
 
 ;; pre-order
 (define (tree-fold f init tree)
@@ -74,7 +93,7 @@
           (tree-fold f b (right tree))))))
 
 (define (alist->tree alist)
-  (fold (lambda (kv tree) (apply tree-put tree kv))
+  (fold (lambda (kv tree) (tree-put tree (car kv) (cdr kv)))
         (tree-terminal)
         alist))
 

@@ -74,7 +74,8 @@ fi
   '((skip (value #t))
     (only (value #t))
     (verbose (single-char #\v))
-    (coverage (value optional))))
+    (coverage (value optional))
+    (catch)))
 
 (define options (getopt-long (command-line) option-spec))
 
@@ -112,17 +113,22 @@ fi
 
 ;;; Catch/print-trace should intercept thrown exceptions, print them prettily with a stack trace, and then continue
 
-#;
-(define (catch/print-trace proc)
-  (catch #t proc
-    (case-lambda
-      ((err from msg args data)
-       (test-assert (format #f "~a in ~a: ~?" err from msg args)
-         #f))
-      (args
-       (test-assert (format #f "~a (~s)" f args)
-         #f)))))
 
+
+(define catch/print-trace
+  (if (option-ref options 'catch #f)
+      (lambda (proc)
+        (catch #t proc
+          (case-lambda
+            ((err from msg args data)
+             (test-assert (format #f "~a in ~a: ~?" err from msg args)
+               #f))
+            (args
+             (test-assert (format #f "~a (~s)" f args)
+               #f)))))
+      (lambda (proc) (proc))))
+
+#;
 (define (catch/print-trace proc)
   (proc))
 

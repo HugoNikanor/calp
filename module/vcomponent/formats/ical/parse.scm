@@ -1,6 +1,7 @@
 (define-module (vcomponent formats ical parse)
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module (ice-9 format)
+  :use-module (ice-9 curried-definitions)
   :use-module (hnh util exceptions)
   :use-module (hnh util)
   :use-module (datetime)
@@ -12,6 +13,8 @@
   :use-module (vcomponent geo)
   :use-module (vcomponent formats common types)
   :use-module (calp translation)
+  :use-module (hnh util lens)
+  :use-module (hnh util table)
   :export (parse-calendar))
 
 ;;; TODO a few translated strings here contain explicit newlines. Check if that
@@ -139,7 +142,7 @@
 (define (build-vline key value params)
   (let ((parser
          (cond
-          [(and=> (hashq-ref params 'VALUE) string->symbol) => get-parser]
+          [(and=> (table-get params 'VALUE) string->symbol) => get-parser]
 
           [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID RDATE
                               CREATED DTSTAMP LAST-MODIFIED
@@ -246,9 +249,9 @@
     (let ((parsed (parser params value)))
       (if (list? parsed)
           (apply values
-                 (map (lambda (p) (make-vline key p params))
+                 (map (lambda (p) (vline key: key vline-value: p vline-parameters: params))
                       parsed))
-       (make-vline key parsed params)))))
+       (vline key: key vline-value: parsed vline-parameters: params)))))
 
 ;; (parse-itemline '("DTEND"  "20200407T130000"))
 ;; => DTEND
@@ -256,17 +259,45 @@
 ;; => #<hash-table 7f76b5f82a60 0/31>
 (define (parse-itemline itemline)
   (define key (string->symbol (car itemline)))
-  (define parameters (make-hash-table))
-  (let loop ((rem (cdr itemline)))
-    (if (null? (cdr rem))
-        (values key (car rem) parameters )
-        (let* ((kv (car rem))
-               (idx (string-index kv #\=)))
-          ;; TODO lists in parameters
-          (hashq-set! parameters (string->symbol (substring kv 0 idx))
-                      (substring kv (1+ idx)))
-          (loop (cdr rem))))))
+  ;; (define parameters (make-hash-table))
+  (define-values (parameters value) (init+last (cdr itemline)))
+  (values
+   key value
+   (fold (lambda (parameter table)
+           (let ((idx (string-index parameter #\=)))
+             ;; TODO lists in parameters
+             (table-put table (string->symbol (substring parameter 0 idx))
+                        (substring parameter (1+ idx)))))
+         (table)
+         parameters)))
 
+(define ((warning-handler-proc token) fmt . args)
+  (let ((linedata (get-metadata token)))
+    (format
+     #f
+     ;; arguments:
+     ;; linedata
+     ;; ~?
+     ;; source line
+     ;; source file
+     (G_ "WARNING parse error around ~a
+  ~?
+  line ~a ~a~%")
+     (get-string linedata)
+     fmt args
+     (get-line linedata)
+     (get-file linedata)
+     )))
+
+;;; Property keys which are allowed multiple times
+(define repeating-properties
+  '(ATTACH ATTENDEE CATEGORIES
+           COMMENT CONTACT EXDATE
+           REQUEST-STATUS RELATED-TO
+           RESOURCES RDATE
+           ;; x-prop
+           ;; iana-prop
+           ))
 
 ;; (list <tokens>) → <vcomponent>
 (define (parse lst)
@@ -274,69 +305,53 @@
              (stack '()))
     (if (null? lst)
         stack
-        (let* ((head* (car lst))
-               (head (get-data head*)))
+        (let* ((token (car lst))
+               (head (get-data token)))
           (catch 'parse-error
             (lambda ()
-             (parameterize
-                 ((warning-handler
-                   (lambda (fmt . args)
-                     (let ((linedata (get-metadata head*)))
-                       (format
-                        #f
-                        ;; arguments:
-                        ;; linedata
-                        ;; ~?
-                        ;; source line
-                        ;; source file
-                        (G_ "WARNING parse error around ~a
-  ~?
-  line ~a ~a~%")
-                        (get-string linedata)
-                        fmt args
-                        (get-line linedata)
-                        (get-file linedata)
-                        )))))
-               (cond [(string=? "BEGIN" (car head))
-                      (loop (cdr lst)
-                            (cons (make-vcomponent (string->symbol (cadr head)))
-                                  stack))]
-                     [(string=? "END" (car head))
-                      (loop (cdr lst)
-                            (if (null? (cdr stack))
-                                ;; return
-                                (car stack)
-                                (begin (reparent! (cadr stack) (car stack))
-                                       (cdr stack))))]
-                     [else
-                      (let ((key value params (parse-itemline head)))
-                        (call-with-values (lambda () (build-vline key value params))
-                          (lambda vlines
-                            (for vline in vlines
-                                 (define key (vline-key vline))
-
-                                 (set! (vline-source vline)
-                                   (get-metadata head*))
+              (parameterize ((warning-handler (warning-handler-proc token)))
+                (cond [(string=? "BEGIN" (car head))
+                       (format (current-error-port) "BEGIN ~s~%" (cadr head))
+                       (loop (cdr lst)
+                             (cons (vcomponent type: (string->symbol (cadr head)))
+                                   stack))]
+                      [(string=? "END" (car head))
+                       (format (current-error-port) "END ~s~%" (cadr head))
+                       (loop (cdr lst)
+                             (if (null? (cdr stack))
+                                 ;; return
+                                 stack
+                                 (cons (add-child (cadr stack) (car stack))
+                                       (cddr stack))))]
+                      [else
+                       (let ((k value params (parse-itemline head)))
+                         (loop (cdr lst)
+                               (let (((values . vlines) (build-vline k value params)))
+                                 ;; TODO
+                                 ;; (set! (vline-source vline)
+                                 ;;   (get-metadata token))
 
                                  ;; See RFC 5545 p.53 for list of all repeating types
                                  ;; (for vcomponent)
-                                 ;; TODO templetize this, and allow users to set which types are list types, but also validate this upon creation (elsewhere)
-                                 (if (memv key '(ATTACH ATTENDEE CATEGORIES
-                                                     COMMENT CONTACT EXDATE
-                                                     REQUEST-STATUS RELATED-TO
-                                                     RESOURCES RDATE
-                                                     ;; x-prop
-                                                     ;; iana-prop
-                                                     ))
-                                     (aif (prop* (car stack) key)
-                                          (set! (prop* (car stack) key) (cons vline it))
-                                          (set! (prop* (car stack) key) (list vline)))
-                                     ;; else
-                                     (set! (prop* (car stack) key) vline))))))
+                                 ;; TODO templetize this, and allow users to
+                                 ;; set which types are list types, but also
+                                 ;; validate this upon creation (elsewhere).
+                                 (fold (lambda (vline stack)
+                                         (modify stack car*
+                                                 (lambda (comp)
+                                                   (format (current-error-port)
+                                                           "    stack=~s, comp=~s~%"
+                                                           stack comp)
+                                                   (if (memv (key vline) repeating-properties)
+                                                       (aif (prop* comp (key vline))
+                                                            (prop* comp (key vline) (cons vline it))
+                                                            (prop* comp (key vline) (list vline)))
+                                                       ;; else
+                                                       (prop* comp (key vline) vline)))))
+                                       stack vlines))))])))
 
-                      (loop (cdr lst) stack)])))
             (lambda (err proc fmt fmt-args data)
-              (let ((linedata (get-metadata head*)))
+              (let ((linedata (get-metadata token)))
                 (display (format
                           #f
                           ;; arguments
@@ -353,7 +368,10 @@
                           (get-line linedata)
                           (get-file linedata))
                          (current-error-port))
-                (let ((key value params (parse-itemline head)))
-                  (set! (prop* (car stack) key)
-                    (make-vline key value params))
-                  (loop (cdr lst) stack)))))))))
+                (let ((k value params (parse-itemline head)))
+                  (loop (cdr lst)
+                        (modify stack car*
+                                (lambda (c) (prop* c key
+                                              (vline key: k
+                                                     vline-value: value
+                                                     vline-parameters: params)))))))))))))

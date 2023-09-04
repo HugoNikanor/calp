@@ -381,13 +381,11 @@ window.default_calendar='~a';"
              (repeating% regular (partition repeating? flat-events))
              (repeating
               (for ev in repeating%
-                   (define instance (copy-vcomponent ev))
-
-                   (set! (prop instance 'UID) (output-uid instance))
-                   (delete-parameter! (prop* instance 'DTSTART) '-X-HNH-ORIGINAL)
-                   (delete-parameter! (prop* instance 'DTEND)   '-X-HNH-ORIGINAL)
-
-                   instance)))
+                   ;; TODO
+                   (-> (set-properties ev 'UID (output-uid ev))
+                       ;; (focus (prop* instance 'DTSTART) (lambda (vline) (remove-parameter vline key)))
+                       ;; (focus (prop* instance 'DTEND)   (lambda (vline) (remove-parameter vline key)))
+                       ))))
 
         `(
           ;; Mapping showing which events belongs to which calendar,

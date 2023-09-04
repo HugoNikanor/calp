@@ -9,7 +9,7 @@
   :use-module ((vcomponent formats ical) :prefix #{ics:}#)
   :use-module ((vcomponent) :prefix vcs-)
   :use-module ((vcomponent base)
-               :select (type prop make-vcomponent))
+               :select (type prop vcomponent))
 
   :use-module (web request)
   :use-module (web uri)
@@ -33,10 +33,7 @@
   (description init-value: #f
                accessor: description)
   (data-store getter: data-store
-              init-keyword: store:)
-  #;
-  (content% init-value: (make-vcomponent 'VIRTUAL)
-            accessor: content%))
+              init-keyword: store:))
 
 
 (define-method (is-collection? (_ <calendar-collection-resource>))
@@ -57,7 +54,7 @@
 
 (define-method (base-timezone <calendar-collection-resource>)
   ;; (zoneinfo->vtimezone '() "Europe/Stockholm" 'ev)
-  (make-vcomponent 'VTIMEZONE)
+  (vcomponent type: 'VTIMEZONE)
   )
 
 
