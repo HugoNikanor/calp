@@ -14,8 +14,6 @@ import { DateJump } from './components/date-jump'
 export { initialize_components }
 
 function initialize_components() {
-
-
     /* These MUST be created AFTER vcal_objcets and event_calendar_mapping are
     inistialized, since their constructors assume that that piece of global
     state is available */
