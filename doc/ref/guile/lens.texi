@@ -1,0 +1,47 @@
+@node Lenses
+@section Lenses
+
+Provided by the module @code{(hnh util lens)}
+
+@defun modify object lens f args ...
+@end defun
+
+@defmac modify* object lens
+@defmacx modify* object lens rest ...
+@end defmac
+
+@defmac set object lenses ... value
+@end defmac
+
+@defmac get object lenses ...
+@end defmac
+
+
+@defun make-lens getter setter
+@end defun
+
+@defmac build-lens getter setter
+Where any of getter or setter can either be a single symbol, or a list.
+@end defmac
+
+@deftp {Scheme Lens} identity-lens
+@end deftp
+
+@defun compose-lenses lenses ...
+@defunx lens-compose lenses ...
+Lenses composes left to right, so earlier lenses in @var{lenses} are
+applied earlier.
+@end defun
+
+@deftp {Scheme Lens} ref idx
+Focuses the element at index @var{idx} in a list.
+@end deftp
+
+@deftp {Scheme Lens} car*
+@deftp {Scheme Lens} cdr*
+Focuses the first or second element of a pair.
+@end deftp
+
+@defun each object lens proc
+@end defun
+

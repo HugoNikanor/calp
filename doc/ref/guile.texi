@@ -11,6 +11,7 @@
 @include guile/util-config.texi
 @include guile/util-type.texi
 @include guile/util-object.texi
+@include guile/lens.texi
 @include guile/base64.texi
 @include guile/web.texi
 @include guile/vcomponent.texi
