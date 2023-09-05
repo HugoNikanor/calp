@@ -1,3 +1,15 @@
+/**
+ * `<vevent-edit-rrule />`
+ *
+ * An edit form for a recurrence rule. Searches its template for elements
+ * with `[name="<<field name>>"]`, and binds to those.
+ *
+ * TODO rename this file
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
 export { EditRRule }
 
 import { ComponentVEvent } from './vevent'

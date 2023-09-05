@@ -34,9 +34,13 @@
   "include": ["**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"],
   "typedocOptions": {
-	  "entryPointStrategy": "expand",
-	  "entryPoints": ["./ts"],
-	  "exclude": ["node_modules"],
-	  "out": "docs"
+      "entryPointStrategy": "expand",
+      "entryPoints": ["./ts"],
+      "exclude": ["node_modules"],
+      "plugin": [
+          "@mxssfd/typedoc-theme"
+      ],
+      "theme": "my-theme",
+      "out": "docs"
   }
 }

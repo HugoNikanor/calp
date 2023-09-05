@@ -1,3 +1,14 @@
+/**
+ * `<vevent-edit />`
+ *
+ * Edit form for a vevent, designed for useful human interaction (and
+ * thereby not being all-encompassing).
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
+
 export { ComponentEdit }
 
 import { ComponentVEvent } from './vevent'

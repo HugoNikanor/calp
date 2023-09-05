@@ -1,3 +1,14 @@
+/**
+ * `<vevent-block />`
+ *
+ * A block in our graphical view.
+ *
+ * Unique in that it works quite differently between the week and month view.
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
 export { ComponentBlock }
 
 import { ComponentVEvent } from './vevent'

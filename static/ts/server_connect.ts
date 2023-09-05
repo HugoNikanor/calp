@@ -1,3 +1,9 @@
+/**
+ * Procedures for interfacing with the backend server.
+ *
+ * @module
+ */
+
 export { create_event, remove_event }
 
 import { jcal_to_xcal } from './jcal'
@@ -6,6 +12,15 @@ import { uid } from './types'
 import { vcal_objects } from './globals'
 import { PopupElement } from './components/popup-element'
 
+/**
+ * Requests that the server permanently remove the event with the given
+ * unique id from its persistant storage.
+ *
+ * If the server responds with a success also delete it from our local
+ * store (`vcal_objects`).
+ *
+ * // TODO link to our backend flow here
+*/
 async function remove_event(uid: uid) {
     let element = vcal_objects.get(uid);
     if (!element) {
@@ -55,6 +70,13 @@ async function remove_event(uid: uid) {
 //     ];
 // }
 
+/**
+ * Packs up the given event and sends it to the server to either be
+ * created, or simply be updated in the persistant database.
+
+ * Also does some minor updates registered components, to show that the
+ * event is actually created.
+*/
 async function create_event(event: VEvent) {
 
     // let xml = event.getElementsByTagName("icalendar")[0].outerHTML

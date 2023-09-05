@@ -64,7 +64,6 @@ text @footnote{Improvements welcome}
 @c @end menu
 
 @include guile.texi
-@include javascript.texi
 
 @node Index
 @unnumbered Index
@@ -74,8 +73,5 @@ text @footnote{Improvements welcome}
 @printindex pg
 @printindex tp
 @printindex vr
-
-@unnumbered Web Components
-@printindex wc
 
 @bye

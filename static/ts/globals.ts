@@ -1,3 +1,10 @@
+/**
+ * Different variables and values which for different reasons needs to be
+ * global. Window Value's are those that are bound to the `window`
+ * context in JavaScript, so is really always available, no opt out.
+ * @module
+ */
+
 export {
     find_block,
     vcal_objects, event_calendar_mapping
@@ -10,14 +17,38 @@ import { ComponentBlock } from './components/vevent-block'
 import { v4 as uuid } from 'uuid'
 import { setup_popup_element } from './components/popup-element'
 
+/**
+ * All VEvent objects on current page, indexed by their unique identifiers.
+ *
+ * A global object store.
+ *
+ * Also bound to the window object for easy access.
+ */
 const vcal_objects: Map<uid, VEvent> = new Map;
+
+/**
+ * Mapping from VEvent unique identifier, to name of its calendar. Should
+ * probably not be global, so refrain from using it.
+ */
 const event_calendar_mapping: Map<uid, string> = new Map;
 
 declare global {
     interface Window {
         vcal_objects: Map<uid, VEvent>;
+        /**
+         * How the calendar is currently formatted. Should be set by the backend
+         * through a simple `script`-tag.
+         */
         VIEW: 'month' | 'week';
+        /**
+         * However editing of events is enabled or not.
+         * Should be set by the backend through a simple `script`-tag.
+         */
         EDIT_MODE: boolean;
+        /**
+         * Name of the calendar to assume when creating new events.
+         * Should be set by the backend through a simple `script`-tag.
+         */
         default_calendar: string;
 
         addNewEvent(): void;

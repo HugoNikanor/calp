@@ -1,3 +1,40 @@
+/**
+ * `<tab-group />`
+
+A group of tabs, where only one can be visible at a time.
+
+@privateRemarks TODO which form does the HTML document have? For CSS purposes
+
+Each tab consists of two parts, a label which is used for selecting
+it, and a tab-element, which contains the actual content. These two
+should refer to each other as follows:
+
+@example
+```
++---------------+     +-----------------+
+|   TabLabel    |     |       Tab       |
++---------------+     +-----------------+
+|            id |<----| aria-labelledby |
+| aria-controls |---->|              id |
++---------------+     +-----------------+
+```
+
+Further information about tabs in HTML can be found here:
+https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/Tab_Role
+
+#### CSS Variables
+
+##### tabcount
+Each tab element has the style property `--tabcount` set to how
+many tabs it has. This is mostly useful to make sure the tab context
+is large enough to fit all tab labels without overflowing.
+
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
+
 import { ComponentVEvent } from './vevent'
 import { makeElement, gensym } from '../lib'
 import { EditRRule } from './edit-rrule'
@@ -6,7 +43,7 @@ import { vcal_objects } from '../globals'
 
 export { TabGroupElement }
 
-/* Lacks a template, since it's trivial
+/** Lacks a template, since it's trivial
    The initial children of this element all becomes tabs, each child may have
    the datapropertys 'label' and 'title' set, where label is what is shown in
    the tab bar, and title is the hower text.
@@ -81,6 +118,12 @@ class TabGroupElement extends ComponentVEvent {
 
     } /* end connectedCallback */
 
+    /**
+       Adds a new tab to the group. The first parameter will make up the body
+       of the tab. The label is whath should be shown in the tab selector,
+       but defaults to the first letter of the text content of the body node.
+       Title is the hoover text of the label.
+    */
     addTab(child: HTMLElement, label?: string, title?: string) {
 
         /* First character of text is a good a guess as any for our label,
@@ -128,6 +171,10 @@ class TabGroupElement extends ComponentVEvent {
         this.style.setProperty('--tabcount', '' + this.tabs.length);
     }
 
+    /**
+       HTMLElement must be one of the tab bodies in this group. This method
+       removes it, along with its TabLabel.
+    */
     removeTab(tab: HTMLElement) {
         let id = tab.getAttribute('aria-labelledby')!
         let label = document.getElementById(id)

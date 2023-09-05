@@ -1,3 +1,19 @@
+/**
+ * Formatting procedures used by some components.
+ *
+ * // TODO can we have a backref of every node containing {@link formatters-proc}?
+ *
+ * {@label formatters}
+ *
+ * Each procedure takes three arguments. The HTML-element which contents
+ * should be replaced, the VEvent containing all data, and the target
+ * value, as returned by {@link VEvent.getProperty}.
+ *
+ * Also bound to the window object.
+ *
+ * @module
+ */
+
 export {
     format
 }
@@ -16,6 +32,10 @@ declare global {
 let formatters: Map<string, formatter>;
 formatters = window.formatters = new Map();
 
+/**
+ * Checks if a specific formatter exists for the given key, and executes it.
+ * Defaults to 'default', and also runs that if the regular formatter throws.
+ */
 async function format(targetElement: HTMLElement, data: VEvent, key: string): Promise<void> {
     let d = data.getProperty(key);
     if (!d) return

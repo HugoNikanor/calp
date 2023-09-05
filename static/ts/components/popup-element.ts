@@ -1,3 +1,19 @@
+/**
+ * `<popup-element />`
+ *
+ * A (small) floating window containing information, which can be dragged
+ * arround. Consists of a navigation bar with a few buttons for
+ * controlling the window, which also works as a drag handle, along with
+ * an area for contents, which can be resized by the user.
+
+ * Currently tightly coupled to VEvent's, since their color
+ * profile is derived from their owning events calendar, and they have
+ * action buttons for the event in their navigation bar.
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
 export { PopupElement, setup_popup_element }
 
 import { VEvent } from '../vevent'
@@ -7,12 +23,19 @@ import { ComponentVEvent } from './vevent'
 
 import { remove_event } from '../server_connect'
 
-/* <popup-element /> */
+/**
+   ### Attributes
+   - visible
+   */
 class PopupElement extends ComponentVEvent {
 
     /* The popup which is the "selected" popup.
-    /* Makes the popup last hovered over the selected popup, moving it to
+     * Makes the popup last hovered over the selected popup, moving it to
      * the top, and allowing global keyboard bindings to affect it. */
+    /**
+       The popup which was most recently interacted with by the user. Used to
+       move it on top of all others, as well as sending relevant key events there.
+    */
     static activePopup: PopupElement | null = null;
 
     constructor(uid?: string) {
@@ -81,6 +104,12 @@ class PopupElement extends ComponentVEvent {
         }
     }
 
+    /**
+       If the popup is currently visible.
+
+       Adds the `visible` attribute to the component, which must then be handled
+       through CSS.
+     */
     get visible(): boolean {
         return this.hasAttribute('visible');
     }
@@ -128,6 +157,10 @@ class PopupElement extends ComponentVEvent {
         el.style.removeProperty('height');
     }
 
+    /**
+       Resize the popup window to fill the current viewport (mostly). Is
+       probably bonud to the maximize button in the navigation bar.
+    */
     maximize() {
         /* TODO this assumes that popups are direct decendant of their parent,
            which they really ought to be */
@@ -144,7 +177,8 @@ class PopupElement extends ComponentVEvent {
     }
 }
 
-/* Create a new popup element for the given VEvent, and ready it for editing the
+/**
+   Create a new popup element for the given VEvent, and ready it for editing the
    event. Used when creating event (through the frontend).
    The return value can safely be ignored.
 */

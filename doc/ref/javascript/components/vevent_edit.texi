@@ -1,9 +1,0 @@
-@subsection VEvent Edit
-
-@deftp {Web Component for VEvent} ComponentEdit
-@wcindex <vevent-edit>
-@wcindex vevent-edit
-@code{<vevent-edit>}
-Edit form for a vevent, designed for useful human interaction (and
-thereby not being all-encompassing).
-@end deftp

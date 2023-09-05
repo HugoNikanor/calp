@@ -1,3 +1,18 @@
+/**
+  * Components for working with things which depend on the current time.
+  *
+  * Also introduces two web components:
+  *
+  * ```html
+  * <today-button />
+  * <current-time />
+  * ```
+  *
+  * TODO shouldn't these be defined with the rest of the components?
+  *
+  * @module
+  */
+
 export {
     SmallcalCellHighlight, Timebar,
     initialize_clock_components
@@ -5,11 +20,17 @@ export {
 
 import { makeElement, date_to_percent } from './lib'
 
-abstract class Clock {
+/**
+ * Interface for `things` which wants to get updated on a human timescale.
+ */
+export abstract class Clock {
+    /** Called every now and then
+     * @param now Called with the current time
+     */
     abstract update(now: Date): void;
 }
 
-
+/** The (blue) vertical line which show the current time in the current day. */
 class Timebar extends Clock {
 
     // start_time: Date
@@ -22,7 +43,6 @@ class Timebar extends Clock {
         // this.end_time = end_time;
         this.bar_object = null
     }
-
 
     update(now: Date) {
         // if (! (this.start_time <= now.getTime() && now.getTime() < this.end_time))
@@ -46,11 +66,21 @@ class Timebar extends Clock {
     }
 }
 
+/**
+ * Highlights the current date in the small calendar to the side.
+ * Currently directly sets a border
+ *
+ * @TODO{but should preferably set a class instead}.
+*/
 class SmallcalCellHighlight extends Clock {
 
     small_cal: HTMLElement
     current_cell: HTMLElement | null
 
+    /**
+     * @param small_cal the DOM-node of the calendar widget. It must support
+     *   querySelector.
+     */
     constructor(small_cal: HTMLElement) {
         super();
         this.small_cal = small_cal;
@@ -103,6 +133,14 @@ class ClockElement extends HTMLElement {
 }
 
 
+/**
+ * Updates the ``Today'' link in the side panel to point directly to the
+ * correct web-address. The link works without JavaScript, but then
+ * requires a redirect from the server.
+ *
+ * All actual updating logic is already abstracted away. It would be
+ * desirable if something more was done with this.
+ */
 class TodayButton extends ClockElement {
     a: HTMLAnchorElement;
 

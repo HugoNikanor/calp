@@ -1,0 +1,22 @@
+@node Exception Utilities
+@section Exception Utilities
+
+@defun warning fmt args ...
+
+@end defun
+
+@deftp {parameter} warning-handler
+Procedure, which htnaoe htn oeu htn oeu 
+@end deftp
+
+@deftp {parameter} warnings-are-errors
+Boolean parameter
+@end deftp
+
+@defun fatal fmt args ...
+Display the message in fmt, populated with args, then raises the UNIX
+signal 2, which kills the program.
+@end defun
+
+@defun filter-stack pred? stack
+@end defun

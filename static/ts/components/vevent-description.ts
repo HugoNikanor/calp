@@ -1,3 +1,19 @@
+/**
+ * `<vevent-description />`
+
+A text representation of a VEvent. Used as the summary tab of our
+popup windows, and in the sidebar.
+
+When redrawn, it looks for an HTML-tag inside its template having the
+attribute `data-property` matching the properties name. If one is
+found, it looks in the `formatters` table
+({@link formatters}), for a field matching the property value, and
+defaults to the key `default`.
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
 export { ComponentDescription }
 
 import { VEvent } from '../vevent'

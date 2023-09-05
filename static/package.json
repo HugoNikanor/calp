@@ -3,6 +3,7 @@
   "version": "0.1",
   "private": true,
   "devDependencies": {
+    "@mxssfd/typedoc-theme": "^1.1.2",
     "@types/uuid": "^8.3.1"
   },
   "optionalDependencies": {

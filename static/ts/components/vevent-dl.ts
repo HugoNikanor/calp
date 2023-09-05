@@ -1,3 +1,15 @@
+/**
+ * `<vevent-dl />`
+ *
+ * A description list of a vevent, used for debugging.
+ *
+ * No guarantees are given about the contents of the data fields, more
+ * than that they are related to the value in question.
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
 export { VEventDL }
 
 import { ComponentVEvent } from './vevent'

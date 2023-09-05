@@ -1,9 +1,30 @@
+/**
+ * `<date-time-input />`
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
+
 export { DateTimeInput }
 
 import { makeElement, parseDate } from '../lib'
 
-
-/* '<date-time-input />' */
+/**
+ * The HTML component `<date-time-input />`.
+ * An element for input for date-times. Similar to
+ * @example
+ * ```html
+ * <input type="date"/>
+ * <input type="time"/>
+ * ```
+ *
+ * But as a single unit.
+ *
+ * ### Attributes
+ * - dateonly
+ *
+ */
 class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
 
     readonly time: HTMLInputElement;
@@ -54,6 +75,11 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         }
     }
 
+    /**
+       Setting this to true disabled the time part of the input, and makes
+       any output only have date components (alternativly, the time component
+       set to zero).
+    */
     get dateonly(): boolean {
         return this.hasAttribute('dateonly');
     }
@@ -74,6 +100,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         this.dateonly = date.dateonly;
     }
 
+    /** Returns current value as a Date object. */
     get value(): Date {
         let dt;
         let date = this.date.value;
@@ -88,6 +115,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         return dt;
     }
 
+    /** Returns current value as an ISO-8601 formatted string. */
     get stringValue(): string {
         if (this.dateonly) {
             return this.value.format("~Y-~m-~d")

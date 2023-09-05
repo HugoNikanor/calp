@@ -1,3 +1,12 @@
+/**
+   Actuall creation of all web components.
+
+   More text
+
+   @category Web Components
+   @module components
+  */
+
 import { ComponentDescription } from './components/vevent-description'
 import { ComponentEdit } from './components/vevent-edit'
 import { VEventDL } from './components/vevent-dl'

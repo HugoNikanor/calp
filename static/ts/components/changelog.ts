@@ -1,3 +1,14 @@
+/**
+ * `<changelog />`
+ *
+ * Display of a VEvents changelog. @ref{ChangeLogEntry}
+ *
+ * @privateRemarks @anchor{VEventChangelog}
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
 import { makeElement } from '../lib'
 import { ComponentVEvent } from './vevent'
 import { VEvent } from '../vevent'

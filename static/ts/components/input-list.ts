@@ -1,3 +1,13 @@
+/**
+ * `<input-list />`
+ *
+ * A list of identical input fields, which forms a group. For example
+ * useful to handle keywords.
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
 export { InputList }
 
 /*
@@ -58,6 +68,10 @@ class InputList extends HTMLElement {
         this.appendChild(new_el);
     }
 
+    /**
+     * The value from each element, except the last which should always be empty.
+     * Has an unspecified type, since children:s value field might give non-strings.
+     */
     get value(): any[] {
         let value_list = []
         for (let child of this.children) {

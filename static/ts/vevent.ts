@@ -7,11 +7,12 @@ export {
     isRedrawable,
 }
 
-/* Something which can be redrawn */
+/** Something which can be redrawn */
 interface Redrawable extends HTMLElement {
     redraw(data: VEvent): void
 }
 
+/** Checks if the given element is an instance of Redrawable. */
 function isRedrawable(x: HTMLElement): x is Redrawable {
     return 'redraw' in x
 }
@@ -32,6 +33,10 @@ class VEventValue {
         this.parameters = parameters;
     }
 
+    /**
+     * The return value is *almost* a `JCalProperty`, just without
+     * the field name.
+    */
     to_jcal(): [Record<string, any>, ical_type, any] {
         let value;
         let v = this.value;
@@ -88,6 +93,13 @@ type list_values
   Abstract representation of a calendar event (or similar).
 All "live" calendar data in the frontend should live in an object of this type.
  */
+/**
+ * Component for a single instance of a calendar event. Almost all data
+ * access should go through `getProperty` and `setProperty`,
+ * with the exception of the current calendar (which is accessed directly
+ * through `calendar`). Almost all changes through these interfaces
+ * are logged, and can be viewed through `changelog`.
+ */
 class VEvent {
 
     /* Calendar properties */
@@ -103,10 +115,16 @@ class VEvent {
 
     #calendar: string | null = null;
 
+    /**
+     * Every write through getProperty gets logged here, and can be
+     * consumed. Hopefully this will one day turn into an undo system.
+     * TODO ref ChangeLogEntry.
+     */
     #changelog: ChangeLogEntry[] = []
 
     /* Iterator instead of direct return to ensure the receiver doesn't
        modify the array */
+    /** Public (read only) interface to changelog. */
     get changelog(): IterableIterator<[number, ChangeLogEntry]> {
         return this.#changelog.entries();
     }
@@ -156,6 +174,19 @@ class VEvent {
 
     // getProperty(key: 'categories'): string[] | undefined
 
+    /**
+     * Returns the value of the given property if set, or undefined otherwise.
+     *
+     * For the keys
+     *
+     * - `'CATEGORIES'`,
+     * - `'RESOURCES'`,
+     * - `'FREEBUSY'`,
+     * - `'EXDATE'`, and
+     * - `'RDATE'`
+     *
+     * instead returns a list list of values.
+     */
     getProperty(key: string): any | any[] | undefined {
         key = key.toUpperCase()
         let e = this.properties.get(key);
@@ -166,6 +197,7 @@ class VEvent {
         return e.value;
     }
 
+    /** Returns an iterator of all our properties. */
     get boundProperties(): IterableIterator<string> {
         return this.properties.keys()
     }
@@ -228,6 +260,18 @@ class VEvent {
     setProperty(key: list_values, value: any[], type?: ical_type): void;
     setProperty(key: string, value: any, type?: ical_type): void;
 
+    /**
+     * Sets the given property to the given value. If type is given it's
+     * stored alongside the value, possibly updating what is already
+     * there. Do however note that no validation between the given type and
+     * the type of the value is done.
+     *
+     * `value` may also be a list, but should only be so for the keys
+     * mentioned in `getProperty`.
+     *
+     * After the value is set, `redraw` is called on all registered
+     * objects, notifying them of the change.
+     */
     setProperty(key: string, value: any, type?: ical_type) {
         this.setPropertyInternal(key, value, type);
 
@@ -236,6 +280,10 @@ class VEvent {
         }
     }
 
+    /**
+     * Equivalent to running `setProperty` for each element in the input
+     * list, but only calls `redraw` once at the end.
+     */
     setProperties(pairs: [string, any, ical_type?][]) {
         for (let pair of pairs) {
             this.setPropertyInternal(...pair);
@@ -245,7 +293,7 @@ class VEvent {
         }
     }
 
-
+    /** The name of the calendar which this event belongs to. */
     set calendar(calendar: string | null) {
         this.addlog({
             type: 'calendar',
@@ -263,14 +311,20 @@ class VEvent {
         return this.#calendar;
     }
 
+    /**
+     * Register something redrawable, which will be notified whenever this
+     * VEvents data is updated.
+     */
     register(htmlNode: Redrawable) {
         this.registered.push(htmlNode);
     }
 
+    /** Stop recieving redraw events on the given component. */
     unregister(htmlNode: Redrawable) {
         this.registered = this.registered.filter(node => node !== htmlNode)
     }
 
+    /** Converts the object to JCal data. */
     to_jcal(): JCal {
         let out_properties: JCalProperty[] = []
         console.log(this.properties);
@@ -332,6 +386,7 @@ class RecurrenceRule {
     bysetpos?: number[]
     wkst?: weekday
 
+    /** Converts ourselves to JCal data. */
     to_jcal(): Record<string, any> {
         let obj: any = {}
         if (this.freq) obj['freq'] = this.freq;
@@ -368,6 +423,7 @@ class RecurrenceRule {
     }
 }
 
+/** Parse a XCAL recurrence rule into a RecurrenceRule object. */
 function xml_to_recurrence_rule(xml: Element): RecurrenceRule {
     let rr = new RecurrenceRule;
 
@@ -507,6 +563,7 @@ function make_vevent_value_(value_tag: Element): string | boolean | Date | numbe
     }
 }
 
+/** Parse a complete XCAL object into a JS VEvent object. */
 function xml_to_vcal(xml: Element): VEvent {
     /* xml MUST have a VEVENT (or equivalent) as its root */
     let properties = xml.getElementsByTagName('properties')[0];

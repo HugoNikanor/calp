@@ -3,6 +3,10 @@ export { jcal_to_xcal }
 import { xcal, ical_type, JCalProperty, JCal } from './types'
 import { asList } from './lib'
 
+/**
+ * A document with the xcal namespace, and @code{icalendar} as its root
+ * element. Each child is a valid xcal representation of our JCal object.
+ */
 function jcal_type_to_xcal(doc: Document, type: ical_type, value: any): Element {
     let el = doc.createElementNS(xcal, type);
     switch (type) {

@@ -1,18 +1,34 @@
+/**
+ * Root component for all events which content is closely linked to a `VEvent` object
+ *
+ * Lacks an accompaning tag, and shouldn't be directly instanciated.
+ *
+ * Note that many of these assume that their initial children are
+ * configured specifically, that is however not completely documented.
+ *
+ * @category Web Components
+ * @mergeTarget components
+ * @module
+ */
+
 export { ComponentVEvent }
 
 import { vcal_objects } from '../globals'
 import { VEvent } from '../vevent'
 
-/* Root component for all events which content is closely linked to a
-@code{VEvent} object
-
-Lacks an accompaning tag, and shouldn't be directly instanciated.
-*/
 abstract class ComponentVEvent extends HTMLElement {
 
     template?: HTMLTemplateElement
     uid: string
 
+    /**
+     * This registeres itself, but doesn't redraw
+     * We do however redraw in connectedCallback
+
+     * @privateRemarks
+     * TODO what is done in the default constructor,
+     * and the default connectedCallback
+    */
     constructor(uid?: string) {
         super();
         this.template = document.getElementById(this.tagName.toLowerCase()) as HTMLTemplateElement | undefined
@@ -64,6 +80,7 @@ abstract class ComponentVEvent extends HTMLElement {
         }
     }
 
+    /** While abstract for this, @emph{must} be overridden for everyone else */
     abstract redraw(data: VEvent): void
 
 }

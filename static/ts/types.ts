@@ -1,3 +1,8 @@
+/**
+ * Collection of type information for calendar data.
+ * @module
+ */
+
 export {
     ical_type,
     valid_input_types,
@@ -6,6 +11,8 @@ export {
     ChangeLogEntry
 }
 
+
+/** Name of all valid icalendar types. */
 let all_types = [
     'text',
     'uri',
@@ -23,6 +30,7 @@ let all_types = [
 ]
 
 
+/* The union of all elements in `all_types`. */
 type ical_type
     = 'text'
     | 'uri'
@@ -39,6 +47,10 @@ type ical_type
     | 'boolean'
     | 'unknown'
 
+/**
+ * All known names properties (top level keys) can have.
+ * Such as "calscale", "dtstart", ...
+ */
 let property_names = [
     'calscale', 'method', 'prodid', 'version', 'attach', 'categories',
     'class', 'comment', 'description', 'geo', 'location', 'percent-complete',
@@ -50,6 +62,15 @@ let property_names = [
 ];
 
 
+/**
+ * Which property fields each component can hold.
+ *
+ * ```json
+ * { 'VCALENDAR': ['PRODID', 'VERSION', 'CALSCALE', 'METHOD'],
+ *     ...
+ * }
+ * ```
+ */
 let valid_fields: Map<string, string[]> = new Map([
     ['VCALENDAR', ['PRODID', 'VERSION', 'CALSCALE', 'METHOD']],
     ['VEVENT', ['DTSTAMP', 'UID', 'DTSTART', 'CLASS', 'CREATED',
@@ -130,6 +151,18 @@ type known_ical_types
     | 'URL'
     | 'VERSION'
 
+/**
+ * Which types are valid to store under each property.
+ * If multiple values are an option for that property, then
+ * the list of possibilities will contain a sub-list (see example).
+ *
+ * ```json
+ * { 'DTSTART': ['date', 'date-time'],
+ *   'CATEGORIES': [['text']],
+ *   ...
+ * }
+ * ```
+ */
 let valid_input_types: Map<string, Array<ical_type | ical_type[]>> =
     new Map([
         ['ACTION', ['text']], // AUDIO|DISPLAY|EMAIL|*other*
@@ -184,20 +217,35 @@ let valid_input_types: Map<string, Array<ical_type | ical_type[]>> =
 // type JCalLine {
 // }
 
+/** Alias of (`'vevent' | string`). */
 type tagname = 'vevent' | string
 
+/** Alias of `string`. */
 type uid = string
 
 /* TODO is this type correct?
    What really are valid values for any? Does that depend on ical_type? Why is the tail a list?
    What really is the type for the parameter map?
 */
+/* TODO link to RFC 7265 (jCal) */
+/**
+ * Alias for a record consisting of
+ * - the name of the type, as a string
+ * - all parameters of the object, as a `Record<String, any>`
+ * - An `ical_type` value, noting the type of the final field(s)
+ * - and one or more values of the type specified by the third field.
+ */
 type JCalProperty
     = [string, Record<string, any>, ical_type, any]
     | [string, Record<string, any>, ical_type, ...any[]]
 
+/**
+ * A record consisting of a `tagname`, a list of
+ * `JCalProperties`, and a list of other `JCal` objects.
+*/
 type JCal = [tagname, JCalProperty[], JCal[]]
 
+/** The xml namespace name for xcalendar */
 const xcal = "urn:ietf:params:xml:ns:icalendar-2.0";
 
 interface ChangeLogEntry {
