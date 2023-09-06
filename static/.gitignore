@@ -6,3 +6,4 @@ deps.svg
 !arbitary_kv.js
 !input_list.js
 docs/
+!prettify-tsconfig.js
