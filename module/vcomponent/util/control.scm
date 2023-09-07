@@ -26,7 +26,7 @@
 ;; TODO what is this even used for?
 (define-syntax with-replaced-properties
   (syntax-rules ()
-    [(_ (component (key val) ...)
+    [(G_ (component (key val) ...)
         body ...)
 
      (let ((htable (make-hash-table 10)))
