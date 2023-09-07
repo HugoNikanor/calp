@@ -4,6 +4,7 @@
   :use-module (srfi srfi-88)           ; postfix keywords
   :use-module ((sxml fold) :select (fold-values))
   :use-module ((srfi srfi-9 gnu) :select (set-fields))
+  :use-module ((ice-9 copy-tree) :select (copy-tree))
   :re-export (fold-values)
   :export (aif
            awhen
