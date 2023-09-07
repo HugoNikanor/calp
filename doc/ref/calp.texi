@@ -1,4 +1,5 @@
 \input texinfo
+@setfilename calp.info
 @settitle Calp
 
 @copying

@@ -89,10 +89,10 @@ have parent in its parent slot
 @end lisp
 @end deffn
 
-@deffn (extract field) vcomponent
-@deffnx (extract* field) vcomponent
+@defun {(extract field)} vcomponent
+@defunx {(extract* field)} vcomponent
 Curried version of @var{prop}.
-@end deffn
+@end defun
 
 @defun delete-property! component key
 @end defun
