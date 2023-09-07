@@ -8,6 +8,7 @@
 @include guile/util-path.texi
 @include guile/util-config.texi
 @include guile/base64.texi
+@include guile/xdg-basedir.texi
 @include guile/web.texi
 @include guile/vcomponent.texi
 

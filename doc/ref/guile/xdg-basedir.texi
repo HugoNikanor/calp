@@ -1,0 +1,62 @@
+@node XDG Base Directory
+@section XDG Base Directory
+
+Implementation of the XDG Base Directory Specification
+@url{https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html}, v0.8.
+
+It's recommended to include this module with a symbol prefix:
+
+@example
+(use-modules ((xdg basedir) :prefix xdg-)
+
+(xdg-data-dirs)
+⇒ ("/usr/local/share" "/usr/share")
+@end example
+
+The users home directory is fetched from the environment variable @env{HOME}.
+
+
+@defun data-home
+@findex XDG_DATA_HOME
+@env{XDG_DATA_HOME}, usually @file{~/.local/share}.
+@end defun
+
+@defun config-home
+@findex XDG_CONFIG_HOME
+@env{XDG_CONFIG_HOME}, usually @file{~/.config}.
+@end defun
+
+@defun state-home
+@findex XDG_STATE_HOME
+@env{XDG_STATE_HOME}, usually @file{~/.local/state}.
+@end defun
+
+@defun data-dirs
+@findex XDG_DATA_DIRS
+@env{XDG_DATA_DIRS}, split into a list.
+
+Defaults to @code{("/usr/local/share" "/usr/share")}.
+@end defun
+
+@defun config-dirs
+@findex XDG_CONFIG_DIRS
+@env{XDG_CONFIG_DIRS} as a list, usually @code{("/etc/xdg")}.
+
+Defaults to @file{/etc/xdg}.
+@end defun
+
+@defun cache-home
+@findex XDG_CACHE_HOME
+@env{XDG_CACHE_HOME}, usually @file{~/.cache}.
+@end defun
+
+@defun runtime_dir
+@findex XDG_RUNTIME_DIR
+If @env{XDG_RUNTIME_DIR} is set, than that is used. Otherwise a
+warning message is printed to stderr and @file{/tmp} is returned.
+
+The standard also stipulates a few things about permissons for this
+directory. These are currently not checked.
+
+Systemd usually sets this value to @file{/run/user/$(id -u)}.
+@end defun
