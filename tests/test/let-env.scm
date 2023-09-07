@@ -41,3 +41,8 @@
   (getenv "CALP_TEST_ENV"))
 
 
+(test-group "Unsetting environment"
+  (setenv "TEST" "A")
+  (let-env ((TEST #f))
+           (test-assert (not (getenv "TEST"))))
+  (test-equal "A" (getenv "TEST")))

@@ -315,6 +315,9 @@ Converts @var{any} to a string, as per @var{display}.
 @defmac let-env bindings body ...
 Similar to @var{let}, but sets environment variables for the code in
 body. Restores the old values once we leave.
+
+A variable can also be removed from the environment, by setting its
+value to @code{#f}.
 @end defmac
 
 @defmac catch* thunk (symbol proc) ...
