@@ -3,7 +3,7 @@
 ;;; Code:
 
 (define-module (xdg basedir)
-  :export (sysconfdir runtime-dir
+  :export (runtime-dir
            data-home config-home cache-home
            data-dirs config-dirs))
 
@@ -27,14 +27,6 @@
     (if str
         (parse-path str)
         '("/usr/local/share" "/usr/share"))))
-
-;;; sysconfdir
-;;; /etc
-;;; Techincly not part of the standard, but it's mentioned
-(define (sysconfdir)
-  (or (getenv "sysconfdir")
-      "/etc"))
-
 
 ;;; XDG_CONFIG_DIRS
 ;;; colon (:) separated, in adddition to XDG_CONFIG_HOME
