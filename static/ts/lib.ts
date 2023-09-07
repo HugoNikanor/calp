@@ -1,90 +1,16 @@
 /**
- * General procedures which in theory could be used anywhere.
- *
- * Besides exporting the mentioned functions, this module also extends some base
- * classes.
- *
- * ```tex
-@node Default prototype extensions
-@subsubsection Default prototype extensions
+  General procedures which in theory could be used anywhere.
 
+  Besides exporting the mentioned functions, this module also
+  extends some base classes.
 
-
-@defmethod HTMLElement addEventListener name proc
-Replace the default @code{addEventListener} with a version that stores
-all listeners in the dictionary @var{listeners}.
-@end defmethod
-
-@defivar HTMLElement listeners
-Dictionary of all registered listeners to this element.
-Keys are taken from @code{addEventListener}.
-@end defivar
-
-@defmethod DOMTokenList find regexp
-Finds the first element of the DOMTokenList whichs value matches
-the supplied regexp. Returns a pair of the index and the value.
-@end defmethod
-
-@defmethod Object format args ...
-Returns a string representation of the given object.
-Allows extending for custom types,
-@ref{date-format}
-@end defmethod
- * ```
- *
- * ---
- *
- * ```tex
-Some extensions to the builtin class ``Date'' is made.
-
-@defivar Date utc
-Boolean indicating if the given timestamp is in UTC or local time.
-true means UTC.
-@end defivar
-
-@defivar Date dateonly
-Boolean indicating if the time component of the Date object should be disregarded.
-@end defivar
-
- * ```
- * ```tex
-@defmethod Date format str args ...
-@anchor{date-format}
-Formats a Date object according to the format specification @var{str}.
-Keeping with Guile each format specifier starts with a ~.
-
-@table @samp
-@item ~~
-literal ~
-@c Almost all fields are left padded. How do I signify this
-@c with a single footnote?
-@item ~Y
-year, left-padding with zeroes.
-@item ~m
-month number, left padded with zeroes.
-@item ~d
-day of month.
-@item ~H
-hour
-@item ~M
-minute
-@item ~S
-second
-@item ~Z
-'Z' if Date is UTC, otherwise nothing
-@item ~L
-Converts the date to local time
-(@pxref{to_local}) (doesn't modify source object). Outputs nothing
-@end table
-@end defmethod
-```
- *
- * @module
+  @module
  */
 export {
     makeElement, date_to_percent,
     parseDate, gensym, to_local, to_boolean,
-    asList, round_time
+    asList, round_time,
+    format_date,
 }
 
 /*
@@ -92,37 +18,95 @@ export {
  */
 declare global {
     interface Object {
+        /**
+           Introduce a format method on ALL objects
+
+           The default implementation simply stringifies the object, but this
+           allows any component to overwrite it, allowing for generic custom
+           formatting of data.
+
+           This also means that the format string is ignored for the default
+           implementation.
+
+           See `Data.prototype.format`.
+        */
         format: (fmt: string) => string
     }
 
     /** HTMLElement extensions */
     interface HTMLElement {
+        /**
+           "Private" property, storing the "true" add event listener. The
+           exposed addEventListener is later overwritten to also store a list of
+           which event listeners are added.
+        */
         _addEventListener: (name: string, proc: (e: Event) => void) => void
-        listeners: Map<string, ((e: Event) => void)[]>
+
+        /**
+           Contains all listeners added through `addEventListener`.
+
+           The keys are the same as to `addEventListener` ('load', 'mouseover',
+           ...)
+
+           Values are simply a list of all added listeners, probably in addition
+           order.
+        */
+        listeners: Map<string, ((e: Event) => void)[]>;
+
+        /**
+           Returns listeners.
+
+           TODO why does this exist?
+        */
         getListeners: () => Map<string, ((e: Event) => void)[]>
     }
 
     interface Date {
+        /**
+           A proper date formatter for javascript.
+
+           See {@ref format_date} for details
+        */
         format: (fmt: string) => string
+
+        /** Indicates if the date object is in UTC or local time. */
         utc: boolean
+
+        /**
+           Indicates that the object only contains a date component.
+
+           This means that any time is ignored in most operations.
+        */
         dateonly: boolean
         // type: 'date' | 'date-time'
     }
 
     interface DOMTokenList {
+        /**
+           Searches a DOMTokenList for anything matching.
+
+           DOMTokenLists are returned by `.classList` and similar.
+
+           @return Returns the matching index, and the matched value,
+              or `undefined` if nothing was found.
+           */
         find: (regex: string) => [number, string] | undefined
     }
 
     interface HTMLCollection {
+        /** Adds an iterator to HTMLCollections */
         forEach: (proc: ((el: Element) => void)) => void
     }
 
     interface HTMLCollectionOf<T> {
+        /** Adds an iterator to HTMLCollections */
         forEach: (proc: ((el: T) => void)) => void
     }
 }
 
+/** See interface above */
 HTMLElement.prototype._addEventListener = HTMLElement.prototype.addEventListener;
+/** See interface above */
 HTMLElement.prototype.addEventListener = function(name: string, proc: (e: Event) => void) {
     if (!this.listeners) this.listeners = new Map
     if (!this.listeners.get(name)) this.listeners.set(name, []);
@@ -130,6 +114,7 @@ HTMLElement.prototype.addEventListener = function(name: string, proc: (e: Event)
     this.listeners.get(name)!.push(proc);
     return this._addEventListener(name, proc);
 };
+/** See interface above */
 HTMLElement.prototype.getListeners = function() {
     return this.listeners;
 }
@@ -199,7 +184,6 @@ function parseDate(str: string): Date {
     return date;
 }
 
-/* @anchor{to_local} */
 /**
  * Returns a Date object (which may be new) which is guaranteed in local time.
  * This means that the `utc` field is `false`, and that
@@ -245,7 +229,21 @@ function makeElement(name: string, attr = {}, actualAttr = {}): HTMLElement {
     return element;
 }
 
-/** TODO document me */
+/**
+   Round clock time to closest interval.
+
+   @param time
+   The desired clock-time, in decimal time. So 12:30 would be given as 12.30.
+
+   @param fraction
+   The time interval to round to. To round to nearest half hour, give 0.5.
+
+   @example
+   ```js
+   > round_time(10.1, 15/60)
+   10
+   ```
+   */
 function round_time(time: number, fraction: number): number {
     let scale = 1 / fraction;
     return Math.round(time * scale) / scale;
@@ -286,6 +284,16 @@ function asList<T>(thing: Array<T> | T): Array<T> {
 }
 
 
+/**
+   Smartly converts a value into a boolean.
+
+   Booleans are returned as if,
+
+   Strings are parsed, mapping `'true'` onto `true`, `'false'` onto `false`,
+   empty strings onto `false`, and anything else onto `true`.
+
+   Anything else is left onto JavaScript to coerce a boolean.
+   */
 function to_boolean(value: any): boolean {
     switch (typeof value) {
         case 'string':
@@ -309,13 +317,43 @@ function datepad(thing: number | string, width = 2): string {
     return (thing + "").padStart(width, "0");
 }
 
-/** Equivalent to `date.format(str)` */
-function format_date(date: Date, str: string): string {
+/**
+   Format a date into a string.
+
+   @param date
+   The datetime to format
+
+   @param format
+   How the date should be converted into a string.
+
+   The format is similar to `strftime`, but with tilde (`~`) characters
+   instead of percent signs, to match how Scheme does it. Valid format
+   specifiers are:
+
+   | Fmt  |               Output             | Width¹ |
+   |------|----------------------------------|--------|
+   | `~~` | Literal '~'                      |        |
+   | `~Y` | Year                             | 4      |
+   | `~m` | Month number                     | 2      |
+   | `~d` | Day of month                     | 2      |
+   | `~H` | Hour                             | 2      |
+   | `~M` | Minute                           | 2      |
+   | `~S` | Second                           | 2      |
+   | `~Z` | 'Z' if date is UTC, otherwise '' |        |
+   | `~L` | Converts date to local time²     |        |
+
+   - ¹ These fields will be left padded with zeroes to that width
+   - ² This forces the output to be in local time, possibly converting
+     timezone if needed. It then outputs nothing.
+     See {@link to_local `to_local`} for details.
+
+*/
+function format_date(date: Date, format: string): string {
     let fmtmode = false;
     let outstr = "";
-    for (var i = 0; i < str.length; i++) {
+    for (var i = 0; i < format.length; i++) {
         if (fmtmode) {
-            switch (str[i]) {
+            switch (format[i]) {
                 /* Moves the date into local time. */
                 case 'L': date = to_local(date); break;
                 case 'Y': outstr += datepad(date.getFullYear(), 4); break;
@@ -327,10 +365,10 @@ function format_date(date: Date, str: string): string {
                 case 'Z': if (date.utc) outstr += 'Z'; break;
             }
             fmtmode = false;
-        } else if (str[i] == '~') {
+        } else if (format[i] == '~') {
             fmtmode = true;
         } else {
-            outstr += str[i];
+            outstr += format[i];
         }
     }
     return outstr;

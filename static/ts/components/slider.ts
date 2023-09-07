@@ -1,24 +1,58 @@
-export { SliderInput }
+/**
+   <slider-input />
+
+   A Web Component implementing a slider with a corresponding number input.
+
+   TODO rename this file
+
+   ### Parameters
+
+   All of these are optional, see {@linkcode dflt} for defaults.
+
+   #### min
+   Minimum allowed value.
+
+   #### max
+   Maximum allowed value.
+
+   #### step
+   How large each step of the slider/number box should be.
+
+   @module
+*/
+
+export { SliderInput, Attribute, dflt }
 
 import { makeElement } from '../lib'
 
+/** Defalut values for all attributes, if not given */
 const dflt = {
     min: 0,
     max: 100,
     step: 1,
 }
 
+/** Valid attributes for SliderInput */
 type Attribute = 'min' | 'max' | 'step'
 
+/**
+   Component displaying an input slider, together with a corresponding numerical
+   input
+*/
 class SliderInput extends HTMLElement {
 
     /* value a string since javascript kind of expects that */
-    #value = "0";
-    min = 0;
-    max = 100;
-    step = 1;
+    #value = "" + dflt.min
+    /** Minimum allowed value */
+    min = dflt.min
+    /** Maximum allowed value */
+    max = dflt.max
+    /** How large each step should be */
+    step = dflt.step
 
+    /** The HTML slider component */
     readonly slider: HTMLInputElement;
+    /** The HTML number input component */
     readonly textIn: HTMLInputElement;
 
     constructor(min?: number, max?: number, step?: number, value?: number) {
@@ -48,8 +82,8 @@ class SliderInput extends HTMLElement {
             value: this.value,
         }) as HTMLInputElement
 
-        this.slider.addEventListener('input', e => this.propagate(e));
-        this.textIn.addEventListener('input', e => this.propagate(e));
+        this.slider.addEventListener('input', e => this.#propagate(e));
+        this.textIn.addEventListener('input', e => this.#propagate(e));
 
         /* MUST be after sub components are bound */
         this.value = "" + (value || this.getAttribute('value') || defaultValue);
@@ -59,7 +93,7 @@ class SliderInput extends HTMLElement {
         this.replaceChildren(this.slider, this.textIn);
     }
 
-
+    /** ['min', 'max', 'step'] */
     static get observedAttributes(): Attribute[] {
         return ['min', 'max', 'step']
     }
@@ -75,19 +109,35 @@ class SliderInput extends HTMLElement {
         this[name] = parseFloat(to || "" + dflt[name])
     }
 
-    propagate(e: Event) {
+    /**
+       Helper for updating the value attribute
+
+       Event listeners are bound on both the input elements, which both simply
+       call this. This procedure then updates the classes value field.
+
+       TODO `oninput`?
+    */
+    #propagate(e: Event) {
         this.value = (e.target as HTMLInputElement).value;
         if (e instanceof InputEvent && this.oninput) {
             this.oninput(e);
         }
     }
 
+    /**
+       Set a new numerical value.
+
+       A number not possible due to the current `min`, `max`, and `step`
+       properties can be set and will work, the slider will however not
+       properly show it, but rather the closest value it can display.
+     */
     set value(value: string) {
         this.slider.value = value;
         this.textIn.value = value;
         this.#value = value;
     }
 
+    /** Get the current numerical value */
     get value(): string {
         return this.#value;
     }

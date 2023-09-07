@@ -30,7 +30,7 @@ let all_types = [
 ]
 
 
-/* The union of all elements in `all_types`. */
+/** The union of all elements in `all_types`. */
 type ical_type
     = 'text'
     | 'uri'
@@ -104,6 +104,12 @@ let valid_fields: Map<string, string[]> = new Map([
 
 valid_fields.set('DAYLIGHT', valid_fields.get('STANDARD')!);
 
+/**
+   All registered property types for VComponents.
+
+   Note that only some of these are valid for each type of component (VCALENDAR,
+   VEVENT, ...), and that they all support both iana and `x-` extensions.
+ */
 type known_ical_types
     = 'ACTION'
     | 'ATTACH'
@@ -217,10 +223,7 @@ let valid_input_types: Map<string, Array<ical_type | ical_type[]>> =
 // type JCalLine {
 // }
 
-/** Alias of (`'vevent' | string`). */
-type tagname = 'vevent' | string
-
-/** Alias of `string`. */
+/** The UID of a VEvent, to make declarations clearer.  */
 type uid = string
 
 /* TODO is this type correct?
@@ -240,17 +243,40 @@ type JCalProperty
     | [string, Record<string, any>, ical_type, ...any[]]
 
 /**
- * A record consisting of a `tagname`, a list of
- * `JCalProperties`, and a list of other `JCal` objects.
+   Base type for JCal documents.
+
+   Each VComponent in a JCal document is of this form.
+
+   - The first element is the components type
+     ('vevent', 'vcalendar', ...), in all lower case
+   - The second element is is all properties directly
+     on the component.
+   - The third element is a list of all children.
 */
-type JCal = [tagname, JCalProperty[], JCal[]]
+type JCal = [string, JCalProperty[], JCal[]]
 
 /** The xml namespace name for xcalendar */
 const xcal = "urn:ietf:params:xml:ns:icalendar-2.0";
 
+/**
+   An entry into a changelog.
+
+   This is primarily used by VEvent, to track what has happened during a
+   session.
+ */
 interface ChangeLogEntry {
+    /**
+       Type of change
+
+       'property' is used for changes to properties.
+
+       'calendar' is used when the containing calendar of a VEVENT is changed
+    */
     type: 'calendar' | 'property',
+    /** The name of the filed changed */
     name: string,
+    /** The previous value, `null` if just created */
     from: string | null,
+    /** The new value, `null` if removed */
     to: string | null,
 }

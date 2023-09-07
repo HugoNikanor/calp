@@ -1,13 +1,13 @@
 /**
  * Formatting procedures used by some components.
  *
- * // TODO can we have a backref of every node containing {@link formatters-proc}?
+ * // TODO can we have a backref of every node containing `{@link formatters-proc}`?
  *
- * {@label formatters}
+ * {@label FORMATTERS}
  *
  * Each procedure takes three arguments. The HTML-element which contents
  * should be replaced, the VEvent containing all data, and the target
- * value, as returned by {@link VEvent.getProperty}.
+ * value, as returned by {@linkcode vevent.VEvent.getProperty}.
  *
  * Also bound to the window object.
  *

@@ -1,5 +1,15 @@
 The frontend code has its entry-point in `script.ts`.
 
+Much of this code assumes prior knowledge of the iCalendar standard (RFC
+5545). Besides that, the term "VComponent" is used to refer to any Calendar
+Component as specified in that RFC under 3.6.
+
+## Data Flow
+
+TODO document how data gets from the server to us, and from us to the server.
+
+A large part of this is how much we convert between serialization formats.
+
 ## web components
 
 All elements are initialized in components.ts

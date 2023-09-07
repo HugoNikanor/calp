@@ -58,9 +58,12 @@ export { TabGroupElement }
 */
 class TabGroupElement extends ComponentVEvent {
 
+    /** The container holding all the tabLabels */
     readonly menu: HTMLElement;
 
+    /** Contents of each tab */
     tabs: HTMLElement[] = [];
+    /** Label element of each tab */
     tabLabels: HTMLElement[] = [];
 
     constructor(uid?: string) {
@@ -166,7 +169,7 @@ class TabGroupElement extends ComponentVEvent {
         this.tabLabels.push(tabLabel);
         this.menu.appendChild(tabLabel);
 
-        tabLabel.addEventListener('click', () => this.tabClickedCallback(tabLabel));
+        tabLabel.addEventListener('click', () => this.#tabClickedCallback(tabLabel));
 
         this.style.setProperty('--tabcount', '' + this.tabs.length);
     }
@@ -199,7 +202,7 @@ class TabGroupElement extends ComponentVEvent {
     }
 
     /* TODO replace querySelectors here with our already saved references */
-    tabClickedCallback(tab: Element) {
+    #tabClickedCallback(tab: Element) {
 
         /* hide all tab panels */
         for (let tabcontent of this.querySelectorAll('[role="tabpanel"]')) {
@@ -218,7 +221,7 @@ class TabGroupElement extends ComponentVEvent {
     }
 
 
-    /* returns our rrule tab if we have one */
+    /** Return our rrule tab if we have one */
     has_rrule_tab(): Element | false {
         for (let child of this.children) {
             if (child.firstChild! instanceof EditRRule) {

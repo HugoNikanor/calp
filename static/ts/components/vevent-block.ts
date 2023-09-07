@@ -16,10 +16,16 @@ import { VEvent } from '../vevent'
 import { parseDate, to_local } from '../lib'
 
 
-/* <vevent-block />
+/**
+   A graphical block in the inline view.
 
-   A grahpical block in the week view.
-*/
+   The back-end links what should become these to elements in the sidebar
+   containing extra info, jumping between them using fragment links.
+   That functionality is removed when we replace the non-js fallback children of
+   these elements, but we instead link it to a
+   {@linkcode components/popup-element.PopupElement}
+   containing the detailed information, along with editing controls and more.
+ */
 class ComponentBlock extends ComponentVEvent {
     constructor(uid?: string) {
         super(uid);

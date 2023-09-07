@@ -15,7 +15,7 @@ __ESBUILD_FLAGS = --log-level=$(ESBUILD_LOGLEVEL) \
 				  --sourcemap --bundle --outdir=$(CURDIR)/out \
 				  $(ESBUILD_FLAGS)
 
-export PATH := $(shell npm bin):$(PATH)
+export PATH := $(CURDIR)/node_modules/.bin/:$(PATH)
 
 all: $(TARGETS)
 
@@ -42,5 +42,13 @@ clean:
 out/%.css: scss/%.scss
 	scss -E UTF-8 $(WATCH) -I. $< $@
 
+# The grep expression is to supress irrelevant warning messages.
+# - __type since the extensions to base classes propagate to many
+#   events, but typedoc only documents them if in the entry point
+# - [.]# since it's sometimes sensible to not document
+#   implementation details.
+# - connectedCallback, attributeChangedCallabck: These are part
+#   of the standard API for Web Components, and usually have nothing
+#   interesting to note.
 doc:
-	typedoc --logLevel Verbose --excludeExternals
+	typedoc --excludeExternals |& grep -vE '(__type|[.]#|connectedCallback|attributeChangedCallback)'

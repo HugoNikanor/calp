@@ -10,6 +10,8 @@
   *
   * TODO shouldn't these be defined with the rest of the components?
   *
+  * TODO why isn't Timebar and SmallCellHighlight also Web Components?
+  *
   * @module
   */
 
@@ -35,6 +37,8 @@ class Timebar extends Clock {
 
     // start_time: Date
     // end_time: Date
+
+    /** The bar to update */
     bar_object: HTMLElement | null
 
     constructor(/*start_time: Date, end_time: Date*/) {
@@ -74,7 +78,12 @@ class Timebar extends Clock {
 */
 class SmallcalCellHighlight extends Clock {
 
+    /** The calendar which a cell should be highlighted in */
     small_cal: HTMLElement
+    /**
+       The currently highlighted cell, or `null` if no cell should be
+       should be highlighted (such as if a non-current month is selected
+    */
     current_cell: HTMLElement | null
 
     /**
@@ -105,8 +114,16 @@ class SmallcalCellHighlight extends Clock {
 
 /* -------------------------------------------------- */
 
+/**
+   Base class for custom HTML elements which wants to be updated for a human
+   timescale.
+
+   When creating, the attribute `interval` can be given, which specifies (in
+   seconds) how often the component should be updated.
+*/
 class ClockElement extends HTMLElement {
 
+    /** Javascript timer id. Used if the timer needs to be canceled */
     timer_id: number
 
     constructor() {
@@ -125,21 +142,24 @@ class ClockElement extends HTMLElement {
         this.update(new Date)
     }
 
-    static get observedAttributes() {
-        return ['timer_id']
-    }
-
+    /**
+       Method which is called each "tick" (see interval)
+       @param date
+         The current timestamp when the function is called.
+     */
     update(_: Date) { /* noop */ }
 }
 
 
 /**
- * Updates the ``Today'' link in the side panel to point directly to the
- * correct web-address. The link works without JavaScript, but then
- * requires a redirect from the server.
- *
- * All actual updating logic is already abstracted away. It would be
- * desirable if something more was done with this.
+   A "button" which always points to the link "~Y-~m-~d.html".
+
+   This class is bound to the web component <today-button />
+
+   In the backend code, a `/today` endpoint exists. That however requires that
+   we ask the server for the correct URL, and follow a 300 (series) redirect.
+
+   Since the URL:s are stable, it's possible to jump directly to the given page.
  */
 class TodayButton extends ClockElement {
     a: HTMLAnchorElement;
@@ -162,12 +182,26 @@ class TodayButton extends ClockElement {
 }
 
 
+/**
+   A component which displays the current time
+
+   This class is bound to the web component <current-time />
+
+   It currently is hard-coded to display time on the format ~H:~M:~S.
+*/
 class CurrentTime extends ClockElement {
     update(now: Date) {
         this.textContent = now.format('~H:~M:~S')
     }
 }
 
+/**
+   Create Web Components mentioned on this page.
+
+   MUST be called early on in the execution.
+
+   TODO this should be merged with other web component declarations.
+*/
 function initialize_clock_components() {
     customElements.define('today-button', TodayButton)
     customElements.define('current-time', CurrentTime)

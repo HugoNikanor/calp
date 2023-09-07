@@ -1,40 +1,51 @@
+/**
+   `<date-jump />`
+
+   @category Web Components
+   @mergeTarget components
+   @module
+*/
+
 export { DateJump }
 
-/* Replace backend-driven [today] link with frontend, with one that
+/** Replace backend-driven [today] link with frontend, with one that
     gets correctly set in the frontend. Similarly, update the go to
     specific date button into a link which updates wheneven the date
     form updates.
+
+    TODO is this comment correct? We somehow contain an input element also.
 */
 class DateJump extends HTMLElement {
 
-    readonly golink: HTMLAnchorElement;
-    readonly input: HTMLInputElement;
+    readonly #golink: HTMLAnchorElement;
+    readonly #input: HTMLInputElement;
 
     constructor() {
         super();
 
-        this.golink = document.createElement('a')
-        this.golink.classList.add('btn');
-        this.golink.textContent = "➔"
-        this.input = document.createElement('input')
-        this.input.type = 'date';
+        this.#golink = document.createElement('a')
+        this.#golink.classList.add('btn');
+        this.#golink.textContent = "➔"
+        this.#input = document.createElement('input')
+        this.#input.type = 'date';
     }
 
+    /** Sets the link to NOW upon mounting */
     connectedCallback() {
 
         /* Form is just here so the css works out */
         let form = document.createElement('form');
-        form.replaceChildren(this.input, this.golink);
+        form.replaceChildren(this.#input, this.#golink);
         this.replaceChildren(form);
 
-        this.input.onchange = () => {
-            let date = this.input.valueAsDate!.format('~Y-~m-~d');
-            this.golink.href = `${date}.html`
+        this.#input.onchange = () => {
+            let date = this.#input.valueAsDate!.format('~Y-~m-~d');
+            this.#golink.href = `${date}.html`
         }
 
         let now = (new Date).format("~Y-~m-~d")
-        this.input.value = now;
+        this.#input.value = now;
         /* onchange isn't triggered by manually setting the value */
-        this.golink.href = `${now}.html`
+        this.#golink.href = `${now}.html`
     }
 }

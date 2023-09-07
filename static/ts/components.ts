@@ -22,6 +22,19 @@ import { DateJump } from './components/date-jump'
 
 export { initialize_components }
 
+/**
+   Create web components from all our components.
+
+   The reason each components module doesn't simply initialize its own component
+   is due to some components needing to be initialized AFTER some global
+   variables (see inline comments).
+
+   @TODO
+   Fix the initialization order dependency
+
+   @TODO
+   or otherwise have a static field on each component specifying it's desired name.
+   */
 function initialize_components() {
     /* These MUST be created AFTER vcal_objcets and event_calendar_mapping are
     inistialized, since their constructors assume that that piece of global

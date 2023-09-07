@@ -6,40 +6,69 @@ import { ComponentBlock } from './components/vevent-block'
 import { round_time, parseDate } from './lib'
 import { ical_type } from './types'
 
+/**
+   Class managing the state while creating events.
+
+   This is mainly for, when in the UI, the user starts to create events by
+   dragging on the calendar.
+
+*/
 class EventCreator {
 
-    /* Event which we are trying to create */
+    /** Event which we are trying to create */
     ev?: VEvent
 
-    /* Graphical block for event. Only here so we can find its siblings,
-       and update pointer events accordingly */
+    /** Graphical block for event. Only here so we can find its siblings, and
+       update pointer events accordingly */
     event?: Element
 
-    event_start: { x: number, y: number } = { x: NaN, y: NaN }
-    down_on_event: boolean = false
-    timeStart: number = 0
+    /**
+       Where the mouse down for the event started.
 
+       This is here to check if the user is actually dragging, or just randomly
+       clicking on the background with a shaky hand.
+
+       There are some constants in the code for what a shaky hand means
+       (currently less than 10 pixels in X, or 5 in Y)
+       */
+    #event_start: { x: number, y: number } = { x: NaN, y: NaN }
+    #down_on_event: boolean = false
+    #time_start: number = 0
+
+    /**
+       Event handler for `mosedown` events.
+    */
     create_event_down(intended_target: HTMLElement): (e: MouseEvent) => any {
         let that = this;
         return function(e: MouseEvent) {
             /* Only trigger event creation stuff on actuall events background,
                NOT on its children */
-            that.down_on_event = false;
+            that.#down_on_event = false;
             if (e.target != intended_target) return;
-            that.down_on_event = true;
+            that.#down_on_event = true;
 
-            that.event_start.x = e.clientX;
-            that.event_start.y = e.clientY;
+            that.#event_start.x = e.clientX;
+            that.#event_start.y = e.clientY;
         }
     }
 
-    /*
-      round_to: what start and end times should round to when dragging, in fractionsb
-      of the width of the containing container.
+    /**
+       Event handler for `mousemove` events.
 
-      TODO limit this to only continue when on the intended event_container.
+       @param pos_in
+       TODO
 
-      (event → [0, 1)), 𝐑, bool → event → ()
+       @param round_to
+       what start and end times should round to when dragging, in fractionsb of
+       the width of the containing container.
+
+       @param wide_element
+       Does the element expect to grow horizontally (`true`) or vertically
+       (`false`).
+
+       TODO limit this to only continue when on the intended event_container.
+
+       (event → [0, 1)), 𝐑, bool → event → ()
      */
     create_event_move(
         pos_in: ((c: HTMLElement, e: MouseEvent) => number),
@@ -48,13 +77,13 @@ class EventCreator {
     ): ((e: MouseEvent) => void) {
         let that = this;
         return function(this: HTMLElement, e: MouseEvent) {
-            if (e.buttons != 1 || !that.down_on_event) return;
+            if (e.buttons != 1 || !that.#down_on_event) return;
 
             /* Create event when we start moving the mouse. */
             if (!that.ev) {
                 /* Small deadzone so tiny click and drags aren't registered */
-                if (Math.abs(that.event_start.x - e.clientX) < 10
-                    && Math.abs(that.event_start.y - e.clientY) < 5) { return; }
+                if (Math.abs(that.#event_start.x - e.clientX) < 10
+                    && Math.abs(that.#event_start.y - e.clientY) < 5) { return; }
 
                 /* only allow start of dragging on background */
                 if (e.target !== this) return;
@@ -112,7 +141,7 @@ class EventCreator {
                     (e as HTMLElement).style.pointerEvents = "none";
                 }
 
-                that.timeStart = round_time(pos_in(this, e), round_to);
+                that.#time_start = round_time(pos_in(this, e), round_to);
             }
 
             let time = round_time(pos_in(this, e), round_to);
@@ -136,8 +165,8 @@ class EventCreator {
             /* ms */
             let duration = container_end.valueOf() - container_start.valueOf();
 
-            let start_in_duration = duration * Math.min(that.timeStart, time);
-            let end_in_duration = duration * Math.max(that.timeStart, time);
+            let start_in_duration = duration * Math.min(that.#time_start, time);
+            let end_in_duration = duration * Math.max(that.#time_start, time);
 
             /* Notice that these are converted to UTC, since the intervals are given
                in utc, and I only really care about local time (which a specific local
@@ -158,6 +187,12 @@ class EventCreator {
         }
     }
 
+    /**
+       Event handler for `mouseup` events.
+
+       TODO callback?
+       TODO return value?
+    */
     create_event_finisher(callback: ((ev: VEvent) => void)) {
         let that = this;
         return function create_event_up(_: MouseEvent) {

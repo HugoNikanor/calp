@@ -1,3 +1,10 @@
+/**
+   Operations for working with jCal.
+
+   jCal is defined in RFC 7265, and is a JSON mapping of the iCalendar standard.
+*/
+
+
 export { jcal_to_xcal }
 
 import { xcal, ical_type, JCalProperty, JCal } from './types'
@@ -161,6 +168,17 @@ function jcal_property_to_xcal_property(
 }
 
 
+/**
+   Convert a jCal document into an xCal document.
+
+   @param jcals A list of jcal components. Most iCal formats supports multiple
+   "root" levels components. jCal might do it, which is why this parameter is
+   multi-valued.
+
+   @return A document note which is the root of an xCal document.
+   The root will be an icalendar tag, with each child getting its data from each
+   element of the input.
+   */
 function jcal_to_xcal(...jcals: JCal[]): Document {
     let doc = document.implementation.createDocument(xcal, 'icalendar');
     for (let jcal of jcals) {
@@ -169,6 +187,18 @@ function jcal_to_xcal(...jcals: JCal[]): Document {
     return doc;
 }
 
+/**
+   Convert a single jCal entry into a single xCal entry.
+
+   @param doc
+   A Document element in the xcal namespace.
+
+   @param jcal
+   The object to convert
+
+   @return
+   A 1-to-1 mapping of the jCal object as xCal.
+   */
 function jcal_to_xcal_inner(doc: Document, jcal: JCal) {
     let [tagname, properties, components] = jcal;
 

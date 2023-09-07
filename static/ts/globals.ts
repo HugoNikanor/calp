@@ -76,6 +76,10 @@ window.addNewEvent = () => {
     popup.maximize();
 }
 
+/**
+   Find the calendar block in the inline view containing the VEvent identified
+   by the uid
+*/
 function find_block(uid: uid): ComponentBlock | null {
     let obj = vcal_objects.get(uid)
     if (obj === undefined) {

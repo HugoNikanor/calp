@@ -27,7 +27,9 @@ import { makeElement, parseDate } from '../lib'
  */
 class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
 
+    /** Our time input element */
     readonly time: HTMLInputElement;
+    /** Our date input element */
     readonly date: HTMLInputElement;
 
     constructor() {
@@ -43,22 +45,30 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         }) as HTMLInputElement
     }
 
+    /**
+       We set our children first when mounted.
+
+       This can be in the constructor for chromium, but NOT firefox...
+
+       - Vivaldi 4.3.2439.63 stable
+       - Mozilla Firefox 94.0.1
+    */
     connectedCallback() {
-        /* This can be in the constructor for chromium, but NOT firefox...
-           Vivaldi 4.3.2439.63 stable
-           Mozilla Firefox 94.0.1
-        */
-        /*
- https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes#boolean_attributes
- https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttribute
-        */
         this.replaceChildren(this.date, this.time)
     }
 
+    /**
+       Attributes which we want notifications when they are change.
+
+       Part of the Web Component API
+
+       - `dateonly`
+    */
     static get observedAttributes() {
         return ['dateonly']
     }
 
+    /** Part of the Web Component API */
     attributeChangedCallback(name: string, _: string | null, to: string | null): void {
         switch (name) {
             case 'dateonly':
@@ -84,6 +94,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         return this.hasAttribute('dateonly');
     }
 
+    /** See getter */
     set dateonly(b: boolean) {
         if (b) {
             this.setAttribute('dateonly', "");
@@ -92,6 +103,7 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         }
     }
 
+    /** See getter */
     set value(date: Date) {
         let [d, t] = date.format("~L~Y-~m-~dT~H:~M").split('T');
         this.date.value = d;
@@ -124,6 +136,13 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         }
     }
 
+    /**
+       Set the selected date.
+
+       @param new_value
+       If given a date, set the input to that date.
+       If given a string, parse it as an ISO-8601 formatted datetime.
+    */
     set stringValue(new_value: Date | string) {
         let date, time, dateonly = false;
         if (new_value instanceof Date) {
@@ -138,6 +157,9 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         this.time.value = time;
     }
 
+    /**
+       Adds an event listener to both the date and time input.
+    */
     addEventListener(type: string, proc: ((e: Event) => void)) {
         if (type != 'input') throw "Only input supported";
 

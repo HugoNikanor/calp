@@ -90,6 +90,7 @@ class PopupElement extends ComponentVEvent {
         this.replaceChildren(body);
     }
 
+    /** ['visible'] */
     static get observedAttributes() {
         return ['visible'];
     }
@@ -99,7 +100,7 @@ class PopupElement extends ComponentVEvent {
             case 'visible':
                 if (newValue !== null)
                     /* Only run resize code when showing the popup */
-                    this.onVisibilityChange()
+                    this.#onVisibilityChange()
                 break;
         }
     }
@@ -114,6 +115,7 @@ class PopupElement extends ComponentVEvent {
         return this.hasAttribute('visible');
     }
 
+    /** Set the visibility status of the component. */
     set visible(isVisible: boolean) {
         if (isVisible) {
             this.setAttribute('visible', 'visible');
@@ -122,7 +124,7 @@ class PopupElement extends ComponentVEvent {
         }
     }
 
-    private onVisibilityChange() {
+    #onVisibilityChange() {
         console.log('here');
 
         /* TODO better way to find root */

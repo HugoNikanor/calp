@@ -2,13 +2,20 @@ import { ical_type, valid_input_types, JCal, JCalProperty, ChangeLogEntry } from
 import { parseDate } from './lib'
 
 export {
-    VEvent, xml_to_vcal,
     RecurrenceRule,
+    Redrawable,
+    VEvent,
+    VEventValue,
+    freqType,
     isRedrawable,
+    list_values,
+    weekday,
+    xml_to_vcal,
 }
 
 /** Something which can be redrawn */
 interface Redrawable extends HTMLElement {
+    /** Method which will be called upon a redraw request. */
     redraw(data: VEvent): void
 }
 
@@ -17,14 +24,27 @@ function isRedrawable(x: HTMLElement): x is Redrawable {
     return 'redraw' in x
 }
 
+/**
+   A single value from a vcomponent.
 
+   This is basically a type tagged tuple, with an optional map of parameters.
+*/
 class VEventValue {
 
+    /** The value type of the contained value. */
     type: ical_type
 
-    /* value should NEVER be a list, since multi-valued properties should
-       be split into multiple VEventValue objects! */
+    /**
+       The actual value.
+
+       Should NEVER be a list, since those are coded as
+       lists of `VEventValue`:s in `Vevent.properties`
+       */
     value: any
+
+    /**
+       VComponent parameters attached to the value.
+     */
     parameters: Map<string, any>
 
     constructor(type: ical_type, value: any, parameters = new Map) {
@@ -82,34 +102,46 @@ class VEventValue {
 }
 
 /* TODO maybe ... */
-class VEventDuration extends VEventValue {
-}
+// class VEventDuration extends VEventValue {
+// }
 
+/** VComponent properties which contain lists */
 type list_values
     = 'categories' | 'resources' | 'freebusy' | 'exdate' | 'rdate'
     | 'CATEGORIES' | 'RESOURCES' | 'FREEBUSY' | 'EXDATE' | 'RDATE';
 
-/*
-  Abstract representation of a calendar event (or similar).
-All "live" calendar data in the frontend should live in an object of this type.
- */
 /**
- * Component for a single instance of a calendar event. Almost all data
- * access should go through `getProperty` and `setProperty`,
- * with the exception of the current calendar (which is accessed directly
- * through `calendar`). Almost all changes through these interfaces
- * are logged, and can be viewed through `changelog`.
+   This class is the data container for the underlying VEVENT objects in the
+   backend calendar files. They also keep track on all Web Components which
+   wants to render part of the event.
+
+   Note that despite the name this component isn't limited to VEVENT:s, but is
+   used for all VComponents in the tree. This means that even calendars and
+   alarms can be instances of this class.
+
+   Property access is done through `getProperty` and `setProperty` (properties
+   are things such as 'SUMMARY', 'DTSTART', ...)
  */
 class VEvent {
 
-    /* Calendar properties */
+    /**
+       Properties bound directly on this object.
+
+       These are things such as 'DTSTART', 'SUMMARY', ...
+    */
     private properties: Map<string, VEventValue | VEventValue[]>
 
-    /* Children (such as alarms for events) */
+    /**
+       Children to this component.
+
+       Valid children depends on the type. For example, for calendars this is
+       primarily events, while for events it's alarm components
+       */
     components: VEvent[]
 
-    /* HTMLElements which wants to be redrawn when this object changes.
-       Elements can be registered with the @code{register} method.
+    /**
+       HTMLElements which wants to be redrawn when this object changes.
+       Elements can be registered with the `register` method.
      */
     registered: Redrawable[]
 
@@ -122,13 +154,19 @@ class VEvent {
      */
     #changelog: ChangeLogEntry[] = []
 
-    /* Iterator instead of direct return to ensure the receiver doesn't
-       modify the array */
-    /** Public (read only) interface to changelog. */
+    /**
+       The changelog for this component.
+
+       An iterator is returned rather than an array, to ensure modifications are
+       impossible.
+    */
     get changelog(): IterableIterator<[number, ChangeLogEntry]> {
         return this.#changelog.entries();
     }
 
+    /**
+       Add an entry to the changelog.
+    */
     addlog(entry: ChangeLogEntry) {
         let len = this.#changelog.length
         let last = this.#changelog[len - 1]
@@ -153,6 +191,17 @@ class VEvent {
         }
     }
 
+    /**
+       Construct a new Component.
+
+       @param properties
+       Initial properties for the component
+
+       @param components
+       Initial children for the component
+
+       TODO where is the type of the component registered?
+       */
     constructor(
         properties: Map<string, VEventValue | VEventValue[]> = new Map(),
         components: VEvent[] = []
@@ -202,7 +251,7 @@ class VEvent {
         return this.properties.keys()
     }
 
-    private setPropertyInternal(key: string, value: any, type?: ical_type) {
+    #setPropertyInternal(key: string, value: any, type?: ical_type) {
         function resolve_type(key: string, type?: ical_type): ical_type {
             if (type) {
                 return type;
@@ -273,7 +322,7 @@ class VEvent {
      * objects, notifying them of the change.
      */
     setProperty(key: string, value: any, type?: ical_type) {
-        this.setPropertyInternal(key, value, type);
+        this.#setPropertyInternal(key, value, type);
 
         for (let el of this.registered) {
             el.redraw(this);
@@ -286,7 +335,7 @@ class VEvent {
      */
     setProperties(pairs: [string, any, ical_type?][]) {
         for (let pair of pairs) {
-            this.setPropertyInternal(...pair);
+            this.#setPropertyInternal(...pair);
         }
         for (let el of this.registered) {
             el.redraw(this);
@@ -307,6 +356,11 @@ class VEvent {
         }
     }
 
+    /**
+       Get the name of the containing calendar for this component.
+
+       This is only valid for VEVENT components (I think)
+    */
     get calendar(): string | null {
         return this.#calendar;
     }
@@ -354,6 +408,7 @@ class VEvent {
     }
 }
 
+/** Helper procedure when converting xml to vcal */
 function make_vevent_value(value_tag: Element): VEventValue {
     /* TODO parameters */
     return new VEventValue(
@@ -367,23 +422,46 @@ function make_vevent_value(value_tag: Element): VEventValue {
 
 
 
+/** Different frequency internals for recurrence rules. */
 type freqType = 'SECONDLY' | 'MINUTELY' | 'HOURLY' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
+
+/** Alternatives for when a week start, for recurrence rules */
 type weekday = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU'
 
+/**
+   A recurrence rule.
+
+   The basic semantics of this class is borrowed from RFC 5545, and maps 1-to-1
+   on those instances. See individual fields for mappings.
+   */
 class RecurrenceRule {
+    /** The type of frequency of this rule */
     freq?: freqType
+    /** Final instance of this rule. */
     until?: Date
+    /** Maximum number of recurrences for this rule */
     count?: number
+    /** The multiplier to `freq` */
     interval?: number
+    /** Which seconds are relevant for this rule */
     bysecond?: number[]
+    /** Which minutes are relevant for this rule */
     byminute?: number[]
+    /** Which hours are relevant for this rule */
     byhour?: number[]
+    /** Which weekday or weekday offsets are relevant for this rule */
     byday?: (weekday | [number, weekday])[]
+    /** Which month days are relevant for this rule */
     bymonthday?: number[]
+    /** Which year days are relevant for this rule */
     byyearday?: number[]
+    /** Which week number are relevant for this rule */
     byweekno?: number[]
+    /** Which months relevant for this rule (interval 1-12) */
     bymonth?: number[]
+    /** TODO see the RFC */
     bysetpos?: number[]
+    /** Which day the week start, according to this rule */
     wkst?: weekday
 
     /** Converts ourselves to JCal data. */

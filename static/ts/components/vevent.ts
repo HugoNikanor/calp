@@ -16,9 +16,23 @@ export { ComponentVEvent }
 import { vcal_objects } from '../globals'
 import { VEvent } from '../vevent'
 
+/**
+   Base class for all Web Components closely linked with VEvents.
+
+   TODO document how templates work.
+
+   TODO document lifecycle, and how objects are fetched from the "global" store.
+ */
 abstract class ComponentVEvent extends HTMLElement {
 
+    /**
+       The template for this event.
+
+       TODO document how this is populate
+    */
     template?: HTMLTemplateElement
+
+    /** The UID of the VEvent we are tracking */
     uid: string
 
     /**
@@ -72,6 +86,11 @@ abstract class ComponentVEvent extends HTMLElement {
            should take care of that some other way */
     }
 
+    /**
+       Called when the component is mounted.
+
+       Redraws the target if the wanted object is available at that time.
+    */
     connectedCallback() {
         let uid = this.dataset.uid
         if (uid) {
