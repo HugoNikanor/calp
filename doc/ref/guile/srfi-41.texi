@@ -39,7 +39,7 @@ was found.
 @end defun
 
 
-@defun stream-remave pred stream
+@defun stream-remove pred stream
 Stream-filter, but with predicate negated.
 @end defun
 
