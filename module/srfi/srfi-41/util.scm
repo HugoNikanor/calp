@@ -5,6 +5,7 @@
   :use-module ((ice-9 sandbox) :select (call-with-time-limit))
   :use-module ((hnh util) :select (find-extreme))
   :export (stream-car+cdr
+           eager-stream-cons
            interleave-streams
            stream-insert
            filter-sorted-stream
