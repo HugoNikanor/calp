@@ -102,6 +102,9 @@
 (define (main . args)
   (define source-directory "module")
   (define doc-dir "doc/ref")
+  (define skip-files
+    '("module/graphvis.scm"
+      "module/glob.scm"))
 
   (define documented-symbols
     (concatenate
@@ -126,6 +129,8 @@
   (define defined-symbols
     (concatenate
      (for path in (all-modules-under-directory source-directory)
+          (when (member path skip-files)
+            (continue))
           (define components* (drop (path-split path) (length (path-split source-directory))))
           (define name
             (map string->symbol
