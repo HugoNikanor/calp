@@ -16,6 +16,15 @@
 
 ;; (define %help "")
 
+;;; All texinfo forms we want to capture.
+;;; For each of these, the following grammar holds:
+;;; - The first element should be a string of the texinfo tag to match
+;;; - The following arguments are
+;;;   - Any number of `_`, meaning an argument we don't care about
+;;;   - a single instance of the symbol `name`, which indicates where the name of
+;;;     the definition is stored.
+;;;   - An optional final argument `...`, which indicates that more may argumnets
+;;;     may follow.
 (define texinfo-definition-forms
  '(("deffn" _ name ...)
    ("deftp" _ name ...)
