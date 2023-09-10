@@ -39,15 +39,30 @@
   (awhen (memv 0 '(1 2 3 4 5))
          (cdr it)))
 
-(test-equal "for simple"
-  (iota 10)
-  (for x in (iota 10)
-       x))
+(test-group "for"
+ (test-equal "for simple"
+   (iota 10)
+   (for x in (iota 10)
+        x))
 
-(test-equal "for matching"
-  (iota 12)
-  (for (x c) in (zip (iota 12) (string->list "Hello, World"))
-       x))
+ (test-equal "for matching"
+   (iota 12)
+   (for (x c) in (zip (iota 12) (string->list "Hello, World"))
+        x))
+
+ (test-equal "for break"
+   'x
+   (for x in (iota 10)
+        (break 'x)
+        (test-assert "This should never happen" #f)))
+
+ (test-equal "for continue"
+   '(x #f 2)
+   (for x in (iota 3)
+        (case x
+          ((0) (continue 'x))
+          ((1) (continue))
+          (else x)))))
 
 (test-equal "procedure label"
   120

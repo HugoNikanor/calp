@@ -34,8 +34,8 @@ our extra specialized @var{when}}, but binds the return of
 @defmacx for (key ...) in collection body ...
 Syntactic sugar over @code{map}.
 @example
-for x in collection
-    body ...
+(for x in collection
+     body ...)
 @end example
 expands into
 @example
@@ -44,6 +44,17 @@ expands into
 
 If keys are a list, an match-lambda is used instead.
 @xref{Pattern Matching,,,guile}
+
+@defun break args ...
+Abandon the entire loop. Returing what was given to @code{break}.
+@end defun
+
+@defun continue [arg]
+Abandon the current iteration of the loop. If an argument is given,
+it's used as the result in the resulting list, otherwise @code{#f} is
+used.
+@end defun
+
 @end defmac
 
 
