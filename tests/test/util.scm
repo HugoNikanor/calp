@@ -280,8 +280,6 @@
 
   (test-equal "root" "/" (path-append ""))
 
-  (test-equal "No components" "" (path-append))
-
   (test-equal
       '("usr" "lib" "test")
     (path-split "usr/lib/test"))

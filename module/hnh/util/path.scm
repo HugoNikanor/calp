@@ -18,7 +18,7 @@
 
 ;; TODO remove intermidiate period components
 ;; e.x. /a/../b => /b
-(define (path-append . strings)
+(define (path-append path . paths)
   (fold (lambda (s done)
           (string-append
            done
@@ -34,11 +34,9 @@
         ;; the path absolute. This isn't exactly correct if we have
         ;; drive letters, but on those system the user should make
         ;; sure that the first component of the path is non-empty.
-        (let ((s (car strings)))
-          (if (string-null? s)
-              // s))
-        (cdr strings)
-        ))
+        (if (string-null? path)
+            // path)
+        paths))
 
 (define (path-join lst) (apply path-append lst))
 

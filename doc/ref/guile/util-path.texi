@@ -8,7 +8,7 @@ Provided by the module @code{(hnh util path)}.
 Alias of @code{absolute-file-name?} from Guile.
 @end defun
 
-@defun path-append strings ...
+@defun path-append path paths ...
 Joins all strings into a path, squeezing duplicated delimiters, but
 ensuring that all delimiters that are needed are there.
 
