@@ -1,3 +1,0 @@
-#!/bin/bash
-GUILE=${GUILE:-guile}
-exec "$GUILE" -e '(@ (calp main) main)' "$@"

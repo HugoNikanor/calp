@@ -1,11 +1,15 @@
 #!/usr/bin/bash
 # -*- mode: scheme; geiser-scheme-implementation: guile -*-
-here=$(dirname $(realpath $0))
+root=$(dirname "$(dirname "$(dirname "$(realpath "$0")")")")
 
-. "$(dirname "$(dirname "$here")")/env"
+eval "$(env __PRINT_ENVIRONMENT=1 ${root}/calp)"
 
 exec $GUILE -e main -s "$0" -- "$@"
 !#
+
+(unless (getenv "CALP_TEST_ENVIRONMENT")
+  (format (current-error-port) "Not running in test environment, abandoning~%")
+  (exit 1))
 
 (use-modules (sxml simple)
              ((sxml xpath) :select (sxpath))

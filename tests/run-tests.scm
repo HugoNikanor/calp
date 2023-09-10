@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # -*- mode: scheme; geiser-scheme-implementation: guile -*-
 
-here=$(dirname $(realpath $0))
-
-. "$(dirname "$here")/env"
+root=$(dirname "$(dirname "$(realpath "$0")")")
+eval "$(env __PRINT_ENVIRONMENT=1 ${root}/calp)"
 
 if [ "$DEBUG" = '' ]; then
   exec $GUILE -s "$0" "$@"
@@ -11,6 +10,10 @@ else
   exec $GUILE --debug -s "$0" "$@"
 fi
 !#
+
+(unless (getenv "CALP_TEST_ENVIRONMENT")
+  (format (current-error-port) "Not running in test environment, abandoning~%")
+  (exit 1))
 
 (format #t "current-filename = ~s~%" (current-filename))
 

@@ -1,8 +1,0 @@
-#!/bin/bash
-
-here=$(dirname $(realpath $0))
-. $here/env
-
-make GUILE="$GUILE" go_files
-
-exec $GUILE -e '(@ (calp main) main)' "$@"

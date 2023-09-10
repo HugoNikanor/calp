@@ -25,6 +25,11 @@ GUILE_C_FLAGS = -Lmodule \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
 
+CLIBS = guile-3.0
+CFLAGS = -Wall -pedantic -std=c11 $(shell pkg-config --cflags $(CLIBS))
+LDLIBS = $(shell pkg-config --libs $(CLIBS))
+LDFLAGS = -lrt
+
 # All po-files inside po/, except new.po, and hidden files
 PO_FILES = $(shell find po -type f -name \*.po -and -not -name new.po -and -not -name .\*)
 LOCALIZATIONS = $(PO_FILES:po/%.po=localization/%/LC_MESSAGES/calp.mo)
@@ -34,8 +39,14 @@ LIMIT_FILES=$(LIMIT:%=--only %)
 # Skip these files when testing
 SKIP=--skip $(PWD)/tests/test/web-server.scm
 
-all: go_files static $(LOCALIZATIONS)
+all: calp go_files static $(LOCALIZATIONS)
 	$(MAKE) -C doc/ref
+
+calp: calp.c
+	$(CC) -ggdb $(CFLAGS) -DBUILD_ENV $(LDFLAGS) -o $@ $< $(LDLIBS)
+
+calp-release: calp.c
+	$(CC) -O2 $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 XGETTEXT_FLAGS = --from-code=UTF-8 --add-comments --indent -kG_
 
@@ -63,8 +74,10 @@ localization/%/LC_MESSAGES/calp.mo: po/%.po
 clean:
 	-$(MAKE) -C static clean
 	-rm -r obj-*
+	-rm calp
+	-rm calp-release
 
-install: all
+install: all calp-release
 	install -d $(DESTDIR)$(GUILE_SITE_DIR)  $(DESTDIR)$(GUILE_CCACHE_DIR)
 	rsync -a module/ $(DESTDIR)$(GUILE_SITE_DIR)
 	rsync -a obj-$(GUILE_VERSION)/ $(DESTDIR)$(GUILE_CCACHE_DIR)
@@ -73,7 +86,7 @@ install: all
 	$(MAKE) -C doc/ref install
 	install -m 644 -D -t $(DESTDIR)/usr/share/doc/calp README.md
 	install -m 755 -D -t $(DESTDIR)/usr/lib/calp/ scripts/tzget
-	install -m755 -D production-main $(DESTDIR)/usr/bin/calp
+	install -m755 -D calp-release $(DESTDIR)/usr/bin/calp
 
 lcov.info: $(GO_FILES)
 	env DEBUG=0 tests/run-tests.scm --coverage=$@ $(if $(VERBOSE),--verbose) $(SKIP) $(LIMIT_FILES)
