@@ -33,8 +33,7 @@
 (define (fatal fmt . args)
   (display (format #f "FATAL: ~?~%" fmt (or args '()))
            (current-error-port))
-  (raise 2)
-  )
+  (raise SIGINT))
 
 
 (define (filter-stack pred? stk)

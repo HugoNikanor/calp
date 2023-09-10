@@ -7,6 +7,7 @@
 @include guile/util.texi
 @include guile/util-path.texi
 @include guile/util-config.texi
+@include guile/util-exceptions.texi
 @include guile/base64.texi
 @include guile/xdg-basedir.texi
 @include guile/web.texi
@@ -24,6 +25,8 @@ Should possibly be replaced by an explicit return-continuation.
 
 @deftp{Error type} warning fmt args
 Thrown when @code{warnings-are-errors} is true.
+
+@ref{warning} for more information.
 @end deftp
 
 @deftp{Error type} max-page page-number

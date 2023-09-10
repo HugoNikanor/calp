@@ -1,22 +1,40 @@
-@node Exception Utilities
-@section Exception Utilities
+@node Exception & Warning Utilities
+@section Exception & Warning Utilities
+@anchor{warning}
+
+Warnings are like exceptions, but only fatal when wanted.
+
+@code{(hnh util exceptions)}
 
 @defun warning fmt args ...
+Emit a warning.
 
+If the parameter @var{warnings-are-errors} is true, then an exception
+of type @code{'warning} will be raised, with @var{fmt} and @var{args}
+as arguments.
+
+If that parameter is false, then the procedure in
+@var{warning-handler} will instead be called.
 @end defun
 
 @deftp {parameter} warning-handler
-Procedure, which htnaoe htn oeu htn oeu 
+Parameter containing proceudre which will be called for non-throwing
+warnings. This procedure is assumed by the program to log the warning
+in some way, and continue program flow. But anything goes.
+
+The procedure is given a format specifier (as per Scheme's basic
+@code{format}), along with the correct number of arguments.
 @end deftp
 
 @deftp {parameter} warnings-are-errors
-Boolean parameter
+Boolean parameter, which if set causes warnings to be thrown as exceptions.
 @end deftp
 
 @defun fatal fmt args ...
 Display the message in fmt, populated with args, then raises the UNIX
-signal 2, which kills the program.
+signal SIGINT, which kills the program.
 @end defun
 
 @defun filter-stack pred? stack
+@c TODO document me
 @end defun
