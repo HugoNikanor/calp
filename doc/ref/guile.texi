@@ -12,6 +12,7 @@
 @include guile/xdg-basedir.texi
 @include guile/web.texi
 @include guile/vcomponent.texi
+@include guile/translation.texi
 
 @node Errors and Conditions
 @section Errors and Conditions
