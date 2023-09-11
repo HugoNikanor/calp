@@ -65,6 +65,7 @@ text @footnote{Improvements welcome}
 @c @end menu
 
 @include guile.texi
+@include entry-points.texi
 @include text.texi
 
 @node Index
