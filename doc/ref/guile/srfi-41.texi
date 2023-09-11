@@ -73,6 +73,26 @@ times.
 stream cons, but eval arguments beforehand.
 @end defun
 
+@defun stream-split-by pred strm
+Chunks the content of @var{strm} into lists, breaking on @var{pred}.
+If the end of the stream is reached, the remaining objects
+are put into a final chunk.
+
+Can for example be used to split a stream of characters into a stream
+of words.
+
+@lisp
+(stream-split-by (lambda (c) (char=? c #\space))
+                 (-> "This is a short test"
+                     string->list list->stream))
+⇒ #<stream (#\T #\h #\i #\s #\space)
+           (#\i #\s #\space)
+           (#\a #\space)
+           (#\s #\h #\o #\r #\t #\space)
+           (#\t #\e #\s #\t)>
+@end lisp
+@end defun
+
 @defun stream-timeslice-limit stream timeslice
 Wrap a stream in time limits. Each element has at most @var{timeslice}
 seconds to produce a value, otherwise the stream ends. Useful for finding the
