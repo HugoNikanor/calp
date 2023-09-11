@@ -142,7 +142,7 @@
                   (lambda (raw-continue)
                     (let ((continue
                            (case-lambda
-                             (() #f)
+                             (() (raw-continue #f))
                              (args (apply raw-continue args)))))
                       b1 body ...)))])
                <collection>))))
@@ -155,7 +155,7 @@
                    (call/ec (lambda (raw-continue)
                               (let ((continue
                                      (case-lambda
-                                       (() #f)
+                                       (() (raw-continue #f))
                                        (args (apply raw-continue args)))))
                                 b1 body ...))))
                  <collection>)))))))

@@ -71,8 +71,12 @@
    '(x #f 2)
    (for x in (iota 3)
         (case x
-          ((0) (continue 'x))
-          ((1) (continue))
+          ((0)
+           (continue 'x)
+           (test-assert "Continue with value failed" #f))
+          ((1)
+           (continue)
+           (test-assert "Continue without value failed" #f))
           (else x)))))
 
 (test-equal "procedure label"
