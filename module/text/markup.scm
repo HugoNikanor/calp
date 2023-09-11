@@ -65,6 +65,7 @@
                    (map (lambda (line) (sxml->ansi-text `(group (ws (@ (minwidth 4))) ,line (br))))
                         (flow-text
                          (string-concatenate (map sxml->ansi-text body))
+                         ;; TODO shouldn't this use (- width 4)?
                          width: 66)))]
     [(ws) (make-string  (aif (assoc-ref args 'minwidth)
                              (car it) 1)

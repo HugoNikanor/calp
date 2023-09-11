@@ -1,0 +1,67 @@
+@node Text Utilities
+@section Text Utilities
+
+@code{(text util)}
+
+Various general utilities for basic text manipulation.
+
+Some of these procedures claim to use ``true'' text width. These
+calculate text width in unicode code-points, but with (some) ANSI
+escape sequences omitted. In a perfect world, these would show exactly
+how many characters wide the outputed string is when printed to a
+(sufficiently advanced) terminal.
+
+@defun words str
+Split string on spaces. No space merging is done.
+@end defun
+
+@defun unwords list
+Join list with spaces.
+@end defun
+
+@defun lines str
+Split string on newlines.
+@end defun
+
+@defun unlines list
+Join string with newlines.
+@end defun
+
+@defun true-string-length word
+@anchor{true-string-length}
+Alternative string-length whith counts ANSI escapes as 0-length.
+@end defun
+
+@defun true-string-pad str len [chr=#\space]
+Works like the regular @code{string-pad}, but uses the ``true''
+length. @ref{true-string-length}
+@end defun
+
+@defun trim-to-width str len
+Forces @var{str} to be exactly @var{len} characters long.
+
+This is done by either right padding the string, or by drop
+characters from the right until the string is one shorter than length,
+then an ellipsis character is added.
+
+@example
+(trim-to-width "Hello, World!" 6)
+⇒ "Hello…"
+
+(trim-to-width "Hello" 10)
+⇒ "Hello     "
+@end example
+@end defun
+
+@defun add-enumeration-punctuation list [final-delim=``&'']
+Intersperse punctuation into @var{list}, preparing it to be formatted
+as a inline list in the body of the document. The sequence ``, ''
+inserted between each element, except the last which will use
+@var{final-delim}. An oxford comma is not used.
+
+@example
+(string-concatenate (add-enumeration-punctuation
+                        '("Pasta" "Hamburgers" "Hotdog and Mash")))
+⇒ "Pasta, Hamburgers & Hotdog and Mash"
+@end example
+@end defun
