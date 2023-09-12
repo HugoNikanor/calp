@@ -127,7 +127,7 @@ fi
              (test-assert (format #f "~a in ~a: ~?" err from msg args)
                #f))
             (args
-             (test-assert (format #f "~a (~s)" f args)
+             (test-assert (format #f "~s" args)
                #f)))))
       (lambda (proc) (proc))))
 

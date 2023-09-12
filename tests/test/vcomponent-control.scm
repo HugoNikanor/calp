@@ -5,7 +5,7 @@
 (define-module (test vcomponent-control)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
-  :use-module ((vcomponent create))
+  :use-module (vcomponent create)
   :use-module ((vcomponent util control)
                :select (with-replaced-properties))
   :use-module ((vcomponent formats ical parse)
