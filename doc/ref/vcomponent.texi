@@ -1,0 +1,4 @@
+@node VComponents
+@chapter VComponents
+
+@include guile/vcomponent.texi

@@ -1,8 +1,5 @@
-@node General Utilities
-@section General Utilities
-
 @node Miscellaneous utilities
-@subsection Miscellaneous utilities
+@section Miscellaneous utilities
 
 Provided by the module @code{(hnh util)}.
 
@@ -362,7 +359,7 @@ last.
 @end defmac
 
 @node UUIDs
-@subsection UUID generation
+@section UUID generation
 
 Provided by module @code{(hnh util uuid)}.
 
@@ -380,7 +377,7 @@ this module. Only set this when you want non-random randomness.
 @end deftp
 
 @node IO operations
-@subsection IO
+@section IO
 
 Provided by module @code{(hnh util io)}.
 
@@ -412,7 +409,7 @@ Open file at path, and return its content as a string.
 @end defun
 
 @node Binary Search Tree
-@subsection Binary Search Tree
+@section Binary Search Tree
 
 A simple ``read only'' binary search tree.
 

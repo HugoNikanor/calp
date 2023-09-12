@@ -1,21 +1,7 @@
-@node Guile
-@chapter Guile
+@node Calp as a Program
+@chapter Calp as a Program
 
-@include guile/datetime.texi
-@include guile/zic.texi
-@include guile/srfi-41.texi
-@include guile/util.texi
-@include guile/util-path.texi
-@include guile/util-config.texi
-@include guile/util-exceptions.texi
-@include guile/base64.texi
-@include guile/xdg-basedir.texi
-@include guile/web.texi
-@include guile/vcomponent.texi
 @include guile/translation.texi
-@include guile/glob.texi
-@include guile/graphviz.texi
-@include guile/crypto.texi
 
 @node Errors and Conditions
 @section Errors and Conditions

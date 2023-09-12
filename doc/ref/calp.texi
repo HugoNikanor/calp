@@ -64,8 +64,11 @@ text @footnote{Improvements welcome}
 @c * Index::
 @c @end menu
 
-@include guile.texi
+@include calp-prime.texi
 @include entry-points.texi
+@include general.texi
+@include vcomponent.texi
+@include web.texi
 @include text.texi
 @include vulgar.texi
 
