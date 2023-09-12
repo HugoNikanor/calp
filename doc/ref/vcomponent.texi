@@ -1,6 +1,13 @@
 @node VComponents
 @chapter VComponents
 
+Procedures for manipulating VComponents.
+VComponents are the general container type as specified by RFC5545
+(iCalendar). The term VComponent isn't from the standard, but rather
+the generialization of VCALENDAR, VEVENT, ...
+
+Some of these values are still Calp specific.
+
 @defvr {Configuration Variable} calendar-files
 List of filepaths
 @end defvr

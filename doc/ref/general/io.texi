@@ -1,5 +1,5 @@
 @node IO operations
-@section IO
+@section IO operations
 
 Provided by module @code{(hnh util io)}.
 

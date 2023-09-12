@@ -1,6 +1,9 @@
 @node Miscellaneous utilities
 @section Miscellaneous utilities
 
+A kitchen sink utility library. Note should be taken that some core
+procedures and forms are replaced, but all in compatible ways.
+
 Provided by the module @code{(hnh util)}.
 
 @defmac define-syntax [stx]

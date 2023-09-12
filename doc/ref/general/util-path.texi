@@ -1,8 +1,13 @@
 @node Path Utilities
 @section Path Utilities
 
-Provided by the module @code{(hnh util path)}.
+An extended path library for Guile. This library builds upon the path
+utilities provided by @xref{File System,,,guile}, but adds
+manipulation procedures. These procedures should work no matter what
+the systems directory delimiter is, even though this documentation
+uses ``/'' for its examples.
 
+Provided by the module @code{(hnh util path)}.
 
 @defun path-absolute? string
 Alias of @code{absolute-file-name?} from Guile.

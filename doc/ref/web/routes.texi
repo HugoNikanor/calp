@@ -1,24 +1,5 @@
-@node Web Stuff
-@section Web Stuff
-
-@subsection (web query)
-
-@defun parse-query query-string [encoding=''UTF-8'']
-Given a string like ``?key=value&other=something'', returns
-@code{(key: "value" other: "something")}. Performs uri-decoding of
-both key and value. A key without a value decodes to that key, with
-itself as its value
-@end defun
-
-
-@subsection (web uri-query)
-
-@defun encode-query-parameters parameters
-Given the association list @var{parameter}, encode it into a query
-string on the form ``key=value&...''.
-@end defun
-
-@subsection (web http make-routes)
+@node HTTP Routes
+@section (web http make-routes)
 
 @defun parse-endpoint-string str
 Only really public for tests.

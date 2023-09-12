@@ -1,0 +1,7 @@
+@node URI Query
+@section (web uri-query)
+
+@defun encode-query-parameters parameters
+Given the association list @var{parameter}, encode it into a query
+string on the form ``key=value&...''.
+@end defun
