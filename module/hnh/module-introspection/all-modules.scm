@@ -9,7 +9,7 @@
   :export (all-files-and-modules-under-directory
            all-files-under-directory
            all-modules-under-directory
-           fs-find-base fs-find
+           fs-find
            module-file-mapping
            ))
 

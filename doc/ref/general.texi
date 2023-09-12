@@ -19,3 +19,5 @@ of these should be generally useful in any project.
 @include general/glob.texi
 @include general/graphviz.texi
 @include general/crypto.texi
+@include general/graph.texi
+@include general/options.texi

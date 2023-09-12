@@ -1,0 +1,32 @@
+@node Getopt-Long Extensions
+@section Getopt-Long extensions
+
+The module @code{(hnh util options)} extend Guile's
+@code{(ice-9 getopt-long)}. The extra keys which can be specified on
+an option are
+
+@table @samp
+@item (description string)
+A propper description of the value. Should be written for human
+consumption.
+
+@item (value value-spec)
+Value is from the core library, but here ...
+@c TODO document me
+@end table
+
+@defun getopt-opt options
+Remove extensions from @var{options}, turning it into a structure
+which can be passed to @code{getopt-long}.
+@end defun
+
+@defun format-arg-help options
+Pretty print an option summary.
+
+Each description will be parsed as XML and then fed through our markup
+system @xref{Markup}.
+@end defun
+
+@defun print-arg-help options [port=(current-error-port)]
+Formats and prints option spec.
+@end defun
