@@ -6,7 +6,6 @@
   :use-module ((srfi srfi-9 gnu) :select (set-fields))
   :use-module ((ice-9 copy-tree) :select (copy-tree))
   :use-module ((ice-9 control) :select (call/ec))
-  :re-export (fold-values)
   :export (aif
            awhen
            for
@@ -60,7 +59,6 @@
            uniqx
            uniq
            univ
-           uniqv
            unique
 
            vector-last

@@ -1,6 +1,9 @@
 @node General Utilities
 @section General Utilities
 
+@node Miscellaneous utilities
+@subsection Miscellaneous utilities
+
 Provided by the module @code{(hnh util)}.
 
 @defmac define-syntax [stx]
@@ -340,6 +343,25 @@ innermost.
 then @code{with-throw-handler} is used instead of @code{catch}.
 @end defmac
 
+@defun uniq lst
+@defunx univ lst
+@defunx unique lst
+@defunx uniqx comp lst
+Squash repeated equivalent elements in a list into single instances,
+similar to the POSIX command uniq(1). The three variants uses
+@code{eq?}, @code{eqv?}, and @code{equal?} respectively.
+
+@code{uniqx} also takes @var{comp}, which is sholud be a binary
+procedure returning if the elements are equal.
+@end defun
+
+@defmac begin1 forms ...
+Port of Common Lisp's @code{begin1} form. Like @code{begin} runs each
+form in its body in order, but returns the first result instead of the
+last.
+@end defmac
+
+@node UUIDs
 @subsection UUID generation
 
 Provided by module @code{(hnh util uuid)}.
@@ -352,6 +374,12 @@ Generates a UUID-v4 string.
 Generates an implementation defined (but guaranteed valid) UUID.
 @end defun
 
+@deftp {parameter} seed
+Guile parameter containing the seed used when generating UUID's in
+this module. Only set this when you want non-random randomness.
+@end deftp
+
+@node IO operations
 @subsection IO
 
 Provided by module @code{(hnh util io)}.
@@ -381,4 +409,42 @@ the file, and @code{#f} otherwise.
 
 @defun read-file path
 Open file at path, and return its content as a string.
+@end defun
+
+@node Binary Search Tree
+@subsection Binary Search Tree
+
+A simple ``read only'' binary search tree.
+
+@defun make-tree pred? lst
+Constructs a new tree. @var{pred?} should be a procedure taking the
+first element of @var{lst}, along with each element, and should return
+a boolean value indicating if the specific element should go in the
+left or right subtree. (left subtree is ``truthy'' values).
+
+This operation is done recursively.
+@end defun
+
+@defun tree-node tree
+Return the value of a tree node.
+@end defun
+
+@defun left-subtree tree
+Return all ``truthy'' children of tree node.
+@end defun
+
+@defun right-subtree tree
+Return all ``falsy children of tree node.
+@end defun
+
+@defun length-of-longest-branch tree
+Get the depth of a tree.
+@end defun
+
+@defun tree-map proc tree
+Apply proc onto the value of every node in tree, keeping the structure
+of the tree.
+
+@b{Note:} this can cause the tree to no longer be a binary search
+tree, but simply a ``formless'' binary tree.
 @end defun

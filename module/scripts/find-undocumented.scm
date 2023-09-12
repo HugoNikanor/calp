@@ -7,6 +7,7 @@
   :use-module (ice-9 regex)
   :use-module (ice-9 rdelim)
   :use-module (rnrs records syntactic)
+  :use-module (glob)
   :export (main)
   )
 
@@ -103,8 +104,20 @@
   (define source-directory "module")
   (define doc-dir "doc/ref")
   (define skip-files
-    '("module/graphvis.scm"
-      "module/glob.scm"))
+    (append
+     '(
+       ;; Ignored since we arent't the implementor.
+       ;; It could however be nice to document it
+       "module/graphviz.scm"
+       )
+     ;; Each entry-point should only export a main procedure,
+     ;; and is documented elsewhere
+     (glob "module/calp/entry-points/*.scm")
+     ;; These are scripts for `guild`.
+     ;; Each file exports a few pre-defined symbols,
+     ;; and are documented in other ways.
+     (glob "module/scripts/*.scm")
+     ))
 
   (define documented-symbols
     (concatenate
@@ -130,6 +143,12 @@
     (concatenate
      (for path in (all-modules-under-directory source-directory)
           (when (member path skip-files)
+            (continue '()))
+
+          (define components*
+            (drop (path-split path)
+                  (length (path-split source-directory))))
+
           (define name
             (map string->symbol
                  (append (drop-right components* 1)

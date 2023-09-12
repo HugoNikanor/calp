@@ -50,7 +50,7 @@ Defaults to @file{/etc/xdg}.
 @env{XDG_CACHE_HOME}, usually @file{~/.cache}.
 @end defun
 
-@defun runtime_dir
+@defun runtime-dir
 @findex XDG_RUNTIME_DIR
 If @env{XDG_RUNTIME_DIR} is set, than that is used. Otherwise a
 warning message is printed to stderr and @file{/tmp} is returned.

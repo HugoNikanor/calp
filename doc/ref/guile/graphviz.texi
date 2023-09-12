@@ -1,0 +1,10 @@
+@node Graphviz
+@section Graphviz
+
+The graphviz library comes bundled with Guile bindings, but without a
+corresponding .scm file exporting the symbols. The module @code{(guile)} does
+exactly that.
+
+This ``header'' is borrowed from
+@url{https://github.com/roelj/graphviz-guile/blob/master/graphviz.scm},
+under GPL 3.0.

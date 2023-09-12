@@ -1,0 +1,37 @@
+@node Glob
+@section Glob
+
+@defun glob str
+Globs (glob(7)) on @var{str}, returing a list of files, which will be
+on the same form of the glob. E.g. @code{(glob "../*")} will return
+strings all starting with ``../''
+
+If no matches are found, a misc error is thrown.
+@end defun
+
+
+
+@defvar GLOB_NOMAGIC
+@defvarx GLOB_NOCHECK
+@defvarx unix
+@defvarx GLOB_NOSPACE
+@defvarx GLOB_TILDE_CHECK
+@defvarx GLOB_ALTDIRFUNC
+@defvarx GLOB_NOSORT
+@defvarx GLOB_NOMATCH
+@defvarx GLOB_TILDE
+@defvarx GLOB_ERR
+@defvarx GLOB_MAGCHAR
+@defvarx GLOB_BRACE
+@defvarx GLOB_APPEND
+@defvarx GLOB_NOSYS
+@defvarx GLOB_DOOFFS
+@defvarx GLOB_NOESCAPE
+@defvarx GLOB_MARK
+@defvarx GLOB_PERIOD
+@defvarx linux
+@defvarx GLOB_ABORTED
+@defvarx _POSIX_VDISABLE
+@defvarx GLOB_ONLYDIR
+``Symbols'' imported from the C header ``glob.h''. See that documentation.
+@end defvar

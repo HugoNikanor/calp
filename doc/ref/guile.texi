@@ -13,6 +13,9 @@
 @include guile/web.texi
 @include guile/vcomponent.texi
 @include guile/translation.texi
+@include guile/glob.texi
+@include guile/graphviz.texi
+@include guile/crypto.texi
 
 @node Errors and Conditions
 @section Errors and Conditions
