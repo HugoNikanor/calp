@@ -1,5 +1,6 @@
 @node Data Formats
 @section Data Formats
+
 A data format is some way that an individual event may get serialized
 to disk. The default is iCalendar (TODO reference RFC 5545), but
 others might be available (TODO footnote and reference xcal).

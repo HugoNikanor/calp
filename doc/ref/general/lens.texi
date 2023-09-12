@@ -38,10 +38,9 @@ Focuses the element at index @var{idx} in a list.
 @end deftp
 
 @deftp {Scheme Lens} car*
-@deftp {Scheme Lens} cdr*
+@deftpx {Scheme Lens} cdr*
 Focuses the first or second element of a pair.
 @end deftp
 
 @defun each object lens proc
 @end defun
-

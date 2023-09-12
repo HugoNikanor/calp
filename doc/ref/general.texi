@@ -29,3 +29,4 @@ of these should be generally useful in any project.
 @include general/data-formats.texi
 @include general/data-stores.texi
 @include general/webdav.texi
+@include general/sxml.texi
