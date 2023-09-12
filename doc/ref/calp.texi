@@ -67,6 +67,7 @@ text @footnote{Improvements welcome}
 @include calp-prime.texi
 @include entry-points.texi
 @include general.texi
+@include webdav.texi
 @include vcomponent.texi
 @include web.texi
 @include text.texi

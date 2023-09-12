@@ -1,13 +1,14 @@
 @node Data Formats
 @section Data Formats
 
-A data format is some way that an individual event may get serialized
-to disk. The default is iCalendar (TODO reference RFC 5545), but
-others might be available (TODO footnote and reference xcal).
+Data formats are the serialization formats for components.
+The primary serialization format is iCalendar, but xCalendar and
+sxCalendar also exists.
 
 Each available format should be included as
 @code{(vcomponent formats @var{format-name})}.
-Which module corresponds to what file type is currently defined out of band.
+Which module corresponds to what file type is currently defined out of
+band.
 
 Each module should expose the following procedures.
 

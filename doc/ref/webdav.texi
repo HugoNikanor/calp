@@ -1,5 +1,5 @@
 @node WebDAV
-@section WebDAV
+@chapter WebDAV
 
 For a complete view of WebDAV, please see @cite{RFC4918 (HTTP
 Extensions for Web Distributed Authoring and Versioning (WebDAV))},
@@ -42,14 +42,14 @@ Live properties are handled through GOOPS methods.
 Dead properties are (by default) stored directly inside each resource.
 
 @node WebDAV Properties
-@subsection Properties
+@section Properties
 
 @itemize
 @item @code{(calp webdav property)}
 @item @code{(calp webdav propfind)}
 @end itemize
 
-@subsubsection Default Live Properties
+@subsection Default Live Properties
 
 @deftp {GOOPS method} creationdate
 @end deftp
@@ -83,7 +83,7 @@ Dead properties are (by default) stored directly inside each resource.
 
 
 @node WebDAV Resources
-@subsection Resources
+@section Resources
 
 @deftp {GOOPS class} <resource>
 Base type for all WebDAV resources.
@@ -242,15 +242,15 @@ The root resource is however guaranteed to be first.
 
 
 @node WebDAV Resource Types
-@subsection Resource Types
+@section Resource Types
 
-@subsubsection @code{(calp webdav resource base)}
+@subsection @code{(calp webdav resource base)}
 
 Implementation of @code{(calp webdav resource)}. Exists to possibly
 avoid dependency loops.
 
-@subsubsection @code{(calp webdav resource calendar)}
-@subsubsection @code{(calp webdav resource file)}
+@subsection @code{(calp webdav resource calendar)}
+@subsection @code{(calp webdav resource file)}
 
 Resources backed by the file system.
 
@@ -278,10 +278,10 @@ Data can be set either as a string or a bytevector. When a string is
 used Guile's current encoding will be used.
 @end deftp
 
-@subsubsection @code{(calp webdav resource virtual)}
+@subsection @code{(calp webdav resource virtual)}
 
 @node WebDAV Utilities
-@subsection Utilities
+@section Utilities
 @defun xml-element-hash-key xml-tag
 Given an xml tag object @ref{xml-tag}, return a suitable key for
 @code{hash-ref} and family.
