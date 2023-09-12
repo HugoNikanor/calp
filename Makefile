@@ -100,11 +100,17 @@ GENHTML_FLAGS=--show-details \
 			  --no-function-coverage \
 			  --quiet
 
-coverage: lcov.info
+coverage: lcov.info calp
 	genhtml $(GENHTML_FLAGS) --output-directory $@ $<
 
-check:
-	tests/run-tests.scm $(if $(VERBOSE),--verbose) $(SKIP) $(LIMIT_FILES)
+
+CHECK_FLAGS = \
+	$(if $(CATCH),--catch) \
+	$(if $(VERBOSE),--verbose) \
+	$(SKIP) $(LIMIT_FILES)
+
+check: calp
+	tests/run-tests.scm $(CHECK_FLAGS)
 
 litmus:
 	tests/litmus.scm $(path)
