@@ -43,8 +43,11 @@
         ;; altconfig could be placed in the list below. But I want to raise an error
         ;; if an explicitly given config is missing.
         [(find file-exists?
-               (list
-                (path-append (xdg-config-home) "calp" "config.scm")
-                (path-append (xdg-sysconfdir) "calp" "config.scm")))
+               (let ((end '("calp" "config.scm")))
+                 `(,(apply path-append (xdg-config-home) end)
+                   ,@(map (lambda (sysconfdir)
+                            (apply path-append sysconfdir end))
+                          (xdg-config-dirs))
+                   ,(apply path-append "/etc" end))))
          => identity])
   )

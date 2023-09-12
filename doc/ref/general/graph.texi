@@ -1,0 +1,65 @@
+@node A Graph data structure
+@section A Graph data structure
+
+This is a simple immutable directed graph.
+
+Most operations are O(n), since Scheme lacks a total order betwen
+arbitrary objects.
+
+@defun make-graph [node-key-proc=identity] [node-equal?=eq?]
+Constructs a new graph.
+
+@var{node-key-proc} should be a procedure mapping the actual nodes to
+a value which can be compared. These values are sometimes called
+``node keys''.
+@cindex node keys
+
+@var{node-equal?} should return if two nodes are equal or not.
+@end defun
+
+@defun rebuild-graph [old-graph] [nodes='()] [edges='()]
+@c TODO document me
+@end defun
+
+@defun graph-empty? graph
+Does the graph contaitn
+@end defun
+
+@defun add-node graph node edge-neighbors
+Adds the value @var{node} to @var{graph}. @var{edge-neighbors} should
+be a list of node keys.
+@end defun
+
+@defun get-node graph key
+Retrieve a node from the graph, given its node key.
+
+Returns @code{#f} if no such node exists.
+@end defun
+
+@defun remove-node graph node
+Remvoe @var{node} from @var{graph}, if it exists.
+@end defun
+
+@defun find-dangling-node graph
+Find a node in the graph which no other node ``depends'' on (has an
+edge pointing at it).
+
+NOTE this is O(n^2) (maybe, sort of?)
+Getting it faster would require building an index, which
+is hard since there isn't a total order on symbols.
+@end defun
+
+
+@defun pop-dandling-node graph
+Find a node as per @code{find-dangling-node}, and return two values:
+the node, and a new graph without that node.
+@end defun
+
+@defun resolve-dependency-graph graph
+If each edge is assumed to indicate a nodes dependencies, then this
+procedure will find return a flat list where each dependency is before
+its dependants.
+
+If any link is missing, or a cycle exists, then the result is
+undefined.
+@end defun

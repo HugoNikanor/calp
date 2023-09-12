@@ -1,0 +1,217 @@
+@node Termios
+@section Termios
+
+Interface to termios procedures. See termios(3) and @code{termios.h}
+for general information.
+
+@code{(vulgar termios)}
+
+Refer to termios(3) for deeper information about all these fields.
+
+@deftp {Record Type} <termios>
+See ``The termios structure'' in termios(3).
+@defun make-termios
+Create a new (empty) termios structure.
+@end defun
+
+@defun cc termios
+@defunx cflag termios
+@defunx iflag termios
+@defunx ispeed termios
+@defunx lflag termios
+@defunx line termios
+@defunx oflag termios
+@defunx ospeed termios
+Accessors to termios each field.
+@end defun
+@end deftp
+
+@defun copy-termios termios
+Create a copy of the given termios structure.
+@end defun
+
+@defun tcsetattr! termios [port] [when=TCSANOW]
+Updates @var{port} with flags from @var{termios}.
+@end defun
+
+@defun tcgetattr! termios [port=(current-input-port)]
+Gets termios information about @var{port}, and stores it in @var{termios}.
+@end defun
+
+@defun cfmakeraw! termios
+Calls the termios function @code{cfmakeraw} on @var{termios}, updating
+the structure.
+@end defun
+
+
+@defvar TOSTOP
+@defvarx NLDLY
+@defvarx CREAD
+@defvarx VSTOP
+@defvarx B1500000
+@defvarx B4000000
+@defvarx B150
+@defvarx VEOL
+@defvarx VQUIT
+@defvarx CSTART
+@defvarx CBAUD
+@defvarx CR0
+@defvarx OLCUC
+@defvarx CSTATUS
+@defvarx VSTART
+@defvarx IXANY
+@defvarx ONOCR
+@defvarx VERASE
+@defvarx TTYDEF_IFLAG
+@defvarx B1000000
+@defvarx NL0
+@defvarx FLUSHO
+@defvarx TABDLY
+@defvarx CDSUSP
+@defvarx CEOL
+@defvarx CIBAUD
+@defvarx TAB3
+@defvarx CR2
+@defvarx NL1
+@defvarx CS8
+@defvarx CERASE
+@defvarx OPOST
+@defvarx TTYDEF_SPEED
+@defvarx TAB1
+@defvarx EXTA
+@defvarx B1200
+@defvarx TAB0
+@defvarx B75
+@defvarx EXTB
+@defvarx FF1
+@defvarx CR1
+@defvarx CS5
+@defvarx INPCK
+@defvarx B576000
+@defvarx B3000000
+@defvarx OCRNL
+@defvarx TCOON
+@defvarx CBAUDEX
+@defvarx CCEQ
+@defvarx IXOFF
+@defvarx CREPRINT
+@defvarx FF0
+@defvarx ECHONL
+@defvarx IXON
+@defvarx ISTRIP
+@defvarx CSTOP
+@defvarx PENDIN
+@defvarx BRKINT
+@defvarx IEXTEN
+@defvarx TCIFLUSH
+@defvarx VSUSP
+@defvarx B38400
+@defvarx TCION
+@defvarx B921600
+@defvarx ECHOPRT
+@defvarx CQUIT
+@defvarx IMAXBEL
+@defvarx CRTSCTS
+@defvarx ECHOCTL
+@defvarx CEOT
+@defvarx VMIN
+@defvarx ICANON
+@defvarx ONLRET
+@defvarx VINTR
+@defvarx CSTOPB
+@defvarx B3500000
+@defvarx B230400
+@defvarx CS7
+@defvarx TCOFLUSH
+@defvarx TIOCSER_TEMT
+@defvarx B200
+@defvarx CSUSP
+@defvarx BS1
+@defvarx XTABS
+@defvarx CLNEXT
+@defvarx VT0
+@defvarx NCCS
+@defvarx BSDLY
+@defvarx B9600
+@defvarx ECHOKE
+@defvarx VEOF
+@defvarx TTYDEF_OFLAG
+@defvarx VTDLY
+@defvarx VT1
+@defvarx CTRL
+@defvarx NOFLSH
+@defvarx VREPRINT
+@defvarx ICRNL
+@defvarx CINTR
+@defvarx ADDRB
+@defvarx B2500000
+@defvarx EXTPROC
+@defvarx B110
+@defvarx XCASE
+@defvarx ECHOE
+@defvarx IUTF8
+@defvarx CS6
+@defvarx CFLUSH
+@defvarx B500000
+@defvarx CKILL
+@defvarx CDISCARD
+@defvarx VDISCARD
+@defvarx B2400
+@defvarx TTYDEF_CFLAG
+@defvarx VWERASE
+@defvarx INLCR
+@defvarx ONLCR
+@defvarx OFDEL
+@defvarx B1800
+@defvarx ISIG
+@defvarx IGNPAR
+@defvarx TAB2
+@defvarx CTIME
+@defvarx B1152000
+@defvarx ECHO
+@defvarx CR3
+@defvarx CMSPAR
+@defvarx PARENB
+@defvarx B2000000
+@defvarx VKILL
+@defvarx B4800
+@defvarx CLOCAL
+@defvarx IGNBRK
+@defvarx BS0
+@defvarx TCSAFLUSH
+@defvarx B19200
+@defvarx TCSANOW
+@defvarx VTIME
+@defvarx B0
+@defvarx TCOOFF
+@defvarx CEOF
+@defvarx B460800
+@defvarx PARMRK
+@defvarx VEOL2
+@defvarx FFDLY
+@defvarx TCSADRAIN
+@defvarx IGNCR
+@defvarx CRDLY
+@defvarx VLNEXT
+@defvarx PARODD
+@defvarx CRPRNT
+@defvarx B600
+@defvarx VSWTC
+@defvarx IUCLC
+@defvarx HUPCL
+@defvarx B50
+@defvarx TCIOFF
+@defvarx TTYDEF_LFLAG
+@defvarx CBRK
+@defvarx ECHOK
+@defvarx B115200
+@defvarx CSIZE
+@defvarx B300
+@defvarx OFILL
+@defvarx CWERASE
+@defvarx B134
+@defvarx B57600
+@defvarx TCIOFLUSH
+@defvarx CMIN
+Imported from the ``termios.h'' header file.
+@end defvar

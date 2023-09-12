@@ -1,0 +1,23 @@
+@node Reflowing Text
+@section Reflowing Text
+
+@code{(text flow)}
+
+@defun flow-text str [width=70]
+Reflow and justify @var{str} to @var{width} columns.
+
+Each newline is as a newline, so each paragraph needs to be on its own
+line. The output will look something like the following:
+
+@example
+muck calendar's Hobart's Kendall's  lighthouse wooziest  knot's swanky
+Ghats's   witless   heftiness's   hailstorm's  ladybugs   abridgment's
+whispered  Willemstad's  ludo  stewardess  photostatic  potshot ninety
+perfected  Potsdam  asinine  swings   Valiums  Adrenalin's   contralto
+emigration's    besmears    finessing    resorption's   literariness's
+verbalize   maximums   Bjork   diverticulitis    cascaras   implacably
+overeager deepen funeral's  Edwardian Calvinistic  seawards microlight
+palatial Shaun fungus's unmounted armrests Culbertson's lineage
+@end example
+
+@end defun

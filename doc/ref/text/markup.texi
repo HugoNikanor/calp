@@ -1,0 +1,71 @@
+@node Markup
+@section Markup
+
+@defun sxml->ansi-text tree
+Takes an HTML-like document in SXML format, and produces a formatted
+string with embedded ANSI-escapes suitable to print to a terminal.
+
+Supported tags are:
+
+@table @samp
+@item group
+@item block
+Groups elements, concatenating their format. Mainly here for helper
+procedres and the like. Also used for the root node.
+
+@item header
+Centers and bolds its content. Attributes will be sent along to the
+inner @code{<center/>} tag.
+
+@item center
+Center its contents on the line. The output is undefined if the body
+serializes to a multiline string.
+
+@item p
+A text paragraph. Justifies the content inside.
+
+Ends with a double newline, unless the parameter @code{inline} is set.
+
+@item b
+Make content bold.
+
+@item i
+@item em
+Make content italics.
+
+@item code
+Format content as code.
+
+(currently does nothing since we only support output to terminal)
+
+@item blockquote
+Justifies content, and sets it slightly indented.
+
+@item ws
+Forces horizontal whitespace. Use the parameter @code{minwidth} to
+specify how many spaces should be inserted.
+
+@item br
+Forces a linebreak.
+
+@item hr
+Generates a horrizontal line.
+
+@item dl
+Declares a description list.
+
+@item dt
+A key in a description list, only valid inside @code{dl}.
+
+@item dd
+A value of a description list, only valid inside @code{dl}.
+
+@item scheme
+Set content as Scheme code. The content will be passed through Guile's
+pretty-print.
+@end table
+
+
+Almost all of the block environments accept the attribute @var{width},
+which specifies the desired output width.
+@end defun

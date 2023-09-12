@@ -1,0 +1,165 @@
+@node VComponents
+@chapter VComponents
+
+Procedures for manipulating VComponents.
+VComponents are the general container type as specified by RFC5545
+(iCalendar). The term VComponent isn't from the standard, but rather
+the generialization of VCALENDAR, VEVENT, ...
+
+Some of these values are still Calp specific.
+
+@defvr {Configuration Variable} calendar-files
+List of filepaths
+@end defvr
+
+@defvr {Configuration Variable} default-calendar
+@end defvr
+
+@c ===== Concepts =====
+
+@c - internal fields
+@c DATA layout
+@c how does multiple value work?
+
+@c ===== BASE =====
+
+@deftp {Record Type} <vline>
+
+@c - key
+@c - value
+@c - parameters
+@c - source
+
+@defun make-vline key value [ht=(make-hash-table)]
+@var{ht} is the hash table storing the parameters, can be explicitly
+given if need for optimizations arrises.
+@end defun
+
+@defun vline? x
+@end defun
+
+@defun vline-key vline
+@end defun
+
+@deffn {Slot} vline-source vline
+@end deffn
+
+@deffn {Slot} value vline
+@end deffn
+
+@deffn {Slot} param vline key
+@end deffn
+
+@defun delete-parameter! vline key
+@end defun
+
+@defun parameters vline
+Key a list of all parameters
+@example
+((key value) ...)
+@end example
+@end defun
+
+@end deftp
+
+
+@deftp {Record Type} <vcomponent>
+
+@defun vcomponent? x
+@end defun
+
+@defun make-vcomponent [type='VIRTUAL]
+@end defun
+
+@defun children vcomponent
+Returns all direct children of vcomponent, as a list of vcomponents.
+@end defun
+
+@deffn {Slot} parent vcomonent
+@end deffn
+
+@defun type vcomponent
+Returns the type of this vcomponent, as a symbol. Probably one of
+@code{VCALENDAR}, @code{VEVENT}, ...
+@end defun
+
+@defun add-child! parent child
+Adds child to the parents child list, but also updates the child to
+have parent in its parent slot
+@end defun
+
+@deffn {Prop} prop* vcomponent key
+@deffnx {Prop} prop vcomponent key
+@var{prop*} return the vline object, while @var{prop} is equivalent to
+@lisp
+(value (prop* vcomponent key))
+@end lisp
+@end deffn
+
+@defun {(extract field)} vcomponent
+@defunx {(extract* field)} vcomponent
+Curried version of @var{prop}.
+@end defun
+
+@defun delete-property! component key
+@end defun
+
+@defun properties comopnent
+@example
+((key . value) ...)
+@end example
+@end defun
+
+@end deftp
+
+@defun copy-vcomponent vcomponent
+Creates a shallow copy of @var{vcomponent}. If the source object has a
+parent, then than parent adopts the new event also.
+@end defun
+
+
+@defun x-property? symb
+Does symbol start with ``X-''?
+@end defun
+
+@defun internal-field? symb [prefix="-"]
+@end defun
+
+@node VComponent Create
+@section (vcomponent create)
+
+Procedures for declarativly creating components (instead of the
+primitive procedural API).
+
+@defun vcomponent type [key: prop] ... children
+Creates a new vcomponent of @var{type}. Each kv-pair should contain a
+keyword @var{key}, and a value which is either a direct value, or the
+return value of @code{with-parameters} or
+@code{as-list}. @var{children} should be a list of other vcomponent's.
+@end defun
+
+@defun vcalendar
+@defunx vevent
+@defunx vtimezone
+@defunx standard
+@defunx daylight
+Calls @code{vcomponent}, with type set to the procedure name (but
+up-cased).
+@end defun
+
+@defun with-parameters [key: param] ... value
+Allows setting parameters for a property as created by @code{vcomponent}.
+
+@var{value} follows the same rules as in @code{vcomponent}. Multiple
+@var{key}, @var{value} pairs can be given, where each key must be a keyword.
+@end defun
+
+@defun as-list lst
+Allows setting list values when using @code{vcomponent}.
+
+Without this a list value would be stored as a single value, while
+with this a list of values is instead stored (as, for example, in EXDATE).
+
+A list of list types could be hard-coded, but even then this procedure
+is needed since custom types might need it.
+@end defun

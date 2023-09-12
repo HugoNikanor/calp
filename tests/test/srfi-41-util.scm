@@ -8,6 +8,7 @@
   :use-module (srfi srfi-88)
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-41)
+  :use-module ((srfi srfi-1) :select (circular-list))
   :use-module ((ice-9 sandbox) :select (call-with-time-limit)))
 
 (test-equal "Finite stream"
@@ -86,3 +87,22 @@
     (test-equal "time limited stream"
       '(1 2 3)
       (stream->list strm))))
+
+
+(test-group "stream-split-by"
+  (let ((hello-chars-stream (stream-unfold
+                             car
+                             (const #t)
+                             cdr
+                             (apply circular-list
+                                    (string->list "Hello ")))))
+    (test-equal "Check that test list looks as expected"
+      (string->list "Hello Hell")
+      (stream->list 10 hello-chars-stream))
+    (test-equal "Check that it splits correctly"
+      '("Hello " "Hello " "Hello ")
+      (stream->list
+       3
+       (stream-map list->string
+                   (stream-split-by (lambda (c) (char=? c #\space))
+                                    hello-chars-stream))))))

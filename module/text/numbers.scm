@@ -2,10 +2,16 @@
   :use-module (srfi srfi-88)
   :export (number->string-cardinal
            number->string-ordinal
+           resolve-language
            each-string))
 
 (define (get mod-symb proc-symb)
-  (module-ref (resolve-interface `(text numbers ,mod-symb))
+  (module-ref (catch 'misc-error
+                (lambda () (resolve-interface `(text numbers ,mod-symb)))
+                (lambda (err proc fmt args data)
+                  ;; Possibly check if the err message starts with
+                  ;; "no code for module"
+                  (resolve-interface '(text numbers en))))
               proc-symb))
 
 ;; "sv_SE.UTF-8"

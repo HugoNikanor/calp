@@ -1,7 +1,6 @@
 (define-module (vulgar color)
   :export (color-if color-escape))
 
-(define-public STR-YELLOW "\x1b[0;33m")
 (define-public STR-RESET "\x1b[m")
 
 (define-syntax-rule (color-if pred color body ...)

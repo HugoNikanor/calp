@@ -1,0 +1,9 @@
+@node Text Procedures
+@chapter Text Procedures
+
+Various utilities for formatting text in various ways.
+
+@include text/utilities.texi
+@include text/flow.texi
+@include text/markup.texi
+@include text/numbers.texi

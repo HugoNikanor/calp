@@ -1,0 +1,18 @@
+@node Color
+@section Color
+
+@defvar STR-RESET
+ANSI escape sequence for removing all current formatting, as a string.
+@end defvar
+
+@defmac color-if predicate color body ...
+@code{(begin body ...)} is run, coloring it's return value using the
+ANSI escape sequence @var{color}, if @var{predicate} is true, and
+uncolored otherwise.
+@end defmac
+
+@defun color-escape n
+Generates an RGB color escape code. @var{n} can either be @code{#f},
+in which case the empty string is returned, or a a 24 bit color code
+encoded hexadecimaly as @samp{#RRGGBB}.
+@end defun

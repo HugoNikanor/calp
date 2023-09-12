@@ -1,4 +1,5 @@
 \input texinfo
+@setfilename calp.info
 @settitle Calp
 
 @copying
@@ -63,8 +64,14 @@ text @footnote{Improvements welcome}
 @c * Index::
 @c @end menu
 
-@include guile.texi
-@include javascript.texi
+@include calp-prime.texi
+@include entry-points.texi
+@include general.texi
+@include vcomponent.texi
+@include web.texi
+@include text.texi
+@include vulgar.texi
+@include introspection.texi
 
 @node Index
 @unnumbered Index
@@ -74,8 +81,5 @@ text @footnote{Improvements welcome}
 @printindex pg
 @printindex tp
 @printindex vr
-
-@unnumbered Web Components
-@printindex wc
 
 @bye

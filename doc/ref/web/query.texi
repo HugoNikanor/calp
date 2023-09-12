@@ -1,0 +1,9 @@
+@node Web Query
+@section (web query)
+
+@defun parse-query query-string [encoding=''UTF-8'']
+Given a string like ``?key=value&other=something'', returns
+@code{(key: "value" other: "something")}. Performs uri-decoding of
+both key and value. A key without a value decodes to that key, with
+itself as its value
+@end defun

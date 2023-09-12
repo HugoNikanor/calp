@@ -1,0 +1,42 @@
+@node Spelled out Numbers
+@section Spelled out Numbers
+
+Numbers writtens as word. The usual interface is through
+@code{(text numbers)} which uses the current locale for translations.
+However, @code{(text numbers @var{<lang-code>})} can also be imported
+directly with the exact same interface. Language codes should be two
+letter ISO language codes (e.g. ``se'', ``en'', ...)
+
+When resolving the current language, first the environment variable
+@env{LC_MESSAGES} is checked, followed by @env{LC_ALL}, and finaly
+falls back to ``en''.
+
+English is also chosen if no implementation for the chosen language
+exists.
+
+Note that English uses the term cardinal and ordinal @emph{numeral},
+rather than @emph{number}.
+
+
+@defun number->string-ordinal n [language=(resolve-language)]
+Convert a string into an ordinal number. These are the ``ranking''
+numbers, e.g. ``first'', ``second'', ...
+@end defun
+
+@defun number->string-cardinal n [language=(resolve-language)]
+Convert a string into a cardinal number. These are the ``ordinary''
+counting numbers, e.g. ``one'', ``two'', ...
+@end defun
+
+@defun resolve-language
+Return the current language.
+@end defun
+
+@defun each-string count args ...
+Return a (locale dependant) string indicating which elements of a set
+are targeted, such as ``each'', ``every other'', ...
+
+@var{args} is reserved for locale specific extensions, such as in
+Swedish where both ``var tredje'' and ``vart tredje'' (meaning ``every
+third'') exists, and is chosen depending on the following noun.
+@end defun

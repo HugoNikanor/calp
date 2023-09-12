@@ -5,6 +5,7 @@
   :use-module ((ice-9 sandbox) :select (call-with-time-limit))
   :use-module ((hnh util) :select (find-extreme))
   :export (stream-car+cdr
+           eager-stream-cons
            interleave-streams
            stream-insert
            filter-sorted-stream
@@ -17,7 +18,8 @@
            stream-partition
            stream-split
            stream-paginate
-           stream-timeslice-limit))
+           stream-timeslice-limit
+           stream-split-by))
 
 (define (stream-car+cdr stream)
   (values (stream-car stream)
@@ -145,3 +147,15 @@
           (stream-timeslice-limit (stream-cdr strm) timeslice)))
    (lambda _ stream-null)))
 
+
+(define-stream (stream-split-by pred strm)
+  (let loop ((accumulated '())
+             (strm strm))
+    (stream-match strm
+      (() (if (null? accumulated)
+              stream-null
+              (stream (reverse accumulated))))
+      ((x . xs) (pred x)
+       (stream-cons (reverse (cons x accumulated)) (loop '()  xs)))
+      ((x . xs)
+       (loop (cons x accumulated) xs)))))

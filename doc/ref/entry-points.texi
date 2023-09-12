@@ -1,0 +1,62 @@
+@node Entry Points
+@chapter Entry Points
+
+Calp has many different entry points. Each is implemented in a module
+residing under @code{calp entry-points}. Each such module @emph{must}
+export a @code{main} procedure, which should take a list of command
+line arguments (as a single parameter).
+
+When starting Calp from the command line, the @code{main} procedure
+located in @code{(calp main)} is called. That procedure parse it's own
+command line flags, up until the first non-flag argument. That word
+will be used to chose the actual entry point, which is then
+responsible for parsing the remaining command line flags.
+
+Information about global command line arguments can be accessed by
+running @command{calp --help}, and subcommands arguments through
+@command{calp @var{<subcommand>} --help}.
+
+@deftp {Entry Point} benchmark module
+Run @code{(@ (calp benchmark @var{module}) run-benchmark)} with
+profiling enabled, and prints the collected data.
+@end deftp
+
+@deftp {Entry Point} convert
+Convert calendar files between filetypes.
+@end deftp
+
+@deftp {Entry Point} html
+Generates static HTML files.
+@end deftp
+
+@deftp {Entry Point} ical
+Generates static iCal files.
+@end deftp
+
+@deftp {Entry Point} import
+Import entry into database.
+@end deftp
+
+@deftp {Entry Point} server
+Start the web server.
+@end deftp
+
+@deftp {Entry Point} terminal
+Start the terminal interface.
+@end deftp
+
+@deftp {Entry Point} text
+Format text, completely ignoring calendars.
+@end deftp
+
+@deftp {Entry Point} tidsrapport
+Generate an FDF (PDF Form submission file) for some very specific time
+reporting sheets.
+
+TODO this should be removed from this project, and moved to a
+``private'' repo of hugo.
+@end deftp
+
+@deftp {Entry Point} update-zoneinfo
+Downloads zoneinfo files and places them in the correct location.
+@end deftp

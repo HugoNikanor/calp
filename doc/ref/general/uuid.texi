@@ -1,0 +1,17 @@
+@node UUIDs
+@section UUID generation
+
+Provided by module @code{(hnh util uuid)}.
+
+@defun uuid-v4
+Generates a UUID-v4 string.
+@end defun
+
+@defun uuid
+Generates an implementation defined (but guaranteed valid) UUID.
+@end defun
+
+@deftp {parameter} seed
+Guile parameter containing the seed used when generating UUID's in
+this module. Only set this when you want non-random randomness.
+@end deftp

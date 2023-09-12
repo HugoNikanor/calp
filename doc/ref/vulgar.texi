@@ -1,0 +1,27 @@
+@node Vulgar Terminal Interface
+@chapter Vulgar Terminal Interface
+
+The Vulgar@footnote{Since it's not Curses}
+Terminal Interface aims to be a simple way to semi advanced terminal
+interfaces.
+
+@defun cls
+Clear the screen, and move the cursor to the ``home''.
+@end defun
+
+@defun set-cursor-pos x y
+Move the cursor to the specified position on the screen.
+@end defun
+
+@defun with-vulgar [bits] thunk
+Runs @var{thunk} with
+@code{iattr.lflag &= @var{bits}} and
+@code{oattr.lflag &= @var{bite}}, along with
+@command{tput civis} being run on entrance, and
+@command{tput cnorm} being run on exit.
+
+The thunk is properly prepared on non-local entrances and exits.
+@end defun
+
+@include vulgar/color.texi
+@include vulgar/termios.texi

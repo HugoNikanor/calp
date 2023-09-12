@@ -4,7 +4,8 @@
   :use-module (srfi srfi-88)           ; postfix keywords
   :use-module ((sxml fold) :select (fold-values))
   :use-module ((srfi srfi-9 gnu) :select (set-fields))
-  :re-export (fold-values)
+  :use-module ((ice-9 copy-tree) :select (copy-tree))
+  :use-module ((ice-9 control) :select (call/ec))
   :export (aif
            awhen
            for
@@ -59,7 +60,6 @@
            uniqx
            uniq
            univ
-           uniqv
            unique
 
            vector-last
@@ -118,17 +118,50 @@
 
 
 
-(define-syntax for
-  (syntax-rules (in)
+(define-syntax (for stx)
+  (syntax-case stx (in)
     ((for (<var> <vars> ...) in <collection> b1 body ...)
-     (map ((@ (ice-9 match) match-lambda) [(<var> <vars> ...) b1 body ...])
-          <collection>))
+     (with-syntax ((break (datum->syntax stx 'break))
+                   (continue (datum->syntax stx 'continue)))
+       #'(call/ec
+          (lambda (break)
+            (map ((@ (ice-9 match) match-lambda)
+                  [(<var> <vars> ...)
+                   (call/ec
+                    (lambda (raw-continue)
+                      (let ((continue
+                             (case-lambda
+                               (() #f)
+                               (args (apply raw-continue args)))))
+                        b1 body ...)))])
+                 <collection>)))))
+
     ((for (<var> <vars> ... . <tail>) in <collection> b1 body ...)
-     (map ((@ (ice-9 match) match-lambda) [(<var> <vars> ... . <tail>) b1 body ...])
-          <collection>))
+     #'(call/ec
+        (lambda (break)
+          (map ((@ (ice-9 match) match-lambda)
+                [(<var> <vars> ... . <tail>)
+                 (call/ec
+                  (lambda (raw-continue)
+                    (let ((continue
+                           (case-lambda
+                             (() (raw-continue #f))
+                             (args (apply raw-continue args)))))
+                      b1 body ...)))])
+               <collection>))))
     ((for <var> in <collection> b1 body ...)
-     (map (lambda (<var>) b1 body ...)
-          <collection>))))
+     (with-syntax ((break (datum->syntax stx 'break))
+                   (continue (datum->syntax stx 'continue)))
+       #'(call/ec
+          (lambda (break)
+            (map (lambda (<var>)
+                   (call/ec (lambda (raw-continue)
+                              (let ((continue
+                                     (case-lambda
+                                       (() (raw-continue #f))
+                                       (args (apply raw-continue args)))))
+                                b1 body ...))))
+                 <collection>)))))))
 
 
 
