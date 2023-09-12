@@ -1,0 +1,31 @@
+@node IO operations
+@section IO
+
+Provided by module @code{(hnh util io)}.
+
+@defun open-input-port path
+@defunx open-output-port path
+Like @code{open-*-file}, but ``-'' gives @code{standard-@{input,output@}}.
+@end defun
+
+@defun read-lines port
+Return a list of all lines read from port.
+@end defun
+
+@defun with-atomic-output-to-file filename thunk
+Same functionality as the regular @var{with-output-to-file}, but
+with the difference that either everything is written, or nothing
+is written, and if anything is written it's all written atomicaly at
+once (the original file will never contain an intermidiate state).
+Does NOT handle race conditions between threads.
+
+propagates the return value of @var{thunk} upon successfully writing
+the file, and @code{#f} otherwise.
+@end defun
+
+@defun call-with-tmpfile proc [#:tmpl ``/tmp/file-XXXXXXX'']
+@end defun
+
+@defun read-file path
+Open file at path, and return its content as a string.
+@end defun

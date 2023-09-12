@@ -1,15 +1,18 @@
 @node Generally Useful Utilities
 @chapter Generally Useful Utilities
 
-@include guile/datetime.texi
-@include guile/zic.texi
-@include guile/srfi-41.texi
-@include guile/util.texi
-@include guile/util-path.texi
-@include guile/util-config.texi
-@include guile/util-exceptions.texi
-@include guile/base64.texi
-@include guile/xdg-basedir.texi
-@include guile/glob.texi
-@include guile/graphviz.texi
-@include guile/crypto.texi
+@include general/datetime.texi
+@include general/zic.texi
+@include general/srfi-41.texi
+@include general/util.texi
+@include general/uuid.texi
+@include general/io.texi
+@include general/bst.texi
+@include general/util-path.texi
+@include general/util-config.texi
+@include general/util-exceptions.texi
+@include general/base64.texi
+@include general/xdg-basedir.texi
+@include general/glob.texi
+@include general/graphviz.texi
+@include general/crypto.texi
