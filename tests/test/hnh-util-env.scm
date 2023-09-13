@@ -5,14 +5,11 @@
   :use-module ((guile) :select (setenv getenv))
   :use-module ((hnh util env) :select (let-env)))
 
+(setenv "CALP_TEST_ENV" "1")
 
-(test-group "let-env"
-  (setenv "CALP_TEST_ENV" "1")
-
-  (test-equal
-      "Ensure we have set value beforehand"
-    "1"
-    (getenv "CALP_TEST_ENV"))
+(test-equal "Ensure we have set value beforehand"
+  "1"
+  (getenv "CALP_TEST_ENV"))
 
   (let-env
    ((CALP_TEST_ENV "2"))
@@ -26,24 +23,25 @@
     "1"
     (getenv "CALP_TEST_ENV"))
 
-  (catch 'test-error
-    (lambda ()
-      (let-env
-       ((CALP_TEST_ENV "2"))
-       (test-equal
-           "Test our local override again"
-         "2"
-         (getenv "CALP_TEST_ENV"))
-       (throw 'test-error)))
-    list)
+(catch 'test-error
+       (lambda ()
+         (let-env
+           ((CALP_TEST_ENV "2"))
+           (test-equal
+             "Test our local override again"
+             "2"
+             (getenv "CALP_TEST_ENV"))
+           (throw 'test-error)))
+       list)
 
-  (test-equal
-      "Test restoration after non-local exit"
-    "1"
-    (getenv "CALP_TEST_ENV")))
+(test-equal
+  "Test restoration after non-local exit"
+  "1"
+  (getenv "CALP_TEST_ENV"))
 
-(test-group "with-working-directory"
-  'TODO)
 
-(test-group "with-locale"
-  'TODO)
+(test-group "Unsetting environment"
+  (setenv "TEST" "A")
+  (let-env ((TEST #f))
+           (test-assert (not (getenv "TEST"))))
+  (test-equal "A" (getenv "TEST")))

@@ -45,19 +45,18 @@
 ;; (test-group "define-syntax"
 ;;   )
 
-(test-group "when"
+(test-group "Conditionals"
  (test-equal "when"
    1 (when #t 1))
 
  (test-equal "'() when #f"
-   '() (when #f 1)))
+   '() (when #f 1))
 
-(test-group "unless"
  (test-equal "unless"
    1 (unless #f 1))
 
  (test-equal "'() unless #t"
-   '() (unless #t 1)))
+   '() (unless #t 1))
 
 
 
@@ -72,7 +71,6 @@
        (unreachable)
        (test-assert #t)))
 
-(test-group "awhen"
  (test-equal "awhen it"
    '(3 4 5)
    (awhen (memv 2 '(1 2 3 4 5))
@@ -102,21 +100,26 @@
  (test-equal "for with longer improper list elements"
    '(1 2 4)
    (for (a b . c) in '((1 -1 . 1) (2 -2 . 2) (4 -4 . 4))
-        (* c (+ 1 a b)))))
+        (* c (+ 1 a b))))
 
-(test-group "begin1"
- (let ((value #f))
-   (test-equal
-       "begin1 return value"
-     "Hello"
-     (begin1 "Hello" (set! value "World")))
-   (test-equal "begin1 side effects" "World" value))
+ (test-equal "for break"
+   'x
+   (for x in (iota 10)
+        (break 'x)
+        (test-assert "This should never happen" #f)))
 
- (let ((x 1))
-   (test-eqv "begin1 set! after return"
-     1 (begin1 x (set! x 10)))
-   (test-eqv "Updates value"
-     10 x)))
+ (test-equal "for continue"
+   '(x #f 2)
+   (for x in (iota 3)
+        (case x
+          ((0)
+           (continue 'x)
+           (test-assert "Continue with value failed" #f))
+          ((1)
+           (continue)
+           (test-assert "Continue without value failed" #f))
+          (else x)))))
+
 
 (test-group "print-and-return"
   (let ((p (open-output-string)))
@@ -132,34 +135,204 @@
       '(3 2 1)
     ((swap list) 1 2 3)))
 
-(test-group "set/r!"
- (test-equal
-     "set/r! = single"
-   #f
-   (let ((x #t)) (set/r! x = not)))
 
- (test-error
-     'syntax-error
-   (test-read-eval-string "(set/r! x err not)")))
+(test-equal "procedure label"
+  120
+  ((label factorial (lambda (n)
+                      (if (zero? n)
+                          1 (* n (factorial (1- n))))))
+   5))
 
-(test-group "label"
- (test-equal "procedure label"
-   120
-   ((label factorial (lambda (n)
-                       (if (zero? n)
-                           1 (* n (factorial (1- n))))))
-    5)))
-
-(test-group "sort*"
- ;; we can't test if sort*! destroys the list, since its only /allowed/ to do it,
- ;; not required.
- (test-equal "sort*!"
-   '("a" "Hello" "Assparagus")
-   (sort*! '("Hello" "a" "Assparagus")
-           < string-length)))
+;; we can't test if sort*! destroys the list, since its only /allowed/ to do it,
+;; not required.
+(test-equal "sort*!"
+  '("a" "Hello" "Assparagus")
+  (sort*! '("Hello" "a" "Assparagus")
+          < string-length))
 
 
-(test-group "find-extreme"
+
+
+
+
+(test-assert "not equal"
+  (!= 1 2))
+
+(test-equal "Take to"
+  '() (take-to '() 5))
+
+(test-group "string-take-to"
+  (test-equal "Hello"
+    (string-take-to "Hello, World!" 5)))
+
+(test-group "string-first"
+  (test-eqv #\H (string-first "Hello, World!")))
+
+(test-group "string-last"
+  (test-eqv #\! (string-last "Hello, World!")))
+
+(test-group "as-symb"
+  (test-eq "From string" 'hello (as-symb "hello"))
+  (test-eq "From symbol" 'hello (as-symb 'hello))
+  (test-eq "NOTE that others pass right through"
+    '() (as-symb '())))
+
+
+(test-equal "Enumerate"
+  '((0 #\H) (1 #\e) (2 #\l) (3 #\l) (4 #\o) (5 #\,) (6 #\space) (7 #\W) (8 #\o) (9 #\r) (10 #\l) (11 #\d) (12 #\!))
+  (enumerate (string->list "Hello, World!")))
+
+(test-equal "unval first"
+  1
+  ((unval (lambda () (values 1 2 3)))))
+
+(test-equal "unval other"
+  2
+  ((unval car+cdr 1)
+   (cons 1 2)))
+
+(test-group "Flatten"
+ (test-equal "flatten already flat"
+   (iota 10)
+   (flatten (iota 10)))
+
+ (test-equal "flatten really deep"
+   '(1)
+   (flatten '(((((((((((((((1)))))))))))))))))
+
+ (test-equal "flatten mixed"
+   '(1 2 3 4 5)
+   (flatten '((((((1(((((2((((3))))))4))))))))5))))
+
+;; TODO test let-lazy
+
+(test-group "map/dotted"
+  (test-equal "map/dotted without dot"
+    '(1 2 3 4)
+    (map/dotted 1+ '(0 1 2 3)))
+
+  (test-equal "map/dotted with dot"
+    '(1 2 3 . 4)
+    (map/dotted 1+ '(0 1 2 . 3)))
+
+  (test-equal "map/dotted direct value"
+    1 (map/dotted 1+ 0)))
+
+
+
+(test-group "group-by"
+  ;; Extra roundabout tests since groups-by doesn't guarantee order of the keys
+  (test-group "Two simple groups"
+    (let ((groups (group-by even? (iota 10))))
+      (test-assert (lset= eq? '(#f #t) (map car groups)))
+      (test-assert (lset= = '(0 2 4 6 8) (assq-ref groups #t)))
+      (test-assert (lset= = '(1 3 5 7 9) (assq-ref groups #f)))))
+
+  (test-group "Identity groups"
+    (let ((groups (group-by identity (iota 5))))
+      (test-assert "Correct keys"
+        (lset= = (iota 5) (map car groups)))
+      (test-group "Correct amount in each group"
+        (for-each (lambda (g) (test-equal 1 (length (cdr g)))) groups))))
+
+  (test-equal "Null case"
+    '()
+    (group-by (lambda _ (unreachable)) '())))
+
+(test-group "split-by"
+  'TODO)
+
+
+
+(test-group "cross-product"
+  (test-equal "Basic case"
+      '((1 4)
+        (1 5)
+        (1 6)
+        (2 4)
+        (2 5)
+        (2 6)
+        (3 4)
+        (3 5)
+        (3 6))
+   (cross-product
+    '(1 2 3)
+    '(4 5 6)))
+
+  (test-equal "Single input list"
+    '((1) (2) (3))
+    (cross-product '(1 2 3)))
+
+  (test-equal "More than two"
+    '((1 3 5) (1 3 6)
+      (1 4 5) (1 4 6)
+      (2 3 5) (2 3 6)
+      (2 4 5) (2 4 6))
+    (cross-product
+     '(1 2)
+     '(3 4)
+     '(5 6))))
+
+(test-group "Arrows"
+  (test-equal "->" 9 (-> 1 (+ 2) (* 3)))
+  (test-equal "-> order dependant" -1 (-> 1 (- 2)))
+  (test-equal "->> order dependant" 1 (->> 1 (- 2))))
+
+;; TODO set and set->
+
+;; TODO and=>>
+
+;; downcase-symbol
+
+
+
+;; TODO test failure when grouping isn't possible?
+(test-equal "Group"
+  '((0 1) (2 3) (4 5) (6 7) (8 9))
+  (group (iota 10) 2))
+
+;; TODO test failure when grouping isn't possible?
+
+(test-group "Associations"
+  (test-equal "assoc-ref-all" '(1 3) (assoc-ref-all '((a . 1) (b . 2) (a . 3)) 'a))
+  (test-equal "assq-ref-all" '(1 3) (assq-ref-all '((a . 1) (b . 2) (a . 3)) 'a))
+  (test-equal "assv-ref-all" '(1 3) (assv-ref-all '((a . 1) (b . 2) (a . 3)) 'a))
+
+  ;; TODO assq-limit ?
+
+  (test-equal "assq merge"
+    '((k 2 1) (v 2))
+    (assq-merge '((k 1) (v 2)) '((k 2))))
+
+  (test-equal "kvlist->assq"
+    '((a . 1) (b . 2))
+    (kvlist->assq '(a: 1 b: 2)))
+
+
+  (test-equal "kvlist->assq repeated key"
+    '((a . 1) (b . 2) (a . 3))
+    (kvlist->assq '(a: 1 b: 2 a: 3))))
+
+(test-equal "vector-last"
+  1 (vector-last #(0 2 3 1)))
+
+;; TODO test catch*
+
+(test-equal
+  "Filter sorted"
+  '(3 4 5)
+  (filter-sorted (lambda (x) (<= 3 x 5)) (iota 10)))
+
+(test-equal
+  "set/r! = single"
+  #f
+  (let ((x #t)) (set/r! x = not)))
+
+(test-error
+  'syntax-error
+  (test-read-eval-string "(set/r! x err not)"))
+
+(test-group "Find extremes"
   (test-error 'wrong-type-arg (find-extreme '()))
 
   (test-group "find-min"
@@ -191,129 +364,7 @@
            "Other members left 2"
          (member "Test" rest))))))
 
-(test-group "filter-sorted"
- (test-equal
-     "Filter sorted"
-   '(3 4 5)
-   (filter-sorted (lambda (x) (<= 3 x 5)) (iota 10))))
-
-
-(test-group "!="
- (test-assert "not equal"
-   (!= 1 2)))
-
-(test-group "init+last"
-  'TODO)
-
-(test-group "take-to"
- (test-equal "Take to"
-   '() (take-to '() 5)))
-
-(test-group "string-take-to"
-  (test-equal "Hello"
-    (string-take-to "Hello, World!" 5)))
-
-(test-group "string-first"
-  (test-eqv #\H (string-first "Hello, World!")))
-
-(test-group "string-last"
-  (test-eqv #\! (string-last "Hello, World!")))
-
-(test-group "as-symb"
-  (test-eq "From string" 'hello (as-symb "hello"))
-  (test-eq "From symbol" 'hello (as-symb 'hello))
-  (test-eq "NOTE that others pass right through"
-    '() (as-symb '())))
-
-
-(test-group "enumerate"
- (test-equal "Enumerate"
-   '((0 #\H) (1 #\e) (2 #\l) (3 #\l) (4 #\o) (5 #\,) (6 #\space) (7 #\W) (8 #\o) (9 #\r) (10 #\l) (11 #\d) (12 #\!))
-   (enumerate (string->list "Hello, World!"))))
-
-
-(test-group "unval"
- (test-equal "unval first"
-   1
-   ((unval (lambda () (values 1 2 3)))))
-
- (test-equal "unval other"
-   2
-   ((unval car+cdr 1)
-    (cons 1 2))))
-
-
-(test-group "flatten"
- (test-equal "flatten already flat"
-   (iota 10)
-   (flatten (iota 10)))
-
- (test-equal "flatten really deep"
-   '(1)
-   (flatten '(((((((((((((((1)))))))))))))))))
-
- (test-equal "flatten mixed"
-   '(1 2 3 4 5)
-   (flatten '((((((1(((((2((((3))))))4))))))))5))))
-
-(test-group "let-lazy"
-  'TODO)
-
-(test-group "map/dotted"
- (test-equal "map/dotted without dot"
-   '(1 2 3 4)
-   (map/dotted 1+ '(0 1 2 3)))
-
- (test-equal "map/dotted with dot"
-   '(1 2 3 . 4)
-   (map/dotted 1+ '(0 1 2 . 3)))
-
- (test-equal "map/dotted direct value"
-   1 (map/dotted 1+ 0)))
-
-(test-group "assq-merge"
-  (test-equal "assq merge"
-    '((k 2 1) (v 2))
-    (assq-merge '((k 1) (v 2)) '((k 2)))))
-
-
-(test-group "kvlist->assq"
- (test-equal "kvlist->assq"
-   '((a . 1) (b . 2))
-   (kvlist->assq '(a: 1 b: 2)))
-
- (test-equal "kvlist->assq repeated key"
-   '((a . 1) (b . 2) (a . 3))
-   (kvlist->assq '(a: 1 b: 2 a: 3))))
-
-(test-group "assq-limit"
-  'TODO)
-
-
-(test-group "group-by"
-  ;; Extra roundabout tests since groups-by doesn't guarantee order of the keys
-  (test-group "Two simple groups"
-    (let ((groups (group-by even? (iota 10))))
-      (test-assert (lset= eq? '(#f #t) (map car groups)))
-      (test-assert (lset= = '(0 2 4 6 8) (assq-ref groups #t)))
-      (test-assert (lset= = '(1 3 5 7 9) (assq-ref groups #f)))))
-
-  (test-group "Identity groups"
-    (let ((groups (group-by identity (iota 5))))
-      (test-assert "Correct keys"
-        (lset= = (iota 5) (map car groups)))
-      (test-group "Correct amount in each group"
-        (for-each (lambda (g) (test-equal 1 (length (cdr g)))) groups))))
-
-  (test-equal "Null case"
-    '()
-    (group-by (lambda _ (unreachable)) '())))
-
-(test-group "split-by"
-  'TODO)
-
-
-(test-group "span-upto"
+(test-group "Span upto"
   (test-group "Case 1"
    (call-with-values
        (lambda ()
@@ -336,93 +387,22 @@
        (test-equal '() head)
        (test-equal '(#\H #\1 #\2 #\3 #\4 #\5 #\6) tail)))))
 
-(test-group "cross-product"
-  (test-equal "Basic case"
-      '((1 4)
-        (1 5)
-        (1 6)
-        (2 4)
-        (2 5)
-        (2 6)
-        (3 4)
-        (3 5)
-        (3 6))
-   (cross-product
-    '(1 2 3)
-    '(4 5 6)))
+(test-group "Begin1"
+  (let ((value #f))
+    (test-equal
+        "begin1 return value"
+      "Hello"
+      (begin1 "Hello" (set! value "World")))
+    (test-equal "begin1 side effects" "World" value))
 
-  (test-equal "Single input list"
-    '((1) (2) (3))
-    (cross-product '(1 2 3)))
+  (let ((x 1))
+    (test-eqv "begin1 set! after return"
+      1 (begin1 x (set! x 10)))
+    (test-eqv "Updates value"
+      10 x)))
 
-  (test-equal "More than two"
-    '((1 3 5) (1 3 6)
-      (1 4 5) (1 4 6)
-      (2 3 5) (2 3 6)
-      (2 4 5) (2 4 6))
-    (cross-product
-     '(1 2)
-     '(3 4)
-     '(5 6))))
-
-(test-group "string-flatten"
-  'TODO)
-
-(test-group "intersperse"
-  'TODO)
-
-(test-group "insert-ordered"
-  'TODO)
-
-(test-group "-> (arrows)"
-  (test-equal "->" 9 (-> 1 (+ 2) (* 3)))
-  (test-equal "-> order dependant" -1 (-> 1 (- 2)))
-  (test-equal "->> order dependant" 1 (->> 1 (- 2))))
-
-(test-group "set"
-  'TODO)
-
-(test-group "set->"
-  'TODO)
-
-(test-group "and=>"
-  'TODO)
-
-(test-group "downcase-symbol"
-  'TODO)
-
-
-(test-group "group"
-  ;; TODO test failure when grouping isn't possible?
-  (test-equal "Group"
-    '((0 1) (2 3) (4 5) (6 7) (8 9))
-    (group (iota 10) 2)))
-
-(test-group "iterate"
-  (test-equal 0 (iterate 1- zero? 10)))
-
-(test-group "valued-map"
-  'TODO)
-
-(test-group "assoc-ref-all"
-  (test-equal "assoc-ref-all"
-    '(1 3) (assoc-ref-all '((a . 1) (b . 2) (a . 3)) 'a))
-  (test-equal "assq-ref-all"
-    '(1 3) (assq-ref-all '((a . 1) (b . 2) (a . 3)) 'a))
-  (test-equal "assv-ref-all"
-    '(1 3) (assv-ref-all '((a . 1) (b . 2) (a . 3)) 'a)))
-
-(test-group "unique"
-  'TODO)
-
-(test-group "vector-last"
-  (test-equal "vector-last"
-    1 (vector-last #(0 2 3 1))))
+(test-equal 0 (iterate 1- zero? 10))
 
 (test-group "->string"
   (test-equal "5" (->string 5))
   (test-equal "5" (->string "5")))
-
-(test-group "catch*"
-  'TODO)
-
