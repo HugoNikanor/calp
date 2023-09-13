@@ -6,6 +6,7 @@
            read-lines
            with-atomic-output-to-file
            call-with-tmpfile
+           displayln
            ->port))
 
 (define (open-input-port str)
@@ -73,6 +74,10 @@
        (begin1
         (proc port filename)
         (close-port port))))))
+
+(define displayln
+  (case-lambda ((x) (display x) (newline))
+               ((x p) (display x p) (newline p))))
 
 (define (->port port-or-string)
   (cond ((port? port-or-string) port-or-string)

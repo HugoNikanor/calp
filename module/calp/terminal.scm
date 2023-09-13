@@ -6,6 +6,7 @@
   :use-module ((srfi srfi-41) :select (stream-car))
   :use-module (srfi srfi-88)
   :use-module (hnh util)
+  :use-module ((hnh util io) :select (displayln))
   :use-module (vulgar)
   :use-module (vulgar info)
   :use-module (vulgar color)
@@ -83,10 +84,6 @@
    (iota (length events)))
   (displayln
    (box-top #\┴ #\─ date-width (+ summary-width 2) (1+ location-width))))
-
-(define (displayln a)
-  (display a) (newline))
-
 
 (define-class <view> ()
   (event-set getter: get-event-set init-keyword: event-set:)

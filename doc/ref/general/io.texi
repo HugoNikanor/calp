@@ -29,3 +29,7 @@ the file, and @code{#f} otherwise.
 @defun read-file path
 Open file at path, and return its content as a string.
 @end defun
+
+@defun displayln x [port]
+Calls @code{display}, followed by @code{newline}.
+@end defun
