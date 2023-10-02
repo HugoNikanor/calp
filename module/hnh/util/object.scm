@@ -130,9 +130,11 @@
        ;; only dependant on the source from which they orginate, which leads to
        ;; multiple instances of <type> being equal for similar types...
        ;; See the manual 6.10.10 Hygiene and the Top-Level
+       ;; They technically shouldn't be exposed, but are as a side effect.
        (with-syntax ((<type>      (construct-syntax stx #'name "<~a>"))
                      (make-<type> (construct-syntax stx #'name "make-~a%")))
          #`(begin
+             ;; Define actual type
              (define-immutable-record-type <type>
                (make-<type> #,@(map syntax-first #'(field ...)))
                <type>?

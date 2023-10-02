@@ -489,6 +489,7 @@
 
 ;; Non-destructive set, syntax extension from set-fields from (srfi
 ;; srfi-9 gnu).
+;;; TODO remove this, it's replaced by the true lens version
 (define-syntax set
   (syntax-rules (=)
     [(set (acc obj) value)

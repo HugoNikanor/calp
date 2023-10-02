@@ -37,6 +37,7 @@
 (define (parse-datetime props value)
   (define parsed
     (parse-ics-datetime
+     ;; TODO props is no longer a (built-in) hash table
      value (hashq-ref props 'TZID #f)))
   (hashq-set! props '-X-HNH-ORIGINAL parsed)
   (get-datetime parsed))

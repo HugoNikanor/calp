@@ -12,7 +12,8 @@
   (cond ((getenv var)
          => (lambda (s)
               (if (string-null? s)
-                  #f s)))
+                  #f
+                  s)))
         (else #f)))
 
 ;;; XDG_DATA_HOME

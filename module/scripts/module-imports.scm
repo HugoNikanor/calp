@@ -5,6 +5,9 @@
 ;;; but simple looks at all unique symbols in the source file for what
 ;;; is used, which might lead to some discrepancies.
 ;;;
+;;; TODO An explicit #:select list in an import leads this module
+;;;   to assume that all those symbols are in use
+;;;
 ;;; Code:
 
 (define-module (scripts module-imports)
