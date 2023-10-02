@@ -1,0 +1,43 @@
+@node Code Coverage Utilities
+@section Code Coverage Utilities
+
+The module @code{(hnh util coverage)} provides procedures for working
+with the coverage reports returned by Guile's @code{(system vm coverage)}.
+
+@deftp {Immutable Record} coverage-info
+
+@defun coverage-info? x
+@end defun
+
+@defvr {Record Field} filename
+@end defvr
+
+@defvr {Record Field} lines
+@end defvr
+
+@defvr {Record Field} total-lines
+@end defvr
+
+@defvr {Record Field} hit-lines
+@end defvr
+
+@end deftp
+
+
+@defun output-coverage coverage [port=(current-output-port)]
+Outputs @var{coverage} as a coverage report to @var{port}. Note that
+for the output to be a valid coverage file, it must begin with ``TN:''
+as its first line, before any records.
+@end defun
+
+@defun parse-coverage string
+Parses coverage data as returned by @code{coverage-data->lcov}. (or
+any pre-generated coverage data file).
+
+Returns a coverage-info object.
+@end defun
+
+@defun merge-coverage a b
+Merges the two given coverage info objects into one coverage info
+objects. The two objects must reference the same source file.
+@end defun

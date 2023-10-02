@@ -54,7 +54,7 @@ Generate an FDF (PDF Form submission file) for some very specific time
 reporting sheets.
 
 TODO this should be removed from this project, and moved to a
-``private'' repo of hugo.
+``private'' repo property of hugo.
 @end deftp
 
 @deftp {Entry Point} update-zoneinfo

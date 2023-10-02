@@ -21,8 +21,7 @@ of these should be generally useful in any project.
 @include general/crypto.texi
 @include general/graph.texi
 @include general/options.texi
-
-@c TODO document (hnh util coverage)
+@include general/coverage.texi
 
 @include general/util-type.texi
 @include general/lens.texi
