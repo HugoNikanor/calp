@@ -1,9 +1,12 @@
+COV_FILE=coverage.info
+
 .PHONY: all clean test \
-	check \
+	unit-test-with-cov \
 	litmus \
 	static \
-	go_files \
-	lcov.info
+	$(COV_FILE) \
+	lcov.info \
+	unit-test-deps
 
 GUILE := guile
 export GUILE
@@ -16,13 +19,17 @@ GUILE_SITE_DIR=$(shell $(GUILE) -c "(display (%site-dir))")
 GUILE_CCACHE_DIR=$(shell $(GUILE) -c "(display (%site-ccache-dir))")
 
 SCM_FILES = $(shell find module/ -type f -name \*.scm)
-GO_FILES = $(SCM_FILES:module/%.scm=obj-$(GUILE_VERSION)/%.go)
+GO_FILES = $(SCM_FILES:%.scm=obj-$(GUILE_VERSION)/%.go)
+SCM_UNIT_TESTS = $(shell find tests/unit/ -type f -name \*.scm)
+GO_UNIT_TESTS = $(SCM_UNIT_TESTS:%.scm=obj-$(GUILE_VERSION)/%.go)
 
-GUILE_ENV = GUILE_LOAD_PATH=$(PWD)/module \
-			GUILE_LOAD_COMPILED_PATH=$(PWD)/obj-$(GUILE_VERSION) \
-			GUILE_AUTO_COMPILE=0
+TEST_FILES = $(shell find tests/unit/util/ -type f -name \*.scm)
 
-GUILE_C_FLAGS = -Lmodule \
+GUILE_ENV = GUILE_LOAD_PATH=$(PWD)/module:$(PWD)/tests/unit \
+	GUILE_LOAD_COMPILED_PATH=$(PWD)/obj-$(GUILE_VERSION)/module:$(PWD)/obj-$(GUILE_VERSION)/obj-3.0.9/tests/util \
+	GUILE_AUTO_COMPILE=0
+
+GUILE_C_FLAGS = -Lmodule -Ltests/util \
 				-Wshadowed-toplevel -Wunbound-variable \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
@@ -41,7 +48,7 @@ LIMIT_FILES=$(LIMIT:%=--only %)
 # Skip these files when testing
 SKIP=--skip $(PWD)/tests/test/web-server.scm
 
-all: calp go_files static $(LOCALIZATIONS)
+all: calp $(GO_FILES) static $(LOCALIZATIONS)
 	$(MAKE) -C doc/ref
 
 calp: calp.c
@@ -50,18 +57,17 @@ calp: calp.c
 calp-release: calp.c
 	$(CC) -O2 $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
+cpucount: cpucount.c
+	$(CC) -o $@ $<
+
 XGETTEXT_FLAGS = --from-code=UTF-8 --add-comments --indent -kG_
 
 static:
 	$(MAKE) -C static
 
-obj-$(GUILE_VERSION)/%.go: module/%.scm
+obj-$(GUILE_VERSION)/%.go: %.scm
 	@echo $(GUILD) $(GUILE_VERSION) compile $<
 	@env $(GUILE_ENV) $(GUILD) compile $(GUILE_C_FLAGS) -o $@ $< >/dev/null
-
-# Phony target used by test/run-tests.scm and main to
-# automatically compile everything before they run.
-go_files: $(GO_FILES)
 
 po/%.po: $(SCM_FILES)
 	xgettext $(XGETTEXT_FLAGS) --output $@ -L scheme $^ --join-existing --omit-header --no-location
@@ -82,7 +88,7 @@ clean:
 install: all calp-release
 	install -d $(DESTDIR)$(GUILE_SITE_DIR)  $(DESTDIR)$(GUILE_CCACHE_DIR)
 	rsync -a module/ $(DESTDIR)$(GUILE_SITE_DIR)
-	rsync -a obj-$(GUILE_VERSION)/ $(DESTDIR)$(GUILE_CCACHE_DIR)
+	rsync -a obj-$(GUILE_VERSION)/module $(DESTDIR)$(GUILE_CCACHE_DIR)
 	$(MAKE) -C static install
 	$(MAKE) -C system install
 	$(MAKE) -C doc/ref install
@@ -90,17 +96,23 @@ install: all calp-release
 	install -m 755 -D -t $(DESTDIR)/usr/lib/calp/ scripts/tzget
 	install -m755 -D calp-release $(DESTDIR)/usr/bin/calp
 
-lcov.info: $(GO_FILES)
-	env DEBUG=0 tests/run-tests.scm --coverage=$@ $(if $(VERBOSE),--verbose) $(SKIP) $(LIMIT_FILES)
+# TODO a test completed with no errors should emit a .test-accepted
+# file, which make can then use as a target.
 
-test: coverage
+unit-test-deps: calp $(GO_UNIT_TESTS) $(GO_FILES) $(TEST_FILES)
+
+$(COV_FILE): cpucount unit-test-deps
+	./testrunner.scm --threads $(shell ./cpucount) --coverage $@
+
+unit-test-with-cov: $(COV_FILE)
 
 GENHTML_FLAGS=--show-details \
-			  --prefix $(shell pwd)/module \
+			  --hierarchical \
+			  --prefix $(shell pwd) \
 			  --no-function-coverage \
 			  --quiet
 
-coverage: lcov.info calp
+coverage: $(COV_FILE)
 	genhtml $(GENHTML_FLAGS) --output-directory $@ $<
 
 
@@ -108,9 +120,6 @@ CHECK_FLAGS = \
 	$(if $(CATCH),--catch) \
 	$(if $(VERBOSE),--verbose) \
 	$(SKIP) $(LIMIT_FILES)
-
-check: calp
-	tests/run-tests.scm $(CHECK_FLAGS)
 
 litmus:
 	tests/litmus.scm $(path)
