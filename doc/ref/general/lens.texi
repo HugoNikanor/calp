@@ -3,6 +3,8 @@
 
 Provided by the module @code{(hnh util lens)}
 
+@c TODO write an actuall introduction here
+
 @defun modify object lens f args ...
 @end defun
 

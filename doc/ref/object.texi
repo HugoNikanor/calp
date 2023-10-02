@@ -1,0 +1,4 @@
+@node Yet Another Object System
+@chapter Yet Another Object System
+
+@include object/object.texi

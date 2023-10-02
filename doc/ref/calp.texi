@@ -73,6 +73,7 @@ text @footnote{Improvements welcome}
 @include text.texi
 @include vulgar.texi
 @include introspection.texi
+@include object.texi
 
 @node Index
 @unnumbered Index

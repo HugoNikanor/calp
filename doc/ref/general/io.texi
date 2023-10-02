@@ -10,6 +10,8 @@ Like @code{open-*-file}, but ``-'' gives @code{standard-@{input,output@}}.
 
 @defun read-lines port
 Return a list of all lines read from port.
+
+The trailing newlines are @emph{not} part of the string.
 @end defun
 
 @defun with-atomic-output-to-file filename thunk

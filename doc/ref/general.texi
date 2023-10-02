@@ -22,8 +22,8 @@ of these should be generally useful in any project.
 @include general/graph.texi
 @include general/options.texi
 
+@c TODO document (hnh util coverage)
 
 @include general/util-type.texi
-@include general/util-object.texi
 @include general/lens.texi
 @include general/sxml.texi

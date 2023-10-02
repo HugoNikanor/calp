@@ -341,6 +341,13 @@ A variable can also be removed from the environment, by setting its
 value to @code{#f}.
 @end defmac
 
+@defmac with-working-directory directory thunk
+Run @var{thunk} with the working directory set to @var{directory}.
+
+Note that this probably isn't thread safe. See source for more
+inforamtion.
+@end defmac
+
 @defmac with-locale1 category locale thunk
 Run @var{thunk} with the locale @var{category} temporarily set to
 @var{locale}.
