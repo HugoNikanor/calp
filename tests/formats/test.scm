@@ -3,9 +3,10 @@
 
 here=$(dirname $(realpath $0))
 export here
-. "$(dirname $(dirname "$here"))/env"
+root="$(dirname "$(dirname "$here")")"
+eval $(env __PRINT_ENVIRONMENT=1 "${root}/calp")
 
-exec $GUILE -s "$0" "$@"
+exec "$GUILE" -s "$0" "$@"
 !#
 
 (use-modules (srfi srfi-64)
@@ -19,7 +20,7 @@ exec $GUILE -s "$0" "$@"
 
 
 (verbose? #t)
-(test-runner-factory construct-test-runner)
+(test-runner-factory (construct-test-runner display))
 
 (define component
   (vcomponent
