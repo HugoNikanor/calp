@@ -42,10 +42,6 @@
 
 
 
-(define (make-lens getter setter)
-  (case-lambda ((datum) (getter datum))
-               ((datum new-value) (setter datum new-value))))
-
 (define-syntax build-lens
   (syntax-rules ()
     ((_ (getter gargs ...)
@@ -97,8 +93,13 @@
   (build-lens (list-ref idx) (list-change idx)))
 
 
-(define car* (make-lens car (lambda (pair value) (cons value (cdr pair)))))
-(define cdr* (make-lens cdr (lambda (pair value) (cons (car pair) value))))
+(define car*
+  (case-lambda ((pair) (car pair))
+               ((pair value) (cons value (cdr pair)))))
+
+(define cdr*
+  (case-lambda ((pair) (cdr pair))
+               ((pair value) (cons (car pair) value))))
 
 (define (each obj lens proc)
   (modify obj lens
