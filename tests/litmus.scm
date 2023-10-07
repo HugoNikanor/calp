@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # -*- mode: scheme; geiser-scheme-implementation: guile -*-
 
-here=$(dirname $(realpath $0))
-. "$(dirname "$here")/env"
+# here=$(dirname $(realpath $0))
+# . "$(dirname "$here")/env"
+
+root=$(dirname "$(dirname "$(realpath "$0")")")
+eval "$(env __PRINT_ENVIRONMENT=1 "${root}/calp")"
 
 exec $GUILE -e main -s "$0" "$@"
 !#
