@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # -*- mode: scheme; geiser-scheme-implementation: guile -*-
 
-make calp unit-test-deps
+make calp
+make unit-test-deps
 
 root=$(dirname "$(realpath "$0")")
-eval "$(env __PRINT_ENVIRONMENT=1 ${root}/calp)"
-
+eval "$(env __PRINT_ENVIRONMENT=1 "${root}/calp")"
 
 exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
 !#
@@ -19,25 +19,24 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
              (srfi srfi-18)
              (srfi srfi-64)
              (srfi srfi-71)
-             ((hnh util) :select (->> for group-by))
+             (srfi srfi-111)
+             ((rnrs io ports) :select (get-bytevector-all))
+             ((hnh util) :select (-> ->> for group-by))
              (hnh util path)
              (hnh util type)
-             ((hnh util lens) :select (modify cdr* car* compose-lenses))
              (hnh util object)
              (hnh util coverage)
+             (hnh util atomic)
+             (hnh util atomic-stack)
+             (hnh util atomic-queue)
+             (hnh test testrunner)
+             ((hnh util io) :select (displayln))
+             (crypto)
              (ice-9 getopt-long)
              (ice-9 control)
              (ice-9 format))
 
 
-
-(define-syntax with-mutex
-  (syntax-rules ()
-    ((_ mutex body ...)
-     (dynamic-wind
-       (lambda () (mutex-lock! mutex))
-       (lambda () body ...)
-       (lambda () (mutex-unlock! mutex))))))
 
 (define-syntax-rule (begin-thread forms ...)
   (let ((thread (make-thread (lambda () forms ...))))
@@ -66,34 +65,16 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
 
 (define current-filename (make-parameter #f))
 
-(define (construct-test-runner)
-  (define runner (test-runner-null))
-  (test-runner-aux-value!
-   runner
-   `((thread-name . ,(thread-name (current-thread)))))
-  #;
-  (test-runner-on-test-begin! runner
-    (lambda (runner)
-      (test-runner-aux-value! runner #t)))
-  (test-runner-on-test-end! runner
-    (lambda (runner)
-      (case (test-result-kind runner)
-        ((pass)
-         (if (getenv "VERBOSE")
-             (println (format #f "~a SUCCEED ~a"
-                              (current-filename)
-                              (test-runner-test-name runner)))
-             (display #\#)))
-        ((fail)
-         (println (format #f "~a FAIL ~a"
-                          (current-filename)
-                          (test-runner-test-name runner))))
-        ((xpass xfail skip)
-         (println (format #f "~a ~a ~a"
-                          (current-filename)
-                          (test-result-kind runner)
-                          (test-runner-test-name runner)))))))
-  runner)
+(define (test-runner-name runner)
+ (cond ((test-runner-test-name runner)
+        (negate string-null?) => identity)
+       ((test-result-ref runner 'expected-value)
+        => (lambda (p) (with-output-to-string
+                    (lambda ()
+                      ;; (display (bold "[SOURCE]: "))
+                      ;; (truncated-print p width: 60)
+                      (write p)
+                      ))))))
 
 
 (define (test-runner-processed runner)
@@ -114,18 +95,19 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
                 (else
                  (string-join (test-runner-group-path runner) " → ")))))
 
-(define runners '())
-(define runner-mutex (make-mutex))
-(sigaction SIGINT
-(lambda _
-    (display
-    (string-join (map test-runner-test-description runners) "\n"))))
+
 
+(define runners (atomic-stack))
+
+(sigaction SIGINT
+  (lambda _
+    (display
+     (string-join (map test-runner-test-description (stack->list runners))
+                  "\n"))))
 
 (define-type (job)
   (jobname type: string?)
   (job-thunk type: thunk?))
-
 
 (define* (maybe-with-code-coverage thunk key: (coverage? #f))
   (if coverage?
@@ -141,15 +123,13 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
         (lambda ()
           (parameterize ((current-filename (basename entry)))
             (test-begin entry)
-            (with-mutex runner-mutex
-              (set! runners (cons (test-runner-get) runners)))
+            (push! (test-runner-get) runners)
             (let ((coverage module-names
                             (maybe-with-code-coverage
                              (lambda () (load entry))
                              coverage?: coverage?)))
               (let ((tested-files (map module->source-file module-names)))
                 (test-end entry)
-                (println (format #f "Completed ~a" entry))
                 (if coverage
                     (let ((lcov-data
                            (call-with-output-string
@@ -162,28 +142,20 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
 
 
 (define* (make-work-pool jobs key: (thread-count 1))
-  (define job-pool jobs)
-  (define pool-mutex (make-mutex))
-
-  (define results (list))
-  (define results-mutex (make-mutex))
+  (define job-pool (atomic-stack))
+  (define results (atomic-stack))
+  (for-each (lambda (job) (push! job job-pool)) jobs)
 
   (define (pool-worker)
     (call/ec
      (lambda (return)
        (while #t
-         (let ((job (with-mutex pool-mutex
-                      (if (null? job-pool)
-                          (return #f)
-                          (let ((job (car job-pool)))
-                            (set! job-pool (cdr job-pool))
-                            job)))))
+         (let ((job (pop! job-pool)))
+           (unless job (return #f))
            (catch #t
-             (lambda ()
-               (let ((result ((job-thunk job))))
-                 (with-mutex results-mutex
-                   (set! results (cons result results)))))
+             (lambda () (push! ((job-thunk job)) results))
              (lambda args
+               ;; TODO indicate FATAL ERROR
                (println (format #f "Job [~a] failed: ~s"
                                 (jobname job)
                                 ;; TODO better error formatting
@@ -218,6 +190,7 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
     (nice (value #t))
     (threads (value #t))
     (coverage (value optional))
+    (coverage-supplement (value #t))
     ))
 
 (define help "
@@ -249,18 +222,31 @@ Flags:
 --coverage [output-filename]
   Generate code coverage data, this causes the tests to be quite
   a bit slower.
+--coverage-supplement supplement-file
 ")
+
+
+
+(define (read-coverage-info port)
+  (map (lambda (entry)
+         (call-with-values (lambda () (apply values entry))
+           (lambda (filename checksum . lines)
+             (cons checksum
+                   (coverage-info
+                    filename: (realpath filename)
+                    lines: (map (lambda (l) (cons l 1)) lines))))))
+       (read port)))
+
 
 
 (define (main args)
   (define options (getopt-long args option-spec))
 
   (when (option-ref options 'help #f)
-    (display help)
     (exit 0))
 
-  (when (option-ref options 'verbose #f)
-    (setenv "VERBOSE" "1"))
+  (when (option-ref options 'verbose (getenv "VERBOSE"))
+    (verbose? #t))
 
   (define test-files
     (cond ((option-ref options 'suite #f)
@@ -271,7 +257,9 @@ Flags:
 
   (nice (string->number (option-ref options 'nice "10")))
 
-  (test-runner-factory construct-test-runner)
+  (define error-queue (atomic-queue))
+
+  (test-runner-factory (construct-test-runner print error-queue))
 
   (define coverage
     (let ((cov (option-ref options 'coverage #f)))
@@ -279,21 +267,58 @@ Flags:
             (cov "coverage.info")
             (else #f))))
 
+  ;; Guile's coverage system sometimes miss some definitions.
+  ;; Add these here so the output gets green.
+  ;; However, always start by attempting to add more tests to fill
+  ;; in the coverage.
+  (define-values (extra-coverage outdated-extra)
+    (cond ((option-ref options 'coverage-supplement #f)
+           => (lambda (supplement-file)
+                (partition
+                 (lambda (pair)
+                   (let ((checksum coverage (car+cdr pair)))
+                     (-> (call-with-input-file (filename coverage)
+                           get-bytevector-all)
+                         sha256
+                         checksum->string
+                         (string=? checksum))))
+                 (call-with-input-file supplement-file read-coverage-info))))
+          (else (values '() '()))))
+
+  (unless (null? outdated-extra)
+    (format #t "The following files have changed since their coverage")
+    (format #t "exceptions were written. Please review:~%")
+    (for-each displayln outdated-extra))
+
   ((@ (hnh util exceptions) warnings-are-errors) #t)
 
   (if (option-ref options 'list #f)
       (format #t "Gathered the following tests:~%~y~%" test-files)
-      (let ((results (thread-join!
-                      (make-work-pool
-                       (prepare-jobs test-files coverage?: coverage)
-                       thread-count: (string->number
-                                      (option-ref options 'threads "1"))))))
-        (define merged-coverages
-          (map (lambda (group) (reduce merge-coverage #f (cdr group)))
-               (group-by filename (concatenate results))))
+      (begin
+        (test-begin "Universe")
+        (let ((results (thread-join!
+                        (make-work-pool
+                         (prepare-jobs test-files coverage?: coverage)
+                         thread-count: (string->number
+                                        (option-ref options 'threads "1"))))))
 
-        (unless (null? merged-coverages)
-          (with-output-to-file coverage
-            (lambda ()
-              (display "TN:") (newline)
-              (for-each output-coverage merged-coverages)))))))
+          (test-end "Universe")
+          (define merged-coverages
+            (map (lambda (group) (reduce merge-coverage #f (cdr group)))
+                 (group-by filename (concatenate (cons (map cdr extra-coverage)
+                                                       (stack->list results))))))
+
+
+          (unless (null? merged-coverages)
+            (with-output-to-file coverage
+              (lambda ()
+                (display "TN:") (newline)
+                (for-each output-coverage merged-coverages))))
+
+          (display "== Gathered errors ==\n")
+          (let loop ()
+            (cond ((dequeue! error-queue)
+                   => (lambda (entry)
+                        (display entry)
+                        (newline)
+                        (loop)))))))))

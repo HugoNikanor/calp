@@ -63,7 +63,7 @@
    (fold (lambda (line state)
            (match (parse-coverage-line line)
              (('DA line hits)
-              (modify state (compose-lens car* lines)
+              (modify state (compose-lenses car* lines)
                       (lambda (lines) (cons (cons line hits) lines))))
              (('SF source)
               (set state car* filename source))
@@ -86,6 +86,7 @@
                "Can only merge coverage data for the same file, got ~s and ~s"
                (list (filename a) (filename b))
                #f))
+  #;
   (unless (= (total-lines a) (total-lines b))
     (scm-error 'misc-error "merge-coverage"
                "Mismatch between found lines. Is it really the same file? File: ~s, got ~s and ~s"
