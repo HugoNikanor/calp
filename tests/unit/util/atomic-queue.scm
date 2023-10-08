@@ -15,6 +15,9 @@
 
 (enqueue! 4 q)
 
+(test-equal "Returned order when extracting list"
+  '(2 3 4) (queue->list q))
+
 (test-equal 2 (dequeue! q))
 (test-equal 3 (dequeue! q))
 (test-equal 4 (dequeue! q))

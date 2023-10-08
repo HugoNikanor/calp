@@ -26,3 +26,4 @@ of these should be generally useful in any project.
 @include general/util-type.texi
 @include general/lens.texi
 @include general/sxml.texi
+@include general/atomic.texi

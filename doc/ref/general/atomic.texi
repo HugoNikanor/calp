@@ -1,0 +1,74 @@
+@node Atomic Operations and Datastructures
+@section Atomic Operations and Datastructures
+
+@code{(hnh util atomic)}
+
+@defmac with-mutex mutex body ...
+Equivalent to Guile's @code{with-mutex} from
+@code{(ice-9 threads)}.
+Re-implemented to be able to drop an ice-9 dependency@c
+@footnote{As if Scheme will ever be portable enough for that to matter}.
+@end defmac
+
+A few ``atomic'' data structures are also available. These allow
+synchronized insertion and removal from the set.
+
+@node Atomic Queue
+@subsection Atomic Queue
+
+@code{(hnh util atomic-queue)}
+
+@defun atomic-queue
+Create a new atomic queue. Each queue will internally syncronize all
+modifications of state. Sepparate queue's don't affect each other.
+@end defun
+
+@defun atomic-queue? x
+Check if @var{x} is an atomic queue?
+@end defun
+
+@defun enqueue! value queue
+Add @var{value} to the back of @var{queue}.
+@end defun
+
+@defun queue-peek queue
+Returns the first element of @var{queue}, or raises an exception if
+the queue is empty.
+@end defun
+
+@defun dequeue! queue
+remove and retrun the first element of @var{queue}, or @code{#f} if the queue is
+empty.
+@end defun
+
+@defun queue->list queue
+Extract contents of @var{queue}. With the front of the list in the car
+slot, and subsequent elements following.
+@end defun
+
+@node Atomic Stack
+@subsection Atomic Stack
+
+@code{(hnh util atomic-stack)}
+
+@defun atomic-stack
+Creates a new atomic stack. See @code{atomic-queue} further details.
+@end defun
+
+@defun atomic-stack? x
+Check if @var{x} is an atomic stack.
+@end defun
+
+@defun push! value stack
+@end defun
+
+@defun stack-peek stack
+@end defun
+
+@defun pop! value stack
+@end defun
+
+@defun stack->list stack
+Extract the contents of @var{stack}. The topmost element will be first
+in the returned list.
+@end defun

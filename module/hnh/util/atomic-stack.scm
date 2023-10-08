@@ -19,9 +19,6 @@
 (define (atomic-stack)
   (%atomic-stack '() (make-mutex)))
 
-(define (stack->list stack)
-  (stack-contents stack))
-
 (define (push! value stack)
   (typecheck stack atomic-stack?)
   (with-mutex (stack-mutex stack)
@@ -41,3 +38,5 @@
               (stack-contents-set!
                stack (cdr (stack-contents stack)))))))
 
+(define (stack->list stack)
+  (stack-contents stack))
