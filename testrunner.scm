@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # -*- mode: scheme; geiser-scheme-implementation: guile -*-
 
-make calp
-make unit-test-deps
+make --silent calp
+make --silent unit-test-deps
 
 root=$(dirname "$(realpath "$0")")
 eval "$(env __PRINT_ENVIRONMENT=1 "${root}/calp")"
@@ -30,6 +30,7 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
              (hnh util atomic-stack)
              (hnh util atomic-queue)
              (hnh test testrunner)
+             (hnh test util)
              ((hnh util io) :select (displayln))
              (crypto)
              (ice-9 getopt-long)
@@ -111,11 +112,36 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
 
 (define* (maybe-with-code-coverage thunk key: (coverage? #f))
   (if coverage?
-      (with-code-coverage
-       (lambda () (catch #t thunk (lambda _ #f))))
-      (values #f (catch #t thunk (lambda _ #f)))))
+      (with-code-coverage thunk)
+      (values #f (thunk))))
 
-(define* (prepare-jobs test-files key: (coverage? #f))
+
+(define (format-test-runner-crash-message args)
+  (with-output-to-string
+    (lambda ()
+      (display
+       (red
+        (format
+         #f
+         "Test crashed unexpectedly, after: ~s~%"
+         (test-runner-test-name/description (test-runner-current)))))
+      (display (yellow "  All further tests in file will be skipped"))
+      (newline)
+      (format #t "  In file ~s, sightly after line ~a~%"
+              (test-result-ref (test-runner-current) 'source-file)
+              (test-result-ref (test-runner-current) 'source-line))
+
+      (apply (case-lambda ((err proc fmt args data)
+                           (if proc
+                               (format #t "  ~a thrown in ~a. ~?~%"
+                                       err proc fmt args)
+                               (format #t "~a thrtown. ~?~%"
+                                       err fmt args)))
+                          (args (format #t "  ~s~%" args)))
+             args))))
+
+
+(define* (prepare-jobs test-files error-queue key: (coverage? #f))
   (for entry in test-files
        (job
         jobname: (basename entry)
@@ -124,21 +150,27 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
           (parameterize ((current-filename (basename entry)))
             (test-begin entry)
             (push! (test-runner-get) runners)
-            (let ((coverage module-names
-                            (maybe-with-code-coverage
-                             (lambda () (load entry))
-                             coverage?: coverage?)))
-              (let ((tested-files (map module->source-file module-names)))
-                (test-end entry)
-                (if coverage
-                    (let ((lcov-data
-                           (call-with-output-string
-                             (lambda (port) (coverage-data->lcov coverage port)))))
-                      (filter (lambda (coverage)
-                                (member (filename coverage)
-                                        tested-files))
-                              (parse-coverage lcov-data)))
-                    '()))))))))
+            (define-values (coverage module-names)
+              (catch #t
+                (lambda ()
+                  (maybe-with-code-coverage
+                   (lambda () (load entry))
+                   coverage?: coverage?))
+                (lambda args
+                  (enqueue! (format-test-runner-crash-message args)
+                            error-queue)
+                  (values #f '()))))
+            (define tested-files (map module->source-file module-names))
+            (test-end)
+            (if coverage
+                (let ((lcov-data
+                       (call-with-output-string
+                         (lambda (port) (coverage-data->lcov coverage port)))))
+                  (filter (lambda (coverage)
+                            (member (filename coverage)
+                                    tested-files))
+                          (parse-coverage lcov-data)))
+                '()))))))
 
 
 (define* (make-work-pool jobs key: (thread-count 1))
@@ -205,24 +237,27 @@ Flags:
 --verbose|-v
   Enables verbose output. This can also be done by setting the
   environment variable VERBOSE.
---suite
+--suite path
   Limit execution to a single test suite. Should be given as a
   directory, and that directory should contain a number of test
   files. See files in tests/unit for available suites.
   Mutualy exclusive with --file.
---file
+
+  Example: tests/unit/general
+--file filename
   Only runs tests from the given file.
   Mutually exlusive with --suite.
 --list|-l
   Don't run test, but list all files which would have been ran.
---nice
+--nice increment
   How much do incrument the nice value
---threads
+--threads count
   How many threads to spawn for running tests.
 --coverage [output-filename]
   Generate code coverage data, this causes the tests to be quite
   a bit slower.
 --coverage-supplement supplement-file
+
 ")
 
 
@@ -243,6 +278,7 @@ Flags:
   (define options (getopt-long args option-spec))
 
   (when (option-ref options 'help #f)
+    (display help)
     (exit 0))
 
   (when (option-ref options 'verbose (getenv "VERBOSE"))
@@ -259,7 +295,9 @@ Flags:
 
   (define error-queue (atomic-queue))
 
-  (test-runner-factory (construct-test-runner print error-queue))
+  (test-runner-factory (construct-test-runner
+                        print
+                        error-queue))
 
   (define coverage
     (let ((cov (option-ref options 'coverage #f)))
@@ -298,7 +336,7 @@ Flags:
         (test-begin "Universe")
         (let ((results (thread-join!
                         (make-work-pool
-                         (prepare-jobs test-files coverage?: coverage)
+                         (prepare-jobs test-files error-queue coverage?: coverage)
                          thread-count: (string->number
                                         (option-ref options 'threads "1"))))))
 
@@ -315,7 +353,7 @@ Flags:
                 (display "TN:") (newline)
                 (for-each output-coverage merged-coverages))))
 
-          (display "== Gathered errors ==\n")
+          (format #t "~%== Gathered errors ==~%")
           (let loop ()
             (cond ((dequeue! error-queue)
                    => (lambda (entry)

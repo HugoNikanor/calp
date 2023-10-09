@@ -6,8 +6,8 @@
   :use-module (ice-9 pretty-print)
   :use-module (ice-9 format)
   :use-module (ice-9 curried-definitions)
-  :export (verbose? construct-test-runner)
-  )
+  :export (verbose? construct-test-runner
+                    test-runner-test-name/description))
 
 (define verbose? (make-parameter #f))
 
@@ -107,8 +107,12 @@
          (with-output-to-string
            (lambda ()
              (display
-              (red (format #f "Test failed: ~a~%"
+              (yellow (format #f "Test failed: ~a~%"
                            (test-runner-test-name/description runner))))
+             (display
+              (yellow
+               (format #f "  Path: ~s~%"
+                       (cdr (test-runner-group-path runner)))))
              (test-runner-describe-error runner 0)))
          err-queue))
 
