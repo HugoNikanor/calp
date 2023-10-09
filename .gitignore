@@ -3,6 +3,6 @@
 coverage
 obj-*
 localization
-calp
+/calp
 calp-release
 cpucount
