@@ -107,7 +107,11 @@
 ;; (define prop (compose-lens vline-value prop*))
 (define prop
   (case-lambda
-    ((comp key) (and=> (prop* comp key) vline-value))
+    ((comp key) (and=> (prop* comp key)
+                       (lambda (x)
+                         (if (list? x)
+                             (map vline-value x)
+                             (vline-value x)))))
     ((comp k v)
      (cond ((prop* comp k)
             => (lambda (vline)
