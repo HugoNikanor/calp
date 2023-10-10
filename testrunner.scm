@@ -326,7 +326,7 @@ Flags:
   (unless (null? outdated-extra)
     (format #t "The following files have changed since their coverage")
     (format #t "exceptions were written. Please review:~%")
-    (for-each displayln outdated-extra))
+    (for-each (compose displayln yellow) outdated-extra))
 
   ((@ (hnh util exceptions) warnings-are-errors) #t)
 
