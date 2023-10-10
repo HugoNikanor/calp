@@ -26,6 +26,7 @@
   :use-module (calp webdav property)
   :use-module (calp webdav propfind)
   :use-module (calp webdav proppatch)
+  :use-module (calp webdav util)
   :use-module (oop goops)
   :export (; run-run
            run-propfind
@@ -155,33 +156,6 @@
 (define root-resource (make-parameter #f))
 
 
-
-(define (parse-dav-line str)
-  (map (lambda (item)
-         (cond ((string-match "^[0-9]+$" item)
-                => (lambda (m) (number->string (match:substring m))))
-               ((string-match "^<(.*)>$" item)
-                => (lambda (m) (string->uri (match:substring m 1))))
-               (else (string->symbol item))))
-       (map string-trim-both (string-split str #\,))))
-
-(define (validate-dav-line lst)
-  (every (lambda (item)
-           (or (and (number? item) (<= 1 item 3))
-               (uri? item)
-               ;; Possibly check against list of valid tokens
-               (symbol? item)))
-         lst))
-
-(define (write-dav-line lst port)
-  (display
-   (string-join (map (lambda (item)
-                       (cond ((number? item) (number->string item))
-                             ((uri? item) (string-append "<" (uri->string item) ">"))
-                             (else (symbol->string item))))
-                     lst)
-                ", " 'infix)
-   port))
 
 (declare-header! "DAV"
   parse-dav-line
