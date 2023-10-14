@@ -79,4 +79,12 @@
 (define-type (f4 printer: (lambda (r p) (display "something" p))))
 (test-equal "something" (with-output-to-string (lambda () (write (f4)))))
 
+(test-group "Object equivalence"
+  (let ((o1 (f3 f3-x: 10 f3-y: "string"))
+        (o2 (f3 f3-x: 10 f3-y: "string")))
+    (test-eq "An object is itself" o1 o1)
+    (test-assert "Two identical objects are different objects"
+      (not (eq?? o1 o2)))
+    (test-equal "Two identical objects are equal" o1 o2)))
+
 '((hnh util object))
