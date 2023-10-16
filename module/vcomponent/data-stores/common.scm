@@ -6,6 +6,8 @@
            get-all
            get-by-uid))
 
+;;; This should NOT inherit from WebDAV <resource>.
+;;; Instead, CalDAV resources should hold a reference to a calendar data store.
 
 (define-class <calendar-data-store> ()
   ;; (path init-keyword: path:

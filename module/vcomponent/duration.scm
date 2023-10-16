@@ -11,6 +11,10 @@
            format-duration
            ))
 
+;;; TODO Write tests for this
+
+;;; TODO replace record type
+
 (define-immutable-record-type <duration>
   (make-duration sign week day dur-time)
   duration?

@@ -1,3 +1,9 @@
+;;; Commentary:
+;;; Module for changing the namespace prefix in sxml symbols.
+;;; TODO consider removing this module in favour of (sxml namespaced).
+;;; This is a hack, that one works correctly
+;;; Code:
+
 (define-module (sxml namespace)
   :use-module (hnh util)
   :use-module (sxml transform)

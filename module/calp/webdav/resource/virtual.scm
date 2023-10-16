@@ -38,7 +38,8 @@
 (define-method (live-properties (self <virtual-resource>))
   (append
    (next-method)
-   (list (cons (xml-element-hash-key (xml virtual-ns 'isvirtual)) (make-live-property isvirtual set-isvirtual!)))))
+   (list (cons (xml-element-hash-key (xml virtual-ns 'isvirtual))
+               (make-live-property isvirtual set-isvirtual!)))))
 
 (define-method (content (self <virtual-resource>))
   (content* self))
