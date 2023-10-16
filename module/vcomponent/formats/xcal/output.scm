@@ -111,7 +111,6 @@
                 [(? (compose internal-field? car)) #f]
 
                 [(key vlines ...)
-                 (format (current-error-port) "vlines: ~s~%" vlines)
                  (remove null?
                          `(,(xml xcal (downcase-symbol key))
                            ,(parameters-tag (reduce assq-merge

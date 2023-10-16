@@ -311,12 +311,10 @@
             (lambda ()
               (parameterize ((warning-handler (warning-handler-proc token)))
                 (cond [(string=? "BEGIN" (car head))
-                       (format (current-error-port) "BEGIN ~s~%" (cadr head))
                        (loop (cdr lst)
                              (cons (vcomponent type: (string->symbol (cadr head)))
                                    stack))]
                       [(string=? "END" (car head))
-                       (format (current-error-port) "END ~s~%" (cadr head))
                        (loop (cdr lst)
                              (if (null? (cdr stack))
                                  ;; return
@@ -339,9 +337,6 @@
                                  (fold (lambda (vline stack)
                                          (modify stack car*
                                                  (lambda (comp)
-                                                   (format (current-error-port)
-                                                           "    stack=~s, comp=~s~%"
-                                                           stack comp)
                                                    (if (memv (key vline) repeating-properties)
                                                        (aif (prop* comp (key vline))
                                                             (prop* comp (key vline) (cons vline it))
