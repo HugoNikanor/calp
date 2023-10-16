@@ -8,8 +8,9 @@
   :use-module ((hnh util) :select (->))
   :export (serialize deserialize))
 
+(define-public xcal (string->symbol "urn:ietf:params:xml:ns:icalendar-2.0"))
 
-(define* (serialize component port key: (namespaces '()))
+(define* (serialize component port key: (namespaces `((,xcal . xcal))))
   (-> (vcomponent->sxcal component)
       ns-wrap
       (namespaced-sxml->xml port: port

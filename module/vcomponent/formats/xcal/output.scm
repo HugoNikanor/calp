@@ -76,10 +76,11 @@
      (warning (G_ "Unknown key ~a") k)
      (get-writer 'TEXT)]))
 
-  (writer ((@@ (vcomponent base) get-vline-parameters) vline)
-          (value vline)))
+  (writer (vline-parameters vline)
+          (vline-value vline)))
 
-(define (property->value-tag tag . values)
+(define (property->value-tag pair)
+  (define-values (tag value) (car+cdr pair))
   (if (or (eq? tag 'VALUE)
           (internal-field? tag))
       #f
@@ -87,7 +88,7 @@
         ,@(map (lambda (v)
                  ;; TODO parameter types!!!! (rfc6321 3.5.)
                  `(,(xml xcal 'text) ,(->string v)))
-               values))))
+               value))))
 
 ;; ((key value ...) ...) -> `(parameters , ... )
 (define (parameters-tag parameters)
