@@ -11,6 +11,7 @@ of these should be generally useful in any project.
 @include general/uuid.texi
 @include general/io.texi
 @include general/bst.texi
+@include general/table.texi
 @include general/util-path.texi
 @include general/util-config.texi
 @include general/util-exceptions.texi

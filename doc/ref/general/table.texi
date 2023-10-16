@@ -1,0 +1,38 @@
+@node Table
+@section Table
+
+An immutable table, where all operations on the table return a new
+table with the wanted changes carried out. All keys @emph{must} be
+symbols.
+
+@defun table
+Constructs a new empty table.
+@end defun
+
+@defun table? x
+Is @var{x} a table?
+@end defun
+
+@defun table-get table key [default=#f]
+Retrive value form table, returns @var{default} if key isn't in the
+table.
+@end defun
+
+@defun table-put table key value
+Insert new value into table, overwriting anything previously stored
+under that key. Returns a new table with the values set.
+@end defun
+
+@defun table-remove table key
+Returns a new table with @var{key} removed.
+@end defun
+
+@defun table->list table
+Return an association list with the same content as the table.
+
+The keys will be sorted.
+@end defun
+
+@defun alist->table alist
+Construct a new table from the given alist.
+@end defun
