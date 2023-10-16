@@ -37,8 +37,8 @@ Link    Europe/Zurich  Europe/Vaduz
             (test-equal "Basic Rule"
               (list ((@@ (datetime zic) make-rule)
                      'US 1967 1973 4 '(last 0)
-                     ((@ (datetime zic) make-timespec) (time hour: 02 minute: 00 second: 00) '+ #\w)
-                     ((@ (datetime zic) make-timespec) (time hour: 01 minute: 00 second: 00) '+ #\d)
+                     (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
+                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\d)
                      "D"))
               (call-with-input-string "Rule  US    1967  1973  -  Apr  lastSun  2:00w  1:00d  D"
                 parse-zic-file))
@@ -171,8 +171,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
               (rule->dtstart
                ((@@ (datetime zic) make-rule)
                 'US 1967 1973 4 '(last 0)
-                ((@ (datetime zic) make-timespec) (time hour: 02 minute: 00 second: 00) '+ #\w)
-                ((@ (datetime zic) make-timespec) (time hour: 01 minute: 00 second: 00) '+ #\d)
+                (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
+                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\d)
                 "D")))
 
             (test-equal "sunday >= 1"
@@ -240,7 +240,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
 
 (test-group "rule->rrule"
             (test-equal "Basic example, and to = maximum"
-              ((@ (vcomponent recurrence internal) make-recur-rule)
+              ((@ (vcomponent recurrence internal) recur-rule)
                freq: 'YEARLY interval: 1 wkst: mon
                byday: (list (cons -1 sun))
                bymonth: (list oct))
@@ -260,7 +260,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                 "")))
 
             (test-equal "with definitive to year"
-              ((@ (vcomponent recurrence internal) make-recur-rule)
+              ((@ (vcomponent recurrence internal) recur-rule)
                freq: 'YEARLY interval: 1 wkst: mon
                byday: (list (cons -1 tue))
                bymonth: (list oct)
@@ -272,7 +272,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                 "")))
 
             (test-equal "on being a month day"
-              ((@ (vcomponent recurrence internal) make-recur-rule)
+              ((@ (vcomponent recurrence internal) recur-rule)
                freq: 'YEARLY interval: 1 wkst: mon
                bymonthday: (list 2)
                bymonth: (list oct))
@@ -283,7 +283,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                 "")))
 
             (test-equal "on being first day after date"
-              ((@ (vcomponent recurrence internal) make-recur-rule)
+              ((@ (vcomponent recurrence internal) recur-rule)
                freq: 'YEARLY interval: 1 wkst: mon
                byday: (list (cons 1 mon))
                bymonth: (list oct))

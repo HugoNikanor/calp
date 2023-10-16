@@ -12,7 +12,7 @@
 ;;; Code:
 (define-module (datetime zic)
   :use-module ((hnh util)
-               :select (awhen group set when sort* iterate group-by))
+               :select (awhen group when sort* iterate group-by))
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (datetime)
   :use-module (datetime timespec)
@@ -23,7 +23,7 @@
   :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-71)
   :use-module ((vcomponent recurrence internal)
-               :select (byday make-recur-rule bymonthday))
+               :select (byday recur-rule bymonthday))
   :use-module (calp translation)
   :export (read-zoneinfo
 
@@ -369,7 +369,7 @@
 (define (rule->rrule rule)
   (if (eq? 'only (rule-to rule))
       #f
-      (let ((base (make-recur-rule
+      (let ((base (recur-rule
                    freq: 'YEARLY
                    interval: 1
                    bymonth: (list (rule-in rule))
@@ -388,8 +388,8 @@
 
 
         (match (rule-on rule)
-          ((? number? d) (set (bymonthday base) (list d)))
-          (('last d)     (set (byday base) (list (cons -1 d))))
+          ((? number? d) (bymonthday base (list d)))
+          (('last d)     (byday base (list (cons -1 d))))
           (('< wday base-day) (scm-error 'misc-error "rule->rrule" (G_ "Counting backward for RRULES unsupported") #f #f))
           (('> wday base-day)
            ;; Sun<=25
@@ -398,10 +398,10 @@
            ;; something like Sun>=5 is hard to fix, since we can only
            ;; say which sunday in the month we want (first sunday,
            ;; second sunday, ...).
-           (set (byday base)
-                (list
-                 (cons (ceiling-quotient base-day 7)
-                       wday))))))))
+           (byday base
+                  (list
+                   (cons (ceiling-quotient base-day 7)
+                         wday))))))))
 
 ;; special case of format which works with %s and %z
 (define (zone-format fmt-string arg)

@@ -265,18 +265,6 @@ list, in which case @var{->} inserts item as the second argument
 @end defmac
 
 
-@defmac set (accessor object) value
-@defmacx set (accessor object) = (operation args ...)
-See @xref{SRFI-9 Records,,,guile}
-@end defmac
-
-@defmac set-> object (accessor value) rest ...
-@defmacx set-> object (accessor = (operator args)) rest ...
-Wrapper around @var{set}, but applies transformations from left to
-right, similar to @var{->}.
-@end defmac
-
-
 @defmac and=>> value procedures ...
 Chained application of @code{and=>}, so applies each procedure from
 left to right, stopping when one return @code{#f}.

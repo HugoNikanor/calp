@@ -3,7 +3,6 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)           ; postfix keywords
   :use-module ((sxml fold) :select (fold-values))
-  :use-module ((srfi srfi-9 gnu) :select (set-fields))
   :use-module ((ice-9 copy-tree) :select (copy-tree))
   :use-module ((ice-9 control) :select (call/ec))
   :export (aif
@@ -45,7 +44,6 @@
            insert-ordered
 
            -> ->>
-           set set->
            and=>>
 
            downcase-symbol
@@ -486,26 +484,6 @@
      (->> (func args ... obj) rest ...))
     ((->> obj func rest ...)
      (->> (func obj) rest ...))))
-
-;; Non-destructive set, syntax extension from set-fields from (srfi
-;; srfi-9 gnu).
-;;; TODO remove this, it's replaced by the true lens version
-(define-syntax set
-  (syntax-rules (=)
-    [(set (acc obj) value)
-     (set-fields
-      obj ((acc) value))]
-    [(set (acc obj) = (op rest ...))
-     (set-fields
-      obj ((acc) (op (acc obj) rest ...)))]))
-
-(define-syntax set->
-  (syntax-rules (=)
-    [(_ obj) obj]
-    [(_ obj (func = (op args ...)) rest ...)
-     (set-> (set (func obj) (op (func obj) args ...)) rest ...)]
-    [(_ obj (func args ...) rest ...)
-     (set-> (set (func obj) args ...) rest ...)]))
 
 (define-syntax and=>>
   (syntax-rules ()

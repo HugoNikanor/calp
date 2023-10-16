@@ -96,7 +96,7 @@
 
        ;; freq until count interval wkst
 
-       (apply (@ (vcomponent recurrence internal) make-recur-rule)
+       (apply (@ (vcomponent recurrence internal) recur-rule)
               (concatenate
                (filter identity
                        (for key in '(bysecond byminute byhour byday bymonthday

@@ -21,17 +21,15 @@
                :select (warnings-are-errors warning-handler))
   :use-module ((vcomponent recurrence)
                :select (parse-recurrence-rule
-                        make-recur-rule
+                        recur-rule
                         generate-recurrence-set)))
-
-(define recur-rule make-recur-rule)
 
 ;;; Test that basic parsing or recurrence rules work.
 
-(test-equal (make-recur-rule freq: 'HOURLY wkst: mon interval: 1)
+(test-equal (recur-rule freq: 'HOURLY wkst: mon interval: 1)
   (parse-recurrence-rule "FREQ=HOURLY"))
 
-(test-equal (make-recur-rule freq: 'HOURLY count: 3 interval: 1 wkst: mon)
+(test-equal (recur-rule freq: 'HOURLY count: 3 interval: 1 wkst: mon)
   (parse-recurrence-rule "FREQ=HOURLY;COUNT=3"))
 
 ;;; Test that recurrence rule parsing fails where appropriate
@@ -39,10 +37,10 @@
 (parameterize ((warnings-are-errors #t)
                (warning-handler (lambda _ "")))
   (test-error "Invalid FREQ"
-    'warning
+    'wrong-type-arg
     (parse-recurrence-rule "FREQ=ERR;COUNT=3"))
   (test-error "Negative COUNT"
-    'warning
+    'wrong-type-arg
     (parse-recurrence-rule "FREQ=HOURLY;COUNT=-1"))
   (test-error "Invalid COUNT"
     'wrong-type-arg
@@ -228,11 +226,12 @@
 
 ;;; Earlier I failed to actually parse the recurrence parts, in short, 1 ≠ "1".
 
-(test-assert "Test that xcal recur rules are parseable"
-  ((@@ (vcomponent formats xcal parse) handle-value)
-   'recur
-   'props-are-unused-for-recur
-   '((freq "WEEKLY") (interval "1") (wkst "MO"))))
+;;; TODO this should be part of the xCal tests
+;; (test-assert "Test that xcal recur rules are parseable"
+;;   ((@@ (vcomponent formats xcal parse) handle-value)
+;;    'recur
+;;    'props-are-unused-for-recur
+;;    '((freq "WEEKLY") (interval "1") (wkst "MO"))))
 
 (define ev
   (vevent

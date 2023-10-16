@@ -15,7 +15,7 @@
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
   :use-module ((vcomponent recurrence)
-               :select (make-recur-rule))
+               :select (recur-rule))
   :use-module ((vcomponent recurrence generate)
                :select (generate-recurrence-set))
   :use-module ((vcomponent recurrence display)
@@ -74,7 +74,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'DAILY
               count: 10)
              x-summary:
@@ -96,7 +96,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'DAILY
               until: (datetime year: 1997 month: 12 day: 24 hour: 00 minute: 00 second: 00 tz: "UTC"))
              x-summary:
@@ -221,7 +221,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'DAILY
               interval: 2)
              x-summary:
@@ -253,7 +253,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'DAILY
               interval: 10
               count: 5)
@@ -271,7 +271,7 @@
              dtstart:
              (datetime year: 1998 month: 01 day: 01 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               until: (datetime year: 2000 month: 01 day: 31 hour: 14 minute: 00 second: 00 tz: "UTC")
               bymonth: (list jan)
@@ -378,10 +378,10 @@
              dtstart:
              (datetime year: 1998 month: 01 day: 01 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'DAILY
               until: (datetime year: 2000 month: 01 day: 31 hour: 14 minute: 00 second: 00 tz: "UTC")
-              bymonth: 1)
+              bymonth: (list jan))
              x-summary:
              "dagligen, till och med den 31 januari, 2000 kl. 14:00"
              x-set:
@@ -484,7 +484,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'WEEKLY
               count: 10)
              x-summary:
@@ -506,7 +506,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'WEEKLY
               until: (datetime year: 1997 month: 12 day: 24 hour: 00 minute: 00 second: 00 tz: "UTC"))
              x-summary:
@@ -535,7 +535,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'WEEKLY
               interval: 2
               wkst: sun)
@@ -568,7 +568,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'WEEKLY
               until: (datetime year: 1997 month: 10 day: 07 hour: 00 minute: 00 second: 00 tz: "UTC")
               wkst: sun
@@ -592,7 +592,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'WEEKLY
               count: 10
               wkst: sun
@@ -616,7 +616,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 01 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'WEEKLY
               interval: 2
               until: (datetime year: 1997 month: 12 day: 24 hour: 00 minute: 00 second: 00 tz: "UTC")
@@ -656,7 +656,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'WEEKLY
               interval: 2
               count: 8
@@ -679,7 +679,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 05 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               count: 10
               byday: (list (cons 1 fri)))
@@ -702,7 +702,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 05 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               until: (datetime year: 1997 month: 12 day: 24 hour: 00 minute: 00 second: 00 tz: "UTC")
               byday: (list (cons 1 fri)))
@@ -719,7 +719,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 07 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               interval: 2
               count: 10
@@ -744,7 +744,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 22 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               count: 6
               byday: (list (cons -2 mon)))
@@ -763,7 +763,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 28 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               bymonthday: (list -3))
              x-summary:
@@ -795,7 +795,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               count: 10
               bymonthday: (list 2 15))
@@ -818,7 +818,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 30 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               count: 10
               bymonthday: (list 1 -1))
@@ -841,7 +841,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 10 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               interval: 18
               count: 10
@@ -865,7 +865,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               interval: 2
               byday: (list tue))
@@ -898,7 +898,7 @@
              dtstart:
              (datetime year: 1997 month: 06 day: 10 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               count: 10
               bymonth: (list 6 7))
@@ -921,7 +921,7 @@
              dtstart:
              (datetime year: 1997 month: 03 day: 10 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               interval: 2
               count: 10
@@ -945,7 +945,7 @@
              dtstart:
              (datetime year: 1997 month: 01 day: 01 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               interval: 3
               count: 10
@@ -969,7 +969,7 @@
              dtstart:
              (datetime year: 1997 month: 05 day: 19 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               byday: (list (cons 20 mon)))
              x-summary:
@@ -1001,7 +1001,7 @@
              dtstart:
              (datetime year: 1997 month: 05 day: 12 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               byweekno: (list 20)
               byday: (list mon))
@@ -1034,7 +1034,7 @@
              dtstart:
              (datetime year: 1997 month: 03 day: 13 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               bymonth: (list mar)
               byday: (list thu))
@@ -1067,7 +1067,7 @@
              dtstart:
              (datetime year: 1997 month: 06 day: 05 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               byday: (list thu)
               bymonth: (list 6 7 8))
@@ -1103,7 +1103,7 @@
              (as-list
               (list (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)))
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               byday: (list fri)
               bymonthday: (list 13))
@@ -1136,7 +1136,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 13 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               byday: (list sat)
               bymonthday: (list 7 8 9 10 11 12 13))
@@ -1169,7 +1169,7 @@
              dtstart:
              (datetime year: 1996 month: 11 day: 05 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               interval: 4
               bymonth: (list nov)
@@ -1204,7 +1204,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 04 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               count: 3
               byday: (list tue wed thu)
@@ -1221,7 +1221,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 29 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               byday: (list mon tue wed thu fri)
               bysetpos: (list -2))
@@ -1239,7 +1239,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'HOURLY
               interval: 3
               until: (datetime year: 1997 month: 09 day: 02 hour: 17 minute: 00 second: 00 tz: "UTC"))
@@ -1255,7 +1255,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MINUTELY
               interval: 15
               count: 6)
@@ -1274,7 +1274,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MINUTELY
               interval: 90
               count: 4)
@@ -1291,7 +1291,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'DAILY
               byhour: (list 9 10 11 12 13 14 15 16)
               byminute: (list 0 20 40))
@@ -1324,7 +1324,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MINUTELY
               interval: 20
               byhour: (list 9 10 11 12 13 14 15 16))
@@ -1357,7 +1357,7 @@
              dtstart:
              (datetime year: 1997 month: 08 day: 05 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'WEEKLY
               interval: 2
               count: 4
@@ -1376,7 +1376,7 @@
              dtstart:
              (datetime year: 1997 month: 08 day: 05 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'WEEKLY
               interval: 2
               count: 4
@@ -1395,7 +1395,7 @@
              dtstart:
              (datetime year: 2007 month: 01 day: 15 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               bymonthday: (list 15 30)
               count: 5)
@@ -1416,7 +1416,7 @@
              (as-list
               (list (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)))
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'MONTHLY
               byday: (list fri wed)
               bymonthday: (list 13))
@@ -1449,7 +1449,7 @@
              dtstart:
              (datetime year: 1997 month: 05 day: 12 hour: 09 minute: 00 second: 00)
              rrule:
-             (make-recur-rule
+             (recur-rule
               freq: 'YEARLY
               byweekno: (list 20)
               byday: (list mon wed))
@@ -1479,7 +1479,7 @@
            (vevent
             summary: "Each second, for ever"
             dtstart: (datetime year: 2020 month: 10 day: 10 hour: 10 minute: 00 second: 00)
-            rrule: (make-recur-rule freq: 'SECONDLY)
+            rrule: (recur-rule freq: 'SECONDLY)
             x-summary: "varje sekund"
             x-set: (list (datetime year: 2020 month: 10 day: 10 hour: 10 minute: 00 second: 00)
                          (datetime year: 2020 month: 10 day: 10 hour: 10 minute: 00 second: 01)
@@ -1506,7 +1506,7 @@
            (vevent
             summary: "Exdates are applied AFTER rrule's"
             dtstart: (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
-            rrule: (make-recur-rule freq: 'DAILY count: 5)
+            rrule: (recur-rule freq: 'DAILY count: 5)
             exdate: (as-list (list (datetime year: 2022 month: 06 day: 12 hour: 10 minute: 00 second: 00)))
             x-summary: "dagligen, totalt 5 gånger"
             x-set: (list (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
@@ -1518,7 +1518,7 @@
            (vevent
             summary: "RDATE:s add to the recurrence rule"
             dtstart: (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
-            rrule: (make-recur-rule freq: 'DAILY count: 5)
+            rrule: (recur-rule freq: 'DAILY count: 5)
             rdate: (as-list (list (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00)))
             x-summary: "dagligen, totalt 5 gånger"
             x-set: (list (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
@@ -1532,7 +1532,7 @@
            (vevent
             summary: "RDATE:s add to the recurrence rule"
             dtstart: (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
-            rrule: (make-recur-rule freq: 'DAILY count: 5)
+            rrule: (recur-rule freq: 'DAILY count: 5)
             exdate: (as-list (list (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00)))
             rdate: (as-list (list (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00)))
             x-summary: "dagligen, totalt 5 gånger"

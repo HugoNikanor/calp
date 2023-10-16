@@ -44,7 +44,7 @@
   (@@ (vcomponent recurrence internal)
       field->string))
 
-(let ((rule (parse-recurrence-rule "BYDAY=MO,TU,WE")))
+(let ((rule (parse-recurrence-rule "FREQ=WEEKLY;BYDAY=MO,TU,WE")))
   (test-equal
     "Direct return of parsed value"
     "MO,TU,WE"
@@ -55,10 +55,10 @@
     (filter
       (lambda (pair) (eq? 'byday (car pair)))
       (keyword-flatten
-        '(interval byday wkst)
+        '(interval byday wkst freq)
         (recur-rule->rrule-sxml rule)))))
 
-(let ((rule (parse-recurrence-rule "BYDAY=+1MO,1TU,-2FR")))
+(let ((rule (parse-recurrence-rule "FREQ=WEEKLY;BYDAY=+1MO,1TU,-2FR")))
   (test-equal
     "Direct return of parsed value"
     "1MO,1TU,-2FR"
@@ -68,8 +68,9 @@
     '((byday "1MO") (byday "1TU") (byday "-2FR"))
     (filter
       (lambda (pair) (eq? 'byday (car pair)))
+      ;; TODO why is keyword-flatten used here?
       (keyword-flatten
-        '(interval byday wkst)
+        '(interval byday wkst freq)
         (recur-rule->rrule-sxml rule)))))
 
 

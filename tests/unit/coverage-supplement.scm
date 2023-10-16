@@ -15,4 +15,10 @@
   1 18)
  ("module/hnh/util/atomic-stack.scm"
   "147b45d2216c378c35d5c3ed0228be393b6c287f2a5515802928040f2087378e"
-  1 13 29))
+  1 13 29)
+ ("module/hnh/util/type.scm"
+  "f670542b9b404125224fd4c702be99e2c1c3fd55d862b18228e8772264ef3189"
+  1                                      ; Module declaration
+  12 34 44 46                            ; Macros
+  53)                                    ; false? == not
+ )

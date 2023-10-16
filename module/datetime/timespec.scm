@@ -4,12 +4,14 @@
 ;;; Code:
 
 (define-module (datetime timespec)
-  :use-module ((hnh util) :select (set unless))
+  :use-module ((hnh util) :select (unless))
   :use-module ((hnh util exceptions) :select (warning))
+  :use-module (hnh util object)
+  :use-module (hnh util lens)
   :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
-  :use-module (srfi srfi-9 gnu)
+  :use-module (srfi srfi-88)
   :use-module (calp translation)
   :export (make-timespec
            timespec?
@@ -26,16 +28,22 @@
 ;; timespec as defined by the TZ-database
 ;; also used UTC-OFFSET defined by RFC5545. Then type should equal #\z
 ;; and be ignored.
-(define-immutable-record-type <timespec> ; EXPORTED
-  (make-timespec timespec-time sign type)
-  timespec?
-  (timespec-time timespec-time)         ; <time>
-  (sign timespec-sign)                  ; '+ | '-
+
+(define-type (timespec)
+  (timespec-time type: time?)
+  (timespec-sign type: (memv '(+ -)))
   ;; types:
   ;; w - wall clock time (local time)
   ;; s - standard time without daylight savings adjustments
   ;; u, g, z - Universal time
-  (type timespec-type))                 ; char
+  (timespec-type type: char?))
+
+;;; TODO remove make-timespec
+;;; It's a transient procedure while changing object system
+(define (make-timespec time sign type)
+  (timespec timespec-time: time
+            timespec-sign: sign
+            timespec-type: type))
 
 (define (timespec-zero)
   (make-timespec (time) '+ #\w))
@@ -50,7 +58,8 @@
              ;; + +
              [(eq? (timespec-sign done)
                    (timespec-sign spec))
-              (set (timespec-time done) = (time+ (timespec-time spec)))]
+              (modify done timespec-time
+                      time+ (timespec-time spec))]
              ;; - +
              [(and (eq? '- (timespec-sign done))
                    (eq? '+ (timespec-sign spec)))
