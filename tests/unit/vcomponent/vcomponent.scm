@@ -101,7 +101,15 @@
 ;;      (write (vline key: 'KEY vline-value: "Value") ))))
 
 (test-equal "VComponent string representation"
-  "(vcomponent (quote VCALENDAR) (list (vcomponent (quote VEVENT) #:dtstart #<<vline> key: DTSTART value: #2023-03-01T10:00:00 parameters: #f> #:uid #<<vline> key: UID value: \"049d9004-cb1e-4c8d-bb54-042689d9808b\" parameters: #f>)))"
+  "(vcomponent
+  'VCALENDAR
+  (list (vcomponent
+          'VEVENT
+          #:dtstart
+          #<<vline> key: DTSTART value: #2023-03-01T10:00:00 parameters: #f>
+          #:uid
+          #<<vline> key: UID value: \"049d9004-cb1e-4c8d-bb54-042689d9808b\" parameters: #f>)))
+"
 
   (with-output-to-string
     (lambda ()
