@@ -287,7 +287,7 @@ Flags:
   (define test-files
     (cond ((option-ref options 'suite #f)
            => (lambda (suite)
-                (glob (path-append suite "*"))))
+                (glob (path-append suite "*.scm"))))
           ((option-ref options 'file #f) => list)
           (else (glob "tests/unit/**/*.scm"))))
 
