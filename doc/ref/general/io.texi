@@ -26,6 +26,12 @@ the file, and @code{#f} otherwise.
 @end defun
 
 @defun call-with-tmpfile proc [#:tmpl ``/tmp/file-XXXXXXX'']
+Creates a new temporary file, named per the template @var{tmpl}, then
+call @var{proc} with two arguments: an open input-output port to the
+file, and the generated name of the file.
+
+The file will be closed upon the procedures return. However, the file
+@emph{may} be left on disk.
 @end defun
 
 @defun read-file path
