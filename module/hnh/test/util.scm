@@ -48,8 +48,18 @@
   )
 
 (define (diff s1 s2)
-  (let ((filename1 (call-with-tmpfile (lambda (p f) (pretty-print s1 p display?: #t) f)))
-        (filename2 (call-with-tmpfile (lambda (p f) (pretty-print s2 p display?: #t) f))))
+  (let ((filename1 (call-with-tmpfile
+                    (lambda (p f)
+                      (if (and (string? s1) (string? s2))
+                          (display s1 p)
+                          (pretty-print s1 p display?: #f))
+                      f)))
+        (filename2 (call-with-tmpfile
+                    (lambda (p f)
+                      (if (and (string? s1) (string? s2))
+                          (display s2 p)
+                          (pretty-print s2 p display?: #f))
+                      f))))
     (let ((pipe (apply open-pipe*
                  OPEN_READ
                  (append diff-cmd (list filename1 filename2)))))

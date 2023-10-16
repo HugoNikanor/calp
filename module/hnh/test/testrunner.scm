@@ -19,7 +19,7 @@
      (with-output-to-string
        (lambda () (pretty-print
               form
-              display?: #t
+              display?: #f
               per-line-prefix: prefix
               width: (- 79 (string-length indent)))))
      (string-append indent prefix-1))))
@@ -61,13 +61,11 @@
                    (begin
                      (display (pp expected indent "Expected: "))
                      (display (pp actual indent "Received: "))
-                     (let ((d (diff (pp expected "" "")
-                                    (pp actual "" ""))))
-                       (display
-                        (string-join
-                         (map (lambda (line) (string-append indent "|" line))
-                              (string-split d #\newline))
-                         "\n" 'suffix))))))))))
+                     (display
+                      (string-join
+                       (map (lambda (line) (string-append indent "|" line))
+                            (string-split (diff expected actual) #\newline))
+                       "\n" 'suffix)))))))))
 
   (format #t "~aNear ~a:~a~%"
           (make-indent (1+ depth))
