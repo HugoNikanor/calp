@@ -60,3 +60,15 @@ Useful at the start of procedures.
 Returns the current procedure name as a symbol, or @code{#f} if not found.
 @end defmac
 
+
+@defun false? x
+An alias of @code{not}. Usefull in type predicates when introducing optional
+types, since
+@example
+(or false? integer?)
+@end example
+is much clearer than
+@example
+(or not integer?)
+@end example
+@end defun

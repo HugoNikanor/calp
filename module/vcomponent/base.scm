@@ -3,6 +3,7 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-17)
   :use-module (srfi srfi-88)
+  :use-module ((hnh util type) :select (false?))
   :use-module (hnh util object)
   :use-module (hnh util lens)
   :use-module (hnh util table)
@@ -86,9 +87,6 @@
   ((@ (ice-9 pretty-print) pretty-print)
    (serialize-vcomponent c)
    p))
-
-
-(define false? not)
 
 (define-type (vcomponent printer: print-vcomponent)
   (type                        type: symbol?)

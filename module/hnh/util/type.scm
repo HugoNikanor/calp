@@ -2,6 +2,7 @@
   :use-module ((srfi srfi-1) :select (every))
   :export (build-validator-body
            list-of pair-of
+           false?
            typecheck
            current-procedure-name))
 
@@ -44,3 +45,8 @@
                   (list (quote variable) (quote type-clause) variable)
                   #f)))))
 
+;;; For use in typechecks, since
+;;;   (or false? integer?)
+;;; is much clearer than
+;;;   (or not integer?)
+(define false? not)
