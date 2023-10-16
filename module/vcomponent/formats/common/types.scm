@@ -1,9 +1,10 @@
 (define-module (vcomponent formats common types)
   :use-module (hnh util)
   :use-module (hnh util exceptions)
+  :use-module (hnh util table)
+  :use-module ((web uri) :select (string->uri))
   :use-module (base64)
   :use-module (datetime)
-  :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-71)
   :use-module (datetime timespec)
   :use-module (calp translation)
@@ -12,7 +13,7 @@
 ;; BINARY
 (define (parse-binary props value)
   ;; p 30
-  (unless (string=? "BASE64" (hashq-ref props 'ENCODING))
+  (unless (string=? "BASE64" (table-get props 'ENCODING))
     (warning (G_ "Binary field not marked ENCODING=BASE64")))
 
   ;; For icalendar no extra whitespace is allowed in a
@@ -38,8 +39,9 @@
   (define parsed
     (parse-ics-datetime
      ;; TODO props is no longer a (built-in) hash table
-     value (hashq-ref props 'TZID #f)))
-  (hashq-set! props '-X-HNH-ORIGINAL parsed)
+     value (table-get props 'TZID)))
+  ;; TODO update table
+  ;; (hashq-set! props '-X-HNH-ORIGINAL parsed)
   (get-datetime parsed))
 
 ;; DURATION
