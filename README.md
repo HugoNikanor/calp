@@ -35,6 +35,8 @@ The [zoneinfo data][TZ] is in [the public domain][TZLIC].
 
 Standards and specifications
 ----------------------------
+- RFC 4791 (CalDAV)
+- RFC 4918 (WebDAV)
 - RFC 5545 (iCalendar)
 - RFC 6321 (xCal)
 - RFC 7265 (jCal)
