@@ -135,7 +135,7 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
                            (if proc
                                (format #t "  ~a thrown in ~a. ~?~%"
                                        err proc fmt args)
-                               (format #t "~a thrtown. ~?~%"
+                               (format #t "~a thrown. ~?~%"
                                        err fmt args)))
                           (args (format #t "  ~s~%" args)))
              args))))
