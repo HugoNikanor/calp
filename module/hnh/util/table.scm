@@ -49,9 +49,8 @@
          (modify tree (if (symbol<? k (key tree)) left right)
                  tree-put k v))))
 
-(define (tree-get tree k)
-  (cond ((tree-terminal? tree) #f ; (throw 'out-of-range)
-         )
+(define* (tree-get tree k optional: default)
+  (cond ((tree-terminal? tree) default)
         ((eq? k (key tree)) (value tree))
         ((symbol<? k (key tree))
          (tree-get (left tree) k))
