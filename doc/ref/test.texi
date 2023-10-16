@@ -1,0 +1,58 @@
+@node Utilities for Testing Code
+@chapter Utilities for Testing Code
+
+The module @code{(hnh test util)} contains a number of general
+utilities which I have only found useful when running tests.
+
+@defun µs x
+Multiply @var{x} by @math{10^6}, transforming seconds into
+micro seconds.
+@end defun
+
+@defun transform-time-of-day tod
+Merges the pair returned by @code{gettimeofday} into one large
+integer, measured in microseconds.
+
+@example
+(transform-time-of-day (gettimeofday))
+⇒ 1697460136217839
+@end example
+@end defun
+
+@defun green str
+@defunx red str
+@defunx yellow str
+@defunx bold str
+Wrap the give string in ANSI escape sequences.
+
+@c TODO should be replaced by a general system.
+@end defun
+
+@defun make-indent depth
+Returns a string conisting of 2 × @var{depth} spaces.
+@end defun
+
+@defun string-replace-head s1 s2
+Return a new string, which contains @code{s2 ++ s1[len(s2):]}.
+@end defun
+
+@defun diff a b
+Return a line diff between object @var{a} and @var{b}. If both objects
+are strings then they will be passed directoly to the line diff
+function, but if either is a non-string then they will both first be
+passed through @code{pretty-print} in write mode (instead of display mode).
+
+Currently the diff command used is
+@example
+git diff --no-index --color-moved=default --color=always a b
+@end example
+@end defun
+
+@section xmllint
+
+The module @code{(hnh test xmllint)} provides a wrapper around the
+xmllint program.
+
+@defun xmllint str
+Run xmllint on @var{str}, returning the result as a new string.
+@end defun
