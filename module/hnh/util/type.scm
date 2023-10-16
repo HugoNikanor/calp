@@ -23,9 +23,10 @@
 ;; DSL for specifying type predicates
 ;; Basically a procedure body, but the variable to test is implicit.
 (define-syntax build-validator-body
-  (syntax-rules (and or list-of)
+  (syntax-rules (and or not)
     ((_ variable (and clauses ...))  (and (build-validator-body variable clauses) ...))
     ((_ variable (or clauses ...))   (or (build-validator-body variable clauses) ...))
+    ((_ variable (not clause))       (not (build-validator-body variable clause)))
     ((_ variable (proc args ...))    (proc variable args ...))
     ((_ variable proc)               (proc variable))))
 
