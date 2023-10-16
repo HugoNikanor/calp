@@ -51,6 +51,9 @@
 ;;; </vcomponent>
 ;;;
 
+;;; TODO at least when called from serialize-vcomponent, this should
+;;; emit something which allows the serialized vcomponent to be
+;;; fed back into the parser to get the object back.
 (define (print-vline v p)
   (format p "#<<vline> key: ~s value: ~s parameters: ~s>"
           (key v)
@@ -60,14 +63,29 @@
           ))
 
 (define-type (vline printer: print-vline)
+  ;; TODO why does vline contain its own key?
   (key type: symbol?)
   (vline-value)
   (vline-parameters default: (table) type: table?)
   (vline-source default: "" type: string?))
 
+(define (serialize-vcomponent c)
+  (let ((children (table->list (vcomponent-children c))))
+    `(vcomponent ',(type c)
+                 ,@(concatenate
+                    (for (key . value) in (table->list (component-properties c))
+                         (list (-> key symbol->string
+                                   string-downcase
+                                   string->keyword)
+                               value)))
+                 ,@(unless (null? children)
+                     `((list ,@(map (lambda (child) (serialize-vcomponent child))
+                                    (map cdr children))))))))
+
 (define (print-vcomponent c p)
-  (format p "#<<vcomponent> ~a>"
-          (type c)))
+  ((@ (ice-9 pretty-print) pretty-print)
+   (serialize-vcomponent c)
+   p))
 
 
 (define false? not)
