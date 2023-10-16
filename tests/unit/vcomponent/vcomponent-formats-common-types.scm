@@ -2,6 +2,7 @@
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
+  :use-module (hnh util table)
   :use-module ((vcomponent formats common types)
                :select (get-parser))
   :use-module ((datetime) :select (date time datetime)))
@@ -42,7 +43,7 @@
 (test-equal
     (datetime year: 2021 month: 12 day: 02 hour: 10 minute: 20 second: 30)
   (parse-datetime
-    (make-hash-table)
+    (table)
     "20211202T102030"))
 
 ;; TODO tests with timezones here

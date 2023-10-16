@@ -15,18 +15,16 @@
   :use-module ((sxml namespaced) :select (sxml->namespaced-sxml))
   :use-module ((calp namespaces) :select (xcal))
   :use-module ((hnh util) :select (->))
+  :use-module (datetime)
+  :use-module ((vcomponent create) :select (vcalendar vevent with-parameters))
   :use-module ((hnh util exceptions)
                :select (warnings-are-errors warning-handler))
-  :use-module ((vcomponent formats ical parse)
-               :select (parse-calendar))
-  :use-module ((vcomponent formats xcal parse)
-               :select (sxcal->vcomponent))
   :use-module ((vcomponent recurrence)
                :select (parse-recurrence-rule
                         make-recur-rule
                         generate-recurrence-set)))
 
-;; TODO evaluate format for direct events
+(define recur-rule make-recur-rule)
 
 ;;; Test that basic parsing or recurrence rules work.
 
@@ -54,13 +52,9 @@
 ;;; also see the neighbour test file recurrence.scm for more tests.
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART;VALUE=DATE:20190302
-RRULE:FREQ=DAILY
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (date year: 2029 month: mars day: 2)
+   rrule: (recur-rule freq: 'DAILY)))
 
 (test-assert "Generate at all"
   (stream-car (generate-recurrence-set ev)))
@@ -93,13 +87,9 @@ END:VEVENT"
 (test-assert "Test 1" #t)
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART:20190302T100000
-RRULE:FREQ=DAILY
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (datetime year: 2019 month: mars day: 2 hour: 10)
+   rrule: (recur-rule freq: 'DAILY)))
 
 (test-assert "Test 2" #t)
 
@@ -107,110 +97,85 @@ END:VEVENT"
   (stream-car (generate-recurrence-set ev)))
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART:20190302T100000
-DTEND:20190302T120000
-RRULE:FREQ=DAILY
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (datetime year: 2019 month: mars day: 2 hour: 10)
+   dtend: (datetime year: 2019 month: mars day: 2 hour: 12)
+   rrule: (recur-rule freq: 'DAILY)))
 
 (test-assert "daily 10-12"
   (stream-car (generate-recurrence-set ev)))
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART:20190302T100000
-DTEND:20190302T120000
-RRULE:FREQ=WEEKLY
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (datetime year: 2019 month: mars day: 2 hour: 10)
+   dtend: (datetime year: 2019 month: mars day: 2 hour: 12)
+   rrule: (recur-rule freq: 'WEEKLY)))
 
 (test-assert "weekly 10-12"
   (stream-car (generate-recurrence-set ev)))
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART;TZID=Europe/Stockholm:20190302T100000
-DTEND;TZID=Europe/Stockholm:20190302T120000
-RRULE:FREQ=WEEKLY
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (with-parameters tzid: "Europe/Stockholm"
+                             (datetime year: 2019 month: mars day: 2 hour: 10))
+   dtend:   (with-parameters tzid: "Europe/Stockholm"
+                             (datetime year: 2019 month: mars day: 2 hour: 12))
+   rrule: (recur-rule freq: 'WEEKLY)))
 
 (test-assert "weekly TZ 10-12"
   (stream-car (generate-recurrence-set ev)))
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART;TZID=Europe/Stockholm:20190302T100000
-DTEND;TZID=Europe/Stockholm:20190302T120000
-RRULE:FREQ=WEEKLY
-SEQUENCE:1
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (with-parameters tzid: "Europe/Stockholm"
+                             (datetime year: 2019 month: mars day: 2 hour: 10))
+   dtend:   (with-parameters tzid: "Europe/Stockholm"
+                             (datetime year: 2019 month: mars day: 2 hour: 12))
+   rrule: (recur-rule freq: 'WEEKLY)
+   sequence: 1))
+
 
 (test-assert "weekly TZ SEQUENCE 10-12"
   (stream-car (generate-recurrence-set ev)))
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART;TZID=Europe/Stockholm:20190302T100000
-RRULE:FREQ=WEEKLY
-DTEND;TZID=Europe/Stockholm:20190302T120000
-SEQUENCE:1
-LOCATION:Here
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (with-parameters tzid: "Europe/Stockholm"
+                             (datetime year: 2019 month: mars day: 2 hour: 10))
+   dtend:   (with-parameters tzid: "Europe/Stockholm"
+                             (datetime year: 2019 month: mars day: 2 hour: 12))
+   rrule: (recur-rule freq: 'WEEKLY)
+   location: "Here"
+   sequence: 1))
 
 (test-assert "weekly TZ SEQUENCE LOCATION 10-12"
   (stream-car (generate-recurrence-set ev)))
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART:20180117T170000
-RRULE:FREQ=WEEKLY
-LOCATION:~
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (datetime year: 2018 month: jan day: 17 hour: 17)
+   rrule: (recur-rule freq: 'WEEKLY)
+   location: "~"))
 
 (test-assert "Just location"
   (stream-car (generate-recurrence-set ev)))
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART;TZID=Europe/Stockholm:20180117T170000
-DTEND;TZID=Europe/Stockholm:20180117T200000
-RRULE:FREQ=WEEKLY
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (datetime year: 2018 month: jan day: 17 hour: 17)
+   dtend: (datetime year: 2018 month: jan day: 17 hour: 20)
+   rrule: (recur-rule freq: 'WEEKLY)))
 
 (test-assert "Same times"
   (stream-car (generate-recurrence-set ev)))
 
 (define ev
-  (car
-   (call-with-input-string
-       "BEGIN:VEVENT
-DTSTART;TZID=Europe/Stockholm:20180117T170000
-RRULE:FREQ=WEEKLY
-DTEND;TZID=Europe/Stockholm:20180117T200000
-SEQUENCE:1
-LOCATION:~
-END:VEVENT"
-     parse-calendar)))
+  (vevent
+   dtstart: (with-parameters tzid: "Europe/Stockholm"
+                             (datetime year: 2018 month: jan day: 17 hour: 17))
+   dtend:   (with-parameters tzid: "Europe/Stockholm"
+                             (datetime year: 2018 month: jan day: 17 hour: 20))
+   rrule: (recur-rule freq: 'WEEKLY)))
 
 ;; errer in dtend ?
 
@@ -245,26 +210,18 @@ END:VEVENT"
            "This instance only has a time component")))))
 
 (define ev
-  (call-with-input-string
-    (format
-      #f
-      "BEGIN:VCALENDAR
-BEGIN:VEVENT
-SUMMARY:Changing type on Recurrence-id.
-UID:~a
-DTSTART;VALUE=DATE:20090127
-END:VEVENT
-BEGIN:VEVENT
-UID:~a
-SUMMARY:Changing type on Recurrence-id.
-DTSTART;TZID=Europe/Stockholm:20100127T120000
-RECURRENCE-ID;VALUE=DATE:20100127
-SUMMARY:This instance only has a time component
-END:VEVENT
-END:VCALENDAR"
-      uid
-      uid)
-    parse-calendar))
+  (vcalendar
+   (list
+    (vevent
+     summary: "Changing type on Recurrence-id."
+     uid: uid
+     dtstart: (date year: 2009 month: jan day: 27))
+    (vevent
+     uid: uid
+     summary: "Changing type on Recurrence-id."
+     dtstart: (with-parameters tzid: "Europe/Stockholm"
+                               (datetime year: 2010 month: jan day: 12 hour: 12))
+     summary: "This instance only has a time component)"))))
 
 (test-assert "Changing type on Recurrence id."
   (stream->list 10 (generate-recurrence-set ev)))
@@ -278,20 +235,18 @@ END:VCALENDAR"
    '((freq "WEEKLY") (interval "1") (wkst "MO"))))
 
 (define ev
-  (-> '(vevent
-        (properties
-         (summary (text "reptest"))
-         (dtend (date-time "2021-01-13T02:00:00"))
-         (dtstart (date-time "2021-01-13T01:00:00"))
-         (uid (text "RNW198S6QANQPV1C4FDNFH6ER1VZX6KXEYNB"))
-         (rrule (recur (freq "WEEKLY")
-                       (interval "1")
-                       (wkst "MO")))
-         (dtstamp (date-time "2021-01-13T01:42:20Z"))
-         (sequence (integer "0")))
-        (components))
-      (sxml->namespaced-sxml `((#f . ,xcal)))
-      sxcal->vcomponent))
+  (vevent
+   summary: "reptest"
+   dtstart: (datetime year: 2021 month: jan day: 13 hour: 1)
+   dtend: (datetime year: 2021 month: jan day: 13 hour: 2)
+   uid: "RNW198S6QANQPV1C4FDNFH6ER1VZX6KXEYNB"
+   rrule: (recur-rule freq: 'WEEKLY
+                      interval: 1
+                      wkst: monday)
+   dtstamp: (datetime year: 2021 month: jan day: 13
+                      hour: 1 minute: 42 second: 20
+                      tz: "UTC")
+   sequence: 0))
 
 (test-assert
   "Check that recurrence rule commint from xcal also works"

@@ -8,7 +8,8 @@
   :use-module (srfi srfi-88)
   :use-module (hnh util table)
   :use-module (datetime)
-  :use-module (vcomponent base))
+  :use-module (vcomponent base)
+  :use-module ((vcomponent create) :select (vevent vcalendar with-parameters)))
 
 
 
@@ -86,6 +87,33 @@
            vcomponent*
            `((K1 . "V1")
              (K2 . "V2"))))))
+
+(test-equal "VLine string representation"
+  "#<<vline> key: KEY value: \"Value\" parameters: #f>"
+ (with-output-to-string
+   (lambda ()
+     (write (vline key: 'KEY vline-value: "Value") ))))
+
+;; (test-equal "VLine with parameters representation"
+;;   "#<<vline> key: KEY value: \"Value\" parameters: #f>"
+;;  (with-output-to-string
+;;    (lambda ()
+;;      (write (vline key: 'KEY vline-value: "Value") ))))
+
+(test-equal "VComponent string representation"
+  "(vcomponent (quote VCALENDAR) (list (vcomponent (quote VEVENT) #:dtstart #<<vline> key: DTSTART value: #2023-03-01T10:00:00 parameters: #f> #:uid #<<vline> key: UID value: \"049d9004-cb1e-4c8d-bb54-042689d9808b\" parameters: #f>)))"
+
+  (with-output-to-string
+    (lambda ()
+      (write (vcalendar
+              ;; name: "Hello"
+              (list (vevent
+                     uid: "049d9004-cb1e-4c8d-bb54-042689d9808b"
+                     dtstart:
+                     (with-parameters
+                      tzid: "Europe/Stockholm"
+                      (datetime year: 2023 month: mars day: 1
+                                hour: 10)))))))))
 
 ;; remove-property
 

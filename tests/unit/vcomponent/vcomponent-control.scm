@@ -8,8 +8,6 @@
   :use-module (vcomponent create)
   :use-module ((vcomponent util control)
                :select (with-replaced-properties))
-  :use-module ((vcomponent formats ical parse)
-               :select (parse-calendar))
   :use-module ((vcomponent base) :select (prop)))
 
 (define ev (vcomponent 'DUMMY x-key: "value"))
