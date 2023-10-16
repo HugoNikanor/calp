@@ -32,7 +32,7 @@ Introduce a new type, disjoint from all previously defined types.
 @var{type-parameters} is a key-value list, where the valid keys are
 
 @deffn {Type Parameter} #:constructor (λ (primitive-constructor type-validator))
-The defaulct constructor for these types simply takes a keyword-value
+The default constructor for these types simply takes a keyword-value
 list, validates each argument in regard to the defined types, and
 constructs a final object. However; sometimes a more advanced
 constructor is needed, which can be added through this parameter.
