@@ -282,15 +282,6 @@ used Guile's current encoding will be used.
 
 @node WebDAV Utilities
 @section Utilities
-@defun xml-element-hash-key xml-tag
-Given an xml tag object @ref{xml-tag}, return a suitable key for
-@code{hash-ref} and family.
-
-These key objects should preferably not be carried around for
-long. Prefer to keep the @emph{real} xml-tag object, and only call
-this while directly referencing the hash table.
-@end defun
-
 @defun href->string href
 HREF's are represented as lists of strings. The root resource (``/'')
 is the empty list.
