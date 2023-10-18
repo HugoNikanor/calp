@@ -19,8 +19,8 @@
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module (ice-9 match)
   :use-module (srfi srfi-1)
-  :use-module (srfi srfi-9)
-  :use-module (srfi srfi-9 gnu)
+  :use-module (hnh util object)
+  :use-module (hnh util type)
   :use-module (srfi srfi-71)
   :use-module ((vcomponent recurrence internal)
                :select (byday recur-rule bymonthday))
@@ -28,7 +28,7 @@
   :export (read-zoneinfo
 
            #| note that make-rule isn't exported |#
-           rule?
+           zi-rule?
            rule-name rule-from rule-to rule-in
            rule-on rule-at rule-save rule-letters
 
@@ -61,50 +61,61 @@
 
 
 
+;;; TODO Write a proper tuple-of predicate
+(define-syntax tuple-of
+  (syntax-rules ()
+    ((_ x a b) (and (list? x)
+                    (build-validator-body (list-ref x 0) a)
+                    (build-validator-body (list-ref x 1) b)))
+    ((_ x a b c) (and (list? x)
+                      (build-validator-body (list-ref x 0) a)
+                      (build-validator-body (list-ref x 1) b)
+                      (build-validator-body (list-ref x 2) c)))))
+
 
 ;; <day-name> := [0..6]
 
-(define-immutable-record-type <rule>    ; EXPORTED
+(define-type (zi-rule)                  ; EXPORTED
+  (rule-name    type: symbol?)
+  (rule-from    type: (or integer? ; year
+                       (memv '(minimum maximum))))
+  (rule-to      type: (or integer? ; year
+                     (memv '(only minimum maximum))))
   ;; type should always be "-"
-  (make-rule name from to #|type|# in on at save letters)
-  rule?
-  (name rule-name)                      ; string
-  (from rule-from)                       ; int (year) | 'minimum | 'maximum
-  (to rule-to)                           ; int (year) | 'minimum | 'maximum
-  (in rule-in)                           ; int (month number)
-  (on rule-on)                           ; int (month day) | ('last <day-name>) | (['< | '>] <day-name> int)
-  (at rule-at)                           ; <timespec>
-  (save rule-save)                       ; <timespec>
-  (letters rule-letters)                 ; string
+  ;; (rule-type type: (eq? "-") default: "-")
+  (rule-in      type: integer?); month number
+  (rule-on      type: (or integer? ; month day
+                     (tuple-of (eq? 'last)
+                               (memv (weekday-list sun)))
+                     (tuple-of (memv '(< >))
+                               (memv (weekday-list sun))
+                               integer?)))
+  (rule-at      type: timespec?)
+  (rule-save    type: timespec?)
+  (rule-letters type: string?))
+
+;;; TODO zone-entry collision
+
+(define-type (zone-entry)               ; EXPORTED
+  (zone-entry-stdoff keyword: stdoff type: timespec?)
+  (zone-entry-rule   keyword: rule   type: (or false? symbol? timespec?))
+  (zone-entry-format keyword: format type: string?)
+  (zone-entry-until  keyword: until  type: (or false? datetime?)))
+
+
+(define-type (zone)                     ; INTERNAL
+  (zone-name    type: string?)
+  (zone-entries type: (list-of zone-entry?)))
+
+(define-type (link)                     ; INTERNAL
+  (link-name   type: string? keyword: name)
+  (link-target type: string? keyword: target))
+
+(define-type (zoneinfo)                 ; EXPORTED
+  (zoneinfo-rules type: hash-table? keyword: rules)             ; (map symbol? (list <rule>)
+  (zoneinfo-zones type: hash-table? keyword: zones)             ; (map string? (list <zone-entry>))
   )
 
-
-(define-immutable-record-type <zone-entry> ; EXPORTED
-  (make-zone-entry stdoff rule format until)
-  zone-entry?
-  (stdoff zone-entry-stdoff)                   ; <timespec>
-  (rule zone-entry-rule)                       ; #f | symbol | <timespec>
-  (format zone-entry-format)                   ; string
-  (until zone-entry-until))                    ; <datetime> | #f
-
-
-(define-immutable-record-type <zone>    ; INTERNAL
-  (make-zone name entries)
-  zone?
-  (name zone-name)                      ; string
-  (entries zone-entries))               ; (list <zone-entry>)
-
-(define-immutable-record-type <link>    ; INTERNAL
-  (make-link name target)
-  link?
-  (name link-name)                      ; string
-  (target link-target))                 ; string
-
-(define-immutable-record-type <zoneinfo>  ; EXPORTED
-  (make-zoneinfo rules zones)
-  zoneinfo?
-  (rules zoneinfo-rules)                ; (map symbol (list <rule>))
-  (zones zoneinfo-zones))               ; (map string (list <zone-entry>))
 
 ;; @example
 ;; (get-zone zoneinfo "Europe/Stockholm")
@@ -194,15 +205,15 @@
 
 
 (define (parse-zone stdoff rule format . until)
-  (make-zone-entry
-    (parse-time-spec stdoff)           ; stdoff
-    (cond [(string=? "-" rule) #f]     ; rule
-          [(char-alphabetic? (string-ref rule 0))
-           (string->symbol rule)]
-          [else (parse-time-spec rule)])
-    format                             ; format
-    (if (null? until)                  ; until
-      #f (apply parse-until until))))
+  (zone-entry
+   stdoff: (parse-time-spec stdoff)
+   rule: (cond [(string=? "-" rule) #f]
+               [(char-alphabetic? (string-ref rule 0))
+                (string->symbol rule)]
+               [else (parse-time-spec rule)])
+   format: format
+   until: (if (null? until)
+              #f (apply parse-until until))))
 
 
 
@@ -234,7 +245,8 @@
                           (zone-entries (cons zone-entry entries)))
                     (if (zone-entry-until zone-entry)
                         (loop done (list name zone-entries))
-                        (loop (cons (make-zone name (reverse zone-entries))
+                        (loop (cons (zone zone-name: name
+                                          zone-entries: (reverse zone-entries))
                                     done)
                               #f)))]
                   [else
@@ -242,19 +254,18 @@
                      (("Rule" name from to type in on at save letters)
                       (let* ((parsed-from (parse-from from))
                              (rule
-                              (make-rule (string->symbol name) ; name
-                                         parsed-from           ; from
-                                         ;; to
-                                         (if (string-prefix? to "only")
-                                             ;; parsed-from
-                                             'only
-                                             (parse-from to))
-                                         (month-name->number in) ; in
-                                         (parse-day-spec on)     ; on
-                                         (parse-time-spec at)    ; at
-                                         (parse-time-spec save '(#\s #\d)) ; save
-                                         (if (string= letters "-") ; letters
-                                             "" letters))))
+                              (zi-rule rule-name: (string->symbol name)
+                                       rule-from: parsed-from
+                                       rule-to: (if (string-prefix? to "only")
+                                                    ;; parsed-from
+                                                    'only
+                                                    (parse-from to))
+                                       rule-in: (month-name->number in)
+                                       rule-on: (parse-day-spec on)
+                                       rule-at: (parse-time-spec at)
+                                       rule-save: (parse-time-spec save '(#\s #\d))
+                                       rule-letters: (if (string= letters "-")
+                                                         "" letters))))
                         (loop (cons rule done)
                               #f)))
                      (("Zone" name args ...)
@@ -262,12 +273,13 @@
                              (zones (list zone-entry)))
                         (if (zone-entry-until zone-entry)
                             (loop done (list name zones))
-                            (loop (cons (make-zone name (reverse zones))
+                            (loop (cons (zone zone-name: name
+                                              zone-entries: (reverse zones))
                                         done)
                                   #f))))
 
                      (("Link" target name)
-                      (loop (cons (make-link name target)
+                      (loop (cons (link name: name target: target)
                                   done) #f))
                      (_
                       ;; NOTE an earlier version of the code the parsers for those.
@@ -287,7 +299,7 @@
   (define rules (make-hash-table))
 
   (let ((groups (group-by (lambda (item)
-                            (cond [(rule? item) 'rule]
+                            (cond [(zi-rule? item) 'rule]
                                   [(zone? item) 'zone]
                                   [(link? item) 'link]
                                   [else (warning "Unknown item type ~a" item) #f]))
@@ -320,7 +332,7 @@
                         (hash-set! zones name target-item))))
                 it))
 
-    (make-zoneinfo rules zones)))
+    (zoneinfo rules: rules zones: zones)))
 
 
 

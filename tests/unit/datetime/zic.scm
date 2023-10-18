@@ -35,20 +35,27 @@ Link    Europe/Zurich  Europe/Vaduz
 ;; Some of the tests are slightly altered to score better on the coverage
 (test-group "From zic(8)"
             (test-equal "Basic Rule"
-              (list ((@@ (datetime zic) make-rule)
-                     'US 1967 1973 4 '(last 0)
-                     (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\d)
-                     "D"))
+              (list ((@@ (datetime zic) zi-rule)
+                     rule-name: 'US
+                     rule-from: 1967
+                     rule-to: 1973
+                     rule-in: 4
+                     rule-on: '(last 0)
+                     rule-at: (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
+                     rule-save: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\d)
+                     rule-letters: "D"))
               (call-with-input-string "Rule  US    1967  1973  -  Apr  lastSun  2:00w  1:00d  D"
                 parse-zic-file))
 
             ;; Technically not from zic(8), since that example has an until field
             (test-equal "Basic Zone"
-              (list ((@@ (datetime zic) make-zone) "Asia/Amman"
-                     (list ((@@ (datetime zic) make-zone-entry)
-                            (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
-                            'Jordan "EE%sT" #f))))
+              (list ((@@ (datetime zic) zone)
+                     zone-name: "Asia/Amman"
+                     zone-entries: (list ((@@ (datetime zic) zone-entry)
+                                          stdoff: (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
+                                          rule: 'Jordan
+                                          format: "EE%sT"
+                                          until: #f))))
 
               (call-with-input-string
                   "Zone  Asia/Amman  2:00    Jordan  EE%sT"
@@ -56,13 +63,18 @@ Link    Europe/Zurich  Europe/Vaduz
 
             ;; Modified from the following example
             (test-equal "Basic Zone with continuation"
-              (list ((@@ (datetime zic) make-zone) "America/Menominee"
-                     (list ((@@ (datetime zic) make-zone-entry)
-                            (make-timespec (time hour: 05 minute: 00 second: 00) '- #\w)
-                            #f "EST" (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00))
-                           ((@@ (datetime zic) make-zone-entry)
-                            (make-timespec (time hour: 06 minute: 00 second: 00) '- #\w)
-                            'US "C%sT" #f))))
+              (list ((@@ (datetime zic) zone)
+                     zone-name: "America/Menominee"
+                     zone-entries: (list ((@@ (datetime zic) zone-entry)
+                                        stdoff: (make-timespec (time hour: 05 minute: 00 second: 00) '- #\w)
+                                        rule: #f
+                                        format: "EST"
+                                        until: (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00))
+                                       ((@@ (datetime zic) zone-entry)
+                                        stdoff: (make-timespec (time hour: 06 minute: 00 second: 00) '- #\w)
+                                        rule: 'US
+                                        format: "C%sT"
+                                        until: #f))))
               ;; Why can't I single read a zone with an until field?
               (call-with-input-string
                   "Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
@@ -71,23 +83,36 @@ Link    Europe/Zurich  Europe/Vaduz
 
 
             (test-equal "Rules and Zone"
-              (list ((@@ (datetime zic) make-zone) "America/Menominee"
-                     (list ((@@ (datetime zic) make-zone-entry)
-                            (make-timespec (time hour: 05 minute: 00 second: 00) '- #\w)
-                            #f "EST" (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00))
-                           ((@@ (datetime zic) make-zone-entry)
-                            (make-timespec (time hour: 06 minute: 00 second: 00) '- #\w)
-                            'US "C%sT" #f)))
-                    ((@@ (datetime zic) make-rule)
-                     'US 1967 1973 dec '(last 0)
-                     (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                     "D")
-                    ((@@ (datetime zic) make-rule)
-                     'US 1967 2006 nov '(last 0)
-                     (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
-                     (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                     "S"))
+              (list ((@@ (datetime zic) zone)
+                     zone-name: "America/Menominee"
+                     zone-entries: (list ((@@ (datetime zic) zone-entry)
+                                          stdoff: (make-timespec (time hour: 05 minute: 00 second: 00) '- #\w)
+                                          rule: #f
+                                          format: "EST"
+                                          until: (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00))
+                                         ((@@ (datetime zic) zone-entry)
+                                          stdoff: (make-timespec (time hour: 06 minute: 00 second: 00) '- #\w)
+                                          rule: 'US
+                                          format: "C%sT"
+                                          until: #f)))
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'US
+                     rule-from: 1967
+                     rule-to: 1973
+                     rule-in: dec
+                     rule-on: '(last 0)
+                     rule-at: (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
+                     rule-save: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "D")
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'US
+                     rule-from: 1967
+                     rule-to: 2006
+                     rule-in: nov
+                     rule-on: '(last 0)
+                     rule-at: (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
+                     rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "S"))
               (call-with-input-string
                   "# Rule  NAME  FROM  TO    -  IN   ON       AT    SAVE  LETTER/S
 Rule    US    1967  2006  -  Nov  lastSun  2:00  0     S
@@ -99,7 +124,9 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
 
 
             (test-equal "Simple Link"
-              (list ((@@ (datetime zic) make-link) "Asia/Istanbul" "Europe/Istanbul"))
+              (list ((@@ (datetime zic) link)
+                     name: "Asia/Istanbul"
+                     target: "Europe/Istanbul"))
               (call-with-input-string "Link Europe/Istanbul Asia/Istanbul"
                 parse-zic-file))
 
@@ -116,52 +143,103 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
 
             (test-equal "Extended example"
               ;; Items are in reverse order of discovery
-              (list ((@@ (datetime zic) make-link) "Europe/Vaduz" "Europe/Zurich")
-                    ((@@ (datetime zic) make-zone) "Europe/Zurich"
-                     (list ((@@ (datetime zic) make-zone-entry)
-                            (make-timespec (time hour: 00 minute: 34 second: 08) '+ #\w)
-                            #f "LMT" (datetime year: 1853 month: 07 day: 16 hour: 00 minute: 00 second: 00))
-                           ((@@ (datetime zic) make-zone-entry)
-                            (make-timespec (time hour: 00 minute: 29 second: 45) '+ #\w) ; NOTE that the .50 is discarded
-                            #f "BMT" (datetime year: 1894 month: 06 day: 01 hour: 00 minute: 00 second: 00))
-                           ((@@ (datetime zic) make-zone-entry)
-                            (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                            'Swiss "CE%sT" (datetime year: 1981 month: 01 day: 01 hour: 00 minute: 00 second: 00))
-                           ((@@ (datetime zic) make-zone-entry)
-                            (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                            'EU "CE%sT" #f)))
-                    ((@@ (datetime zic) make-rule) 'EU 1996 'maximum 10 '(last 0)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                     (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                     "")
-                    ((@@ (datetime zic) make-rule) 'EU 1981 'maximum 3 '(last 0)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                     "S")
-                    ((@@ (datetime zic) make-rule) 'EU 1979 1995 9 `(last ,sun)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                     (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                     "")
-                    ((@@ (datetime zic) make-rule) 'EU 1978 'only 10 1
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                     (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                     "")
-                    ((@@ (datetime zic) make-rule) 'EU 1977 'only 9 `(last ,sun)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                     (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                     "")
-                    ((@@ (datetime zic) make-rule) 'EU 1977 1980 4 `(> ,sun 1)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                     "S")
-                    ((@@ (datetime zic) make-rule) 'Swiss 1941 1942 10 `(> ,mon 1)
-                     (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
-                     (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                     "")
-                    ((@@ (datetime zic) make-rule) 'Swiss 1941 1942 5 `(> ,mon 1)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                     (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                     "S"))
+              (list ((@@ (datetime zic) link)
+                     name: "Europe/Vaduz"
+                     target: "Europe/Zurich")
+                    ((@@ (datetime zic) zone)
+                     zone-name: "Europe/Zurich"
+                     zone-entries: (list ((@@ (datetime zic) zone-entry)
+                                        stdoff: (make-timespec (time hour: 00 minute: 34 second: 08) '+ #\w)
+                                        rule: #f
+                                        format: "LMT"
+                                        until: (datetime year: 1853 month: 07 day: 16 hour: 00 minute: 00 second: 00))
+                                       ((@@ (datetime zic) zone-entry)
+                                        stdoff: (make-timespec (time hour: 00 minute: 29 second: 45) '+ #\w) ; NOTE that the .50 is discarded
+                                        rule: #f
+                                        format: "BMT"
+                                        until: (datetime year: 1894 month: 06 day: 01 hour: 00 minute: 00 second: 00))
+                                       ((@@ (datetime zic) zone-entry)
+                                        stdoff: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                                        rule: 'Swiss
+                                        format: "CE%sT"
+                                        until: (datetime year: 1981 month: 01 day: 01 hour: 00 minute: 00 second: 00))
+                                       ((@@ (datetime zic) zone-entry)
+                                        stdoff: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                                        rule: 'EU
+                                        format: "CE%sT"
+                                        until: #f)))
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'EU
+                     rule-from: 1996
+                     rule-to: 'maximum
+                     rule-in: 10
+                     rule-on: '(last 0)
+                     rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                     rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "")
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'EU
+                     rule-from: 1981
+                     rule-to: 'maximum
+                     rule-in: 3
+                     rule-on: '(last 0)
+                     rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                     rule-save: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "S")
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'EU
+                     rule-from: 1979
+                     rule-to: 1995
+                     rule-in: 9
+                     rule-on: `(last ,sun)
+                     rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                     rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "")
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'EU
+                     rule-from: 1978
+                     rule-to: 'only
+                     rule-in: 10
+                     rule-on: 1
+                     rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                     rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "")
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'EU
+                     rule-from: 1977
+                     rule-to: 'only
+                     rule-in: 9
+                     rule-on: `(last ,sun)
+                     rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                     rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "")
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'EU
+                     rule-from: 1977
+                     rule-to: 1980
+                     rule-in: 4
+                     rule-on: `(> ,sun 1)
+                     rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                     rule-save: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "S")
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'Swiss
+                     rule-from: 1941
+                     rule-to: 1942
+                     rule-in: 10
+                     rule-on: `(> ,mon 1)
+                     rule-at: (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
+                     rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "")
+                    ((@@ (datetime zic) zi-rule)
+                     rule-name: 'Swiss
+                     rule-from: 1941
+                     rule-to: 1942
+                     rule-in: 5
+                     rule-on: `(> ,mon 1)
+                     rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                     rule-save: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                     rule-letters: "S"))
               (call-with-input-string big-sample
                 parse-zic-file)))
 
@@ -169,19 +247,28 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
             (test-equal "last sunday"
               (datetime year: 1967 month: 04 day: 30 hour: 02 minute: 00 second: 00)
               (rule->dtstart
-               ((@@ (datetime zic) make-rule)
-                'US 1967 1973 4 '(last 0)
-                (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\d)
-                "D")))
+               ((@@ (datetime zic) zi-rule)
+                rule-name: 'US
+                rule-from: 1967
+                rule-to: 1973
+                rule-in: 4
+                rule-on: '(last 0)
+                rule-at: (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
+                rule-save: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\d)
+                rule-letters: "D")))
 
             (test-equal "sunday >= 1"
               (datetime year: 1977 month: 04 day: 03 hour: 01 minute: 00 second: 00 tz: "UTC")
               (rule->dtstart
-               ((@@ (datetime zic) make-rule) 'EU 1977 1980 4 `(> ,sun 1)
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                "S")))
+               ((@@ (datetime zic) zi-rule)
+                rule-name: 'EU
+                rule-from: 1977
+                rule-to: 1980
+                rule-in: 4
+                rule-on: `(> ,sun 1)
+                rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                rule-save: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                rule-letters: "S")))
 
             ;; Max and min uses dummy dates, which is slightly wrong
             ;; but shouldn't cause any real problems
@@ -189,19 +276,29 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
             (test-equal "Minimum time"
               (datetime year: 0000 month: 10 day: 30 hour: 01 minute: 00 second: 00 tz: "UTC")
               (rule->dtstart
-               ((@@ (datetime zic) make-rule) 'EU 'minimum 2000 10 '(last 0)
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                "")))
+               ((@@ (datetime zic) zi-rule)
+                rule-name: 'EU
+                rule-from: 'minimum
+                rule-to: 2000
+                rule-in: 10
+                rule-on: '(last 0)
+                rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                rule-letters: "")))
 
             (test-equal "Maximum time"
               (datetime year: 9999 month: oct day: 27
                         hour: 1 tz: "UTC")
               (rule->dtstart
-               ((@@ (datetime zic) make-rule) 'EU 'maximum 2000 10 '(last 0)
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                ""))))
+               ((@@ (datetime zic) zi-rule)
+                rule-name: 'EU
+                rule-from: 'maximum
+                rule-to: 2000
+                rule-in: 10
+                rule-on: '(last 0)
+                rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                rule-letters: ""))))
 
 (test-group "zone-format"
 
@@ -227,14 +324,24 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                 (get-zone zoneinfo "Europe/Zurich") (get-zone zoneinfo "Europe/Vaduz"))
               (test-equal "Get rules returns correctly, and in order"
                   ;; Rules are sorted
-                  (list ((@@ (datetime zic) make-rule) 'Swiss 1941 1942 5 `(> ,mon 1)
-                         (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                         (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
-                         "S")
-                        ((@@ (datetime zic) make-rule) 'Swiss 1941 1942 10 `(> ,mon 1)
-                         (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
-                         (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                         ""))
+                (list ((@@ (datetime zic) zi-rule)
+                       rule-name: 'Swiss
+                       rule-from: 1941
+                       rule-to: 1942
+                       rule-in: 5
+                       rule-on: `(> ,mon 1)
+                       rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                       rule-save: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\w)
+                       rule-letters: "S")
+                      ((@@ (datetime zic) zi-rule)
+                       rule-name: 'Swiss
+                       rule-from: 1941
+                       rule-to: 1942
+                       rule-in: 10
+                       rule-on: `(> ,mon 1)
+                       rule-at: (make-timespec (time hour: 02 minute: 00 second: 00) '+ #\w)
+                       rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                       rule-letters: ""))
                (get-rule zoneinfo 'Swiss))))
 
 
@@ -245,19 +352,29 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                byday: (list (cons -1 sun))
                bymonth: (list oct))
               (rule->rrule
-               ((@@ (datetime zic) make-rule) 'EU 1996 'maximum 10 '(last 0)
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                "")
+               ((@@ (datetime zic) zi-rule)
+                rule-name: 'EU
+                rule-from: 1996
+                rule-to: 'maximum
+                rule-in: 10
+                rule-on: '(last 0)
+                rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                rule-letters: "")
                ))
 
             (test-equal "with to = only"
               #f
               (rule->rrule
-               ((@@ (datetime zic) make-rule) 'EU 1996 'only 10 '(last 2)
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                "")))
+               ((@@ (datetime zic) zi-rule)
+                rule-name: 'EU
+                rule-from: 1996
+                rule-to: 'only
+                rule-in: 10
+                rule-on: '(last 2)
+                rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                rule-letters: "")))
 
             (test-equal "with definitive to year"
               ((@ (vcomponent recurrence internal) recur-rule)
@@ -266,10 +383,15 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                bymonth: (list oct)
                until: (datetime year: 2000 month: 01 day: 01 hour: 00 minute: 00 second: 00))
               (rule->rrule
-               ((@@ (datetime zic) make-rule) 'EU 1996 2000 10 '(last 2)
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                "")))
+               ((@@ (datetime zic) zi-rule)
+                rule-name: 'EU
+                rule-from: 1996
+                rule-to: 2000
+                rule-in: 10
+                rule-on: '(last 2)
+                rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                rule-letters: "")))
 
             (test-equal "on being a month day"
               ((@ (vcomponent recurrence internal) recur-rule)
@@ -277,10 +399,15 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                bymonthday: (list 2)
                bymonth: (list oct))
               (rule->rrule
-               ((@@ (datetime zic) make-rule) 'EU 1996 'maximum 10 2
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                "")))
+               ((@@ (datetime zic) zi-rule)
+                rule-name: 'EU
+                rule-from: 1996
+                rule-to: 'maximum
+                rule-in: 10
+                rule-on: 2
+                rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                rule-letters: "")))
 
             (test-equal "on being first day after date"
               ((@ (vcomponent recurrence internal) recur-rule)
@@ -288,20 +415,30 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                byday: (list (cons 1 mon))
                bymonth: (list oct))
               (rule->rrule
-               ((@@ (datetime zic) make-rule) 'EU 1996 'maximum 10 `(> ,mon 2)
-                (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                "")))
+               ((@@ (datetime zic) zi-rule)
+                rule-name: 'EU
+                rule-from: 1996
+                rule-to: 'maximum
+                rule-in: 10
+                rule-on: `(> ,mon 2)
+                rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                rule-letters: "")))
 
             (test-equal "Crash on counting backwards from date"
               '(misc-error "rule->rrule" "Counting backward for RRULES unsupported" #f #f)
               (catch 'misc-error
                 (lambda ()
                  (rule->rrule
-                  ((@@ (datetime zic) make-rule) 'EU 1996 'maximum 10 `(< ,mon 2)
-                   (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                   (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                   "")))
+                  ((@@ (datetime zic) zi-rule)
+                   rule-name: 'EU
+                   rule-from: 1996
+                   rule-to: 'maximum
+                   rule-in: 10
+                   rule-on: `(< ,mon 2)
+                   rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                   rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                   rule-letters: "")))
                 list))
 
             (test-equal "Crash on to = minimum"
@@ -309,10 +446,15 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
               (catch 'misc-error
                 (lambda ()
                   (rule->rrule
-                   ((@@ (datetime zic) make-rule) 'EU 1996 'minimum 10 `(< ,mon 2)
-                    (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
-                    (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
-                    "")))
+                   ((@@ (datetime zic) zi-rule)
+                    rule-name: 'EU
+                    rule-from: 1996
+                    rule-to: 'minimum
+                    rule-in: 10
+                    rule-on: `(< ,mon 2)
+                    rule-at: (make-timespec (time hour: 01 minute: 00 second: 00) '+ #\u)
+                    rule-save: (make-timespec (time hour: 00 minute: 00 second: 00) '+ #\w)
+                    rule-letters: "")))
                 list))
             )
 
