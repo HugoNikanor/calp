@@ -36,4 +36,10 @@
   5                                     ; (Module declaration
   52                                    ; else "keyword" apparently missed
   )
+ ("module/vcomponent/duration.scm"
+  "c83a2750964c2362af5043f33b435a792f62007d847f543e78a8f2550757e010"
+  ;; Unreachable code, but fail faster
+  113 114 115
+  118 119 120 121
+  )
 )

@@ -110,12 +110,15 @@
                              [(H) `(hour: ,n)]
                              [(M) `(minute: ,n)]
                              [(S) `(second: ,n)]
-                             [else (scm-error 'misc-error "parse-duration"
-                                              "Invalid key ~a" type #f)]))]
+                             [else (unreachable
+                                    "parse-duration"
+                                    "Invalid key ~a"
+                                    type)]))]
                         [a
-                         (scm-error 'misc-error "parse-duration"
-                                    "~s not on expected form ((number <num>) type)"
-                                    (list a) #f)])
+                         (unreachable
+                          "parse-duration"
+                          "~s not on expected form ((number <num>) type)"
+                          (list a))])
                       (context-flatten (lambda (x) (and (pair? (car x))
                                                    (eq? 'number (caar x))))
                       (cdr (member "P" tree)))
