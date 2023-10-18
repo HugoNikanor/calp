@@ -31,4 +31,9 @@
   23 29 ; internal lookup table, used by everything so tested implicitly
   53 ; internal helper function, tested implictly
  )
+ ("module/text/util.scm"
+  "271a5f7740aa6e378e7fda2da4725171dc50a2e4a790e9529fceed19a747e775"
+  5                                     ; (Module declaration
+  52                                    ; else "keyword" apparently missed
+  )
 )
