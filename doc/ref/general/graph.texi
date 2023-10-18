@@ -33,7 +33,7 @@ Returns @code{#f} if no such node exists.
 @end defun
 
 @defun remove-node graph node
-Remvoe @var{node} from @var{graph}, if it exists.
+Remove @var{node} from @var{graph}, if it exists.
 @end defun
 
 @defun find-dangling-node graph
