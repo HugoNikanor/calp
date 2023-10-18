@@ -1,27 +1,37 @@
 (define-module (vcomponent duration)
   :use-module (hnh util)
   :use-module (hnh util exceptions)
+  :use-module (hnh util object)
+  :use-module (hnh util type)
   :use-module (datetime)
   :use-module (ice-9 peg)
   :use-module (ice-9 match)
-  :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-1)
   :export (duration
            parse-duration
            format-duration
            ))
 
-;;; TODO Write tests for this
+(define-type (duration-week)
+  (duration-week-sign  keyword: sign type: (memv '(+ -)))
+  (duration-week-count keyword: week type: integer?))
 
-;;; TODO replace record type
+(define-type (duration-datetime)
+  (duration-datetime-sign keyword: sign type: (memv '(+ -)))
+  (duration-day  keyword: day  default: #f
+                 type: (or false? integer?))
+  (duration-time keyword: time default: #f
+                 type: (or false? time?)))
 
-(define-immutable-record-type <duration>
-  (make-duration sign week day dur-time)
-  duration?
-  (sign duration-sign)
-  (week duration-week)
-  (day duration-day)
-  (dur-time duration-time))
+(define (duration? x)
+  (or (duration-week? x)
+      (duration-datetime? x)))
+
+(define (duration-sign duration)
+  (typecheck duration duration?)
+  ((cond ((duration-week? duration) duration-week-sign)
+         ((duration-datetime? duration) duration-datetime-sign))
+   duration))
 
 (define* (duration
           key: (sign '+)
@@ -30,7 +40,12 @@
     (scm-error 'misc-error "duration"
                "Can't give week together with day or time"
                #f #f))
-  (make-duration sign week day time))
+  (if week
+      (duration-week sign: sign week: week)
+      (duration-datetime
+       sign: sign
+       day: day
+       time: time)))
 
 
 (define (format-duration duration)
@@ -39,9 +54,9 @@
       (unless (eq? '+ (duration-sign duration))
         (display (duration-sign duration)))
       (display "P")
-      (aif (duration-week duration)
-           (format #t "~aW" it)
-           (begin
+      (cond ((duration-week? duration)
+             (format #t "~aW" (duration-week-count duration)))
+            ((duration-datetime? duration)
              (awhen (duration-day duration) (format #t "~aD" it))
              (awhen (duration-time duration)
                     (display "T")
