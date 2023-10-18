@@ -17,10 +17,6 @@ a value which can be compared. These values are sometimes called
 @var{node-equal?} should return if two nodes are equal or not.
 @end defun
 
-@defun rebuild-graph [old-graph] [nodes='()] [edges='()]
-@c TODO document me
-@end defun
-
 @defun graph-empty? graph
 Does the graph contaitn
 @end defun

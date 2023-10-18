@@ -271,7 +271,6 @@
              ;; to use a /update endpoint to change events. This to prevent
              ;; accidental overwriting.
 
-
              (parameterize ((warnings-are-errors #t))
                (catch*
                 (lambda () (add-and-save-event global-event-object

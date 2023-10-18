@@ -11,7 +11,6 @@
   :use-module (srfi srfi-9 gnu)
   :use-module (ice-9 format)
   :export (make-graph
-           rebuild-graph
            graph-empty?
            add-node
            get-node
