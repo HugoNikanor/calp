@@ -7,9 +7,7 @@
 ;;; - The filename, relative calp's root
 ;;; - The sha256-sum of that file
 ;;; - Any number of lines which should be marked as covered.
-(("module/vcomponent/base.scm"
-  "f98a3887020c400595bcc32805f968ebebca685bc1c18ef1f1531f55d9f72ec1"
-  73 83 108 1)
+(
  ("module/hnh/util/atomic-queue.scm"
   "40c0e0feb77392e3eb1f6ab6136cc116aeeded6030eea7db6688901df5ed021d"
   1 18)
@@ -21,4 +19,16 @@
   1                                      ; Module declaration
   12 34 44 46                            ; Macros
   53)                                    ; false? == not
+ ;; File is not tested at all, since it's mearly a "header" file.
+ ;; TODO possibly actually test extension loading, since it should
+ ;; fail gracefully when library is not available.
+ ("module/graphviz.scm"
+  "5ff20a55098973fcc8552cd897e779eaf01dc3d4909f8d23be47d317987d8e95"
+  18 82 84)
+ ("module/base64.scm"
+  "4614855f6cfedc20041e7094989e817f2c2c5ef85fb5f8322d915101c0aab53c"
+  1 ; module declaration
+  23 29 ; internal lookup table, used by everything so tested implicitly
+  53 ; internal helper function, tested implictly
  )
+)
