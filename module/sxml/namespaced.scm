@@ -3,12 +3,12 @@
   :use-module (sxml util)
   :use-module (ice-9 match)
   :use-module (srfi srfi-1)
-  :use-module (srfi srfi-9)
-  :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (hnh util state-monad)
   :use-module ((hnh util io) :select (->port))
+  :use-module (hnh util object)
+  :use-module (hnh util type)
   :export (xml->namespaced-sxml
            namespaced-sxml->xml
            namespaced-sxml->sxml
@@ -17,13 +17,13 @@
            xml
            attribute
 
-           make-xml-element
+           xml-element
            xml-element?
            xml-element-tagname
            xml-element-namespace
            xml-element-attributes
 
-           make-pi-element
+           pi-element
            pi-element?
            pi-tag
            pi-body
@@ -34,26 +34,29 @@
 ;; (make-pi-element 'xml "version=\"1.0\" encoding=\"utf-8\"")
 ;; tag should always be a symbol
 ;; body should always be a string
-(define-record-type <pi-element>
-  (make-pi-element tag body)
-  pi-element?
-  (tag pi-tag)
-  (body pi-body))
+(define-type (pi-element
+              constructor: (lambda (constructor typecheck)
+                             (lambda (tag body)
+                               (typecheck tag body)
+                               (constructor tag body))))
+  (pi-tag  type: symbol?)
+  (pi-body type: string?))
 
-
-(define-record-type <xml-element>
-  (make-xml-element tagname namespace attributes)
-  xml-element?
-  (tagname xml-element-tagname)
-  (namespace xml-element-namespace)
-  (attributes xml-element-attributes))
-
+(define-type (xml-element)
+  (xml-element-tagname    type: symbol?
+                          keyword: tag)
+  (xml-element-namespace  type: (or false? symbol?)
+                          default: #f
+                          keyword: ns)
+  (xml-element-attributes type: (list-of (pair-of symbol? string?))
+                          default: '()
+                          keyword: attributes))
 
 (define xml
   (case-lambda
-    ((tag) (make-xml-element tag #f '()))
-    ((ns tag) (make-xml-element tag ns '()))
-    ((ns tag attrs) (make-xml-element tag ns attrs))))
+    ((tag) (xml-element tag: tag))
+    ((ns tag) (xml-element tag: tag ns: ns))
+    ((ns tag attrs) (xml-element tag: tag ns: ns attributes: attrs))))
 
 (define (attribute xml attr)
   (assoc-ref (xml-element-attributes xml) attr))
@@ -84,8 +87,8 @@
     (cons
      (list
       (match elem-gi
-        ((ns . tag) (make-xml-element tag ns attributes))
-        (tag (make-xml-element tag #f attributes))))
+        ((ns . tag) (xml-element tag: tag ns: ns attributes: attributes))
+        (tag (xml-element tag: tag attributes: attributes))))
      seed))
 
   FINISH-ELEMENT
@@ -114,7 +117,7 @@
                   (let ((body (ssax:read-pi-body-as-string port)))
                     (match seed
                       (((parent . children) . rest)
-                       `((,parent ,(make-pi-element pi-tag body) ,@children)
+                       `((,parent ,(pi-element pi-tag body) ,@children)
                          ,@rest)))))))
   ))
 
@@ -245,7 +248,7 @@
 ;; Returns a namespaced sxml tree
 (define (sxml->namespaced-sxml tree namespaces)
   (match tree
-    (('*PI* tag body) (make-pi-element tag body))
+    (('*PI* tag body) (pi-element tag body))
     (('*TOP* rest ...)
      `(*TOP* ,@(map (lambda (r) (sxml->namespaced-sxml r namespaces))
                     rest)))

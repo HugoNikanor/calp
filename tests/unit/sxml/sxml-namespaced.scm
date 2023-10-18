@@ -19,15 +19,15 @@
 
 (test-group "XML constructor utility procedure"
   (test-equal "3 args"
-    (make-xml-element 'tagname 'namespace 'attributes)
-    (xml 'namespace 'tagname 'attributes))
+    (xml-element tag: 'tagname ns: 'namespace attributes: '())
+    (xml 'namespace 'tagname '()))
 
   (test-equal "2 args"
-    (make-xml-element 'tagname 'namespace '())
+    (xml-element tag: 'tagname ns: 'namespace attributes: '())
     (xml 'namespace 'tagname))
 
   (test-equal "1 args"
-    (make-xml-element 'tagname #f '())
+    (xml-element tag: 'tagname attributes: '())
     (xml 'tagname)))
 
 
@@ -52,12 +52,12 @@
     (xml->namespaced-sxml "<x:tag xmlns='ns1' xmlns:x='ns2'><tag/></x:tag>"))
 
   (test-equal "PI are passed directly"
-      `(*TOP* ,(make-pi-element 'xml "encoding=\"utf-8\" version=\"1.0\"")
+      `(*TOP* ,(pi-element 'xml "encoding=\"utf-8\" version=\"1.0\"")
               (,(xml 'tag)))
       (xml->namespaced-sxml "<?xml encoding=\"utf-8\" version=\"1.0\"?><tag/>"))
 
   (test-equal "Document with whitespace in it"
-    `(*TOP* ,(make-pi-element 'xml "")
+    `(*TOP* ,(pi-element 'xml "")
             (,(xml 'root)
              " "
              (,(xml 'a))
@@ -67,7 +67,7 @@
 
   ;; TODO is this expected? xml->sxml discards it.
   (test-equal "Whitespace before root is kept"
-    `(*TOP* ,(make-pi-element 'xml "")
+    `(*TOP* ,(pi-element 'xml "")
             (,(xml 'root)))
     (xml->namespaced-sxml "<?xml?> <root/>")))
 
@@ -85,7 +85,7 @@
     (sxml->namespaced-sxml '(x:a)
                            `((x . ,(ns 1)))))
   (test-equal "With pi"
-    `(*TOP* ,(make-pi-element 'xml "test")
+    `(*TOP* ,(pi-element 'xml "test")
             (,(xml 'a)))
     (sxml->namespaced-sxml
      `(*TOP*
@@ -134,7 +134,7 @@
          (lambda ()
            (namespaced-sxml->sxml/namespaces
             `(*TOP*
-              ,(make-pi-element 'xml "test")
+              ,(pi-element 'xml "test")
               (,(xml 'a)))))
        (lambda (tree namespaces)
          (test-equal '() namespaces)
