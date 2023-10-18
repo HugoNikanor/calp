@@ -38,3 +38,14 @@ signal SIGINT, which kills the program.
 @defun filter-stack pred? stack
 @c TODO document me
 @end defun
+
+
+@defun unreachable procedure fmt args
+Marks that a code path should be unreachable. Throws an exception
+which should never be caught (an @code{(exit -1)} would also have
+worked, but would make debugging harder).
+
+@var{procedure} is the procedure which reached an ``impossible''
+state, @var{fmt} a format string, and @var{args} arguments to that
+format string.
+@end defun
