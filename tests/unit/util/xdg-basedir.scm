@@ -56,4 +56,10 @@
      (test-assert "No error was emitted"
        (string-null? warning)))))
 
+(test-group "Empty string works as unset"
+  (let-env ((XDG_CONFIG_DIRS ""))
+           (test-equal "XDG_CONFIG_DIRS"
+                       '("/etc/xdg")
+                       (xdg-config-dirs))))
+
 '((xdg basedir))
