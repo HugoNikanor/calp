@@ -44,12 +44,13 @@
         trimmed)))
 
 ;; TODO more options for infix strings
+;; TODO why does this procedure return lists?
 (define* (add-enumeration-punctuation
-                 list optional: (final-delim "&"))
-  (cond [(null? list) ""]
-        [(= 1 (length list)) (car list)]
+                 lst optional: (final-delim "&"))
+  (cond [(null? lst) '("")]
+        [(= 1 (length lst)) (list (car lst))]
         [else
-         (let* ((rev (reverse list))
+         (let* ((rev (reverse lst))
                 (tail (car rev))
                 (rest (cdr rev)))
            (reverse (cons* tail " " final-delim " "
