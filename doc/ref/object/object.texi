@@ -70,11 +70,11 @@ adds a field which can hold anything. However, a list with the target
 name as its first element can instead be given, with the tail
 containing keyword arguments as follows
 
-@deffn {Field Parameter} default value
+@deffn {Field Parameter} #:default value
 Value the field should get if not given.
 @end deffn
 
-@deffn {Field Parameter} type type-clause
+@deffn {Field Parameter} #:type type-clause
 A type predicate that the field must obey. See @ref{type-clause} for details.
 
 Each type introduces a number of bindings, which are@footnote{
