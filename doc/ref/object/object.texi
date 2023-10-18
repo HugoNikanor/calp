@@ -82,6 +82,17 @@ Each type introduces a number of bindings, which are@footnote{
 }:
 @end deffn
 
+@deffn {Field Parameter} #:keyword name
+Specify an alternative keyword to use for this parameter when creating
+new instances of the object. Note that @var{name} should be a bare
+symbol, and @emph{not} a keyword object.
+
+@example
+(define-type (my-type)
+  (my-type-x keyword: x))
+@end example
+@end deffn
+
 @defun @var{<name>} [kv-args ...]
 Type constructor. Takes key-value arguments. Where the keys are the
 names of the fields.

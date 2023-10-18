@@ -36,17 +36,37 @@
 
 
 ;; Given (x type: predicate?), expand to a single `unless' form (otherwise #f)
+;; Each variable gets its own unless form, to enable better error messages
 (define-syntax (validator stx)
   (syntax-case stx ()
-    ((_ (name kvs ...))
+    ;; This form may be expanded both from the constructor, and from
+    ;; accessor procedures.
+    ;; In the constructor a different name may be used for the variable,
+    ;; due to custom keyword arguments being a thing.
+    ;; The field `name*' represents the variable holding the value
+    ;; While the field `name' contains the true name of the field in the struct.
+    ((_ name* (name kvs ...))
      (cond ((kv-ref #'(kvs ...) type:)
             => (lambda (type-stx)
                  (with-syntax ((type type-stx))
-                   #'(unless (build-validator-body name type)
+                   #'(unless (build-validator-body name* type)
                        (scm-error 'wrong-type-arg "validator"
                                   "Invalid value for `~s'. Expected ~s, got ~s"
-                                  (list (quote name) (quote type) name) #f)))))
+                                  (list (quote name) (quote type) name*) #f)))))
            (else #f)))
+    ((_ name) #f)))
+
+;;; When constructing a validator from a type constructor the keyword:
+;;; key in the field declaration should be honored. This means that the
+;;; looked at name, and the "true name" of a field may differ.
+(define-syntax (constructor-validator stx)
+  (syntax-case stx ()
+    ((_ (name kvs ...))
+     (with-syntax ((name*
+                    (cond ((kv-ref #'(kvs ...) keyword:)
+                           => identity)
+                          (else #'name))))
+       #'(validator name* (name kvs ...))))
     ((_ name) #f)))
 
 
@@ -105,18 +125,26 @@
                        ;; the field. This ensures those two are the same for validator,
                        ;; while keeping name bound to the accessor in the outer scope.
                        (let ((name new-value))
-                         (validator (name kvs ...)))
+                         (validator name (name kvs ...)))
                        ((field-set type-name name) datum new-value)))))
     ((_ type-name name) #'(build-accessor type-name (name)))))
 
+
+(define (syntax-name field)
+  (syntax-case field ()
+    ((name kvs ...)
+     (cond ((kv-ref #'(kvs ...) keyword:)
+            => identity)
+           (else #'name)))
+    (name #'name)))
 
 ;; Go from my concept of field deffinitions, to what lambda* wants as arguments
 (define (lambda*-stx field)
   (syntax-case field ()
     ((name kvs ...)
      (cond ((kv-ref #'(kvs ...) default:)
-            => (lambda (dflt) #`(name #,dflt)))
-           (else #'name)))
+            => (lambda (dflt) #`(#,(syntax-name field) #,dflt)))
+           (else (syntax-name field))))
     (name #'name)))
 
 
@@ -150,11 +178,11 @@
                                 make-<type>
                                 ;; Type validator
                                 (lambda #,(map syntax-first #'(field ...))
-                                  (validator field) ...))))
+                                  (constructor-validator field) ...))))
                        (else #`(lambda* (key: #,@(map lambda*-stx #'(field ...)))
                                  ;; Type validators
-                                 (validator field) ...
-                                 (make-<type> #,@(map syntax-first #'(field ...)))))))
+                                 (constructor-validator field) ...
+                                 (make-<type> #,@(map syntax-name #'(field ...)))))))
 
              ;; Field accessors
              (build-accessor name field) ...
