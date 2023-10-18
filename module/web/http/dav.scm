@@ -1,3 +1,8 @@
+;;; Commentary:
+;;; This is a simple WedDAV client.
+;;; TODO figure out what it's used for.
+;;; Code:
+
 (define-module (web http dav)
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-88)
