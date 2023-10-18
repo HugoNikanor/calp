@@ -8,8 +8,6 @@
 (define-module (hnh util table)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-88)
-  ;; :use-module (srfi srfi-9)
-  ;; :use-module (srfi srfi-9 gnu)
   :use-module (hnh util lens)
   :use-module (hnh util object)
   :export ((make-tree . table)
