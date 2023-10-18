@@ -129,8 +129,8 @@
     [(geo) ; ((long 1) (lat 2))
      (sxml-match
       (cons 'geo value)
-      [(geo (latitude ,x) (longitude ,y))
-       ((@ (vcomponent geo) make-geo) x y)])]
+      [(geo (latitude ,y) (longitude ,x))
+       ((@ (vcomponent geo) geo) y: y x: x)])]
 
     [else (scm-error 'misc-error "handle-value"
                      "Unknown value type: ~s"

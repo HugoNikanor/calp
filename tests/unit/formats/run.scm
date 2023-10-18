@@ -43,7 +43,7 @@
     comment: "A comment"
     description: "Descrition of the event"
     description: (with-parameters language: "sv" "Beskrivning av händelsen")
-    ;; geo: (make-geo 10 20)
+    ;; geo: (geo y: 10 x: 20)
     location: "Room 5"
     priority: 5
     ;; resources:

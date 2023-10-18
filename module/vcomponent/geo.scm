@@ -1,10 +1,10 @@
 (define-module (vcomponent geo)
   :use-module (hnh util)
-  :use-module (srfi srfi-9 gnu)
-  :export (make-geo geo-pos? geo-latitude geo-longitude))
+  :use-module (hnh util object)
+  :use-module (srfi srfi-88)
+  :export (geo geo? geo-latitude geo-longitude))
 
-(define-immutable-record-type <geographical-position>
-  (make-geo latitude longitude)
-  geo-pos?
-  (latitude geo-latitude)
-  (longitude geo-longitude))
+(define-type (geo)
+  (geo-latitude  keyword: y type: number?)
+  (geo-longitude keyword: x type: number?))
+

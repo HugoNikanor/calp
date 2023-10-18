@@ -226,8 +226,8 @@
            ;; two semicolon sepparated floats
            (lambda (params value)
              (let ((left right (apply values (string-split value #\;))))
-               (make-geo ((get-parser 'FLOAT) params left)
-                         ((get-parser 'FLOAT) params right))))]
+               (geo y: ((get-parser 'FLOAT) params left)
+                    x: ((get-parser 'FLOAT) params right))))]
 
           [(memv key '(RRULE))
            (get-parser 'RECUR)]
