@@ -33,6 +33,8 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
              (hnh test util)
              ((hnh util io) :select (displayln))
              (crypto)
+             (ice-9 popen)
+             (ice-9 rdelim)
              (ice-9 getopt-long)
              (ice-9 control)
              (ice-9 format))
@@ -273,6 +275,22 @@ Flags:
        (read port)))
 
 
+;;; TODO replace this with native Guile variant
+(define (all-files-under-dir dir)
+  (let ((pipe (open-pipe*
+               OPEN_READ
+               "find" dir
+               "-type" "f"
+               "-name" "*.scm"
+               "-exec" "realpath" "--zero" "{}" ";")))
+    (let loop ((done '()))
+      (let ((line (read-delimited "\0" pipe)))
+        (if (eof-object? line)
+            (begin
+              (close-pipe pipe)
+              done)
+            (loop (cons line done)))))))
+
 
 (define (main args)
   (define options (getopt-long args option-spec))
@@ -347,11 +365,23 @@ Flags:
                                                        (stack->list results))))))
 
 
+          (define uncovered-files
+            (lset-difference! string=?
+             (all-files-under-dir "module/")
+             (map filename merged-coverages)))
+
           (unless (null? merged-coverages)
             (with-output-to-file coverage
               (lambda ()
                 (display "TN:") (newline)
-                (for-each output-coverage merged-coverages))))
+                (for-each output-coverage merged-coverages)
+                (for-each output-coverage
+                          (map (lambda (filename)
+                                 (coverage-info filename: filename
+                                                lines: '((2 . 0))
+                                                total-lines: 1
+                                                hit-lines: 0))
+                               uncovered-files)))))
 
           (format #t "~%== Gathered errors ==~%")
           (let loop ()
