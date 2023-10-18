@@ -3,13 +3,12 @@
   :use-module ((vcomponent base)
                :select (vline key add-child prop* vline?))
   :use-module ((srfi srfi-1) :select (fold last drop-right car+cdr))
-  :use-module (srfi srfi-9)
-  :use-module (srfi srfi-9 gnu)
   :use-module (srfi srfi-17)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module ((hnh util table) :select (alist->table))
   :use-module ((hnh util) :select (swap init+last kvlist->assq ->))
+  :use-module (hnh util object)
   :export (with-parameters
            as-list
            vcomponent
@@ -56,13 +55,11 @@
 
 
 
-(define-immutable-record-type <list-value>
-  (make-list-value value)
-  list-value?
-  (value list-value-value))
+(define-type (list-value)
+  (list-value-value))
 
 (define (as-list arg)
-  (make-list-value arg))
+  (list-value list-value-value: arg))
 
 
 
