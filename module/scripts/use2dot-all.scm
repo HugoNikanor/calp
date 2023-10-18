@@ -11,7 +11,6 @@
 
 (define default-remove
  '((srfi srfi-1)
-   (srfi srfi-9)
    (srfi srfi-26)
    (srfi srfi-41)
 
