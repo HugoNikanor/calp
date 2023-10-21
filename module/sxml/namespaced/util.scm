@@ -5,7 +5,6 @@
   :export (xml-element-hash-key
            find-element
            element-matches?
-           on-root-element
            root-element
            ))
 
@@ -30,16 +29,10 @@
         (xml-element-hash-key (car tree)))))
 
 
-(define (on-root-element proc tree)
+(define (root-element tree)
   (cond ((and (eq? '*TOP* (car tree))
               (pi-element? (cadr tree)))
-         (cons* (car tree) (cadr tree)
-                (proc (caddr tree))))
+         (caddr tree))
         ((eq? '*TOP* (car tree))
-         (cons (car tree)
-               (proc (cadr tree))))
-        (else (proc (car tree)))))
-
-(define (root-element tree)
-  (call/ec (lambda (return)
-             (on-root-element return tree))))
+         (cadr tree))
+        (else tree)))
