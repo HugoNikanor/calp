@@ -202,7 +202,11 @@
    (!= 1 2)))
 
 (test-group "init+last"
-  'TODO)
+  (call-with-values
+    (lambda () (init+last (iota 5)))
+    (lambda (init last)
+      (test-equal '(0 1 2 3) init)
+      (test-equal 4 last))))
 
 (test-group "take-to"
  (test-equal "Take to"
@@ -336,6 +340,10 @@
        (test-equal '(#\H #\1 #\2 #\3 #\4 #\5 #\6) tail)))))
 
 (test-group "cross-product"
+
+  (test-equal "null case"
+    '() (cross-product))
+
   (test-equal "Basic case"
       '((1 4)
         (1 5)

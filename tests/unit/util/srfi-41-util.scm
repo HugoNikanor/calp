@@ -4,12 +4,18 @@
 ;;; Code:
 
 (define-module (test srfi-41-util)
-  :use-module (srfi srfi-64)
-  :use-module (srfi srfi-88)
+  :use-module ((srfi srfi-1) :select (circular-list))
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-41)
-  :use-module ((srfi srfi-1) :select (circular-list))
+  :use-module (srfi srfi-64)
+  :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
   :use-module ((ice-9 sandbox) :select (call-with-time-limit)))
+
+(test-group "stream car+cdr"
+ (let ((a d (stream-car+cdr (stream 1 2 3))))
+   (test-equal "car" 1 a)
+   (test-equal "cdr" '(2 3) (stream->list d))))
 
 (test-equal "Finite stream"
   '((0 1 2) (3 4 5) (6 7 8) (9))

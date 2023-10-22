@@ -204,7 +204,27 @@
       (datetime month: may)
       (string->datetime "Maj" "~h" sv_SE)))
 
-  ;; TODO AM/PM string ~p
+  (test-group "AM/PM"
+    (test-equal "AM (and no periods)"
+        (time hour: 10)
+      (string->time "10 AM" "~H ~p"))
+    (test-equal "PM (and periods)"
+        (time hour: 22)
+      (string->time "10 p.m." "~H ~p"))
+    (test-group "Period after AM/PM"
+     (call-with-values
+         (lambda ()
+           (string->time "Meeting at 12 pm." "Meeting at ~H ~p."
+                         return-trailing: #t))
+       (lambda (dt trailing)
+         (test-equal "Trailing period"
+           (time hour: 12) dt)
+         (test-equal "No remaining items"
+           '() trailing))))
+    (test-equal "12 am is midnight"
+      (time hour: 0)
+      (string->time "12 AM" "~H ~p"))
+    )
 
   (test-group "Complete parses"
     (test-equal "Parse complete ISO date"
@@ -388,11 +408,38 @@
   (date? (current-date)))
 
 
-;; TODO write these, also, check connection to get-time%
-get-datetime
-as-date
-as-time
-as-datetime
+(test-group "as-date"
+  (test-equal (date year: 1 month: 2 day: 3)
+              (as-date (datetime year: 1 month: 2 day: 3
+                                  hour: 4 minute: 5 second: 6)))
+  (test-equal (date year: 1 month: 2 day: 3)
+              (as-date (date year: 1 month: 2 day: 3)))
+  (test-equal (date) (as-date (time hour: 1 minute: 2 second: 3)))
+  (test-error 'wrong-type-arg
+              (as-date 'something-else)))
+
+(test-group "as-time"
+  (test-equal (time hour: 4 minute: 5 second: 6)
+              (as-time (datetime year: 1 month: 2 day: 3
+                                  hour: 4 minute: 5 second: 6)))
+  (test-equal (time hour: 1 minute: 2 second: 3)
+              (as-time (time hour: 1 minute: 2 second: 3)))
+  (test-equal (time) (as-time (date year: 1 month: 2 day: 3)))
+  (test-error 'wrong-type-arg
+              (as-time 'something-else)))
+
+(test-group "as-datetime"
+  (test-equal (datetime year: 1 month: 2 day: 3
+                        hour: 4 minute: 5 second: 6)
+              (as-datetime (datetime year: 1 month: 2 day: 3
+                                     hour: 4 minute: 5 second: 6)))
+  (test-equal (datetime year: 1 month: 2 day: 3)
+              (as-datetime (date year: 1 month: 2 day: 3)))
+  (test-equal (datetime hour: 1 minute: 2 second: 3)
+              (as-datetime (time hour: 1 minute: 2 second: 3)))
+  (test-error 'wrong-type-arg
+              (as-datetime 'something-else)))
+
 
 (test-group "Leap years"
   (test-assert "Most years are't leap years" (not (leap-year? 1999)))
@@ -448,11 +495,20 @@ as-datetime
 
 (test-equal "Week day" thu (week-day (date year: 2022 month: 06 day: 23)))
 
-(test-equal "week-1-start" (date year: 2019 month: 12 day: 30) (week-1-start (date year: 2020 month: 01 day: 01) mon))
+(test-group "week-1-start"
+  (test-equal
+      (date year: 2019 month: 12 day: 30)
+    (week-1-start (date year: 2020)
+                  mon))
+  (test-equal
+      (date year: 2018 month: 1 day: 1)
+    (week-1-start (date year: 2018)
+                  mon)))
 
-;; Possibly add case where the end of the year uses next years week numbers
-(test-equal "Week number at end of year"   53 (week-number (date year: 2008 month: 12 day: 31) sun))
-(test-equal "Week number at start of year" 53 (week-number (date year: 2009 month: 01 day: 01) sun))
+(test-group "week-number"
+  (test-equal "Week number at end of year"   53 (week-number (date year: 2008 month: 12 day: 31) sun))
+  (test-equal "Week number at start of year" 53 (week-number (date year: 2009 month: 01 day: 01) sun))
+  (test-equal "Week using next years weeks"   1 (week-number (date year: 2018 month: 12 day: 31) mon)))
 
 (test-equal (date year: 2008 month: 12 day: 28) (date-starting-week 53 (date year: 2008) sun))
 (test-equal (date year: 2007 month: 12 day: 30) (date-starting-week 1  (date year: 2008) sun))
@@ -472,35 +528,39 @@ as-datetime
   ;; |  ||s2| : |s1||  | : |  ||  | : |  ||  | : |  ||  | :
   ;;     |  | : |  |     : |  ||  | : |  ||  | : |  ||  | :     |s2|
   ;;     |  | : |  |     : |  |     :     |  | :          :     |  |
-  (test-assert "End of S1 overlaps start of S2"
-    (timespan-overlaps? (time hour: 10 minute: 00 second: 00) (time hour: 12 minute: 00 second: 00)
-                        (time hour: 11 minute: 00 second: 00) (time hour: 13 minute: 00 second: 00)))
-  (test-assert "Start of S1 overlaps end of S2"
-    (timespan-overlaps? (time hour: 11 minute: 00 second: 00) (time hour: 13 minute: 00 second: 00)
-                        (time hour: 10 minute: 00 second: 00) (time hour: 12 minute: 00 second: 00)))
-  (test-assert "S1 complete encompasses S2"
-    (timespan-overlaps? (time hour: 10 minute: 00 second: 00) (time hour: 13 minute: 00 second: 00)
-                        (time hour: 11 minute: 00 second: 00) (time hour: 12 minute: 00 second: 00)))
-  (test-assert "S2 complete encompasses S1"
-    (timespan-overlaps? (time hour: 11 minute: 00 second: 00) (time hour: 12 minute: 00 second: 00)
-                        (time hour: 10 minute: 00 second: 00) (time hour: 13 minute: 00 second: 00)))
-  (test-assert "S1 is equal to S2"
-    (timespan-overlaps? (time hour: 11 minute: 00 second: 00) (time hour: 12 minute: 00 second: 00)
-                        (time hour: 11 minute: 00 second: 00) (time hour: 12 minute: 00 second: 00)))
-  (test-assert "S1 dosesn't overlap S2"
+  (test-assert "[A] End of S1 overlaps start of S2"
+    (timespan-overlaps? (time hour: 10) (time hour: 12)
+                        (time hour: 11) (time hour: 13)))
+  (test-assert "[B] Start of S1 overlaps end of S2"
+    (timespan-overlaps? (time hour: 11) (time hour: 13)
+                        (time hour: 10) (time hour: 12)))
+  (test-assert "[C] S1 complete encompasses S2"
+    (timespan-overlaps? (time hour: 10) (time hour: 13)
+                        (time hour: 11) (time hour: 12)))
+  (test-assert "[D] S2 complete encompasses S1"
+    (timespan-overlaps? (time hour: 11) (time hour: 12)
+                        (time hour: 10) (time hour: 13)))
+  (test-assert "[E] S1 is equal to S2"
+    (timespan-overlaps? (time hour: 11) (time hour: 12)
+                        (time hour: 11) (time hour: 12)))
+  (test-assert "[F] S1 dosesn't overlap S2"
     (not
-     (timespan-overlaps? (time hour: 10 minute: 00 second: 00) (time hour: 11 minute: 00 second: 00)
-                         (time hour: 12 minute: 00 second: 00) (time hour: 13 minute: 00 second: 00))))
+     (timespan-overlaps? (time hour: 10) (time hour: 11)
+                         (time hour: 12) (time hour: 13))))
   (test-assert "If the events only share an instant they don't overlap"
     (not
-     (timespan-overlaps? (time hour: 10 minute: 00 second: 00) (time hour: 12 minute: 00 second: 00)
-                         (time hour: 12 minute: 00 second: 00) (time hour: 14 minute: 00 second: 00)))))
+     (timespan-overlaps? (time hour: 10) (time hour: 12)
+                         (time hour: 12) (time hour: 14)))))
 
-(test-equal (date year: 2022 month: 06 day: 25) (find-first-week-day sat (date year: 2022 month: 06 day: 23)))
+(test-equal (date year: 2022 month: 06 day: 25)
+  (find-first-week-day sat (date year: 2022 month: 06 day: 23)))
 
 (test-group "All weekdays in <>"
   (test-equal "month, if starting from beginning of month"
-    (list (date year: 2022 month: 06 day: 03) (date year: 2022 month: 06 day: 10) (date year: 2022 month: 06 day: 17) (date year: 2022 month: 06 day: 24))
+    (list (date year: 2022 month: 06 day: 03)
+          (date year: 2022 month: 06 day: 10)
+          (date year: 2022 month: 06 day: 17)
+          (date year: 2022 month: 06 day: 24))
     (all-wday-in-month fri (date year: 2022 month: 06 day: 01)))
 
   (test-equal "month, if starting from the middle"
@@ -508,15 +568,101 @@ as-datetime
     (all-wday-in-month fri (date year: 2022 month: 06 day: 23)))
 
   (test-equal "year, if starting from the beggining"
-    (list (date year: 2022 month: 01 day: 07) (date year: 2022 month: 01 day: 14) (date year: 2022 month: 01 day: 21) (date year: 2022 month: 01 day: 28) (date year: 2022 month: 02 day: 04) (date year: 2022 month: 02 day: 11) (date year: 2022 month: 02 day: 18) (date year: 2022 month: 02 day: 25) (date year: 2022 month: 03 day: 04) (date year: 2022 month: 03 day: 11) (date year: 2022 month: 03 day: 18) (date year: 2022 month: 03 day: 25) (date year: 2022 month: 04 day: 01) (date year: 2022 month: 04 day: 08) (date year: 2022 month: 04 day: 15) (date year: 2022 month: 04 day: 22) (date year: 2022 month: 04 day: 29) (date year: 2022 month: 05 day: 06) (date year: 2022 month: 05 day: 13) (date year: 2022 month: 05 day: 20) (date year: 2022 month: 05 day: 27) (date year: 2022 month: 06 day: 03) (date year: 2022 month: 06 day: 10) (date year: 2022 month: 06 day: 17) (date year: 2022 month: 06 day: 24) (date year: 2022 month: 07 day: 01) (date year: 2022 month: 07 day: 08) (date year: 2022 month: 07 day: 15) (date year: 2022 month: 07 day: 22) (date year: 2022 month: 07 day: 29) (date year: 2022 month: 08 day: 05) (date year: 2022 month: 08 day: 12) (date year: 2022 month: 08 day: 19) (date year: 2022 month: 08 day: 26) (date year: 2022 month: 09 day: 02) (date year: 2022 month: 09 day: 09) (date year: 2022 month: 09 day: 16) (date year: 2022 month: 09 day: 23) (date year: 2022 month: 09 day: 30) (date year: 2022 month: 10 day: 07) (date year: 2022 month: 10 day: 14) (date year: 2022 month: 10 day: 21) (date year: 2022 month: 10 day: 28) (date year: 2022 month: 11 day: 04) (date year: 2022 month: 11 day: 11) (date year: 2022 month: 11 day: 18) (date year: 2022 month: 11 day: 25) (date year: 2022 month: 12 day: 02) (date year: 2022 month: 12 day: 09) (date year: 2022 month: 12 day: 16) (date year: 2022 month: 12 day: 23) (date year: 2022 month: 12 day: 30))
+    (list (date year: 2022 month: 01 day: 07)
+          (date year: 2022 month: 01 day: 14)
+          (date year: 2022 month: 01 day: 21)
+          (date year: 2022 month: 01 day: 28)
+          (date year: 2022 month: 02 day: 04)
+          (date year: 2022 month: 02 day: 11)
+          (date year: 2022 month: 02 day: 18)
+          (date year: 2022 month: 02 day: 25)
+          (date year: 2022 month: 03 day: 04)
+          (date year: 2022 month: 03 day: 11)
+          (date year: 2022 month: 03 day: 18)
+          (date year: 2022 month: 03 day: 25)
+          (date year: 2022 month: 04 day: 01)
+          (date year: 2022 month: 04 day: 08)
+          (date year: 2022 month: 04 day: 15)
+          (date year: 2022 month: 04 day: 22)
+          (date year: 2022 month: 04 day: 29)
+          (date year: 2022 month: 05 day: 06)
+          (date year: 2022 month: 05 day: 13)
+          (date year: 2022 month: 05 day: 20)
+          (date year: 2022 month: 05 day: 27)
+          (date year: 2022 month: 06 day: 03)
+          (date year: 2022 month: 06 day: 10)
+          (date year: 2022 month: 06 day: 17)
+          (date year: 2022 month: 06 day: 24)
+          (date year: 2022 month: 07 day: 01)
+          (date year: 2022 month: 07 day: 08)
+          (date year: 2022 month: 07 day: 15)
+          (date year: 2022 month: 07 day: 22)
+          (date year: 2022 month: 07 day: 29)
+          (date year: 2022 month: 08 day: 05)
+          (date year: 2022 month: 08 day: 12)
+          (date year: 2022 month: 08 day: 19)
+          (date year: 2022 month: 08 day: 26)
+          (date year: 2022 month: 09 day: 02)
+          (date year: 2022 month: 09 day: 09)
+          (date year: 2022 month: 09 day: 16)
+          (date year: 2022 month: 09 day: 23)
+          (date year: 2022 month: 09 day: 30)
+          (date year: 2022 month: 10 day: 07)
+          (date year: 2022 month: 10 day: 14)
+          (date year: 2022 month: 10 day: 21)
+          (date year: 2022 month: 10 day: 28)
+          (date year: 2022 month: 11 day: 04)
+          (date year: 2022 month: 11 day: 11)
+          (date year: 2022 month: 11 day: 18)
+          (date year: 2022 month: 11 day: 25)
+          (date year: 2022 month: 12 day: 02)
+          (date year: 2022 month: 12 day: 09)
+          (date year: 2022 month: 12 day: 16)
+          (date year: 2022 month: 12 day: 23)
+          (date year: 2022 month: 12 day: 30))
     (all-wday-in-year fri (date year: 2022 month: 01 day: 01)))
 
   (test-equal "year, if starting from the middle"
-    (list (date year: 2022 month: 06 day: 03) (date year: 2022 month: 06 day: 10) (date year: 2022 month: 06 day: 17) (date year: 2022 month: 06 day: 24) (date year: 2022 month: 07 day: 01) (date year: 2022 month: 07 day: 08) (date year: 2022 month: 07 day: 15) (date year: 2022 month: 07 day: 22) (date year: 2022 month: 07 day: 29) (date year: 2022 month: 08 day: 05) (date year: 2022 month: 08 day: 12) (date year: 2022 month: 08 day: 19) (date year: 2022 month: 08 day: 26) (date year: 2022 month: 09 day: 02) (date year: 2022 month: 09 day: 09) (date year: 2022 month: 09 day: 16) (date year: 2022 month: 09 day: 23) (date year: 2022 month: 09 day: 30) (date year: 2022 month: 10 day: 07) (date year: 2022 month: 10 day: 14) (date year: 2022 month: 10 day: 21) (date year: 2022 month: 10 day: 28) (date year: 2022 month: 11 day: 04) (date year: 2022 month: 11 day: 11) (date year: 2022 month: 11 day: 18) (date year: 2022 month: 11 day: 25) (date year: 2022 month: 12 day: 02) (date year: 2022 month: 12 day: 09) (date year: 2022 month: 12 day: 16) (date year: 2022 month: 12 day: 23) (date year: 2022 month: 12 day: 30))
+    (list (date year: 2022 month: 06 day: 03)
+          (date year: 2022 month: 06 day: 10)
+          (date year: 2022 month: 06 day: 17)
+          (date year: 2022 month: 06 day: 24)
+          (date year: 2022 month: 07 day: 01)
+          (date year: 2022 month: 07 day: 08)
+          (date year: 2022 month: 07 day: 15)
+          (date year: 2022 month: 07 day: 22)
+          (date year: 2022 month: 07 day: 29)
+          (date year: 2022 month: 08 day: 05)
+          (date year: 2022 month: 08 day: 12)
+          (date year: 2022 month: 08 day: 19)
+          (date year: 2022 month: 08 day: 26)
+          (date year: 2022 month: 09 day: 02)
+          (date year: 2022 month: 09 day: 09)
+          (date year: 2022 month: 09 day: 16)
+          (date year: 2022 month: 09 day: 23)
+          (date year: 2022 month: 09 day: 30)
+          (date year: 2022 month: 10 day: 07)
+          (date year: 2022 month: 10 day: 14)
+          (date year: 2022 month: 10 day: 21)
+          (date year: 2022 month: 10 day: 28)
+          (date year: 2022 month: 11 day: 04)
+          (date year: 2022 month: 11 day: 11)
+          (date year: 2022 month: 11 day: 18)
+          (date year: 2022 month: 11 day: 25)
+          (date year: 2022 month: 12 day: 02)
+          (date year: 2022 month: 12 day: 09)
+          (date year: 2022 month: 12 day: 16)
+          (date year: 2022 month: 12 day: 23)
+          (date year: 2022 month: 12 day: 30))
     (all-wday-in-year fri (date year: 2022 month: 06 day: 01))))
 
-;; TODO
-in-date-range?
+(test-group "in-date-range?"
+  (let ((f (in-date-range? (date year: 2020 month: 1 day: 1)
+                           (date year: 2021 month: 1 day: 1))))
+    (test-assert "Midle of interval" (f (date year: 2020 month: 5)))
+    (test-assert "Left edge" (f (date year: 2020 month: 1 day: 1)))
+    (test-assert "Right edge" (f (date year: 2021 month: 1 day: 1)))
+    (test-assert "Outside" (not (f (date year: 2019 month: 1 day: 1))))))
 
 (test-equal "weekday-list" (list wed thu fri sat sun mon tue) (weekday-list wed))
 (test-equal "start of week" (date year: 2022 month: 06 day: 20) (start-of-week (date year: 2022 month: 06 day: 23) mon))
@@ -552,8 +698,29 @@ in-date-range?
     (test-equal "Can get length of month if we have a month"
       (* 31 24.0) (datetime->decimal-hour (datetime month: 1) (date year: 2020 month: 01 day: 01)))))
 
-;; TODO
-date-range
+(test-equal "date-range"
+  (list (date year: 2020 month: 01 day: 01)
+        (date year: 2020 month: 01 day: 03)
+        (date year: 2020 month: 01 day: 05)
+        (date year: 2020 month: 01 day: 07)
+        (date year: 2020 month: 01 day: 09)
+        (date year: 2020 month: 01 day: 11)
+        (date year: 2020 month: 01 day: 13)
+        (date year: 2020 month: 01 day: 15)
+        (date year: 2020 month: 01 day: 17)
+        (date year: 2020 month: 01 day: 19)
+        (date year: 2020 month: 01 day: 21)
+        (date year: 2020 month: 01 day: 23)
+        (date year: 2020 month: 01 day: 25)
+        (date year: 2020 month: 01 day: 27)
+        (date year: 2020 month: 01 day: 29)
+        (date year: 2020 month: 01 day: 31))
+  (date-range (date year: 2020 month: 1 day: 1)
+              ;; This is an invalid date, but it tests how "invalid" input is handled.
+              (date year: 2020 month: 1 day: 100)
+              (date day: 2)))
+
+
 
 (test-group "To string"
   (test-group "Datetime->string"

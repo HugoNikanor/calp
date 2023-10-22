@@ -737,12 +737,16 @@ Returns -1 on failure"
       (loop* str fmt dt ampm))
 
     (cond [(and (null? str) (null? fmt))
-           (ampm dt)]
+           (if return-trailing
+               (values (ampm dt) '())
+               (ampm dt))]
           [(null? str)
            ;; TODO it would be preferable to error out here. However, that fails for
            ;; optional specifiers (e.g. ~Z).
            ;; Also see the disabled test in "Premature end of string to parse"
-           (ampm dt)
+           (if return-trailing
+               (values (ampm dt) '())
+               (ampm dt))
            #; (err "Premature end of string, trailing fmt: ~s" fmt)]
           [(null? fmt)
            (if return-trailing
@@ -842,11 +846,17 @@ Returns -1 on failure"
 
 (define* (string->time str optional: (fmt "~H:~M:~S") (locale %global-locale)
                        key: return-trailing)
-  (datetime-time (string->datetime str fmt locale return-trailing: return-trailing)))
+  (call-with-values
+      (lambda () (string->datetime str fmt locale return-trailing: return-trailing))
+    (case-lambda ((dt) (datetime-time dt))
+                 ((dt rem) (values (datetime-time dt) rem)))))
 
 (define* (string->date str optional: (fmt "~Y-~m-~d") (locale %global-locale)
                        key: return-trailing)
-  (datetime-date (string->datetime str fmt locale return-trailing: return-trailing)))
+  (call-with-values
+      (lambda () (string->datetime str fmt locale return-trailing: return-trailing))
+    (case-lambda ((dt) (datetime-date dt))
+                 ((dt rem) (values (datetime-time dt) rem)))))
 
 ;; Parse @var{string} as either a date, time, or date-time.
 ;; String MUST be on iso-8601 format.
