@@ -18,11 +18,11 @@
 (define (sort-propstats propstats)
   (map
    (lambda (propstat)
-     (make-propstat (propstat-status-code propstat)
-                    (sort* (propstat-property propstat)
-                           string< (compose symbol->string xml-element-tagname car))
-                    (propstat-error propstat)
-                    (propstat-response-description propstat)))
+     (propstat (propstat-status-code propstat)
+               (sort* (propstat-property propstat)
+                      string< (compose symbol->string xml-element-tagname car))
+               (propstat-error propstat)
+               (propstat-response-description propstat)))
    (sort* propstats < propstat-status-code)))
 
 

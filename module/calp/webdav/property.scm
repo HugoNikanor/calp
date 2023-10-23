@@ -2,13 +2,13 @@
   :use-module (sxml namespaced)
   :use-module (web http status-codes)
   :use-module ((srfi srfi-1) :select (concatenate find))
-  :use-module (srfi srfi-9)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (hnh util)
+  :use-module (hnh util type)
+  :use-module (hnh util object)
   :use-module (calp namespaces)
-  :export (make-propstat
-           propstat?
+  :export (propstat?
            propstat-status-code
            propstat-property
            propstat-error
@@ -28,24 +28,29 @@
 
 ;; Maps directly to [WEBDAV]'s propstat objects. This is just a simpler interface in the code.
 
-(define-record-type <propstat>
-  (make-propstat status prop error responsedescription)
-  propstat?
+(define-type (propstat
+              constructor: (lambda (constructor typecheck)
+                             (lambda* (code prop key: error responsedescription)
+                               (typecheck code prop error responsedescription)
+                               (constructor code prop error responsedescription)
+                               )))
   ;; An http status code indicating if this property is present
-  (status propstat-status-code)
+  (propstat-status-code type: integer?)
+
   ;; A list of namespaced sxml elements, such that they could all be
   ;; directly inserted as the children of <DAV::prop/>
   ;; @example
   ;; `((,(xml ns tag) "Content"))
   ;; @end example
-  (prop propstat-property)
+  propstat-property
 
   ;; See [WEBCAL] propstat XML element
-  (error propstat-error)
-  (responsedescription propstat-response-description))
+  (propstat-error keyword: error)
 
-(define* (propstat code prop key: error responsedescription)
-  (make-propstat code prop error responsedescription))
+  (propstat-response-description
+   ;; keyword: responsedescription
+   type: (or false? string?)))
+
 
 ;; Query a given dead property from the given resource
 ;; property should be a xml-element item
@@ -59,13 +64,13 @@
 (define (merge-propstats propstats)
   (map (lambda (group)
          (define-values (code error desc) (unlist (car group)))
-         (make-propstat code
-                        (concatenate
-                         (map propstat-property (cdr group)))
-                        error desc))
+         (propstat code
+                   (concatenate
+                    (map propstat-property (cdr group)))
+                   error: error responsedescription: desc))
        (group-by (lambda (propstat)
                    (list (propstat-status-code propstat)
-                         (propstat-error propstat )
+                         (propstat-error propstat)
                          (propstat-response-description propstat)))
                  propstats)))
 
