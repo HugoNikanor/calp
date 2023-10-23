@@ -76,10 +76,6 @@ Value the field should get if not given.
 
 @deffn {Field Parameter} #:type type-clause
 A type predicate that the field must obey. See @ref{type-clause} for details.
-
-Each type introduces a number of bindings, which are@footnote{
-@var{<name>} here refers to the name of the type
-}:
 @end deffn
 
 @deffn {Field Parameter} #:keyword name
@@ -92,6 +88,10 @@ symbol, and @emph{not} a keyword object.
   (my-type-x keyword: x))
 @end example
 @end deffn
+
+Each type introduces a number of bindings, which are@footnote{
+@var{<name>} here refers to the name of the type
+}:
 
 @defun @var{<name>} [kv-args ...]
 Type constructor. Takes key-value arguments. Where the keys are the
