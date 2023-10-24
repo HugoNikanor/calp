@@ -5,6 +5,7 @@
   :use-module (srfi srfi-88)
   :export (G_ translate yes-no-check))
 
+;; TODO stop hard coding this.
 (bindtextdomain "calp" "/home/hugo/code/calp/localization/")
 
 

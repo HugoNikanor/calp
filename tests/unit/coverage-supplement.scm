@@ -107,6 +107,13 @@
   2)
 
 
+ ("module/calp/translation.scm"
+  "b7c0a82e1c109c339cf83438f39b6fc63219b51a3ad3ee35d58e70fb6a24c5c9"
+  1
+  9 ; bindtextdomain
+  22 ; G_ function
+  )
+
 ;;; Vendored files, and therefore shouldn't be tested
 
  ("module/srfi/srfi-64/test-error.scm"
