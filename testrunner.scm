@@ -162,6 +162,11 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
                   (enqueue! (format-test-runner-crash-message args)
                             error-queue)
                   (values #f '()))))
+            (catch 'wrong-type-arg
+              (lambda () (typecheck module-names (list-of (list-of symbol?))))
+              (lambda (_ __ fmt args ___)
+                (enqueue! (red (format #f "File doesn't end with a module list: ~s" entry))
+                          error-queue)))
             (define tested-files (map module->source-file module-names))
             (test-end)
             (if coverage
