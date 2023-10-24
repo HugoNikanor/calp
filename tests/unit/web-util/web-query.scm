@@ -1,7 +1,7 @@
 (define-module (test web-query)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
-  :use-module ((web query) :select (parse-query)))
+  :use-module ((web query) :select (parse-query encode-query-parameters)))
 
 (test-equal "Empty query gives empty assoc list"
   '() (parse-query ""))
@@ -32,6 +32,16 @@
 ;; I don't know if HTTP allows this, but my code works like this
 (test-equal "Value with equal in it"
   '(key: "=") (parse-query "key=="))
+
+
+(test-group "encode-query-parameters"
+  (test-equal "Null case" "" (encode-query-parameters '()))
+  (test-equal "Single simple" "a=10" (encode-query-parameters '((a . 10))))
+  (test-equal "Multi simple" "a=10&b=20" (encode-query-parameters '((a . 10) (b . 20))))
+  (test-equal "Strings are `write' encoded" "a=%22Hello%22" (encode-query-parameters '((a . "Hello"))))
+  (test-equal "Strings are URI encoded" "a=%22Hello%20World%22" (encode-query-parameters '((a . "Hello World"))))
+  (test-equal "Symbols are `write' and URI encoded"
+    "a=%23%7BHello%20World%7D%23" (encode-query-parameters `((a . ,(string->symbol "Hello World"))))))
 
 
 '((web query))
