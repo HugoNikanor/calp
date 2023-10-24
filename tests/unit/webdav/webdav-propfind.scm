@@ -1,6 +1,8 @@
 (define-module (test webdav-propfind)
   :use-module ((hnh util) :select (sort*))
   :use-module ((calp namespaces) :select (webdav))
+  :use-module (hnh util type)
+  :use-module (hnh util lens)
   :use-module (calp webdav property)
   :use-module (calp webdav propfind)
   :use-module (calp webdav resource virtual)
@@ -17,12 +19,12 @@
 
 (define (sort-propstats propstats)
   (map
-   (lambda (propstat)
-     (propstat (propstat-status-code propstat)
-               (sort* (propstat-property propstat)
-                      string< (compose symbol->string xml-element-tagname car))
-               (propstat-error propstat)
-               (propstat-response-description propstat)))
+   (lambda (pr)
+     (typecheck pr propstat?)
+     (modify pr propstat-property
+             (lambda (it)
+              (sort* it
+                     string< (compose symbol->string xml-element-tagname car)))))
    (sort* propstats < propstat-status-code)))
 
 
