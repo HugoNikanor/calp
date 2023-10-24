@@ -37,7 +37,7 @@ Check if @var{variable} is a cons-pair, and that the car satisfies
 @var{car-type-clause}, and that the cdr satisfies @var{cdr-type-clause}.
 @end defmac
 
-@subsection Deffinitions
+@subsection Definitions
 
 @defmac build-validator-body variable type-clause
 ``Entry point'' of type clauses. Inserts variable into the

@@ -138,7 +138,7 @@
            (else #'name)))
     (name #'name)))
 
-;; Go from my concept of field deffinitions, to what lambda* wants as arguments
+;; Go from my concept of field definitions, to what lambda* wants as arguments
 (define (lambda*-stx field)
   (syntax-case field ()
     ((name kvs ...)
