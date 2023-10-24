@@ -1,0 +1,10 @@
+@node WebDAV Utilities
+@section Utilities
+@defun href->string href
+HREF's are represented as lists of strings. The root resource (``/'')
+is the empty list.
+@end defun
+
+@defun string->href string
+Return a href list back into a string. A leading slash will always be added.
+@end defun
