@@ -11,7 +11,7 @@
 
   :use-module ((web response) :select (build-response))
   :use-module ((web uri) :select (build-relative-ref))
-  :use-module ((web uri-query) :select (encode-query-parameters))
+  :use-module ((web query) :select (encode-query-parameters))
 
   :use-module ((sxml simple) :select (sxml->xml xml->sxml))
   :use-module ((sxml html)   :select (sxml->html))

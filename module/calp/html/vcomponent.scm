@@ -10,7 +10,7 @@
   :use-module (vcomponent)
   :use-module (datetime)
   :use-module ((text util) :select (add-enumeration-punctuation))
-  :use-module ((web uri-query) :select (encode-query-parameters))
+  :use-module ((web query) :select (encode-query-parameters))
   :use-module ((calp html util) :select (html-id calculate-fg-color))
   :use-module ((calp html config) :select (edit-mode debug))
   :use-module ((crypto) :select (sha256 checksum->string))

@@ -3,7 +3,8 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (web uri)
-  :export (parse-query))
+  :export (parse-query
+           encode-query-parameters))
 
 (define* (parse-query query-string optional: (encoding "UTF-8"))
   (unless (or (not query-string) (string-null? query-string))
@@ -19,3 +20,15 @@
                                     (values v v))))))
               (cons* (-> key string->symbol symbol->keyword) val list)))
           '() (string-split query-string #\&))))
+
+
+;; TODO why this format for values?
+;; TODO why aren't we encoding the keys?
+(define (encode-query-parameters parameters)
+  (string-join
+   (map (lambda (p)
+          (format #f "~a=~a"
+                  (car p)
+                  (uri-encode (with-output-to-string (lambda () (write (cdr p)))))))
+        parameters)
+   "&"))

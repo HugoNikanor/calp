@@ -7,3 +7,8 @@ Given a string like ``?key=value&other=something'', returns
 both key and value. A key without a value decodes to that key, with
 itself as its value
 @end defun
+
+@defun encode-query-parameters parameters
+Given the association list @var{parameter}, encode it into a query
+string on the form ``key=value&...''.
+@end defun

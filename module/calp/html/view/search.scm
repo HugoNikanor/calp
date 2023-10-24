@@ -3,7 +3,7 @@
   :use-module (vcomponent)
   :use-module (vcomponent util search)
   :use-module ((ice-9 pretty-print) :select (pretty-print))
-  :use-module ((web uri-query) :select (encode-query-parameters))
+  :use-module ((web query) :select (encode-query-parameters))
   :use-module ((calp html components)
                :select (xhtml-doc include-css))
   :use-module ((calp html vcomponent)
