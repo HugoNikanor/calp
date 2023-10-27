@@ -2,12 +2,24 @@
   :use-module ((srfi srfi-1) :select (every))
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
+  :use-module ((vcomponent base) :select (vcomponent?))
   :use-module ((vcomponent create)
                :select (vcomponent
                         with-parameters
-                        as-list))
+
+                        as-list
+                        vcalendar
+                        vevent
+                        vtimezone
+                        standard
+                        daylight))
   :use-module ((vcomponent)
-               :select (children properties type prop prop* param vline?)))
+               :select (children
+                        properties
+                        type
+                        prop prop*
+                        param
+                        vline?)))
 
 ;; vevent, vcalendar, vtimezone, standard, and daylight all trivial
 ;; and therefore not tested
@@ -65,5 +77,20 @@
 
 ;; (test-group "Parameters and lists" )
 
+
+(test-assert (vcomponent? (vcalendar)))
+(test-eq 'VCALENDAR (type (vcalendar)))
+
+(test-assert (vcomponent? (vevent)))
+(test-eq 'VEVENT (type (vevent)))
+
+(test-assert (vcomponent? (vtimezone)))
+(test-eq 'VTIMEZONE (type (vtimezone)))
+
+(test-assert (vcomponent? (standard)))
+(test-eq 'STANDARD (type (standard)))
+
+(test-assert (vcomponent? (daylight)))
+(test-eq 'DAYLIGHT (type (daylight)))
 
 '((vcomponent create))

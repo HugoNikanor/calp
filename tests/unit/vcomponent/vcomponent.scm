@@ -135,7 +135,14 @@
 ;; parameters
 ;; properties
 
-;; x-property?
-;; internal-field?
+(test-group "x-property?"
+  (test-assert (x-property? 'X-Extension))
+  (test-assert (not (x-property? 'Regular)))
+  (test-assert (not (x-property? '-internal))))
+
+(test-group "internal-field?"
+  (test-assert (not (internal-field? 'X-Extension)))
+  (test-assert (not (internal-field? 'Regular)))
+  (test-assert (internal-field? '-internal)))
 
 '((vcomponent base))

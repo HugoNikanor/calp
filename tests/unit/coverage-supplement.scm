@@ -62,6 +62,10 @@
   "b1c58b3beb6f170d3c9f7d603b27231ccf696897736113095b446f437721a9e1"
   2)
 
+ ("module/vcomponent/config.scm"
+  "a7d2da32181d6c4013a9994620458ace4da786be68b2b0a5a14890d736bc4bd7"
+  2)
+
  ;; get-terminal-size is basically impossible to test
  ("module/vulgar/info.scm"
   "f9f30fd2709a5614b986c697e089c36c7d5d8cd3824e6d4e2bac042d5c2c23e6"

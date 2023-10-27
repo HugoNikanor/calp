@@ -12,4 +12,15 @@
   (with-output-to-string (lambda () (write "\x1b[21;11H")))
   (with-output-to-string (lambda () (write (with-output-to-string (lambda () (set-cursor-pos 10 20)))))))
 
+(test-equal "with-vulgar returning its argument"
+  'return
+  (with-vulgar (lambda () 'return)))
+
+;;; TODO these tests can test the termios flags outside and inside the
+;;; vulgar block Checking that they are
+;;; - different.
+;;; - what's expected.
+;;; - properly restored.
+;; (test-group "with-vulgar tty attrs")
+
 '((vulgar))
