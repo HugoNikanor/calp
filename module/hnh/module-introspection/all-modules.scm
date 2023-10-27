@@ -1,5 +1,4 @@
 (define-module (hnh module-introspection all-modules)
-  :use-module (ice-9 regex)
   :use-module (srfi srfi-1)
   :use-module (ice-9 ftw)
   :use-module (ice-9 match)
@@ -21,14 +20,18 @@
 ;; (define (fs-find proc dir)
 ;;   (filter proc (fs-find-base dir)))
 
-(define* (all-files-under-directory dir extension)
-  (define extension-rx ((@ (texinfo string-utils) escape-special-chars)
-                        extension "[](){}+*?.^$" #\\))
-  (define re (make-regexp (string-append extension-rx "$")))
+(define (string-ends-with? string tail)
+  (and (>= (string-length string)
+          (string-length tail))
+       (string=? tail
+                 (substring string
+                            (- (string-length string)
+                               (string-length tail))))))
 
+(define* (all-files-under-directory dir extension)
   (map car
        (filter (match-lambda ((filename _ 'regular)
-                              (and (regexp-exec re filename)
+                              (and (string-ends-with? filename extension)
                                    (not (file-hidden? filename))))
                              (_ #f))
                (fs-find dir))))
