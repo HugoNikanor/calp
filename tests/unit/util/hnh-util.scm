@@ -154,7 +154,7 @@
  ;; not required.
  (test-equal "sort*!"
    '("a" "Hello" "Assparagus")
-   (sort*! '("Hello" "a" "Assparagus")
+   (sort*! (list-copy '("Hello" "a" "Assparagus"))
            < string-length)))
 
 
