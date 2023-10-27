@@ -503,6 +503,11 @@
   (test-equal
       (date year: 2018 month: 1 day: 1)
     (week-1-start (date year: 2018)
+                  mon))
+
+  (test-equal
+      (date year: 2017 month: 1 day: 2)
+    (week-1-start (date year: 2017 month: 1 day: 1)
                   mon)))
 
 (test-group "week-number"
