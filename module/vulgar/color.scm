@@ -1,14 +1,7 @@
 (define-module (vulgar color)
-  :export (color-if color-escape))
+  :export (color-escape))
 
 (define-public STR-RESET "\x1b[m")
-
-(define-syntax-rule (color-if pred color body ...)
-  (let ((pred-value pred))
-    (format #f "~a~a~a"
-            (if pred-value color "")
-            (begin body ...)
-            (if pred-value STR-RESET ""))))
 
 (define (color-escape n)
   (cond ((not n) "")
