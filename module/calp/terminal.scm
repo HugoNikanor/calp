@@ -10,7 +10,6 @@
   :use-module (vulgar)
   :use-module (vulgar info)
   :use-module (vulgar color)
-  :use-module (vulgar components)
 
   :use-module (vcomponent)
   :use-module (vcomponent datetime)
@@ -18,6 +17,7 @@
   :use-module (vcomponent util group)
 
   :use-module (text util)
+  :use-module ((text calendar) :select (cal-3))
   :use-module (text flow)
 
   :use-module (ice-9 format)
@@ -127,7 +127,7 @@
   (display (G_ "== Day View =="))
   (newline)
 
-  (display-calendar-header! (current-page this))
+  (cal-3 (current-page this))
 
   ;; display event list
   (display-event-table
