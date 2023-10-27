@@ -643,10 +643,10 @@ msgid   "<p><b>html</b> reads calendar files from disk, and writes them to "
 msgstr  "<p><b>html</b> läser kalenderfiler från disk, och matar ur sig "
         "statiska HTML-filer.</p>"
 
-msgid   "<p><b>terminal</b> loads the calendars, and starts an interactive "
+msgid   "<p><b>term</b> loads the calendars, and starts an interactive "
         "terminal interface.</p>"
-msgstr  "<p><b>terminal</b> laddar kalendrar, och startar ett en interaktiv "
-        "miljö i terminalen.</p>"
+msgstr  "<p><b>term</b> laddar kalendrar, och startar ett en interaktiv miljö "
+        "i terminalen.</p>"
 
 msgid   "<p><b>ical</b> loads the calendar database, and immediately\n"
         "re-serializes it back into iCAL format. Useful for merging calendars."

@@ -79,7 +79,7 @@ contain all events.
     "<center><b>" (G_ "Modes") "</b></center>
 <br/><br/>"
     (G_ "<p><b>html</b> reads calendar files from disk, and writes them to static HTML files.</p>")
-    (G_ "<p><b>terminal</b> loads the calendars, and starts an interactive terminal interface.</p>")
+    (G_ "<p><b>term</b> loads the calendars, and starts an interactive terminal interface.</p>")
     (G_ "[UNTESTED]<br/><p><b>import</b>s a calendar object into the database.</p>")
     (G_ "<p><b>text</b> formats and justifies what it's given on standard input,
 and writes it to standard output. Similar to this text.</p>")

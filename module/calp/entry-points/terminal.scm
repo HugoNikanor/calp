@@ -25,5 +25,4 @@
   (let ((date (or (and=> (option-ref opts 'date #f) parse-freeform-date)
                   (current-date))))
     (with-vulgar
-     (lambda () (main-loop date))))
-)
+     (lambda () (main-loop date)))))
