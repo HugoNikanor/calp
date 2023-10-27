@@ -201,7 +201,7 @@
               constructor: datetime-constructor-constructor
               printer: (lambda (r p)
                          (if (and (tz r) (not (string=? "UTC" (tz r))))
-                             (write (datetime->sexp r) p)
+                             (write (datetime->sexp r) p) ; NOCOV
                              (display (datetime->string r "#~1T~3~Z") p))))
 
   (datetime-date type: date?)
@@ -249,7 +249,7 @@
   (let ((tm (datetime->tm dt)))
     (car (if (tz dt)
              (mktime tm (vector-last tm))
-             (mktime tm)))))
+             (mktime tm))))) ; NOCOV Would depend on local timezone
 
 (define (unix-time->datetime n)
   ;; tm->datetime returns GMT here (as hinted by the
@@ -963,7 +963,7 @@ Returns -1 on failure"
 ;; Extends a binary comparison procedure to work on any
 ;; number of arguments.
 (define (fold-comparator <)
-  (label this
+  (label this                           ; NOCOV
    (case-lambda
      [() #t]
      [(_) #t]

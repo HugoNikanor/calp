@@ -37,14 +37,6 @@
   16 17 18 19 ; primitive sha256 procedure
   )
 
- ("module/datetime.scm"
-  "67eb46283a4097e8400322ab6434518a2455ca630e163238b5839c2bf25c9ac7"
-  204
-  252 ; Would depend on local timezone
-  491 ; somehow not counted
-  966
-  )
-
  ("module/datetime/zic.scm"
   "2a8ac0fae3c88227b05a5978bff3e114745ea146e07a2751df67d16c1e8218f5"
   66 ; syntax-rules
