@@ -32,12 +32,22 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
              (hnh test testrunner)
              (hnh test util)
              ((hnh util io) :select (displayln))
+             (hnh module-introspection all-modules)
              (crypto)
              (ice-9 popen)
              (ice-9 rdelim)
              (ice-9 getopt-long)
              (ice-9 control)
              (ice-9 format))
+
+
+
+(define exemption-rxs
+  (list
+   ;; All definitions are ignored, since they quite often are missed
+   ;; (and don't really "run")
+   "\\(define(-(\\w|-)+[*]?)?\\s"
+   "read-hash-extend"))
 
 
 
@@ -279,22 +289,16 @@ Flags:
                     lines: (map (lambda (l) (cons l 1)) lines))))))
        (read port)))
 
-
-;;; TODO replace this with native Guile variant
-(define (all-files-under-dir dir)
-  (let ((pipe (open-pipe*
-               OPEN_READ
-               "find" dir
-               "-type" "f"
-               "-name" "*.scm"
-               "-exec" "realpath" "--zero" "{}" ";")))
-    (let loop ((done '()))
-      (let ((line (read-delimited "\0" pipe)))
-        (if (eof-object? line)
-            (begin
-              (close-pipe pipe)
-              done)
-            (loop (cons line done)))))))
+;; Return the line numbers of all lines which
+;; contain an instance of the given regex
+(define (matching-lines rx port)
+  (let loop ((lino 1) (hit '()))
+    (let ((line (read-line port)))
+      (if (eof-object? line)
+          hit
+          (if (regexp-exec rx line)
+              (loop (1+ lino) (cons lino hit))
+              (loop (1+ lino) hit))))))
 
 
 (define (main args)
@@ -349,7 +353,23 @@ Flags:
   (unless (null? outdated-extra)
     (format #t "The following files have changed since their coverage")
     (format #t "exceptions were written. Please review:~%")
-    (for-each (compose displayln yellow) outdated-extra))
+    (for-each (lambda (line)
+                (displayln
+                 (yellow
+                  (format #f "~a, expected SHA256: ~a"
+                          (filename (cdr line))
+                          (car line)))))
+              outdated-extra))
+
+  (define coverage-exemptions
+    (let ((rx (make-regexp (string-join exemption-rxs "|" 'infix))))
+      (map (lambda (filename)
+             (coverage-info
+              filename: (realpath filename)
+              lines: (map (lambda (l) (cons l 1))
+                          (call-with-input-file filename
+                            (lambda (port) (matching-lines rx port))))))
+           (all-files-under-directory "module" ".scm"))))
 
   ((@ (hnh util exceptions) warnings-are-errors) #t)
 
@@ -364,16 +384,31 @@ Flags:
                                         (option-ref options 'threads "1"))))))
 
           (test-end "Universe")
-          (define merged-coverages
-            (map (lambda (group) (reduce merge-coverage #f (cdr group)))
-                 (group-by filename (concatenate (cons (map cdr extra-coverage)
-                                                       (stack->list results))))))
 
+          (define expected-files (concatenate (cons (map cdr extra-coverage)
+                                                    (stack->list results))))
 
           (define uncovered-files
             (lset-difference! string=?
-             (all-files-under-dir "module/")
-             (map filename merged-coverages)))
+             (map realpath (all-files-under-directory "module" ".scm"))
+             (map filename expected-files)))
+
+          (define merged-coverages
+            (map (lambda (group) (reduce merge-coverage #f (cdr group)))
+                 (group-by filename
+                           (append
+                            expected-files
+                            ;; Remove totally uncovered files from the
+                            ;; excepmption list. Otherwise they would
+                            ;; (accidentally) get a really high coverage
+                            ;; percentage, instead of 0%.
+
+                            ;; TODO possibly also remove vendored files,
+                            ;; Locking them to 1/1 lines covered (line 2).
+                            (remove (lambda (entry) (member (filename entry)
+                                                       uncovered-files))
+                                    coverage-exemptions)))))
+
 
           (unless (null? merged-coverages)
             (with-output-to-file coverage
