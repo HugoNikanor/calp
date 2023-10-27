@@ -46,7 +46,7 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
   (list
    ;; All definitions are ignored, since they quite often are missed
    ;; (and don't really "run")
-   "\\(define(-(\\w|-)+[*]?)?\\s"
+   "\\(define(-(\\w|-)+)?[*]?\\s"
    "read-hash-extend"
    "; NOCOV[^\"]*$"))
 
