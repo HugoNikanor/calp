@@ -71,6 +71,43 @@
   "f9f30fd2709a5614b986c697e089c36c7d5d8cd3824e6d4e2bac042d5c2c23e6"
   2)
 
+ ;; File will be replaced with new system.
+ ;; Techincally a test for the exported symbol `glob` could be
+ ;; written, but it's way to much work, and since the tests already
+ ;; depend on glob errors would quickly be found anyways.
+ ("module/glob.scm"
+  "2dfe76208aed52c36899b219683cc265333a042c9fd3b2a9a582aaeb8a453ba8"
+  2)
+
+ ;; This is barely a module. It only re-exports usefull utilities to
+ ;; include in the configuration file.
+ ;; NOTE possible look over if we really want this module, or if it
+ ;; should be solved in some other way.
+ ("module/calp/config-base.scm"
+  "4da40542d408cd81cf80e37938118ab699ab0e9924d6d07edefe31d32bf29ae8"
+  2)
+
+ ;; Module simply exports static strings naming all namespaces used.
+ ;; TODO shouldn't we pull namespaces from respective modules?
+ ("module/calp/namespaces.scm"
+  "a511671454f032760c6eabe53fefb29c2540615297ace1dc6024cafbb222d7c8"
+  2)
+
+
+ ;; Only defines configuration parametrs, nothing to test
+
+ ("module/calp/html/config.scm"
+  "5c4e1d0dac665d0e138a7c16684e782fc253c68d3d432d0c9f6b844a52b7fc5c"
+  2)
+
+ ("module/calp/html/filter.scm"
+  "b0d2c4d890786867d43dc2904f6808d463d67f0b7bc14b772795137542547474"
+  2)
+
+ ("module/calp/util/exceptions.scm"
+  "03ddd467a4acc28845aa4a8797210086a739bede315aa2693d10ad807ab2d50d"
+  2)
+
 
 
 ;;; Vendored files, and therefore shouldn't be tested
