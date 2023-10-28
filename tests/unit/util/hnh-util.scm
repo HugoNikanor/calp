@@ -101,7 +101,11 @@
  (test-equal "for with longer improper list elements"
    '(1 2 4)
    (for (a b . c) in '((1 -1 . 1) (2 -2 . 2) (4 -4 . 4))
-        (* c (+ 1 a b)))))
+        (* c (+ 1 a b))))
+
+ ;; TODO For with continue
+ ;; TODO For with break
+ )
 
 (test-group "begin1"
  (let ((value #f))
@@ -150,6 +154,14 @@
     5)))
 
 (test-group "sort*"
+  (let* ((l '("Hello" "a" "Assparagus"))
+         (l* (list-copy l)))
+    (test-equal "sort*"
+      '("a" "Hello" "Assparagus")
+      (sort* l* < string-length))
+    (test-equal "Origin not modified"
+      l l*))
+
  ;; we can't test if sort*! destroys the list, since its only /allowed/ to do it,
  ;; not required.
  (test-equal "sort*!"
@@ -260,7 +272,11 @@
    (flatten '((((((1(((((2((((3))))))4))))))))5))))
 
 (test-group "let-lazy"
-  'TODO)
+  ;; (/ 0) would crash if evaluated, but since we never look at it it's ok
+  (test-equal 10
+   (let-lazy ((a 10)
+              (b (/ 0)))
+             a)))
 
 (test-group "map/dotted"
  (test-equal "map/dotted without dot"
@@ -290,7 +306,12 @@
    (kvlist->assq '(a: 1 b: 2 a: 3))))
 
 (test-group "assq-limit"
-  'TODO)
+  (test-equal
+      '((a . (1 2)) (b . (5 6)))
+    (assq-limit '((a . (1 2 3 4)) (b . (5 6 7 8))) 2))
+ (test-equal "To few arguments"
+      '((a . (1 2)) (b . (5 6)) (c . ()))
+    (assq-limit '((a . (1 2 3 4)) (b . (5 6 7 8)) (c . ())) 2)) )
 
 
 (test-group "group-by"
@@ -313,8 +334,8 @@
     (group-by (lambda _ (unreachable)) '())))
 
 (test-group "split-by"
-  'TODO)
-
+  '((0 1) (3 4) (5 6))
+  (split-by '(0 1 2 3 4 2 5 6) 2))
 
 (test-group "span-upto"
   (test-group "Case 1"
@@ -372,14 +393,37 @@
      '(3 4)
      '(5 6))))
 
-(test-group "string-flatten"
-  'TODO)
+(test-equal "string-flatten"
+  "12345"
+  (string-flatten
+   '((("1") 2 "3" ("4" ("5"))))))
 
-(test-group "intersperse"
-  'TODO)
+(test-equal "intersperse"
+  '(0 x 1 x 2 x 3 x 4)
+  (intersperse 'x (iota 5)))
 
 (test-group "insert-ordered"
-  'TODO)
+  (test-equal "Simple insert"
+    '("1" "22" "333" "4444")
+    (insert-ordered
+     "333"
+     '("1" "22" "4444")
+     (lambda (a b)
+       (< (string-length a)
+          (string-length b)))))
+
+  (test-equal "Insert with identical keys"
+    '("1" "22" "bbb" "aaa" "4444")
+    (insert-ordered
+     "aaa"
+     '("1" "22" "bbb" "4444")
+     (lambda (a b)
+       (< (string-length a)
+          (string-length b)))))
+
+  (test-equal "After everything ( / on empty collection )"
+    '(0 1 2 3 5)
+    (insert-ordered 5 '(0 1 2 3))))
 
 (test-group "-> (arrows)"
   (test-equal "->" 9 (-> 1 (+ 2) (* 3)))
@@ -387,7 +431,8 @@
   (test-equal "->> order dependant" 1 (->> 1 (- 2))))
 
 (test-group "downcase-symbol"
-  'TODO)
+  (test-equal 'a (downcase-symbol 'A))
+  (test-equal 'a (downcase-symbol 'a)))
 
 
 (test-group "group"
@@ -400,7 +445,12 @@
   (test-equal 0 (iterate 1- zero? 10)))
 
 (test-group "valued-map"
-  'TODO)
+  (let ()
+    (define (± x) (values x (- x)))
+    (call-with-values
+        (lambda () (valued-map ± '(1 2)))
+      (lambda args
+        (test-equal '(1 -1 2 -2) args)))))
 
 (test-group "assoc-ref-all"
   (test-equal "assoc-ref-all"
@@ -411,7 +461,12 @@
     '(1 3) (assv-ref-all '((a . 1) (b . 2) (a . 3)) 'a)))
 
 (test-group "unique"
-  'TODO)
+  (test-equal "Adjacent squached"
+    '(a b c d)
+    (uniq '(a a b b b c d)))
+  (test-equal "Non-adjacent not squashed"
+    '(a b a)
+    (uniq '(a a b b a))))
 
 (test-group "vector-last"
   (test-equal "vector-last"
