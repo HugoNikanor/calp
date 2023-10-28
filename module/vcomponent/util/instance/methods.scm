@@ -14,6 +14,8 @@
   :use-module (oop goops)
 
   :use-module (calp translation)
+  :use-module ((hnh util exceptions)
+               :select (warning))
 
   :export (load-calendars
 
@@ -173,9 +175,19 @@
 
 
 
+(define (validate-event component)
+  (unless (date/-time<=
+           (prop component 'DTSTART)
+           (prop component 'DTEND))
+    (warning (G_ "end (~a) must be equal to or greater than start (~a)")
+             (prop component 'DTEND)
+             (prop component 'DTSTART)))
+  )
+
+
 (define-method (add-and-save-event (this <events>) calendar event)
 
-  ((@ (vcomponent validate) validate-event) event)
+  (validate-event event)
 
   (cond
    [(get-event-by-uid this (prop event 'UID))
