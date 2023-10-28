@@ -38,7 +38,8 @@
 
 (define (string-replace-head s1 s2)
   (string-replace s1 s2
-                  0 (string-length s2)))
+                  0 (min (string-length s1)
+                         (string-length s2))))
 
 
 (define diff-cmd
