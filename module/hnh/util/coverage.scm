@@ -1,3 +1,7 @@
+;;; Commentary:
+;;; A rudamentary parser for the GCOV coverage file format.
+;;; Code:
+
 (define-module (hnh util coverage)
   :use-module ((hnh util) :select (group-by))
   :use-module (hnh util type)
@@ -9,7 +13,7 @@
   :use-module ((ice-9 regex) :select (string-match match:substring))
   :export (coverage-info
            coverage-info?
-           filename lines total-lines hit-lines
+           filename lines total-lines hit-line
            output-coverage
            parse-coverage
            merge-coverage))
