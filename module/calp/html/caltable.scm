@@ -38,6 +38,7 @@
     (date->string date "~Y-~m-~d.html"))
 
   ;; (<date> → sxml-attributes) → <date> → sxml
+  ;; TODO rename this since tables aren't used any more.
   (define (td attr)
     (lambda (date)
       `(a (@ ,@(attr date))

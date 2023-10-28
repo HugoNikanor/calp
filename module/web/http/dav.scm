@@ -1,6 +1,7 @@
 ;;; Commentary:
-;;; This is a simple WedDAV client.
-;;; TODO figure out what it's used for.
+;;; This is a simple WedDAV and CalDAV client.
+;;; It's used in calp to implement the CalDAV storage backend, as well as
+;;; testing our server implementation.
 ;;; Code:
 
 (define-module (web http dav)

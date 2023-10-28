@@ -1,3 +1,5 @@
+;;; TODO these aren't unit tests, but rather basic integration tests
+
 (define-module (test annoying-events)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)

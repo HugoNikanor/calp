@@ -894,6 +894,7 @@ Returns -1 on failure"
   (string->datetime str))
 
 (define (parse-freeform-date str)
+  ;; TODO as-date?
   (parse-iso-datetime str))
 
 (define (date->sexp d)
