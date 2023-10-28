@@ -392,9 +392,6 @@
 (test-group "set->"
   'TODO)
 
-(test-group "and=>"
-  'TODO)
-
 (test-group "downcase-symbol"
   'TODO)
 

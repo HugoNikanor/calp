@@ -44,7 +44,6 @@
            insert-ordered
 
            -> ->>
-           and=>>
 
            downcase-symbol
            group
@@ -484,13 +483,6 @@
      (->> (func args ... obj) rest ...))
     ((->> obj func rest ...)
      (->> (func obj) rest ...))))
-
-(define-syntax and=>>
-  (syntax-rules ()
-    [(_ value) value]
-    [(_ value proc rest ...)
-     (and=>> (and=> value proc)
-             rest ...)]))
 
 (define (downcase-symbol symb)
   (-> symb

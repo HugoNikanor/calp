@@ -264,12 +264,6 @@ list, in which case @var{->} inserts item as the second argument
 (after the operand), and @var{->>} inserts it last.
 @end defmac
 
-
-@defmac and=>> value procedures ...
-Chained application of @code{and=>}, so applies each procedure from
-left to right, stopping when one return @code{#f}.
-@end defmac
-
 @defun downcase-symbol
 Converts a symbol to lower case.
 @end defun
