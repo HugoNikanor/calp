@@ -69,11 +69,11 @@
                  when unless))
 
 (cond-expand
-  (guile-3 (use-modules ((ice-9 copy-tree) :select (copy-tree))))
-  (else))
+  (guile-3 (use-modules ((ice-9 copy-tree) :select (copy-tree)))) ; NOCOV
+  (else))                                                         ; NOCOV
 
 ((@ (guile) define-syntax) define-syntax
-  (syntax-rules ()
+  (syntax-rules ()                      ; NOCOV
     ((_ (name args ...) body ...)
      ((@ (guile) define-syntax) name
       (lambda (args ...)
@@ -166,7 +166,8 @@
   (call-with-values (lambda () first)
     (lambda returned
       rest ...
-      (apply values returned))))
+      (apply values returned))))        ; NOCOV
+;;; NOCOV (don't ask)
 
 
 
