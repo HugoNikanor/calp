@@ -20,7 +20,7 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
              (srfi srfi-64)
              (srfi srfi-71)
              (srfi srfi-111)
-             ((rnrs io ports) :select (get-bytevector-all))
+             ((rnrs io ports) :select (get-bytevector-all get-u8))
              ((hnh util) :select (-> ->> for group-by))
              (hnh util path)
              (hnh util type)
@@ -56,6 +56,15 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
   (let ((thread (make-thread (lambda () forms ...))))
     (thread-start! thread)
     thread))
+
+(define (line-count port)
+  (let loop ((count 0)
+             (chr (get-u8 port)))
+    (if (eof-object? chr)
+        count
+        (loop (+ count (if (= chr 10)
+                           1 0))
+              (get-u8 port)))))
 
 
 
@@ -418,10 +427,12 @@ Flags:
                 (for-each output-coverage merged-coverages)
                 (for-each output-coverage
                           (map (lambda (filename)
-                                 (coverage-info filename: filename
-                                                lines: '((2 . 0))
-                                                total-lines: 1
-                                                hit-lines: 0))
+                                 (let ((lines (call-with-input-file filename line-count)))
+                                   (coverage-info filename: filename
+                                                  lines: (map (lambda (x) (cons x 0))
+                                                              (iota lines 1))
+                                                  total-lines: lines
+                                                  hit-lines: 0)))
                                uncovered-files)))))
 
           (format #t "~%== Gathered errors ==~%")
