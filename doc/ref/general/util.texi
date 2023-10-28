@@ -200,7 +200,10 @@ pairs of symbols and values.
 @end defun
 
 @defun assq-limit alist [number=1]
-@c TODO document
+Given that @var{alist} is an association list from symbols to lists of
+values, truncate each such list no @var{number} of arguments. If a
+key-list pair has fewer values than the desired number, all available
+values are returned.
 @end defun
 
 @defun group-by proc lst
