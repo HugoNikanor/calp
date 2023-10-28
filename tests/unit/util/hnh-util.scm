@@ -386,12 +386,6 @@
   (test-equal "-> order dependant" -1 (-> 1 (- 2)))
   (test-equal "->> order dependant" 1 (->> 1 (- 2))))
 
-(test-group "set"
-  'TODO)
-
-(test-group "set->"
-  'TODO)
-
 (test-group "downcase-symbol"
   'TODO)
 
