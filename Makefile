@@ -5,6 +5,7 @@ COV_FILE=coverage.info
 	litmus \
 	static \
 	$(COV_FILE) \
+	genhtml \
 	lcov.info \
 	unit-test-deps
 
@@ -103,9 +104,7 @@ unit-test-deps: calp $(GO_UNIT_TESTS) $(GO_FILES) $(TEST_FILES)
 
 # TODO (current-processor-count)
 $(COV_FILE): cpucount unit-test-deps
-	./testrunner.scm --threads $(shell ./cpucount) --coverage $@ --coverage-supplement tests/unit/coverage-supplement.scm
-
-unit-test-with-cov: $(COV_FILE)
+	./testrunner.scm --threads $(shell ./cpucount)  --coverage $@ --coverage-supplement tests/unit/coverage-supplement.scm
 
 GENHTML_FLAGS=--show-details \
 			  --hierarchical \
@@ -113,8 +112,17 @@ GENHTML_FLAGS=--show-details \
 			  --no-function-coverage \
 			  --quiet
 
-coverage: $(COV_FILE)
-	genhtml $(GENHTML_FLAGS) --output-directory $@ $<
+# TODO order between these?
+# Is it guaranteed that COV_FILE will be made before genhtml?
+# Run full coverage test, then generate resulting HTML directory
+coverage: $(COV_FILE) genhtml
+
+# Only generate HTML output from coverage info.
+# Allows manually running
+#     ./testrunner.scm --file <indiviual-file> -coverage coverage.info
+# To quickly get coverage data for a specific file.
+genhtml:
+	genhtml $(GENHTML_FLAGS) --output-directory coverage $(COV_FILE)
 
 
 CHECK_FLAGS = \
