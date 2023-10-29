@@ -1,4 +1,4 @@
-(define-module (test web-http-status-codes)
+(define-module (test http-status-codes)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
   :use-module ((web http status-codes)
