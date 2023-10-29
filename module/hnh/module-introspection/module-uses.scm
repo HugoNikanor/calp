@@ -1,7 +1,7 @@
 (define-module (hnh module-introspection module-uses)
   :use-module (ice-9 match)
   :use-module (hnh util)
-  :use-module ((srfi srfi-1) :select (concatenate))
+  :use-module ((srfi srfi-1) :select (concatenate every))
   :use-module ((srfi srfi-88) :select (string->keyword))
   :use-module (rnrs records syntactic)
   :export (module-uses*))
@@ -13,24 +13,28 @@
 ;;; Code:
 
 (define-record-type (module make-module% module?)
-  (fields name select hide prefix renamer version))
+  (fields name select hide prefix renamer version autoload))
 
-(define* (make-module name key:
-                      (select #f)
-                      (hide '())
-                      (prefix #f)
+(define* (make-module name              ; (list-of symbol?)
+                      key:
+                      (select #f)       ; (or false? (list-of symbol?))
+                      (hide '())        ; (list-of symbol?)
+                      (prefix #f)       ; (or false? symbol?):w
                       (renamer #f)
-                      (version #f))
-  (make-module% name select hide prefix renamer version))
+                      (version #f)
+                      (autoload #f)     ; boolean?
+                      )
+  (make-module% name select hide prefix renamer version autoload))
 
 (define (module->list module)
   (append
    (list (module-name module))
    (awhen (module-select module)  `(#:select ,it))
-   (awhen (module-hide module)    `(#:hide ,it))
+   `(#:hide ,(module-hide module))
    (awhen (module-prefix module)  `(#:prefix ,it))
    (awhen (module-renamer module) `(#:renamer ,it))
-   (awhen (module-version module) `(#:version ,it))))
+   (awhen (module-version module) `(#:version ,it))
+   `(#:autoload ,(module-autoload module))))
 
 ;; Normalizes keywords (#:key) and pseudo keywords (:key) used by define-module syntax.
 (define (normalize-keyword kw-or-symb)
@@ -40,7 +44,10 @@
               string->keyword))
         ((keyword? kw-or-symb)
          kw-or-symb)
-        (else (error "Bad keyword like" kw-or-symb))))
+        (else (scm-error 'wrong-type-arg "normalize-keyword"
+                         "Expected symbol or keyword, got: ~s"
+                         (list kw-or-symb)
+                         #f))))
 
 ;; Takes one argument as taken by @code{use-modules}, or following #:use-module
 ;; in @code{define-module}.
@@ -59,8 +66,16 @@
                              (group args 2))))))
     ;; matches `(srfi srfi-1)
     ((parts ...)
+     (unless (every symbol? parts)
+       (scm-error 'wrong-type-arg "parse-interface-specification"
+                  "Not a valid module import: ~s"
+                  (list interface-specification)
+                  #f))
      (make-module parts))
-    (_ (error "Bad module declaration"))))
+    (_ (scm-error 'wrong-type-arg "parse-interface-specification"
+                  "Bad module declaration, got: ~s"
+                  (list interface-specification)
+                  #f))))
 
 ;; Finds all define-module forms, and returns what they
 ;; pull in (including autoloads)
@@ -73,7 +88,9 @@
               (cons (parse-interface-specification (cadr directives))
                     (loop (cddr directives))))
              ((memv (car directives) '(#:autoload #{:autoload}#))
-              (cons (cadr directives)
+              (cons (make-module (cadr directives)
+                                 select: (caddr directives)
+                                 autoload: #t)
                     (loop (cdddr directives))))
              (else (loop (cdr directives))))))
     ((form forms ...)

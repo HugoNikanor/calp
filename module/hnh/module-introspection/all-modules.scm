@@ -17,9 +17,6 @@
   (ftw dir (lambda args (set! files (cons args files)) #t))
   files)
 
-;; (define (fs-find proc dir)
-;;   (filter proc (fs-find-base dir)))
-
 (define (string-ends-with? string tail)
   (and (>= (string-length string)
           (string-length tail))
