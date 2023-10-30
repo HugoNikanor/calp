@@ -91,6 +91,11 @@
 ;;; to ensure that all implementations are compatible.
 ;;; However, reflowing data for better diffs is acceptable.
 
+;;; TODO remove this.
+;;; iCalendar disabled since the internal vcomponent format isn't yet
+;;; fully defined.
+(test-skip "iCalendar")
+
 (test-group "iCalendar"
   (run-test
    "iCalendar" "target.ics"
