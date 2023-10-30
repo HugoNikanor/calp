@@ -12,13 +12,41 @@ TODO the all-*-under-directory procedures really need to be
 straightened out.
 
 @defun module-uses* forms
-Find all dependencies of a module by statically analyzing it's source code.
+Find all dependencies of a module by statically analyzing its source code.
 
 It gives worse resluts than Guile's built in @code{module-uses}, but
 has the benefit that a module which doesn't compile can still be checked.
 
 @var{froms} should be a list gotten by repeateadly calling @code{read}
 on a Scheme source file.
+
+The return value is a list of sublists, where the car of each list is
+the module's name (for example @code{(ice-9 format)}), and the cdr
+being a keyword tagged list with the following tags and types,
+corresponding to @code{use-modules} parameters.
+
+@table @samp
+@item #:select
+List of imported symbols, present if only a subset of the exported
+symbols are imported.
+
+@item #:hide
+List of symbols removed from the import. Always present, but may be an
+empty list if nothing was hidden.
+
+@item #:prefix
+A symbol which prefixes all imported symbols.
+
+@item #:renamer
+literally what is written.
+
+@item #:version
+A list of exact integers.
+
+@end table
+
+Note that if the module was imported multiple times then it will be
+present multiple times in the list, possibly with different options.
 @end defun
 
 @defun unique-symbols tree
