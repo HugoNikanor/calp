@@ -102,9 +102,11 @@ install: all calp-release
 
 unit-test-deps: calp $(GO_UNIT_TESTS) $(GO_FILES) $(TEST_FILES)
 
+THREADS = $(shell ./cpucount)
+
 # TODO (current-processor-count)
 $(COV_FILE): cpucount unit-test-deps
-	./testrunner.scm --threads $(shell ./cpucount)  --coverage $@ --coverage-supplement tests/unit/coverage-supplement.scm
+	./testrunner.scm --threads $(THREADS)  --coverage $@ --coverage-supplement tests/unit/coverage-supplement.scm
 
 GENHTML_FLAGS=--show-details \
 			  --hierarchical \
