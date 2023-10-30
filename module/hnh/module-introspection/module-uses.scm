@@ -12,6 +12,12 @@
 ;;; require that the target module compiles.
 ;;; Code:
 
+;;; TODO Currently modules are returend as pairs of the module name, and the
+;;; import parameters. This should be changed to module objects equal to those
+;;; from the "true" 'use-modules'.
+;;; TODO note that this extends to #:renamer, which needs to be evalutaed within
+;;; the inspected module.
+
 (define-record-type (module make-module% module?)
   (fields name select hide prefix renamer version autoload))
 
