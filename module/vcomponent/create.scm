@@ -24,13 +24,13 @@
 (define (keyword->key keyword)
   (-> keyword
       keyword->string
-      string-upcase
+      string-upcase                     ; NOCOV
       string->symbol))
 
 (define (symbol-upcase symbol)
   (-> symbol
       symbol->string
-      string-upcase
+      string-upcase                     ; NOCOV
       string->symbol))
 
 ;; Upcase the keys in an association list. Keys must be symbols.
