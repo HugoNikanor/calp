@@ -4,12 +4,31 @@
 These are various procedures for getting information about modules,
 usually in a static (only looking at ``dead'' source code) way. They
 are currently strewn about a couple files, all under
-@file{hnh/module-introspection}.
+@code{(hnh module-introspection)}.
 
-TODO rework the file structure.
+@node General Module Introspection Utilities
+@section General utilities
 
-TODO the all-*-under-directory procedures really need to be
-straightened out.
+The module @code{(hnh module-introspection)} contains general helper
+funcions for inspecting source code.
+
+@defun unique-symbols tree
+Return a list of all symbols occuring in @var{tree}. Each symbol is
+noted exactly once, anything which isn't a symbol is discarded.
+@end defun
+
+@defun module-declaration? form
+Checks if @var{form} starts with @code{'define-module}.
+@end defun
+
+@defun find-module-declaration forms
+@anchor{find-module-declaration}
+In a list of forms, find the first one which satisfies @code{module-declarations?}.
+@end defun
+
+@node Module Uses
+@section Module Uses
+
 
 @defun module-uses* forms
 Find all dependencies of a module by statically analyzing its source code.
@@ -49,24 +68,19 @@ Note that if the module was imported multiple times then it will be
 present multiple times in the list, possibly with different options.
 @end defun
 
-@defun unique-symbols tree
-Return a list of all symbols occuring in @var{tree}. Each symbol is
-noted exactly once, anything which isn't a symbol is discarded.
-@end defun
-
-@defun module-declaration? form
-Checks if @var{form} starts with @code{'define-module}.
-@end defun
-
-@defun find-module-declaration forms
-@anchor{find-module-declaration}
-In a list of forms, find the first one which satisfies @code{module-declarations?}.
-@end defun
+@node Static Module Introspection Utilities
+@section Static Utilities
 
 @defun get-forms port
 Repeatadly call @code{read} on @var{port}, and return a list of the
 read forms in order of occurence in the file.
 @end defun
+
+@node Finding all Modules in Directory
+@section Finding all Modules in Directory
+
+TODO the all-*-under-directory procedures really need to be
+straightened out.
 
 @defun all-files-and-modules-under-directory dir
 Like @code{all-modules-under-directory}, but returns 2-lists of
