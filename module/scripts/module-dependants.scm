@@ -15,7 +15,6 @@
   :use-module (ice-9 format)
   :use-module (texinfo string-utils)
   :use-module (hnh module-introspection)
-  :use-module ((hnh module-introspection static-util) :select (get-forms))
   :export (main))
 
 (define %summary "Print all modules which depend on module specified in target file.")

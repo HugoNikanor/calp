@@ -13,8 +13,10 @@
 (define-module (scripts module-imports)
   :use-module ((srfi srfi-1) :select (lset-difference))
   :use-module ((rnrs lists) :select (remp filter partition))
-  :use-module ((hnh module-introspection) :select (module-declaration? unique-symbols))
-  :use-module ((hnh module-introspection static-util) :select (get-forms))
+  :use-module ((hnh module-introspection)
+               :select (module-declaration?
+                        unique-symbols
+                        get-forms))
   :use-module ((hnh module-introspection module-uses) :select (module-uses*))
   :export (main)
   )

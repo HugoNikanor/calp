@@ -19,7 +19,7 @@
 
   (hnh module-introspection all-modules)
   (hnh module-introspection module-introspection)
-  ((hnh module-introspection static-util)
+  ((hnh module-introspection)
    :select (get-forms))
 
   ((calp translation)
