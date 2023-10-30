@@ -1,5 +1,6 @@
 (define-module (text numbers)
   :use-module (srfi srfi-88)
+  :use-module ((hnh util language) :select (resolve-language))
   :export (number->string-cardinal
            number->string-ordinal
            resolve-language
@@ -13,15 +14,6 @@
                   ;; "no code for module"
                   (resolve-interface '(text numbers en))))
               proc-symb))
-
-;; "sv_SE.UTF-8"
-(define (resolve-language)
-  (string->symbol
-   (string-take
-    (or (getenv "LC_MESSAGES")
-        (getenv "LC_ALL")
-        "en")
-    2)))
 
 (define* (number->string-cardinal
           n optional: (language (resolve-language)))
