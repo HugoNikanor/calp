@@ -1,13 +1,14 @@
 (define-module (text numbers en)
   :use-module (ice-9 format)
+  :use-module (srfi srfi-71)
   :export (number->string-cardinal
            number->string-ordinal
            each-string))
 
-(define (number->string-cardinal n)
+(define (number->string-cardinal n . _)
   (format #f "~r" n))
 
-(define (number->string-ordinal n)
+(define (number->string-ordinal n . _)
   (format #f "~:r" n))
 
 ;; Allows extra args to handle eventual local changes.

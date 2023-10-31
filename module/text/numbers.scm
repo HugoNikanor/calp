@@ -1,4 +1,5 @@
 (define-module (text numbers)
+  :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module ((hnh util language) :select (resolve-language))
   :export (number->string-cardinal
@@ -16,12 +17,15 @@
               proc-symb))
 
 (define* (number->string-cardinal
-          n optional: (language (resolve-language)))
-  ((get language 'number->string-cardinal) n))
+          n optional: (language (resolve-language))
+          rest: extra-kvs)
+  (apply (get language 'number->string-cardinal) n extra-kvs))
 
 (define* (number->string-ordinal
-          n optional: (language (resolve-language)))
-  ((get language 'number->string-ordinal) n))
+          n
+          optional: (language (resolve-language))
+          rest: extra-kvs)
+  (apply (get language 'number->string-ordinal) n extra-kvs))
 
 ;; TODO change API to allow language, and stop having random extra
 ;; arguments for implementations.

@@ -20,7 +20,7 @@
    [(<= 60 e 65) "dec"]
    ))
 
-(define (number->string-cardinal n)
+(define (number->string-cardinal n . _)
   (cond [(< n 0) (string-append "minus " (number->string-cardinal (- n)))]
         [(= n 0) "noll"]
         [(= n 1) "ett"]
@@ -93,7 +93,7 @@
                         (number->string n))]))
 
 (define* (number->string-ordinal
-                 n key: a-form?)
+                 n key: a-form? allow-other-keys:)
   (define a-string (if a-form? "a" "e"))
   (cond [(>= -3 n) (format #f "~a sista" (number->string-ordinal (- n)))]
         [(= -2 n) "näst sista"]
