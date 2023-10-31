@@ -93,6 +93,13 @@
   "a511671454f032760c6eabe53fefb29c2540615297ace1dc6024cafbb222d7c8"
   2)
 
+ ;; The pretty print header might be testable, but the remaining is
+ ;; only testable by running the tests, which the tests (obviously)
+ ;; already do.
+ ("module/hnh/test/testrunner.scm"
+  "3d4d0bfb1e47adf99db8590e312e378459a8081bc1993988cfacc5c68c27da22"
+  2)
+
 
  ;; Only defines configuration parametrs, nothing to test
 
