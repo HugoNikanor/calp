@@ -17,13 +17,15 @@
 
 (define (esc . effect)
   (format #f "\x1b[~am"
-          (if (null? effect)
+          (if (null? effect)            ; NOCOV
               ""
-              (case (car effect)
+              (case (car effect)        ; NOCOV
                 [(bold) 1]
                 [(italic) 3]
                 [(invert) 7]
-                [else 4]))))
+                [else (scm-error 'misc-error "esc"
+                                 "Unknown escape: ~s"
+                                 (car effect) #f)]))))
 
 ;; tag := (tag-name [(@ attributes ...)] body ...)
 
@@ -41,6 +43,12 @@
 (define (get-attr args key default)
   (aif (assoc-ref args key)
        (car it) default))
+
+(define (dt? x)
+  (and (list? x) (eq? 'dt (car x))))
+
+(define (dd? x)
+  (and (list? x) (eq? 'dd (car x))))
 
 ;; NOTE Some tags can be given a `width' attribute. This is however not yet
 ;; fully supported.
@@ -71,22 +79,48 @@
                              (car it) 1)
                         #\space)]
     [(br) "\n"]
+    ;; TODO width
     [(hr) (string-append "     " (make-string 60 #\─) "     \n")]
     [(dl)
-     (let* ((dts dds (partition (lambda (x) (eq? 'dt (car x))) body))
-            (dts* (map sxml->ansi-text dts))
-            (m (if (null? dts*) 0 (apply max (map true-string-length dts*)))))
-       (string-concatenate
-        (map (lambda (dt dd)
-               (let ((dds (string-split dd #\newline)))
-                 (string-concatenate
-                  (map (lambda (left right)
-                         (string-append (true-string-pad left m) " │ " right "\n"))
-                       (cons dt (map (const "") (iota (1- (length dds)))))
-                       dds))))
-             dts*
-             (map (compose sxml->ansi-text (add-attributes `((width ,(- 70 m 5)))))
-                  dds))))]
+     (let* ((body
+             (map (lambda (el)
+                    (cond ((dt? el) (list 'dt (sxml->ansi-text el)))
+                          ((dd? el) el)
+                          (else (scm-error 'wrong-type-arg "ontree"
+                                           "Only <dt/> and <dd/> are valid children of <dl/>, got ~s"
+                                           (list el)
+                                           #f))))
+                  body))
+            (dt-width (apply max 0 (map (compose true-string-length cadr) (filter dt? body)))))
+       (let loop ((remaining body)
+                  (dts '()))
+         (if (null? remaining)
+             (string-join
+              (map string-append
+                   (append (map (lambda (x) (true-string-pad x dt-width))
+                                (reverse dts)))
+                   (make-list (length dts) " │ "))
+              "\n" 'suffix)
+             (let ((el (car remaining)))
+               (cond ((dt? el) (loop (cdr remaining) (cons (cadr el) dts)))
+                     ((dd? el)
+                      (let ((content (lines
+                                      (sxml->ansi-text `(block (@ (width ,(- 70 dt-width 3)))
+                                                               ,el)))))
+                        (string-append
+                         (unlines
+                          (map string-append
+                               (append (map (lambda (x) (true-string-pad x dt-width))
+                                            (reverse dts))
+                                       (make-list (max 0 (- (length content)
+                                                            (length dts)))
+                                                  (make-string dt-width #\space)))
+                               (make-list (max (length content) (length dts)) " │ ")
+                               (append content (make-list (max 0 (- (length dts) (length content)))
+                                                          ""))))
+                         "\n"
+                         (loop (cdr remaining) '()))))
+                     (else (scm-error 'misc-error "on-tree" "Unexpected: ~s~%" (list (car remaining)) #f  )))))))]
     [(dt) (string-concatenate (map (compose sxml->ansi-text (add-attributes args))
                                    body))]
     [(dd)
@@ -105,10 +139,9 @@
     [else (string-append (esc 'bold) "??"
                          "`"
                          (esc 'invert)
-                         (string-concatenate (map sxml->ansi-text body))
-                         (esc) "'")]
-    )
-  )
+                         (with-output-to-string
+                           (lambda () (write body)))
+                         (esc) "'")]))
 
 (define (onleaf leaf)
   (format #f "~a" leaf))
@@ -118,8 +151,7 @@
     [(tag ('@ args ...) body ...)
      (tree-callback tag body args)]
     [(tag body ...)
-     (tree-callback tag body)
-     ]
+     (tree-callback tag body)]
     [() ""]
     [(any ...) (map leaf-callback any)]
     [any (leaf-callback any)]))
