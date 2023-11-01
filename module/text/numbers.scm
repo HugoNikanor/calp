@@ -27,16 +27,8 @@
           rest: extra-kvs)
   (apply (get language 'number->string-ordinal) n extra-kvs))
 
-;; TODO change API to allow language, and stop having random extra
-;; arguments for implementations.
-(define* (each-string count . args)
-  (define language (resolve-language))
+(define* (each-string count
+                      optional: (language (resolve-language))
+                      rest: extra-kvs)
   (apply (get language 'each-string)
          count args))
-
-;; scheme@(guile-user)> (number->string-cardinal 123)
-;; $10 = "hundratjugotre"
-;; scheme@(guile-user)> (number->string-ordinal 123)
-;; $11 = "hundratjugotredje"
-;; scheme@(guile-user)> (each-string 10)
-;; $12 = "var tionde"

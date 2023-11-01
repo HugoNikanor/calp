@@ -83,7 +83,8 @@
            [else
             (list
              " "
-             (each-string (interval rrule) (eq? 'YEARLY (freq rrule)))
+             (each-string (interval rrule)
+                          neutrum: (eq? 'YEARLY (freq rrule)))
              " "
              (case (freq rrule)
                ;; p.44 RFC 5545

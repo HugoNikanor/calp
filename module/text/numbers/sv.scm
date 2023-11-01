@@ -181,7 +181,7 @@
 ;; (each-string 2) ; => "varannan"
 ;; (each-string 3) ; => "var tredje"
 ;; (each-string 3 #t) ; => "vart tredje"
-(define* (each-string count optional: neutrum)
+(define* (each-string count key: neutrum allow-other-keys:)
   (string-flatten
    (cons
     "var"
