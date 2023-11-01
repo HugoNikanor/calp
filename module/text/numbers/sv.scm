@@ -44,80 +44,73 @@
         [(= n 18) "arton"]
         [(= n 19) "nitton"]
         [(= n 20) "tjugo"]
-        [(<= 21 n 29) (format #f "tjugo~a" (number->string-cardinal
-                                           (- n 20)))]
+        [(<= 21 n 29) (string-append "tjugo" (number->string-cardinal
+                                             (- n 20)))]
         [(= n 30) "trettio"]
-        [(<= 31 n 39) (format #f "trettio~a" (number->string-cardinal
-                                             (- n 30)))]
+        [(<= 31 n 39) (string-append "trettio" (number->string-cardinal
+                                               (- n 30)))]
         [(= n 40) "fyrtio"]
-        [(<= 31 n 49) (format #f "fyrtio~a" (number->string-cardinal
-                                            (- n 40)))]
+        [(<= 31 n 49) (string-append "fyrtio" (number->string-cardinal
+                                              (- n 40)))]
         [(<= 50 n 69) (let ((big small (floor/ n 10)))
-                       (format #f "~atio~a"
-                               (number->string-cardinal big)
-                               (if (zero? small)
-                                   "" (number->string-cardinal small))))]
+                       (string-append
+                        (number->string-cardinal big)
+                        "tio"
+                        (if (zero? small)
+                            "" (number->string-cardinal small))))]
         [(= n 70) "sjuttio"]
-        [(<= 71 n 79) (format #f "sjuttio~a"
-                             (number->string-cardinal (- n 70)))]
+        [(<= 71 n 79) (string-append "sjuttio" (number->string-cardinal (- n 70)))]
         [(= n 80) "åttio"]
-        [(<= 81 n 89) (let ((_ small (floor/ n 10)))
-                       (format #f "åttio~a"
-                               (number->string-cardinal small)))]
+        [(<= 81 n 89) (string-append "åttio" (number->string-cardinal (- n 80)))]
         [(= n 90) "nittio"]
-        [(<= 91 n 99) (let ((_ small (floor/ n 10)))
-                       (format #f "nittio~a"
-                               (number->string-cardinal small)))]
+        [(<= 91 n 99) (string-append "nittio" (number->string-cardinal (- n 90)))]
         [(= n 100) "etthundra"]
-        [(< 100 n 200) (let ((_ small (floor/ n 100)))
-                         (format #f "etthundra~a"
-                                 (number->string-cardinal small)))]
+        [(< 100 n 200) (string-append "etthundra" (number->string-cardinal (- n 100)))]
         [(= n 200) "tvåhundra"]
         [(< 200 n 1000) (let ((big small (floor/ n 100)))
-                          (format #f "~ahundra~a"
-                                  (number->string-cardinal big)
-                                  (if (zero? small)
-                                      "" (number->string-cardinal small))))]
+                          (string-append
+                           (number->string-cardinal big)
+                           "hundra"
+                           (if (zero? small)
+                               "" (number->string-cardinal small))))]
 
         [(<= 1000 n 999999)
          (let ((big small (floor/ n 1000)))
            (let ((big* (number->string-cardinal big)))
-            (format #f "~a~atusen~a"
-                    (if (= 1 big)
-                        "et"
-                        big*)
-                    (if (<= 18 (string-length big*))
-
-                        " " "")
-                    (if (zero? small)
-                        "" (string-append
-                            " " (number->string-cardinal small))))))]
+             (string-append
+              (if (= 1 big) "et" big*)
+              (if (<= 18 (string-length big*)) " " "")
+              "tusen"
+              (if (zero? small)
+                  ""
+                  (string-append
+                   " " (number->string-cardinal small))))))]
 
         [(<= #e1e6 n (1- #e1e66))
          (let ((e (inexact->exact (floor (log10 n))))
                (big small (floor/ n #e1e6)))
            (if (zero? big)
                (number->string-cardinal (modulo small 1000))
-               (format #f "~a ~a~a~a~a"
-                       (if (or (= 1 big)
-                               (= 0 (modulo big 1000)))
-                           "en"
-                           (number->string-cardinal
-                            (floor-quotient
-                             big (if (even? (floor-quotient e 3))
-                                     1 1000))))
-                       (large-prefix e)
-                       (if (even? (floor-quotient e 3))
-                           "iljon" "iljard")
-                       (if (or (= 1 big)
-                               (= 0 (modulo big 1000)))
-                           "" "er")
-                       (if (zero? small)
-                           ""
-                           (string-append
-                            " "
-                            (number->string-cardinal small)))
-                       )))]
+               (string-append
+                (if (or (= 1 big)
+                        (= 0 (modulo big 1000)))
+                    "en"
+                    (number->string-cardinal
+                     (floor-quotient
+                      big (if (even? (floor-quotient e 3))
+                              1 1000))))
+                " "
+                (large-prefix e)
+                (if (even? (floor-quotient e 3))
+                    "iljon" "iljard")
+                (if (or (= 1 big)
+                        (= 0 (modulo big 1000)))
+                    "" "er")
+                (if (zero? small)
+                    ""
+                    (string-append
+                     " "
+                     (number->string-cardinal small))))))]
         [else
          ;; I give up, don't have larger numbers that that!
          (string-append "det stora talet "
@@ -126,12 +119,12 @@
 (define* (number->string-ordinal
                  n key: a-form? allow-other-keys:)
   (define a-string (if a-form? "a" "e"))
-  (cond [(>= -3 n) (format #f "~a sista" (number->string-ordinal (- n)))]
+  (cond [(>= -3 n) (string-append (number->string-ordinal (- n)) " sista" )]
         [(= -2 n) "näst sista"]
         [(= -1 n) "sista"]
         [(= 0 n) "nollte"]              ;
-        [(= 1 n) (format #f "först~a" a-string)]
-        [(= 2 n) (format #f "andr~a" a-string)]
+        [(= 1 n) (string-append "först" a-string)]
+        [(= 2 n) (string-append "andr" a-string)]
         [(= 3 n) "tredje"]
         [(= 4 n) "fjärde"]
         [(= 5 n) "femte"]
@@ -149,27 +142,27 @@
         [(= 17 n) "sjuttonde"]
         [(= 18 n) "artonde"]
         [(= 19 n) "nittonde"]
-        [(<= 20 n 29) (format #f "tjugo~a"
-                             (if (= 20 n)
-                                 "nde"
-                                 (number->string-ordinal
-                                  (- n 20)
-                                  a-form?: a-form?)))]
+        [(= 20 n) "tjugonde"]
+        [(<= 20 n 29) (string-append "tjugo"
+                                    (number->string-ordinal
+                                     (- n 20)
+                                     a-form?: a-form?))]
 
         [(<= 30 n 99)
          (let ((big small (floor/ n 10)))
-           (format #f "~atio~a"
-                   (case big
-                     [(3) "tret"]
-                     [(4) "fyr"]
-                     [(8) "åt"]
-                     [(7) "sjut"]
-                     [(9) "nit"]
-                     [else (number->string-cardinal big)])
-                   (if (zero? (modulo small 10))
-                       "nde"
-                       (number->string-ordinal
-                        small a-form?: a-form?))))]
+           (string-append
+            (case big
+              [(3) "tret"]
+              [(4) "fyr"]
+              [(8) "åt"]
+              [(7) "sjut"]
+              [(9) "nit"]
+              [else (number->string-cardinal big)])
+            "tio"
+            (if (zero? (modulo small 10))
+                "nde"
+                (number->string-ordinal
+                 small a-form?: a-form?))))]
         [(= n 100) "etthundrade"]
         [(= n 1000) "etttusende"]
         [(= n #e1e6) "miljonte"]
