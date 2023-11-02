@@ -1400,7 +1400,7 @@
               bymonthday: (list 15 30)
               count: 5)
              x-summary:
-             "den femtonde & tretionde varje månad, totalt 5 gånger"
+             "den femtonde & trettionde varje månad, totalt 5 gånger"
              x-set:
              (list (datetime year: 2007 month: 01 day: 15 hour: 09 minute: 00 second: 00)
                    (datetime year: 2007 month: 01 day: 30 hour: 09 minute: 00 second: 00)
