@@ -1,7 +1,13 @@
 (define-module (test text-numbers-sv)
+  :use-module (srfi srfi-1)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-71)
   :use-module (text numbers))
+
+;;; Readable integer "literals", until srfi-169 gets ported to Guile
+(define (n s)
+  (fold (lambda (x p) (+ x (* 1000 p)))
+        0 (map string->number (string-split s #\_))))
 
 (test-group "Cardinal numbers"
 
@@ -70,14 +76,30 @@
   (test-equal "etthundra miljoner" (number->string-cardinal 100000000 'sv))
   (test-equal "niohundraåttiosju miljoner sexhundrafemtiofyra tusen trehundratjugoett"
     (number->string-cardinal 987654321 'sv))
-  (test-equal "en miljard"         (number->string-cardinal 1000000000 'sv))
-  (test-equal "en biljon"          (number->string-cardinal 1000000000000 'sv))
-  (test-equal "en biljard"         (number->string-cardinal #e10e15 'sv))
-  (test-equal "en triljon"         (number->string-cardinal #e10e18 'sv))
-  (test-equal "en triljard"        (number->string-cardinal #e10e21 'sv))
-  (test-equal "en kvadriljon"      (number->string-cardinal #e10e24 'sv))
-  (test-equal "en kvadriljard"     (number->string-cardinal #e10e27 'sv))
-  (test-equal "en kvintiljon"      (number->string-cardinal #e10e30 'sv))
+  (test-equal "en miljard"         (number->string-cardinal (n "1_000_000_000") 'sv))
+  (test-equal "en biljon"          (number->string-cardinal (n "1_000_000_000_000") 'sv))
+  (test-equal "en biljard"         (number->string-cardinal #e1e15 'sv))
+  (test-equal "tio biljarder"      (number->string-cardinal #e1e16 'sv))
+  (test-equal "etthundra biljarder" (number->string-cardinal #e1e17 'sv))
+  (test-equal "en biljard"         (number->string-cardinal (n "1_000_000_000_000_000") 'sv))
+  (test-equal "en triljon"         (number->string-cardinal #e1e18 'sv))
+  (test-equal "en triljard"        (number->string-cardinal #e1e21 'sv))
+  (test-equal "en kvadriljon"      (number->string-cardinal #e1e24 'sv))
+  (test-equal "en kvadriljard"     (number->string-cardinal #e1e27 'sv))
+  (test-equal "en kvintiljon"      (number->string-cardinal #e1e30 'sv))
+  (test-equal "en kvintiljard"     (number->string-cardinal #e1e33 'sv))
+  (test-equal "en sextiljon"       (number->string-cardinal #e1e36 'sv))
+  (test-equal "en sextiljard"      (number->string-cardinal #e1e39 'sv))
+  (test-equal "en septiljon"       (number->string-cardinal #e1e42 'sv))
+  (test-equal "en septiljard"      (number->string-cardinal #e1e45 'sv))
+  (test-equal "en oktiljon"        (number->string-cardinal #e1e48 'sv))
+  (test-equal "en oktiljard"       (number->string-cardinal #e1e51 'sv))
+  (test-equal "en noniljon"        (number->string-cardinal #e1e54 'sv))
+  (test-equal "en noniljard"       (number->string-cardinal #e1e57 'sv))
+  (test-equal "en deciljon"        (number->string-cardinal #e1e60 'sv))
+  (test-equal "en deciljard"       (number->string-cardinal #e1e63 'sv))
+  (test-equal "det stora talet 1000000000000000000000000000000000000000000000000000000000000000000"
+    (number->string-cardinal #e1e66 'sv))
   )
 
 (test-group "Ordinal numbers"
@@ -113,11 +135,12 @@
   (test-equal "åttioåttonde"             (number->string-ordinal 88 'sv a-form?: #t))
   (test-equal "nittionionde"             (number->string-ordinal 99 'sv a-form?: #t))
   (test-equal "etthundrade"              (number->string-ordinal 100 'sv a-form?: #t))
+  (test-equal "tvåhundrade"              (number->string-ordinal 200 'sv a-form?: #t))
   (test-equal "etthundratrettiofjärde"   (number->string-ordinal 134 'sv a-form?: #t))
   (test-equal "sjuhundratrettiosjätte"   (number->string-ordinal 736 'sv a-form?: #t))
   (test-equal "etttusende"                       (number->string-ordinal 1000 'sv a-form?: #t))
   (test-equal "ettusen sjätte"                   (number->string-ordinal 1006 'sv a-form?: #t))
-  (test-equal "ettusen hundrade"                 (number->string-ordinal 1100 'sv a-form?: #t))
+  (test-equal "ettusen etthundrade"                 (number->string-ordinal 1100 'sv a-form?: #t))
   (test-equal "ettusen niohundratjugoandra"      (number->string-ordinal 1922 'sv a-form?: #t))
   (test-equal "ettusen niohundranittionionde"    (number->string-ordinal 1999 'sv a-form?: #t))
   (test-equal "tvåtusende"                       (number->string-ordinal 2000 'sv a-form?: #t))
@@ -173,6 +196,9 @@
     (number->string-ordinal 987654321 'sv a-form?: #t))
   (test-equal "miljarde"           (number->string-ordinal 1000000000 'sv a-form?: #t))
   (test-equal "biljonte"           (number->string-ordinal 1000000000000 'sv a-form?: #t)))
+(test-equal "niohundranittionio biljoner niohundranittionio miljarder niohundranittionio miljoner niohundranittionio tusen niohundranittionionde"
+  (number->string-ordinal (1- #e1e15) 'sv))
+(test-equal "1000000000000000:e" (number->string-ordinal #e1e15 'sv))
 
 '((text numbers)
   (text numbers sv))

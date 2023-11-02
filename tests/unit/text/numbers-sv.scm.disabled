@@ -1233,12 +1233,12 @@
   (test-equal "niohundraåttiosju miljoner sexhundrafemtiofyra tusen trehundratjugoett" (number->string-cardinal 987654321 'sv))
   (test-equal "en miljard"         (number->string-cardinal 1000000000 'sv))
   (test-equal "en biljon"          (number->string-cardinal 1000000000000 'sv))
-  (test-equal "en biljard"         (number->string-cardinal #e10e15 'sv))
-  (test-equal "en triljon"         (number->string-cardinal #e10e18 'sv))
-  (test-equal "en triljard"        (number->string-cardinal #e10e21 'sv))
-  (test-equal "en kvadriljon"      (number->string-cardinal #e10e24 'sv))
-  (test-equal "en kvadriljard"     (number->string-cardinal #e10e27 'sv))
-  (test-equal "en kvintiljon"      (number->string-cardinal #e10e30 'sv)))
+  (test-equal "en biljard"         (number->string-cardinal #e1e15 'sv))
+  (test-equal "en triljon"         (number->string-cardinal #e1e18 'sv))
+  (test-equal "en triljard"        (number->string-cardinal #e1e21 'sv))
+  (test-equal "en kvadriljon"      (number->string-cardinal #e1e24 'sv))
+  (test-equal "en kvadriljard"     (number->string-cardinal #e1e27 'sv))
+  (test-equal "en kvintiljon"      (number->string-cardinal #e1e30 'sv)))
 
 
 ;;; Ordningstal – Ordinal numbers
@@ -2256,7 +2256,7 @@
   (test-equal "ettusen åttonde"                  (number->string-ordinal 1008 'sv a-form?: #t))
   (test-equal "ettusen nionde"                   (number->string-ordinal 1009 'sv a-form?: #t))
   (test-equal "ettusen tionde"                   (number->string-ordinal 1010 'sv a-form?: #t))
-  (test-equal "ettusen hundrade"                 (number->string-ordinal 1100 'sv a-form?: #t))
+  (test-equal "ettusen etthundrade"              (number->string-ordinal 1100 'sv a-form?: #t))
   (test-equal "ettusen tvåhundrade"              (number->string-ordinal 1200 'sv a-form?: #t))
   (test-equal "ettusen trehundrade"              (number->string-ordinal 1300 'sv a-form?: #t))
   (test-equal "ettusen fyrahundrade"             (number->string-ordinal 1400 'sv a-form?: #t))
