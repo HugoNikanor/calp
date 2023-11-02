@@ -100,19 +100,28 @@
       (when (or (verbose?) #;(eq? 'fail (test-result-kind)))
         (format #t " ~a~%" (test-runner-test-name/description runner)))
 
-      (when (eq? 'fail (test-result-kind))
-        (enqueue!
-         (with-output-to-string
-           (lambda ()
-             (display
-              (yellow (format #f "Test failed: ~a~%"
-                           (test-runner-test-name/description runner))))
-             (display
-              (yellow
-               (format #f "  Path: ~s~%"
-                       (cdr (test-runner-group-path runner)))))
-             (test-runner-describe-error runner 0)))
-         err-queue))
+      (case (test-result-kind)
+        ((fail)
+         (enqueue!
+          (with-output-to-string
+            (lambda ()
+              (display
+               (yellow (format #f "Test failed: ~a~%"
+                               (test-runner-test-name/description runner))))
+              (display
+               (yellow
+                (format #f "  Path: ~s~%"
+                        (cdr (test-runner-group-path runner)))))
+              (test-runner-describe-error runner 0)))
+          err-queue))
+        ((xpass)
+         (enqueue!
+          (string-append
+           (yellow (format #f "Test unexpectedly passed: ~a~%"
+                           (test-runner-test-name/description runner)))
+           (format #f "  Path: ~s~%"
+                   (cdr (test-runner-group-path runner))))
+          err-queue)))
 
       (let ((start (test-runner-aux-value runner))
             (end (transform-time-of-day (gettimeofday))))
