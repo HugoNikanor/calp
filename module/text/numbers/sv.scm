@@ -146,16 +146,11 @@
                  [(<= 30 n 99)
                   (let ((big small (floor/ n 10)))
                     (string-append
-                     (case big
-                       [(3) "tret"]
-                       [(4) "fyr"]
-                       [(8) "åt"]
-                       [(7) "sjut"]
-                       [(9) "nit"]
-                       [else (number->string-cardinal big)])
-                     "tio"
-                     (number->string-ordinal
-                      small a-form?: a-form?)))]
+                     (number->string-cardinal (* 10 big))
+                     (if (zero? small)
+                         "nde"
+                         (number->string-ordinal
+                          small a-form?: a-form?))))]
 
                  [(= n 100) "etthundrade"]
 
