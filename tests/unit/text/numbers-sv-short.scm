@@ -98,9 +98,8 @@
   (test-equal "en noniljard"       (number->string-cardinal #e1e57 'sv))
   (test-equal "en deciljon"        (number->string-cardinal #e1e60 'sv))
   (test-equal "en deciljard"       (number->string-cardinal #e1e63 'sv))
-  (test-equal "det stora talet 1000000000000000000000000000000000000000000000000000000000000000000"
-    (number->string-cardinal #e1e66 'sv))
-  )
+  (test-equal "det stora talet 10⁶⁶"
+    (number->string-cardinal #e1e66 'sv)))
 
 (test-group "Ordinal numbers"
   (test-equal "nollte"                   (number->string-ordinal 0 'sv a-form?: #t))
@@ -195,10 +194,13 @@
   (test-equal "niohundraåttiosju miljoner sexhundrafemtiofyra tusen trehundratjugoförsta"
     (number->string-ordinal 987654321 'sv a-form?: #t))
   (test-equal "miljarde"           (number->string-ordinal 1000000000 'sv a-form?: #t))
-  (test-equal "biljonte"           (number->string-ordinal 1000000000000 'sv a-form?: #t)))
-(test-equal "niohundranittionio biljoner niohundranittionio miljarder niohundranittionio miljoner niohundranittionio tusen niohundranittionionde"
-  (number->string-ordinal (1- #e1e15) 'sv))
-(test-equal "1000000000000000:e" (number->string-ordinal #e1e15 'sv))
+  (test-equal "biljonte"           (number->string-ordinal 1000000000000 'sv a-form?: #t))
+  (test-equal "niohundranittionio biljoner niohundranittionio miljarder niohundranittionio miljoner niohundranittionio tusen niohundranittionionde"
+    (number->string-ordinal (1- #e1e15) 'sv))
+  (test-equal "biljarde" (number->string-ordinal #e1e15 'sv))
+  (test-equal "10⁶⁶:e"
+    (number->string-ordinal #e1e66 'sv))
+ )
 
 '((text numbers)
   (text numbers sv))

@@ -1,11 +1,15 @@
 (define-module (text numbers sv)
-  :use-module ((srfi srfi-1) :select (every))
+  :use-module ((srfi srfi-1) :select (every last))
   :use-module (srfi srfi-71)
+  :use-module ((text util) :select (words))
+  :use-module (text big-numbers)
   :use-module (hnh util)
   :use-module (hnh util type)
   :export (number->string-cardinal
            number->string-ordinal
            each-string))
+
+(define maxnum (1- #e1e66))
 
 (define (exp-name x)
   (case x
@@ -90,7 +94,7 @@
                 (if (and have-larger (= e3 1)) " " "")
                 (exp-name e3)))]
 
-            [(< n (1- #e1e66))
+            [(< n maxnum)
              (let ((head tail (floor/ n 1000)))
                (string-append
                 (loop head (+ e3 1) #f)
@@ -102,11 +106,10 @@
                       (else (string-append
                              " " (loop tail e3 #t))))))]
 
-
             [else
              ;; I give up, don't have larger numbers that that!
              (string-append "det stora talet "
-                            (number->string n))]))]))
+                            (number->exponential-form n))]))]))
 
 (define* (number->string-ordinal
                  n key: a-form? allow-other-keys:)
@@ -117,7 +120,7 @@
       ((0) (cond [(>= -3 n) (string-append (number->string-ordinal (- n) a-form?: a-form?) " sista" )]
                  [(= -2 n) "näst sista"]
                  [(= -1 n) "sista"]
-                 [(= 0 n)  "nollte"]      ;
+                 [(= 0 n)  "nollte"]
                  [(= 1 n)  (string-append "först" a-string)]
                  [(= 2 n)  (string-append "andr" a-string)]
                  [(= 3 n)  "tredje"]
@@ -128,22 +131,16 @@
                  [(= 8 n)  "åttonde"]
                  [(= 9 n)  "nionde"]
                  [(= 10 n) "tionde"]
+
                  [(= 11 n) "elfte"]
                  [(= 12 n) "tolfte"]
-                 [(= 13 n) "trettonde"]
-                 [(= 14 n) "fjortonde"]
-                 [(= 15 n) "femtonde"]
-                 [(= 16 n) "sextonde"]
-                 [(= 17 n) "sjuttonde"]
-                 [(= 18 n) "artonde"]
-                 [(= 19 n) "nittonde"]
-                 [(= 20 n) "tjugonde"]
-                 [(<= 20 n 29) (string-append "tjugo"
-                                             (number->string-ordinal
-                                              (- n 20)
-                                              a-form?: a-form?))]
 
-                 [(<= 30 n 99)
+                 [(<= 13 n 19)
+                  (string-append
+                   (number->string-cardinal n)
+                   "de")]
+
+                 [(<= 20 n 99)
                   (let ((big small (floor/ n 10)))
                     (string-append
                      (number->string-cardinal (* 10 big))
@@ -151,8 +148,6 @@
                          "nde"
                          (number->string-ordinal
                           small a-form?: a-form?))))]
-
-                 [(= n 100) "etthundrade"]
 
                  [else
                   (let ((big small (floor/ n 100)))
@@ -165,13 +160,11 @@
       ((1) (string-append (number->string-cardinal n) "tusende"))
       (else (string-append
              (if (= n 1) "" (string-append (number->string-cardinal n) " "))
-             (case e
-               ((2) "miljonte")
-               ((3) "miljarde")
-               ((4) "biljonte"))))))
+             (last (words (number->string-cardinal (expt 10 (* 3 e)))))
+             (if (even? e) "te" "e")))))
 
-  (if (>= n #e1e15)
-      (string-append (number->string n) ":e")
+  (if (> n maxnum)
+      (string-append (number->exponential-form n) ":e")
       (let loop ((n n) (e 0))
         (if (> 1000 n)
             (main-part n e)

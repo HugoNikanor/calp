@@ -2464,7 +2464,10 @@
   (test-equal "etthundra miljonte" (number->string-ordinal 100000000 'sv a-form?: #t))
   (test-equal "niohundraåttiosju miljoner sexhundrafemtiofyra tusen trehundratjugoförsta" (number->string-ordinal 987654321 'sv a-form?: #t))
   (test-equal "miljarde"           (number->string-ordinal 1000000000 'sv a-form?: #t))
-  (test-equal "biljonte"           (number->string-ordinal 1000000000000 'sv a-form?: #t)))
+  (test-equal "biljonte"           (number->string-ordinal 1000000000000 'sv a-form?: #t))
+  (test-equal "etthundra deciljarde" (number->string-ordinal #e1e65 'sv a-form?: #t))
+ (test-equal "etthundra deciljarde" (number->string-ordinal #e1e66 'sv a-form?: #t))
+  )
 
 
 
