@@ -31,4 +31,4 @@
                       optional: (language (resolve-language))
                       rest: extra-kvs)
   (apply (get language 'each-string)
-         count args))
+         count extra-kvs))

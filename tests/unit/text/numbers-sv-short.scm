@@ -202,5 +202,17 @@
     (number->string-ordinal #e1e66 'sv))
  )
 
+(test-group "each-string sv"
+  (test-equal "varje"
+    (each-string 1 'sv))
+  (test-equal "varannan"
+    (each-string 2 'sv))
+  (test-equal "vartannat"
+    (each-string 2 'sv neutrum: #t))
+  (test-equal "var tredje"
+    (each-string 3 'sv))
+  (test-equal "vart tredje"
+    (each-string 3 'sv neutrum: #t)))
+
 '((text numbers)
   (text numbers sv))
