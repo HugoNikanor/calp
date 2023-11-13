@@ -6,6 +6,8 @@
                :select (parse-cal-path))
   :re-export (
               vcomponent
+              vcomponent?
+              vcomponent-equal?
               set-properties
               properties
               children

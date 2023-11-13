@@ -20,6 +20,8 @@
            children type parent
            add-child
 
+           vcomponent-equal?
+
            remove-property
            prop* prop
            extract extract*
@@ -95,6 +97,14 @@
   (component-properties
               default: (table) type: table?)
   (parent     default: #f      type: (or false? vcomponent?)))
+
+(define (vcomponent-equal? a b)
+  (and (eqv? (type a) (type b))
+       (= (length (children a)) (length (children b)))
+       (every vcomponent-equal?
+            (sort* (children a) string< (extract 'UID))
+            (sort* (children b) string< (extract 'UID)))
+       (equal? (properties a) (properties b))))
 
 (define prop*
   (case-lambda
