@@ -68,20 +68,22 @@
     (cond ((null? attrs*)          (values '() '()))
           ((even? (length attrs*)) (values attrs* '()))
           (else                    (init+last attrs*))))
+
+  (define (attach-property pair component)
+    (let ((k value (car+cdr pair)))
+      (prop* component k
+             (cond ((vline? value)
+                    (key value k))
+                   ((list-value? value)
+                    (map (lambda (value) (vline key: k vline-value: value))
+                         (list-value-value value)))
+                   (else (vline key: k vline-value: value))))))
+
   ;; TODO add-child requires a UID on the child
   ;; Possibly just genenerate one here if missing
   (fold (swap add-child)
-        (fold (lambda (pair component)
-                (let ((k value (car+cdr pair)))
-                  (prop* component k
-                         (cond ((vline? value)
-                                (key value k))
-                               ((list-value? value)
-                                (map (lambda (value) (vline key: k vline-value: value))
-                                     (list-value-value value)))
-                               (else (vline key: k vline-value: value))))))
-              (vcs-vcomponent
-               type: type)
+        (fold attach-property
+              (vcs-vcomponent type: type)
               (upcase-keys (kvlist->assq attrs)))
         children))
 

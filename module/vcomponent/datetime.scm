@@ -80,8 +80,10 @@ Event must have the DTSTART and DTEND protperty set."
           (date day: 1)
           (datetime))
       ((if (date? (prop e 'DTSTART))
-           date-difference datetime-difference)
-       (prop e 'DTEND) (prop e 'DTSTART))))
+           date-difference
+           datetime-difference)
+       (prop e 'DTEND)
+       (prop e 'DTSTART))))
 
 ;;
 ;; |-----|      extent of event
@@ -147,11 +149,10 @@ Event must have the DTSTART and DTEND protperty set."
 (define (really-long-event? ev)
   (let ((start (prop ev 'DTSTART))
         (end (prop ev 'DTEND)))
-   (if (date? start)
-       (and end (date< (date+ start (date day: 1)) end))
-       (and end
-            (datetime< (datetime day: 1)
-                       (datetime-difference end start))))))
+    (and end (if (date? start)
+                 (date< (date+ start (date day: 1)) end)
+                 (datetime< (datetime day: 1)
+                            (datetime-difference end start))))))
 
 
 ;; DTEND of the last instance of this event.
@@ -311,5 +312,6 @@ Event must have the DTSTART and DTEND protperty set."
                  ])
           )
         (prop (vcomponent type: 'VTIMEZONE) 'TZID zone-name)
-        (filter (relevant-zone-entry? event) (get-zone zoneinfo zone-name))
+        (filter (relevant-zone-entry? event)
+                (get-zone zoneinfo zone-name))
         ))
