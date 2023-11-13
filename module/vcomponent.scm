@@ -12,6 +12,8 @@
               properties
               children
               type
+              extract
+              extract*
               prop
               prop*
               parse-cal-path
