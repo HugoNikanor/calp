@@ -54,9 +54,10 @@
   ;; To combat this I simple create a bunch of dummy groups below.
 
   (cond [(stream-null? good-part)
-         (list->stream
-          (map (lambda (d) (cons d stream-null))
-               (date-range start-date end-date)))]
+         ;; This case is checked, but streams lazy evaluation means that ther are missed.
+         (list->stream                             ; NOCOV
+          (map (lambda (d) (cons d stream-null))        ; NOCOV
+               (date-range start-date end-date)))] ; NOCOV
         [(car (stream-car good-part))
          (lambda (d) (date< start-date d))
          => (lambda (d)
