@@ -111,7 +111,7 @@
   (link-name   type: string? keyword: name)
   (link-target type: string? keyword: target))
 
-(define-type (zoneinfo)                 ; EXPORTED
+(define-type (zoneinfo)                 ; EXPORTED?
   (zoneinfo-rules type: hash-table? keyword: rules)             ; (map symbol? (list <rule>)
   (zoneinfo-zones type: hash-table? keyword: zones)             ; (map string? (list <zone-entry>))
   )

@@ -121,6 +121,7 @@
   (modify parent* vcomponent-children
           (lambda (table)
             (let ((child
+                   ;; TODO is this the correct place to generate UIDs?
                    (if (prop child 'UID)
                        child
                        (prop child 'UID (uuid)))))
