@@ -189,5 +189,5 @@ zoneinfo database, but is currently broken.</p>")
       ;; and prints them.
       (map (lambda (it)
              (with-output-to-port (current-error-port)
-               (lambda () ((@ (vcomponent util describe) describe) it))))
+               (lambda () (write it))))
            (filter-stack (@ (vcomponent) vcomponent?) (make-stack #t))))))
