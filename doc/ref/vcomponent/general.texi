@@ -67,6 +67,9 @@ Key a list of all parameters
 
 @defun children vcomponent
 Returns all direct children of vcomponent, as a list of vcomponents.
+
+Note that this list isn't ordered, and may change from run to run (or
+any other time).
 @end defun
 
 @deffn {Slot} parent vcomonent
