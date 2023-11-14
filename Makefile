@@ -102,7 +102,7 @@ install: all calp-release
 
 unit-test-deps: calp $(GO_UNIT_TESTS) $(GO_FILES) $(TEST_FILES)
 
-THREADS = $(shell ./cpucount)
+THREADS = $(shell echo $$(( $(shell ./cpucount) / 2 )))
 
 # TODO (current-processor-count)
 $(COV_FILE): cpucount unit-test-deps
