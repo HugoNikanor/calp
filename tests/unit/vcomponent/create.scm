@@ -2,6 +2,7 @@
   :use-module ((srfi srfi-1) :select (every))
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
+  :use-module ((hnh util) :select (-> sort*))
   :use-module ((vcomponent base) :select (vcomponent?))
   :use-module ((vcomponent create)
                :select (vcomponent
@@ -18,6 +19,7 @@
                         properties
                         type
                         prop prop*
+                        extract
                         param
                         vline?)))
 
@@ -55,6 +57,20 @@
     (test-equal 1 (length (children ev)))
     ; (test-eq child (car (children ev)))
     ))
+
+(test-group "Component with multiple children"
+  (let ((cal
+         (vcalendar
+          calscale: "GREGORIAN"
+          (list
+           (vevent summary: "Child 1")
+           (vevent summary: "Child 2")))))
+    (test-equal 2 (length (children cal)))
+    (test-equal "GREGORIAN" (-> cal (prop 'CALSCALE)))
+    (let ((ch (sort* (children cal)
+                     string<? (extract 'SUMMARY))))
+      (test-equal "Child 1" (-> ch (list-ref 0) (prop 'SUMMARY)))
+      (test-equal "Child 2" (-> ch (list-ref 1) (prop 'SUMMARY))))))
 
 (test-group "Component with no children, where last elements value is a list"
   (let ((ev (vcomponent 'TEST prop: (list 1 2 3))))
