@@ -87,6 +87,11 @@
   "a0dc01c5bf4d2202d6f024e882abafebfb243d09d26fcf0e70008084bbd9c2f3"
   2)
 
+ ;; with-mutex is pretty much impossible to test
+ ("module/hnh/util/atomic.scm"
+  "c81f950ccc84e33b4382f9a69f75092da0db268e946835f1950da7d7b8fb41d1"
+  2)
+
 
  ;; Only defines configuration parametrs, nothing to test
 
