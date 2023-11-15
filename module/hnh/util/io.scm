@@ -1,23 +1,12 @@
 (define-module (hnh util io)
   :use-module ((hnh util) :select (begin1))
   :use-module ((ice-9 rdelim) :select (read-line))
-  :export (open-input-port
-           open-output-port
-           read-lines
+  :export (read-lines
            with-atomic-output-to-file
            call-with-tmpfile
            displayln
            ->port))
 
-(define (open-input-port str)
-  (if (string=? "-" str)
-      (current-input-port)
-      (open-input-file str)))
-
-(define (open-output-port str)
-  (if (string=? "-" str)
-      (current-output-port)
-      (open-output-file str)))
 
 
 (define (read-lines port)
