@@ -37,19 +37,6 @@
   16 17 18 19 ; primitive sha256 procedure
   )
 
- ("module/datetime/zic.scm"
-  "2a8ac0fae3c88227b05a5978bff3e114745ea146e07a2751df67d16c1e8218f5"
-  66 ; syntax-rules
-  )
-
-
- ("module/hnh/util.scm"
-  "3f0bf90a45d6eecce1248b7509e1b050e5cadbe92b279fe5ef082c18baf3e6ca"
-  72 73 74 ; conditional import
-  77 ; syntax rules not covered
-  333 568 ; syntax rules
-  )
-
  ("module/calp/translation.scm"
   "b7c0a82e1c109c339cf83438f39b6fc63219b51a3ad3ee35d58e70fb6a24c5c9"
   9 ; bindtextdomain
@@ -59,7 +46,7 @@
 
  ;; this file simply exports other things. There's nothing to test
  ("module/vcomponent.scm"
-  "b1c58b3beb6f170d3c9f7d603b27231ccf696897736113095b446f437721a9e1"
+  "57554836a49c98263f326188a0caa90dfdade5a31ef6e5396c4f4feddb50dfe1"
   2)
 
  ("module/vcomponent/config.scm"
@@ -97,7 +84,7 @@
  ;; only testable by running the tests, which the tests (obviously)
  ;; already do.
  ("module/hnh/test/testrunner.scm"
-  "3d4d0bfb1e47adf99db8590e312e378459a8081bc1993988cfacc5c68c27da22"
+  "a0dc01c5bf4d2202d6f024e882abafebfb243d09d26fcf0e70008084bbd9c2f3"
   2)
 
 

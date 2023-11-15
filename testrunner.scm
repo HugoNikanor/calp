@@ -48,6 +48,8 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
    ;; (and don't really "run")
    "\\(define(-(\\w|-)+)?[*]?\\s"
    "read-hash-extend"
+   ;; Syntax-rules are usually covered, but not always
+   "syntax-rules"
    "; NOCOV[^\"]*$"))
 
 
