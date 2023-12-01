@@ -24,14 +24,23 @@
 (define-syntax-rule (symbol< args ...)
   (string< (symbol->string args) ...))
 
-(define-type (tree-node)
+(define-type (tree-node
+              printer: (lambda (t p)
+                         (write
+                          `(-> (table)
+                               ,@(fold (lambda (p done)
+                                         (cons `(table-put ,(car p) ,(cdr p))
+                                               done))
+                                       '()
+                                       (tree->list t)))
+                          p)))
   (key type: symbol?)
   value
   (left type: tree? default: (tree-terminal))
   (right type: tree? default: (tree-terminal)))
 
 ;; Type tagged null
-(define-type (tree-terminal))
+(define-type (tree-terminal printer: (lambda (_ p) (write '(table) p))))
 
 ;; Wrapped for better error messages
 (define (make-tree) (tree-terminal))
