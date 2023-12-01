@@ -8,6 +8,7 @@
   :use-module (hnh util lens)
   :use-module (hnh util table)
   :use-module (hnh util uuid)
+  :use-module ((hnh util exceptions) :select (unreachable))
   :export (vline
            vline?
            vline-value
@@ -58,12 +59,17 @@
 ;;; emit something which allows the serialized vcomponent to be
 ;;; fed back into the parser to get the object back.
 (define (print-vline v p)
-  (format p "#<<vline> key: ~s value: ~s parameters: ~s>"
-          (key v)
-          (vline-value v)
-          #f
-          ;; (hash-map->list list (get-vline-parameters v))
-          ))
+  ((@ (ice-9 pretty-print) pretty-print)
+   `(vline key: ,(key v)
+           vline-value: ,(vline-value v)
+           ,@(let ((params (table->list (vline-parameters v))))
+               (if (null? params)
+                   '()
+                   `(vline-parameters:
+                     ,(concatenate (for (key . value) in params
+                                        `(,(symbol->keyword key)
+                                          ,value)))))))
+   p))
 
 (define-type (vline printer: print-vline)
   ;; TODO why does vline contain its own key?
@@ -71,6 +77,17 @@
   (vline-value)
   (vline-parameters default: (table) type: table?)
   (vline-source default: "" type: string?))
+
+(define (serialize-vline line)
+  (let ((parameters
+         (table->list (vline-parameters line))))
+    (if (null? parameters)
+        (vline-value line)
+        `(with-parameters
+          ,@(concatenate (for (key . value) in parameters
+                              `(,(symbol->keyword key)
+                                ,value)))
+          ,(vline-value line)))))
 
 (define (serialize-vcomponent c)
   (let ((children (table->list (vcomponent-children c))))
@@ -80,7 +97,14 @@
                          (list (-> key symbol->string
                                    string-downcase
                                    string->keyword)
-                               value)))
+                               (cond ((list? value)
+                                      `(as-list (list
+                                                 ,@(map serialize-vline value))))
+                                     ((vline? value) (serialize-vline value))
+                                     (else (unreachable
+                                            "serialize-vcomponent"
+                                            "Expected vline or list of vline, got ~s"
+                                            value))))))
                  ,@(unless (null? children)
                      `((list ,@(map (lambda (child) (serialize-vcomponent child))
                                     (map cdr children))))))))

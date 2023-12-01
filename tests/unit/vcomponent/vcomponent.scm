@@ -89,16 +89,26 @@
              (K2 . "V2"))))))
 
 (test-equal "VLine string representation"
-  "#<<vline> key: KEY value: \"Value\" parameters: #f>"
+  "(vline #:key KEY #:vline-value \"Value\")
+"
+  (with-output-to-string
+    (lambda ()
+      (write (vline key: 'KEY vline-value: "Value") ))))
+
+(test-equal "VLine with parameters representation"
+  "(vline #:key
+       KEY
+       #:vline-value
+       \"Value\"
+       #:vline-parameters
+       (#:a \"1\"))
+"
  (with-output-to-string
    (lambda ()
-     (write (vline key: 'KEY vline-value: "Value") ))))
-
-;; (test-equal "VLine with parameters representation"
-;;   "#<<vline> key: KEY value: \"Value\" parameters: #f>"
-;;  (with-output-to-string
-;;    (lambda ()
-;;      (write (vline key: 'KEY vline-value: "Value") ))))
+     (write (vline key: 'KEY
+                   vline-value: "Value"
+                   vline-parameters:
+                   (alist->table '((a . "1"))))))))
 
 (test-equal "VComponent string representation"
   "(vcomponent
@@ -106,9 +116,12 @@
   (list (vcomponent
           'VEVENT
           #:dtstart
-          #<<vline> key: DTSTART value: #2023-03-01T10:00:00 parameters: #f>
+          (with-parameters
+            #:TZID
+            \"Europe/Stockholm\"
+            #2023-03-01T10:00:00)
           #:uid
-          #<<vline> key: UID value: \"049d9004-cb1e-4c8d-bb54-042689d9808b\" parameters: #f>)))
+          \"049d9004-cb1e-4c8d-bb54-042689d9808b\")))
 "
 
   (with-output-to-string
