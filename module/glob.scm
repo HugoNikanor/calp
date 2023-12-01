@@ -36,7 +36,11 @@
       (unless (zero? globret)
         (scm-error 'misc-error "glob"
                    "Globret errror ~a"
-                   (list globret)
+                   (list
+                    (cond ((= globret GLOB_NOSPACE) 'glob-nospace)
+                          ((= globret GLOB_ABORTED) 'glob-noabport)
+                          ((= globret GLOB_NOMATCH) 'glob-nomatch)
+                          (else globret)))
                    #f))
       (let* ((globstr (parse-c-struct (bytevector->pointer bv) (list size_t '* size_t)))
              (strvec (pointer->bytevector (cadr globstr) (car globstr) 0
