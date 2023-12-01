@@ -78,6 +78,13 @@
   (vline-parameters default: (table) type: table?)
   (vline-source default: "" type: string?))
 
+(define (vline-equal? a b)
+  (and (eq? (key a) (key b))
+       (equal? (vline-value a)
+               (vline-value b))
+       (equal? (table->list (vline-parameters a))
+               (table->list (vline-parameters b)))))
+
 (define (serialize-vline line)
   (let ((parameters
          (table->list (vline-parameters line))))
@@ -128,7 +135,19 @@
        (every vcomponent-equal?
             (sort* (children a) string< (extract 'UID))
             (sort* (children b) string< (extract 'UID)))
-       (equal? (properties a) (properties b))))
+       (every (lambda (a b)
+                (and (eq? (car a) (car b))
+                     (cond ((and (list? (cadr a))
+                                 (list? (cadr b)))
+                            (every vline-equal?
+                                   (cadr a)
+                                   (cadr b)))
+                           ((and (not (list? (cadr a)))
+                                 (not (list? (cadr b))))
+                            (vline-equal? (cadr a)
+                                          (cadr b)))
+                           (else #f))))
+              (properties a) (properties b))))
 
 (define prop*
   (case-lambda
