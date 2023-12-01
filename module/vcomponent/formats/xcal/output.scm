@@ -111,7 +111,7 @@
               (match-lambda
                 [(? (compose internal-field? car)) #f]
 
-                [(key vlines ...)
+                [(key (vlines ...))
                  (remove null?
                          `(,(xml xcal (downcase-symbol key))
                            ,(parameters-tag (reduce assq-merge
@@ -120,7 +120,7 @@
                            ,@(for vline in vlines
                                   (vline->value-tag vline))))]
 
-                [(key . vline)
+                [(key vline)
                  (remove null?
                          `(,(xml xcal (downcase-symbol key))
                            ,(parameters-tag (parameters vline))

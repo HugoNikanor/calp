@@ -4,9 +4,7 @@
   :use-module ((vcomponent formats ical parse)
                :select (parse-calendar))
   :export (serialize
-           deserialize
-           )
-   )
+           deserialize))
 
 
 (define (serialize component port)

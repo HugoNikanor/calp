@@ -103,7 +103,7 @@ Curried version of @var{prop}.
 
 @defun properties comopnent
 @example
-((key . value) ...)
+((key value) ...)
 @end example
 @end defun
 
