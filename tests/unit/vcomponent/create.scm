@@ -1,9 +1,12 @@
 (define-module (test create)
   :use-module ((srfi srfi-1) :select (every))
   :use-module (srfi srfi-64)
+  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((hnh util) :select (-> sort*))
+  :use-module ((hnh util table) :select (alist->table))
   :use-module ((vcomponent base) :select (vcomponent?))
+  :use-module (vcomponent)
   :use-module ((vcomponent create)
                :select (vcomponent
                         with-parameters
@@ -91,7 +94,48 @@
     (test-equal 3 (length (prop* ev 'PROP)))
     (test-assert (every vline? (prop* ev 'PROP)))))
 
-;; (test-group "Parameters and lists" )
+(test-group "List and parameters"
+  (let ((ev
+         (vevent
+          prop: (as-list
+                 (list
+                  "One"
+                  (with-parameters lang: "sv" "Två")
+                  (with-parameters numeric: "3" "Three"))))))
+    (test-equal 3 (length (prop* ev 'PROP)))
+    (test-equal '("One" "Två" "Three") (prop ev 'PROP))
+    (test-assert (every vline? (prop* ev 'PROP)))
+    (test-equal (list (vline key: 'PROP
+                             vline-value: "One")
+                      (vline key: 'PROP
+                             vline-value: "Två"
+                             vline-parameters:
+                             (alist->table '((LANG . "sv"))))
+                      (vline key: 'PROP
+                             vline-value: "Three"
+                             vline-parameters:
+                             (alist->table '((NUMERIC . "3")))))
+      (prop* ev 'PROP))))
+
+
+(test-error "Fail on nested with-parameters"
+  'wrong-type-arg
+  (vevent prop: (with-parameters a: "1"
+                                 (with-parameters b: "2"
+                                                  "3"))))
+
+(test-group "An empty as-list is effectively the same as not having the property"
+  (let ((ev (vevent prop: (as-list '()))))
+    (test-equal '() (properties ev))))
+
+(test-error "Fail on nested as-list"
+  'wrong-type-arg
+  (vevent prop: (as-list (list (as-list '())))))
+
+(test-error "Fail on as-list inside with-parameters"
+  'wrong-type-arg
+  (vevent prop: (with-parameters a: "1"
+                                 (as-list '()))))
 
 
 (test-assert (vcomponent? (vcalendar)))
