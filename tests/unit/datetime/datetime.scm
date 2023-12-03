@@ -467,13 +467,27 @@
 
 (test-group "Date streams"
   (test-equal "Day stream"
-    (list (date year: 2020 month: 01 day: 01) (date year: 2020 month: 01 day: 02) (date year: 2020 month: 01 day: 03) (date year: 2020 month: 01 day: 04) (date year: 2020 month: 01 day: 05))
+    (list (date year: 2020 month: 01 day: 01)
+          (date year: 2020 month: 01 day: 02)
+          (date year: 2020 month: 01 day: 03)
+          (date year: 2020 month: 01 day: 04)
+          (date year: 2020 month: 01 day: 05))
     (stream->list 5 (day-stream (date year: 2020 month: 01 day: 01))))
-  (test-equal "Week stream"
-    (list (date year: 2020 month: 01 day: 01) (date year: 2020 month: 02 day: 01) (date year: 2020 month: 03 day: 01) (date year: 2020 month: 04 day: 01) (date year: 2020 month: 05 day: 01))
-    (stream->list 5 (month-stream (date year: 2020 month: 01 day: 01))))
+
   (test-equal "Month stream"
-    (list (date year: 2020 month: 01 day: 01) (date year: 2020 month: 01 day: 08) (date year: 2020 month: 01 day: 15) (date year: 2020 month: 01 day: 22) (date year: 2020 month: 01 day: 29))
+    (list (date year: 2020 month: 01 day: 01)
+          (date year: 2020 month: 02 day: 01)
+          (date year: 2020 month: 03 day: 01)
+          (date year: 2020 month: 04 day: 01)
+          (date year: 2020 month: 05 day: 01))
+    (stream->list 5 (month-stream (date year: 2020 month: 01 day: 01))))
+
+  (test-equal "Week stream"
+    (list (date year: 2020 month: 01 day: 01)
+          (date year: 2020 month: 01 day: 08)
+          (date year: 2020 month: 01 day: 15)
+          (date year: 2020 month: 01 day: 22)
+          (date year: 2020 month: 01 day: 29))
     (stream->list 5 (week-stream (date year: 2020 month: 01 day: 01)))))
 
 ;; See time< tests for more context
@@ -917,7 +931,9 @@ date/-time> date/-time>? date/-time>= date/-time>=?
       (test-equal "Date+Month overflow" (date year: 2023 month: 01 day: 01) (date+ (date year: 2022 month: 12 day: 31) (date day: 1))))
 
     ;; NOTE
-    (test-equal (date year: 2020 month: 02 day: 31) (date+ (date year: 2020 month: 01 day: 31) (date month: 1)))
+    (test-equal "Undefined overflow"
+      (date year: 2020 month: 02 day: 31)
+      (date+ (date year: 2020 month: 01 day: 31) (date month: 1)))
     )
 
   (test-group "Time"
