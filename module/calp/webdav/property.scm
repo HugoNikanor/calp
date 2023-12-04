@@ -9,10 +9,10 @@
   :use-module (hnh util object)
   :use-module (calp namespaces)
   :export (propstat?
-           propstat-status-code
-           propstat-property
-           propstat-error
-           propstat-response-description
+           propstat-status-code          propstat-status-code*
+           propstat-property             propstat-property*
+           propstat-error                propstat-error*
+           propstat-response-description propstat-response-description*
 
            propstat
 

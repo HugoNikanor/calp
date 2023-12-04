@@ -112,11 +112,35 @@
                                   (datum->syntax stx))))
        #'(name name-get name-set)))))
 
+;;; Name of the created accessor
+(define (accessor-name field)
+  (syntax-case field ()
+    ((name kvs ...)
+     (cond ((kv-ref #'(kvs ...) accessor:)
+            => identity)
+           (else #'name)))
+    (name #'name)))
+
+;;; Name of the created lens
+(define (lens-name field)
+  (syntax-case field ()
+    ((name kvs ...)
+     (cond ((kv-ref #'(kvs ...) lens:)
+            => identity)
+           (else (->> (syntax->datum #'name)
+                      (format #f "~a*")
+                      string->symbol
+                      (datum->syntax field)))))
+    (name (->> (syntax->datum #'name)
+               (format #f "~a*")
+               string->symbol
+               (datum->syntax field)))))
+
 ;; Accessors are procedures for getting and setting fields in records
 (define-syntax (build-accessor stx)
   (syntax-case stx ()
     ((_ type-name (name kvs ...))
-     #'(define name
+     #`(define #,(accessor-name #'(name kvs ...))
          (case-lambda ((datum)
                        ((field-get type-name name) datum))
                       ((datum new-value)
@@ -126,8 +150,21 @@
                        ;; while keeping name bound to the accessor in the outer scope.
                        (let ((name new-value))
                          (validator name (name kvs ...)))
+
                        ((field-set type-name name) datum new-value)))))
+
     ((_ type-name name) #'(build-accessor type-name (name)))))
+
+
+(define (build-lenses stx fields)
+  (map (lambda (field)
+         (with-syntax ((lens* (lens-name field))
+                       (accessor (accessor-name field)))
+           #'(define (lens* object)
+               (lambda (op)
+                 (accessor object
+                  (op (accessor object)))))))
+       fields))
 
 
 (define (syntax-name field)
@@ -186,6 +223,8 @@
 
              ;; Field accessors
              (build-accessor name field) ...
+
+             #,@(build-lenses stx #'(field ...))
 
              ;; if printer in attribute
              #,@(cond ((kv-ref #'(attribute ...) printer:)

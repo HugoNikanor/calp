@@ -89,6 +89,26 @@ symbol, and @emph{not} a keyword object.
 @end example
 @end deffn
 
+@deffn {Field Parameter} #:accessor name
+Explicit name for the accessor of this field. Will otherwise use the
+fields name.
+
+Each accessor is a procedure which either
+@itemize
+@item retrives the field from the record (if one argument was given), or
+@item returns a new record with that field replaced (if two arguments
+where given).
+@end itemize
+
+@end deffn
+
+@deffn {Field Parameter} #:lens name
+Explicit name for the lens
+@c TODO link to lens documentation
+focusing this field. Will use the fields
+name, with a star (``*'') appended by if unset..
+@end deffn
+
 Each type introduces a number of bindings, which are@footnote{
 @var{<name>} here refers to the name of the type
 }:
@@ -103,13 +123,5 @@ Type predicate.
 @end defun
 
 And for each field @var{<field>}:
-
-@defun @var{<field>} object [value]
-Accessor for the given filed.
-Returns the current value if called with only an object, and returns a
-new object with @var{field} set to @var{value} if called with two values.
-
-The updating version checks the type if #:type was given on creation.
-@end defun
 
 @end defmac

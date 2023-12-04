@@ -3,7 +3,6 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module ((hnh util) :select (when unless group ->))
-  :use-module ((hnh util lens) :select (modify))
   :use-module ((hnh util io) :select (displayln))
   :use-module (hnh util type)
   :use-module (ice-9 format)

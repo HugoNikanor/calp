@@ -1,106 +1,82 @@
 (define-module (hnh util lens)
   :use-module (srfi srfi-1)
+  :use-module (ice-9 control)
+  :use-module (ice-9 curried-definitions)
   :export (modify
-           modify*
            set
            get
 
            identity-lens
-           compose-lenses
+           compose-lens
            lens-compose
 
+           focus-matching
+           traversed
+
            ref car* cdr*
-
-           each))
-
-
-(define (modify object lens f . args)
-  (lens object (apply f (lens object) args)))
-
-(define-syntax modify*
-  (syntax-rules ()
-    ((_ object f) (f object))
-    ((_ object lens rest ...)
-     (modify object lens
-             (lambda (object*) (modify* object* rest ...))))))
-
-;; The simple case of getting and setting when you already have the lens is trivial
-;; (lens object)
-;; (lens object new-value)
-
-(define-syntax set
-  (syntax-rules ()
-    ((_ object lenses ... value)
-     (modify* object lenses ... (const value)))))
-
-(define-syntax get
-  (syntax-rules ()
-    ((_ object) object)
-    ((_ object f lenses ...)
-     (get (f object) lenses ...))))
-
-
+           ))
 
 
-(define-syntax build-lens
-  (syntax-rules ()
-    ((_ (getter gargs ...)
-        (setter sargs ...))
-     ;; (make-lens (lambda (datum) (getter datum gargs ...))
-     ;;            (lambda (datum new-value) (setter datum sargs ... new-value)))
-     (case-lambda ((datum)
-                   (getter datum gargs ...))
-                  ((datum new-value)
-                   (setter datum sargs ... new-value))))
-    ((_ (getter args ...) setter)
-     (build-accesor (getter args ...) (setter)))
-    ((_ getter (setter args ...))
-     (build-lens (getter) (setter args ...)))
-    ((_ getter setter)
-     (build-lens (getter) (setter)))))
+(define ((car* lst) f)
+  (cons (f (car lst))                   ; ← focus
+        (cdr lst)))
+
+(define ((cdr* lst) f)
+  (cons (car lst)
+        (f (cdr lst))))
+
+(define (((ref idx) list) f)
+  (let loop ((idx idx) (rem list))
+    (if (zero? idx)
+        (cons (f (car rem))
+              (cdr rem))
+        (cons (car rem)
+              (loop (1- idx)
+                    (cdr rem))))))
+
+(define (((focus-matching predicate) list) f)
+  (map (lambda (x)
+         (if (predicate x)
+             (f x)
+             x))
+       list))
 
 
-
+;;; Lens l i :: l i → (i → i) → l i
 
-(define identity-lens
-  (case-lambda ((a) a)
-               ((_ a) a)))
+;;; modify :: (l i, Lens l i, (i → i)) → l i
+(define (modify container lens f)
+  ((lens container) f))
 
-(define (compose-lenses% f g)
-  (build-lens (get f g) (set f g)))
+;;; set :: (l i, Lens l i, i) → l i
+(define (set container lens value)
+  (modify container lens (const value)))
 
-(define (compose-lenses . fs)
-  (reduce-right compose-lenses% identity-lens fs))
+;;; get :: (l i, Lens l i) → i
+(define (get container lens)
+  (call/ec (lambda (return)
+             (modify container lens return))))
 
-(define lens-compose compose-lenses)
-
-
-
-(define (list-change list index value)
-  (cond ((zero? index)
-         (cons value (cdr list)))
-        ((null? list)
-         (scm-error 'out-of-range "list-change" "" #f #f))
-        (else
-         (cons (car list)
-               (list-change (cdr list)
-                            (1- index)
-                            value)))))
+(define (traversed container lens)
+  (define v '())
+  ((lens container) (lambda (x) (set! v (cons x v))))
+  v)
 
 
+(define lens-compose
+  (case-lambda
+    ((lens)
+     (lambda (object)
+       (lambda (operator)
+         (modify object lens operator))))
+    ((lens . lenses)
+     (lambda (object)
+       (lambda (operator)
+         (modify object lens
+                 (lambda (focus) (((apply lens-compose lenses) focus) operator))))))))
 
-(define (ref idx)
-  (build-lens (list-ref idx) (list-change idx)))
+(define compose-lens lens-compose)
 
 
-(define car*
-  (case-lambda ((pair) (car pair))
-               ((pair value) (cons value (cdr pair)))))
-
-(define cdr*
-  (case-lambda ((pair) (cdr pair))
-               ((pair value) (cons (car pair) value))))
-
-(define (each obj lens proc)
-  (modify obj lens
-          (lambda (lst) (map proc lst))))
+(define ((identity-lens object) op)
+  (op object))

@@ -49,12 +49,33 @@
   (or (tree-node? x)
       (tree-terminal? x)))
 
+;;; A lens
+;;; This function (tree-focus)
+;;; returns a function (f),
+;;; which takes a function (g).
+;;;
+;;; g will be given the focused value in the tree, and should return
+;;; the new value for that node
+;;;
+;;; f takes such a modifier function, and returns a new tree identical
+;;; to the old tree, but with the value of that node changed
+(define (tree-focus tree k)
+  (lambda (op)
+    (cond ((tree-terminal? tree) ;; new node
+           (tree-node key: k value: (op 'not-a-value)))
+          ((eq? k (key tree)) ;; this node
+           (value tree (op (value truee))))
+          (else
+           (if (symbol<? k (key tree))
+               (lens-compose left* (tree-focus (left tree) k))
+               (lens-compose right* (tree-focus (right tree k))))))))
+
 (define (tree-put tree k v)
   (cond ((tree-terminal? tree) (tree-node key: k value: v))
         ((eq? k (key tree)) (value tree v))
         (else
-         (modify tree (if (symbol<? k (key tree)) left right)
-                 tree-put k v))))
+         (modify tree (if (symbol<? k (key tree)) left* right*)
+                 (lambda (branch) (tree-put branch k v))))))
 
 (define* (tree-get tree k optional: default)
   (cond ((tree-terminal? tree) default)

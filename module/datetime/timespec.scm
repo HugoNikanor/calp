@@ -58,8 +58,8 @@
              ;; + +
              [(eq? (timespec-sign done)
                    (timespec-sign spec))
-              (modify done timespec-time
-                      time+ (timespec-time spec))]
+              (modify done timespec-time*
+                      (lambda (t) (time+ t (timespec-time spec))))]
              ;; - +
              [(and (eq? '- (timespec-sign done))
                    (eq? '+ (timespec-sign spec)))

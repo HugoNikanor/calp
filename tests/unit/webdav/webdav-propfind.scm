@@ -21,7 +21,7 @@
   (map
    (lambda (pr)
      (typecheck pr propstat?)
-     (modify pr propstat-property
+     (modify pr propstat-property*
              (lambda (it)
               (sort* it
                      string< (compose symbol->string xml-element-tagname car)))))

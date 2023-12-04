@@ -3,69 +3,58 @@
 
 Provided by the module @code{(hnh util lens)}
 
-A lens system for Scheme. All these procedures are pure. In general,
-procedures fetching values from objects return that value, while
-procedures ``setting'' or ``mutating'' objects returns a new instance
-of the object, with the field in question replaced.
+A lens system for Scheme.
 
-Lenses aren't a special type, but rather procedures which return a
-value when called with one argument, and produce a new container with
-an updated value when called with two arguments.
+@subsection Overview
 
-For example, the lens to focus the first element of a pair is
-implemented as:
+@subsection Using Lenses
 
-@lisp
-(define car*
-  (case-lambda ((pair) (car pair))
-               ((pair value) (cons value (cdr pair)))))
-@end lisp
+@defun modify container lens f
+Returns a new object, with the value focused by @var{lens} replaced by
+the result of calling @var{f}, with the old value, and the extra
+arguments given.
+@end defun
 
-@defun compose-lenses lenses ...
-@defunx lens-compose lenses ...
+@defun set container lens value
+Like modify, but sets a fixed value.
+@end defun
+
+@defun get container lens
+Get the value focused by lens. Only a single value can me focused.
+@end defun
+
+@defun traversed container lens
+Similar to @code{get}, but returns a list of all focused elements.
+
+Note that this ``runs'' the lens for each elemement, (where ``modify''
+doesn't). So use with caution.
+@end defun
+
+@defun lens-compose lenses ...
+@defunx compose-lens lenses ...
 Creates a new lens, which is the compound from all the given lenses.
 
 Lenses composes left to right, so earlier lenses in @var{lenses} are
 applied earlier.
 @end defun
 
-@defmac get object lenses ...
-Do a deep lookup. Lenses are composed as per @code{compose-lenses}.
-@end defmac
+@subsection Built in Lenses
 
-@defmac set object lenses ... value
-Do a deep update of a field, and return a new object with the focused
-element replaced. Lenses are composed as per @code{compose-lenses}.
-@end defmac
+@deffn {Lens} car*
+@deffnx {Lens} cdr*
+Focuses the first or second element of a pair.
+@end deffn
 
-@defun modify object lens f args ...
-Returns a new object, with the value focused by @var{lens} replaced by
-the result of calling @var{f}, with the old value, and the extra
-arguments given.
-@end defun
+@deffn {Lens} ref idx
+Focuses the element at index @var{idx} in a list.
+@end deffn
 
-@defmac modify* object lens ... f
-Like @code{modify}, but auto compose lenses, and don't allow extra
-arguments to @var{f}.
-@end defmac
-
-@defmac build-lens getter setter
-Where any of getter or setter can either be a single symbol, or a list.
-@end defmac
-
-@deftp {Scheme Lens} identity-lens
+@deffn {Lens} identity-lens
 A lens focusing the given object. Showing the value returns the root
 value, and setting the value just returns the new value.
-@end deftp
+@end deffn
 
-@deftp {Scheme Lens} ref idx
-Focuses the element at index @var{idx} in a list.
-@end deftp
-
-@deftp {Scheme Lens} car*
-@deftpx {Scheme Lens} cdr*
-Focuses the first or second element of a pair.
-@end deftp
-
-@defun each object lens proc
-@end defun
+@deffn {Lens} focus-matching predicate
+A lens focusing each element of a list where @var{predicate} returns
+true. This may be multiple elements.
+@end deffn

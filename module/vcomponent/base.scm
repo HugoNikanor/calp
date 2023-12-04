@@ -161,7 +161,7 @@
   (map cdr (table->list (vcomponent-children c))))
 
 (define (add-child parent* child)
-  (modify parent* vcomponent-children
+  (modify parent* vcomponent-children*
           (lambda (table)
             (let ((child
                    ;; TODO is this the correct place to generate UIDs?

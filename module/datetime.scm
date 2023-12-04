@@ -29,10 +29,12 @@
   :export (date
            date?
            year month day
+           year* month* day*
 
            time
            time?
            hour minute second
+           hour* minute* second*
 
            datetime
            datetime?
@@ -40,7 +42,8 @@
            ;; get-timezone
            datetime-date
            datetime-time
-           tz
+           date* time*
+           tz tz*
 
            date-zero?
            time-zero?
@@ -204,8 +207,8 @@
                              (write (datetime->sexp r) p) ; NOCOV
                              (display (datetime->string r "#~1T~3~Z") p))))
 
-  (datetime-date type: date?)
-  (datetime-time type: time?)
+  (datetime-date type: date? lens: date*)
+  (datetime-time type: time? lens: time*)
   tz)
 
 
@@ -780,13 +783,13 @@ Returns -1 on failure"
                                 (case (string-ref (match:substring m 1) 0)
                                   ((#\a #\A)
                                    (lambda (dt)
-                                     (modify* dt datetime-time hour
-                                              (lambda (x) (if (= x 12) 0 x)))))
+                                     (modify dt (lens-compose time* hour*)
+                                             (lambda (x) (if (= x 12) 0 x)))))
                                   ((#\p #\P)
                                    (lambda (dt)
-                                     (modify* dt datetime-time hour
-                                              (lambda (x) (if (= x 12)
-                                                         x (+ x 12))))))))
+                                     (modify dt (lens-compose time* hour*)
+                                             (lambda (x) (if (= x 12)
+                                                        x (+ x 12))))))))
                           ))
                     ;; fail here?
                     (else (loop str (cddr fmt) dt)))
@@ -804,7 +807,7 @@ Returns -1 on failure"
                             ((next-char rest ...) (span (lambda (c) (not (eqv? c next-char))) str)))))
                 (loop post
                       (cddr fmt)
-                      (set dt datetime-date month
+                      (set dt (lens-compose date* month*)
                            (parse-month (list->string head) locale))))]
              [(#\H #\M #\S #\m #\d)
               ;; This captures both the possibility of a date with a single digit,
@@ -817,11 +820,11 @@ Returns -1 on failure"
                  (cddr fmt)
                  (let ((lens
                         (case (cadr fmt)
-                          [(#\H) (lens-compose datetime-time hour)]
-                          [(#\M) (lens-compose datetime-time minute)]
-                          [(#\S) (lens-compose datetime-time second)]
-                          [(#\m) (lens-compose datetime-date month)]
-                          [(#\d) (lens-compose datetime-date day)])))
+                          [(#\H) (lens-compose time* hour*)]
+                          [(#\M) (lens-compose time* minute*)]
+                          [(#\S) (lens-compose time* second*)]
+                          [(#\m) (lens-compose date* month*)]
+                          [(#\d) (lens-compose date* day*)])))
                    (set dt lens num))))]
 
              [(#\Y)
@@ -830,7 +833,7 @@ Returns -1 on failure"
                 (loop
                  post
                  (cddr fmt)
-                 (set dt datetime-date year num)))]
+                 (set dt (lens-compose date* year*) num)))]
 
              [else (err "Unimplemented or incorrect parse token ~S" str)])]
           [else
@@ -1090,15 +1093,17 @@ Returns -1 on failure"
                   (day change 0))
           ;; Date (and possibly year) overflow
           (loop (if (= 12 (month target))
-                    (-> (modify target year 1+)
+                    (-> (modify target year* 1+)
                         (month 1)
                         (day 1))
-                    (-> (modify target month 1+)
+                    (-> (modify target month* 1+)
                         (day 1)))
-                (modify change day -
-                        (- (day target))
-                        (days-in-month target)
-                        1)))))
+                ;; How did this ever work‽
+                (modify change day*
+                        (lambda (d) (- d
+                                  (- (day target))
+                                  (days-in-month target)
+                                  1)))))))
 
   (define-values (month-fixed change**)
     (if (date-zero? change*)
@@ -1106,12 +1111,12 @@ Returns -1 on failure"
      (let loop ((target days-fixed) (change change*))
        (if (< 12 (+ (month change) (month target)))
            ;; if we overflow into the next year
-           (loop (-> (modify target year 1+)
+           (loop (-> (modify target year* 1+)
                      (month 1))
-                 (modify change month
-                         + (month target) -13))
+                 (modify change month*
+                         (lambda (d) (+ d (month target) -13))))
            ;; if we don't overflow our date
-           (values (modify target month + (month change))
+           (values (modify target month* (lambda (d) (+ d (month change))))
                    (month change 0))
 
            ))))
@@ -1147,30 +1152,30 @@ Returns -1 on failure"
   (define-values (days-fixed change*)
     (let loop ((target base) (change change))
       (if (>= (day change) (day target))
-          (let ((new-change (modify change day - (day target))))
+          (let ((new-change (modify change day* (lambda (d) (- d (day target))))))
             (loop (if (= 1 (month target))
-                      (-> (modify target year 1-)
+                      (-> (modify target year* 1-)
                           (month 12)
                           (day 31)              ; days in december
                           )
-                      (let ((nm (modify target month 1-)))
+                      (let ((nm (modify target month* 1-)))
                         (day nm (days-in-month nm))))
                   new-change))
-          (values (modify target day - (day change))
+          (values (modify target day* (lambda (d) (- d (day change))))
                   (day change 0)))))
 
   (define-values (month-fixed change**)
     (let loop ((target days-fixed) (change change*))
       (if (>= (month change) (month target))
-          (loop (-> (modify target year 1-)
+          (loop (-> (modify target year* 1-)
                     (month 12))
-                (modify change month - (month target)))
-          (values (modify target month - (month change))
+                (modify change month* (lambda (d) (- d (month target)))))
+          (values (modify target month* (lambda (d) (- d (month change))))
                   (month change 0)))))
 
   ;; change** should here should have both month and date = 0
 
-  (modify month-fixed year - (year change**)))
+  (modify month-fixed year* (lambda (d) (- d (year change**)))))
 
 (define (date-% change base)
 
@@ -1204,24 +1209,24 @@ Returns -1 on failure"
   ;; while (day base) > (days-in-month base)
   ;;     month++; days -= (days-in-month base)
   (define second-fixed
-    (let loop ((target (modify base second + (second change))))
+    (let loop ((target (modify base second* (lambda (d) (+ d (second change))))))
       (if (>= (second target) 60)
           (loop (-> target
-                    (modify minute 1+)
-                    (modify second - 60)))
+                    (modify minute* 1+)
+                    (modify second* (lambda (d) (- d 60)))))
           target)))
 
   ;; while (month base) > 12
   ;;     year++; month -= 12
   (define minute-fixed
-    (let loop ((target (modify second-fixed minute + (minute change))))
+    (let loop ((target (modify second-fixed minute* (lambda (d) (+ d (minute change))))))
       (if (>= (minute target) 60)
           (loop (-> target
-                    (modify hour 1+)
-                    (modify minute - 60)))
+                    (modify hour* 1+)
+                    (modify minute* (lambda (d) (- d 60)))))
           target)))
 
-  (define hour-almost-fixed (modify minute-fixed hour + (hour change)))
+  (define hour-almost-fixed (modify minute-fixed hour* (lambda (d) (+ d (hour change)))))
 
   (if (<= 24 (hour hour-almost-fixed))
       (let ((div remainder (floor/ (hour hour-almost-fixed) 24)))
@@ -1245,23 +1250,23 @@ Returns -1 on failure"
   (define-values (second-fixed change*)
     (let loop ((target base) (change change))
       (if (> (second change) (second target))
-          (loop (-> (modify target minute 1-)
+          (loop (-> (modify target minute* 1-)
                     (second 60))
-                (modify change second - (second target)))
-          (values (modify target second - (second change))
+                (modify change second* (lambda (d) (- d (second target)))))
+          (values (modify target second* (lambda (d) (- d (second change))))
                   (second change 0)))))
 
   (define-values (minute-fixed change**)
     (let loop ((target second-fixed) (change change*))
       (if (> (minute change) (minute target))
-          (loop (-> (modify target hour 1-)
+          (loop (-> (modify target hour* 1-)
                     (minute 60))
-                (modify change minute - (minute target)))
-          (values (modify target minute - (minute change))
+                (modify change minute* (lambda (d) (- d (minute target)))))
+          (values (modify target minute* (lambda (d) (- d (minute change))))
                   (minute change 0)))))
 
   (if (>= (hour minute-fixed) (hour change**))
-      (values (modify minute-fixed hour - (hour change**)) 0)
+      (values (modify minute-fixed hour* (lambda (d) (- d (hour change**)))) 0)
       (let ((diff (- (hour minute-fixed)
                      (hour change**))))
         (values (hour minute-fixed (modulo diff 24))
@@ -1287,17 +1292,19 @@ Returns -1 on failure"
 (define (datetime+ base change)
   (let ((time* overflow (time+ (datetime-time base) (datetime-time change))))
     (-> base
-        (modify datetime-date date+
-                (datetime-date change)
-                (date day: overflow))
+        (modify date*
+                (lambda (d) (date+ d
+                              (datetime-date change)
+                              (date day: overflow))))
         (datetime-time time*))))
 
 (define (datetime- base change)
   (let ((time* underflow (time- (datetime-time base) (datetime-time change))))
     (-> base
-        (modify datetime-date date-
-                (datetime-date change)
-                (date day: underflow))
+        (modify date*
+                (lambda (d) (date- d
+                              (datetime-date change)
+                              (date day: underflow))))
         (datetime-time time*))))
 
 ;;; the *-difference procedures takes two actual datetimes.
@@ -1312,11 +1319,11 @@ Returns -1 on failure"
       (if (> (day a) (day b))
           (let ((new-a (day a (- (day a) (day b) 1))))
             (loop (if (= 0 (month b))
-                      (-> (modify b year 1-)
+                      (-> (modify b year* 1-)
                           (month 11)
                           (day 30)   ; Last day in december
                           )
-                      (-> (modify b month 1-)
+                      (-> (modify b month* 1-)
                           (day (1- (days-in-month b))))) ; last in prev month
                   new-a))
           ;; elif (> (day b) (day a))
@@ -1329,11 +1336,11 @@ Returns -1 on failure"
   (define-values (b** a**)
     (let loop ((b b*) (a a*))
       (if (> (month a) (month b))
-          (loop (-> (modify b year 1-)
+          (loop (-> (modify b year* 1-)
                     (month 11))
-                (modify a month - 1 (month b)))
+                (modify a month* (lambda (d) (- d 1 (month b)))))
           ;; elif (> (month b) (month a))
-          (values (modify b month - (month a))
+          (values (modify b month* (lambda (d) (- d (month a))))
                   (month a 0)))))
 
   ;; a** should here should have both month and date = 0
@@ -1358,8 +1365,8 @@ Returns -1 on failure"
            #f))
 
   (let ((proc (lambda (d) (-> d
-                         (modify month 1-)
-                         (modify day 1-)))))
+                         (modify month* 1-)
+                         (modify day* 1-)))))
     (date-difference% (proc later-date)
                       (proc earlier-date))))
 

@@ -70,7 +70,7 @@
          (ev (vevent dtstart: dt
                      dtend: (datetime+ dt (datetime hour: 5)))))
     (test-assert (event-contains? ev dt))
-    (test-assert (not (event-contains? ev (set dt datetime-date day 10))))))
+    (test-assert (not (event-contains? ev (set dt (lens-compose date* day*) 10))))))
 
 (test-group "event-zero-length?"
   (test-assert (not (event-zero-length? (vevent dtstart: (date)))))
