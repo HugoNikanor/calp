@@ -16,6 +16,7 @@
            (tree-remove . table-remove)
            (tree->list . table->list)
            (tree? . table?)
+           (serialize-tree . serialize-table)
            (alist->tree . alist->table)))
 
 (define (symbol<? . args)
@@ -24,15 +25,20 @@
 (define-syntax-rule (symbol< args ...)
   (string< (symbol->string args) ...))
 
+(define (serialize-tree t)
+  `(-> (table)
+       ,@(fold (lambda (p done)
+                 (cons `(table-put
+                         (quote ,(car p))
+                         (quote ,(cdr p)))
+                       done))
+               '()
+               (tree->list t))))
+
 (define-type (tree-node
               printer: (lambda (t p)
-                         (write
-                          `(-> (table)
-                               ,@(fold (lambda (p done)
-                                         (cons `(table-put ,(car p) ,(cdr p))
-                                               done))
-                                       '()
-                                       (tree->list t)))
+                         ((@ (ice-9 pretty-print) pretty-print)
+                          (serialize-tree t)
                           p)))
   (key type: symbol?)
   value
