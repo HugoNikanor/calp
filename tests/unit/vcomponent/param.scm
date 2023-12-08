@@ -9,14 +9,14 @@
   :use-module (srfi srfi-88)
   :use-module ((vcomponent base)
                :select (param prop* parameters prop vline?))
-  :use-module ((vcomponent) :select (vcomponent properties set-properties))
-  :use-module ((vcomponent create) :select (vcomponent with-parameters))
+  :use-module ((vcomponent) :select (properties set-properties))
+  :use-module ((vcomponent create) :select (create-vcomponent with-parameters))
   :use-module ((hnh util) :select (sort* set!))
   :use-module ((ice-9 ports) :select (call-with-input-string))
   )
 
 (define v
-  (vcomponent 'DUMMY
+  (create-vcomponent 'DUMMY
               x-key: (with-parameters a: "1" b: "2"
                                       "Some text")))
 

@@ -8,7 +8,7 @@
   :use-module ((vcomponent base) :select (vcomponent?))
   :use-module (vcomponent)
   :use-module ((vcomponent create)
-               :select (vcomponent
+               :select (create-vcomponent
                         with-parameters
 
                         as-list
@@ -30,20 +30,20 @@
 ;; and therefore not tested
 
 (test-group "Empty component"
- (let ((ev (vcomponent 'TEST)))
+ (let ((ev (create-vcomponent 'TEST)))
    (test-equal 'TEST (type ev))
    (test-equal '() (children ev))
    (test-equal '() (properties ev))))
 
 (test-group "Component with properties, but no children"
- (let ((ev (vcomponent 'TEST
+ (let ((ev (create-vcomponent 'TEST
                        prop: "value")))
    (test-equal '(PROP) (map car (properties ev)))
    (test-equal "value" (prop ev 'PROP))))
 
 (test-group "Component with children, but no properties"
-  (let* ((child (vcomponent 'CHILD))
-         (ev (vcomponent 'TEST
+  (let* ((child (create-vcomponent 'CHILD))
+         (ev (create-vcomponent 'TEST
                         (list child))))
     (test-equal '() (properties ev))
     (test-equal 1 (length (children ev)))
@@ -51,8 +51,8 @@
     ))
 
 (test-group "Component with both children and properties"
-  (let* ((child (vcomponent 'CHILD))
-         (ev (vcomponent 'TEST
+  (let* ((child (create-vcomponent 'CHILD))
+         (ev (create-vcomponent 'TEST
                          prop: "VALUE"
                          (list child))))
     (test-equal '(PROP) (map car (properties ev)))
@@ -76,19 +76,19 @@
       (test-equal "Child 2" (-> ch (list-ref 1) (prop 'SUMMARY))))))
 
 (test-group "Component with no children, where last elements value is a list"
-  (let ((ev (vcomponent 'TEST prop: (list 1 2 3))))
+  (let ((ev (create-vcomponent 'TEST prop: (list 1 2 3))))
     (test-equal '() (children ev))
     (test-equal '(PROP) (map car (properties ev)))
     (test-equal '(1 2 3) (prop ev 'PROP))))
 
 (test-group "With parameters"
-  (let ((ev (vcomponent 'TEST
+  (let ((ev (create-vcomponent 'TEST
                         prop: (with-parameters param: 1 2))))
     (test-equal 2 (prop ev 'PROP))
     (test-equal '(1) (param (prop* ev 'PROP) 'PARAM))))
 
 (test-group "As list"
-  (let ((ev (vcomponent 'TEST
+  (let ((ev (create-vcomponent 'TEST
                         prop: (as-list (list 1 2 3)))))
     (test-equal '(1 2 3) (prop ev 'PROP))
     (test-equal 3 (length (prop* ev 'PROP)))

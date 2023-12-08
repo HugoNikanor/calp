@@ -12,7 +12,7 @@
   :use-module (hnh util type)
   :export (with-parameters
            as-list
-           vcomponent
+           create-vcomponent
            vcalendar vevent
            vtimezone standard daylight
            ))
@@ -74,7 +74,7 @@
 
 
 
-(define (vcomponent type . attrs*)
+(define (create-vcomponent type . attrs*)
   ;; Split the subforms into attributes and children
   (define-values (attrs children)
     (cond ((null? attrs*)          (values '() '()))
@@ -84,12 +84,12 @@
   (define (value->vline key value)
     (cond
      ((vline? value)
-      (scm-error 'misc-error "vcomponent"
+      (scm-error 'misc-error "create-vcomponent"
                  "Explicit VLines should never appear when creating components: ~s"
                  (list value) #f))
 
      ((list-value? value)
-      (scm-error 'misc-error "vcomponent"
+      (scm-error 'misc-error "create-vcomponent"
                  "As-list can only be used at top level. key: ~s, value: ~s"
                  (list key value) #f))
 
@@ -125,16 +125,16 @@
         children))
 
 (define (vcalendar . attrs)
-  (apply vcomponent 'VCALENDAR attrs))
+  (apply create-vcomponent 'VCALENDAR attrs))
 
 (define (vevent . attrs)
-  (apply vcomponent 'VEVENT attrs))
+  (apply create-vcomponent 'VEVENT attrs))
 
 (define (vtimezone . attrs)
-  (apply vcomponent 'VTIMEZONE attrs))
+  (apply create-vcomponent 'VTIMEZONE attrs))
 
 (define (standard . attrs)
-  (apply vcomponent 'STANDARD attrs))
+  (apply create-vcomponent 'STANDARD attrs))
 
 (define (daylight . attrs)
-  (apply vcomponent 'DAYLIGHT attrs))
+  (apply create-vcomponent 'DAYLIGHT attrs))

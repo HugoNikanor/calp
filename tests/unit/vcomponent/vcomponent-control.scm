@@ -10,7 +10,7 @@
                :select (with-replaced-properties))
   :use-module ((vcomponent base) :select (prop)))
 
-(define ev (vcomponent 'DUMMY x-key: "value"))
+(define ev (create-vcomponent 'DUMMY x-key: "value"))
 
 (test-group "With replaced properties"
  ;; Test that temoraries are set and restored
