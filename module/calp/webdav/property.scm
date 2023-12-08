@@ -42,7 +42,7 @@
   ;; @example
   ;; `((,(xml ns tag) "Content"))
   ;; @end example
-  propstat-property
+  (propstat-property type: (list-of xml-element?))
 
   ;; See [WEBCAL] propstat XML element
   (propstat-error keyword: error)
@@ -87,10 +87,15 @@
 ;;                         `((d:responsedescription ,it)))))
 
 (define (propstat->namespaced-sxml propstat)
-  `(,(xml webdav 'propstat)
-    (,(xml webdav 'prop) ,@(propstat-property propstat))
-    (,(xml webdav 'status) ,(http-status-line (propstat-status-code propstat)))
-    ,@(awhen (propstat-error propstat)
-             `((,(xml webdav 'error) ,it)))
-    ,@(awhen (propstat-response-description propstat)
-             `((,(xml webdav 'responsedescription) ,it)))))
+  (apply (xml webdav 'propstat)
+         (append
+
+          (list
+           (apply (xml webdav 'prop) (propstat-property propstat))
+           ((xml webdav 'status) (http-status-line (propstat-status-code propstat))))
+
+          (awhen (propstat-error propstat)
+                 (list ((xml webdav 'error) it)))
+
+          (awhen (propstat-response-description propstat)
+                 (list ((xml webdav 'responsedescription) it))))))

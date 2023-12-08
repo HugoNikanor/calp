@@ -25,34 +25,34 @@
 
 ;; (test-equal "/" (href->string (href resource)))
 (test-equal "Basic propstat"
-    (propstat 200 (list (list (xml webdav 'getcontentlength) 4)))
+    (propstat 200 (list ((xml webdav 'getcontentlength) "4")))
     (getcontentlength resource))
 
 
 ;;; NOTE propstat's return order isn't stable, making this test possibly fail
-(let ((ps (list (propstat 200 (list `(,(xml webdav 'displayname) "Displayname")))
-                (propstat 200 (list `(,(xml webdav 'getcontenttype) "text/plain"))))))
+(let ((ps (list (propstat 200 (list ((xml webdav 'displayname) "Displayname")))
+                (propstat 200 (list ((xml webdav 'getcontenttype) "text/plain"))))))
   (test-equal "Propstat merger"
     (list (propstat 200
-                    (list (list (xml webdav 'getcontenttype) "text/plain")
-                          (list (xml webdav 'displayname) "Displayname"))))
+                    (list ((xml webdav 'getcontenttype) "text/plain")
+                          ((xml webdav 'displayname) "Displayname"))))
     (merge-propstats ps)))
 
 (test-group "Propstat -> namespaced sxml"
   (test-equal "Simple"
-    `(,(xml webdav 'propstat)
-      (,(xml webdav 'prop) (,(xml webdav 'displayname) "test"))
-      (,(xml webdav 'status) "HTTP/1.1 200 OK"))
-    (propstat->namespaced-sxml (propstat 200 `((,(xml webdav 'displayname) "test")) )))
+    ((xml webdav 'propstat)
+     ((xml webdav 'prop) ((xml webdav 'displayname) "test"))
+     ((xml webdav 'status) "HTTP/1.1 200 OK"))
+    (propstat->namespaced-sxml (propstat 200 (list ((xml webdav 'displayname) "test")))))
 
   ;; TODO populated error field
 
   (test-equal "With response description"
-    `(,(xml webdav 'propstat)
-      (,(xml webdav 'prop) (,(xml webdav 'displayname) "test"))
-      (,(xml webdav 'status) "HTTP/1.1 403 Forbidden")
-      (,(xml webdav 'responsedescription) "Try logging in"))
-    (propstat->namespaced-sxml (propstat 403 `((,(xml webdav 'displayname) "test"))
+    ((xml webdav 'propstat)
+     ((xml webdav 'prop) ((xml webdav 'displayname) "test"))
+     ((xml webdav 'status) "HTTP/1.1 403 Forbidden")
+     ((xml webdav 'responsedescription) "Try logging in"))
+    (propstat->namespaced-sxml (propstat 403 (list ((xml webdav 'displayname) "test"))
                                          responsedescription: "Try logging in"))))
 
 '((calp webdav property))

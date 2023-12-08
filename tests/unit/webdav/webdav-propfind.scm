@@ -17,6 +17,8 @@
 (define (sort-symbols symbs)
   (sort* symbs string<=? symbol->string))
 
+;;; Propstats are unsorted, we just sort them here for easier
+;;; equivalence checks in the tests.
 (define (sort-propstats propstats)
   (map
    (lambda (pr)
@@ -24,7 +26,7 @@
      (modify pr propstat-property*
              (lambda (it)
               (sort* it
-                     string< (compose symbol->string xml-element-tagname car)))))
+                     string< (compose symbol->string xml-element-tagname)))))
    (sort* propstats < propstat-status-code)))
 
 
@@ -50,24 +52,25 @@
                 (test-equal (format #f "Propstat well formed: ~a" (propstat-property propstat))
                   1 (length (propstat-property propstat)))
                 (test-assert "Propstat child is xml"
-                  (xml-element? (caar (propstat-property propstat)))))
+                  (xml-element? (car (propstat-property propstat)))))
               most)
 
     (test-equal "Correct keys"
       '(creationdate displayname getcontentlanguage getcontentlength
                      getcontenttype getetag getlastmodified
                      lockdiscovery resourcetype supportedlock)
-      (sort-symbols (map (compose xml-element-tagname caar propstat-property) most)))))
+      (sort-symbols (map (compose xml-element-tagname car propstat-property)
+                         most)))))
 
 
 (test-equal "propfind-selected-properties"
-  (list (propstat 404 `((,(xml webdav 'displayname)))))
-  (propfind-selected-properties resource (list (xml webdav 'displayname))))
+  (list (propstat 404 (list ((xml webdav 'displayname)))))
+  (propfind-selected-properties resource (list ((xml webdav 'displayname)))))
 
 (test-group "parse-propfind"
   (test-group "propname"
-    (let ((props (parse-propfind `(,(xml webdav 'propfind)
-                                   (,(xml webdav 'propname)))
+    (let ((props (parse-propfind ((xml webdav 'propfind)
+                                  ((xml webdav 'propname)))
                                 resource)))
 
 
@@ -77,11 +80,8 @@
 
      (test-assert "Propstat objects are returned" (propstat? (car props)))
      (for-each (lambda (el)
-                 (test-assert "Base is list" (list? el))
-                 (test-eqv "List only contains head el" 1 (length el))
-                 #;
-                 (test-assert (format #f "Head is an xml tag: ~a" el)
-                   (xml-element? (car el))))
+                 (test-assert "Each entry is an xml element" (xml-element*? el))
+                 (test-eqv "The enrties lack children" 0 (length (xml-element-children el))))
                (propstat-property (car props)))
 
      #;
@@ -89,128 +89,119 @@
        (sort-symbols (cons* 'test 'is-virtual webdav-keys))
        (sort-symbols (map (compose xml-element-tagname car)
                           (propstat-property (car props)))))
-
-     (test-group "No property should contain any data"
-       (for-each (lambda (el)
-                   (test-eqv (format #f "Propname property: ~s" el)
-                     1 (length el)))
-                 (propstat-property (car props))))))
+     ))
 
 
   (test-group "direct property list"
-    (let ((props (parse-propfind `((xml webdav 'propfind)
-                                   (,(xml webdav 'prop)
-                                    (,(xml webdav 'displayname))))
+    (let ((props (parse-propfind ((xml webdav 'propfind)
+                                  ((xml webdav 'prop)
+                                   ((xml webdav 'displayname))))
                                  resource)))
       (test-equal "Simple lookup"
-        (list (propstat 404 (list (list (xml webdav 'displayname)
-                                        ))))
+        (list (propstat 404 (list ((xml webdav 'displayname)))))
         props)))
 
   ;; TODO test that calendar properties are reported by propname
   ;; TODO test that non-native caldav propreties aren't reported by allprop
 
   (test-group "allprop"
-    (let ((props (parse-propfind `(,(xml webdav 'propfind)
-                                   (,(xml webdav 'allprop)))
+    (let ((props (parse-propfind ((xml webdav 'propfind)
+                                  ((xml webdav 'allprop)))
                                  resource)))
 
 
       (test-equal "Propfind result"
         (list
          (propstat 200
-                   (list (list (xml webdav 'creationdate)
-                               (datetime->string dt "~Y-~m-~dT~H:~M:~SZ"))
-                         (list (xml webdav 'getcontentlength)
-                               4)
-                         (list (xml webdav 'getcontenttype)
-                               "application/binary")
-                         (list (xml webdav 'getlastmodified)
-                               "Thu, 01 Jan 1970 00:00:00 GMT")
-                         (list (xml webdav 'lockdiscovery) '())
-                         (list (xml webdav 'resourcetype)
+                   (list ((xml webdav 'creationdate)
+                          (datetime->string dt "~Y-~m-~dT~H:~M:~SZ"))
+                         ((xml webdav 'getcontentlength)
+                          "4")
+                         ((xml webdav 'getcontenttype)
+                          "application/binary")
+                         ((xml webdav 'getlastmodified)
+                          "Thu, 01 Jan 1970 00:00:00 GMT")
+                         ((xml webdav 'lockdiscovery))
+                         ((xml webdav 'resourcetype)
                                         ; (list (xml webdav 'collection))
-                               )
-                         (list (xml webdav 'supportedlock) '())
+                          )
+                         ((xml webdav 'supportedlock))
                          ;; (list (xml ns1 'test) "Content")
                          ))
-         (propstat 404 (list (list (xml webdav 'displayname))
-                             (list (xml webdav 'getcontentlanguage))))
+         (propstat 404 (list ((xml webdav 'displayname))
+                             ((xml webdav 'getcontentlanguage))))
          (propstat 501
-                   (list (list (xml webdav 'getetag))
-                        )))
+                   (list ((xml webdav 'getetag)))))
         (sort-propstats props))))
 
 
   (test-group "allprop with include"
-    (let ((props (parse-propfind `((xml webdav 'propfind)
-                                   (,(xml webdav 'allprop))
-                                   (,(xml webdav 'include)))
+    (let ((props (parse-propfind ((xml webdav 'propfind)
+                                  ((xml webdav 'allprop))
+                                  ((xml webdav 'include)))
                                  resource)))
 
 
       (test-equal "Include NOTHING"
         (list
          (propstat 200
-                   (list (list (xml webdav 'creationdate)
-                               (datetime->string dt "~Y-~m-~dT~H:~M:~SZ"))
-                         (list (xml webdav 'getcontentlength)
-                               4)
-                         (list (xml webdav 'getcontenttype)
-                               "application/binary")
-                         (list (xml webdav 'getlastmodified)
-                               "Thu, 01 Jan 1970 00:00:00 GMT")
-                         (list (xml webdav 'lockdiscovery) '())
-                         (list (xml webdav 'resourcetype)
+                   (list ((xml webdav 'creationdate)
+                          (datetime->string dt "~Y-~m-~dT~H:~M:~SZ"))
+                         ((xml webdav 'getcontentlength)
+                          "4")
+                         ((xml webdav 'getcontenttype)
+                          "application/binary")
+                         ((xml webdav 'getlastmodified)
+                          "Thu, 01 Jan 1970 00:00:00 GMT")
+                         ((xml webdav 'lockdiscovery))
+                         ((xml webdav 'resourcetype)
                                         ; (list (xml webdav 'collection))
-                               )
-                         (list (xml webdav 'supportedlock) '())
+                          )
+                         ((xml webdav 'supportedlock))
                          ;; (list (xml ns1 'test) "Content")
                          ))
-         (propstat 404 (list (list (xml webdav 'displayname))
-                             (list (xml webdav 'getcontentlanguage))))
+         (propstat 404 (list ((xml webdav 'displayname))
+                             ((xml webdav 'getcontentlanguage))))
          (propstat 501
-                   (list (list (xml webdav 'getetag))
+                   (list ((xml webdav 'getetag))
                          )))
         (sort-propstats props)))
 
 
-    (let ((props (parse-propfind `(,(xml webdav 'propfind)
-                                   (,(xml webdav 'allprop))
-                                   (,(xml webdav 'include)
-                                    (,(xml virtual-ns 'isvirtual))))
+    (let ((props (parse-propfind ((xml webdav 'propfind)
+                                  ((xml webdav 'allprop))
+                                  ((xml webdav 'include)
+                                   ((xml virtual-ns 'isvirtual))))
                                  resource)))
 
       (test-equal "Include isvirtual"
         (list
          (propstat 200
-                   (list (list (xml webdav 'creationdate) (datetime->string dt "~Y-~m-~dT~H:~M:~SZ"))
-                         (list (xml webdav 'getcontentlength) 4)
-                         (list (xml webdav 'getcontenttype) "application/binary")
-                         (list (xml webdav 'getlastmodified) "Thu, 01 Jan 1970 00:00:00 GMT")
-                         (list (xml virtual-ns 'isvirtual) "true")
-                         (list (xml webdav 'lockdiscovery) '())
-                         (list (xml webdav 'resourcetype))
-                         (list (xml webdav 'supportedlock) '())
+                   (list ((xml webdav 'creationdate) (datetime->string dt "~Y-~m-~dT~H:~M:~SZ"))
+                         ((xml webdav 'getcontentlength) "4")
+                         ((xml webdav 'getcontenttype) "application/binary")
+                         ((xml webdav 'getlastmodified) "Thu, 01 Jan 1970 00:00:00 GMT")
+                         ((xml virtual-ns 'isvirtual) "true")
+                         ((xml webdav 'lockdiscovery))
+                         ((xml webdav 'resourcetype))
+                         ((xml webdav 'supportedlock))
                          ;; (list (xml ns1 'test) "Content")
                          ))
-         (propstat 404 (list (list (xml webdav 'displayname))
-                             (list (xml webdav 'getcontentlanguage))))
-         (propstat 501
-                   (list (list (xml webdav 'getetag))
-                     )))
+         (propstat 404 (list ((xml webdav 'displayname))
+                             ((xml webdav 'getcontentlanguage))))
+         (propstat 501 (list ((xml webdav 'getetag)))))
         (sort-propstats props)))))
 
 
 (test-equal
     (list (propstat 200
-                    `((,(xml webdav 'getcontentlength) 4)
-                      (,(xml webdav 'getlastmodified) "Thu, 01 Jan 1970 00:00:00 GMT")
-                      (,(xml webdav 'resourcetype))))
+                    (list ((xml webdav 'getcontentlength) "4")
+                          ((xml webdav 'getlastmodified) "Thu, 01 Jan 1970 00:00:00 GMT")
+                          ((xml webdav 'resourcetype))))
           (propstat 404
-                    `((,(xml webdav 'checked-in))
-                      (,(xml webdav 'checked-out))
-                      (,(xml (string->symbol "http://apache.org/dav/props/") 'executable)))))
+                    (list ((xml webdav 'checked-in))
+                          ((xml webdav 'checked-out))
+                          ((xml (string->symbol "http://apache.org/dav/props/") 'executable)))))
   (let ((request (xml->namespaced-sxml
                   "<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <propfind xmlns=\"DAV:\">
@@ -224,7 +215,7 @@
   </prop>
 </propfind>")))
 
-    (sort-propstats (parse-propfind (caddr request) resource))))
+    (sort-propstats (parse-propfind (xml-document-root request) resource))))
 
 (test-equal "All dead properties"
   (list #;

@@ -4,6 +4,7 @@
   :use-module (hnh util)
   :use-module (hnh util env)
   :use-module (hnh util path)
+  :use-module (hnh util type)
   :use-module (datetime)
   :use-module (ice-9 popen)
   :use-module (ice-9 rdelim)
@@ -33,6 +34,11 @@
   ;; ensure that they stay consistant with the @var{name} trail.
   (root getter: root setter: set-root! init-value: "/" init-keyword: root:)
   (path getter: path setter: set-path! init-value: "/" init-keyword: path:))
+
+(define-method (initialize (self <file-resource>) args)
+  (next-method)
+  (typecheck (root self) string? "<file-resource>.root")
+  (typecheck (path self) string? "<file-resource>.path"))
 
 (define-method (write (self <file-resource>) port)
   (display

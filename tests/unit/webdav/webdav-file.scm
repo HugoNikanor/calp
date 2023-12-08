@@ -20,6 +20,7 @@
 (define test-root (mkdtemp (string-copy "/tmp/calp-test-XXXXXX")))
 
 (define root-resource (make <file-resource>
+                        name: "*root*"
                         root: test-root))
 
 

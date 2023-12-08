@@ -213,15 +213,17 @@
 
               ;; Body, if it exists, MUST have be a DAV::propfind object
               (define property-request
-                (cond ((string? body)
-                       (xml->namespaced-sxml body))
-                      ((bytevector? body)
-                       (-> body
-                           (bytevector->string
-                            (make-transcoder (utf-8-codec)))
-                           xml->namespaced-sxml))
-                      (else `(,(xml webdav 'propfind)
-                              (,(xml webdav 'allprop))))))
+                (xml-document-root
+                 (cond ((string? body)
+                        (xml->namespaced-sxml body))
+                       ((bytevector? body)
+                        (-> body
+                            (bytevector->string
+                             (make-transcoder (utf-8-codec)))
+                            xml->namespaced-sxml))
+                       (else (xml-document
+                              root: ((xml webdav 'propfind)
+                                     ((xml webdav 'allprop))))))))
 
 
               (catch 'bad-request
@@ -232,11 +234,12 @@
                            headers: '((content-type . (application/xml))))
                           (lambda (port)
                             (namespaced-sxml->xml
-                             `(,(xml webdav 'multistatus)
-                               ,@(for (href . resource) in requested-resources
-                                      `(,(xml webdav 'response)
-                                        (,(xml webdav 'href) ,(href->string href))
-                                        ,@(map propstat->namespaced-sxml
+                             (apply
+                              (xml webdav 'multistatus)
+                              (for (href . resource) in requested-resources
+                                   (apply (xml webdav 'response)
+                                          ((xml webdav 'href) (href->string href))
+                                          (map propstat->namespaced-sxml
                                                (parse-propfind (root-element/namespaced property-request)
                                                                resource)))))
                              namespaces: output-namespaces
@@ -278,14 +281,15 @@
                                     (else (throw 'body-required))))
 
                             (namespaced-sxml->xml
-                             `(,(xml webdav 'multistatus)
-                               (,(xml webdav 'response)
-                                (,(xml webdav 'href) ,(href->string href))
-                                ,@(map propstat->namespaced-sxml
-                                       (parse-propertyupdate
-                                        (root-element request)
-                                        (map swap namespaces*)
-                                        resource))))
+                             ((xml webdav 'multistatus)
+                              (apply
+                               (xml webdav 'response)
+                               ((xml webdav 'href) (href->string href))
+                               (map propstat->namespaced-sxml
+                                    (parse-propertyupdate
+                                     (root-element request)
+                                     (map swap namespaces*)
+                                     resource))))
                              port: port))))
                 (lambda (err proc fmt args data)
                   (values (build-response

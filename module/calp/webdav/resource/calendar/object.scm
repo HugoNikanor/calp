@@ -19,6 +19,7 @@
 ;;; content%
 
 (define-class <calendar-object-resource> (<resource>)
+  ;; TODO typecheck
   (component getter: component
              init-keyword: component:))
 

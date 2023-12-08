@@ -52,7 +52,7 @@
  (let ((props (live-properties resource)))
    (test-assert (list? props))
    (for-each (lambda (pair)
-               ;; (test-assert (xml-element? (car pair)))
+               (test-assert (xml-element? (car pair)))
                (test-assert (live-property? (cdr pair)))
                (test-assert (procedure? (property-getter (cdr pair))))
                (test-assert (procedure? (property-setter-generator (cdr pair)))))
@@ -61,36 +61,36 @@
 
 (define ns1 (string->symbol "http://example.com/namespace"))
 
-(set-dead-property! resource `(,(xml ns1 'test) "Content"))
+(set-dead-property! resource ((xml ns1 'test) "Content"))
 
 (test-equal "Get dead property"
-  (propstat 200 (list (list (xml ns1 'test) "Content")))
-  (get-dead-property resource (xml ns1 'test)))
+  (propstat 200 (list ((xml ns1 'test) "Content")))
+  (get-dead-property resource ((xml ns1 'test))))
 
 (test-equal "Get live property"
-  (propstat 404 (list (list (xml ns1 'test))))
-  (get-live-property resource (xml ns1 'test)))
+  (propstat 404 (list ((xml ns1 'test))))
+  (get-live-property resource ((xml ns1 'test))))
 
 (test-group "Dead properties"
   (test-equal "Existing property"
-    (propstat 200 (list (list (xml ns1 'test) "Content")))
-    (get-property resource (xml ns1 'test)))
+    (propstat 200 (list ((xml ns1 'test) "Content")))
+    (get-property resource ((xml ns1 'test))))
 
   (test-equal "Missing property"
-    (propstat 404 (list (list (xml ns1 'test2))))
-    (get-property resource (xml ns1 'test2))))
+    (propstat 404 (list ((xml ns1 'test2))))
+    (get-property resource ((xml ns1 'test2)))))
 
 (test-group "Live Properties"
 
   ;; TODO these tests were written when displayname always returned 200, but have since changed to test for 404.
   ;; Change to another property which return 200
   (test-equal "Existing live property (through get-live-property)"
-    (propstat 404 `((,(xml webdav 'displayname))))
-    (get-live-property resource (xml webdav 'displayname)))
+    (propstat 404 (list ((xml webdav 'displayname))))
+    (get-live-property resource ((xml webdav 'displayname))))
 
   (test-equal "Existing live property (thrtough get-property)"
-    (propstat 404 `((,(xml webdav 'displayname))))
-    (get-property resource (xml webdav 'displayname))))
+    (propstat 404 (list ((xml webdav 'displayname))))
+    (get-property resource ((xml webdav 'displayname)))))
 
 (test-group "lookup-resource"
   (let* ((root (make <virtual-resource> name: "*root*"))

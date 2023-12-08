@@ -3,6 +3,7 @@
   :use-module (datetime)
   :use-module (rnrs bytevectors)
   :use-module (hnh util)
+  :use-module (hnh util type)
   :use-module (sxml namespaced)
   :use-module (sxml namespaced util)
   :use-module (calp webdav resource)
@@ -27,6 +28,11 @@
                  init-keyword: creation-time:
                  getter: creation-time))
 
+(define-method (initialize (self <virtual-resource>) args)
+  (next-method)
+  (typecheck (content* self) bytevector? "<virtual-resource>.content*")
+  (typecheck (creation-time self) datetime? "<virtual-resource>.creation-time"))
+
 (define (virtual-resource? x)
   (is-a? x <virtual-resource>))
 
@@ -42,7 +48,7 @@
 (define-method (live-properties (self <virtual-resource>))
   (append
    (next-method)
-   (list (cons (xml-element-hash-key (xml virtual-ns 'isvirtual))
+   (list (cons ((xml virtual-ns 'isvirtual))
                (make-live-property isvirtual set-isvirtual!)))))
 
 (define-method (content (self <virtual-resource>))
@@ -54,22 +60,22 @@
 (define-method (creationdate (self <virtual-resource>))
   (propstat 200
             (list
-             (list (xml webdav 'creationdate)
-                   (-> (creation-time self)
-                       (datetime->string "~Y-~m-~dT~H:~M:~SZ"))))))
+             ((xml webdav 'creationdate)
+              (-> (creation-time self)
+                  (datetime->string "~Y-~m-~dT~H:~M:~SZ"))))))
 
 
 (define-method (getcontenttype (self <resource>))
   (propstat 200
             (list
-             (list (xml webdav 'getcontenttype)
-                   "application/binary"))))
+             ((xml webdav 'getcontenttype)
+              "application/binary"))))
 
 (define-method (isvirtual (self <virtual-resource>))
   (propstat 200
             (list
-             (list (xml virtual-ns 'isvirtual)
-                   "true"))))
+             ((xml virtual-ns 'isvirtual)
+              "true"))))
 
 
 (define-method (set-isvirtual! (self <virtual-resource>) _)

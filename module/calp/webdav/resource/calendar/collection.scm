@@ -30,6 +30,7 @@
 
 ;;; Resoruces containing calendar components
 (define-class <calendar-collection-resource> (<resource>)
+  ;; TODO typecheck
   (description init-value: #f
                accessor: description)
   (data-store getter: data-store
@@ -61,7 +62,7 @@
 
 (define-method (live-properties (self <calendar-collection-resource>))
   (append (next-method)
-          (map (lambda (pair) (cons (xml caldav (car pair)) (cdr pair)))
+          (map (lambda (pair) ((xml caldav (car pair)) (cdr pair)))
                caldav-properties)))
 
 
@@ -69,14 +70,14 @@
 
 (define-method (displayname (self <calendar-collection-resource>))
   (propstat 200
-            `((,(xml webdav 'displayname)
-               ,(prop (content self) 'displayname)))))
+            (list ((xml webdav 'displayname)
+                   (prop (content self) 'displayname)))))
 
 
 (define-method (resourcetype (self <calendar-collection-resource>))
   (propstat 200
-   `((,(xml webdav 'resourcetype)
-      (,(xml caldav 'calendar))))))
+            (list ((xml webdav 'resourcetype)
+                   ((xml caldav 'calendar))))))
 
 ;;; CALDAV Properties
 
@@ -84,35 +85,33 @@
   (cond ((description self)
          => (lambda (it)
               (propstat 200
-                        (list (list (xml caldav 'calendar-description (alist->hashq-table '((xml:lang . "en"))))
-                                    it)))))
+                        (list ((xml caldav 'calendar-description '((xml:lang "en")))
+                               it)))))
         (else
-         (propstat 404 (list (list (xml caldav 'calendar-description)))))))
+         (propstat 404 (list ((xml caldav 'calendar-description)))))))
 
 (define-method (calendar-timezone (self <calendar-collection-resource>))
   (propstat 200
             (list
-             (list (xml caldav 'calendar-description)
-                   (call-with-output-string
-                     (lambda (port)
-                       (ics:serialize (base-timezone self) port)))))))
+             ((xml caldav 'calendar-description)
+              (call-with-output-string
+                (lambda (port)
+                  (ics:serialize (base-timezone self) port)))))))
 
 (define-method (supported-calendar-component-set (self <calendar-collection-resource>))
   (propstat 200
-            `((,(xml caldav 'supported-calendar-component-set)
-               (,(xml caldav 'comp
-                      (alist->hashq-table '((name . "VEVENT")))))))))
+            (list ((xml caldav 'supported-calendar-component-set)
+                   ((xml caldav 'comp
+                         '((name "VEVENT"))))))))
 
 (define-method (supported-calendar-data (self <calendar-collection-resource>))
   (propstat 200
    (list
-    (list
-     (xml caldav 'supported-calendar-data)
+    ((xml caldav 'supported-calendar-data)
      (map (lambda (content-type)
-            (list (xml caldav 'calendar-data
-                       (alist->hashq-table
-                        '((content-type . ,content-type)
-                          (version . "2.0"))))))
+            ((xml caldav 'calendar-data
+                  '((content-type ,content-type)
+                    (version "2.0")))))
           '("text/calendar"
             "application/calendar+xml"))))))
 
@@ -128,13 +127,13 @@
 
 (define-method (supported-collation-set (self <calendar-collection-resource>))
   (propstat 200
-            (list `(,(xml caldav 'supported-collation-set)
-                    ,@(map (lambda (cs) `(,(xml caldav 'supported-collation) ,cs))
-                           `(;; Required by CalDAV
-                             "i;ascii-casemap"
-                             "i;octet"
-                             ;; Added (RFC 5051))
-                             "i;unicode-casemap"))))))
+            (list ((xml caldav 'supported-collation-set)
+                   (map (lambda (cs) ((xml caldav 'supported-collation) cs))
+                        `(;; Required by CalDAV
+                          "i;ascii-casemap"
+                          "i;octet"
+                          ;; Added (RFC 5051))
+                          "i;unicode-casemap"))))))
 
 
 
@@ -159,11 +158,11 @@
            ;; Required for ACL, but not for CalDAV
            ;; (xml webdav 'version-tree)
            ;; Optional for ACL, but REQUIRED for CalDAV
-           (cons (xml webdav 'expand-property) expand-property)
+           ((xml webdav 'expand-property) expand-property)
            ;; REQUIRED by CalDAV
-           (cons (xml caldav 'calendar-query) calendar-query)
-           (cons (xml caldav 'calendar-multiget) calendar-multiget)
-           (cons (xml caldav 'free-busy-report) free-busy-report)
+           ((xml caldav 'calendar-query) calendar-query)
+           ((xml caldav 'calendar-multiget) calendar-multiget)
+           ((xml caldav 'free-busy-report) free-busy-report)
            )))
 
 
@@ -196,24 +195,24 @@
     )))
 
     (let ((resources (select-components-by-comp-filter this comp-filter)))
-      `(,(xml webdav 'multistatus)
-        ,@(for (href . resource) in resources
-               `(,(xml webdav 'response)
-                 (,(xml webdav 'href) ,(href->string href))
-                 ,@(map propstat->namespaced-sxml
-                        (merge-propstats
-                         (cond (allprop
-                                (append (propfind-most-live-properties resource)
-                                        (propfind-all-dead-properties resource)))
-                               (propname
-                                (list (propstat
-                                       200
-                                       (map (compose list car)
-                                            (append (dead-properties resource)
-                                                    (live-properties resource))))))
-                               (prop
-                                (map (lambda (prop) (get-property resource prop))
-                                     prop)))))))))))
+      (apply (xml webdav 'multistatus)
+             (for (href . resource) in resources
+                  (apply (xml webdav 'response)
+                         ((xml webdav 'href) (href->string href))
+                         (map propstat->namespaced-sxml
+                                (merge-propstats
+                                 (cond (allprop
+                                        (append (propfind-most-live-properties resource)
+                                                (propfind-all-dead-properties resource)))
+                                       (propname
+                                        (list (propstat
+                                               200
+                                               (map (compose (lambda (x) ((xml x))) car)
+                                                    (append (dead-properties resource)
+                                                            (live-properties resource))))))
+                                       (prop
+                                        (map (lambda (prop) (get-property resource prop))
+                                             prop)))))))))))
 
 
 
@@ -224,10 +223,10 @@
 
 (define-method (calendar-multiget (this <calendar-collection-resource>) request body)
   (define base-href (-> request request-uri uri-path href->string))
-  (let ((allprop  (find-element (xml webdav 'allprop)  (cdr body)))
-        (propname (find-element (xml webdav 'propname) (cdr body)))
-        (prop     (find-element (xml webdav 'prop)     (cdr body)))
-        (hrefs    (find-element (xml webdav 'href)    (cdr body))))
+  (let ((allprop  (find-children ((xml webdav 'allprop))  (cdr body)))
+        (propname (find-children ((xml webdav 'propname)) (cdr body)))
+        (prop     (find-children ((xml webdav 'prop))     (cdr body)))
+        (hrefs    (find-children ((xml webdav 'href))     (cdr body))))
     (when (< 1 (count identity (list allprop propname prop)))
       (throw 'bad-request 400 "allprop, propname, and prop are mutually exclusive"))
     (when (null? hrefs)
@@ -241,29 +240,30 @@
                       (lookup-resource
                        this
                        (href-relative base-href href))))))
-      `(,(xml webdav 'multistatus)
-        (for (href . resource) in resources
-             `(,(xml webdav 'response)
-               (,(xml webdav 'href) ,(href->string href))
-               ,@(cond (resource
-                        (cond (allprop
-                               (append (propfind-most-live-properties resource)
-                                       (propfind-all-dead-properties resource)))
-                              (propname
-                               (list (propstat
-                                      200
-                                      ;; car to get tagname, list to construct a valid xml element
-                                      (map (compose list car)
-                                           (append
-                                            (dead-properties resource)
-                                            (live-properties resource))))))
-                              (prop
-                               (propfind-selected-properties
-                                resource
-                                (map car (cdr prop))))))
-                       (else
-                        `(,(xml webdav 'status)
-                          ,(http-status-line 404))))))))))
+      (apply (xml webdav 'multistatus)
+             (for (href . resource) in resources
+                  (apply (xml webdav 'response)
+                         ((xml webdav 'href) (href->string href))
+                         (cond (resource
+                                (cond (allprop
+                                       (append (propfind-most-live-properties resource)
+                                               (propfind-all-dead-properties resource)))
+                                      (propname
+                                       (list (propstat
+                                              200
+                                              ;; car to get tagname, list to construct a valid xml element
+                                              (map (compose (lambda (x) ((xml x))) car)
+                                                   (append
+                                                    (dead-properties resource)
+                                                    (live-properties resource))))))
+                                      (prop
+                                       (propfind-selected-properties
+                                        resource
+                                        ;; TODO???
+                                        (map car (cdr prop))))))
+                               (else
+                                ((xml webdav 'status)
+                                 (http-status-line 404))))))))))
 
 
 

@@ -183,7 +183,12 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
                 (lambda args
                   (enqueue! (format-test-runner-crash-message args)
                             error-queue)
-                  (values #f '()))))
+                  (values #f '()))
+                (lambda _
+                  ;; TODO make backtrace configurable
+                  ;; TODO backtrace should be placed AFTER the error
+                  (enqueue! (with-output-to-string (lambda () (backtrace))) error-queue)
+                  )))
             (catch 'wrong-type-arg
               (lambda () (typecheck module-names (list-of (list-of symbol?))))
               (lambda (_ __ fmt args ___)

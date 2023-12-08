@@ -23,6 +23,9 @@
 (define* (deserialize port)
   (-> port
       xml->namespaced-sxml
-      root-element                      ; Strip potential *TOP*
-      cadr                              ; Remove containing icalendar
+      xml-document-root
+
+      ;; Remove containing icalendar
+      xml-element-children car
+
       sxcal->vcomponent))

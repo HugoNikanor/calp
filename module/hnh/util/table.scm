@@ -19,6 +19,7 @@
            (tree? . table?)
            (tree-terminal? . table-empty?)
            (tree-focus . table-focus)
+           (tree-equal? . table-equal?)
            (serialize-tree . serialize-table)
            (alist->tree . alist->table)))
 
@@ -46,6 +47,7 @@
 (define-type (tree-terminal serializer: (lambda _ '(table))))
 
 ;; Wrapped for better error messages
+;;; TODO possibly only have one tree-terminal shared by everyone
 (define (make-tree) (tree-terminal))
 
 (define (tree? x)
@@ -65,6 +67,11 @@
                                         left* right*)
                                     (tree-focus k))
                  op))))
+
+(define (tree-equal? a b)
+  (or (and (tree-terminal? a) (tree-terminal? b))
+      (tree-equal? (left a) (left b))
+      (tree-equal? (right a) (right b))))
 
 (define (tree-put tree k v)
   (cond ((tree-terminal? tree) (tree-node key: k value: v))

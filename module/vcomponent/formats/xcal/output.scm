@@ -59,9 +59,10 @@
 
     [(memv k '(GEO))
      (lambda (_ v)
-       `(,(xml xcal 'geo)
-         (latitude ,(geo-latitude v))
-         (longitude ,(geo-longitude v))))]
+       ((xml xcal 'geo)
+        (list
+         ((xml xcal 'latitude)  (geo-latitude v))
+         ((xml xcal 'longitude) (geo-longitude v)))))]
 
     [(memv k '(RRULE))
      (get-writer 'RECUR)]
@@ -84,60 +85,59 @@
   (if (or (eq? tag 'VALUE)
           (internal-field? tag))
       #f
-      `(,(xml xcal (downcase-symbol tag))
-        ,@(map (lambda (v)
-                 ;; TODO parameter types!!!! (rfc6321 3.5.)
-                 `(,(xml xcal 'text) ,(->string v)))
-               value))))
+      (apply (xml xcal (downcase-symbol tag))
+             (map (lambda (v)
+                    ;; TODO parameter types!!!! (rfc6321 3.5.)
+                    ((xml xcal 'text) (->string v)))
+                  value))))
 
-;; ((key value ...) ...) -> `(parameters , ... )
+;; ((key value ...) ...) -> #<xml parameters>
 (define (parameters-tag parameters)
   (define outparams (filter-map
                      (lambda (x) (property->value-tag x))
                      parameters))
 
-  (unless (null? outparams)
-    `(,(xml xcal 'parameters) ,@outparams)))
+  (apply (xml xcal 'parameters) outparams))
 
 (define (vcomponent->sxcal component)
 
   (define tagsymb (downcase-symbol (type component)))
 
-  (remove null?
-   `(,(xml xcal tagsymb)
-     ;; only have <properties> when it's non-empty.
-     ,(let ((props
-             (filter-map
-              (match-lambda
-                [(? (compose internal-field? car)) #f]
+  (apply (xml xcal tagsymb)
+         (remove (compose null? xml-element-children)
+                 ;; only have <properties> when it's non-empty.
+                 (list
+                  (let ((props
+                         (filter-map
+                          (match-lambda
+                            [(? (compose internal-field? car)) #f]
 
-                [(key (vlines ...))
-                 (remove null?
-                         `(,(xml xcal (downcase-symbol key))
-                           ,(parameters-tag (reduce assq-merge
-                                                    '()
-                                                    (map parameters vlines)))
-                           ,@(for vline in vlines
-                                  (vline->value-tag vline))))]
+                            [(key (vlines ...))
+                             (apply (xml xcal (downcase-symbol key))
+                                    (remove (compose null? xml-element-children)
+                                            (cons
+                                             (parameters-tag (reduce assq-merge
+                                                                     '()
+                                                                     (map parameters vlines)))
+                                             (map vline->value-tag vlines))))]
 
-                [(key vline)
-                 (remove null?
-                         `(,(xml xcal (downcase-symbol key))
-                           ,(parameters-tag (parameters vline))
-                           ,(vline->value-tag vline)))])
-              ;; NOTE this sort is unnecesasary, but here so tests can work
-              ;; Possibly add it as a flag instead
-              (sort* (properties component)
-                     string< (compose symbol->string car)))))
-        (unless (null? props)
-          `(,(xml xcal 'properties)
-            ;; NOTE
-            ;; (x-hnh-calendar-name (text ,(prop (parent component) 'NAME)))
-            ,@props)))
-     ,(unless (null? (children component))
-        `(,(xml xcal 'components)
-          ,@(map vcomponent->sxcal (children component)))))))
+                            [(key vline)
+                             (apply (xml xcal (downcase-symbol key))
+                                    (remove (compose null? xml-element-children)
+                                            (list
+                                             (parameters-tag (parameters vline))
+                                             (vline->value-tag vline))))])
+                          ;; NOTE this sort is unnecesasary, but here so tests can work
+                          ;; Possibly add it as a flag instead
+                          (sort* (properties component)
+                                 string< (compose symbol->string car)))))
+                    (apply (xml xcal 'properties)
+                           ;; NOTE
+                           ;; (x-hnh-calendar-name (text ,(prop (parent component) 'NAME)))
+                           props))
+                  (apply (xml xcal 'components)
+                         (map vcomponent->sxcal (children component)))))))
 
 (define (ns-wrap sxml)
-  `(,(xml xcal 'icalendar)
-    ,sxml))
+  ((xml xcal 'icalendar)
+   sxml))

@@ -2,32 +2,52 @@
   :use-module (sxml ssax)
   :use-module (sxml util)
   :use-module (ice-9 match)
+  :use-module (ice-9 pretty-print)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
+  :use-module (hnh util)
   :use-module (hnh util state-monad)
   :use-module ((hnh util io) :select (->port))
   :use-module (hnh util object)
   :use-module (hnh util type)
+  :use-module (hnh util table)
+  :use-module ((hnh util lens) :select (car* cdr* modify lens-compose))
   :export (xml->namespaced-sxml
            namespaced-sxml->xml
            namespaced-sxml->sxml
            namespaced-sxml->sxml/namespaces
            sxml->namespaced-sxml
+
            xml
            attribute
 
            xml-element
            xml-element?
+           xml-element*?
            xml-element-tagname
            xml-element-namespace
            xml-element-attributes
+           xml-element-children
+
+           xml-document
+           xml-document-root
+           xml-document-pis
 
            pi-element
            pi-element?
            pi-tag
            pi-body
            ))
+
+
+(define (car+cadr p) (values (car p) (cadr p)))
+(define (2list->pair l)
+  (call-with-values (lambda () (car+cadr l)) cons))
+
+(define (attributes->table attributes)
+  (alist->table (map 2list->pair attributes)))
+
 
 ;; XML processing instruction elements (and other things with identical syntax)
 ;; For example: <?xml version="1.0" encoding="utf-8"?> would be encoded as
@@ -42,94 +62,160 @@
   (pi-tag  type: symbol?)
   (pi-body type: string?))
 
-(define-type (xml-element)
+
+(define (serialize-xml-element el)
+  `(xml-element tag: ,(xml-element-tagname el)
+                ns:  ,(xml-element-namespace el)
+                attributes: ,(serialize-table (xml-element-attributes el))
+                children: (list ,@(map (lambda (e)
+                                         (cond ((xml-element*? e)
+                                                (serialize-xml-element e))
+                                               (else e)))
+                                       (xml-element-children el)))))
+
+
+(define-type (xml-element
+              printer: (lambda (r p)
+                         (pretty-print (serialize-xml-element r)
+                                       p)))
   (xml-element-tagname    type: symbol?
                           keyword: tag)
   (xml-element-namespace  type: (or false? symbol?)
                           default: #f
                           keyword: ns)
-  (xml-element-attributes type: (list-of (pair-of symbol? string?))
-                          default: '()
-                          keyword: attributes))
+  (xml-element-attributes type: table?
+                          ;; (table-of symbol? string?)
+                          ;; (table-of symbol? any?)
+                          default: (table)
+                          keyword: attributes)
+  (xml-element-children   type: (list-of (or string?
+                                             xml-element?
+                                             pi-element?))
+                          keyword: children
+                          default: '()))
+
+
+;;; NOTE Due to how define-type works, and how guile expands forms,
+;;; this MUST be placed after the xml-element declaration. Otherwise
+;;; `xml-element?' is of type syntax-transformer, which isn't a procedure.
+(define (xml-element*? x)
+  (xml-element? x))
+
+
+(define-type (xml-document)
+  (xml-document-root type: xml-element*?
+                     keyword: root)
+  (xml-document-pis  type: (list-of pi-element?)
+                     keyword: pi
+                     default: '()))
+
 
 (define xml
   (case-lambda
-    ((tag) (xml-element tag: tag))
-    ((ns tag) (xml-element tag: tag ns: ns))
-    ((ns tag attrs) (xml-element tag: tag ns: ns attributes: attrs))))
+    ((tag)          (lambda children (xml-element children: children tag: tag)))
+    ((ns tag)       (lambda children (xml-element children: children tag: tag ns: ns)))
+    ((ns tag attrs) (lambda children (xml-element children: children tag: tag ns: ns
+                                                  attributes: (attributes->table attrs))))))
 
 (define (attribute xml attr)
   (assoc-ref (xml-element-attributes xml) attr))
 
+(define (add-child child el)
+  (xml-element-children el (cons child (xml-element-children el))))
+
+(define (make-stack) (list))
+
+(define push cons)
+(define peek car)
+(define pop car+cdr)
+
+;;; Lens focusing the first element of list matching predicate
+(define (find* predicate)
+  (lambda (list)
+    (lambda (f)
+      (let loop ((rem list))
+        (cond ((null? rem) '())
+              ((predicate (car rem))
+               (cons (f (car rem))
+                     (cdr rem)))
+              (else (cons (car rem)
+                          (loop (cdr rem)))))))))
 
 (define* (parser key: trim-whitespace?)
- (ssax:make-parser
+  (ssax:make-parser
 
-  ;; DOCTYPE
-  ;; (lambda (port docname systemid internal-subset? seed)
-  ;;   (format (current-error-port)
-  ;;           "doctype: port=~s, docname=~s, systemid=~s, internal-subset?=~s, seed=~s~%"
-  ;;           port docname systemid internal-subset? seed)
-  ;;   (values #f '() '() seed))
+   ;; DOCTYPE
+   ;; (lambda (port docname systemid internal-subset? seed)
+   ;;   (format (current-error-port)
+   ;;           "doctype: port=~s, docname=~s, systemid=~s, internal-subset?=~s, seed=~s~%"
+   ;;           port docname systemid internal-subset? seed)
+   ;;   (values #f '() '() seed))
 
-  ;; UNDECL-ROOT
-  ;; (lambda (elem-gi seed)
-  ;;   (format (current-error-port) "Undecl-root: ~s~%" elem-gi)
-  ;;   (values #f '() '() seed))
+   ;; UNDECL-ROOT
+   ;; (lambda (elem-gi seed)
+   ;;   (format (current-error-port) "Undecl-root: ~s~%" elem-gi)
+   ;;   (values #f '() '() seed))
 
-  ;; DECL-ROOT
-  ;; (lambda (elem-gi seed)
-  ;;   (format (current-error-port) "Decl-root: ~s~%" elem-gi)
-  ;;   seed)
+   ;; DECL-ROOT
+   ;; (lambda (elem-gi seed)
+   ;;   (format (current-error-port) "Decl-root: ~s~%" elem-gi)
+   ;;   seed)
 
-  NEW-LEVEL-SEED
-  (lambda (elem-gi attributes namespaces expected-content seed)
-    (cons
-     (list
+   NEW-LEVEL-SEED
+   (lambda (elem-gi attrs namespaces expected-content seed)
+     (push
       (match elem-gi
-        ((ns . tag) (xml-element tag: tag ns: ns attributes: attributes))
-        (tag (xml-element tag: tag attributes: attributes))))
-     seed))
+        ((ns . tag) (xml-element tag: tag attributes: (attributes->table attrs) ns: ns))
+        (tag        (xml-element tag: tag attributes: (attributes->table attrs))))
+      seed))
 
-  FINISH-ELEMENT
-  (lambda (elem-gi attributes namespaces parent-seed seed)
-    (match seed
-      (((self . self-children) (parent . children) . rest)
-       `((,parent (,self ,@(reverse self-children)) ,@children)
-         ,@rest))))
+   FINISH-ELEMENT
+   (lambda (elem-gi attributes namespaces parent-seed seed)
+     (let ((head tail (pop seed)))
+       (modify tail
+               (find* xml-element*?)
+               (lambda (parent)
+                 (add-child
+                  (modify head xml-element-children* reverse)
+                  parent)))))
 
-  CHAR-DATA-HANDLER
-  (lambda (str1 str2 seed)
-    (define s
-      (if trim-whitespace?
-          (string-trim-both (string-append str1 str2))
-          (string-append str1 str2)))
-    (cond ((string-null? s) seed)
-          (else
-           (match seed
-             (((parent . children) . rest)
-              `((,parent ,(string-append str1 str2)
-                         ,@children)
-                ,@rest))))))
+   CHAR-DATA-HANDLER
+   (lambda (s1 s2 seed)
+     (define s
+       (if trim-whitespace?
+           (string-trim-both (string-append s1 s2))
+           (string-append s1 s2)))
+     (if (string-null? s)
+         seed
+         (modify seed (lens-compose (find* xml-element*?)
+                                    xml-element-children*)
+                 (lambda (ch) (cons s ch)))))
 
-  PI
-  ((*DEFAULT* . (lambda (port pi-tag seed)
-                  (let ((body (ssax:read-pi-body-as-string port)))
-                    (match seed
-                      (((parent . children) . rest)
-                       `((,parent ,(pi-element pi-tag body) ,@children)
-                         ,@rest)))))))
-  ))
+
+   PI
+   ((*DEFAULT* . (lambda (port pi-tag seed)
+                   (let ((body (ssax:read-pi-body-as-string port)))
+                     (modify seed
+                             (find* xml-element*?)
+                             (lambda (parent)
+                               (add-child (pi-element pi-tag body)
+                                          parent)))))))))
 
 
 (define* (xml->namespaced-sxml port-or-string key: (trim-whitespace? #t))
-  (match (with-ssax-error-to-port
-          (current-error-port)
-          (lambda () ((parser trim-whitespace?: trim-whitespace?)
+  (define result
+    (with-ssax-error-to-port
+     (current-error-port)
+     (lambda () ((parser trim-whitespace?: trim-whitespace?)
                  (->port port-or-string)
-                 '((*TOP*)))))
-    ((('*TOP* . items))
-     `(*TOP* ,@(reverse items)))))
+                 (list ((xml 'ROOT)))))))
+
+  (let ((roots pis
+               (partition xml-element*?
+                          (-> result peek xml-element-children))))
+    (xml-document
+     root: (car roots)
+     pi: (reverse pis))))
 
 (define (pi-element->sxml pi)
   `(*PI* ,(pi-tag pi) ,(pi-body pi)))
@@ -165,15 +251,16 @@
                               (string->symbol
                                (format #f "~a:~a" pre (xml-element-tagname el)))))))
                    (else (return (xml-element-tagname el))))
+      children <- (sequence (map namespaced-sxml->sxml*
+                                 (xml-element-children el)))
       (return
-       (lambda (children)
-         (cond ((null? (xml-element-attributes el))
-                `(,tag ,@children))
-               (else
-                `(,tag (@ ,@(map (lambda (p)
-                                   (call-with-values (lambda () (car+cdr p)) list))
-                                 (xml-element-attributes el)))
-                       ,@children)))))))
+       (cond ((table-empty? (xml-element-attributes el))
+              `(,tag ,@children))
+             (else
+              `(,tag (@ ,@(map (lambda (p) (call-with-values (lambda () (car+cdr p)) list))
+                               (table->list
+                                (xml-element-attributes el))))
+                     ,@children))))))
 
 (define (sxml->xml-element el namespaces)
   (lambda (children)
@@ -200,24 +287,15 @@
 
 
 (define (namespaced-sxml->sxml* tree)
-  (cond ((null? tree)   (return tree))
-        ((string? tree) (return tree))
-        ((pi-element? tree) (return (pi-element->sxml tree)))
-        ((not (pair? tree)) (return tree))
-        ((car tree) symbol?
-         => (lambda (symb)
-              (case symb
-                ((*TOP*) (do children <- (sequence (map namespaced-sxml->sxml*
-                                                        (cdr tree)))
-
-                             (return (cons '*TOP* children))))
-                (else (return tree)))))
-        ((xml-element? (car tree))
-         (do proc <- (xml-element->sxml (car tree))
-             children <- (sequence (map namespaced-sxml->sxml* (cdr tree)))
-             (return (proc children))))
-
-        ;; list of xml-element?
+  (cond ((string? tree)      (return tree))
+        ((xml-element*? tree) (xml-element->sxml tree))
+        ((pi-element? tree)  (return (pi-element->sxml tree)))
+        ((xml-document? tree)
+         (do pis <- (sequence (map namespaced-sxml->sxml*
+                                   (xml-document-pis tree)))
+             el  <- (namespaced-sxml->sxml*
+                    (xml-document-root tree))
+             (return `(*TOP* ,@pis ,el))))
         (else (scm-error 'misc-error "namespaced-sxml->sxml*"
                          "Unexpected token in tree: ~s"
                          (list tree)
@@ -244,26 +322,54 @@
 (define* (namespaced-sxml->sxml/namespaces tree optional: (namespace-prefixes '()))
   ((namespaced-sxml->sxml* tree) namespace-prefixes))
 
+
+
+
+(define (split-namespace symb)
+  (apply values (map string->symbol
+                     (string-split (symbol->string symb) #\:))))
+
 ;; Takes an sxml tree, and an association list from prefixes to namespaces
 ;; Returns a namespaced sxml tree
 (define (sxml->namespaced-sxml tree namespaces)
   (match tree
     (('*PI* tag body) (pi-element tag body))
     (('*TOP* rest ...)
-     `(*TOP* ,@(map (lambda (r) (sxml->namespaced-sxml r namespaces))
-                    rest)))
+     (let ((groups
+            (group-by (lambda (x)
+                        (cond ((xml-element*? x) 'el)
+                              ((pi-element?  x) 'pi)
+                              (else #f)))
+                      (map (lambda (r) (sxml->namespaced-sxml r namespaces))
+                           rest))))
+       ;; NOTE should multiple roots be allowed? sxml->xml allows it.
+       ;; NOTE should a warning be emitted if the #f groups isn't empty?
+       (xml-document root: (car (assoc-ref groups 'el))
+                     pi:   (or (assoc-ref groups 'pi) '()))))
+
     ((el ('@ attrs ...) rest ...)
-     ((sxml->xml-element `(,el (@ ,@attrs)) namespaces)
-      (map (lambda (el) (sxml->namespaced-sxml el namespaces))
-           rest)))
+     (apply (call-with-values (lambda () (split-namespace el))
+              (case-lambda ((tag)
+                            (xml (assoc-ref namespaces #f)
+                                 tag attrs))
+                           ((ns tag)
+                            (cond ((assoc-ref namespaces ns)
+                                   => (lambda (ns) (xml ns tag attrs)))
+                                  (else (scm-error
+                                         'missing-namespace
+                                         "sxml->xml-element"
+                                         "Unknown namespace prefix encountered: ~s (on tag ~s)"
+                                         (list ns tag)
+                                         #f))))))
+            (map (lambda (el) (sxml->namespaced-sxml el namespaces))
+                 rest)))
+
     ((el rest ...)
-     ((sxml->xml-element `(,el) namespaces)
-      (map (lambda (el) (sxml->namespaced-sxml el namespaces))
-           rest)))
+     (sxml->namespaced-sxml `(,el (@) ,@rest) namespaces))
+
     (atom atom)))
 
 ;;; TODO read intro-comment in SSAX file
 ;;; TODO Figure out how to still use (sxml match) and (sxml xpath) with these
 ;;;      new trees (probably rewriting to a "regular" sxml tree, and keeping
 ;;;      a strict mapping of namespaces)
-

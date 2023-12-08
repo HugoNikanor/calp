@@ -2,8 +2,9 @@
   :use-module (sxml namespaced)
   :use-module (srfi srfi-1)
   :use-module ((ice-9 control) :select (call/ec))
+  :use-module (hnh util type)
   :export (xml-element-hash-key
-           find-element
+           find-child
            element-matches?
            root-element
            ))
@@ -13,12 +14,12 @@
   (cons (xml-element-namespace tag)
         (xml-element-tagname tag)))
 
-(define (find-element target list)
+(define (find-child target list)
+  (typecheck target xml-element?)
+  (typecheck list (list-of (or xml-element? string?)))
   (define target* (xml-element-hash-key target))
-  (find (lambda (x) (and (list? x)
-                    (not (null? x))
-                    (xml-element? (car x))
-                    (equal? target* (xml-element-hash-key (car x)))))
+  (find (lambda (x) (and (xml-element? x)
+                    (equal? target* (xml-element-hash-key x))))
         list))
 
 
@@ -27,12 +28,3 @@
        (equal?
         (xml-element-hash-key target-el)
         (xml-element-hash-key (car tree)))))
-
-
-(define (root-element tree)
-  (cond ((and (eq? '*TOP* (car tree))
-              (pi-element? (cadr tree)))
-         (caddr tree))
-        ((eq? '*TOP* (car tree))
-         (cadr tree))
-        (else tree)))
