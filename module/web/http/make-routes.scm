@@ -145,7 +145,8 @@
 
                  ;; TODO propper logging
                  (display (format #f "[~a] ~a ~a:~a~a?~a~%"
-                                  (datetime->string (current-datetime))
+                                  "now"
+                                  ;; (datetime->string (current-datetime))
                                   r:method r:host r:port r:path (or r:query ""))
                           (current-error-port))
 
