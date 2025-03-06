@@ -96,7 +96,7 @@
            type (concatenate
                  (map children (slot-ref this 'calendars)))))
          (events (awhen (assoc-ref groups 'VEVENT)
-                        (car it)))
+                        it))
          (removed remaining (partition (extract 'X-HNH-REMOVED) events)))
 
     ;; TODO figure out what to do with removed events
