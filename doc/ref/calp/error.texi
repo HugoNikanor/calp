@@ -1,0 +1,55 @@
+@node Errors and Conditions
+@section Errors and Conditions
+
+@subsection ``Special'' Errors
+
+@deftp{Error type} return
+Thrown in some sub-mains to quickly return from the sub-function.
+Should possibly be replaced by an explicit return-continuation.
+@end deftp
+
+@deftp{Error type} warning fmt args
+Thrown when @code{warnings-are-errors} is true.
+
+@ref{warning} for more information.
+@end deftp
+
+@deftp{Error type} max-page page-number
+@end deftp
+
+@subsection ``Regular'' Errors
+All below mentioned error types behave as expected, e.g., they are
+produced through @code{scm-error}.
+
+@deftp{Error Type} configuration-error
+Thrown by (calp util config), in some scenarios.
+@TODO{Better documentation}
+@end deftp
+
+@deftp{Error Type} c-parse-error
+Errors thrown by our make-shift C parser.
+@end deftp
+
+@deftp{Error Type} decoding-error
+thrown by base64 in some cases
+@end deftp
+
+@deftp{Error Type} parse-error
+Thrown by some things related to parsing, but not all.
+@TODO{normalize parsing errors further}
+@end deftp
+
+@deftp{Error Type} graph-error
+The first element of data is guaranteed to be the graph which caused
+the error.
+@end deftp
+
+@deftp{Error Type} missing-helper
+A helper program we wanted was missing, could be resolved by somehow
+downloading it into one of the searched locations.
+
+@example
+data : (program-name : string)
+     , (searched-locations : (list string))
+@end example
+@end deftp
