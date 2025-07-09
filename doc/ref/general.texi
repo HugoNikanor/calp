@@ -1,8 +1,8 @@
 @node Generally Useful Utilities
 @chapter Generally Useful Utilities
 
-These are all general utilitios with no direct relation to Calp. Many
-of these should be generally useful in any project.
+These are all general utilities with no direct relation to Calp. Many
+of these can be useful in any project.
 
 @include general/datetime.texi
 @include general/zic.texi

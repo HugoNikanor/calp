@@ -7,7 +7,7 @@ export a @code{main} procedure, which should take a list of command
 line arguments (as a single parameter).
 
 When starting Calp from the command line, the @code{main} procedure
-located in @code{(calp main)} is called. That procedure parse it's own
+located in @code{(calp main)} is called. That procedure parses its own
 command line flags, up until the first non-flag argument. That word
 will be used to chose the actual entry point, which is then
 responsible for parsing the remaining command line flags.
