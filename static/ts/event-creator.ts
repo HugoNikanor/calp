@@ -3,7 +3,8 @@ export { EventCreator }
 import { VEvent } from './vevent'
 import { v4 as uuid } from 'uuid'
 import { ComponentBlock } from './components/vevent-block'
-import { round_time, parseDate } from './lib'
+import { round_time } from './lib'
+import { parse_date } from './datetime'
 import { ical_type } from './types'
 
 /**
@@ -157,8 +158,8 @@ class EventCreator {
             let event_container = this.closest(".event-container") as HTMLElement;
 
             /* These two are in UTC */
-            let container_start = parseDate(event_container.dataset.start!);
-            let container_end = parseDate(event_container.dataset.end!);
+            let container_start = parse_date(event_container.dataset.start!);
+            let container_end = parse_date(event_container.dataset.end!);
 
             /* ---------------------------------------- */
 
