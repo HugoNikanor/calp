@@ -57,7 +57,7 @@ whose end in @var{extension}.
 
 @defun all-modules-under-directory directory
 Finds all ``.scm'' files under @var{directory}, and then read them to
-find a module declaration @pref{find-module-declaration}. Returns both
+find a module declaration (@ref{find-module-declaration}). Returns both
 the list of all the files, as well as all modules found, as a list of
 module lists, each one suitable to be sent to
 @code{reslove-interface}.
