@@ -115,12 +115,16 @@ window.default_calendar='~a';"
     --event-font-size: 8pt;
 }"))
 
-    ,(include-css "/static/style.css")
-    ,(include-alt-css "/static/dark.css"  '(title "Dark"))
-    ,(include-alt-css "/static/light.css" '(title "Light"))
+    ;; TODO the prefix for static resources needs to be configurable,
+    ;; Currently production environments expect "/static/", while the
+    ;; development environment requires "/static/out/".
 
-    (script (@ (src "/static/script.js")))
-    (script (@ (src "/static/user/user-additions.js")))
+    ,(include-css "/static/out/style.css")
+    ,(include-alt-css "/static/out/dark.css"  '(title "Dark"))
+    ,(include-alt-css "/static/out/light.css" '(title "Light"))
+
+    (script (@ (src "/static/out/script.js")))
+    (script (@ (src "/static/out/user/user-additions.js")))
 
     (style ,(lambda () (calendar-styles calendars #t)))
 
