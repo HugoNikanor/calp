@@ -12,6 +12,8 @@ purposes, but it's quite usable still.
 Configuration is set in `~/.config/calp/config.scm`. Set at least
 calendar-files with something like:
 
+TODO this configuration format is outdated.
+
     (set-config! 'calendar-files (glob "~/calendars/*")).
 Both single calendar files, and vdir's are supported, see vdirsyncer
 and ikhal. Then run
