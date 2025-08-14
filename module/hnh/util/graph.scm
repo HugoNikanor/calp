@@ -10,6 +10,7 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-9 gnu)
   :use-module (ice-9 format)
+  :use-module (sxml simple)
   :export (make-graph
            rebuild-graph
            graph-empty?
@@ -90,6 +91,34 @@
                  "No node without dependencies in graph"
                  '() (list graph)))
     (values node (remove-node graph node))))
+
+;; Rudamentary graph->graphvis tool.'
+;; Only works on graphs where the key procedure is `car`, and the
+;; "body procedure" is `cdr`.
+;; Assumes that all keys are reasonably well formed.
+(define (to-graphviz graph)
+  (format #t "digraph G {~%")
+  (format #t "graph [layout=fdp]~%")
+  ;; Extra passes through (format #f "~s" ...) to ensure we have
+  ;; strings, which causes the next level of ~s to quote it properly.
+  (for (key . body) in (graph-nodes graph)
+       (format
+        #t
+        "~s [label=<~a>,style=filled,fillcolor=gray];~%"
+        key
+        (with-output-to-string
+          (lambda ()
+            (sxml->xml
+             `(,(format #f "~a" key)
+               (br)
+               (font (@ (point-size "8")
+                        (face "mono"))
+                     ,(format #f "~s" body))
+               ))))))
+  (for (start . end) in (graph-edges graph)
+       (format #t "~s -> ~s;~%" (format #f "~s" start) (format #f "~s" end)
+               ))
+  (format #t "}~%"))
 
 ;; Assumes that the edges of the graph are dependencies.
 ;; Returns a list of all nodes so that each node is before its dependants.
