@@ -60,6 +60,6 @@ If each edge is assumed to indicate a nodes dependencies, then this
 procedure will find return a flat list where each dependency is before
 its dependants.
 
-If any link is missing, or a cycle exists, then the result is
-undefined.
+If any link is missing, or a cycle exists, then a @code{graph-error}
+will be thrown.
 @end defun

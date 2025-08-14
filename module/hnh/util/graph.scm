@@ -122,20 +122,13 @@
 
 ;; Assumes that the edges of the graph are dependencies.
 ;; Returns a list of all nodes so that each node is before its dependants.
-;; A missing dependency (and probably a loop) is an error, and currently
-;; leads to some weird error messages.
+;; A missing dependency (and probably a loop) is an error
 (define (resolve-dependency-graph graph)
-  (catch 'graph-error
-    (lambda ()
-      (let loop ((graph graph) (done '()))
-        (if (graph-empty? graph)
-            (reverse done)
-            (let ((node graph* (pop-dangling-node graph)))
-              (loop graph* (cons node done))))))
-    (lambda (err proc fmt args data)
-      (format (current-error-port)
-              "~a in ~a: ~?~%"
-              err proc fmt args)
-      (format (current-error-port)
-              "~s~%" (car data))
-      )))
+  ;; (with-output-to-file "/tmp/graph.dot"
+  ;;   (lambda ()
+  ;;    (to-graphviz graph)))
+  (let loop ((graph graph) (done '()))
+    (if (graph-empty? graph)
+        (reverse done)
+        (let ((node graph* (pop-dangling-node graph)))
+          (loop graph* (cons node done))))))
