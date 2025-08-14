@@ -48,9 +48,13 @@
     [('base-16 n) (string->number n 16)]
 
     [('integer n ('integer-suffix suffix))
-     `(as-type
-       ,(parse-integer-suffix suffix)
-       ,(parse-lexeme-tree n))
+     ;; NOTE type casts should be left until the "evaluation" phase.
+     ;; However, since this code is due to be deprecated, we just
+     ;; assume that the literal given works.
+     (parse-lexeme-tree n)
+     ;; `(as-type
+     ;;   ,(parse-integer-suffix suffix)
+     ;;   ,(parse-lexeme-tree n))
      ]
     [('integer n)
      (parse-lexeme-tree n)]
