@@ -169,7 +169,7 @@
          '() #f))
 
 (define-method (set-content! (self <resource>) content)
-  (throw 'msic-error "set-content!<resource>"
+  (throw 'misc-error "set-content!<resource>"
          "Base <resource> doesn't implement (setting) content, please override this method"
          '() #f))
 
