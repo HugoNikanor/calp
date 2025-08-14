@@ -13,7 +13,8 @@ export { ComponentBlock }
 
 import { ComponentVEvent } from './vevent'
 import { VEvent } from '../vevent'
-import { parseDate, to_local } from '../lib'
+import { to_local } from '../lib'
+import { parse_date } from '../datetime'
 
 
 /**
@@ -73,8 +74,8 @@ class ComponentBlock extends ComponentVEvent {
             let p;
             if ((p = data.getProperty('dtstart'))) {
                 let c = this.closest('.event-container') as HTMLElement
-                let start = parseDate(c.dataset.start!).getTime()
-                let end = parseDate(c.dataset.end!).getTime();
+                let start = parse_date(c.dataset.start!).getTime()
+                let end = parse_date(c.dataset.end!).getTime();
                 // console.log(p);
                 let pp = to_local(p).getTime()
                 let result = 100 * (Math.min(end, Math.max(start, pp)) - start) / (end - start) + "%"
@@ -88,8 +89,8 @@ class ComponentBlock extends ComponentVEvent {
             if ((p = data.getProperty('dtend'))) {
                 // console.log('dtend', p);
                 let c = this.closest('.event-container') as HTMLElement
-                let start = parseDate(c.dataset.start!).getTime()
-                let end = parseDate(c.dataset.end!).getTime();
+                let start = parse_date(c.dataset.start!).getTime()
+                let end = parse_date(c.dataset.end!).getTime();
                 let pp = to_local(p).getTime()
                 let result = 100 - (100 * (Math.min(end, Math.max(start, pp)) - start) / (end - start)) + "%"
                 if (c.classList.contains('longevents')) {

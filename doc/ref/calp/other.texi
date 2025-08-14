@@ -110,4 +110,8 @@ system overview in the future.
 @defmac with-replaced-properties (component (key value) ...) body ...
 Through the extent of @var{body} each @var{key}'s value in
 @var{component} is replaced by its repspective @var{value}.
+
+Note that @var{body} is guarded through a dynamic-wind, meaning that
+even non-local exits will restore @var{component} to its initial
+state.
 @end defmac

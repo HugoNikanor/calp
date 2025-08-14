@@ -8,7 +8,8 @@
 
 export { DateTimeInput }
 
-import { makeElement, parseDate } from '../lib'
+import { makeElement } from '../lib'
+import { parse_date } from '../datetime'
 
 /**
  * The HTML component `<date-time-input />`.
@@ -117,11 +118,11 @@ class DateTimeInput extends /* HTMLInputElement */ HTMLElement {
         let dt;
         let date = this.date.value;
         if (this.dateonly) {
-            dt = parseDate(date);
+            dt = parse_date(date);
             dt.dateonly = true;
         } else {
             let time = this.time.value;
-            dt = parseDate(date + 'T' + time)
+            dt = parse_date(date + 'T' + time)
             dt.dateonly = false;
         }
         return dt;

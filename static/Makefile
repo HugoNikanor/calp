@@ -40,6 +40,7 @@ clean:
 	-rm $(TARGETS)
 
 out/%.css: scss/%.scss
+	-@mkdir out
 	scss -E UTF-8 $(WATCH) -I. $< $@
 
 # The grep expression is to supress irrelevant warning messages.

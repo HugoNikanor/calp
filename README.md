@@ -12,6 +12,8 @@ purposes, but it's quite usable still.
 Configuration is set in `~/.config/calp/config.scm`. Set at least
 calendar-files with something like:
 
+TODO this configuration format is outdated.
+
     (set-config! 'calendar-files (glob "~/calendars/*")).
 Both single calendar files, and vdir's are supported, see vdirsyncer
 and ikhal. Then run
@@ -35,11 +37,13 @@ The [zoneinfo data][TZ] is in [the public domain][TZLIC].
 
 Standards and specifications
 ----------------------------
+- RFC 3253 (Versioning Extensions to WebDAV) (`REPORT` method)
 - RFC 4791 (CalDAV)
 - RFC 4918 (WebDAV)
 - RFC 5545 (iCalendar)
 - RFC 6321 (xCal)
 - RFC 7265 (jCal)
+- RFC 9110, 9112 (HTTP/1.1) (and etag)
 - [Vdir Storage Format][VDIR]
 
 Building & Running

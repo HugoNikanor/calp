@@ -1,5 +1,5 @@
 import { ical_type, valid_input_types, JCal, JCalProperty, ChangeLogEntry } from './types'
-import { parseDate } from './lib'
+import { parse_date } from './datetime'
 
 export {
     RecurrenceRule,
@@ -532,7 +532,7 @@ function xml_to_recurrence_rule(xml: Element): RecurrenceRule {
                 break;
 
             case 'until':
-                rr.until = parseDate(t);
+                rr.until = parse_date(t);
                 break;
 
             case 'count':
@@ -600,7 +600,7 @@ function make_vevent_value_(value_tag: Element): string | boolean | Date | numbe
         case 'time':
         case 'date':
         case 'date-time':
-            return parseDate(value_tag.textContent || '');
+            return parse_date(value_tag.textContent || '');
 
         case 'duration':
             /* TODO duration parser here 'P1D' */
@@ -613,10 +613,10 @@ function make_vevent_value_(value_tag: Element): string | boolean | Date | numbe
         case 'period':
             /* TODO has sub components, meaning that a string wont do */
             let start = value_tag.getElementsByTagName('start')[0]
-            parseDate(start.textContent || '');
+            parse_date(start.textContent || '');
             let other;
             if ((other = value_tag.getElementsByTagName('end')[0])) {
-                return parseDate(other.textContent || '')
+                return parse_date(other.textContent || '')
             } else if ((other = value_tag.getElementsByTagName('duration')[0])) {
                 /* TODO parse duration */
                 return other.textContent || ''

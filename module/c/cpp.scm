@@ -37,9 +37,13 @@
       (apply function arguments)
       (function arguments)))
 
+;; (define-syntax (do-as-type type value)
+;;   value)
+
 (define symb-map
   `((,(symbol #\|) . logior)
     (funcall . (@ (c cpp) do-funcall))
+    ;; (as-type . (@ (c cpp) do-as-type))
     (&& . and)
     (& . logand)
     (== . =)
@@ -60,9 +64,7 @@
 
 ;; built in symbols. Should never be marked as dependencies
 (define (primitive? x)
-  (memv x (cons 'funcall binary-operators)))
-
-
+  (memv x (cons* #; 'as-type 'funcall binary-operators)))
 
 ;; (symbol . value) -> (list (dependencies . symbol . value)
 (define (parse-cpp-define pair)
@@ -81,6 +83,12 @@
   (define dependencies
     (lset-difference
      eq?
+     ;; NOTE specal care should be taken for `as-type` casts here.
+     ;; However, that would require actually traversing the tree
+     ;; instead of flattening it and looking at symbols.
+     ;; Since this code is due to be deprecated, that is wasted
+     ;; time, instead as-type declarations are expanded already
+     ;; in the parser.
      (remove primitive?
              (remove immediate?
                      (flatten (if (list? right)
@@ -96,6 +104,13 @@
      [('funcall name arg)
       (cons name `(lambda (,arg) ,alt-right))]
 
+     ;; This case should never be reached, but it's better to have an explicit error
+     [(compound args ...)
+      (scm-error 'misc-error "parse-cpp-define"
+                 "Unhandled compound CPP expression: ~s ~s"
+                 (cons compound args)
+                 (cons compound args))]
+
      [name (cons name alt-right)])))
 
 
@@ -104,7 +119,7 @@
          (catch #t
            (lambda () (parse-cpp-define line))
            (lambda (err caller fmt args data)
-             (format #t "~a ~?~%" fmt args)
+             (format #t "~?~%" fmt args)
              #f)))
        lines))
 
@@ -122,7 +137,15 @@
 
   (define define-form (if (null? args) 'define (car args)))
 
-  (define lines (remove (compose private-c-symbol? car)
+  ;; NOTE Extremely ugly hack to handle inclusion of termios.h
+  ;; All "public" symbols can be resolved though other public symbols,
+  ;; with the exception of `BOTHER` which references `__BOTHER`. Including
+  ;; all symbols, but defined as "private" would be the correct
+  ;; solution. However, that would force us to handle all C fragments which
+  ;; appear, and since this code is due to be deprecated, it's not worth
+  ;; the work.
+  (define lines (filter (lambda (symb) (or (not (private-c-symbol? (car symb)))
+                                      (string=? (car symb) "__BOTHER")))
                         (tokenize-header-file header-file)))
 
   (define forms (parse-cpp-file lines))

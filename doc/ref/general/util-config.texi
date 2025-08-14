@@ -4,6 +4,9 @@
 
 Provided by the module @code{(calp util config)}.
 
+@b{TODO: This module has changed quite a bit, see commit:}
+@code{f1532b4eca797f5aab4ec1a693a767a7a3e603c9}
+
 Configuration items are similar to regular defines, but global to the
 entire program, and assignable before they are declared.
 Their primary purpose is to allow a user supplied @file{config.scm},

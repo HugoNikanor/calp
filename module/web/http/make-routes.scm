@@ -145,9 +145,8 @@
 
                  ;; TODO propper logging
                  (display (format #f "[~a] ~a ~a:~a~a?~a~%"
-                                  ;; TODO does this even work? Maybe it works due to datetime
-                                  ;; being included at all expansion points.
-                                  (datetime->string (current-datetime))
+                                  "now"
+                                  ;; (datetime->string (current-datetime))
                                   r:method r:host r:port r:path (or r:query ""))
                           (current-error-port))
 
