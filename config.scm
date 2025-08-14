@@ -7,7 +7,8 @@
              (sxml xpath)
              )
 
-(when (getenv "SYSTEMD")
+;;; SYSTEMD_EXEC_PID was added in v248 (2021-03-30)
+(when (getenv "SYSTEMD_EXEC_PID")
   ((@ (calp entry-points server) port) 58080)
   ((@ (calp html config) debug) #f)
   ((@ (calp html config) edit-mode) #t)
