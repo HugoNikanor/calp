@@ -119,7 +119,7 @@
          (catch #t
            (lambda () (parse-cpp-define line))
            (lambda (err caller fmt args data)
-             (format #t "~a ~?~%" fmt args)
+             (format #t "~?~%" fmt args)
              #f)))
        lines))
 
