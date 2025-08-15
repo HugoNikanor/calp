@@ -1,9 +1,10 @@
 @node WebDAV
 @chapter WebDAV
+@cindex webdav
 
-For a complete view of WebDAV, please see @cite{RFC4918 (HTTP
+For a complete overview of WebDAV, please see @cite{RFC4918 (HTTP
 Extensions for Web Distributed Authoring and Versioning (WebDAV))},
-but in short, and specifc for this implementation.
+but in short, and specifc for this implementation:
 
 A DAV tree consists of resources, which are analogous to files and
 directories. A resource is referenced by its href.
