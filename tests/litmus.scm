@@ -21,7 +21,7 @@ exec $GUILE -e main -s "$0" "$@"
 ;;; Runs the external WebDAV test framework litmus [1], pointing it
 ;;; to a new instance of our webdav server.
 ;;;
-;;; [1]: http://webdav.org/neon/litmus/
+;;; [1]: https://notroj.github.io/litmus/
 ;;;
 ;;; Code:
 
