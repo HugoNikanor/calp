@@ -1,7 +1,6 @@
 COV_FILE=coverage.info
 
 .PHONY: all clean test \
-	unit-test-with-cov \
 	litmus \
 	static \
 	$(COV_FILE) \
@@ -107,6 +106,9 @@ THREADS = $(shell echo $$(( $(shell ./cpucount) / 2 )))
 # TODO (current-processor-count)
 $(COV_FILE): cpucount unit-test-deps
 	./testrunner.scm --threads $(THREADS)  --coverage $@ --coverage-supplement tests/unit/coverage-supplement.scm
+
+test: cpucount unit-test-deps
+	./testrunner.scm --threads $(THREADS)
 
 GENHTML_FLAGS=--show-details \
 			  --hierarchical \
