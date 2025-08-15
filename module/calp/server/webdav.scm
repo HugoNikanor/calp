@@ -351,7 +351,8 @@
                                     request-body)
                      (values (build-response code: 201) "")))))
         ;; No parent collection, fail per [WEBDAV] 9.7.1.
-        (else (values (build-response code: 409)))))
+        (else (values (build-response code: 409)
+                      "Parent missing"))))
 
 (define (run-mkcol href request _)
   ;; TODO href="/"
