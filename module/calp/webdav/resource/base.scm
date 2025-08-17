@@ -175,7 +175,7 @@
 
 (define-method (content-length (self <resource>))
   (if (is-collection? self)
-      0
+      0 ; TODO maybe return number of children
       (let ((c (content self)))
         (cond ((bytevector? c) (bytevector-length c))
               ((string? c) (string-length c))

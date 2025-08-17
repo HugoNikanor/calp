@@ -93,6 +93,7 @@ the same output code as <b>html</b>. While the <i>/calendar/{uid}.ics</i> uses
 the same code as <b>ical</b>.</p>")
     (G_ "<p><b>update-zoneinfo</b> in theory downloads and updates our local
 zoneinfo database, but is currently broken.</p>")
+    (G_ "<p><b>webdav</b> --config <i>file</i>, starts the sample webdav server</p>")
     "<hr/><br/>"
     ;; Header for list of available flags.
     ;; Actual list is auto generated elsewhere.
@@ -161,6 +162,7 @@ zoneinfo database, but is currently broken.</p>")
        ((tidsrapport) (@ (calp entry-points   tidsrapport) main))
        ((benchmark) (@ (calp entry-points benchmark) main))
        ((update-zoneinfo) (@ (calp entry-points update-zoneinfo) main))
+       ((webdav) (@ (calp entry-points webdav) main))
        (else => (lambda (s)
                   (format (current-error-port)
                           (G_ "Unsupported mode of operation: ~a~%")
