@@ -16,6 +16,12 @@
   :use-module (rnrs bytevectors)
   :export (<file-resource> file-resource? root ; path
                            ))
+;; NOTE:
+;; Webdav makes no mention of symlinks,
+;; Apache chooses to hide all symlinks [1].
+;; The approach taken here is to treat all symlinks as their own
+;; content type, with their content being their destination.
+;; [1]: http://www.webdav.org/mod_dav/faq/#04-02
 
 ;;; Resources backed by the filesystem
 (define-class <file-resource> (<resource>)
@@ -70,12 +76,10 @@
                  (scandir (filepath self))))))
 
 (define-method (is-collection? (self <file-resource>))
-  (eq? 'directory (stat:type (stat (filepath self)))))
+  (eq? 'directory (stat:type (lstat (filepath self)))))
 
 (define (file-creation-date path)
-  (let ((pipe (open-pipe* OPEN_READ "stat" "-c" "%W" path)))
-    (begin1 (unix-time->datetime (read pipe))
-            (close-pipe pipe))))
+  (-> path lstat stat:ctime unix-time->datetime))
 
 (define (mimetype path)
   (let ((pipe (open-pipe* OPEN_READ "file" "--brief" "--mime-type"
@@ -93,10 +97,11 @@
                       (datetime->string "~Y-~m-~dT~H:~M:~S~Z"))))))))
 
 (define-method (content (self <file-resource>))
-  (if (is-collection? self)
-      #f
-      (call-with-input-file (filepath self)
-        get-bytevector-all binary: #t)))
+  (case (stat:type (lstat (filepath self)))
+    ((regular) (call-with-input-file (filepath self)
+              get-bytevector-all binary: #t))
+    ((symlink) (readlink (filepath self)))
+    ((directory block-special char-special fifo socket unknown) #f)))
 
 (define-method (set-content! (self <file-resource>) data)
   (cond ((bytevector? data)
@@ -127,8 +132,9 @@
        delete-file)
    (filepath self)))
 
+;;; TODO this is never used, even when it should
 (define-method (content-length (self <file-resource>))
-  (-> (filepath self) stat stat:size))
+  (-> (filepath self) lstat stat:size))
 
 
 (define-method (getcontenttype (self <file-resource>))
@@ -144,7 +150,7 @@
                  LC_TIME "C"
                  (lambda ()
                   (-> (filepath self)
-                      stat
+                      lstat
                       stat:mtime
                       unix-time->datetime
                       (datetime->string "~a, ~d ~b ~Y ~H:~M:~S GMT"))))))))
