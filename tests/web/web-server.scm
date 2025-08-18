@@ -58,18 +58,18 @@
 
 (define server-thread
   (call-with-new-thread
-    (lambda ()
-      (catch #t
-             (lambda ()
-               (run-server
-                 (make-make-routes)
-                 'http
-                 `(socket: ,sock)))
-             (lambda args
-               (format #f "~s~%" args)
-               (test-assert "Server Crashed" #f)))
-      ;; This test should always fail, but should never be run
-      (test-assert "Server returned unexpectedly" #f))))
+   (lambda ()
+     (catch #t
+       (lambda ()
+         (run-server
+          (make-make-routes)
+          'http
+          `(socket: ,sock)))
+       (lambda args
+         (format #f "~s~%" args)
+         (test-assert "Server Crashed" #f)))
+     ;; This test should always fail, but should never be run
+     (test-assert "Server returned unexpectedly" #f))))
 
 (let ((response
         _
@@ -94,16 +94,11 @@
 (let ((response
         body
         (http-get
-          (build-uri
-            'http
-            host:
-            host
-            port:
-            port
-            path:
-            "/today"
-            query:
-            "view=week&date=2020-01-04"))))
+         (build-uri 'http
+                    host: host
+                    port: port
+                    path: "/today"
+                    query: "view=week&date=2020-01-04"))))
   (test-eqv
     "Redirect"
     302

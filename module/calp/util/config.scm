@@ -27,7 +27,7 @@
 
 (define-syntax (define-config stx)
   (syntax-case stx ()
-    ((G_ name default kw ...)
+    ((_ name default kw ...)
      (let ((pre  (cond ((memv pre:  (fix-keywords #'(kw ...))) => cadr) (else #f)))
            (post (cond ((memv post: (fix-keywords #'(kw ...))) => cadr) (else #f))))
        #`(define-once-public name
@@ -54,8 +54,7 @@
                    (post
                     #`((lambda (new-value)
                          (#,post new-value)
-                         new-value))
-                    )
+                         new-value)))
                    (else #'()))))))))
 
 
