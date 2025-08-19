@@ -43,14 +43,16 @@
                                 (scm-error 'configuration-error
                                            "set-config!"
                                            %configuration-error
-                                           (list (quote name) new-value)))))))
+                                           (list (quote name) new-value)
+                                           '()))))))
                    (pre
                     #`((lambda (new-value)
                          (or (#,pre new-value)
                              (scm-error 'configuration-error
                                         "set-config!"
                                         %configuration-error
-                                        (list (quote name) new-value))))))
+                                        (list (quote name) new-value)
+                                        '())))))
                    (post
                     #`((lambda (new-value)
                          (#,post new-value)
