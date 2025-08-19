@@ -31,30 +31,14 @@
                         SOCK_STREAM
                         current-error-port))
   :use-module ((ice-9 format) :select (format))
-  :use-module ((web response) :select (build-response)))
+  :use-module ((web response) :select (build-response))
+  :use-module (hnh util randport) :select (randport))
+
 
 (define host "127.8.9.5")
 
-(define sock (socket PF_INET SOCK_STREAM 0))
-
-(setsockopt sock SOL_SOCKET SO_REUSEADDR 1)
-
-(define-values
-  (port sock)
-  (let ((addr (inet-pton AF_INET host)))
-    (let loop ((port 8090))
-      (catch 'system-error
-             (lambda ()
-               (bind sock
-                     (make-socket-address AF_INET addr port))
-               (values port sock))
-             (lambda (err proc fmt args data)
-               (if (and (not (null? data))
-                        ;; errno address already in use
-                        (= 98 (car data)))
-                 (loop (1+ port))
-                 ;; rethrow
-                 (throw err fmt args data)))))))
+(define-values (port sock)
+  (randport host))
 
 (define server-thread
   (call-with-new-thread

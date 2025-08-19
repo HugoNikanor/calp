@@ -1,8 +1,7 @@
 (define-module (calp server socket)
   :use-module (srfi srfi-88)
   :use-module (web server)
-  :export (setup-socket
-           run-at-any-port)
+  :export (setup-socket)
   )
 
 ;; NOTE The default make-default-socket is broken for IPv6.
@@ -24,25 +23,3 @@
   (make-default-socket/fixed family addr port))
 
 
-(define* (run-at-any-port handler key:
-                          (min-port 8081)
-                          msg-port)
-  (unless msg-port
-    (scm-error 'misc-error "run-at-any-port"
-               "msg-port required"
-               '() #f))
-  (let loop ((port min-port))
-    (catch 'system-error
-      (lambda ()
-        (let ((socket (setup-socket port: port)))
-          (let ((addr (format #f "http://localhost:~a~%" port)))
-            (display addr msg-port)
-            (force-output msg-port)
-            (format #t "Server started at ~s~%" addr)
-            (run-server handler 'http
-                        `(socket: ,socket))
-            (format #t "Server closed~%"))))
-      (lambda (err proc fmt args data)
-        (if (= EADDRINUSE (car data))
-            (loop (1+ port))
-            (apply throw err proc fmt args data))))))

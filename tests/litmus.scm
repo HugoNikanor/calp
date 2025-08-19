@@ -10,12 +10,13 @@ eval "$(env __PRINT_ENVIRONMENT=1 "${root}/calp")"
 exec $GUILE -e main -s "$0" "$@"
 !#
 
-(use-modules (calp server webdav)
-             (calp server socket)
-             (ice-9 threads)
-             (ice-9 rdelim)
+(use-modules ((calp server webdav) :select (webdav-handler))
+             ((hnh util randport) :select (randport))
+             ((web server) :select (run-server))
+             ((ice-9 threads) :select (begin-thread cancel-thread))
              (srfi srfi-1)
-             (srfi srfi-88))
+             (srfi srfi-88)
+             )
 
 ;;; Commentary:
 ;;; Runs the external WebDAV test framework litmus [1], pointing it
@@ -27,24 +28,26 @@ exec $GUILE -e main -s "$0" "$@"
 
 
 
-(define (start-server out)
-  (begin-thread
-   (with-error-to-file "webdav.log"
-     (lambda ()
-       (run-at-any-port
-        webdav-handler
-        min-port: 8102
-        msg-port: out)))))
-
 
 (define (main args)
-  (define-values (in out) (car+cdr (pipe)))
-  (define scm (start-server out))
-  (define uri-base (read-line in))
+  (define-values (port socket)
+    (randport "127.0.0.1" start: 8102))
+
+  (define server-thread
+   (begin-thread
+    (with-error-to-file "webdav.log"
+      (lambda ()
+        (run-server webdav-handler 'http `(socket: ,socket))))))
+
+  ;; Start the litmus test suite
+
   (define suffix
     (if (null? (cdr args))
         ""
         (string-append "/" (cadr args))))
-  (system* "litmus" (string-append uri-base suffix))
+  ;; Tiny wait to give the server thread chance to start properly
+  (usleep 1000)
+  (system* "litmus" (format #f "http://localhost:~a~a"
+                            port suffix))
 
-  (cancel-thread scm))
+  (cancel-thread server-thread))
