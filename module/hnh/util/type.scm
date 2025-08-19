@@ -1,7 +1,7 @@
 (define-module (hnh util type)
   :use-module ((srfi srfi-1) :select (every))
   :export (build-validator-body
-           list-of pair-of
+           list-of pair-of pair-of* tuple-of
            false?
            typecheck
            current-procedure-name))
@@ -19,6 +19,14 @@
   (and (pair? variable)
        (build-validator-body (car variable) a)
        (build-validator-body (cdr variable) b)))
+
+(define-syntax pair-of*
+  (syntax-rules ()
+    ((_ variable a)       (build-validator-body variable a))
+    ((_ variable a b ...) (pair-of variable a (pair-of* b ...)))))
+
+(define-syntax-rule (tuple-of variable a ... b)
+  (pair-of* variable a ... (pair-of b null?)))
 
 ;; DSL for specifying type predicates
 ;; Basically a procedure body, but the variable to test is implicit.

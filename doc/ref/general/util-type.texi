@@ -37,6 +37,20 @@ Check if @var{variable} is a cons-pair, and that the car satisfies
 @var{car-type-clause}, and that the cdr satisfies @var{cdr-type-clause}.
 @end defmac
 
+@defmac pair-of* variable car-type-clause rest-type-clauses ...
+Like @code{cons*} is to @code{cons}, this is to @code{pair-of}.
+
+Note that for proper lists the last element must be @code{(listof @var{predicate?})}
+@end defmac
+
+@defmac tuple-of variable field-type-clauses ...
+Tuples here are defined as lists of exact length, where each index is
+assigned its own type.
+
+For example, @code{(tuple-of string? number? number?)} would match a
+list of length 3, starting with one string followed by two numbers.
+@end defmac
+
 @subsection Definitions
 
 @defmac build-validator-body variable type-clause

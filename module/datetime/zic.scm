@@ -61,18 +61,6 @@
 
 
 
-;;; TODO Write a proper tuple-of predicate
-(define-syntax tuple-of
-  (syntax-rules ()
-    ((_ x a b) (and (list? x)
-                    (build-validator-body (list-ref x 0) a)
-                    (build-validator-body (list-ref x 1) b)))
-    ((_ x a b c) (and (list? x)
-                      (build-validator-body (list-ref x 0) a)
-                      (build-validator-body (list-ref x 1) b)
-                      (build-validator-body (list-ref x 2) c)))))
-
-
 ;; <day-name> := [0..6]
 
 (define-type (zi-rule)                  ; EXPORTED
