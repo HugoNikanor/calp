@@ -15,6 +15,7 @@
   :use-module (rnrs io ports)
   :use-module (rnrs bytevectors)
   :export (<file-resource> file-resource? root ; path
+                           make-resource
                            ))
 ;; NOTE:
 ;; Webdav makes no mention of symlinks,
@@ -40,6 +41,9 @@
            (root self)
            (path self))
    port))
+
+(define (make-resource name . args)
+  (apply make <file-resource> name: name args))
 
 (define (file-resource? x)
   (is-a? x <file-resource>))

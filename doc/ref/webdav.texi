@@ -46,3 +46,4 @@ Dead properties are (by default) stored directly inside each resource.
 @include webdav/resources.texi
 @include webdav/resource-types.texi
 @include webdav/util.texi
+@include webdav/builder.texi

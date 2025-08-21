@@ -13,6 +13,7 @@
            virtual-ns
            ;; content
            isvirtual
+           make-resource
            )
   )
 
@@ -34,6 +35,9 @@
           (name self)
           (creation-time self)
           (content self)))
+
+(define (make-resource name . args)
+  (apply make <virtual-resource> name: name args))
 
 (define-method (live-properties (self <virtual-resource>))
   (append
