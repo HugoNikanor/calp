@@ -4,6 +4,7 @@
   :use-module (ice-9 regex)
   :use-module (ice-9 format)
   :use-module (ice-9 control)
+  :use-module (ice-9 curried-definitions)
   :use-module (web request)
   :use-module (web response)
   :use-module (web uri)
@@ -21,14 +22,11 @@
   :use-module (rnrs io ports)
   :use-module (calp namespaces)
   :use-module (calp webdav resource)
-  :use-module (calp webdav resource virtual)
-  :use-module (calp webdav resource file)
   :use-module (calp webdav property)
   :use-module (calp webdav propfind)
   :use-module (calp webdav proppatch)
   :use-module (calp webdav util)
-  :use-module (oop goops)
-  :export (; run-run
+  :export (
            run-propfind
            run-proppatch
            run-options
@@ -40,7 +38,6 @@
            run-move
            run-report
 
-           root-resource
            webdav-handler
            ))
 
@@ -153,9 +150,6 @@
                  (else (car children)))))
         (else sxml)))
 
-
-(define root-resource (make-parameter #f))
-
 
 
 (declare-header! "DAV"
@@ -203,9 +197,9 @@
 
 
 
-(define (run-propfind href request body)
+(define (run-propfind root-resource href request body)
   (define headers (request-headers request))
-  (cond ((lookup-resource (root-resource) href)
+  (cond ((lookup-resource root-resource href)
          => (lambda (resource)
               (define requested-resources
                 (case (or (assoc-ref headers 'depth) 'infinity)
@@ -258,8 +252,8 @@
 
 
 
-(define (run-proppatch href request body)
-  (cond ((lookup-resource (root-resource) href)
+(define (run-proppatch root-resource href request body)
+  (cond ((lookup-resource root-resource href)
          => (lambda (resource)
               ;; Body MUST exist, and be a DAV::propertyupdate element
               (catch 'bad-request
@@ -302,7 +296,8 @@
         (else (values (build-response code: 404) ""))))
 
 
-(define (run-options href request)
+;;; TODO shouldn't root resource actually be used?
+(define (run-options _ href request)
   (values
    (build-response code: 200
                    headers: `((dav . (1))
@@ -319,8 +314,8 @@
                                         ))))
    ""))
 
-(define (run-get href request mode)
-  (cond ((lookup-resource (root-resource) href)
+(define (run-get root-resource href request mode)
+  (cond ((lookup-resource root-resource href)
          => (lambda (resource)
               ;; "/calendar/:user/:calendar/:filename"
               ;; headers: `((content-type ,content-type))
@@ -333,11 +328,11 @@
                                          (list mode) #f))))))
         (else (values (build-response code: 404) ""))))
 
-(define (run-put href request request-body)
+(define (run-put root-resource href request request-body)
   (cond ((null? href)
          (values (build-response code: 405 headers: '((content-type . (text/plain))))
                  "Can't PUT on root resource"))
-        ((lookup-resource (root-resource) (drop-right href 1))
+        ((lookup-resource root-resource (drop-right href 1))
          => (lambda (parent)
               (cond ((lookup-resource parent (list (last href)))
                      => (lambda (child)
@@ -354,13 +349,13 @@
         (else (values (build-response code: 409)
                       "Parent missing"))))
 
-(define (run-mkcol href request _)
+(define (run-mkcol root-resource href request _)
   ;; TODO href="/"
   (if (assoc-ref (request-headers request) 'content-type)
       (values (build-response code: 415)
               "")
       (let ((path name (init+last href)))
-        (cond ((lookup-resource (root-resource) path)
+        (cond ((lookup-resource root-resource path)
                => (lambda (parent)
                     (catch 'resource-exists
                       (lambda ()
@@ -375,7 +370,7 @@
 ;;; TODO completely rewrite error handling here
 ;;; TODO what happens on copy between sub-trees of different types?
 ;;; Like from a <calendar-resource> tree to a <file-tree>.
-(define (run-copy source-href request)
+(define (run-copy root-resource source-href request)
   (define headers (request-headers request))
   (call/ec
    (lambda (return)
@@ -393,10 +388,10 @@
 
       (let ((dest-path dest-name (init+last dest-href)))
         (let ((source-resource
-               (cond ((lookup-resource (root-resource) source-href) => identity)
+               (cond ((lookup-resource root-resource source-href) => identity)
                      (else (return (build-response code: 404) ""))))
               (destination-parent-resource
-               (cond ((lookup-resource (root-resource) dest-path) => identity)
+               (cond ((lookup-resource root-resource dest-path) => identity)
                      (else (return (build-response
                                     code: 409
                                     reason-phrase: (http-status-phrase 409)
@@ -418,10 +413,10 @@
              (values (build-response code: 412) "")))))))))
 
 
-(define (run-delete href request)
+(define (run-delete root-resource href request)
   ;; TODO href="/"
   (let ((path name (init+last href)))
-    (cond ((lookup-resource (root-resource) path)
+    (cond ((lookup-resource root-resource path)
            => (lambda (parent)
                 (cond ((lookup-resource parent (list name))
                        => (lambda (child)
@@ -434,13 +429,13 @@
            (values (build-response code: 404) "")))))
 
 
-(define (run-move href request)
+(define (run-move root-resource href request)
   ;; TODO href="/"
   (define headers (request-headers request))
   (call/ec
    (lambda (return)
      (define-values (path name) (init+last href))
-     (define parent (or (lookup-resource (root-resource) path)
+     (define parent (or (lookup-resource root-resource path)
                         (return (build-response code: 404)
                                 "Source Parent not found")))
      (define child (or (lookup-resource parent (list name))
@@ -449,7 +444,7 @@
      (define-values (dest-path dest-name)
        (-> headers (assoc-ref 'destination)
            uri-path string->href init+last))
-     (define dest-parent (or (lookup-resource (root-resource) dest-path)
+     (define dest-parent (or (lookup-resource root-resource dest-path)
                              (return (build-response code: 404)
                                      "Dest Parent not found")))
      (define overwrite? (cond ((assoc 'overwrite headers) => cdr)
@@ -573,7 +568,7 @@
 ;;   (content-length ,(format #f (bytevector->length data)))
 
 
-(define (webdav-handler request request-body)
+(define ((webdav-handler root-resource) request request-body)
   (define href (-> request request-uri uri-path string->href))
   (init-log-table!)
   (log-table-add! 'now (current-datetime)
@@ -588,21 +583,21 @@
       (call-with-values
           (lambda ()
             (case (request-method request)
-              ((OPTIONS) (run-options href request))
+              ((OPTIONS) (run-options root-resource href request))
 
-              ((PROPFIND)  (run-propfind  href request request-body))
-              ((PROPPATCH) (run-proppatch href request request-body))
+              ((PROPFIND)  (run-propfind  root-resource href request request-body))
+              ((PROPPATCH) (run-proppatch root-resource href request request-body))
 
-              ((GET HEAD) (run-get href request (request-method request)))
+              ((GET HEAD) (run-get root-resource href request (request-method request)))
 
-              ((PUT) (run-put href request request-body))
+              ((PUT) (run-put root-resource href request request-body))
 
-              ((DELETE) (run-delete href request))
+              ((DELETE) (run-delete root-resource href request))
 
-              ((MKCOL) (run-mkcol href request request-body))
+              ((MKCOL) (run-mkcol root-resource href request request-body))
 
-              ((COPY) (run-copy href request))
-              ((MOVE) (run-move href request))
+              ((COPY) (run-copy root-resource href request))
+              ((MOVE) (run-move root-resource href request))
 
               ;; ((REPORT))
 
@@ -652,33 +647,6 @@
                              errmsg)))))))
 
 
-
-;;; TODO shouldn't this default to #f
-(root-resource
- (let ()
-   (define root-resource (make <virtual-resource> name: "*root*"))
-
-   (define virtual-resource (make <virtual-resource>
-                              name: "virtual"
-                              content: (string->bytevector "Hello, World\n" (native-transcoder))))
-
-   (define file-tree (make <file-resource>
-                       root: "/home/hugo/tmp"
-                       name: "files"))
-
-   (mount-resource! root-resource file-tree)
-   (mount-resource! root-resource virtual-resource)
-   root-resource))
-
-
-(define (run-run)
-  (unless (root-resource)
-    (throw 'misc-error "run-run"
-           "root-resource parameter must be set before running"
-           (list) #f))
-  (run-server webdav-handler
-              'http
-              `(#:port 8102)))
 
 ;; "/principals/uid/:uid"
 

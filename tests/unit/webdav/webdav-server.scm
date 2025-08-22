@@ -31,9 +31,9 @@
 
 (define prop-ns (string->symbol "http://ns.example.com/properties"))
 
-(root-resource (make <virtual-resource> name: "*root*"))
-(add-resource! (root-resource) "a" "Contents of A")
-(add-resource! (root-resource) "b" "Contents of B")
+(define root-resource (make <virtual-resource> name: "*root*"))
+(add-resource! root-resource "a" "Contents of A")
+(add-resource! root-resource "b" "Contents of B")
 
 ;;; Connect output of one procedure to input of another
 ;;; Both producer and consumer should take exactly one port as argument
@@ -60,7 +60,7 @@
                     method: 'PROPFIND
                     headers: '((depth . 0))
                     validate-headers?: #f))
-          (head body (run-propfind '() request #f)))
+          (head body (run-propfind root-resource '() request #f)))
      (test-equal 207 (response-code head))
      (test-equal '(application/xml)
        (response-content-type head))
@@ -80,7 +80,7 @@
                      method: 'PROPFIND
                      headers: '((depth . infinity))
                      validate-headers?: #f))
-           (head body (run-propfind '() request #f)))
+           (head body (run-propfind root-resource '() request #f)))
       (test-equal 207 (response-code head))
       (test-equal '(application/xml) (response-content-type head))
       (test-assert (procedure? body))
@@ -99,7 +99,7 @@
 <propfind xmlns=\"DAV:\">
   <prop><resourcetype/></prop>
 </propfind>"))
-      (let ((head body (run-propfind '() request request-body)))
+      (let ((head body (run-propfind root-resource '() request request-body)))
         (test-equal 207 (response-code head))
         (test-equal '(application/xml) (response-content-type head))
         (test-assert (procedure? body))
@@ -126,7 +126,7 @@
   </set>
   <!-- TODO test remove? -->
 </propertyupdate>" prop-ns)))
-    (let ((response body (run-proppatch '("a") request request-body)))
+    (let ((response body (run-proppatch root-resource '("a") request request-body)))
       (test-equal 207 (response-code response))
       (test-equal '(application/xml) (response-content-type response))
       (test-assert (procedure? body))
@@ -135,6 +135,7 @@
       ))
 
   (let ((response body (run-propfind
+                        root-resource
                         '("a")
                         (build-request (string->uri "http://localhost/a")
                                        method: 'PROPFIND
@@ -173,7 +174,7 @@
 
 
 (test-group "run-options"
-  (let ((head body (run-options #f #f)))
+  (let ((head body (run-options root-resource #f #f)))
     (test-equal "options head"
       (build-response
        code: 200
@@ -186,7 +187,7 @@
 
 
 (test-group "run-get"
-  (let ((head body (run-get '("a")
+  (let ((head body (run-get root-resource '("a")
                             (build-request
                              (string->uri "http://localhost/a")
                              method: 'GET)
@@ -197,13 +198,13 @@
 
 (test-group "run-put"
   (test-group "Update existing resource"
-    (run-put '("a")
+    (run-put root-resource '("a")
              (build-request (string->uri "http://localhost/a")
                             method: 'PUT
                             port: (open-output-string))
              "New Contents of A")
 
-    (let ((head body (run-get '("a")
+    (let ((head body (run-get root-resource '("a")
                               (build-request
                                (string->uri "http://localhost/a")
                                method: 'GET)
@@ -212,12 +213,12 @@
         "New Contents of A" body)))
 
   (test-group "Create new resource"
-    (run-put '("c")
+    (run-put root-resource '("c")
              (build-request (string->uri "http://localhost/c")
                             method: 'PUT
                             port: (open-output-string))
              "Created Resource C")
-    (let ((head body (run-get '("c")
+    (let ((head body (run-get root-resource '("c")
                               (build-request
                                (string->uri "http://localhost/c")
                                method: 'GET)
@@ -235,7 +236,7 @@
 
 
 (test-group "run-mkcol"
-  (run-mkcol '("a" "b")
+  (run-mkcol root-resource '("a" "b")
              (build-request (string->uri "http://localhost/a/b")
                             method: 'MKCOL)
              "")
@@ -244,7 +245,7 @@
                    method: 'PROPFIND
                    headers: '((depth . infinity))
                    validate-headers?: #f))
-         (head body (run-propfind '() request #f)))
+         (head body (run-propfind root-resource '() request #f)))
     (test-equal 207 (response-code head))
     (test-equal '(application/xml) (response-content-type head))
     (test-assert (procedure? body))
@@ -261,16 +262,16 @@
 
 ;;; Run COPY
 (test-group "run-copy"
-  (parameterize ((root-resource (make <virtual-resource> name: "*root*")))
-    (add-resource! (root-resource) "a" "Content of A")
-    (let ((a (lookup-resource (root-resource) '("a"))))
+  (let ((root-resource (make <virtual-resource> name: "*root*")))
+    (add-resource! root-resource "a" "Content of A")
+    (let ((a (lookup-resource root-resource '("a"))))
       (set-property! a `(,(xml prop-ns 'test) "prop-value"))
       ;; Extra child added to ensure deep copy works
       (add-resource! a "d" "Content of d"))
 
     (test-group "cp /a /c"
       (let ((response _
-                      (run-copy '("a")
+                      (run-copy root-resource '("a")
                                 (build-request
                                  (string->uri "http://example.com/a")
                                  headers: `((destination
@@ -279,7 +280,7 @@
         (test-eqv "Resource was reported created"
           201 (response-code response)))
 
-      (let ((c (lookup-resource (root-resource) '("c"))))
+      (let ((c (lookup-resource root-resource '("c"))))
         (test-assert "New resource present in tree" c)
         (test-equal "Content was correctly copied"
           "Content of A" (content c))
@@ -291,7 +292,7 @@
 
     (test-group "cp --no-clobber /c /a"
       (let ((response _
-                      (run-copy '("c")
+                      (run-copy root-resource '("c")
                                 (build-request
                                  (string->uri "http://example.com/c")
                                  headers: `((destination
@@ -304,7 +305,7 @@
     ;; Copy recursive collection, and onto child of self.
     (test-group "cp -r / /c"
       (let ((response _
-             (run-copy '()
+             (run-copy root-resource '()
                        (build-request
                         (string->uri "http://example.com/")
                         headers: `((destination . ,(string->uri "http://example.com/c")))))))
@@ -316,7 +317,7 @@
             "/c/a" "/c/a/d" "/c/c")
           (map car
            (sort* (map (lambda (p) (cons (href->string (car p)) (cdr p)))
-                       (all-resources-under (root-resource) '()))
+                       (all-resources-under root-resource '()))
                   string< car)))
 
         ;; TODO we should also check that /c is a copy of the root resource,
@@ -328,14 +329,14 @@
 
 ;;; Run MOVE
 (test-group "run-move"
-  (parameterize ((root-resource (make <virtual-resource> name: "*root*")))
-    (add-resource! (root-resource) "a" "Content of A")
-    (let ((a (lookup-resource (root-resource) '("a"))))
+  (let ((root-resource (make <virtual-resource> name: "*root*")))
+    (add-resource! root-resource "a" "Content of A")
+    (let ((a (lookup-resource root-resource '("a"))))
       (set-property! a `(,(xml prop-ns 'test) "prop-value")))
 
     (test-group "mv /a /c"
       (let ((response _
-                      (run-move '("a")
+                      (run-move root-resource '("a")
                                 (build-request
                                  (string->uri "http://example.com/a")
                                  headers: `((destination

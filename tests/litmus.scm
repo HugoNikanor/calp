@@ -16,6 +16,15 @@ exec $GUILE -e main -s "$0" "$@"
              ((ice-9 threads) :select (begin-thread cancel-thread))
              (srfi srfi-1)
              (srfi srfi-88)
+
+             (rnrs bytevectors)
+             (rnrs io ports)
+             (oop goops)
+             (calp webdav resource)
+             (calp webdav resource virtual)
+             (calp webdav resource file)
+
+             (calp webdav builder)
              )
 
 ;;; Commentary:
@@ -30,6 +39,15 @@ exec $GUILE -e main -s "$0" "$@"
 
 
 (define (main args)
+  (define root-resource
+    (build-webdav-resource-tree
+     `(("/virtual" virtual
+        content: ,(string->bytevector "Hello, World\n" (native-transcoder)))
+
+       ("/files" file
+        ;; TODO the temp directory should be created by us
+        root: "/home/hugo/tmp2"))))
+
   (define-values (port socket)
     (randport "127.0.0.1" start: 8102))
 
@@ -37,7 +55,7 @@ exec $GUILE -e main -s "$0" "$@"
    (begin-thread
     (with-error-to-file "webdav.log"
       (lambda ()
-        (run-server webdav-handler 'http `(socket: ,socket))))))
+        (run-server (webdav-handler root-resource) 'http `(socket: ,socket))))))
 
   ;; Start the litmus test suite
 

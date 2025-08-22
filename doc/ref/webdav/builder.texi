@@ -5,6 +5,7 @@
 
 @defun build-webdav-resource-tree resources
 Creates a new WebDAV resource tree
+suitable for passing to webdav-handler
 with the given resources created and mounted under their respective places.
 
 The @var{resources} argument is a list of resource declarations.
