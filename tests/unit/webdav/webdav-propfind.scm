@@ -29,7 +29,8 @@
 
 
 
-(define dt #2010-11-12T13:14:15)
+(define dt (datetime year: 2020 month: 11 day: 12
+                     hour: 13 minute: 14 second: 15))
 
 (define resource (make <virtual-resource>
                    ;; local-path: '("")

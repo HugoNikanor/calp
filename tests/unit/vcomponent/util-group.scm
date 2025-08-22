@@ -125,7 +125,8 @@
       (test-groups
        (list (list (date year: 2019 month: dec day: 31))
              (list (date year: 2020 month: jan day: 1)
-                   (vevent dtend: #2020-01-01T10:00:00 dtstart: #2020-01-01T00:00:00))
+                   (vevent dtend:   (datetime year: 2020 month: 1 day: 1 hour: 10)
+                           dtstart: (datetime year: 2020 month: 1 day: 1 hour: 0)))
              (list (date year: 2020 month: jan day: 2))
              (list (date year: 2020 month: jan day: 3))
              (list (date year: 2020 month: jan day: 4))
