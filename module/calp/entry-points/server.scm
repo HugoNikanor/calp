@@ -10,7 +10,9 @@
   :use-module (calp translation)
   :use-module (sxml simple)
 
-  :use-module ((calp server server) :select (start-server))
+  :use-module ((calp server routes) :select (make-make-routes))
+  :use-module ((calp server socket) :select (setup-socket))
+  :use-module ((web server) :select (run-server))
 
   :export (main))
 
@@ -80,7 +82,13 @@ and <i>[::]</i> for IPv6</group>"))))
 
   (catch 'system-error
     (lambda ()
-      (start-server (list family: family port: port% host: addr)))
+      (run-server (make-make-routes)
+                  'http
+                  `(socket:
+                    ,(setup-socket
+                      family: family
+                      port: port%
+                      host: addr))))
 
     ;; probably address already in use
     (lambda (err proc fmt args errno)
