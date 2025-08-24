@@ -1,0 +1,17 @@
+#!/usr/bin/guile \
+-e main -s
+!#
+
+;;; Commentary:
+;;; Simple command line tool for creating socket files.
+;;; This is generally a worthless utility, since we don't connect any
+;;; listener to the socket. We however use it during the WebDAV tests
+;;; to ensure that sockets are handled in a reasonable way.
+;;; Code:
+
+(define (mksock path)
+  (define sock (socket PF_UNIX SOCK_STREAM 0))
+  (bind sock AF_UNIX path))
+
+(define (main args)
+  (for-each mksock (cdr args)))
