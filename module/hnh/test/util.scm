@@ -44,7 +44,12 @@
 
 (define diff-cmd
   ;; '("diff")
-  '("git" "diff" "--no-index" "--color-moved=default" "--color=always"; "--word-diff=color"
+  '("git" "diff"
+    "--no-index"
+    "--color-moved=default"
+    "--color=always"
+    ;; "--ignore-all-space"
+    ;; "--word-diff=color"
     )
   )
 
