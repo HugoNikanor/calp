@@ -134,7 +134,7 @@
    (GET "/" (html)
         (return (build-response code: 307
                                 headers: `((Location . "/today/")
-                                           (content-type tex/plain)))
+                                           (content-type text/plain)))
                 (G_ "Redirecting to today, might take some time if server was just restarted.")))
 
    (GET "/favicon.ico" ()
