@@ -172,7 +172,8 @@
                                                    ((application/x-www-form-urlencoded)
                                                     (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
                                                       (parse-query (bytevector->string body encoding)
-                                                                   encoding)))))))))))))
+                                                                   encoding)))))))
+                                         (else '())))))))
 
                    (case-lambda ((headers body new-state) (values headers body new-state))
                                 ((headers body)           (values headers body state))
