@@ -271,7 +271,7 @@ window.default_calendar='~a';"
                               (lambda (calendar)
                                 `(li (@ (data-calendar ,(base64encode (prop calendar 'NAME))))
                                      (a (@ (href "/search?"
-                                                 ,((@ (web uri-query) encode-query-parameters)
+                                                 ,((@ (web query) encode-query-parameters)
                                                    `((q . (and (date/-time<=?
                                                                 ,(current-datetime)
                                                                 (prop event 'DTSTART))
