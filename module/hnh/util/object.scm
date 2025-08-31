@@ -184,6 +184,13 @@
            (else (syntax-name field))))
     (name #'name)))
 
+;; Changes a printer function to have "atomic" output.
+(define (wrap-printer printer)
+  (lambda (o p)
+    (display
+     (call-with-output-string (lambda (p_) (printer o p_)))
+     p)))
+
 
 
 (define-syntax (define-type stx)
@@ -229,7 +236,13 @@
              ;; if printer in attribute
              #,@(cond ((kv-ref #'(attribute ...) printer:)
                        => (lambda (printer)
-                            (list #`(set-record-type-printer! <type> #,printer))))
+                            ;; Wrap printer is used, since sometimes
+                            ;; the output port closes to early (not
+                            ;; sure why, tested with Guile 3.0.10,
+                            ;; 2025-08-28)
+                            (list #`(set-record-type-printer!
+                                     <type>
+                                     (wrap-printer #,printer)))))
                       (else '()))))))
 
     ;; else, type name without extra attributes
