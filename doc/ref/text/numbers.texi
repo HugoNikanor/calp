@@ -20,12 +20,12 @@ rather than @emph{number}.
 Most of these procedures takes optional keyword arguments, these
 depend on the language. See the relevant implementation for details.
 
-@defun number->string-ordinal n [language=(resolve-language)] [other-kvs ...]
+@defun number->string-ordinal n [#:language=(resolve-language)] [other-kvs ...]
 Convert a string into an ordinal number. These are the ``ranking''
 numbers, e.g. ``first'', ``second'', ...
 @end defun
 
-@defun number->string-cardinal n [language=(resolve-language)] [other-kvs ...]
+@defun number->string-cardinal n [#:language=(resolve-language)] [other-kvs ...]
 Convert a string into a cardinal number. These are the ``ordinary''
 counting numbers, e.g. ``one'', ``two'', ...
 @end defun
@@ -34,7 +34,7 @@ counting numbers, e.g. ``one'', ``two'', ...
 Return the current language.
 @end defun
 
-@defun each-string count [language=(resolve-language)] [other-kvs ...]
+@defun each-string count [#:language=(resolve-language)] [other-kvs ...]
 Return a (locale dependant) string indicating which elements of a set
 are targeted, such as ``each'', ``every other'', ...
 

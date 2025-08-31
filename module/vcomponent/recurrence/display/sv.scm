@@ -36,6 +36,7 @@
               [else
                (list (number->string-ordinal
                       (car group)
+                      language: 'sv
                       a-form?: #t)
                      " "
                      (add-enumeration-punctuation
@@ -47,7 +48,7 @@
 (define* (format-bymonth-day lst optional: (final-delim "&"))
   (list "den "
         (add-enumeration-punctuation
-         (map number->string-ordinal lst)
+         (map (lambda (n) (number->string-ordinal n language: 'sv)) lst)
          final-delim)))
 
 (define (format-recurrence-rule rrule)
@@ -86,12 +87,14 @@
            [(and (eq? 'MINUTELY (freq rrule))
                  (zero? (modulo (interval rrule) 15)))
             (list " "
-                  (each-string (/ (interval rrule) 15))
+                  (each-string (/ (interval rrule) 15)
+                               language: 'sv)
                   " kvart")]
            [else
             (list
              " "
              (each-string (interval rrule)
+                          language: 'sv
                           neutrum: (eq? 'YEARLY (freq rrule)))
              " "
              (case (freq rrule)

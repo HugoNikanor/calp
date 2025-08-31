@@ -16,18 +16,19 @@
               proc-symb))
 
 (define* (number->string-cardinal
-          n optional: (language (resolve-language))
+          n
+          key: language allow-other-keys:
           rest: extra-kvs)
-  (apply (get language 'number->string-cardinal) n extra-kvs))
+  (apply (get (or language (resolve-language)) 'number->string-cardinal) n extra-kvs))
 
 (define* (number->string-ordinal
           n
-          optional: (language (resolve-language))
+          key: language allow-other-keys:
           rest: extra-kvs)
-  (apply (get language 'number->string-ordinal) n extra-kvs))
+  (apply (get (or language (resolve-language)) 'number->string-ordinal) n extra-kvs))
 
 (define* (each-string count
-                      optional: (language (resolve-language))
+                      key: language allow-other-keys:
                       rest: extra-kvs)
-  (apply (get language 'each-string)
+  (apply (get (or language (resolve-language)) 'each-string)
          count extra-kvs))

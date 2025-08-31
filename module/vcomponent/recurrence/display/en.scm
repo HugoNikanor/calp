@@ -29,7 +29,7 @@
                            (cdr group)
                            )))]
               [else
-               (list (number->string-ordinal (car group)) " "
+               (list (number->string-ordinal (car group) language: 'en) " "
                      (add-enumeration-punctuation
                       (map (lambda (d) (list (week-day-name (cdr d)) "en"))
                            (cdr group))))])
@@ -39,7 +39,7 @@
 (define (format-bymonth-day lst)
   (list "the "
         (add-enumeration-punctuation
-         (map number->string-ordinal lst))))
+         (map (lambda (n) (number->string-ordinal n language: 'en)) lst))))
 
 
 (define (format-recurrence-rule rrule)
@@ -78,12 +78,14 @@
            [(and (eq? 'MINUTELY (freq rrule))
                  (zero? (modulo (interval rrule) 15)))
             (list " "
-                  (each-string (/ (interval rrule) 15))
+                  (each-string (/ (interval rrule) 15)
+                               language: 'en)
                   " 15 minutes")]
            [else
             (list
              " "
              (each-string (interval rrule)
+                          language: 'en
                           neutrum: (eq? 'YEARLY (freq rrule)))
              " "
              (case (freq rrule)
