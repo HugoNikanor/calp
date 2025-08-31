@@ -29,7 +29,15 @@
   `(-> (table)
        ,@(fold (lambda (p done)
                  (cons `(table-put
-                         (quote ,(car p))
+                         ;; A bug in Guile makes symbols which look
+                         ;; like floating point numbers with exponents
+                         ;; larger than allowed to fail to write. For
+                         ;; example, (string->symbol "1e500<anything>")
+                         ;; crashes when printed, as if `1e500` was
+                         ;; trying to be evaluated.
+
+                         ;; (quote ,(car p))
+                         (string->symbol ,(symbol->string (car p)))
                          (quote ,(cdr p)))
                        done))
                '()
