@@ -4,7 +4,6 @@
   :use-module ((hnh util language) :select (resolve-language))
   :export (number->string-cardinal
            number->string-ordinal
-           resolve-language
            each-string))
 
 (define (get mod-symb proc-symb)
