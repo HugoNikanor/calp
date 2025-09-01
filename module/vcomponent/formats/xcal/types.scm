@@ -17,7 +17,7 @@
 (define (write-datetime p v)
   `(,(xml xcal 'date-time)
     ,(datetime->string
-      (table-get p '-X-HNH-ORIGINAL v)
+      (or (table-get p '-X-HNH-ORIGINAL v) v)
       ;; 'Z' should be included for UTC,
       ;; other timezones MUST be specified
       ;; in the TZID parameter.

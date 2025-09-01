@@ -36,11 +36,14 @@
 
 ;; DATE-TIME
 (define (parse-datetime props value)
-  (define parsed
-    (parse-ics-datetime
-     ;; TODO props is no longer a (built-in) hash table
-     value (table-get props 'TZID)))
-  ;; TODO update table
+  (define parsed (parse-ics-datetime value (table-get props 'TZID)))
+  ;; TODO store the original datetime value.
+  ;; This is needed since we convert it to local time,
+  ;; but we want the output to be the time stored in the database,
+  ;; Not whatever time the user happens to have
+  ;; Prevoisly, `props` was a mutable object, allowing us to interject
+  ;; properties here. This is however not the case since we switched
+  ;; to immutable tables.
   ;; (hashq-set! props '-X-HNH-ORIGINAL parsed)
   (get-datetime parsed))
 
