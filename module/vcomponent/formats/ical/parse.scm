@@ -318,7 +318,7 @@
                        (loop (cdr lst)
                              (if (null? (cdr stack))
                                  ;; return
-                                 stack
+                                 (car stack)
                                  (cons (add-child (cadr stack) (car stack))
                                        (cddr stack))))]
                       [else
