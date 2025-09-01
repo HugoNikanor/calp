@@ -112,10 +112,7 @@
                                 ;; can already produce duplicates, meaning that
                                 ;; we need to filter duplicates either way.
                                 (map (extract 'RECURRENCE-ID) (cons head rest))
-                                (cons head rest))))))])
-
-              ;; return
-              calendar)
+                                (cons head rest))))))]))
             (vcomponent type: 'VIRTUAL)
             (map #; (@ (ice-9 threads) par-map)
              (lambda (fname)
