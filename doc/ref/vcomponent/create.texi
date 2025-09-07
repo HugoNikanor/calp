@@ -4,7 +4,7 @@
 Procedures for declarativly creating components (instead of the
 primitive procedural API).
 
-@defun vcomponent type [key: prop] ... children
+@defun create-vcomponent type [key: prop] ... children
 Creates a new vcomponent of @var{type}. Each kv-pair should contain a
 keyword @var{key}, and a value which is either a direct value, or the
 return value of @code{with-parameters} or
