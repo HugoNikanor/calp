@@ -1,0 +1,22 @@
+(define-module (calp entry-points info)
+  :use-module (srfi srfi-88)
+  :use-module (ice-9 format)
+  :use-module (vcomponent util instance)
+  :use-module (vcomponent util instance methods)
+  :use-module (hnh util)
+  :use-module (vcomponent)
+  :export (main)
+  )
+
+(define (main args)
+  (for component in (get-calendars global-event-object)
+       (format #t "~a ~s (~a entries)~%"
+               (type component)
+               (or (prop component 'NAME) "[UNKNOWN]")
+               (length (children component)))
+       #;
+       (when (or (string=? "Calendar" (or (prop component 'NAME) ""))
+                 (string=? "Nolle-P" (or (prop component 'NAME) "")))
+         (format #t "~y~%" (map (lambda (c) (cons (type c) (prop c 'SUMMARY))) (children component)))
+           )
+       ))
