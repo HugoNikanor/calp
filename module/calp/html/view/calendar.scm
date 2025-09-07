@@ -1,5 +1,7 @@
 (define-module (calp html view calendar)
   :use-module (hnh util)
+  :use-module (hnh util lens)
+  :use-module (hnh util table)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
                :select (events-between))
@@ -385,11 +387,13 @@ window.default_calendar='~a';"
              (repeating% regular (partition repeating? flat-events))
              (repeating
               (for ev in repeating%
-                   ;; TODO
-                   (-> (set-properties ev 'UID (output-uid ev))
-                       ;; (focus (prop* instance 'DTSTART) (lambda (vline) (remove-parameter vline key)))
-                       ;; (focus (prop* instance 'DTEND)   (lambda (vline) (remove-parameter vline key)))
-                       ))))
+                   ;; TODO *why* are we removing -X-HNH-ORIGINAL here?
+                   (-> ev
+                       (set-properties (cons 'UID (output-uid ev)))
+                       (modify (lens-compose (prop% 'DTSTART) vline-parameters*)
+                               (lambda (params) (table-remove params '-X-HNH-ORIGINAL)))
+                       (modify (lens-compose (prop% 'DTEND) vline-parameters*)
+                               (lambda (params) (table-remove params '-X-HNH-ORIGINAL)))))))
 
         `(
           ;; Mapping showing which events belongs to which calendar,

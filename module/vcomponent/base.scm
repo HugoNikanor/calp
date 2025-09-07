@@ -29,7 +29,6 @@
 
            set-properties
 
-           remove-parameter
            ;; value
            param
 
@@ -149,6 +148,7 @@
                            (else #f))))
               (properties a) (properties b))))
 
+;; Accessor to whole vline
 (define prop*
   (case-lambda
     ((object key)
@@ -156,6 +156,10 @@
     ((object key value)
      (component-properties object
       (table-put (component-properties object) key value)))))
+
+;; Lens focusing the given property in the object.
+(define (prop% k) (lens-compose component-properties* (table-focus k)))
+
 
 (define (children c)
   (map cdr (table->list (vcomponent-children c))))
@@ -190,8 +194,10 @@
             (prop* comp k (vline key: k vline-value: v)))))))
 
 (define (remove-property component key)
-  (component-properties component
-              (table-remove (component-properties component) key)))
+  (modify component component-properties*
+          (lambda (props) (table-remove props key))))
+
+;;; TODO where is remove-child?
 
 (define param
   ;; TODO list?
@@ -200,9 +206,6 @@
                              vline
                              (table-put (vline-parameters vline) k v)))))
 
-(define (remove-parameter vline key)
-  (vline-parameters vline
-              (table-remove (vline-parameters vline) key)))
 
 
 ;; Returns the parameters of a property as an assoc list.

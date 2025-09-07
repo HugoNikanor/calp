@@ -1,0 +1,30 @@
+@node VComponsent Introduction
+@section VComponent Introduction
+
+Consider the following XCal fragment:
+
+@verbatim
+<x:vevent xmlns:x="urn:ietf:params:xml:ns:icalendar-2.0">
+  <x:properties>
+    <x:dtstart>
+      <x:parameters>
+        <x:tzid><x:text>Europe/Stockholm</x:text></x:tzid>
+      </x:parameters>
+      <x:date-time>2025-09-07T12:41:48Z</x:date-time>
+    </x:dtstart>
+    <x:summary>
+      <x:text>Hello</x:text>
+    </x:summary>
+  </x:properties>
+</x:vevent>
+@end verbatim
+
+The top level @code{vevent} is a VComponent object of type
+@code{'VEVENT}, with the @emph{properties} @code{dtstart} and @code{summary}.
+
+The property @code{dtstart} in turn has one @emph{parameter}: @code{tzid}.
+
+@cindex component
+@cindex vcomponent
+@cindex property
+@cindex parameter

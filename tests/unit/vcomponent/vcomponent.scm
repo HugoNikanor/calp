@@ -141,7 +141,6 @@
 ;; extract extract*
 
 
-;; remove-parameter
 ;; value
 ;; param
 

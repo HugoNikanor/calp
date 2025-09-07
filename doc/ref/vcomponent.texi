@@ -8,6 +8,7 @@ the generialization of VCALENDAR, VEVENT, ...
 
 Some of these values are still Calp specific.
 
+@include vcomponent/introduction.texi
 @include vcomponent/general.texi
 @include vcomponent/group.texi
 @include vcomponent/create.texi

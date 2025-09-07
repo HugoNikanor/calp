@@ -10,12 +10,14 @@
   :use-module (srfi srfi-88)
   :use-module (hnh util lens)
   :use-module (hnh util object)
+  :use-module (ice-9 curried-definitions)
   :export ((make-tree . table)
            (tree-get . table-get)
            (tree-put . table-put)
            (tree-remove . table-remove)
            (tree->list . table->list)
            (tree? . table?)
+           (tree-focus . table-focus)
            (serialize-tree . serialize-table)
            (alist->tree . alist->table)))
 
@@ -63,26 +65,20 @@
   (or (tree-node? x)
       (tree-terminal? x)))
 
-;;; A lens
-;;; This function (tree-focus)
-;;; returns a function (f),
-;;; which takes a function (g).
-;;;
-;;; g will be given the focused value in the tree, and should return
-;;; the new value for that node
-;;;
-;;; f takes such a modifier function, and returns a new tree identical
-;;; to the old tree, but with the value of that node changed
-(define (tree-focus tree k)
-  (lambda (op)
-    (cond ((tree-terminal? tree) ;; new node
-           (tree-node key: k value: (op 'not-a-value)))
-          ((eq? k (key tree)) ;; this node
-           (value tree (op (value truee))))
-          (else
-           (if (symbol<? k (key tree))
-               (lens-compose left* (tree-focus (left tree) k))
-               (lens-compose right* (tree-focus (right tree k))))))))
+
+;; Lens for focusing a specific eontry in a table.
+;; If the given key isn't present in the table, `op` will be called
+;; with the dummy value `'not-a-value`
+(define (((tree-focus k) tree) op)
+  (cond ((tree-terminal? tree)
+         (tree-node key: k value: (op 'not-a-value)))
+        ((eq? k (key tree))
+         (value tree (op (value tree))))
+        (else
+         (modify tree (lens-compose (if (symbol<? k (key tree))
+                                        left* right*)
+                                    (tree-focus k))
+                 op))))
 
 (define (tree-put tree k v)
   (cond ((tree-terminal? tree) (tree-node key: k value: v))
@@ -104,16 +100,17 @@
         ((eq? k (key tree))
          (merge-trees (left tree) (right tree)))
         ((symbol<? k (key tree))
-         (modify tree left (lambda (t) (tree-remove t k))))
+         (modify tree left* (lambda (t) (tree-remove t k))))
         (else
-         (modify tree right (lambda (t) (tree-remove t k))))))
+         (modify tree right* (lambda (t) (tree-remove t k))))))
 
 (define (merge-trees a b)
   ;; TODO write a better version of this
-  (fold (lambda (item tree)
-          (apply tree-put tree item))
+  ;; Possibly one which re-balances the trees
+  (fold (lambda (pair tree)
+          (tree-put tree (car pair) (cdr pair)))
         a
-        b))
+        (tree->list b)))
 
 ;; in-order traversal
 (define (tree->list tree)
