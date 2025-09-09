@@ -16,19 +16,19 @@ return value of @code{with-parameters} or
 @defunx vtimezone
 @defunx standard
 @defunx daylight
-Calls @code{vcomponent}, with type set to the procedure name (but
+Calls @code{create-vcomponent}, with type set to the procedure name (but
 up-cased).
 @end defun
 
 @defun with-parameters [key: param] ... value
-Allows setting parameters for a property as created by @code{vcomponent}.
+Allows setting parameters for a property as created by @code{create-vcomponent}.
 
-@var{value} follows the same rules as in @code{vcomponent}. Multiple
+@var{value} follows the same rules as in @code{create-vcomponent}. Multiple
 @var{key}, @var{value} pairs can be given, where each key must be a keyword.
 @end defun
 
 @defun as-list lst
-Allows setting list values when using @code{vcomponent}.
+Allows setting list values when using @code{create-vcomponent}.
 
 Without this a list value would be stored as a single value, while
 with this a list of values is instead stored (as, for example, in EXDATE).
