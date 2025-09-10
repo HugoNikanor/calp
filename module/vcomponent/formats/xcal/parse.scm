@@ -102,7 +102,7 @@
                        (for key in '(bysecond byminute byhour byday bymonthday
                                               byyearday byweekno bymonth bysetpos
                                               freq until count interval wkst)
-                            (cond ((find-element (xml xcal key) value)
+                            (cond ((find-child ((xml xcal key)) value)
                                    => (lambda (v)
                                         (case key
                                           ;; These fields all have zero or one value
@@ -248,7 +248,7 @@
   (define type (symbol-upcase (xml-element-tagname xml-tag)))
 
   (let ((component
-         (aif (find-element (xml xcal 'properties) (cdr sxcal))
+         (aif (find-child ((xml xcal 'properties)) (cdr sxcal))
               ;; Loop over multi valued fields, creating one vline
               ;; for every value. So
               ;;     KEY;p=1:a,b
@@ -260,7 +260,7 @@
               (vcomponent type: type))))
 
     ;; children
-    (aif (find-element (xml xcal 'components) (cdr sxcal))
+    (aif (find-child ((xml xcal 'components)) (cdr sxcal))
            ;; NOTE Order of children is insignificant, but this allows
            ;;      diffs to be stable (which is used by the format tests).
          (fold (swap add-child)
