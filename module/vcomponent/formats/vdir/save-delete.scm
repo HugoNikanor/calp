@@ -61,4 +61,5 @@
                (list (prop calendar '-X-HNH-SOURCETYPE))
                #f))
   (delete-file (prop event '-X-HNH-FILENAME))
+  ;; TODO abandon! doesn't exist
   (abandon! parent event))

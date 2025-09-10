@@ -127,6 +127,7 @@
 ;;; with the same UID, which is BAD.
 (define-method (add-event (this <events>) calendar event)
 
+  ;; TODO reparent! doesn't exist
   (reparent! calendar event)
   (unless (prop event 'UID)
     (set! (prop event 'UID) (uuid)))
@@ -196,6 +197,7 @@
 
          ;; remove old instance of event from runtime
          (remove-event this old-event)
+         ;; TODO abandon! doesn't exist
          (abandon! old-calendar old-event)
 
          ;; Add new event to runtime,

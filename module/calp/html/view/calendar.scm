@@ -421,6 +421,7 @@ window.default_calendar='~a';"
           ;; rendered as xcal.
           (div (@ (style "display:none !important;")
                    (id "xcal-data"))
-                ,((@ (vcomponent formats xcal output) ns-wrap)
-                  (map (@ (vcomponent formats xcal output) vcomponent->sxcal)
-                       (append regular repeating)))))))))
+               ;; TODO TODO TODO soerialize this into xml
+               ,((@ (vcomponent formats xcal output) ns-wrap)
+                 (map (@ (vcomponent formats xcal output) vcomponent->sxcal)
+                      (append regular repeating)))))))))
