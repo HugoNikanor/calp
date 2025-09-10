@@ -12,19 +12,21 @@
   :export (vline
            vline?
            vline-value
+           vline-value*
            key
            vline-parameters
+           vline-parameters*
            vline-source
 
            vcomponent
            vcomponent?
-           children type parent
+           children type parent parent*
            add-child
 
            vcomponent-equal?
 
            remove-property
-           prop* prop
+           prop* prop prop%
            extract extract*
 
            set-properties
