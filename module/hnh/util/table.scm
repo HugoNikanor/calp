@@ -17,6 +17,7 @@
            (tree-remove . table-remove)
            (tree->list . table->list)
            (tree? . table?)
+           (tree-terminal? . table-empty?)
            (tree-focus . table-focus)
            (serialize-tree . serialize-table)
            (alist->tree . alist->table)))
