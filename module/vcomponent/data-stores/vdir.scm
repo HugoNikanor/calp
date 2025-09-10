@@ -44,7 +44,7 @@
                              (unless (eq? 'VCALENDAR (type cal))
                                (scm-error 'misc-error "get-all<vdir-data-store>"
                                           "Unexpected top level component. Expected VCALENDAR, got ~a. In file ~s"
-                                          (list (type cal) file)))
+                                          (list (type cal) file) '()))
                              (each cal children
                                    (lambda (child)
                                      (prop child '-X-HNH-FILENAME file))))

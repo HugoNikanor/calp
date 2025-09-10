@@ -24,6 +24,6 @@
 (define-method (get-by-uid (this <meta-data-store>) (uid <string>))
   (stream-car
    (stream-append
-    (steam-map (lambda (store) (get-by-uid store uid))
-               (list->stream (stores this)))
+    (stream-map (lambda (store) (get-by-uid store uid))
+                (list->stream (stores this)))
     (stream #f))))
