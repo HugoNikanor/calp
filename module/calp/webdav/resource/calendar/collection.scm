@@ -227,7 +227,7 @@
   (let ((allprop  (find-element (xml webdav 'allprop)  (cdr body)))
         (propname (find-element (xml webdav 'propname) (cdr body)))
         (prop     (find-element (xml webdav 'prop)     (cdr body)))
-        (hrefs    (find-elements (xml webdav 'href)    (cdr body))))
+        (hrefs    (find-element (xml webdav 'href)    (cdr body))))
     (when (< 1 (count identity (list allprop propname prop)))
       (throw 'bad-request 400 "allprop, propname, and prop are mutually exclusive"))
     (when (null? hrefs)
