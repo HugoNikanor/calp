@@ -76,29 +76,27 @@
 
 (define (serialize-recur-rule record)
   `(recur-rule
-    ,@(when (freq record) `(freq: ,(freq record)))
-    ,@(when (until record) `(until: ,(until record)))
-    ,@(when (count record) `(count: ,(count record)))
-    ,@(when (interval record) `(interval: ,(interval record)))
-    ,@(when (bysecond record) `(bysecond: ,(bysecond record)))
-    ,@(when (byminute record) `(byminute: ,(byminute record)))
-    ,@(when (byhour record) `(byhour: ,(byhour record)))
-    ,@(when (byday record) `(byday: ,(byday record)))
-    ,@(when (bymonthday record) `(bymonthday: ,(bymonthday record)))
-    ,@(when (byyearday record) `(byyearday: ,(byyearday record)))
-    ,@(when (byweekno record) `(byweekno: ,(byweekno record)))
-    ,@(when (bymonth record) `(bymonth: ,(bymonth record)))
-    ,@(when (bysetpos record) `(bysetpos: ,(bysetpos record)))
-    ,@(when (wkst record) `(wkst: ,(wkst record)))))
+    ,@(when (freq record) `(freq: ,(serialize (freq record))))
+    ,@(when (until record) `(until: ,(serialize (until record))))
+    ,@(when (count record) `(count: ,(serialize (count record))))
+    ,@(when (interval record) `(interval: ,(serialize (interval record))))
+    ,@(when (bysecond record) `(bysecond: ,(serialize (bysecond record))))
+    ,@(when (byminute record) `(byminute: ,(serialize (byminute record))))
+    ,@(when (byhour record) `(byhour: ,(serialize (byhour record))))
+    ,@(when (byday record) `(byday: ,(serialize (byday record))))
+    ,@(when (bymonthday record) `(bymonthday: ,(serialize (bymonthday record))))
+    ,@(when (byyearday record) `(byyearday: ,(serialize (byyearday record))))
+    ,@(when (byweekno record) `(byweekno: ,(serialize (byweekno record))))
+    ,@(when (bymonth record) `(bymonth: ,(serialize (bymonth record))))
+    ,@(when (bysetpos record) `(bysetpos: ,(serialize (bysetpos record))))
+    ,@(when (wkst record) `(wkst: ,(serialize (wkst record))))))
 
 ;;; Both interval and wkst are optional by the standard.
 ;;; We however default those to 1 and monday in the constructor
 ;;; saving us from checking at the use site.
 (define-type (recur-rule
               constructor: recur-rule-constructor-factory
-              printer: (lambda (record port)
-                         (pretty-print (serialize-recur-rule record)
-                                       port display?: #f)))
+              serializer: serialize-recur-rule)
   (freq       type: (memv intervals))
   (until      type: (or false? date? datetime?))
   (count      type: (or false? (and integer? positive?)))

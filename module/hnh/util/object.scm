@@ -1,9 +1,12 @@
 (define-module (hnh util object)
+  :use-module (srfi srfi-1)
   :use-module (srfi srfi-9 gnu)
   :use-module (ice-9 curried-definitions)
   :use-module (hnh util)
   :use-module (hnh util type)
-  :export (define-type))
+  :export (define-type
+            serialize set-record-type-serializer!
+            ))
 
 
 
@@ -167,7 +170,7 @@
        fields))
 
 
-(define (syntax-name field)
+(define (get-keyword-name field)
   (syntax-case field ()
     ((name kvs ...)
      (cond ((kv-ref #'(kvs ...) keyword:)
@@ -175,13 +178,26 @@
            (else #'name)))
     (name #'name)))
 
+(define (get-field-name field)
+  (syntax-case field ()
+    ((name _ ...) #'name)
+    (name #'name)))
+
+(define (get-field-name-and-keyword field)
+  (syntax-case field ()
+    ((name kvs ...)
+     (cond ((kv-ref #'(kvs ...) keyword:)
+            => (lambda (kv) (cons #'name kv)))
+           (else (cons #'name #'name))))
+    (name (cons #'name #'name))))
+
 ;; Go from my concept of field definitions, to what lambda* wants as arguments
 (define (lambda*-stx field)
   (syntax-case field ()
     ((name kvs ...)
      (cond ((kv-ref #'(kvs ...) default:)
-            => (lambda (dflt) #`(#,(syntax-name field) #,dflt)))
-           (else (syntax-name field))))
+            => (lambda (dflt) #`(#,(get-keyword-name field) #,dflt)))
+           (else (get-keyword-name field))))
     (name #'name)))
 
 ;; Changes a printer function to have "atomic" output.
@@ -190,6 +206,60 @@
     (display
      (call-with-output-string (lambda (p_) (printer o p_)))
      p)))
+
+;; Return a form, which when evaluated, returns the source object.
+;; Compare this with "write", which outputs a string which returns the
+;; source object when read back in.
+;; For example `(write 'a)` would output `a`, while `(serialize 'a)`
+;; would return `(quote a)`
+;; A valid (but ugly) implementation of `write` would be:
+;;     (define (write object port)
+;;       (format port "#.~s" object))
+;; assuming that the fluid `read-eval?` is set to `#t`.
+
+(define serializers (list))
+
+(define (set-record-type-serializer! type-predicate serializer)
+  ;; NOTE New serializers are pre-pended. This allows serializers to
+  ;; be overwritten, and allows more specific serializers to be added
+  ;; later. It however comes with the slight downside that `symbol?`
+  ;; is one of the last serializers tested, which might make the code
+  ;; slightly slower.
+  (set! serializers (cons (cons type-predicate serializer) serializers)))
+
+(define (serialize object)
+  (cond ((find (lambda (p) ((car p) object)) serializers)
+         => (lambda (p) ((cdr p) object)))
+        ;; Assume self-quoting
+        (else object)))
+
+(set-record-type-serializer!
+ symbol?
+ (lambda (obj)
+   (catch #t (lambda ()
+               ;; A bug in Guile makes symbols which look
+               ;; like floating point numbers with exponents
+               ;; larger than allowed to fail to write. For
+               ;; example, (string->symbol "1e500<anything>")
+               ;; crashes when printed, as if `1e500` was
+               ;; trying to be evaluated.
+               (with-output-to-string (lambda () (write obj)))
+               `(quote ,obj))
+     (lambda _ `(string->symbol ,(symbol->string obj))))))
+
+;; (set-record-type-serializer!
+;;  circular-list?
+;;  (lambda (obj) '(circular-lists-not-yet-supported)))
+
+(set-record-type-serializer!
+ list?
+ (lambda (obj) `(list ,@(map serialize obj))))
+
+(set-record-type-serializer!
+ pair?
+ (lambda (pair) `(cons ,(serialize (car pair))
+                  ,(serialize (cdr pair)))))
+
 
 
 
@@ -226,24 +296,49 @@
                        (else #`(lambda* (key: #,@(map lambda*-stx #'(field ...)))
                                  ;; Type validators
                                  (constructor-validator field) ...
-                                 (make-<type> #,@(map syntax-name #'(field ...)))))))
+                                 (make-<type> #,@(map get-keyword-name #'(field ...)))))))
 
              ;; Field accessors
              (build-accessor name field) ...
 
              #,@(build-lenses stx #'(field ...))
 
+             (set-record-type-serializer!
+              <type>?
+              #,(cond ((kv-ref #'(attribute ...) serializer:)
+                       => identity)
+                      (else
+                       #`(lambda (r)
+                           ;; TODO instead of (<name> [key: value] ...) pairs, output
+                           ;; (apply <name> (concatenate `([(key value)] ...)))
+                           ;; This is a worthless extra step, but it makes pretty-print
+                           ;; behave better
+                           `(name
+                             #,@(concatenate
+                                 (map (lambda (pair)
+                                        ;; We un-wrap and re-wrap field-name, since we change
+                                        ;; syntax scope here
+                                        (let ((field-name (syntax->datum (car pair)))
+                                              (keyword (syntax->datum (cdr pair))))
+                                          #`(#,(symbol->keyword keyword)
+                                             ,(serialize (#,(datum->syntax stx field-name) r)))))
+                                      (map get-field-name-and-keyword #'(field ...)))))))))
+
              ;; if printer in attribute
-             #,@(cond ((kv-ref #'(attribute ...) printer:)
-                       => (lambda (printer)
-                            ;; Wrap printer is used, since sometimes
-                            ;; the output port closes to early (not
-                            ;; sure why, tested with Guile 3.0.10,
-                            ;; 2025-08-28)
-                            (list #`(set-record-type-printer!
-                                     <type>
-                                     (wrap-printer #,printer)))))
-                      (else '()))))))
+             (set-record-type-printer!
+              ;; Wrap printer is used, since sometimes
+              ;; the output port closes to early (not
+              ;; sure why, tested with Guile 3.0.10,
+              ;; 2025-08-28)
+              <type>
+              (wrap-printer
+               #,(cond ((kv-ref #'(attribute ...) printer:)
+                        => (lambda (printer) printer))
+                       (else
+                        #'(lambda (o p)
+                            (display "#." p)
+                            ((@ (ice-9 pretty-print) pretty-print)
+                             (serialize o) p))))))))))
 
     ;; else, type name without extra attributes
     #;

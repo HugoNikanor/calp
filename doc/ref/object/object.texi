@@ -62,6 +62,16 @@ A custom constructor for the type above might look like
 
 @deffn {Type Parameter} #:printer (λ (record port))
 Use a custom printer for the type.
+
+If no printer is given, then one equivalent to the following is used:
+@example
+(lambda (r p) (format p "#.~y" (serialize r)))
+@end example
+@end deffn
+
+@deffn {Type Parameter} #:serializer (lambda (object))
+Procedure for serializing this type (@ref{serialize}). Defaults to a
+form mimicing the default constructor.
 @end deffn
 
 Each field declares a part of the record, along with relevant metadata
@@ -125,3 +135,17 @@ Type predicate.
 And for each field @var{<field>}:
 
 @end defmac
+
+
+@defun serialize object
+@anchor{serialize}
+Return a form, which when evaluated, returns an object as identical to
+@var{object} as possible.
+
+For example, symbols are serialized as @code{`(quote ,symbol)}, and
+pairs as @code{`(cons ,(serialize (car pair)) ,(serialize (cdr pair)))}.
+@end defun
+
+@defun set-record-type-serializer! type-predicate serializer
+Register a serializer for a given type.
+@end defun

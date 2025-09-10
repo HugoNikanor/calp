@@ -12,11 +12,18 @@
            format-duration
            ))
 
-(define-type (duration-week)
+(define-type (duration-week serializer: (lambda (o)
+                                          `(duration
+                                            sign: ,(serialize (duration-week-sign o))
+                                            week: ,(duration-week-count o))))
   (duration-week-sign  keyword: sign type: (memv '(+ -)))
   (duration-week-count keyword: week type: integer?))
 
-(define-type (duration-datetime)
+(define-type (duration-datetime serializer: (lambda (o)
+                                              `(duration
+                                                sign: ,(serialize (duration-datetime-sign o))
+                                                day: ,(duration-day o)
+                                                time: ,(duration-time o))))
   (duration-datetime-sign keyword: sign type: (memv '(+ -)))
   (duration-day  keyword: day  default: #f
                  type: (or false? integer?))

@@ -202,6 +202,7 @@
 
 (define-type (datetime
               constructor: datetime-constructor-constructor
+              serializer: (lambda (r) `(datetime date: ,(datetime-date r) time: ,(datetime-time r) tz: ,(serialize (tz r))))
               printer: (lambda (r p)
                          (if (and (tz r) (not (string=? "UTC" (tz r))))
                              (write (datetime->sexp r) p) ; NOCOV

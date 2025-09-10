@@ -31,33 +31,19 @@
 (define (serialize-tree t)
   `(-> (table)
        ,@(fold (lambda (p done)
-                 (cons `(table-put
-                         ;; A bug in Guile makes symbols which look
-                         ;; like floating point numbers with exponents
-                         ;; larger than allowed to fail to write. For
-                         ;; example, (string->symbol "1e500<anything>")
-                         ;; crashes when printed, as if `1e500` was
-                         ;; trying to be evaluated.
-
-                         ;; (quote ,(car p))
-                         (string->symbol ,(symbol->string (car p)))
-                         (quote ,(cdr p)))
+                 (cons `(table-put ,(serialize (car p)) ,(serialize (cdr p)))
                        done))
                '()
                (tree->list t))))
 
-(define-type (tree-node
-              printer: (lambda (t p)
-                         ((@ (ice-9 pretty-print) pretty-print)
-                          (serialize-tree t)
-                          p)))
+(define-type (tree-node serializer: serialize-tree)
   (key type: symbol?)
   value
   (left type: tree? default: (tree-terminal))
   (right type: tree? default: (tree-terminal)))
 
 ;; Type tagged null
-(define-type (tree-terminal printer: (lambda (_ p) (write '(table) p))))
+(define-type (tree-terminal serializer: (lambda _ '(table))))
 
 ;; Wrapped for better error messages
 (define (make-tree) (tree-terminal))
@@ -65,7 +51,6 @@
 (define (tree? x)
   (or (tree-node? x)
       (tree-terminal? x)))
-
 
 ;; Lens for focusing a specific eontry in a table.
 ;; If the given key isn't present in the table, `op` will be called

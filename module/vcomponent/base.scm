@@ -56,23 +56,14 @@
 ;;; </vcomponent>
 ;;;
 
-;;; TODO at least when called from serialize-vcomponent, this should
-;;; emit something which allows the serialized vcomponent to be
-;;; fed back into the parser to get the object back.
-(define (print-vline v p)
-  ((@ (ice-9 pretty-print) pretty-print)
-   `(vline key: ,(key v)
-           vline-value: ,(vline-value v)
-           ,@(let ((params (table->list (vline-parameters v))))
-               (if (null? params)
-                   '()
-                   `(vline-parameters:
-                     ,(concatenate (for (key . value) in params
-                                        `(,(symbol->keyword key)
-                                          ,value)))))))
-   p))
+(define (serialize-vline v)
+  `(vline key: ,(serialize (key v))
+          vline-value: ,(serialize (vline-value v))
+          ,@(if (table-empty? (vline-parameters v))
+                '()
+                `(vline-parameters: ,(serialize (vline-parameters v))))))
 
-(define-type (vline printer: print-vline)
+(define-type (vline serializer: serialize-vline)
   ;; TODO why does vline contain its own key?
   (key type: symbol?)
   (vline-value)
@@ -86,43 +77,39 @@
        (equal? (table->list (vline-parameters a))
                (table->list (vline-parameters b)))))
 
-(define (serialize-vline line)
-  (let ((parameters
-         (table->list (vline-parameters line))))
-    (if (null? parameters)
-        (vline-value line)
-        `(with-parameters
-          ,@(concatenate (for (key . value) in parameters
-                              `(,(symbol->keyword key)
-                                ,value)))
-          ,(vline-value line)))))
-
 (define (serialize-vcomponent c)
+
+  ;; Local override for serialize-vline, since we want to output the
+  ;; `create-vcomponent` form, instead of the "true" serialized form.
+  (define (serialize-vline vline)
+    (if (table-empty? (vline-parameters vline))
+        (serialize (vline-value vline))
+        `(with-parameters
+          ,@(for (key . value) in (table->list (vline-parameters vline))
+                 `(,(symbol->keyword key) ,(serialize value)))
+          (serialize (vline-value vline)))))
+
   (let ((children (table->list (vcomponent-children c))))
-    `(vcomponent ',(type c)
-                 ,@(concatenate
-                    (for (key . value) in (table->list (component-properties c))
-                         (list (-> key symbol->string
-                                   string-downcase
-                                   string->keyword)
-                               (cond ((list? value)
-                                      `(as-list (list
-                                                 ,@(map serialize-vline value))))
-                                     ((vline? value) (serialize-vline value))
-                                     (else (unreachable
-                                            "serialize-vcomponent"
-                                            "Expected vline or list of vline, got ~s"
-                                            value))))))
-                 ,@(unless (null? children)
-                     `((list ,@(map (lambda (child) (serialize-vcomponent child))
-                                    (map cdr children))))))))
+    `(create-vcomponent
+      ,(serialize (type c))
+      ,@(concatenate
+         (for (key . value) in (table->list (component-properties c))
+              (list (-> key symbol->string
+                        string-downcase
+                        string->keyword)
+                    (cond ((list? value)
+                           ;; TODO is this correct?
+                           `(as-list (list ,@(map serialize-vline value))))
+                          ((vline? value) (serialize-vline value))
+                          (else (unreachable
+                                 "serialize-vcomponent"
+                                 "Expected vline or list of vline, got ~s"
+                                 value))))))
+      ,@(unless (null? children)
+          `((list ,@(map (lambda (child) (serialize-vcomponent child))
+                         (map cdr children))))))))
 
-(define (print-vcomponent c p)
-  ((@ (ice-9 pretty-print) pretty-print)
-   (serialize-vcomponent c)
-   p))
-
-(define-type (vcomponent printer: print-vcomponent)
+(define-type (vcomponent serializer: serialize-vcomponent)
   (type                        type: symbol?)
   (vcomponent-children
               default: (table) type: table?)
