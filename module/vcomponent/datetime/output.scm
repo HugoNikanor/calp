@@ -38,7 +38,7 @@
                               (datetime->string d (G_ "~e ~b ~k:~M"))
                               ;; [FRR] Exception date without time
                               (datetime->string d (G_ "~e ~b")))))
-                    (map value it)))))
+                    (map vline-value it)))))
     "."))
 
 (define (format-summary ev str)

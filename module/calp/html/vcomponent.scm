@@ -187,7 +187,7 @@
                                   (cond ((and fmt-type
                                               (not (null? fmt-type))
                                               (string=? "image" (car fmt-type)))
-                                         (let* ((chk (-> (value attach)
+                                         (let* ((chk (-> (vline-value attach)
                                                          sha256
                                                          checksum->string))
                                                 (dname (path-append (xdg-runtime-dir)
@@ -200,7 +200,7 @@
                                              (mkdir (dirname dname))
                                              (mkdir dname)
                                              (call-with-output-file filename
-                                               (lambda (port) (put-bytevector port (value attach)))))
+                                               (lambda (port) (put-bytevector port (vline-value attach)))))
                                            (let ((link (path-append "/tmpfiles" (string-append chk "." (mimetype-extension fmt-type)))))
                                              `(a (@ (href ,link))
                                                  (img (@ (class "attach")
@@ -213,10 +213,10 @@
                                               (not (null? fmt-type))
                                               (string=? "image" (car fmt-type)))
                                          `(img (@ (class "attach")
-                                                  (src ,(value attach)))))
+                                                  (src ,(vline-value attach)))))
                                         (else `(a (@ (class "attach")
-                                                     (href ,(value attach)))
-                                                  ,(value attach))))))
+                                                     (href ,(vline-value attach)))
+                                                  ,(vline-value attach))))))
 
                                ;; Neither BINARY nor URI
                                (else (scm-error 'misc-error "fmt-single-event"
