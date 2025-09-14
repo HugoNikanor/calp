@@ -27,7 +27,7 @@ namespace symbols, to prefered prefix.
 Returns a sxml tree, with xmlns:<prefix>=namespace attributes
 @end defun
 
-@defun namespaced-sxml->xml tree [namespaces='()] [port='(current-output-port)]
+@defun namespaced-sxml->xml tree [#:namespaces='()] [#:port='(current-output-port)]
 Serializes the namespaced sxml tree to port. @var{namespaces} should
 be an association list from namespace symbols, to prefered prefixes.
 @end defun
@@ -71,7 +71,7 @@ namespace.
        @itemize
        @item @var{tag} should be a symbol.
        @item @var{ns} should be a symbol.
-       @item @var{attrs} should be a hash table.
+       @item @var{attrs} should be a list of symbol-value pairs.
        @end itemize
 
        @defun make-xml-element tagname namespace attributes
