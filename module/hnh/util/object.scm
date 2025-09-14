@@ -251,15 +251,15 @@
 ;;  circular-list?
 ;;  (lambda (obj) '(circular-lists-not-yet-supported)))
 
-(set-record-type-serializer!
- list?
- (lambda (obj) `(list ,@(map serialize obj))))
 
 (set-record-type-serializer!
  pair?
  (lambda (pair) `(cons ,(serialize (car pair))
                   ,(serialize (cdr pair)))))
 
+(set-record-type-serializer!
+ list?
+ (lambda (obj) `(list ,@(map serialize obj))))
 
 
 
@@ -336,9 +336,14 @@
                         => (lambda (printer) printer))
                        (else
                         #'(lambda (o p)
-                            (display "#." p)
-                            ((@ (ice-9 pretty-print) pretty-print)
-                             (serialize o) p))))))))))
+                            (->
+                             (with-output-to-string
+                               (lambda ()
+                                 (display "#.")
+                                 ((@ (ice-9 pretty-print) pretty-print)
+                                  (serialize o))))
+                             (string-drop-right 1)
+                             (display p)))))))))))
 
     ;; else, type name without extra attributes
     #;

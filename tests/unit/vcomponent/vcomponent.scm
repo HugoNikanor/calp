@@ -89,20 +89,18 @@
              (K2 . "V2"))))))
 
 (test-equal "VLine string representation"
-  "(vline #:key KEY #:vline-value \"Value\")
-"
+  "#.(vline #:key 'KEY #:vline-value \"Value\")"
   (with-output-to-string
     (lambda ()
       (write (vline key: 'KEY vline-value: "Value") ))))
 
 (test-equal "VLine with parameters representation"
-  "(vline #:key
-       KEY
-       #:vline-value
-       \"Value\"
-       #:vline-parameters
-       (#:a \"1\"))
-"
+  "#.(vline #:key
+         'KEY
+         #:vline-value
+         \"Value\"
+         #:vline-parameters
+         (-> (table) (table-put 'a \"1\")))"
  (with-output-to-string
    (lambda ()
      (write (vline key: 'KEY
@@ -111,18 +109,17 @@
                    (alist->table '((a . "1"))))))))
 
 (test-equal "VComponent string representation"
-  "(vcomponent
-  'VCALENDAR
-  (list (vcomponent
+  "#.(create-vcomponent
+   'VCALENDAR
+   (list (create-vcomponent
           'VEVENT
           #:dtstart
           (with-parameters
-            #:TZID
-            \"Europe/Stockholm\"
-            #2023-03-01T10:00:00)
+           #:TZID
+           \"Europe/Stockholm\"
+           (datetime #:date #2023-03-01 #:time #10:00:00 #:tz #f))
           #:uid
-          \"049d9004-cb1e-4c8d-bb54-042689d9808b\")))
-"
+          \"049d9004-cb1e-4c8d-bb54-042689d9808b\")))"
 
   (with-output-to-string
     (lambda ()

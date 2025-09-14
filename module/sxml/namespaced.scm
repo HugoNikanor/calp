@@ -2,7 +2,6 @@
   :use-module (sxml ssax)
   :use-module (sxml util)
   :use-module (ice-9 match)
-  :use-module (ice-9 pretty-print)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -60,21 +59,16 @@
   (pi-body type: string?))
 
 
-(define (serialize-xml-element el)
-  `(xml-element tag: ,(xml-element-tagname el)
-                ns:  ,(xml-element-namespace el)
-                attributes: ,(serialize-table (xml-element-attributes el))
-                children: (list ,@(map (lambda (e)
-                                         (cond ((xml-element*? e)
-                                                (serialize-xml-element e))
-                                               (else e)))
-                                       (xml-element-children el)))))
+(define (serialize-xml-element object)
+  `((xml ,@(awhen (xml-element-namespace object) (list (serialize it)))
+         ,(serialize (xml-element-tagname object))
+         ,@(let ((attrs (xml-element-attributes object)))
+             (if (table-empty? attrs)
+                 '()
+                 (list (serialize (table->list attrs))))))
+    ,@(map serialize (xml-element-children object))))
 
-
-(define-type (xml-element
-              printer: (lambda (r p)
-                         (pretty-print (serialize-xml-element r)
-                                       p)))
+(define-type (xml-element serializer: serialize-xml-element)
   (xml-element-tagname    type: symbol?
                           keyword: tag)
   (xml-element-namespace  type: (or false? symbol?)

@@ -54,10 +54,7 @@
 
 (test-equal "Scheme block"
     "(sxml->ansi-text
-  '(dl (dt \"key\")
-       (dd \"value\")
-       (dd \"value 2\")
-       (dt \"key 2\")))"
+ '(dl (dt \"key\") (dd \"value\") (dd \"value 2\") (dt \"key 2\")))"
   (sxml->ansi-text
    '(scheme (sxml->ansi-text '(dl (dt "key")
                                   (dd "value")

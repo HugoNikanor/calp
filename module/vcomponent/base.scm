@@ -85,9 +85,10 @@
     (if (table-empty? (vline-parameters vline))
         (serialize (vline-value vline))
         `(with-parameters
-          ,@(for (key . value) in (table->list (vline-parameters vline))
-                 `(,(symbol->keyword key) ,(serialize value)))
-          (serialize (vline-value vline)))))
+          ,@(concatenate
+             (for (key . value) in (table->list (vline-parameters vline))
+                  `(,(symbol->keyword key) ,(serialize value))))
+          ,(serialize (vline-value vline)))))
 
   (let ((children (table->list (vcomponent-children c))))
     `(create-vcomponent
