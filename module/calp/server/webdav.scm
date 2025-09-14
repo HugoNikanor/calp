@@ -128,30 +128,6 @@
 
 
 
-;;; Extract the root element from sxml tree
-(define (root-element sxml)
-  (sxml-match sxml
-    [(*TOP* (*PI* . ,args) ,root) root]
-    [(*TOP* ,root) root]
-    [,root root]))
-
-(define (root-element/namespaced sxml)
-  (cond ((not (list? sxml)) (scm-error 'misc-error "root-element/namespaced"
-                                       "Argument is invalid sxml: ~s"
-                                       (list sxml) #f))
-        ((null? (car sxml)) (scm-error 'misc-error "root-element/namespaced"
-                                       "No root in an empty list"
-                                       '() #f))
-        ((eq? '*TOP* (car sxml))
-         (let ((children (cdr sxml)))
-           (cond ((null? children) #f)
-                 ((pi-element? (car children))
-                  (cadr children))
-                 (else (car children)))))
-        (else sxml)))
-
-
-
 (declare-header! "DAV"
   parse-dav-line
   validate-dav-line
@@ -201,6 +177,7 @@
   (define headers (request-headers request))
   (cond ((lookup-resource root-resource href)
          => (lambda (resource)
+              ;; A list of (path, resource) pairs
               (define requested-resources
                 (case (or (assoc-ref headers 'depth) 'infinity)
                   ((0) (list (cons href resource)))
@@ -210,6 +187,7 @@
                                           child))
                                   (children resource))))
                   ((infinity) (all-resources-under resource href))))
+
 
               ;; Body, if it exists, MUST have be a DAV::propfind object
               (define property-request
@@ -225,7 +203,6 @@
                               root: ((xml webdav 'propfind)
                                      ((xml webdav 'allprop))))))))
 
-
               (catch 'bad-request
                 (lambda ()
                   (values (build-response
@@ -240,8 +217,7 @@
                                    (apply (xml webdav 'response)
                                           ((xml webdav 'href) (href->string href))
                                           (map propstat->namespaced-sxml
-                                               (parse-propfind (root-element/namespaced property-request)
-                                                               resource)))))
+                                               (parse-propfind property-request resource)))))
                              namespaces: output-namespaces
                              port: port)
                             (newline port))))
@@ -266,19 +242,14 @@
                            reason-phrase: (http-status-phrase 207)
                            headers: '((content-type . (application/xml))))
                           (lambda (port)
-                            (define-values (request namespaces*)
-                              (cond ((string? body)
-                                     (-> body
-                                         xml->namespaced-sxml
-                                         (namespaced-sxml->sxml/namespaces
-                                          (map swap namespaces))))
-                                    ((bytevector? body)
-                                     (-> body
-                                         (bytevector->string (make-transcoder (utf-8-codec)))
-                                         xml->namespaced-sxml
-                                         (namespaced-sxml->sxml/namespaces
-                                          (map swap namespaces))))
-                                    (else (throw 'body-required))))
+
+                            (define request-body
+                              (xml-document-root
+                               (xml->namespaced-sxml
+                                (cond ((string? body) body)
+                                      ((bytevector? body)
+                                       (bytevector->string body (make-transcoder (utf-8-codec))))
+                                      (else (throw 'body-required))))))
 
                             (namespaced-sxml->xml
                              ((xml webdav 'multistatus)
@@ -286,11 +257,9 @@
                                (xml webdav 'response)
                                ((xml webdav 'href) (href->string href))
                                (map propstat->namespaced-sxml
-                                    (parse-propertyupdate
-                                     (root-element request)
-                                     (map swap namespaces*)
-                                     resource))))
+                                    (parse-propertyupdate request-body resource))))
                              port: port))))
+
                 (lambda (err proc fmt args data)
                   (values (build-response
                            code: 400

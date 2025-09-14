@@ -265,7 +265,7 @@
   (let ((root-resource (make <virtual-resource> name: "*root*")))
     (add-resource! root-resource "a" "Content of A")
     (let ((a (lookup-resource root-resource '("a"))))
-      (set-property! a `(,(xml prop-ns 'test) "prop-value"))
+      (set-property! a ((xml prop-ns 'test) "prop-value"))
       ;; Extra child added to ensure deep copy works
       (add-resource! a "d" "Content of d"))
 
@@ -286,9 +286,9 @@
           "Content of A" (content c))
         (test-equal "Property was correctly copied"
           (propstat 200
-                    (list `(,(xml prop-ns 'test)
+                    (list ((xml prop-ns 'test)
                             "prop-value")))
-          (get-property c (xml prop-ns 'test)))))
+          (get-property c ((xml prop-ns 'test))))))
 
     (test-group "cp --no-clobber /c /a"
       (let ((response _
@@ -332,7 +332,7 @@
   (let ((root-resource (make <virtual-resource> name: "*root*")))
     (add-resource! root-resource "a" "Content of A")
     (let ((a (lookup-resource root-resource '("a"))))
-      (set-property! a `(,(xml prop-ns 'test) "prop-value")))
+      (set-property! a ((xml prop-ns 'test) "prop-value")))
 
     (test-group "mv /a /c"
       (let ((response _

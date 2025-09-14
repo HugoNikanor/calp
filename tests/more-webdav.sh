@@ -18,7 +18,9 @@ cat - > "$config_file" <<-"EOF"
   `(("/files" file
       path: ,(getenv "tmpdir"))
     ("/virtual" virtual
-      content: "Hello, World\n")
+      content: ,((@ (ice-9 iconv) string->bytevector)
+                    "Hello, World\n"
+                    "ascii"))
    )
 )
 EOF
@@ -41,7 +43,10 @@ mkfifo "$portpipe"
 
 port=$(cat "$portpipe")
 
-curl -X PROPFIND -H 'Depth: Infinity' "http://localhost:$port" \
+curl -X PROPFIND \
+     -H 'Depth: Infinity' \
+     --silent \
+     "http://localhost:$port" \
     | xmllint --format - \
     | highlight -S xml
 

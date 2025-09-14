@@ -65,6 +65,13 @@
   (typecheck sxml xml-element?)
   (typecheck resource resource?)
 
+  (unless (tag-matches? sxml 'propstat webdav)
+    (scm-error 'bad-request "parse-propfind"
+               "Root of PROPFIND method must be a propfind element, got ~s"
+               (list (with-output-to-string
+                       (lambda () (namespaced-sxml->xml (xml-element-children body '())))))
+               '()))
+
   (let ((propname (find-child ((xml webdav 'propname)) (xml-element-children sxml)))
         (allprop  (find-child ((xml webdav 'allprop))  (xml-element-children sxml)))
         (include  (find-child ((xml webdav 'include))  (xml-element-children sxml)))
@@ -91,7 +98,7 @@
                    200
                    (append
                     (map (lambda (el) (-> el (children '()) (properties (table))))
-                     (dead-properties resource))
+                         (dead-properties resource))
                     (map car (live-properties resource))))))
 
            (prop

@@ -45,9 +45,6 @@
 (define (2list->pair l)
   (call-with-values (lambda () (car+cadr l)) cons))
 
-(define (attributes->table attributes)
-  (alist->table (map 2list->pair attributes)))
-
 
 ;; XML processing instruction elements (and other things with identical syntax)
 ;; For example: <?xml version="1.0" encoding="utf-8"?> would be encoded as
@@ -115,7 +112,7 @@
     ((tag)          (lambda children (xml-element children: children tag: tag)))
     ((ns tag)       (lambda children (xml-element children: children tag: tag ns: ns)))
     ((ns tag attrs) (lambda children (xml-element children: children tag: tag ns: ns
-                                                  attributes: (attributes->table attrs))))))
+                                             attributes: (alist->table attrs))))))
 
 (define (attribute xml attr)
   (assoc-ref (xml-element-attributes xml) attr))
@@ -163,10 +160,12 @@
 
    NEW-LEVEL-SEED
    (lambda (elem-gi attrs namespaces expected-content seed)
+     ;; TODO attribute keys are either plain symbols, or
+     ;; a pair of namespace and symbol
      (push
       (match elem-gi
-        ((ns . tag) (xml-element tag: tag attributes: (attributes->table attrs) ns: ns))
-        (tag        (xml-element tag: tag attributes: (attributes->table attrs))))
+        ((ns . tag) (xml-element tag: tag attributes: (alist->table attrs) ns: ns))
+        (tag        (xml-element tag: tag attributes: (alist->table attrs))))
       seed))
 
    FINISH-ELEMENT

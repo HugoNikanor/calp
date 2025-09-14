@@ -7,6 +7,7 @@
            find-child
            element-matches?
            root-element
+           tag-matches?
            ))
 
 (define (xml-element-hash-key tag)
@@ -28,3 +29,11 @@
        (equal?
         (xml-element-hash-key target-el)
         (xml-element-hash-key (car tree)))))
+
+
+(define* (tag-matches? xml-element tagname optional: namespace)
+  (typecheck xml-element xml-element?)
+  (typecheck tagname symbol?)
+  (typecheck namespace (or symbol? false?))
+  (and (eqv? tagname (xml-element-tagname xml-element))
+       (eqv? namespace (xml-element-namespace xml-element))))

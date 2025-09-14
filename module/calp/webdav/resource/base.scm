@@ -316,7 +316,12 @@
   (typecheck resource resource?)
   (typecheck xml-el xml-element?)
 
-  (assoc-ref (live-properties resource) xml-el))
+  (and=> (find (lambda (p)
+                 (and (xml-element? (car p))
+                      (equal? (xml-element-hash-key (car p))
+                              (xml-element-hash-key xml-el))))
+               (live-properties resource))
+         cdr))
 
 ;;; TODO should {get,set}{,-{dead,live}}-property really be methods?
 ;;; - Live properties are defined by lookup-live-property, which isn't a
@@ -358,9 +363,12 @@
                (cons value (cdr rem)))
               (else (loop (cdr rem))))))))
 
+;; Return a promise which performs the set operation.
+;; Pre-conditions can cause this function to throw
 (define-method (set-live-property (resource <resource>) value)
   (typecheck value xml-element?)
-  (cond ((lookup-live-property resource (car value))
+  (cond ((lookup-live-property resource value)
+         ;; NOTE this drops any (xml) attributes from the value object
          => (lambda (prop) (apply (property-setter-generator prop)
                              resource (xml-element-children value))))
         (else #f)))

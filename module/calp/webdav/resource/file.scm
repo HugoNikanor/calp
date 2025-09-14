@@ -99,12 +99,12 @@
 
 (define-method (creationdate (self <file-resource>))
   (propstat 200
-            `((,(xml webdav 'creationdate)
-               ,(with-locale1
-                 LC_TIME "C"
-                 (lambda ()
-                  (-> (file-creation-date (filepath self))
-                      (datetime->string "~Y-~m-~dT~H:~M:~S~Z"))))))))
+            (list ((xml webdav 'creationdate)
+                   (with-locale1
+                    LC_TIME "C"
+                    (lambda ()
+                      (-> (file-creation-date (filepath self))
+                          (datetime->string "~Y-~m-~dT~H:~M:~S~Z"))))))))
 
 (define-method (content (self <file-resource>))
   (case (stat:type (lstat (filepath self)))
@@ -150,20 +150,20 @@
 (define-method (getcontenttype (self <file-resource>))
   ;; TODO 404 if collection
   ;; Or just omit it?
-  (propstat 200 `((,(xml webdav 'getcontenttype)
-                   ,(mimetype (filepath self))))))
+  (propstat 200 (list ((xml webdav 'getcontenttype)
+                       (mimetype (filepath self))))))
 
 (define-method (getlastmodified (self <file-resource>))
   (propstat 200
-            `((,(xml webdav 'getlastmodified)
-               ,(with-locale1
-                 LC_TIME "C"
-                 (lambda ()
-                  (-> (filepath self)
-                      lstat
-                      stat:mtime
-                      unix-time->datetime
-                      (datetime->string "~a, ~d ~b ~Y ~H:~M:~S GMT"))))))))
+            (list ((xml webdav 'getlastmodified)
+                   (with-locale1
+                    LC_TIME "C"
+                    (lambda ()
+                      (-> (filepath self)
+                          lstat
+                          stat:mtime
+                          unix-time->datetime
+                          (datetime->string "~a, ~d ~b ~Y ~H:~M:~S GMT"))))))))
 
 ;; (define (xattr-key xml-el)
 ;;   (format #f "caldav.~a"
