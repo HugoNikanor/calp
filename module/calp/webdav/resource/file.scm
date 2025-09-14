@@ -79,9 +79,9 @@
   ;;         (root self)
   ;;         (local-path self))
   (when (is-collection? self)
-    (map (lambda (p) (file-resource-for-path (root self)
-                                        (path-append (path self)
-                                                     p)))
+    (map (lambda (p) (file-resource-for-path
+                 (root self)
+                 (path-append (path self) p)))
          (remove (lambda (p) (member p '("." "..")))
                  (scandir (filepath self))))))
 
