@@ -67,9 +67,9 @@
   (list (propstat 404 (list ((xml webdav 'displayname)))))
   (propfind-selected-properties resource (list ((xml webdav 'displayname)))))
 
-(test-group "parse-propfind"
+(test-group "exec-propfind"
   (test-group "propname"
-    (let ((props (parse-propfind ((xml webdav 'propfind)
+    (let ((props (exec-propfind ((xml webdav 'propfind)
                                   ((xml webdav 'propname)))
                                 resource)))
 
@@ -93,7 +93,7 @@
 
 
   (test-group "direct property list"
-    (let ((props (parse-propfind ((xml webdav 'propfind)
+    (let ((props (exec-propfind ((xml webdav 'propfind)
                                   ((xml webdav 'prop)
                                    ((xml webdav 'displayname))))
                                  resource)))
@@ -105,7 +105,7 @@
   ;; TODO test that non-native caldav propreties aren't reported by allprop
 
   (test-group "allprop"
-    (let ((props (parse-propfind ((xml webdav 'propfind)
+    (let ((props (exec-propfind ((xml webdav 'propfind)
                                   ((xml webdav 'allprop)))
                                  resource)))
 
@@ -136,7 +136,7 @@
 
 
   (test-group "allprop with include"
-    (let ((props (parse-propfind ((xml webdav 'propfind)
+    (let ((props (exec-propfind ((xml webdav 'propfind)
                                   ((xml webdav 'allprop))
                                   ((xml webdav 'include)))
                                  resource)))
@@ -168,7 +168,7 @@
         (sort-propstats props)))
 
 
-    (let ((props (parse-propfind ((xml webdav 'propfind)
+    (let ((props (exec-propfind ((xml webdav 'propfind)
                                   ((xml webdav 'allprop))
                                   ((xml webdav 'include)
                                    ((xml virtual-ns 'isvirtual))))
@@ -215,7 +215,7 @@
   </prop>
 </propfind>")))
 
-    (sort-propstats (parse-propfind (xml-document-root request) resource))))
+    (sort-propstats (exec-propfind (xml-document-root request) resource))))
 
 (test-equal "All dead properties"
   (list #;

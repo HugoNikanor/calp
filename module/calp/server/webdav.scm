@@ -217,7 +217,7 @@
                                    (apply (xml webdav 'response)
                                           ((xml webdav 'href) (href->string href))
                                           (map propstat->namespaced-sxml
-                                               (parse-propfind property-request resource)))))
+                                               (exec-propfind property-request resource)))))
                              namespaces: output-namespaces
                              port: port)
                             (newline port))))
@@ -257,7 +257,7 @@
                                (xml webdav 'response)
                                ((xml webdav 'href) (href->string href))
                                (map propstat->namespaced-sxml
-                                    (parse-propertyupdate request-body resource))))
+                                    (exec-propertyupdate request-body resource))))
                              port: port))))
 
                 (lambda (err proc fmt args data)

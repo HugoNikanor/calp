@@ -10,17 +10,17 @@
   :use-module ((hnh util) :select (for))
   :use-module (hnh util type)
   :use-module ((calp namespaces) :select (webdav))
-  :export (parse-propertyupdate)
+  :export (exec-propertyupdate)
   )
 
 
 ;; Returns a list of propstat objects
-(define (parse-propertyupdate body resource)
+(define (exec-propertyupdate body resource)
    ;; Check that root is an xml element of type d:propertyupdate
    (typecheck body xml-element?)
 
    (unless (tag-matches? body 'propertyupdate webdav)
-     (scm-error 'bad-request "parse-propertyupdate"
+     (scm-error 'bad-request "exec-propertyupdate"
                 "Root of PROPPATCH method must be a propertyupdate element, got ~s"
                 (list (with-output-to-string
                         (lambda () (namespaced-sxml->xml (xml-element-children body '())))))

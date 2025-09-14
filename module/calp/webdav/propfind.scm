@@ -14,7 +14,7 @@
            propfind-most-live-properties
            propfind-all-dead-properties
 
-           parse-propfind
+           exec-propfind
            ))
 
 ;;; Commentary:
@@ -61,15 +61,15 @@
 
 ;; Takes a propfind xml element (tree), and a webdav resource object.
 ;; Returns a list of <propstat> objects.
-(define (parse-propfind sxml resource)
+(define (exec-propfind sxml resource)
   (typecheck sxml xml-element?)
   (typecheck resource resource?)
 
-  (unless (tag-matches? sxml 'propstat webdav)
+  (unless (tag-matches? sxml 'propfind webdav)
     (scm-error 'bad-request "parse-propfind"
                "Root of PROPFIND method must be a propfind element, got ~s"
                (list (with-output-to-string
-                       (lambda () (namespaced-sxml->xml (xml-element-children body '())))))
+                       (lambda () (namespaced-sxml->xml (xml-element-children sxml '())))))
                '()))
 
   (let ((propname (find-child ((xml webdav 'propname)) (xml-element-children sxml)))
