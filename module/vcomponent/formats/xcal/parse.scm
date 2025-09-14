@@ -57,7 +57,7 @@
              ((@ (vcomponent duration) parse-duration) duration))])]
 
     [(recur)
-     ;; RFC6221 (xcal) Appendix A 3.3.10 specifies that all components should
+     ;; RFC6321 (xcal) Appendix A 3.3.10 specifies that all components should
      ;; come in a specified order, and by extension that all components of the
      ;; same type should follow each other. Actually checking that is harder
      ;; than to just accept anything in any order. It would also make us less
