@@ -33,18 +33,14 @@
            get-dead-property
            get-property
 
-           set-dead-property
-           set-dead-property!
-           set-live-property
-           set-live-property!
-           set-property
+           set-dead-property!!
+           set-live-property!!
+           set-property!!
            set-property!
 
-           remove-dead-property
-           remove-dead-property!
-           remove-live-property
-           remove-live-property!
-           remove-property
+           remove-dead-property!!
+           remove-live-property!!
+           remove-property!!
            remove-property!
 
 
@@ -236,7 +232,7 @@
         resource)))
 
 (define (initialize-copied-resource! source copy)
-  (for-each (lambda (tag) (set-dead-property! copy tag))
+  (for-each (lambda (tag) ((set-dead-property!! copy tag)))
             (dead-properties source))
   (set! (displayname* copy)    (displayname* source)
         (contentlanguage copy) (contentlanguage source))
@@ -348,7 +344,7 @@
 (define-method (dead-properties (resource <resource>))
   (dead-properties% resource))
 
-(define-method (set-dead-property (resource <resource>) value)
+(define-method (set-dead-property!! (resource <resource>) value)
   (typecheck value xml-element?)
   (lambda ()
     (set! (dead-properties% resource)
@@ -365,7 +361,7 @@
 
 ;; Return a promise which performs the set operation.
 ;; Pre-conditions can cause this function to throw
-(define-method (set-live-property (resource <resource>) value)
+(define-method (set-live-property!! (resource <resource>) value)
   (typecheck value xml-element?)
   (cond ((lookup-live-property resource value)
          ;; NOTE this drops any (xml) attributes from the value object
@@ -373,24 +369,21 @@
                              resource (xml-element-children value))))
         (else #f)))
 
-(define (set-dead-property! resource value)
-  ((set-dead-property resource value)))
-
-(define (set-live-property! resource value)
-  ((set-live-property resource value)))
-
-(define (set-property resource value)
-  (or (set-live-property resource value)
-      (set-dead-property resource value)))
+;; Returns a promise, which when evaluated, attempts to physically set
+;; the property. This procedure might fail due to pre-conditions,
+;; and the actuall fail might also fail
+(define (set-property!! resource value)
+  (or (set-live-property!! resource value)
+      (set-dead-property!! resource value)))
 
 (define (set-property! resource value)
-  ((set-property resource value)))
+  ((set-property!! resource value)))
 
 ;;; The remove-* procedures still take "correct" namespaced sxml (so an
 ;;; xml-element object inside a list). These extra lists are a bit of a waste,
 ;;; But allows remove-* to have the same signature as set-*
 
-(define-method (remove-dead-property (resource <resource>) xml-tag)
+(define-method (remove-dead-property!! (resource <resource>) xml-tag)
   (typecheck xml-tag xml-element?)
   (lambda ()
     (set! (dead-properties% resource)
@@ -399,7 +392,7 @@
                         (xml-element-hash-key xml-tag)))
               (dead-properties% resource)))))
 
-(define-method (remove-live-property (resource <resource>) xml-tag)
+(define-method (remove-live-property!! (resource <resource>) xml-tag)
   (typecheck xml-tag xml-element?)
 
   (cond ((lookup-live-property resource xml-tag)
@@ -409,18 +402,12 @@
                     (else (throw 'irremovable-live-property)))))
         (else #f)))
 
-(define (remove-dead-property! resource xml-tag)
- ((remove-dead-property resource xml-tag)))
-
-(define (remove-live-property! resource xml-tag)
-  ((remove-live-property resource xml-tag)))
-
-(define-method (remove-property (resource <resource>) xml-tag)
-  (or (remove-live-property resource xml-tag)
-      (remove-dead-property resource xml-tag)))
+(define-method (remove-property!! (resource <resource>) xml-tag)
+  (or (remove-live-property!! resource xml-tag)
+      (remove-dead-property!! resource xml-tag)))
 
 (define (remove-property! resource xml-tag)
-  ((remove-property resource xml-tag)))
+  ((remove-property!! resource xml-tag)))
 
 
 

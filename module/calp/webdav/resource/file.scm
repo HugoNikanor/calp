@@ -25,6 +25,8 @@
 ;; content type, with their content being their destination.
 ;; [1]: http://www.webdav.org/mod_dav/faq/#04-02
 
+;;; TODO set-dead-property!! should store the data to disk, preferably in extended attributes on the file in question
+
 ;;; Resources backed by the filesystem
 (define-class <file-resource> (<resource>)
   ;; Directory to act as root for this file tree.
@@ -173,10 +175,10 @@
 ;;                    (xml-element-tagname xml-el)))))
 
 
-;; (define-method (set-dead-property (self <file-resource>) value)
+;; (define-method (set-dead-property!! (self <file-resource>) value)
 ;;   (unless (and (list? value)
 ;;                (xml-element? (car value)))
-;;     (scm-error 'misc-error "set-dead-property"
+;;     (scm-error 'misc-error "set-dead-property!!"
 ;;                "Invalid value, expected namespaced sxml"
 ;;                '() #f))
 ;;   (catch #t
@@ -201,7 +203,7 @@
 ;;     (lambda _ (next-method))))
 
 
-;; (define-method (remove-dead-property (self <file-resource>)
+;; (define-method (remove-dead-property!! (self <file-resource>)
 ;;                               xml-el)
 ;;   (catch #t
 ;;     (lambda () (xattr-remove! (filepath self) xml-el))

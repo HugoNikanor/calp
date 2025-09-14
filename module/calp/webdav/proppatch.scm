@@ -36,7 +36,7 @@
                                              (xml-element-children child))))
                    (map (lambda (prop)
                           (cons (xml-element-children prop '())
-                                (set-property resource prop)))
+                                (set-property!! resource prop)))
                         (filter xml-element? (xml-element-children prop-tag)))))
 
                 ((tag-matches? child 'remove webdav)
@@ -44,7 +44,7 @@
                                              (xml-element-children child))))
                    (map (lambda (prop)
                           (cons (xml-element-children prop  '())
-                                (remove-property resource prop)))
+                                (remove-property!! resource prop)))
                         (filter xml-element? (xml-element-children prop-tag)))))
 
                 (else '())

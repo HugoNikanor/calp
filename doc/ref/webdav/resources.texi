@@ -80,26 +80,44 @@ procedure should preferably save its contents properly.
 @c 
 
 @defun get-property resource xml-tag
-@defunx get-live-property resource xml-tag
-@defunx get-dead-property resource xml-tag
+Retrieve a property from a resource. Always returns a @code{propstat}
+object, which however may contain an error.
+
+Resource types provide access to their properties by overriding the
+following methods:
+
+@deftp  {GOOPS method} get-live-property resource xml-tag
+@deftpx {GOOPS method} get-dead-property resource xml-tag
+@end deftp
 @end defun
 
 
-@defun set-property resource xml-el
-@defunx set-property! resource xml-el
-@defunx set-dead-property resource xml-el
-@defunx set-dead-property! resource xml-el
-@defunx set-live-property resource xml-el
-@defunx set-live-property! resource xml-el
+@defun set-property!! resource xml-el
+Runs pre-conditions for setting the given property on the resource,
+and returns a thunk which, when evaluated, executes the set operation,
+and returns an undefined value.
+
+Resource types should implement the following methods:
+@deftp  {GOOPS method} set-dead-property!! resource xml-el
+@deftpx {GOOPS method} set-live-property!! resource xml-el
+
+@code{set-live-property!!} @emph{must} return @code{#f} if no such
+live property exists, and anything else
+otherwise. @code{set-dead-property!!} has undefined return value.
+@end deftp
 @end defun
 
+@defun set-property! resource xml-el
+Like @code{set-live-property!!}, but executes immediately.
+@end defun
 
-@defun remove-property resource xml-tag
-@defunx remove-property! resource xml-tag
-@defunx remove-dead-property resource xml-tag
-@defunx remove-dead-property! resource xml-tag
-@defunx remove-live-property resource xml-tag
-@defunx remove-live-property! resource xml-tag
+@defun remove-property!! resource xml-tag
+@deftp  {GOOPS method} remove-dead-property!! resource xml-tag
+@deftpx {GOOPS method} remove-live-property!! resource xml-tag
+@end deftp
+@end defun
+
+@defun remove-property! resource xml-tag
 @end defun
 
 @c 

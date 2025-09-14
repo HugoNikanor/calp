@@ -61,7 +61,7 @@
 
 (define ns1 (string->symbol "http://example.com/namespace"))
 
-(set-dead-property! resource ((xml ns1 'test) "Content"))
+((set-dead-property!! resource ((xml ns1 'test) "Content")))
 
 (test-equal "Get dead property"
   (propstat 200 (list ((xml ns1 'test) "Content")))
