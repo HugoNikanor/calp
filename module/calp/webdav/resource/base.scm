@@ -402,7 +402,7 @@
                     (else (throw 'irremovable-live-property)))))
         (else #f)))
 
-(define-method (remove-property!! (resource <resource>) xml-tag)
+(define (remove-property!! resource xml-tag)
   (or (remove-live-property!! resource xml-tag)
       (remove-dead-property!! resource xml-tag)))
 
