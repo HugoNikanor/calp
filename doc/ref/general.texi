@@ -18,6 +18,7 @@ of these can be useful in any project.
 @include general/base64.texi
 @include general/xdg-basedir.texi
 @include general/glob.texi
+@include general/xattr.texi
 @include general/graphviz.texi
 @include general/crypto.texi
 @include general/graph.texi

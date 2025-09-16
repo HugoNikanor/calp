@@ -1,0 +1,29 @@
+@node xattr
+@section xattr
+
+The module @code{(xattr)} allows for modifying extended file
+attributes from Guile.
+
+For all these procedures, @code{path-or-port} should be an open file
+port, or a string, and @code{name} a string. Paths and names are
+always encoded as UTF-8. Values (both when setting and retrieving) are
+treated as opaque bytevectors, leaving the user to encode and decode
+data themselves. @code{system-error} is thrown if the underlying
+procedure fails.
+
+
+@defun set-xattr! path-or-port name value [#:force=('create|'replace)] [#:follow-symlinks?=#t]
+@end defun
+
+@defun get-xattr path-or-port name [#:follow-symlinks=#t]
+Returns @code{#f} if no such attribute exists on the file.
+@end defun
+
+@defun list-xattr path-or-port [#:follow-symlinks?=#t]
+Returns a (possible empty) list of strings.
+@end defun
+
+@defun remove-xattr! path-or-port name [#:follow-symlinks?=#t]
+Returns @code{#t} if attribute was removed, and @code{#f} if no such
+attribute existed beforehand.
+@end defun
