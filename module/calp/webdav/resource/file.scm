@@ -85,7 +85,10 @@
                  (root self)
                  (path-append (path self) p)))
          (remove (lambda (p) (member p '("." "..")))
-                 (scandir (filepath self))))))
+                 ;; NOTE scandir returns #f on errors (such as permission denied).
+                 ;; A better error message should possibly be used.
+                 (or (scandir (filepath self))
+                     '())))))
 
 (define-method (is-collection? (self <file-resource>))
   (eq? 'directory (stat:type (lstat (filepath self)))))
