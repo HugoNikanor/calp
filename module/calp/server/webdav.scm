@@ -601,6 +601,13 @@
        (emit-log!)
        (values head errmsg)))
 
+    ((pre-unwind #t)
+     (lambda _
+       (with-output-to-port (current-error-port)
+         ;; TODO this should not print on parser-error
+         ;; TODO option to write this to different port
+         (lambda () (backtrace)))))
+
     (#t
      (case-lambda ((err proc fmt args data)
                    (let ((head (build-response
