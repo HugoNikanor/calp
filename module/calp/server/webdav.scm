@@ -137,7 +137,10 @@
   (lambda (str)
     (if (string-ci=? str "Infinity")
         'infinity
-        (string->number str)))
+        (or (string->number str)
+            (scm-error 'misc-error "Depth header"
+                       "Invalid value for depth header: ~s"
+                       (list str) '()))))
   (lambda (value)
     (memv value '(0 1 infinity)))
   (lambda (value port)
