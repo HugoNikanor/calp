@@ -65,6 +65,14 @@ exec $GUILE -e main -s "$0" "$@"
         (string-append "/" (cadr args))))
   ;; Tiny wait to give the server thread chance to start properly
   (usleep 1000)
+
+  (let ((tests (getenv "TESTS")))
+    (when (or (not tests) (string-null? tests))
+      ;; Everything except "http". Those we skip since they are part
+      ;; of the Guile provided server, and it hangs trying to do a
+      ;; Expect: 100-continue
+      (setenv "TESTS" (string-join '("basic" "copymove" "props" "locks")))))
+
   (system* "litmus" (format #f "http://localhost:~a~a"
                             port suffix))
 
