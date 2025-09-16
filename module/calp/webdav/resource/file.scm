@@ -9,12 +9,16 @@
   :use-module (ice-9 popen)
   :use-module (ice-9 rdelim)
   :use-module (ice-9 ftw)
+  :use-module (ice-9 regex)
   :use-module (sxml namespaced)
+  :use-module (sxml namespaced util)
   :use-module (calp webdav resource)
   :use-module (calp webdav property)
   :use-module (calp namespaces)
   :use-module (rnrs io ports)
   :use-module (rnrs bytevectors)
+  :use-module (xattr)
+  :use-module (calp util config)
   :export (<file-resource> file-resource? root ; path
                            make-resource
                            ))
@@ -25,7 +29,8 @@
 ;; content type, with their content being their destination.
 ;; [1]: http://www.webdav.org/mod_dav/faq/#04-02
 
-;;; TODO set-dead-property!! should store the data to disk, preferably in extended attributes on the file in question
+(define-config xattr-property-prefix "user.webdav"
+  pre: (ensure string?))
 
 ;;; Resources backed by the filesystem
 (define-class <file-resource> (<resource>)
@@ -170,44 +175,52 @@
                           unix-time->datetime
                           (datetime->string "~a, ~d ~b ~Y ~H:~M:~S GMT"))))))))
 
-;; (define (xattr-key xml-el)
-;;   (format #f "caldav.~a"
-;;           (base64-encode
-;;            (format #f "~a:~a"
-;;                    (xml-element-namespace xml-el)
-;;                    (xml-element-tagname xml-el)))))
+(define-method (set-dead-property!! (self <file-resource>) value)
+  (typecheck value xml-element?)
+
+  (lambda ()
+    (set-xattr! (filepath self)
+                (format #f "~a.~a"
+                        (xattr-property-prefix)
+                        (xml-element-hash-key value))
+                (string->utf8
+                 (with-output-to-string
+                   (lambda () (namespaced-sxml->xml value))))
+                follow-symlinks?: #f)))
 
 
-;; (define-method (set-dead-property!! (self <file-resource>) value)
-;;   (unless (and (list? value)
-;;                (xml-element? (car value)))
-;;     (scm-error 'misc-error "set-dead-property!!"
-;;                "Invalid value, expected namespaced sxml"
-;;                '() #f))
-;;   (catch #t
-;;     (lambda ()
-;;       (lambda ()
-;;         (xattr-set!
-;;          (filename self)
-;;          (xattr-key (car value))
-;;          (with-output-to-string
-;;            (lambda () (namespaced-sxml->xml value))))))
-;;     (lambda _ (next-method))))
+(define-method (get-dead-property (self <file-resource>) value)
+  (cond
+   ((get-xattr (filepath self)
+               (format #f "~a.~a"
+                       (xattr-property-prefix)
+                       (xml-element-hash-key value))
+               follow-symlinks?: #f)
+    => (lambda (bv)
+         ;; TODO xml->namespaced-sxml may crash, if another program
+         ;; has modified the xattr to contain invalid xml.
+         ;; TODO similarly, we should verify that the element we get back
+         ;; matches the key
+         (propstat 200 (list (-> bv utf8->string xml->namespaced-sxml
+                                 xml-document-root)))))
+   (else (propstat 404 (list value)))))
+
+(define-method (dead-properties (self <file-resource>))
+  (filter-map (lambda (name)
+                (cond ((string-match (format #f "^~a[.](.+):([^:]+)$"
+                                             (regexp-quote (xattr-property-prefix)))
+                                     name)
+                       => (lambda (m) ((if (string=? "#f" (match:substring m 1))
+                                      (xml (string->symbol (match:substring m 2)))
+                                      (xml (string->symbol (match:substring m 1))
+                                           (string->symbol (match:substring m 2)))))))
+                      (else #f)))
+              (list-xattr (filepath self) follow-symlinks?: #f)))
 
 
-;; (define-method (get-dead-property (self <file-resource>)
-;;                            xml-el)
-;;   (catch #t
-;;     (lambda ()
-;;       (propstat 200
-;;                 (list
-;;                  (xattr-ref (filepath self)
-;;                             (xattr-key el)))))
-;;     (lambda _ (next-method))))
-
-
-;; (define-method (remove-dead-property!! (self <file-resource>)
-;;                               xml-el)
-;;   (catch #t
-;;     (lambda () (xattr-remove! (filepath self) xml-el))
-;;     (lambda _ (next-method))))
+(define-method (remove-dead-property!! (self <file-resource>) value)
+  (typecheck value xml-element?)
+  (lambda ()
+    (remove-xattr!
+     (filepath self)
+     (format #f "~a.~a" (xattr-property-prefix) (xml-element-hash-key value)))))
