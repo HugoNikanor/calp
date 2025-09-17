@@ -27,6 +27,8 @@ EOF
 
 # configure weird files
 echo 'File contents' > "$tmpdir/file"
+setfattr -n 'user.webdav.hnh:lang' -v '<lang xmlns="hnh">sv</lang>' "$tmpdir/file"
+setfattr -n 'user.webdav.hnh:name' -v '<name xmlns="hnh">My cool file</name>' "$tmpdir/file"
 if [ "$(id -u)" = 0 ]; then
     mknod char c 0 0
     mknod block b 0 0
@@ -43,12 +45,24 @@ mkfifo "$portpipe"
 
 port=$(cat "$portpipe")
 
-curl -X PROPFIND \
-     -H 'Depth: Infinity' \
-     --silent \
-     "http://localhost:$port" \
-    | xmllint --format - \
-    | highlight -S xml
+if false; then
+	curl -X PROPFIND \
+		 -H 'Depth: Infinity' \
+		 --silent \
+		 "http://localhost:$port" \
+		| xmllint --format - \
+		| highlight -S xml
+fi
+
+if true; then
+	curl -X PROPFIND \
+		-H 'Depth: 0' \
+		--silent \
+		--data '<propfind xmlns="DAV:"><prop xmlns:hnh="hnh"><hnh:lang /><hnh:name /></prop></propfind>' \
+		"http://localhost:$port/files/file" \
+		| xmllint --format - \
+		| highlight -S xml
+fi
 
 rm "$config_file"
 rm "$portpipe"
