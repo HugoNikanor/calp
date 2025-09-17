@@ -122,12 +122,6 @@
   ;; would have an unspecified name (probably the empty string, or "*root*")
   (name init-keyword: name: getter: name)
 
-  (dead-properties
-   ;; Map from (namespace . tagname) pairs to namespaced xml element
-   ;; init-form: (make-hash-table)
-   init-form: '()
-   accessor: dead-properties%)
-
   ;; Attributes on data
   (displayname accessor: displayname* init-value: #f)
   (contentlanguage accessor: contentlanguage init-value: #f)
@@ -147,7 +141,6 @@
   (typecheck (name self)            string?             "<resource>.name")
   (typecheck (displayname* self)    (or false? string?) "<resource>.displayname")
   (typecheck (contentlanguage self) (or false? string?) "<resource>.contentlanguage")
-  ;; (typecheck (dead-properties self) (list-of xml-element?) "<resource>.dead-properties")
   ;; (typecheck (resource-children self) ...)
   )
 
@@ -335,31 +328,14 @@
          => (lambda (prop) ((property-getter prop) resource)))
         (else (propstat 404 (list xml-el)))))
 
-(define-method (get-dead-property (resource <resource>) xml-el)
-  (typecheck xml-el xml-element?)
+(define-generic get-dead-property)
 
-  (cond ((find-child xml-el (dead-properties% resource))
-         => (lambda (it) (propstat 200 (list it))))
-        (else (propstat 404 (list xml-el)))))
+;; Return a list of xml elements, where each entry is a property
+(define-generic dead-properties)
 
-;;; Return a list of xml elements, where each entry is a property
-(define-method (dead-properties (resource <resource>))
-  (dead-properties% resource))
+(define-generic set-dead-property!!)
 
-(define-method (set-dead-property!! (resource <resource>) value)
-  (typecheck value xml-element?)
-  (lambda ()
-    (set! (dead-properties% resource)
-      ;; TODO replace this with lens
-      (let loop ((rem (dead-properties% resource)))
-        (cond ((null? rem)
-               ;; Append
-               (list value))
-              ((equal? (xml-element-hash-key value)
-                       (xml-element-hash-key (car rem)))
-               ;; Replace
-               (cons value (cdr rem)))
-              (else (loop (cdr rem))))))))
+(define-generic remove-dead-property!!)
 
 ;; Return a promise which performs the set operation.
 ;; Pre-conditions can cause this function to throw
@@ -381,18 +357,6 @@
 (define (set-property! resource value)
   ((set-property!! resource value)))
 
-;;; The remove-* procedures still take "correct" namespaced sxml (so an
-;;; xml-element object inside a list). These extra lists are a bit of a waste,
-;;; But allows remove-* to have the same signature as set-*
-
-(define-method (remove-dead-property!! (resource <resource>) xml-tag)
-  (typecheck xml-tag xml-element?)
-  (lambda ()
-    (set! (dead-properties% resource)
-      (remove (lambda (el)
-                (equal? (xml-element-hash-key el)
-                        (xml-element-hash-key xml-tag)))
-              (dead-properties% resource)))))
 
 (define-method (remove-live-property!! (resource <resource>) xml-tag)
   (typecheck xml-tag xml-element?)

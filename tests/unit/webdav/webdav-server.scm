@@ -31,7 +31,7 @@
 
 (define prop-ns (string->symbol "http://ns.example.com/properties"))
 
-(define root-resource (make <virtual-resource> name: "*root*"))
+(define root-resource (make <virtual-resource> name: "*root*" collection?: #t))
 (add-resource! root-resource "a" "Contents of A")
 (add-resource! root-resource "b" "Contents of B")
 
