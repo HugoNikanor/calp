@@ -152,7 +152,7 @@
        delete-file)
    (filepath self)))
 
-;;; TODO this is never used, even when it should
+
 (define-method (content-length (self <file-resource>))
   (-> (filepath self) lstat stat:size))
 

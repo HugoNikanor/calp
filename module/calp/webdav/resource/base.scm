@@ -58,6 +58,8 @@
            content
            set-content!
 
+           content-length
+
            copy-resource
            copy-to-location!
            move-to-location!
@@ -506,9 +508,6 @@
 
 (define-method (set-getcontentlanguage! (self <resource>) value)
   (lambda () (set! (contentlanguage self) value)))
-
-(define-method (getcontentlength (self <resource>))
-  (propstat 501 (list ((xml webdav 'getcontentlength)))))
 
 (define-method (getcontentlength (self <resource>))
   (propstat 200
