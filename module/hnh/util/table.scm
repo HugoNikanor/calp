@@ -74,6 +74,8 @@
       (tree-equal? (right a) (right b))))
 
 (define (tree-put tree k v)
+  ;; (set tree (tree-focus k) v)
+
   (cond ((tree-terminal? tree) (tree-node key: k value: v))
         ((eq? k (key tree)) (value tree v))
         (else
@@ -81,6 +83,10 @@
                  (lambda (branch) (tree-put branch k v))))))
 
 (define* (tree-get tree k optional: default)
+  ;; (case (get tree (tree-focus k))
+  ;;   ((not-a-value) default)
+  ;;   (else => it))
+
   (cond ((tree-terminal? tree) default)
         ((eq? k (key tree)) (value tree))
         ((symbol<? k (key tree))

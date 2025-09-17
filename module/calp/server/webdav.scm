@@ -128,6 +128,10 @@
 
 
 
+;; Errors thrown during header parse are outputed to the console,
+;; and the HTTP request is fulfilled with a 400 Bad Request with an
+;; empty body.
+
 (declare-header! "DAV"
   parse-dav-line
   validate-dav-line
@@ -224,6 +228,7 @@
                              namespaces: output-namespaces
                              port: port)
                             (newline port))))
+
                 (lambda (err proc fmt args data)
                   (values (build-response
                            code: 400
