@@ -107,8 +107,8 @@ namespace.
 Provided by the module @code{(sxml namespaced util)}.
 
 @defun xml-element-hash-key xml-tag
-Given an xml tag object @ref{xml-tag}, return a suitable key for
-@code{hash-ref} and family.
+Given an xml tag object @ref{xml-tag}, return a symbol uniquely
+referencing the tag name and namespace of the given object.
 
 These key objects should preferably not be carried around for
 long. Prefer to keep the @emph{real} xml-tag object, and only call

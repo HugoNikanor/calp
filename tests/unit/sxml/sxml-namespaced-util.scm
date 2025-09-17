@@ -5,9 +5,13 @@
 
 (define ns (gensym "xmlns-"))
 
-(test-equal "XML Hash key"
-  (cons 'a ns)
-  (xml-element-hash-key ((xml 'a ns))))
+(test-equal "XML Hash key with namespace"
+  (string->symbol (format #f "~a:~a" ns 'a))
+  (xml-element-hash-key ((xml ns 'a))))
+
+(test-equal "XML Hash key without namespace"
+  (string->symbol "#f:a")
+  (xml-element-hash-key ((xml 'a))))
 
 (test-group "Find element"
   (let ((el ((xml ns 'a))))

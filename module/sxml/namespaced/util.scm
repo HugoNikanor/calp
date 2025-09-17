@@ -12,8 +12,10 @@
 
 (define (xml-element-hash-key tag)
   "Returns a value suitable as a key to hash-ref (and family)"
-  (cons (xml-element-namespace tag)
-        (xml-element-tagname tag)))
+  (string->symbol
+   (format #f "~a:~a"
+           (and=> (xml-element-namespace tag) symbol->string)
+           (xml-element-tagname tag))))
 
 (define (find-child target list)
   (typecheck target xml-element?)
