@@ -113,11 +113,6 @@
        (table->list
         (dead-properties% resource))))
 
-;;; TODO this should be moved to the <virtual> resource type,
-;;; since this gives a false impression that setting dead properties
-;;; on custom resource types works, while in actuality it just stores them
-;;; to working memory, without ever serializing them anywhere
-;;; same goes for get-dead-property
 (define-method (set-dead-property!! (resource <virtual-resource>) value)
   (typecheck value xml-element?)
   (lambda ()
