@@ -194,6 +194,8 @@
 (define-method (create-collection! (resource <virtual-resource>) name headers body)
   (when body (throw 'http 415))
 
+  (set! (collection*? parent-resource) #t)
+
   (define child
    (make <virtual-resource>
      parent: resource
@@ -207,6 +209,7 @@
   child)
 
 (define-method (create-resource! (resource <virtual-resource>) name)
+  (set! (collection*? parent-resource) #t)
   (define child (make <virtual-resource> parent: resource))
   (set! (child-table resource)
     (table-put (child-table resource) (string->symbol name)
@@ -227,6 +230,8 @@
                 (resource <resource>) (parent-resource <virtual-resource>) name)
   (when (parent resource)
     (throw 'http 502 "Refusing to mount a resource with parent"))
+
+  (set! (collection*? parent-resource) #t)
 
   (set! (child-table parent-resource)
     (table-put (child-table parent-resource) (string->symbol name) resource)))
