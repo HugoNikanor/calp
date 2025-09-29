@@ -6,9 +6,9 @@
                         property-setter-generator
                         live-property?
                         ))
-  :use-module (calp webdav resource base)
-  :use-module (calp webdav resource virtual)
+  :use-module (calp webdav href)
   :use-module (calp webdav resource)
+  :use-module (calp webdav resource virtual)
   :use-module (datetime)
   :use-module (oop goops)
   :use-module (srfi srfi-64)
@@ -18,7 +18,7 @@
   :use-module (sxml namespaced)
   )
 
-(define get-live-property (@@ (calp webdav resource base) get-live-property))
+(define get-live-property (@@ (calp webdav resource) get-live-property))
 
 (define dt
   (datetime year: 2010 month: 11 day: 12
@@ -115,5 +115,4 @@
 
 '((calp webdav resource)
   (calp webdav property)
-  (calp webdav resource virtual)
-  (calp webdav resource base))
+  (calp webdav resource virtual))

@@ -39,7 +39,8 @@
 
   (display-name init-keyword: display-name:
                 init-form: #f
-                accessor: display-name)
+                getter: display-name
+                setter: set-display-name!)
 
   (dead-properties
    ;; Table, where keys are the result of xml-element-hash-key
@@ -99,7 +100,7 @@
   "application/octet-stream")
 
 (define-method (set-displayname! (self <virtual-resource>) value)
-  (lambda () (set! (display-name self) value)))
+  (lambda () (set-display-name! self value)))
 
 
 (define-method (set-isvirtual! (self <virtual-resource>) _) (throw 'protected-property))

@@ -4,6 +4,7 @@
   :use-module (srfi srfi-88)
   :use-module (oop goops)
   :use-module (calp webdav resource)
+  :use-module (calp webdav href)
   :use-module (calp webdav property)
   :use-module (calp webdav propfind)
   :use-module ((vcomponent formats ical) :prefix #{ics:}#)

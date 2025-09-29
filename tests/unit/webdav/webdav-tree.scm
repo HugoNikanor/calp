@@ -3,6 +3,7 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (calp webdav resource)
+  :use-module (calp webdav href)
   :use-module (calp webdav resource virtual)
   :use-module (calp webdav resource file)
   :use-module (oop goops)

@@ -23,6 +23,7 @@
   :use-module (rnrs io ports)
   :use-module (calp namespaces)
   :use-module (calp webdav resource)
+  :use-module (calp webdav href)
   :use-module (calp webdav property)
   :use-module (calp webdav propfind)
   :use-module (calp webdav proppatch)

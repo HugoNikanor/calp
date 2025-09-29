@@ -1,7 +1,7 @@
 (define-module (calp webdav propfind)
   :use-module (calp webdav property)
   :use-module (calp webdav resource)
-  :use-module ((calp webdav resource base) :select (resource?))
+  :use-module ((calp webdav resource) :select (resource?))
   :use-module (calp namespaces)
   :use-module (srfi srfi-1)
   :use-module (sxml namespaced)

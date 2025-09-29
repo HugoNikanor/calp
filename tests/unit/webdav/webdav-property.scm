@@ -3,6 +3,7 @@
   :use-module ((calp webdav property)
                :select (propstat merge-propstats propstat->namespaced-sxml))
   :use-module (calp webdav resource)
+  :use-module (calp webdav resource href)
   :use-module (calp webdav resource virtual)
   :use-module (datetime)
   :use-module (oop goops)
