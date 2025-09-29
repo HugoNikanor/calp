@@ -110,6 +110,13 @@ $(COV_FILE): cpucount unit-test-deps
 test: cpucount unit-test-deps
 	./testrunner.scm --threads $(THREADS)
 
+# Run the litums tests on all resource types.
+# TODO this depends on the resource configuration hard-coded in the
+# litmus test suite file. Generalize
+test-webdav:
+	tests/litmus.scm virtual
+	tests/litmus.scm files
+
 GENHTML_FLAGS=--show-details \
 			  --hierarchical \
 			  --prefix $(shell pwd) \
