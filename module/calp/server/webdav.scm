@@ -1,5 +1,6 @@
 (define-module (calp server webdav)
-  :use-module ((hnh util) :select (for group -> ->> init+last catch*))
+  :use-module ((hnh util) :select (for group -> ->> init+last catch* print-and-return))
+  :use-module (hnh util lens)
   :use-module (ice-9 match)
   :use-module (ice-9 regex)
   :use-module (ice-9 format)
@@ -41,28 +42,6 @@
            webdav-handler
            ))
 
-;; (define* (my-build-response . kvs)
-;;   (define dt (datetime->string (current-datetime) "~a, ~d ~b ~Y ~H:~M:~S GMT"))
-;;   (define server (format #f "calp/~a" (@ (calp) version)))
-;;   (let ((as (kvlist->assq kvs)))
-;;     (append kvs
-;;             (list
-;;              reason-phrase: (http-status-phrase (assq-ref as code:))
-;;              headers: (append (or (assq-ref kvs headers:) '())
-;;                               (list
-;;                                server: server
-;;                                date: dt
-;;                                connection: 'keep-alive))))))
-
-(define (swap p)
-  (xcons (car p) (cdr p)))
-
-
-(define output-namespaces
-  (map (lambda (pair) (call-with-values (lambda () (car+cdr pair))
-                   xcons))
-       namespaces))
-
 ;; (define (run-filter context filter-spec)
 ;;   (sxml-match filter-spec
 ;;               [(c:comp-filter (@ (name ,name)) . ,rest)
@@ -93,15 +72,6 @@
 ;;     (return (build-response code: 400
 ;;                             headers: ((content-type . (text/plain))))
 ;;             err-msg)))
-
-;; ;; If a body is sent by the client when not expected, the server MUST repspond
-;; ;; with 415 (RFC 4918 8.4)
-
-;; PROPPATCH
-;; SHOULD support setting of arbitrary dead properties (RFC4918 9.2)
-;; Fruux supports this
-;; NOTE this means that user quotas must include dead properties
-
 
 ;; A caldav server MUST support
 ;; - RFC4918 (WebDAV) Class 1
@@ -151,7 +121,9 @@
     (display value port)))
 
 (declare-header! "Destination"
-  string->uri
+  (lambda (s)
+    (or (string->uri s)
+        (build-uri 'http path: s)))
   uri?
   (lambda (uri port)
     (display (uri->string uri) port)))
@@ -189,9 +161,8 @@
                 (case (or (assoc-ref headers 'depth) 'infinity)
                   ((0) (list (cons href resource)))
                   ((1) (cons (cons href resource)
-                             (map (lambda (child)
-                                    (cons (append href (list (name child)))
-                                          child))
+                             (map (lambda (pair)
+                                    (modify pair car* (lambda (name) (append href (list name)))))
                                   (children resource))))
                   ((infinity) (all-resources-under resource href))))
 
@@ -210,32 +181,19 @@
                               root: ((xml webdav 'propfind)
                                      ((xml webdav 'allprop))))))))
 
-              (catch 'bad-request
-                (lambda ()
-                  (values (build-response
-                           code: 207
-                           reason-phrase: (http-status-phrase 207)
-                           headers: '((content-type . (application/xml))))
-                          (lambda (port)
-                            (namespaced-sxml->xml
-                             (apply
-                              (xml webdav 'multistatus)
-                              (for (href . resource) in requested-resources
-                                   (apply (xml webdav 'response)
-                                          ((xml webdav 'href) (href->string href))
-                                          (map propstat->namespaced-sxml
-                                               (exec-propfind property-request resource)))))
-                             namespaces: output-namespaces
-                             port: port)
-                            (newline port))))
+              (values (build-response
+                       code: 207
+                       reason-phrase: (http-status-phrase 207)
+                       headers: '((content-type . (application/xml))))
+                      (apply
+                       (xml webdav 'multistatus)
+                       (for (href . resource) in requested-resources
+                            (apply (xml webdav 'response)
+                                   ((xml webdav 'href) (href->string href))
+                                   (map propstat->namespaced-sxml
+                                        (exec-propfind property-request resource))))))))
 
-                (lambda (err proc fmt args data)
-                  (values (build-response
-                           code: 400
-                           headers: '((content-type . (text/plain))))
-                          (lambda (port)
-                            (apply format port fmt args)))))))
-        (else (values (build-response code: 404) ""))))
+        (else (build-response code: 404))))
 
 
 
@@ -243,205 +201,191 @@
   (cond ((lookup-resource root-resource href)
          => (lambda (resource)
               ;; Body MUST exist, and be a DAV::propertyupdate element
-              (catch 'bad-request
-                (lambda ()
-                  (values (build-response
-                           code: 207
-                           reason-phrase: (http-status-phrase 207)
-                           headers: '((content-type . (application/xml))))
-                          (lambda (port)
+              (define request-body
+                (xml-document-root
+                 (xml->namespaced-sxml
+                  (cond ((string? body) body)
+                        ((bytevector? body)
+                         (bytevector->string body (make-transcoder (utf-8-codec))))
+                        (else (throw 'http 400 "A body is required for proppatch"))))))
 
-                            (define request-body
-                              (xml-document-root
-                               (xml->namespaced-sxml
-                                (cond ((string? body) body)
-                                      ((bytevector? body)
-                                       (bytevector->string body (make-transcoder (utf-8-codec))))
-                                      (else (throw 'body-required))))))
+              (values (build-response
+                       code: 207
+                       reason-phrase: (http-status-phrase 207)
+                       headers: '((content-type . (application/xml))))
 
-                            (namespaced-sxml->xml
-                             ((xml webdav 'multistatus)
-                              (apply
-                               (xml webdav 'response)
-                               ((xml webdav 'href) (href->string href))
-                               (map propstat->namespaced-sxml
-                                    (exec-propertyupdate request-body resource))))
-                             port: port))))
+                      ((xml webdav 'multistatus)
+                       (apply
+                        (xml webdav 'response)
+                        ((xml webdav 'href) (href->string href))
+                        (map propstat->namespaced-sxml
+                             (exec-propertyupdate request-body resource)))))))
 
-                (lambda (err proc fmt args data)
-                  (values (build-response
-                           code: 400
-                           headers: '((content-type . (text/plain))))
-                          (lambda (port)
-                            (apply format port fmt args)))))))
-        (else (values (build-response code: 404) ""))))
+        (else (build-response code: 404))))
 
 
 ;;; TODO shouldn't root resource actually be used?
 (define (run-options _ href request)
-  (values
-   (build-response code: 200
-                   headers: `((dav . (1))
-                              ;; (DAV . "calendar-access")
-                              ;; TODO collecting this set dynamically would be fancy!
-                              (allow . (GET HEAD PUT
-                                        MKCOL PROPFIND OPTIONS
-                                        DELETE
-                                        COPY
-                                        MOVE
-                                        ;; LOCK
-                                        ;; UNLOCK
-                                        ;; REPORT
-                                        ))))
-   ""))
+  (build-response code: 200
+                  headers: `((dav . (1))
+                             ;; (DAV . "calendar-access")
+                             ;; TODO collecting this set dynamically would be fancy!
+                             (allow . (GET HEAD PUT
+                                           MKCOL PROPFIND OPTIONS
+                                           DELETE
+                                           COPY
+                                           MOVE
+                                           ;; LOCK
+                                           ;; UNLOCK
+                                           ;; REPORT
+                                           )))))
 
-(define (run-get root-resource href request mode)
+(define (run-get root-resource href request)
   (cond ((lookup-resource root-resource href)
          => (lambda (resource)
-              ;; "/calendar/:user/:calendar/:filename"
-              ;; headers: `((content-type ,content-type))
-              (values (build-response code: 200)
-                      (case mode
-                        ((HEAD) "")
-                        ((GET) (content resource))
-                        (else (scm-error 'misc-error "run-get"
-                                         "Unknown mode: ~s"
-                                         (list mode) #f))))))
-        (else (values (build-response code: 404) ""))))
+              (values (build-response
+                       code: 200
+                       headers: (filter cdr
+                                        `((content-type
+                                           . ,(and=> (content-type resource)
+                                                     (compose list string->symbol)))
+                                          (last-modified . ,(and=> (last-modified resource)
+                                                                   (@ (datetime srfi-19) datetime->srfi-19-date)))
+                                          (content-language . ,(content-language resource))
+                                          (content-length . ,(content-length resource))
+                                          (etag . ,(etag resource)))))
+                      ;; Content will be filtered out by Guile's
+                      ;; webserver for HEAD requests.
+                      (content resource))))
+
+        (else (build-response code: 404))))
+
 
 (define (run-put root-resource href request request-body)
-  (cond ((null? href)
-         (values (build-response code: 405 headers: '((content-type . (text/plain))))
-                 "Can't PUT on root resource"))
+
+  ;; Helper procedure, since the code is shared between the creation
+  ;; and update path.
+  (define (update-resource! resource)
+    (define etag (set-content! resource request-body (request-headers request)))
+    (cond ((request-content-language request)
+           (negate null?)
+           => (lambda (content-language)
+                (set-property! resource
+                               ((xml webdav 'getcontentlanguage) (car content-language))))))
+
+    (cond ((request-content-type request)
+           => (lambda (content-type)
+                (set-property! resource ((xml webdav 'getcontenttype) content-type)))))
+    etag)
+
+  ;; TODO handle If, If-Match, and similar headers
+
+  (cond ((lookup-resource root-resource href)
+         => (lambda (resource)
+              (define etag (update-resource! resource))
+              (build-response
+               code: 204
+               headers: `(,@(if etag `((etag ,etag)) '())))))
+
+        ;; href will never be the empty list here, since the root
+        ;; resource would have matched that beforehand.
         ((lookup-resource root-resource (drop-right href 1))
          => (lambda (parent)
-              (cond ((lookup-resource parent (list (last href)))
-                     => (lambda (child)
-                          (if (is-collection? child)
-                              (values (build-response code: 405) "")
-                              (begin
-                                (set-content! child request-body)
-                                (values (build-response code: 204) "")))))
-                    (else
-                     (add-resource! parent (last href)
-                                    request-body)
-                     (values (build-response code: 201) "")))))
+              (let ((resource (create-resource! parent (last href))))
+                (define etag (update-resource! resource))
+                (build-response
+                 code: 201
+                 headers: `(,@(if etag `((etag ,etag)) '()))))))
+
         ;; No parent collection, fail per [WEBDAV] 9.7.1.
-        (else (values (build-response code: 409)
+        (else (values (build-response
+                       code: 409
+                       headers: '((content-type text/plain)))
                       "Parent missing"))))
 
-(define (run-mkcol root-resource href request _)
-  ;; TODO href="/"
-  (if (assoc-ref (request-headers request) 'content-type)
-      (values (build-response code: 415)
-              "")
-      (let ((path name (init+last href)))
-        (cond ((lookup-resource root-resource path)
-               => (lambda (parent)
-                    (catch 'resource-exists
-                      (lambda ()
-                        (add-collection! parent name)
-                        (values (build-response code: 201) ""))
-                      (lambda _ (values (build-response code: 405) "")))))
-              (else
-               (values (build-response code: 409) ""))))))
+
+(define (run-mkcol root-resource href request body)
+  (cond ((lookup-resource root-resource href)
+         => (lambda (resource) (build-response code: 405)))
+        ((lookup-resource root-resource (drop-right href 1))
+         => (lambda (parent)
+              (create-collection! parent (last href)
+                                  (request-headers request) body)
+              (build-response code: 201)))
+        (else (build-response code: 409))))
 
 
 
-;;; TODO completely rewrite error handling here
-;;; TODO what happens on copy between sub-trees of different types?
-;;; Like from a <calendar-resource> tree to a <file-tree>.
 (define (run-copy root-resource source-href request)
   (define headers (request-headers request))
-  (call/ec
-   (lambda (return)
-    (let* ((depth (or (assoc-ref headers 'depth) 'infinity))
-           (destination-uri (assoc-ref headers 'destination))
-           (dest-href (-> headers (assoc-ref 'destination)
-                          uri-path string->href))
-           (overwrite?
-            (cond ((assoc 'overwrite headers) => cdr)
-                  (else #t))))
 
-      ;; (assert (memv depth '(0 infinity)))
-      ;; (unless (string=? (listen-uri) (uri-host destination-uri))
-      ;;   (throw 'cross-domain-copy-not-supported))
+  (define depth (or (assoc-ref headers 'depth) 'infinity))
+  (define overwrite? (cond ((assoc 'overwrite headers) => cdr)
+                           (else #t)))
 
-      (let ((dest-path dest-name (init+last dest-href)))
-        (let ((source-resource
-               (cond ((lookup-resource root-resource source-href) => identity)
-                     (else (return (build-response code: 404) ""))))
-              (destination-parent-resource
-               (cond ((lookup-resource root-resource dest-path) => identity)
-                     (else (return (build-response
-                                    code: 409
-                                    reason-phrase: (http-status-phrase 409)
-                                    headers: '((content-type . (text/plain))))
+  ;; TODO handle If, If-Match, and similar headers
+
+  ;; TODO ensure a cross domain move isn't attempted
+
+  (define-values (dest-path dest-name)
+    (-> (or (assoc-ref headers 'destination)
+            (throw 'http 400 "Missing Destination header"))
+        uri-path string->href init+last))
+
+  (build-response
+   code: (let ((source-resource
+                (cond ((lookup-resource root-resource source-href) => identity)
+                      (else (throw 'http 404))))
+               (destination-parent-resource
+                (cond ((lookup-resource root-resource dest-path) => identity)
+                      (else (throw 'http 409
                                    "One or more parent components of destination are missing")))))
 
-          (case (copy-to-location! source-resource destination-parent-resource
-                                   new-name: dest-name
-                                   include-children?: (case depth
-                                                        ((0) #f)
-                                                        ((infinity) #t)
-                                                        (else (throw 'invalid-requeqst)))
-                                   overwrite?: overwrite?)
-            ((created)
-             (values (build-response code: 201) ""))
-            ((replaced)
-             (values (build-response code: 204) ""))
-            ((collision)
-             (values (build-response code: 412) "")))))))))
+           (case (copy-resource! source-resource destination-parent-resource dest-name
+                                 depth: depth
+                                 overwrite?: overwrite?)
+             ((created)   201)
+             ((replaced)  204)
+             ((collision) 412)))))
 
 
 (define (run-delete root-resource href request)
-  ;; TODO href="/"
-  (let ((path name (init+last href)))
-    (cond ((lookup-resource root-resource path)
-           => (lambda (parent)
-                (cond ((lookup-resource parent (list name))
-                       => (lambda (child)
-                            (delete-child! parent child)
-                            (values (build-response code: 202)
-                                    "")))
-                      (else
-                       (values (build-response code: 404) "")))))
-          (else
-           (values (build-response code: 404) "")))))
+  (build-response
+   code: (cond ((lookup-resource root-resource href)
+                => (lambda (resource)
+                     (remove-self! resource)
+                     202))
+               (else 404))))
 
 
 (define (run-move root-resource href request)
-  ;; TODO href="/"
   (define headers (request-headers request))
-  (call/ec
-   (lambda (return)
-     (define-values (path name) (init+last href))
-     (define parent (or (lookup-resource root-resource path)
-                        (return (build-response code: 404)
-                                "Source Parent not found")))
-     (define child (or (lookup-resource parent (list name))
-                       (return (build-response code: 404)
-                               "Source not found")))
-     (define-values (dest-path dest-name)
-       (-> headers (assoc-ref 'destination)
-           uri-path string->href init+last))
-     (define dest-parent (or (lookup-resource root-resource dest-path)
-                             (return (build-response code: 404)
-                                     "Dest Parent not found")))
-     (define overwrite? (cond ((assoc 'overwrite headers) => cdr)
-                              (else #t)))
-     (define status (move-to-location! parent child
-                                       dest-parent
-                                       new-name: dest-name
-                                       overwrite?: overwrite?))
 
-     (case status
-       ((created)
-        (values (build-response code: 201) ""))
-       ((replaced)
-        (values (build-response code: 204) ""))
-       ((collision)
-        (values (build-response code: 412) ""))))))
+  (define-values (dest-path dest-name)
+    (-> (or (assoc-ref headers 'destination)
+            (throw 'http 400 "Missing Destination header"))
+        uri-path string->href init+last))
+
+  (define overwrite?
+   (cond ((assoc 'overwrite headers) => cdr)
+         (else #t)))
+
+  ;; TODO ensure a cross domain move isn't attempted
+
+  ;; TODO handle If, If-Match, and similar headers
+
+  (build-response
+   code: (cond ((lookup-resource root-resource href)
+                => (lambda (source)
+                     (cond ((lookup-resource root-resource dest-path)
+                            => (lambda (destination)
+                                 (case (move-resource!
+                                        source destination dest-name
+                                        overwrite?: overwrite?)
+                                   ((created)  201)
+                                   ((replaced) 204))))
+                           (else 409))))
+               (else 404))))
 
 
 
@@ -511,27 +455,44 @@
   (display
    (with-output-to-string
      (lambda ()
-       (log-table-format (cons 'now (lambda (n) (datetime->string n "~H:~M:~S")))
-                         " " 'method " "
-                         (cons 'uri uri->string)
-                         " ")
-       (case (request-method (log-table-get 'request))
-         ((COPY MOVE) (log-table-format
-                       (cons 'headers (lambda (h) (and=> (assoc-ref h 'destination) uri->string)))
-                       " "))
-         (else ""))
+       (log-table-format
+        "< " 'method " " (cons 'uri uri->string) "\n"
+        "< " 'response-code " " 'response-phrase "\n"
+        "< Completed " (cons 'now (lambda (n) (datetime->string n "~H:~M:~S"))) "\n"
+        "< Headers:\n"
+        (cons 'response (lambda (r)
+                          (string-concatenate
+                           (for (name . value) in (response-headers r)
+                                (format #f "<     ~a: ~s~%" name value)))))
+        )
+       ;; (log-table-format (cons 'now (lambda (n) (datetime->string n "~H:~M:~S")))
+       ;;                   " " 'method " "
+       ;;                   (cons 'uri uri->string)
+       ;;                   " ")
+       ;; (case (request-method (log-table-get 'request))
+       ;;   ((COPY MOVE) (log-table-format
+       ;;                 (cons 'headers (lambda (h) (and=> (assoc-ref h 'destination) uri->string)))
+       ;;                 " "))
+       ;;   (else ""))
        ;; Nginx uses
        ;; <ip> - - [<date>] "<request-line>" <request-status> <content-length> "<referer-url>" "<user-agent>"
-       (log-table-format 'response-code " "
-                         'response-phrase
-                         " "
-                         (cons 'headers (lambda (h) (assoc-ref h 'x-litmus)))
-                         "\n")
+       ;; (log-table-format 'response-code " "
+       ;;                   'response-phrase
+       ;;                   " "
+       ;;                   (cons 'headers (lambda (h) (assoc-ref h 'x-litmus)))
+       ;;                   "\n")
 
        (cond ((log-table-get 'msg)
               => (lambda (it)
-                   (display it)
-                   (newline))))))
+                   (for line in (string-split (string-trim-both it) #\newline)
+                        (format #t "<< ~a~%" line)))))
+
+       (cond ((log-table-get 'backtrace)
+              => (lambda (it)
+                   (for line in (string-split (string-trim-both it) #\newline)
+                        (format #t "<<< ~a~%" line)))))
+
+       (newline)))
 
    (current-error-port))
   )
@@ -550,7 +511,14 @@
 
 
 (define ((webdav-handler root-resource) request request-body)
-  (define href (-> request request-uri uri-path string->href))
+  (format (current-error-port) "> ~a ~a~%> Headers:~%"
+          (request-method request) (uri->string (request-uri request)))
+  (for (header . value) in (request-headers request)
+       (format (current-error-port) ">     ~a: ~s~%" header value))
+
+  (define href (-> request request-uri uri-path
+                   (uri-decode decode-plus-to-space?: #f)
+                   string->href))
   (init-log-table!)
   (log-table-add! 'now (current-datetime)
                   'method (request-method request)
@@ -558,81 +526,106 @@
                   'headers (request-headers request)
                   'request request)
 
-  (catch*
-    (lambda ()
-      ;; TODO also log result of execution
-      (call-with-values
-          (lambda ()
-            (case (request-method request)
-              ((OPTIONS) (run-options root-resource href request))
-
-              ((PROPFIND)  (run-propfind  root-resource href request request-body))
-              ((PROPPATCH) (run-proppatch root-resource href request request-body))
-
-              ((GET HEAD) (run-get root-resource href request (request-method request)))
-
-              ((PUT) (run-put root-resource href request request-body))
-
-              ((DELETE) (run-delete root-resource href request))
-
-              ((MKCOL) (run-mkcol root-resource href request request-body))
-
-              ((COPY) (run-copy root-resource href request))
-              ((MOVE) (run-move root-resource href request))
-
-              ;; ((REPORT))
-
-              (else (values (build-response code: 400) ""))))
-        (lambda (head body)
-          (log-table-add!
-           'response head
-           'response-code (response-code head)
-           'response-phrase (response-reason-phrase head))
-          (emit-log!)
-          (values head body))))
-
-    (parser-error
-     (lambda (err port msg . args)
-       (define head (build-response code: 400
-                                    headers: '((content-type . (text/plain)))))
-       (define errmsg
-         (with-output-to-string
+  (define-values (response body*)
+    (catch*
+     (lambda ()
+       (call-with-values
            (lambda ()
-             (display msg)
-             (for-each display args))))
-       (log-table-add! 'response head
-                       'response-code 400
-                       'msg errmsg)
-       (emit-log!)
-       (values head errmsg)))
+             (case (request-method request)
+               ((OPTIONS) (run-options root-resource href request))
 
-    ((pre-unwind #t)
-     (lambda _
-       (with-output-to-port (current-error-port)
-         ;; TODO this should not print on parser-error
-         ;; TODO option to write this to different port
-         (lambda () (backtrace)))))
+               ((PROPFIND)  (run-propfind  root-resource href request request-body))
+               ((PROPPATCH) (run-proppatch root-resource href request request-body))
 
-    (#t
-     (case-lambda ((err proc fmt args data)
-                   (let ((head (build-response
-                                code: 500
-                                headers: '((content-type . (text/plain)))))
-                         (errmsg (if proc
-                                     (format #f "Error in ~a: ~?~%" proc fmt args)
-                                     (format #f "~?~%" fmt args))))
-                     (log-table-add! 'response head
-                                     'response-code 500
-                                     'msg errmsg)
-                     (emit-log!)
-                     (values head errmsg)))
-                  (err
-                   (let ((errmsg (format #f "General error: ~s~%" err)))
-                     (log-table-add! 'response-code 500
-                                     'msg errmsg)
-                     (emit-log!)
-                     (values (build-response code: 500)
-                             errmsg)))))))
+               ((GET HEAD) (run-get root-resource href request))
+
+               ((PUT) (run-put root-resource href request request-body))
+
+               ((DELETE) (run-delete root-resource href request))
+
+               ((MKCOL) (run-mkcol root-resource href request request-body))
+
+               ((COPY) (run-copy root-resource href request))
+               ((MOVE) (run-move root-resource href request))
+
+               ;; ((REPORT))
+
+               (else (build-response code: 400) "")))
+
+         (case-lambda
+           ((head)      (values head ""))
+           ((head body) (values head body)))))
+
+     (http
+      (lambda* (_ error-code optional: (body "") content-type)
+        (values (build-response code: error-code
+                                headers: (if content-type
+                                           `((content-type . content-type))
+                                           '()))
+                body)))
+
+     ;; (wrong-type-arg
+     ;;  (lambda (_ procedure msg args data)
+     ;;    (log-table-add! 'msg (format #f "~?~%" msg args))
+     ;;    (values (build-response code: 500
+     ;;                            headers: `((content-type text/plain)))
+     ;;            "Internal server error")))
+
+     (parser-error
+      (lambda (err port msg . args)
+        (define head (build-response code: 400
+                                     headers: '((content-type . (text/plain)))))
+        (define errmsg
+          (with-output-to-string
+            (lambda ()
+              (display msg)
+              (for-each display args))))
+        (log-table-add! 'msg errmsg)
+        (values head errmsg)))
+
+     ((pre-unwind #t)
+      (lambda _ (log-table-add! 'backtrace (with-output-to-string (lambda () (backtrace))))))
+
+     (#t
+      (case-lambda ((err proc fmt args data)
+                    (let ((head (build-response
+                                 code: 500
+                                 headers: '((content-type . (text/plain)))))
+                          (errmsg (if proc
+                                      (format #f "Error in ~a: ~?~%" proc fmt args)
+                                      (format #f "~?~%" fmt args))))
+                      (log-table-add! 'msg errmsg)
+                      (values head errmsg)))
+                   (err
+                    (let ((errmsg (format #f "General error: ~s~%" err)))
+                      (log-table-add! 'msg errmsg)
+                      (values (build-response code: 500)
+                              errmsg)))))
+
+     ))
+
+  (log-table-add!
+   'response response
+   'response-code   (response-code response)
+   'response-phrase (response-reason-phrase response))
+
+  (emit-log!)
+
+  ;; TODO
+  ;; if no content type in response headers, insert one:
+  ;; `((content-type
+  ;;    . ,(cond (content-type list? => identity)
+  ;;             (content-type => list)
+  ;;             ((string? body) '(text/plain))
+  ;;             ((xml-element? body) '(application/xml))
+  ;;             (else '(application/octet-stream)))))
+
+  (values response
+          (cond ((xml-element? body*) (with-output-to-string
+                                        (lambda ()
+                                          (namespaced-sxml->xml body*)
+                                          (newline))))
+                (else body*))))
 
 
 

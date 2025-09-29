@@ -579,6 +579,14 @@ Simple wrappers around @code{datetime->string}, which works directly
 on date or time objects.
 @end defun
 
+@defun datetime->http-string dt
+Formats datetime as wanted by some web standards.
+It should convert the datetime to UTC, but currently instead simply
+ignores the timezone.
+
+https://httpwg.org/specs/rfc9110.html#http.date
+@end defun
+
 
 @defun string->datetime str [fmt=''~Y-~m-~dT~H:~M:~S~Z''] [locale=%global-locale]
 Attempts to parse @var{str} as a datetime, according to the ruleset @var{fmt}.
@@ -667,4 +675,18 @@ Parses (the well known subset) of ISO-compatible dates.
 
 @defun parse-freeform-date str
 Currently an alias for parse-iso-datetime, but should preferably be extended.
+@end defun
+
+@subsection Converting to SRFI-19 date objects
+
+The module @code{(datetime srfi-19)} provides procedures for
+converting to SRFI-19 date objects.
+
+@defun datetime->srfi-19-date dt
+@end defun
+
+@defun date->srfi-19-date d
+@end defun
+
+@defun time->srfi-19-date t
 @end defun

@@ -20,6 +20,13 @@
            propstat-200?
            ;; propstat->sxml
            propstat->namespaced-sxml
+
+           make-live-property
+           live-property?
+           property-getter
+           property-setter-generator
+           property-remover-generator
+
            ))
 
 ;;; Commentary:
@@ -40,7 +47,7 @@
   ;; A list of namespaced sxml elements, such that they could all be
   ;; directly inserted as the children of <DAV::prop/>
   ;; @example
-  ;; `((,(xml ns tag) "Content"))
+  ;; (list ((xml ns tag) "Content"))
   ;; @end example
   (propstat-property type: (list-of xml-element?))
 
@@ -99,3 +106,15 @@
 
           (awhen (propstat-response-description propstat)
                  (list ((xml webdav 'responsedescription) it))))))
+
+
+(define-type (live-property)
+  (property-getter            keyword: getter  type: procedure?)
+  (property-setter-generator  keyword: setter  type: procedure?)
+  (property-remover-generator keyword: remover type: procedure?))
+
+
+(define* (make-live-property getter setter-generator remover-generator)
+  (live-property getter: getter
+                 setter: setter-generator
+                 remover: remover-generator))

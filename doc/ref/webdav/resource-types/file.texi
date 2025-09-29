@@ -1,0 +1,133 @@
+@node File Backed Resources
+@subsection File Backed Resources
+
+The module @code{(calp webdav resource file)} implements resources
+backed by regular files in a file system.
+
+Some live properties are store their data as extended file attributes
+under the namespace defined by @code{xattr-prefix}. Dead properties
+are also stored as extended attributes, under the
+@code{xattr-property-prefix} name concatenated with the XML namespace
+and tag name.
+
+@subsubsection Configuration
+
+@deftp {config} xattr-prefix
+Namespace used on extended file attributes used for ``built in''
+metadata. Defaults to @code{user.calp}.
+@end deftp
+
+@deftp {config} xattr-property-prefix
+Namespace used for dead properties. Defaults to
+@code{(string-append (xattr-prefix) ".webdav")}.
+@end deftp
+
+@subsubsection The File Resource
+
+@deftp {GOOPS class} <file-resource> (<resource>)
+
+@deftp {keyword argument} #:path path
+File in the underlying filesystem which this resource will represent.
+@end deftp
+
+@end deftp
+
+@defun file-resource? x
+@end defun
+
+@subsubsection Method Overrides
+
+@deftp {GOOPS method} content <file-resource>
+For file resources, the content is returned verbatim.
+
+For collection resources, the collection if searched for
+@code{index.html}, and if that doesn't exist, then a directory listing
+is generated.
+@end deftp
+
+@deftp {GOOPS method} children <file-resource>
+When the underlying file is a directory, then the directory contents
+is returned. For file resources, an empty list is returned.
+@end deftp
+
+@deftp {GOOPS method} collection? <file-resource>
+Is the referenced file a directory?
+@end deftp
+
+@deftp {GOOPS method} creation-date <file-resource>
+@deftpx {GOOPS method} last-modified <file-resource>
+Retrieved directly from the file through the systems @code{stat} function.
+@end deftp
+
+@deftp {GOOPS method} content-length <file-resource>
+If the resource is a file, the result of the @code{stat} function is
+returned. For collection resources where an @code{index.html} is
+found, then return the @code{stat} result for that, otherwise return
+the length of the generated directory listing.
+@end deftp
+
+@deftp  {GOOPS method} content-type <file-resource>
+@deftpx {GOOPS method} set-contenttype! <file-resource> value
+@deftpx {GOOPS method} remove-contenttype! <file-resource>
+For resources which refenence regular files, the extended attribute
+referenced my ``mime'' under the @code{xattr-prefix} is returned as
+is. Otherwise, a short fixed list of content types is defined,
+depending on the file extension.
+
+Symbolik links always return ``text/plain''@footnote{The sometimes
+used media type ``inode/symlink'' is sometimes used, but it's
+non-standard}.
+
+All other file types return @code{#f}.
+
+The setter and removed updates the aforementioned extended attribute
+as expected.
+@end deftp
+
+@deftp  {GOOPS method} display-name <file-resource>
+@deftpx {GOOPS method} set-displayname! <file-resource> value
+@deftpx {GOOPS method} remove-displayname! <file-resource>
+Handles the extended attribute referenced by @code{xattr-prefix}
+appended by ``.displayname'', in the expected way.
+@end deftp
+
+@deftp {GOOPS method} content <file-resource>
+@deftpx {GOOPS method} set-content! <file-resource> data
+For file resources, this interfaces directly with the contents of the
+underlying file. data can be set either as a string or a
+bytevector. When a string is used Guile's current encoding will be
+used.
+
+For collection resources, if a direct child named @code{index.html}
+exists, it is returned as if we requested that resource
+directly. Otherwise, a HTML text document is generated, containing a
+directory listing.
+@end deftp
+
+@deftp {GOOPS method} move-resource-implementation! <file-resource> <file-resource> name
+Executes Guile's @code{rename-file}. This means that this will fail if
+the provided resource tree consists of multiple mount points.
+@end deftp
+
+@deftp {GOOPS method} remove-self! <file-resource>
+Runs Guile's built in @code{delete-file} or @code{rmdir} recursively.
+@end deftp
+
+@deftp {GOOPS method} create-collection! <file-resource> name headers body
+Executes @code{mkdir}. @var{body} @emph{must} be @code{#f}.
+@end deftp
+
+@deftp {GOOPS method} create-resource! <file-resource> name
+Open the new file with flags @code{O_RDWR | O_CREAT | O_EXCL}, and
+immediately closes it. This ensures that we actually create a new
+file.
+@end deftp
+
+@deftp {GOOPS method} mount-resource! <resource> <file-resource> name
+Refuses all attempts to mount.
+@end deftp
+
+No copy override is created, since this libraries built in copy method
+is basically the same as dispatching to the
+filesystem@footnote{assuming that the underlying filesystem doesn't
+employ copy-on-write or similar.}.

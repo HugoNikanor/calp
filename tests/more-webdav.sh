@@ -15,20 +15,19 @@ cat - > "$config_file" <<-"EOF"
 (use-modules (calp config-base))
 
 ((@ (calp entry-points webdav) webdav-resources)
-  `(("/files" file
-      path: ,(getenv "tmpdir"))
-    ("/virtual" virtual
-      content: ,((@ (ice-9 iconv) string->bytevector)
-                    "Hello, World\n"
-                    "ascii"))
-   )
-)
+ `(virtual
+   (("files" (file path: ,(getenv "tmpdir")))
+    ("virtual" (virtual
+       content: ,((@ (ice-9 iconv) string->bytevector)
+                     "Hello, World\n"
+                     "ascii"))))))
 EOF
 
 # configure weird files
 echo 'File contents' > "$tmpdir/file"
-setfattr -n 'user.webdav.hnh:lang' -v '<lang xmlns="hnh">sv</lang>' "$tmpdir/file"
-setfattr -n 'user.webdav.hnh:name' -v '<name xmlns="hnh">My cool file</name>' "$tmpdir/file"
+setfattr -n 'user.calp.webdav.hnh:lang' -v '<lang xmlns="hnh">sv</lang>' "$tmpdir/file"
+setfattr -n 'user.calp.webdav.hnh:name' -v '<name xmlns="hnh">My cool file</name>' "$tmpdir/file"
+setfattr -n 'user.calp.displayname' -v 'My Displayname' "$tmpdir/file"
 if [ "$(id -u)" = 0 ]; then
     mknod char c 0 0
     mknod block b 0 0
@@ -56,9 +55,15 @@ fi
 
 if true; then
 	curl -X PROPFIND \
-		-H 'Depth: 0' \
+		-H 'Depth: Infinity' \
 		--silent \
-		--data '<propfind xmlns="DAV:"><prop xmlns:hnh="hnh"><hnh:lang /><hnh:name /></prop></propfind>' \
+		--data '<propfind xmlns="DAV:">
+    <prop xmlns:hnh="hnh">
+        <hnh:lang />
+        <hnh:name />
+        <displayname />
+    </prop>
+</propfind>' \
 		"http://localhost:$port/files/file" \
 		| xmllint --format - \
 		| highlight -S xml

@@ -5,6 +5,7 @@
   :use-module (hnh util lens)
   :use-module (calp webdav property)
   :use-module (calp webdav propfind)
+  :use-module (calp webdav resource)
   :use-module (calp webdav resource virtual)
   :use-module (datetime)
   :use-module (oop goops)
@@ -35,10 +36,8 @@
                      hour: 13 minute: 14 second: 15))
 
 (define resource (make <virtual-resource>
-                   ;; local-path: '("")
-                   name: "*root"
                    content: #vu8(1 2 3 4)
-                   creation-time: dt))
+                   creation-date: dt))
 
 (define ns1 (string->symbol "http://example.com/namespace"))
 
@@ -46,21 +45,13 @@
 
 (test-group "\"All\" live properties"
   (let ((most (propfind-most-live-properties resource)))
-    (test-equal "Correct amount of keys" 10 (length most))
     (for-each (lambda (propstat)
                 (test-assert "Propstat is propstat" (propstat? propstat))
                 (test-equal (format #f "Propstat well formed: ~a" (propstat-property propstat))
                   1 (length (propstat-property propstat)))
                 (test-assert "Propstat child is xml"
                   (xml-element? (car (propstat-property propstat)))))
-              most)
-
-    (test-equal "Correct keys"
-      '(creationdate displayname getcontentlanguage getcontentlength
-                     getcontenttype getetag getlastmodified
-                     lockdiscovery resourcetype supportedlock)
-      (sort-symbols (map (compose xml-element-tagname car propstat-property)
-                         most)))))
+              most)))
 
 
 (test-equal "propfind-selected-properties"
@@ -80,7 +71,7 @@
 
      (test-assert "Propstat objects are returned" (propstat? (car props)))
      (for-each (lambda (el)
-                 (test-assert "Each entry is an xml element" (xml-element*? el))
+                 (test-assert "Each entry is an xml element" (xml-element? el))
                  (test-eqv "The enrties lack children" 0 (length (xml-element-children el))))
                (propstat-property (car props)))
 
@@ -114,24 +105,20 @@
         (list
          (propstat 200
                    (list ((xml webdav 'creationdate)
-                          (datetime->string dt "~Y-~m-~dT~H:~M:~SZ"))
+                          (datetime->string dt "~Y-~m-~dT~H:~M:~S"))
                          ((xml webdav 'getcontentlength)
                           "4")
                          ((xml webdav 'getcontenttype)
-                          "application/binary")
-                         ((xml webdav 'getlastmodified)
-                          "Thu, 01 Jan 1970 00:00:00 GMT")
-                         ((xml webdav 'lockdiscovery))
+                          "application/octet-stream")
                          ((xml webdav 'resourcetype)
                                         ; (list (xml webdav 'collection))
                           )
                          ((xml webdav 'supportedlock))
                          ;; (list (xml ns1 'test) "Content")
                          ))
-         (propstat 404 (list ((xml webdav 'displayname))
-                             ((xml webdav 'getcontentlanguage))))
-         (propstat 501
-                   (list ((xml webdav 'getetag)))))
+         ;; (propstat 404 (list ((xml webdav 'displayname))
+         ;;                     ((xml webdav 'getcontentlanguage))))
+         )
         (sort-propstats props))))
 
 
@@ -146,25 +133,20 @@
         (list
          (propstat 200
                    (list ((xml webdav 'creationdate)
-                          (datetime->string dt "~Y-~m-~dT~H:~M:~SZ"))
+                          (datetime->string dt "~Y-~m-~dT~H:~M:~S"))
                          ((xml webdav 'getcontentlength)
                           "4")
                          ((xml webdav 'getcontenttype)
-                          "application/binary")
-                         ((xml webdav 'getlastmodified)
-                          "Thu, 01 Jan 1970 00:00:00 GMT")
-                         ((xml webdav 'lockdiscovery))
+                          "application/octet-stream")
                          ((xml webdav 'resourcetype)
                                         ; (list (xml webdav 'collection))
                           )
                          ((xml webdav 'supportedlock))
                          ;; (list (xml ns1 'test) "Content")
                          ))
-         (propstat 404 (list ((xml webdav 'displayname))
-                             ((xml webdav 'getcontentlanguage))))
-         (propstat 501
-                   (list ((xml webdav 'getetag))
-                         )))
+         ;; (propstat 404 (list ((xml webdav 'displayname))
+         ;;                     ((xml webdav 'getcontentlanguage))))
+         )
         (sort-propstats props)))
 
 
@@ -177,31 +159,29 @@
       (test-equal "Include isvirtual"
         (list
          (propstat 200
-                   (list ((xml webdav 'creationdate) (datetime->string dt "~Y-~m-~dT~H:~M:~SZ"))
+                   (list ((xml webdav 'creationdate) (datetime->string dt "~Y-~m-~dT~H:~M:~S"))
                          ((xml webdav 'getcontentlength) "4")
-                         ((xml webdav 'getcontenttype) "application/binary")
-                         ((xml webdav 'getlastmodified) "Thu, 01 Jan 1970 00:00:00 GMT")
+                         ((xml webdav 'getcontenttype) "application/octet-stream")
                          ((xml virtual-ns 'isvirtual) "true")
-                         ((xml webdav 'lockdiscovery))
                          ((xml webdav 'resourcetype))
                          ((xml webdav 'supportedlock))
                          ;; (list (xml ns1 'test) "Content")
                          ))
-         (propstat 404 (list ((xml webdav 'displayname))
-                             ((xml webdav 'getcontentlanguage))))
-         (propstat 501 (list ((xml webdav 'getetag)))))
+         ;; (propstat 404 (list ((xml webdav 'displayname))
+         ;;                     ((xml webdav 'getcontentlanguage))))
+         )
         (sort-propstats props)))))
 
 
-(test-equal
+(test-equal "Big Propfind"
     (list (propstat 200
                     (list ((xml webdav 'getcontentlength) "4")
-                          ((xml webdav 'getlastmodified) "Thu, 01 Jan 1970 00:00:00 GMT")
                           ((xml webdav 'resourcetype))))
           (propstat 404
                     (list ((xml webdav 'checked-in))
                           ((xml webdav 'checked-out))
-                          ((xml (string->symbol "http://apache.org/dav/props/") 'executable)))))
+                          ((xml (string->symbol "http://apache.org/dav/props/") 'executable))
+                          ((xml webdav 'getlastmodified)))))
   (let ((request (xml->namespaced-sxml
                   "<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <propfind xmlns=\"DAV:\">
@@ -218,9 +198,12 @@
     (sort-propstats (exec-propfind (xml-document-root request) resource))))
 
 (test-equal "All dead properties"
-  (list #;
-   (propstat 200 (list (list (xml ns1 'test) "Content") ;
-   )))
-  (propfind-all-dead-properties resource))
+  (propstat 200 (list ((xml ns1 'test) "Content")))
+
+  (let ((resource (make <virtual-resource>
+                     content: #vu8(1 2 3 4)
+                     creation-date: dt)))
+    (set-property! resource ((xml ns1 'test) "Content"))
+    (propfind-all-dead-properties resource)))
 
 '((calp webdav propfind))

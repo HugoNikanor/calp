@@ -1,38 +1,16 @@
 @node WebDAV Resource Types
 @section Resource Types
 
-@subsection @code{(calp webdav resource base)}
+Resource types provided ``out-of-the-box''. These all reside in the
+@code{calp webdav resource} namespace, and export a procedure named
+@code{make-resource}. This to allow for the builder (@ref{WebDAV
+Resource Tree Builder}) to initialize resources from raw data, by
+executing @code{(@@ (calp webdav resource ,type) make-resource)}.
 
-Implementation of @code{(calp webdav resource)}. Exists to possibly
-avoid dependency loops.
+Each page will document the expected use case for each resource, how
+it extends common methods, and any extra properties or rules it
+imposes for resources.
 
-@subsection @code{(calp webdav resource calendar)}
-@subsection @code{(calp webdav resource file)}
-
-Resources backed by the file system.
-
-@defun file-resource? x
-@end defun
-
-@deftp {GOOPS method} children <file-resource>
-@end deftp
-
-@deftp {GOOPS method} is-collection? <file-resource>
-@end deftp
-
-@deftp {GOOPS method} creationdate <file-resource>
-Retrived directly from the file through @command{stat -c %W $@{filename@}}.
-@end deftp
-
-@deftp {GOOPS method} content <file-resource>
-@deftpx {GOOPS method} set-content! <file-resource> data
-Directly interfaced with the file.
-
-Data can't be retrieved for collections, and will always be
-returned as a bytevector for non-collections.
-
-Data can be set either as a string or a bytevector. When a string is
-used Guile's current encoding will be used.
-@end deftp
-
-@subsection @code{(calp webdav resource virtual)}
+@include webdav/resource-types/calendar.texi
+@include webdav/resource-types/file.texi
+@include webdav/resource-types/virtual.texi

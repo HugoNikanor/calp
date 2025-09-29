@@ -20,11 +20,10 @@
    (typecheck body xml-element?)
 
    (unless (tag-matches? body 'propertyupdate webdav)
-     (scm-error 'bad-request "exec-propertyupdate"
-                "Root of PROPPATCH method must be a propertyupdate element, got ~s"
-                (list (with-output-to-string
-                        (lambda () (namespaced-sxml->xml (xml-element-children body '())))))
-                '()))
+     (throw 'http 400
+            (format #f "Root of PROPPATCH method must be a propertyupdate element, got ~s"
+                    (with-output-to-string
+                      (lambda () (namespaced-sxml->xml (xml-element-children body '())))))))
 
    (define continuations
     (concatenate
@@ -61,7 +60,12 @@
                         (cons (propstat 200 (list tag))
                               (loop (cdr continuations))))
               (lambda err
-                (cons (propstat 409 (list tag))
+                (cons (case (car err)
+                        ((protected-property)
+                         (propstat 403 (list tag)
+                                   responsedescription: "Protected property"))
+                        (else
+                         (propstat 409 (list tag))))
                       (mark-remaining-as-failed-dependency (cdr continuations))))))))))
 
 

@@ -6,56 +6,32 @@
   :use-module (calp webdav resource virtual)
   :use-module (calp webdav resource file)
   :use-module (oop goops)
-  :use-module (rnrs bytevectors)
   :use-module (rnrs io ports)
+  :use-module ((scheme base) :select (string->utf8))
   :use-module ((hnh util) :select (sort*))
   :use-module (hnh util path)
   )
-
-(define* (pretty-print-tree tree
-                            optional: (formatter (lambda (el) (write el) (newline)))
-                            key: (depth 0))
-  (cond ((null? tree) 'noop)
-        ((pair? tree)
-         (display (make-string (* depth 2) #\space)) (formatter (car tree))
-         (for-each (lambda (el) (pretty-print-tree el formatter depth: (+ depth 1)))
-                   (cdr tree)))
-        (else (formatter tree))))
-
-(define-method (resource-tree (self <resource>))
-  (cons self
-        (map resource-tree (children self))))
-
-
 
 (define dir (mkdtemp (string-copy "/tmp/webdav-tree-XXXXXX")))
 (with-output-to-file (path-append dir "greeting")
   (lambda () (display "Hello, World!\n")))
 
-(define root-resource (make <virtual-resource>
-                        name: "*root*"))
+(define root-resource (make <virtual-resource>))
 
-(define virtual-resource (make <virtual-resource>
-                           name: "virtual"
-                           content: (string->bytevector "I'm Virtual!" (native-transcoder))))
+(define virtual-resource (make <virtual-resource> content: (string->utf8 "I'm Virtual!")))
 
-(define file-tree (make <file-resource>
-                    root: dir
-                    name: "files"))
+(define file-tree (make <file-resource> path: dir))
 
-(mount-resource! root-resource file-tree)
-(mount-resource! root-resource virtual-resource)
+(mount-resource! file-tree root-resource "files")
+(mount-resource! virtual-resource root-resource "virtual")
 
 (test-equal "All resources in tree, along with href items"
     (list (cons '() root-resource)
           (cons '("files") file-tree)
-          (cons '("files" "greeting") (car (children file-tree)))
+          ;; TODO this can't work, since file doesn't return stable resource objects
+          (cons '("files" "greeting") (cdr (car (children file-tree))))
           (cons '("virtual") virtual-resource))
   (sort* (all-resources-under root-resource) string< (compose string-concatenate car)))
-
-
-
-;; (pretty-print-tree (resource-tree root-resource))
 
 
 

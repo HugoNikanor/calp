@@ -16,6 +16,7 @@
                         label
                         span-upto
                         ))
+  :use-module ((hnh util env) :select (with-locale1))
 
   :use-module (hnh util object)
   :use-module (hnh util lens)
@@ -104,6 +105,7 @@
            date-range
 
            datetime->string
+           datetime->http-date
            date->string
            time->string
 
@@ -212,6 +214,13 @@
   (datetime-time type: time? lens: time*)
   tz)
 
+
+(define (datetime->http-date dt)
+  (with-locale1
+   LC_TIME "C"
+   (lambda ()
+     ;; TODO move dt to UTC
+     (datetime->string dt "~a, ~d ~b ~Y ~H:~M:~S GMT"))))
 
 (define (date-zero? date)
   (= 0 (year date) (month date) (day date)))

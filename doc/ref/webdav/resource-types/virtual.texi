@@ -1,0 +1,77 @@
+@node Virtual Resources
+@subsection Virtual Resources
+
+Virtual resources (implemented by @code{(calp webdav resource
+virtual)}) mainly exist to allow a system administrator to create a
+proper tree of other resources. All their content, properties, and
+children are stored entirely in memory. However, they allow any
+resource type to be moved into them as a child.
+
+@subsubsection The Virtual Resource
+
+@deftp {GOOPS class} <virtual-resource>
+
+@deftp {keyword argument} #:collection?
+Should this resource be treated as a collection? Note that all virtual
+resources can still have children and content, regardless of this value.
+@end deftp
+
+@deftp {keyword argument} #:content
+Content for resource. @emph{Must} be set if @code{collection?} is set
+to @code{#f}.
+@end deftp
+
+@deftp  {keyword argument} #:creation-date
+@end deftp
+
+@deftp {keyword argument} #:child-table
+@end deftp
+
+@deftp {keyword argument} #:display-name
+@end deftp
+
+@deftp {keyword argument} #:dead-properties
+@end deftp
+
+@end deftp
+
+@defun virtual-resource? resource
+@end defun
+
+@subsubsection Additional Live Properties
+
+@c TODO document the added isvirtual property
+
+@deftp {XML namespace} http://example.com/virtual
+@cindex virtual-ns
+
+Namespace used for live proprieties declared for this
+resource. Exported as @code{virtual-ns}.
+@end deftp
+
+@deftp {WebDAV property} isvirtual!
+
+@deftp  {GOOPS method} isvirtual <virtual-resource>
+@deftpx {GOOPS method} set-isvirtual! <virtual-resource> value
+@deftpx {GOOPS method} remove-isvirtual! <virtual-resource>
+@end deftp
+
+@end deftp
+
+@subsubsection Method Overrides
+@deftp {GOOPS method} collection? <virtual-resource>
+@end deftp
+
+@deftp  {GOOPS method} content <virtual-resource>
+@deftpx {GOOPS method} set-content! <virtual-resource> data headers
+@end deftp
+
+@deftp {GOOPS method} content-type <virtual-resource>
+@end deftp
+
+@deftp  {GOOPS method} set-displayname! <virtual-resource> value
+@end deftp
+
+
+@deftp {GOOPS method} mount-resource!
+@end deftp

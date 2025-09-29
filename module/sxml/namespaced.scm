@@ -23,7 +23,7 @@
 
            xml-element
            xml-element?
-           xml-element*?
+           xml-element*?                ; TODO why is this exported?
            xml-element-tagname
            xml-element-namespace
            xml-element-attributes

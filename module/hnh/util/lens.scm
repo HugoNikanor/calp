@@ -2,6 +2,7 @@
   :use-module (srfi srfi-1)
   :use-module (ice-9 control)
   :use-module (ice-9 curried-definitions)
+  :use-module (oop goops)
   :export (modify
            set
            get
@@ -12,6 +13,8 @@
 
            focus-matching
            traversed
+
+           each
 
            ref car* cdr*
            ))
@@ -40,6 +43,9 @@
              (f x)
              x))
        list))
+
+(define-method (each (lst <list>))
+  (lambda (f) (map f lst)))
 
 
 ;;; Lens l i :: l i → (i → i) → l i

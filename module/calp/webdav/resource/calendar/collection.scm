@@ -37,7 +37,7 @@
               init-keyword: store:))
 
 
-(define-method (is-collection? (_ <calendar-collection-resource>))
+(define-method (collection? (_ <calendar-collection-resource>))
   #t)
 
 
@@ -178,10 +178,10 @@
         (filter   (find-element (xml caldav 'filter)   (cdr body)))
         (timezone (find-element (xml caldav 'timezone) (cdr body))))
     (when (< 1 (count identity (list allprop propname prop)))
-      (throw 'bad-request 400 "allprop, propname, and prop are mutually exclusive"))
+      (throw 'http 400 "allprop, propname, and prop are mutually exclusive"))
 
     (unless filter
-      (throw 'bad-request 400 "filter required"))
+      (throw 'http 400 "filter required"))
 
 
     #;
@@ -228,9 +228,9 @@
         (prop     (find-children ((xml webdav 'prop))     (cdr body)))
         (hrefs    (find-children ((xml webdav 'href))     (cdr body))))
     (when (< 1 (count identity (list allprop propname prop)))
-      (throw 'bad-request 400 "allprop, propname, and prop are mutually exclusive"))
+      (throw 'http 400 "allprop, propname, and prop are mutually exclusive"))
     (when (null? hrefs)
-      (throw 'bad-request 400 "At least one href is required"))
+      (throw 'http 400 "At least one href is required"))
 
     ;; (assert (memv href hrefs))
 

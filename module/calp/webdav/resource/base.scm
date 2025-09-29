@@ -1,5 +1,5 @@
 (define-module (calp webdav resource base)
-  :use-module ((srfi srfi-1) :select (find remove last append-map drop-while))
+  :use-module ((srfi srfi-1) :select (find remove last append-map drop-while concatenate))
   :use-module (srfi srfi-9)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -16,290 +16,122 @@
   :use-module (hnh util env)
   :use-module (datetime)
   :export (<resource>
-           ;; href
-           href->string
-           string->href
-           href-relative
-           ;; local-path
-           name
-           dead-properties
-           ;; resource-children
            resource?
-           children
+           parent
 
-
-
-           get-live-property
-           get-dead-property
            get-property
-
-           set-dead-property!!
-           set-live-property!!
            set-property!!
            set-property!
-
-           remove-dead-property!!
-           remove-live-property!!
            remove-property!!
            remove-property!
 
-
-           setup-new-resource!
-           setup-new-collection!
-
-
-
+           dead-properties
            live-properties
-           add-child!
-           add-resource!
-           add-collection!
-           is-collection?
+           get-dead-property
+           set-dead-property!!
+           remove-dead-property!!
 
            content
            set-content!
 
+           creation-date
+           content-language
            content-length
+           content-type
+           display-name
+           etag
+           last-modified
 
-           copy-resource
-           copy-to-location!
-           move-to-location!
-           cleanup-resource
-           delete-child!
-           setup-new-resource!
-           ;; prepare-for-add!
+           children
+           collection?
 
-           creationdate
-           displayname
-           getcontentlanguage
-           getcontentlength
-           getcontenttype
-           getetag
-           getlastmodified
-           lockdiscovery
-           resourcetype
-           supportedlock
+           get-child-by-name!
+           move-resource!
+           move-resource-implementation!
+           copy-resource!
+           remove-self!
+           on-child-removed
+           mount-resource!
 
+           create-collection!
+           create-resource!
+           create-collection-copy!
+           create-resource-copy!
+
+           ;; properties defined by the RFC
+           creationdate       set-creationdate!       remove-creationdate!
+           displayname        set-displayname!        remove-displayname!
+           getcontentlanguage set-getcontentlanguage! remove-getcontentlanguage!
+           getcontentlength   set-getcontentlength!   remove-getcontentlength!
+           getcontenttype     set-getcontenttype!     remove-getcontenttype!
+           getetag            set-getetag!            remove-getetag!
+           getlastmodified    set-getlastmodified!    remove-getlastmodified!
+           lockdiscovery      set-lockdiscovery!      remove-lockdiscovery!
+           resourcetype       set-resourcetype!       remove-resourcetype!
+           supportedlock      set-supportedlock!      remove-supportedlock!
+
+           ;; List of those properties
            webdav-properties
 
-           ;; absolute-path
-           ;; find-resource
+           ;; Lookup utilities
            lookup-resource
            all-resources-under
 
-           ;; dereference
-
-           make-live-property
-           live-property?
-           property-getter
-           property-setter-generator
-           property-remover-generator
-
-           prepare-update-properties
-
            ))
 
-
-(define-type (live-property)
-  (property-getter            keyword: getter  type: procedure?)
-  (property-setter-generator  keyword: setter  type: procedure?)
-  (property-remover-generator keyword: remover type: (or false? procedure?)))
-
-
-(define* (make-live-property getter setter-generator optional: remover-generator)
-  (live-property getter: getter
-                 setter: setter-generator
-                 remover: remover-generator))
-
-
-;; Collections are also resources, this is non-collection resources
 (define-class <resource> ()
-  ;; (href init-keyword: href: getter: href init-value: #f)
-  ;; (local-path init-keyword: local-path: getter: local-path)
-
-  ;; name is a part of its search path.
-  ;; For example: the component located at /a/b
-  ;; would have name="a", its parent name="b", and the root element
-  ;; would have an unspecified name (probably the empty string, or "*root*")
-  (name init-keyword: name: getter: name)
-
-  ;; Attributes on data
-  (displayname accessor: displayname* init-value: #f)
-  (contentlanguage accessor: contentlanguage init-value: #f)
-
-  ;; Direct children, used by @code{children} if not overwritten by child
-  (resource-children init-value: '()
-                     accessor: resource-children)
-
-  ;; Table containing href -> resource mappings, saves us from recursivly searching children each time.
-  (resource-cache init-value: (make-hash-table 0)
-                  getter: resource-cache))
+  (parent accessor: parent
+          init-keyword: parent:
+          init-value: #f))
 
 
 (define-method (initialize (self <resource>) args)
   (next-method)
-  ;; TODO (name self) when name is unbound gives a really weird error
-  (typecheck (name self)            string?             "<resource>.name")
-  (typecheck (displayname* self)    (or false? string?) "<resource>.displayname")
-  (typecheck (contentlanguage self) (or false? string?) "<resource>.contentlanguage")
-  ;; (typecheck (resource-children self) ...)
-  )
+  (typecheck (parent self) (or false? resource?) "<resource>.parent"))
+
+(define-method (equal? (a <resource>) (b <resource>))
+  (equal? (parent a) (parent b)))
 
 (define (resource? x)
   (is-a? x <resource>))
 
+(define-generic children)
+(define-generic collection?)
 
-(define (href->string href)
-  (typecheck href (list-of string?))
+(define-method (content (resource <resource>))
+  (if (collection? resource)
+      (throw 'http 403)
+      (throw 'http 500 (format #f "The given resource type failed to implement content: ~s" resource))))
 
-  (if (null? href)
-      "/" (string-join href "/" 'prefix)))
-
-(define (string->href s)
-  (typecheck s string?)
-
-  (remove string-null?
-          (string-split s #\/)))
-
-;; parent must be the head of child, elements in child after that is "free range"
-(define (href-relative parent child)
-  (typecheck parent (list-of string?))
-  (typecheck child (list-of string?))
-
-  (cond ((null? parent) child)
-        ((null? child) (scm-error 'misc-error "href-relative" "Not a sub-href" '() #f))
-        ((equal? (car parent) (car child))
-         (href-relative (cdr parent) (cdr child)))
-        (else (scm-error 'misc-error "href-relative" "Not a sub-href" '() #f))))
-
-(define-method (children (self <resource>))
-  (resource-children self))
-
-;;; TODO merge content and set-content! into an accessor?
-(define-method (content (self <resource>))
-  (throw 'misc-error "content<resource>"
-         "Base <resource> doesn't implement (getting) content, please override this method"
-         '() #f))
-
-(define-method (set-content! (self <resource>) content)
-  (throw 'misc-error "set-content!<resource>"
-         "Base <resource> doesn't implement (setting) content, please override this method"
-         '() #f))
+(define-method (set-content! (r <resource>) c)
+  (set-content! r c '()))
+(define-method (set-content! (_ <resource>) c h)
+  (throw 'http 405))
 
 (define-method (content-length (self <resource>))
-  (if (is-collection? self)
-      0 ; TODO maybe return number of children
-      (let ((c (content self)))
-        (cond ((bytevector? c) (bytevector-length c))
-              ((string? c) (string-length c))
-              (else -1)))))
+  (cond ((content self)
+         bytevector? => bytevector-length)
+        (else #f)))
 
-(define-method (write (self <resource>) port)
-  (catch #t
-    (lambda ()
-      (display ; Make output atomic
-       (call-with-output-string
-         (lambda (port)
-           (format port "#<~a name=~s"
-                   (class-name (class-of self))
-                   (name self))
-           (cond ((displayname self)
-                  propstat-200?
-                  (lambda (name) (format port ", displayname=~s" name))))
-           (format port ">")))
-       port))
-    (lambda _
-      (format port "#<~a>" (class-name (class-of self))))))
+
 
+(define* (lookup-resource resource path key: create?)
+  (cond ((null? path) resource)
+        ((get-child-by-name! resource (car path) create?)
+         => (lambda (resource) (lookup-resource resource (cdr path)
+                                           create?: create?)))
+        (else #f)))
 
-(define (add-resource! self new-name content)
-  (if (lookup-resource self (list new-name))
-      (throw 'resource-exists)
-      (let ((resource (make (class-of self) name: new-name)))
-        (add-child! self resource collection?: #f)
-        (set-content! resource content)
-        resource)))
+;; Returns a flat list of this resource, and all its decendants
+(define* (all-resources-under resource optional: (path-prefix '()))
+  (cons (cons path-prefix resource)
+        (concatenate
+         (map (lambda (c) (all-resources-under (cdr c) (append path-prefix (list (car c)))))
+              (children resource)))))
 
-(define (add-collection! self new-name)
-  (if (lookup-resource self (list new-name))
-      (throw 'resource-exists)
-      (let ((resource (make (class-of self) name: new-name)))
-        (add-child! self resource collection?: #t)
-        resource)))
-
-(define (initialize-copied-resource! source copy)
-  (for-each (lambda (tag) ((set-dead-property!! copy tag)))
-            (dead-properties source))
-  (set! (displayname* copy)    (displayname* source)
-        (contentlanguage copy) (contentlanguage source))
-  ;; (format (current-error-port) "Setting content! ~s (~s)~%" copy source)
-  (when (content source)
-    (set-content! copy (content source)))
-  ;; resource-cache should never be copied
-  )
-
-(define-method (copy-resource (self <resource>) include-children?)
-  (copy-resource self include-children? #f))
-
-(define-method (copy-resource (self <resource>) include-children? new-name)
-  (let ((resource (make (class-of self) name: (or new-name (name self)))))
-    (initialize-copied-resource! self resource)
-    (when include-children?
-      (for-each (lambda (c) (add-child! resource c))
-                (map (lambda (c) (copy-resource c #t))
-                     (children self))))
-    resource))
-
-;; source and target-parent should be resource instances
-;; new-name a string
-;; include-children? and overwrite? booleans
-(define* (copy-to-location! source target-parent
-                            key:
-                            (new-name (name source))
-                            include-children?
-                            overwrite?
-                            )
-  (let ((copy (make (class-of source) name: new-name))
-        ;; Take copy if child list. If we run `cp -r / /c` then;
-        ;; (at least when /c already exists) our child list gets
-        ;; updated, leading to an infinite loop if we use
-        ;; `(children source)` directly below.
-        (children-before (children source)))
-    (let ((status (add-child! target-parent copy
-                              ;; (is-collection? copy) doesn't work for
-                              ;; all types, since it's not quite yet
-                              ;; added (for example: <file-resoure>
-                              ;; checks if the target resource is a
-                              ;; directory on the file system).
-                              collection?: (is-collection? source)
-                              overwrite?: overwrite?)))
-      (case status
-        ((created replaced)
-         (initialize-copied-resource! source copy)
-         (when include-children?
-           (for-each (lambda (c) (copy-to-location!
-                             c copy
-                             include-children?: #t))
-                     children-before))
-         status)
-        ((collision) 'collision)))))
-
-(define* (move-to-location! source-parent source target-parent
-                            key:
-                            (new-name (name source))
-                            overwrite?)
-  (let ((status (copy-to-location! source target-parent
-                                   new-name: new-name
-                                   include-children?: #t
-                                   overwrite?: overwrite?)))
-    (case status
-      ((created replaced)
-       (delete-child! source-parent source)
-       status)
-      ((collision) 'collision))))
-
+
 
 ;; Only tagname and namespaces are checked on the <xml-element> for the {get,set}-property
-
 
 ;;; All get-*-property methods return propstat elements
 
@@ -314,19 +146,25 @@
                (live-properties resource))
          cdr))
 
-;;; TODO should {get,set}{,-{dead,live}}-property really be methods?
-;;; - Live properties are defined by lookup-live-property, which isn't a
-;;;   method, which in turn calls live-properties, which MUST be a method.
-;;; - Dead properties may have a reason. For example, file resources might
-;;;   want to store them directly in xattrs, ignoring its built in hash-table.
-;;; - The combined should always just dispatch to either one
-
-(define-method (get-live-property (resource <resource>) xml-el)
+(define (get-live-property resource xml-el)
+  (typecheck resource resource?)
   (typecheck xml-el xml-element?)
 
   (cond ((lookup-live-property resource xml-el)
          => (lambda (prop) ((property-getter prop) resource)))
         (else (propstat 404 (list xml-el)))))
+
+;; Return a promise which performs the set operation.
+;; Pre-conditions can cause this function to throw
+(define (set-live-property!! resource value)
+  (typecheck resource resource?)
+  (typecheck value xml-element?)
+
+  (cond ((lookup-live-property resource value)
+         ;; NOTE this drops any (xml) attributes from the value object
+         => (lambda (prop) (apply (property-setter-generator prop)
+                             resource (xml-element-children value))))
+        (else #f)))
 
 (define-generic get-dead-property)
 
@@ -336,16 +174,6 @@
 (define-generic set-dead-property!!)
 
 (define-generic remove-dead-property!!)
-
-;; Return a promise which performs the set operation.
-;; Pre-conditions can cause this function to throw
-(define-method (set-live-property!! (resource <resource>) value)
-  (typecheck value xml-element?)
-  (cond ((lookup-live-property resource value)
-         ;; NOTE this drops any (xml) attributes from the value object
-         => (lambda (prop) (apply (property-setter-generator prop)
-                             resource (xml-element-children value))))
-        (else #f)))
 
 ;; Returns a promise, which when evaluated, attempts to physically set
 ;; the property. This procedure might fail due to pre-conditions,
@@ -357,15 +185,12 @@
 (define (set-property! resource value)
   ((set-property!! resource value)))
 
-
-(define-method (remove-live-property!! (resource <resource>) xml-tag)
+(define (remove-live-property!! resource xml-tag)
   (typecheck xml-tag xml-element?)
+  (typecheck resource resource?)
 
   (cond ((lookup-live-property resource xml-tag)
-         => (lambda (prop)
-              (cond ((property-remover-generator prop)
-                     => (lambda (f) (f resource)))
-                    (else (throw 'irremovable-live-property)))))
+         => (lambda (prop) ((property-remover-generator prop) resource)))
         (else #f)))
 
 (define (remove-property!! resource xml-tag)
@@ -377,9 +202,9 @@
 
 
 
-;; xml-tag should be just the tag element, without a surounding list
-(define-method (get-property (resource <resource>) xml-tag)
+(define (get-property resource xml-tag)
   (typecheck xml-tag xml-element?)
+  (typecheck resource resource?)
 
   (cond ((get-dead-property resource xml-tag)
          propstat-200? => identity)
@@ -398,81 +223,45 @@
                        (cdr pair)))
        webdav-properties))
 
-(define-method (setup-new-resource! (this <resource>) (parent <resource>))
-  'noop)
-
-(define-method (setup-new-collection! (this <resource>) (parent <resource>))
-  'noop)
-
-(define (add-child* this child collection?)
-  (setup-new-resource! child this)
-  (when collection?
-    (setup-new-collection! child this))
-  (set! (resource-children this)
-    (cons child (resource-children this))))
-
-(define* (add-child! this child
-                     key:
-                     overwrite?
-                     (collection? (is-collection? child)))
-  (let ((existing (lookup-resource this (list (name child)))))
-    (cond ((and overwrite? existing)
-           (delete-child! this existing)
-           (add-child* this child collection?)
-           'replaced)
-          (existing 'collision)
-          (else
-           (add-child* this child collection?)
-           'created))))
-
-
-;; Free any aditional system resources held by this object.
-;; For example, file resources will remove the underlying file here.
-(define-method (cleanup-resource (this <resource>))
-  'noop)
-
-(define-method (delete-child! (this <resource>) (child <resource>))
-  (set! (resource-children this)
-    (delq1! child (children this)))
-  (for-each (lambda (grandchild)
-              (delete-child! child grandchild))
-            (children child))
-  (cleanup-resource child))
 
 
 
-;;; TODO rename to simply @code{collection?}
-(define-method (is-collection? (self <resource>))
-  (not (null? (resource-children self))))
-
-
-
+(define-method (creation-date (_ <resource>)) #f)
 
 (define-method (creationdate (self <resource>))
-  (propstat 501 (list ((xml webdav 'creationdate)))))
+  (cond ((creation-date self)
+         => (lambda (cd)
+              (propstat
+               200 (list ((xml webdav 'creationdate)
+                          (datetime->string cd "~Y-~m-~dT~H:~M:~S~Z"))))))
+        (else (propstat 404 (list ((xml webdav 'creationdate)))))))
 
-(define-method (set-creationdate! (self <resource>) _)
-  (throw 'protected-resource "creationdate"))
+(define-method (set-creationdate! (self <resource>) _) (throw 'protected-property))
+(define-method (remove-creationdate! (self <resource>) _) (throw 'protected-property))
+
+(define-method (display-name (_ <resource>)) #f)
 
 (define-method (displayname (self <resource>))
-  (cond ((displayname* self)
-         => (lambda (name)
-              (propstat 200 (list ((xml webdav 'displayname)
-                                   name)))))
-        (else
-         (propstat 404 (list ((xml webdav 'displayname)))))))
+  (cond ((display-name self)
+         => (lambda (name) (propstat 200 (list ((xml webdav 'displayname)
+                                           name)))))
+        (else (propstat 404 (list ((xml webdav 'displayname)))))))
 
-(define-method (set-displayname! (self <resource>) value)
-  (lambda () (set! (displayname* self) value)))
+(define-method (set-displayname! (_ <resource>)) (throw 'protected-property))
+(define-method (remove-displayname! (_ <resource>)) (throw 'protected-property))
 
+(define-method (content-language (_ <resource>)) #f)
+
+(define-method (set-getcontentlanguage! (_ <resource>) v) (throw 'protected-property))
+(define-method (remove-getcontentlanguage! (_ <resource>)) (throw 'protected-property))
 (define-method (getcontentlanguage (self <resource>))
-  (cond ((contentlanguage self)
+  (cond ((content-language self)
          => (lambda (lang) (propstat 200 (list ((xml webdav 'getcontentlanguage) lang)))))
         (else (propstat 404 (list ((xml webdav 'getcontentlanguage)))))))
 
-(define-method (set-getcontentlanguage! (self <resource>) value)
-  (lambda () (set! (contentlanguage self) value)))
 
+(define-method (remove-getcontentlength! (self <resource>)) (throw 'protected-property))
+(define-method (set-getcontentlength! (self <resource>) _) (throw 'protected-property))
 (define-method (getcontentlength (self <resource>))
   (propstat 200
             (list
@@ -480,102 +269,185 @@
               (number->string
                (content-length self))))))
 
-(define-method (set-getcontentlength! (self <resource>) _)
-  (throw 'protected-resource "getcontentlength"))
 
+(define-method (content-type (_ <resource>)) #f)
+
+(define-method (remove-getcontenttype! (self <resource>)) (throw 'protected-property))
+(define-method (set-getcontenttype! (self <resource>) _) (throw 'protected-property))
 (define-method (getcontenttype (self <resource>))
-  (propstat 501 (list ((xml webdav 'getcontenttype)))))
+  (cond ((content-type self)
+         => (lambda (type)
+              (propstat 200 (list ((xml webdav 'getcontenttype) type)))))
+        (else
+         (propstat 404 (list ((xml webdav 'getcontenttype)))))))
 
-(define-method (set-getcontenttype! (self <resource>) _)
-  (throw 'protected-resource "getcontenttype"))
 
+(define-method (etag (_ <resource>)) #f)
+
+(define (remove-getetag! _) (throw 'protected-property))
+(define (set-getetag! r _) (throw 'protected-property))
 (define-method (getetag (self <resource>))
-  ;; TODO
-  (propstat 501 (list ((xml webdav 'getetag)))))
+  (cond ((etag self)
+         => (lambda (tag)
+              (propstat 200 (list ((xml webdav 'getetag) tag)))))
+        (else
+         (propstat 404 (list ((xml webdav 'getetag)))))))
 
-(define-method (set-getetag! (self <resource>) _)
-  (throw 'protected-resource "getetag"))
 
+(define-method (last-modified (_ <resource>)) #f)
+
+(define-method (remove-getlastmodified! (self <resource>) _) (throw 'protected-property))
+(define-method (set-getlastmodified! (self <resource>) _) (throw 'protected-property))
 (define-method (getlastmodified (self <resource>))
-  (propstat 200 (list ((xml webdav 'getlastmodified)
-                       (with-locale1
-                        LC_TIME "C"
-                        (lambda ()
-                          (datetime->string (unix-time->datetime 0) "~a, ~d ~b ~Y ~H:~M:~S GMT")))))))
+  (cond ((last-modified self)
+         => (lambda (dt)
+              (propstat
+               200
+               (list ((xml webdav 'getlastmodified)
+                      (datetime->http-date dt))))))
+        (else (propstat 404 (list ((xml webdav 'getlastmodified)))))))
 
-(define-method (set-getlastmodified! (self <resource>) _)
-  (throw 'protected-resource "getlastmodified"))
-
+(define (remove-lockdiscovery! _) (throw 'protected-property))
+(define (set-lockdiscovery! r _) (throw 'protected-property))
 (define-method (lockdiscovery (self <resource>))
-  (propstat 200 (list ((xml webdav 'lockdiscovery)))))
+  (propstat #; 200 404 (list ((xml webdav 'lockdiscovery)))))
 
-(define-method (set-lockdiscovery! (self <resource>) _)
-  (throw 'protected-resource "lockdiscovery"))
 
+(define-method (remove-resourcetype! (self <resource>)) (throw 'protected-property))
+(define-method (set-resourcetype! (self <resource>) _) (throw 'protected-property))
 (define-method (resourcetype (self <resource>))
   (propstat 200 (list (apply (xml webdav 'resourcetype)
-                             (when (is-collection? self)
+                             (when (collection? self)
                                (list ((xml webdav 'collection))))))))
 
-(define-method (set-resourcetype! (self <resource>) _)
-  (throw 'protected-resource "resourcetype"))
 
+(define (remove-supportedlock! _) (throw 'protected-property))
+(define (set-supportedlock! r _) (throw 'protected-property))
 (define-method (supportedlock (self <resource>))
   (propstat 200 (list ((xml webdav 'supportedlock)))))
 
-(define-method (set-supportedlock! (self <resource>) _)
-  (throw 'protected-resource "supportedlock"))
+;; Dirty macro to quickly generate  live property definitions
+(define-macro (xx . symbs)
+  `(list ,@(map (lambda (symb)
+                  `(cons (quote ,symb)
+                        (make-live-property
+                         ,symb
+                         ,(string->symbol (format #f "set-~a!" symb))
+                         ,(string->symbol (format #f "remove-~a!" symb)))))
+               symbs)))
 
 (define webdav-properties
-  `((creationdate       . ,(make-live-property creationdate set-creationdate!))
-    (displayname        . ,(make-live-property displayname set-displayname!))
-    (getcontentlanguage . ,(make-live-property getcontentlanguage set-getcontentlanguage!))
-    (getcontentlength   . ,(make-live-property getcontentlength set-getcontentlength!))
-    (getcontenttype     . ,(make-live-property getcontenttype set-getcontenttype!))
-    (getetag            . ,(make-live-property getetag set-getetag!))
-    (getlastmodified    . ,(make-live-property getlastmodified set-getlastmodified!))
-    (lockdiscovery      . ,(make-live-property lockdiscovery set-lockdiscovery!))
-    (resourcetype       . ,(make-live-property resourcetype set-resourcetype!))
-    (supportedlock      . ,(make-live-property supportedlock set-supportedlock!))))
+  (xx creationdate
+      displayname
+      getcontentlanguage
+      getcontentlength
+      getcontenttype
+      getetag
+      getlastmodified
+      lockdiscovery
+      resourcetype
+      supportedlock))
 
 
 
-;;; TODO remove! This is a remnant of the old mount system
-;; (define-method (dereference (self <resource>))
-;;   self)
+;;; Additional functions
+;;; lookup-resource
+;;;
+;;; No delete by path exists, instead do something like
+;;;     (and=> (lookup-resource root path) delete-self!)
+;;; No PUT by path exists for the same reason:
+;;;     (and=> (lookup-resource root path create?: #t)
+;;;            (lambda (resource) (set! (content resource) payload)))
 
-(define (find-resource resource path)
-  ;; Resource should be a <resource> (or something descended from it)
-  ;; path should be a list of strings
-  (cond ((null? path) resource)
-        ((string-null? (car path))
-         ;; resource
-         (find-resource resource (cdr path)))
-        ((find (lambda (r) (string=? (car path) (name r)))
+(define-generic remove-self!)
+(define-generic create-collection!)
+(define-method (create-collection! resource name)
+  (create-collection! resource name '() #f))
+(define-generic create-resource!)
+
+(define-method (create-collection-copy!
+                (source <resource>) (destination <resource>) name depth)
+
+  (typecheck depth (memv '(0 infinity)))
+
+  (let ((resource (create-collection! destination name)))
+    (for-each (lambda (prop) (set-property! resource prop))
+              (dead-properties source))
+
+    (case depth
+      ((0) 'noop)
+      ((infinity)
+       (for (name . child) in (children source)
+            (create-collection-copy! child resource name 'infinity))))))
+
+
+(define-method (create-resource-copy!
+                (source <resource>) (destination <resource>) name)
+  (let ((resource (create-resource! destination name)))
+    (set-content! resource (content source) '())
+    (for-each (lambda (prop) (set-property! resource prop))
+              (dead-properties source))))
+
+(define-method (copy-onto! (source <resource>) (destination <resource>) name depth)
+  (define p (parent destination))
+  (remove-self! destination)
+  (if (collection? source)
+      (create-collection-copy! source p name depth)
+      (create-resource-copy! source p name)))
+
+(define* (copy-resource! source destination name key: (depth 'infinity) (overwrite? #t))
+  (typecheck source resource?)
+  (typecheck destination resource?)
+  (typecheck name string?)
+  (typecheck depth (memv '(0 infinity)))
+
+  (cond ((not (collection? destination))
+         (throw 'http 412 "Destination resource is not a collection"))
+        ((and overwrite? (get-child-by-name! destination name))
+         => (lambda (old)
+              (copy-onto! source old name depth)
+              'replaced))
+        ((get-child-by-name! destination name)
+         'collision)
+        ((collection? source)           ; target doesn't exist
+         (create-collection-copy! source destination name depth)
+         'created)
+        (else       ; target doesn't exist, source is a non-collection
+         (create-resource-copy! source destination name)
+         'created)))
+
+
+(define* (move-resource! source destination name key: overwrite?)
+  (define return-code 'created)
+  (cond ((and overwrite? (get-child-by-name! destination name))
+         => (lambda (old)
+              (remove-self! old)
+              (set! return-code 'replaced)))
+        ((get-child-by-name! destination name)
+         (throw 'http 412)))
+  (move-resource-implementation! source destination name)
+  return-code)
+
+
+(define-method (move-resource-implementation! (source <resource>) (destination <resource>) name)
+  (copy-resource! source destination name)
+  (remove-self! source))
+
+
+(define-method (get-child-by-name! (resource <resource>) (name <string>))
+  (get-child-by-name! resource name #f))
+
+;; Default implementation for finding children.
+;; Specific resource types are free to implement faster lookup methods.
+(define-method (get-child-by-name! (resource <resource>) (name <string>) create?)
+  (cond ((find (lambda (p) (string=? name (car p)))
                (children resource))
-         => (lambda (r) (find-resource r (cdr path))))
+         => cdr)
+        (create? (create-resource! resource name))
         (else #f)))
 
-;; Lookup up a given resource first in the cache,
-;; Then in the tree
-;; and finaly fails and returns #f
-(define (lookup-resource root-resource path)
-  (find-resource root-resource path)
-  #;
-  (or (hash-ref (resource-cache root-resource) path)
-      (and=> (find-resource root-resource path)
-             (lambda (resource)
-               (hash-set! (resource-cache root-resource) path resource)
-               resource))))
 
-(define* (all-resources-under* resource optional: (prefix '()))
-  (define s (append prefix (list (name resource))))
-  (cons (cons s resource)
-        (append-map (lambda (c) (all-resources-under* c s))
-                    (children resource))))
+(define-generic on-child-removed)
 
-;; Returns a flat list of this resource, and all its decendants
-(define* (all-resources-under resource optional: (prefix '()))
-  (cons (cons prefix resource)
-        (append-map (lambda (c) (all-resources-under* c prefix))
-                    (children resource))))
+(define-method (mount-resource! (resource <resource>) (parent <resource>) name)
+  (throw 'http "Can't mount that resource in that location"))

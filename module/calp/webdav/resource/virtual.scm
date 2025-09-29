@@ -1,4 +1,5 @@
 (define-module (calp webdav resource virtual)
+  :use-module (srfi srfi-1)
   :use-module (oop goops)
   :use-module (datetime)
   :use-module (rnrs bytevectors)
@@ -14,89 +15,97 @@
   :export (<virtual-resource>
            virtual-resource?
            virtual-ns
-           ;; content
-           isvirtual
            make-resource
-           )
-  )
+
+           isvirtual set-isvirtual! remove-isvirtual!
+           ))
 
 (define virtual-ns (string->symbol "http://example.com/virtual"))
 
 (define-class <virtual-resource> (<resource>)
-  (collection? init-keyword: collection?: accessor: collection? init-value: #f)
+  (collection? init-keyword: collection?:
+               accessor: collection*?
+               init-value: #f)
   (content* init-value: #vu8()
-           init-keyword: content:
-           accessor: content*)
-  (creation-time init-form: (current-datetime)
-                 init-keyword: creation-time:
-                 getter: creation-time)
+            init-keyword: content:
+            accessor: content*)
+  (creation-date init-form: (current-datetime)
+                 init-keyword: creation-date:
+                 getter: creation-date)
+
+  (child-table init-keyword: children:
+               init-form: (table)
+               accessor: child-table)
+
+  (display-name init-keyword: display-name:
+                init-form: #f
+                accessor: display-name)
 
   (dead-properties
    ;; Table, where keys are the result of xml-element-hash-key
    ;; And values are xml elements.
    init-form: (table)
-   accessor: dead-properties%)
+   accessor: dead-properties%
+   init-keyword: dead-properties:)
   )
 
 (define-method (initialize (self <virtual-resource>) args)
   (next-method)
   (typecheck (content* self) bytevector? "<virtual-resource>.content*")
-  (typecheck (creation-time self) datetime? "<virtual-resource>.creation-time"))
-  ;; (typecheck (dead-properties self) (list-of xml-element?) "<resource>.dead-properties")
+  (typecheck (creation-date self) datetime? "<virtual-resource>.creation-date")
 
-(define-method (setup-new-collection! (this <virtual-resource>) (parent <resource>))
-  (set! (collection? this) #t))
+  (typecheck (child-table self) table? "<virtual-resource>.child-table")
+  (typecheck (dead-properties% self) table? "<virtual-resource>.dead-properties")
+
+  )
+
+;;; TODO implement `equal?`.
+
+(define-method (collection? (resource <virtual-resource>))
+  (collection*? resource))
+
+;; (define-method (setup-new-collection! (this <virtual-resource>) (parent <resource>))
+;;   (set! (collection? this) #t))
 
 (define (virtual-resource? x)
   (is-a? x <virtual-resource>))
 
 (define-method (write (self <virtual-resource>) port)
-  (format port "#<<virtual-resource> name=~s, creation-time=~s, content=~s>"
-          (name self)
-          (creation-time self)
-          (content self)))
+  (format port "#<<virtual-resource> creation-date=~s, content=~s collection=~s>"
+          (creation-date self)
+          (catch 'decoding-error
+            (lambda () (utf8->string (content self)))
+            (lambda _ (content self)))
+          (collection? self)))
 
-(define (make-resource name . args)
-  (apply make <virtual-resource> name: name args))
+(define (make-resource . args)
+  (apply make <virtual-resource> args))
 
 (define-method (live-properties (self <virtual-resource>))
   (append
-   (next-method)
    (list (cons ((xml virtual-ns 'isvirtual))
-               (make-live-property isvirtual set-isvirtual!)))))
+               (make-live-property isvirtual set-isvirtual! remove-isvirtual!)))
+   (next-method)))
 
 (define-method (content (self <virtual-resource>))
   (content* self))
 
-(define-method (set-content! (self <virtual-resource>) data)
-  (set! (content* self) data))
-
-(define-method (is-collection? (self <virtual-resource>))
-  (collection? self))
-
-(define-method (creationdate (self <virtual-resource>))
-  (propstat 200
-            (list
-             ((xml webdav 'creationdate)
-              (-> (creation-time self)
-                  (datetime->string "~Y-~m-~dT~H:~M:~SZ"))))))
+(define-method (set-content! (self <virtual-resource>) data headers)
+  (set! (content* self) data)
+  #f)
 
 
-(define-method (getcontenttype (self <virtual-resource>))
-  (propstat 200
-            (list
-             ((xml webdav 'getcontenttype)
-              "application/binary"))))
+(define-method (content-type (self <virtual-resource>))
+  "application/octet-stream")
 
+(define-method (set-displayname! (self <virtual-resource>) value)
+  (lambda () (set! (display-name self) value)))
+
+
+(define-method (set-isvirtual! (self <virtual-resource>) _) (throw 'protected-property))
+(define-method (remove-isvirtual! (_ <virtual-resource>)) (throw 'protected-property))
 (define-method (isvirtual (self <virtual-resource>))
-  (propstat 200
-            (list
-             ((xml virtual-ns 'isvirtual)
-              "true"))))
-
-
-(define-method (set-isvirtual! (self <virtual-resource>) _)
-  (throw 'protected-resource "isvirtual"))
+  (propstat 200 (list ((xml virtual-ns 'isvirtual) "true"))))
 
 
 
@@ -127,3 +136,96 @@
     (set! (dead-properties% resource)
       (table-remove (dead-properties% resource)
                     (xml-element-hash-key xml-tag)))))
+
+
+(define-method (children (resource <virtual-resource>))
+  (modify (table->list (child-table resource))
+          (lens-compose each car*) symbol->string))
+
+(define-method (get-child-by-name! (resource <virtual-resource>) (name <string>) create?)
+  (table-get (child-table resource) (string->symbol name)))
+
+(define-method (remove-self! (resource <virtual-resource>))
+  (when (parent resource)
+    (on-child-removed (parent resource) resource))
+  (set! (parent resource) #f)
+  ;; This assumes that any children of us will be garbage collected.
+  ;; This works for this run, since the tree is now gone.
+  ;; However, consider the sittuation
+  ;;     (make <virtual-resource>
+  ;;       children: (list (cons "files" (lambda (p) (make <file-resource>
+  ;;                                              path: "/home/hugo"
+  ;;                                              parent: p))))))
+  ;; Then the file resource would be garbage collected and removed
+  ;; from the resource tree. However, at next program start all files
+  ;; would still be there, since it would just get re-mounted.
+  ;; This might however be expected behaviour, since nested virtual
+  ;; resources probably also work that way, at least if they originate from
+  ;; a configuration file.
+  )
+
+;; Local function to <virtual-resource> module
+;; Creates a new virtual resource identical to the old one
+(define (copy-self resource depth)
+  (make <virtual-resource>
+    crollection?: (collection? resource)
+    content: (content* resource)
+    child-table: (child-table resource)
+    dead-properties: (dead-properties% resource)
+    display-name: (display-name resource)
+    )
+  )
+
+;;; TODO this is broken, I think it simply doesn't create the new resource
+#;
+(define-method (move-resource-implementation!
+                (source <virtual-resource>)
+                (destination <virtual-resource>)
+                name)
+  (remove-self! source)
+  (set! (parent source) destination)
+  (set! (child-table source)
+    (table-put (child-table source)
+               (string->symbol name)
+               source)))
+
+
+(define-method (create-collection! (resource <virtual-resource>) name headers body)
+  (when body (throw 'http 415))
+
+  (define child
+   (make <virtual-resource>
+     parent: resource
+     collection?: #t))
+
+  (set! (child-table resource)
+    (table-put (child-table resource)
+               (string->symbol name)
+               child))
+
+  child)
+
+(define-method (create-resource! (resource <virtual-resource>) name)
+  (define child (make <virtual-resource> parent: resource))
+  (set! (child-table resource)
+    (table-put (child-table resource) (string->symbol name)
+               child))
+  child)
+
+
+(define-method (on-child-removed (resource <virtual-resource>) (child <resource>))
+  (cond ((find (lambda (p) (eq? child (cdr p)))
+               (children resource))
+         => (lambda (p)
+              (set! (child-table resource)
+                (table-remove (child-table resource)
+                              (string->symbol (car p))))))))
+
+
+(define-method (mount-resource!
+                (resource <resource>) (parent-resource <virtual-resource>) name)
+  (when (parent resource)
+    (throw 'http 502 "Refusing to mount a resource with parent"))
+
+  (set! (child-table parent-resource)
+    (table-put (child-table parent-resource) (string->symbol name) resource)))

@@ -2,48 +2,21 @@
 @chapter WebDAV
 @cindex webdav
 
-For a complete overview of WebDAV, please see @cite{RFC4918 (HTTP
-Extensions for Web Distributed Authoring and Versioning (WebDAV))},
-but in short, and specifc for this implementation:
+This is an implementation of RFC 4918 (WebDAV).
+At its core is the server handler @code{webdav-handler}, which
+maps HTTP requests onto methods in the resource tree. Resource tree
+operations are implemented by a series of GOOPS method, declared in
+the module @code{(calp webdav resource)}, and implemented in varying
+ways depending on the source of the resource.
 
-A DAV tree consists of resources, which are analogous to files and
-directories. A resource is referenced by its href.
+In general, resource implementations only handle immediate children
+(and parents), and leaves deep lookup, deletions, and similar to the
+wrapping code.
 
-Each resources is either a collection and have children, or have
-content. Parts of this implementation allows a collection to also have
-contents, while other does not. The standard doesn't seem to mind
-either way.
-
-Each resource also has a set of properties, modelling metadata and
-extra data about the resource.
-
-@emph{href}'s are internally represented as lists of strings, where the
-root element ``/'' is an empty list, and all other cases are mapped
-like:
-@example
-"/a/b" ⇒ '("a" "b")
-@end example
-
-@emph{resources} are GOOPS objects, which the base class
-@code{<resource>}.
-
-The user (of the library) is assumed to designate one resource
-instance as the root of the resource tree. All other resources are
-then added as (grand-)children to that resource. Each resource has a
-field @var{name}, which is the normative name used when searching by
-name in the tree@footnote{This means that one resource can't easily
-exist at multiple points in the tree}.
-
-@emph{properties} are split into live and dead properties, where live
-properties have extra handling by the server, while dead properties
-are simply carried along after the end-user put them on a resource.
-
-Live properties are handled through GOOPS methods.
-
-Dead properties are (by default) stored directly inside each resource.
-
+@include webdav/server.texi
+@include webdav/http-error.texi
+@include webdav/resource.texi
 @include webdav/properties.texi
-@include webdav/resources.texi
 @include webdav/resource-types.texi
 @include webdav/util.texi
 @include webdav/builder.texi

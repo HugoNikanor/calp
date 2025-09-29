@@ -88,6 +88,13 @@ namespace.
 
        @defun xml-element-attributes el
        @end defun
+
+    @deftp  {Lens} xml-element-tagname*
+    @deftpx {Lens} xml-element-namespace*
+    @deftpx {Lens} xml-element-attributes*
+    @deftpx {Lens} xml-element-children*
+    @end deftp
+
 @end defun
 
 

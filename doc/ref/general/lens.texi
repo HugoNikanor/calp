@@ -58,3 +58,25 @@ value, and setting the value just returns the new value.
 A lens focusing each element of a list where @var{predicate} returns
 true. This may be multiple elements.
 @end deffn
+
+@deffn {Lens} each lst
+Focus each element of a collection.
+
+This lens is implemented as a goops method, but currently only have a
+specialization for lists.
+
+@example
+(modify (enumerate (string->list "Hello"))
+        (lens-compose each car*)
+        (λ (x) (* x 10)))
+⇒ ((0 #\H) (10 #\e) (20 #\l) (30 #\l) (40 #\o))
+@end example
+
+@example
+(-> (list "Hello" "World")
+    (modify each string->list)
+    (modify (lens-compose each each) char-upcase))
+⇒ ((#\H #\E #\L #\L #\O) (#\W #\O #\R #\L #\D))
+@end example
+
+@end deffn

@@ -1,0 +1,61 @@
+@node Accessing Properties
+@subsection Accessing and Modifying Properties
+
+The canonical way to access properties is through these
+procedures. When accessing through HTTP, @code{exec-propfind} and
+@code{exec-propertyupdate} should instead be used.
+
+Resource types may allow other methods for accessing properties.
+
+@defun get-property resource xml-tag
+Retrieve a property from a resource, returning a propstat object.
+
+It first queries @code{get-dead-property}, wrapping a successful
+return value in a propstat object with a 200 code, and if it fails
+finding one, goes on to search the @code{live-properties} list.
+
+If no property could be found, a propstat object with a 404 code is
+returned.
+@end defun
+
+@defun set-property!! resource value
+Prepares the setting of a property on a resource, by first trying
+checking if a matching live property exists in the
+@code{live-properties} list, and otherwise dispatches to @code{set-dead-property!!}.
+
+This procedure may throw exceptions, if a pre-condition on the given
+property couldn't be fulfilled, and then returns a thunk which
+actually sets the property once called. This extra step to allow
+running the pre-conditions for all properties in a proppatch set
+before any change is actually made.
+
+@b{TODO} we really need a true transaction system, since quite a few
+errors can't be detected before actually trying to set the property.
+For example, setting xattrs on a filesystem which doesn't support it.
+
+@var{value} must be a complete xml element.
+@end defun
+
+@defun set-property! resource xml-el
+Like @code{set-live-property!!}, but executes immediately.
+@end defun
+
+@defun remove-property!! resource xml-tag
+Like @code{set-property!!}, but runs pre-condition checks for removing
+a given property. Dispatches to @code{remove-live-property!!},
+followed by @code{remove-dead-property!!} if the aforementioned
+returned @code{#f}.
+
+The same issues with transactions as for @code{set-property!!} also
+applies here.
+@end defun
+
+@defun remove-property! resource xml-tag
+Like @code{remove-property!}, but executes immediately.
+@end defun
+
+For information about implementing property access for a resource
+type, see @ref{Implementing Properties}.
+
+@include webdav/properties/access-propfind.texi
+@include webdav/properties/access-proppatch.texi

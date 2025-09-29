@@ -2,14 +2,9 @@
   :use-module (srfi srfi-88)
   :use-module (oop goops)
   :use-module (calp webdav resource base)
-  :export (mount-resource!))
+  :export ())
 
 (define cm (module-public-interface (current-module)))
 (module-use! cm (resolve-interface '(calp webdav resource base)))
+(module-use! cm (resolve-interface '(calp webdav href)))
 
-;;; TODO mount-resource! vs add-child!
-;;; Would a good idea be that add-resource! adds directly, and should
-;;; be considered internal, while mount-resource! also runs post-add
-;;; hooks, and could thereby be exported
-(define-method (mount-resource! (this <resource>) (child <resource>))
-  (add-child! this child))

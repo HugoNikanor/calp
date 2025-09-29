@@ -1,0 +1,358 @@
+@node WebDAV Resource
+@section Resources
+
+WebDAV resources are implemented as sub-classes of the
+@code{<resource>} type, with each resource keeping track of its own
+content and properties, as well as its direct children.
+
+@deftp {GOOPS class} <resource>
+Base type for all WebDAV resources. Can't be directly instantiated,
+and lacks implementations for many of the required methods.
+
+@deftp {keyword argument} #:parent parent
+@end deftp
+
+@defun parent resource
+Access the direct parent of the resource. May be @code{#f}, for
+free-floating or resources at the root of a resource tree.
+@end defun
+
+@end deftp
+
+@defun resource? x
+Returns if the given object a resource, or at least a variation of a resource.
+@end defun
+
+@deftp {GOOPS method} collection? resource
+Is the given resource a collection.
+
+@emph{Must} be implemented by all resource types.
+@end deftp
+
+@deftp {GOOPS method} children resource
+Method for retrieving all direct children of @var{resource}, as a list
+of name, resource object pairs.
+
+Depending on the resource type, this can be as simple as keeping the
+aforementioned list in memory, and returning it verbatim. Or as
+complex as generating a new set whenever requested. The second
+approach is for example useful when backed by a real file system,
+since the underlying data can change without our knowledge.
+
+There's no guarantee that the same child resource returns as the exact
+same object (in the sense of `eq?`).
+@end deftp
+
+@deftp {GOOPS method} get-child-by-name! resource name [create?]
+Retrieve the direct child of @var{resource} with local name @var{name}.
+
+If no such resource exist, and @var{create?} is true, then
+@code{create-resource!} should be called, and returned. This mimics the
+POSIX @code{open} call with @code{O_CREAT} specified.
+Otherwise, @code{#f} must be returned.
+
+A default implementation which searches the list returned by
+@var{children} is provided.
+@end deftp
+
+@defun lookup-resource resource path
+Recursively look up a resource by path.
+@end defun
+
+@defun all-resources-under resource [path-prefix='()]
+Returns a list containing pairs of paths and resources, starting with
+the given resource and all is children resources, all the way down.
+
+The optional @var{path-prefix} will be appended to each element of the
+list, and is intended to get absolute paths when starting from the
+middle of the tree.
+
+@example
+(all-resources-under (lookup-resource root '("subpath")) '("subpath"))
+⇒ ((("subpath") . resource-1)
+   (("subpath" "a") . resource-2))
+@end example
+@end defun
+
+@subsection Resource Content
+
+@deftp {GOOPS method} content resource
+Retrieve the content of a given resource.
+Each implementation @emph{must} implement this for non-collection
+resources, and @emph{may} implement it for collection resources, with
+any content they want.
+
+A default implementation exists, which return http errors with code
+403 for collections, and 500 for non-collections.
+
+See also §9.4 of RFC 4918.
+@end deftp
+
+@deftp {GOOPS method} set-content! resource content [headers='()]
+Get and set the content of a given resource. @var{content}s type can
+be anything that the given resource type accepts.
+
+If it returns without error, it @emph{must} either return @code{#f},
+or a string which is the etag for the newly set content. This tag
+@emph{must} include quotation marks (meaning that it @emph{must} match
+the regex @code{(W/)?"[^"]*"}), @emph{should not} be changed if the
+content set is identical to the content already present, and should be
+strong if possible.
+
+The third option is the headers of the HTTP request used to set this
+content. It should be used to interpret the data, for example a
+calendar resource would only accept calendar content. If the given
+content is in any way unacceptable, an http exception should be thrown.
+
+A default implementation exists, which simply throws an http error
+with code 405.
+@end deftp
+
+@subsection Resource Data
+These methods provide general data about the resource, and are used as
+the basis for their corresponding properties, and for HTTP GET requests.
+Each method may return @code{#f} if no suitable value can be given for
+the resource, in which case the property will be omitted from both GET
+and PROPFIND requests. For general information about accessing
+properties, see @ref{Accessing Properties}.
+
+Unless otherwise noted, the default implementation for all of these
+simply returns @code{#f}.
+
+@deftp {GOOPS method} creation-date resource
+Must return a @code{datetime} object.
+@end deftp
+
+@deftp {GOOPS method} content-language resource
+Should return a string containing a language tag, as defined in §8.5.1
+in RFC 9110 (HTTP Semantics).
+@end deftp
+
+@deftp {GOOPS method} content-length resource
+An exact integer specifying the byte length of the content.
+
+If the resource has content, and the content returned is a bytevector,
+then the default implementation returns the result of
+@code{bytevector-length}, or @code{#f} otherwise.
+@end deftp
+
+@deftp {GOOPS method} content-type resource
+Should return a string containing a media type according to §8.3.1 of
+RFC 9110. For example @code{application/octet-stream}.
+@end deftp
+
+@deftp {GOOPS method} display-name resource
+Retrieve a human readable name of the resource.
+@end deftp
+
+@deftp {GOOPS method} etag resource
+Return the etag for the content of this resource. If a string is
+returned, then it @emph{must} contain a valid etag, including
+quotation marks.
+
+@c Wouldn't etag objects be a good idea?
+@c (define-type (etag) (tag type: string?) (weak? type: boolean? default: #f)
+@c (define (etag->string et) (format #f "~a\"~a\"" (if (weak? et) @c "W/" "") (tag et)))
+@end deftp
+
+@deftp {GOOPS method} last-modified resource
+Must return a @code{datetime} object.
+@end deftp
+
+@subsection Creating Resources
+
+These methods create new resources as direct children of the provided
+resource. The newly created resources are generally expected to be of
+the same type as the root resource, but may be of any type. The newly
+created resources @emph{must} be added to the child set of the child
+set of the provided resource.
+
+Implementations may assume that no resource with the given name exists
+in the child set of the resource. On resource creation failure, these
+methods should throw relevant @code{http} errors.
+
+@deftp {GOOPS method} create-collection! resource name [headers body]
+Creates a new collection resource, and returns the resource object.
+
+@var{headers} is the HTTP request headers, and @var{body} is the
+request body, or @code{#f} if none is present. Implementations may use
+these variables to pre-populate the collection, but @emph{must} fail
+by throwing an http error with status code 415 if the body isn't
+supported. For most implementation, this means simply starting with
+@code{(when body (throw 'http 415))}.
+@end deftp
+
+@deftp {GOOPS method} create-resource! resource name
+Creates a new non-collection resource, and returns the resource object.
+
+If a resource with @var{name} already exists in the child set of
+@var{resource}, and error @emph{must} be thrown.
+@end deftp
+
+@defun make-resource [#:parent=#f] args ...
+All resource implementations @emph{should} implement a procedure for
+creating resources of that type explicitly, without having a parent.
+
+This allows creating a root resource, and is also used by
+@code{build-webdav-resource-tree}.
+@end defun
+
+Resource implementations may provide other methods for creating
+resources.
+
+@subsection Removing Resources
+
+@deftp {GOOPS method} remove-self! resource
+Request a resource to clean up after itself, and then delete itself.
+
+If the @code{parent} slot is filled, then
+@code{(on-child-removed (parent @var{resource}) @var{resource})}
+@emph{must} be invoked by any implementation of this method.
+@end deftp
+
+@deftp {GOOPS method} on-child-removed resource child
+Callback to a parent when a child has removed itself. This should
+ensure that the child set of @var{resource} no longer contains @var{child}.
+
+Should not be invoked directly, except when implementing @code{remove-self!}.
+
+@emph{Must} be implemented for all resource types. However, a no-op
+implementation is acceptable. A default no-op implementation is not
+provided, to ensure that no resource type forgets it.
+@end deftp
+
+@subsection Copying and Moving Resources
+
+@defun copy-resource! source destination name [#:depth='infinity] [#:overwrite?=#t]
+Attempts to copy the @var{source} resource into the child set of
+@var{collection}, binding it to @var{name}.
+
+If a resource with the target name already exists as a direct child of
+@var{destination}, then @code{copy-onto!} will be called with
+@code{source}, and the pre-existing resource. Otherwise,
+@code{create-collection-copy!} or @code{create-resource-copy!} will be
+called with appropriate arguments.
+
+Returns one of the symbols @code{collision}, @code{created}, or
+@code{replaced}, depending on the action taken, and throws an
+@code{http} error with code 412 if the destination isn't a collection.
+@end defun
+
+@deftp {GOOPS method} copy-onto! source destination name depth
+Implementations may during a copy, in the case that the target already
+exists, keeps some aspects of the destination, mainly properties.
+
+The default implementation simply calls @code{remove-self!} followed
+by @code{create-resource-copy!} or @code{create-collection-copy!} with
+the parent of @var{destination}.
+
+Any custom implementation @emph{must not} merge child set of the two resources.
+
+See §9.8.4 of RFC 4918 for further details.
+@end deftp
+
+@deftp  {GOOPS method} create-resource-copy!   source destination name
+@deftpx {GOOPS method} create-collection-copy! source destination name depth
+Methods to create a new resource with the given name as a child to the
+destination object, which should mimic the source resource as closely
+as possible. The destination is guaranteed to not exist beforehand.
+
+These methods should generally not be called explicitly, except from
+@code{copy-resource!} or @code{copy-onto!}. This allows them to assume
+that the destination is always un-occpuied, since
+@code{copy-resource!} is responsible for handling conflicts.
+
+The default implementation calls @code{create-resource!} or
+@code{create-collection!}, followed by copying over all data,
+dead properties, and when requested, children.
+
+@var{depth} @emph{must} either be the symbol @code{infinity}, or the
+integer 0.
+
+If the source resource can't be transfered to the destination resource
+(for example, if the user attempts to nest calendar collections), then
+an implementation may throw an @code{http} error with status code 502
+(Bad Gateway), see RFC 4918 §9.8.5.
+@end deftp
+
+@defun move-resource! source destination name overwrite?
+Move the resource @var{source} into the child set of
+@var{destination}, giving it @var{name}. It returns either the symbol
+@code{created} or the symbol @code{replaced}.
+
+This procedure first checks if the target exists, and removes it if
+@var{overwrite!} is true, and throws an @code{http} error with status
+code 412 otherwise. It then calls @code{move-resource-implementation!}.
+@end defun
+
+
+@deftp {GOOPS method} move-resource-implementation! source destination name
+``Workhorse'' method for actually moving resources. Implementations
+must assume that no resource with @var{name} exists at
+@var{destination}, since it's @code{move-resource!}s responsibility to
+delete those beforehand.
+
+A default implementation exists, which simply does a
+@code{copy-resource!} followed by a @code{remove-self!} on the
+source. However, must resource types can probably implement much
+faster copy methods. Consider the following move configuration when
+moving file backed and memory backed resources (here called
+@code{<virtual>}).@footnote{see documentation for each actual resource
+type for information of which of specializations it implements}.
+
+@enumerate
+@item @code{mv <file> <file>}
+In this case, we want to issue a file-system level move instead, since
+that will likely be much master.
+
+@item @code{mv <file> <virtual>}
+Usually, moving a file to a collection of any other type would would
+imply creating a new resource in the other collection, and removing
+the source resource. The one exception however is if the source
+resource is the root of the file resource tree, in which case we can
+simply move the ``mount point''.
+
+@item @code{mv <virtual> <file>}
+The only way to move a non-file resource into a file resource
+collection is to create a new file. Therefore, this invocation will
+dispatch to the default implementation.
+
+@item @code{mv <virtual> <virtual>}
+Here, we just change some pointers around.
+@end enumerate
+
+When specializing, you need to have knowledge of both resource types,
+which makes the set of possible specializations quite big.
+
+An implementation may throw an HTTP error with error code 502 (Bad
+Gateway), in the case that the given resource can't be copied to the
+destination, for whatever reason@footnote{for example, calendar
+collections can't be nested}, see @ref{HTTP Exception Type}.
+@end deftp
+
+@subsection Mounting Resources
+
+Finally, there is one final way to connect resources to each other,
+which is mounting. This is analogous to mounting in the POSIX term.
+
+@deftp {GOOPS method} mount-resource! resource parent name
+Mounts @var{resource} at @var{name} as a child of @var{parent}. For
+example, if both resources are backed by a POSIX-like file system,
+this could be implemented@footnote{Syntax assuming a weird mix of
+Scheme and shell} as
+@code{mount --bind (path resource) (path-append (path parrent) name)}.
+
+If the given resource can't be mounted under the given parent, an
+@code{http} error @emph{should} be thrown, with a status code of 502.
+
+A resource type may support mounting the same resource in multiple
+places. This is however discouraged, since the @code{parent} field can
+only reference one location, meaning that
+@code{(eq? resource (parent (get-child-by-name! resource "mounted")))}
+would return @code{#f}.
+
+A default implementation which simply throws 502 messages without
+proper context exist. Even implementations not intending to support
+mounting are encouraged to implement an override containing better
+error messages.
+@end deftp

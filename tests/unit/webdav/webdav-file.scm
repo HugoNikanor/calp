@@ -9,6 +9,7 @@
   :use-module (oop goops)
   :use-module (calp webdav resource)
   :use-module (calp webdav resource file)
+  :use-module ((scheme base) :select (string->utf8))
   )
 
 ;;; Commentary:
@@ -16,29 +17,24 @@
 ;;; Code:
 
 
-;;; TODO general helper procedure for this
 (define test-root (mkdtemp (string-copy "/tmp/calp-test-XXXXXX")))
 
-(define root-resource (make <file-resource>
-                        name: "*root*"
-                        root: test-root))
+(define root-resource (make <file-resource> path: test-root))
 
 
 (test-group "File resource collection"
-  (add-collection! root-resource "subdir")
+  (create-collection! root-resource "subdir")
   (test-eqv "Collection correctly added"
     'directory (-> (path-append test-root "subdir")
                    stat stat:type) ))
 
 
 
-;;; TODO this fails, sice <file-resource> doesn't override add-resource!
-;;; <file-resources>'s add resource must at least update root path path of the
-;;; child resource, and possibly also touch the file (so ctime gets set).
 (test-group "File resource with content"
   (let ((fname "file.txt")
         (s "Hello, World!\n"))
-    (add-resource! root-resource fname s)
+    (define file-resource (create-resource! root-resource fname))
+    (set-content! file-resource (string->utf8 s))
     (let ((p (path-append test-root fname)))
       (test-eqv "File correctly added"
         'regular (-> p stat stat:type))

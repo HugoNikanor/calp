@@ -1,0 +1,24 @@
+@node HTTP Exception Type
+@section HTTP Exception Type
+
+@deftp {Exception Type} http code [message [content-type]]
+@anchor{http-error}
+Error type which must be caught be a web request handler, and from
+there translated to HTTP responses. @var{code} is an HTTP status code,
+with the optional @var{message} being the optional message body of the response.
+
+@var{message} can either be a string or a namespaced sxml object, and
+an appropriate content type will be chosen. If a custom content type
+is desired, @var{content-type} can be set, with the same semantics as
+the @link{HTTP Headers,content-type,guile} http header from Guile's
+web server.
+
+@example
+(values
+    (build-response
+      code: @var{code}
+      headers: `((content-type ,@var{content-type})))
+    @var{message})
+@end example
+@end deftp
+

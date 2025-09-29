@@ -1,0 +1,14 @@
+@subsubsection Proppatch
+
+Provided by the module @code{(calp webdav proppatch)}.
+
+@defun exec-propertyupdate body resource
+Parses and executes a @code{DAV:propertyupdate} xml element, on behalf
+of a PROPPATCH request.
+
+Actual modifications are dispatched through @code{set-property!!} and
+@code{remove-property!!}.
+
+A list of propstat objects detailing execution the execution result
+are returned.
+@end defun

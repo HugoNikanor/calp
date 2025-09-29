@@ -1,39 +1,31 @@
 @node WebDAV Properties
 @section Properties
 
-@itemize
-@item @code{(calp webdav property)}
-@item @code{(calp webdav propfind)}
-@end itemize
+Each resource has a set of properties, which are additional data
+besides the resources content. All properties are proper xml
+fragments, and here implemented as namespaced sxml objects.
 
-@subsection Default Live Properties
+Properties are divided into @emph{live} and @emph{dead}
+properties. @b{Dead} properties are stored as is, in an implementation
+defined way depending on the resource type (for example, resources
+backed by a filesystem may store them in extended file attributes, or
+sidecar files). @b{Live} properties are managed by the server, and use
+go through methods when being read or written to.
 
-@deftp {GOOPS method} creationdate
-@end deftp
+When setting property values, the resource is first checked if a live
+property of that name exists, before defaulting to setting (and
+possibly creating) a dead property. This ensures that no live property
+isn't accidentally ``shadowed'' by a dead property.
 
-@deftp {GOOPS method} displayname
-@end deftp
+When retrieving specific properties, dead properties are checked
+first. This since dead property lookup is assumed to be effectively
+instant, while live properties may incur costly computations. It in
+theory also allows specific resource implementations to treat some
+live properties as sneaky dead properties (for example,
+DAV:displayname). This is however discouraged.
 
-@deftp {GOOPS method} getcontentlanguage
-@end deftp
+@include webdav/properties/access.texi
+@include webdav/properties/implementing.texi
+@include webdav/properties/objects.texi
+@include webdav/properties/default-live.texi
 
-@deftp {GOOPS method} getcontentlength
-@end deftp
-
-@deftp {GOOPS method} getcontenttype
-@end deftp
-
-@deftp {GOOPS method} getetag
-@end deftp
-
-@deftp {GOOPS method} getlastmodified
-@end deftp
-
-@deftp {GOOPS method} lockdiscovery
-@end deftp
-
-@deftp {GOOPS method} resourcetype
-@end deftp
-
-@deftp {GOOPS method} supportedlock
-@end deftp

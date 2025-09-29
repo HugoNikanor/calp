@@ -25,7 +25,7 @@
 
 
 
-(define-method (is-collection? (_ <calendar-object-resource>))
+(define-method (collection? (_ <calendar-object-resource>))
   #f)
 
 

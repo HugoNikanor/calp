@@ -1,0 +1,40 @@
+@subsubsection Propfind
+
+Provided by the module @code{(calp webdav propfind)}.
+
+@defun exec-propfind body resource
+Takes an xml document containing a propfind element as defined by RFC
+4918, its implemented in terms of the below mention procedures. It
+also dispatches to the methods @code{dead-properties} and @code{live-properties}.
+
+Once the requested set is gathered, propstat objects are merged
+through @code{merge-propstat}. When an allprop is executed,
+``missing'' live properties (e.g. those returning 404 propstat
+objects) are omitted. This has the consequence that
+@code{<DAV:propname/>} requests might return properties which later
+turn out to not exist.
+
+When properties are explicitly named, but don't exist, then proper 404
+responses are generated.
+@end defun
+
+@defun propfind-all-dead-properties resource
+Calls @code{dead-properties} on the resource, and adds a wrapping
+@code{propstat} object with status code 200.
+@end defun
+
+@defun propfind-most-live-properties resource
+When the request is an @code{<DAV:allprop/>}, only all dead properties
+and the live properties explicitly stated in the RFC should be returned.
+
+This methods retrieves all properties specified in the
+@code{webdav-properties} list, which is non-extendable, executes them
+on the given resource, and then filters out any 404 responses.
+@end defun
+
+@c @defun propfind-all-live-properties resource
+@c @end defun
+
+@defun propfind-selected-properties resource properties
+Simply calls get-property for specified property.
+@end defun

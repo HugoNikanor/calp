@@ -1,0 +1,48 @@
+@node Propstat Objects
+@subsection something here
+These are the aforementioned objects which are used to implement properties.
+
+@subsubsection Propstat objects
+
+@defun propstat code prop [#:error] [#:responsedescription]
+
+@defun propstat?
+@end defun
+
+@defun  propstat-status-code
+@defunx propstat-property
+@defunx propstat-error
+@defunx propstat-response-description
+Accessors for each field of a propstat object.
+@end defun
+
+@defun  propstat-status-code*
+@defunx propstat-property*
+@defunx propstat-error*
+@defunx propstat-response-description*
+Lenses for each field of a propstat object.
+@end defun
+
+@end defun
+
+@defun merge-propstats
+@end defun
+
+@defun propstat-200?
+@end defun
+
+@defun propstat->namespaced-sxml
+@end defun
+
+@subsubsection Live Property Objects
+
+@defun make-live-property getter setter-generator [remover-generator]
+@end defun
+
+@defun live-property? x
+@end defun
+
+@defun  property-getter
+@defunx property-setter-generator
+@defunx property-remover-generator
+@end defun

@@ -1,6 +1,11 @@
 (define-module (test webdav-resource)
   :use-module ((calp namespaces) :select (webdav))
-  :use-module ((calp webdav property) :select (propstat))
+  :use-module ((calp webdav property)
+               :select (propstat
+                        property-getter
+                        property-setter-generator
+                        live-property?
+                        ))
   :use-module (calp webdav resource base)
   :use-module (calp webdav resource virtual)
   :use-module (calp webdav resource)
@@ -12,6 +17,8 @@
   :use-module (srfi srfi-88)
   :use-module (sxml namespaced)
   )
+
+(define get-live-property (@@ (calp webdav resource base) get-live-property))
 
 (define dt
   (datetime year: 2010 month: 11 day: 12
@@ -93,10 +100,10 @@
     (get-property resource ((xml webdav 'displayname)))))
 
 (test-group "lookup-resource"
-  (let* ((root (make <virtual-resource> name: "*root*"))
-         (a (add-collection! root "a"))
-         (b (add-collection! a "b"))
-         (c (add-resource! b "c" "~~Nothing~~")))
+  (let* ((root (make <virtual-resource>))
+         (a (create-collection! root "a"))
+         (b (create-collection! a "b"))
+         (c (create-resource! b "c")))
     (test-eq "Lookup root"
       root (lookup-resource root '()))
     (test-eq "Lookup direct child"
@@ -107,4 +114,6 @@
       (not (lookup-resource root '("a" "d" "c"))))))
 
 '((calp webdav resource)
+  (calp webdav property)
+  (calp webdav resource virtual)
   (calp webdav resource base))

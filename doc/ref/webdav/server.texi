@@ -1,0 +1,133 @@
+@node WebDAV Server
+@section WebDAV Server
+
+The module @code{(calp server webdav)} provides a request handler
+suitable for Guile's built in @code{run-server}.
+
+@deftp {HTTP Header} List DAV
+List of numbers, symbols, or uri objects.
+@end deftp
+
+@deftp {HTTP Header} 0|1|'Infinity Depth
+@end deftp
+
+@deftp {HTTP Header} URI-reference Destination
+@end deftp
+
+@c @deftp {HTTP Header} {} If
+@c @end deftp
+
+@c @deftp {HTTP Header} {} Lock-Token
+@c @end deftp
+
+@deftp {HTTP Header} Boolean Overwrite
+@end deftp
+
+@c @deftp {HTTP Header} {} Timeout
+@c @end deftp
+
+@defun (webdav-handler root-resource) request request-body
+The complete handler. Checks the HTTP method, and dispatches to one of
+the below mentioned procedures. This procedure can be used as the sole
+handler for all incoming web traffic (as shown in the example below),
+or to handle a subtree of requests.
+
+@example
+((@@ (web http) run-server)
+ (webdav-handler resource)
+ 'http)
+@end example
+
+Any of the below mentioned handlers may throw an http error, including
+the underlying methods which implement the actual resources. These
+errors will be handled, and returned to the client as proper HTTP responses,
+@ref{http-error}.
+@end defun
+
+The following procedures should only be called by the WebDav handler,
+but are documented here to give context how WebDav resources are
+handled, and how resource implementations are expected to behave.
+
+All methods runs @code{lookup-resource} and 404s if no such resource
+could be found, unless otherwise stated.
+
+@defun run-propfind
+Fetches resources depending on the @code{Depth} header, and executes
+@code{exec-propfind} on each of these, with the (parsed) provided
+request body.
+
+@b{TODO} resources should have an option to deny requests with
+infinite depth.
+@end defun
+
+@defun run-proppatch
+Runs @code{exec-propertyupdate} on the targeted resource.
+@end defun
+
+@defun run-options
+Currently, returns a fixed set of headers declaring basic WebDav compliance.
+@end defun
+
+@defun run-get
+Used for both GET and HEAD requests. The body is retrieved using the
+method @code{content}, and the following headers are populated from
+the following methods:
+
+@enumerate
+@item Content-Type     from @code{content-type}
+@item Last-Modified    from @code{last-modified}
+@item Content-Language from @code{content-language}
+@item Content-Length   from @code{content-length}
+@item ETag             from @code{etag}
+@end enumerate
+@end defun
+
+@defun run-put
+The referenced resource is looked up, and if found then
+@code{set-content!} is called on it, followed by @code{set-property!}
+for @code{Content-Type} and @code{Content-Language}, if present in the
+PUT request headers. @code{set-content!} may throw an HTTP error if
+the resource implementation can't accept the given type (for example,
+putting non-calendar data on a calendar resource). Failure to support
+setting content type and content language should be ignored by the
+resource implementation, rather than signaling an error.
+@c TODO really? It's implemented using set-property!, which WILL fail
+@c on sets on protected resources
+
+@code{set-content!} @emph{must} either return @code{#f}, or an etag
+value identical to the value obtained by later calling @code{etag} on
+the same resource, assuming it hasn't change since.
+
+If the resource doesn't exist, but its direct parent does, then a new
+resource will be created through @code{create-resource!}, and the above
+mentioned methods will be called the exact same.
+
+If the focused resource exists, but is a collection, then an HTTP 405
+(Method Not Allowed) error is returned, and if any parent is missing,
+then an 409 Conflict error is returned.
+@end defun
+
+@defun run-delete
+Looks up the given resource, and if found, calls @code{remove-self!}
+on it.
+@end defun
+
+@defun run-mkcol
+If the parent of the specified resource exist, but the resource itself
+doesn't, then @code{create-collection!} is called. Otherwise, an error
+is thrown.
+@end defun
+
+@defun run-copy
+Looks up the source and destination resource, and dispatches to
+@code{copy-resource!}.
+@end defun
+
+@defun run-move
+Looks up the source and destination resource, and dispatches to
+@code{move-resource!}.
+@end defun
+
+@defun run-report
+Not yet implemented. @b{TODO} document once implemented.
+@end defun

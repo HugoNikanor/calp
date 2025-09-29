@@ -17,7 +17,8 @@ exec $GUILE -e main -s "$0" "$@"
              (srfi srfi-1)
              (srfi srfi-88)
 
-             (rnrs bytevectors)
+             ((scheme base) :select (string->utf8))
+
              (rnrs io ports)
              (oop goops)
              (calp webdav resource)
@@ -41,12 +42,13 @@ exec $GUILE -e main -s "$0" "$@"
 (define (main args)
   (define root-resource
     (build-webdav-resource-tree
-     `(("/virtual" virtual
-        content: ,(string->bytevector "Hello, World\n" (native-transcoder)))
-
-       ("/files" file
-        ;; TODO the temp directory should be created by us
-        root: "/home/hugo/tmp2"))))
+     `(virtual
+       (("virtual"
+         (virtual
+          content: ,(string->utf8 "Hello, World\n")))
+        ("files"
+         ;; TODO the temp directory should be created by us
+         (file path: "/home/hugo/tmp2"))))))
 
   (define-values (port socket)
     (randport "127.0.0.1" start: 8102))

@@ -3,39 +3,35 @@
 
 @code{(calp webdav builder)}
 
-@defun build-webdav-resource-tree resources
+@defun build-webdav-resource-tree resource
 Creates a new WebDAV resource tree
 suitable for passing to webdav-handler
 with the given resources created and mounted under their respective places.
 
-The @var{resources} argument is a list of resource declarations.
+The @var{resource} is a list, consisting of a resource type
+indicator, any number of keyword arguments, and finally (and
+optionally) a list of 2-lists, containing child name and child
+resource declarations on the same form as the top level object.
 
-@itemize @bullet{}
-@item
-Absolute path to the resource.
-
-@item
-Resource type symbol.
-
-This is lookup up as @code{(@ (calp webdav resource @var{type})
-make-resource)}, which is then applied to the remaining arguments.
-
-@item
-Arguments to resource type constructor
-@end itemize
+The resource type is looked up as
+@code{(@@ (calp webdav resource @var{type}) make-resource)},
+which is then applied to the keyword arguments.
 
 @example
 (build-webdav-resource-tree
-  `(("/x" virtual
-    content: ,my-content)))
+  `(virtual
+    (("files" (file path: ,(getenv "tmpdir")))
+     ("virtual"
+      (virtual content: ,my-content)))))
 
 ;; would be equivalent to
 
 (define root (make <virtual-resource> name: "root"))
-(define node (make <virtual-resource>
-                   name: "x"
-                   content: my-content))
-(mount-resource! root node)
+(mount-resource! (make <virtual-resource> content: my-content)
+                 root "virtual")
+(mount-resource! (make <file-resource> path: (getenv "tmpdir"))
+                 root "files")
+
 root ; return value
 @end example
 

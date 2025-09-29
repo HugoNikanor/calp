@@ -1,0 +1,93 @@
+@node Default Live Properties
+@subsection Default Live Properties
+
+The following resources are mandated by RFC 4918 (WebDav), and is
+therefore returned by @code{allprop} requests on resources. Default
+implementations on the base resource type is provided for all the
+following properties. Unless otherwise specified, the ``set'' and
+``remove'' methods all throw a @code{protected-property} error when
+trying to be used. Custom resource types are should implement these
+methods as they see fit. For the getter methods, custom resource types
+may implement them completely. However, most of them have helper
+methods which may either return a valid value which will be wrapped in
+a propstat object, or return @code{#f} if that property isn't valid
+for that resource.
+
+Most getter methods have a default implementation which queries an
+underlying method which @emph{must} either return the relevant value
+in an below mentioned type, or @code{#f}. These will be mapped onto
+@code{propstat} objects with either 200 or 404 status codes.
+All default setters indicate that the resource is protected.
+
+For information about protected resources, and how to implement live
+resources, see @ref{Implementing Properties}.
+
+@deftp  {GOOPS method} creationdate resource
+@deftpx {GOOPS method} set-creationdate! resource value
+@deftpx {GOOPS method} remove-creationdate! resource
+The default getter queries @code{creation-date}, which must return a
+datetime object. It is then formatted as expected.
+@end deftp
+
+@deftp  {GOOPS method} displayname resource
+@deftpx {GOOPS method} set-displayname! resource value
+@deftpx {GOOPS method} remove-displayname! resource
+The default getter queries @code{display-name}, and returns it as is.
+@end deftp
+
+@deftp  {GOOPS method} getcontentlanguage resource
+@deftpx {GOOPS method} set-getcontentlanguage! resource value
+@deftpx {GOOPS method} remove-getcontentlanguage! resource
+The default getter queries @code{content-language}, and returns it as
+is.
+@end deftp
+
+@deftp  {GOOPS method} getcontentlength resource
+@deftpx {GOOPS method} set-getcontentlength! resource value
+@deftpx {GOOPS method} remove-getcontentlength! resource
+The default getter queries @code{content-length}, and returns it as is.
+@end deftp
+
+@deftp  {GOOPS method} getcontenttype resource
+@deftpx {GOOPS method} set-getcontenttype! resource value
+@deftpx {GOOPS method} remove-getcontenttype! resource
+The default getter queries @code{content-type}, and returns it as is.
+@end deftp
+
+@deftp  {GOOPS method} getetag resource
+@deftpx {GOOPS method} set-getetag! resource value
+@deftpx {GOOPS method} remove-getetag! resource
+The default getter queries @code{etag}, and returns it as is.
+@end deftp
+
+@deftp  {GOOPS method} getlastmodified resource
+@deftpx {GOOPS method} set-getlastmodified! resource value
+@deftpx {GOOPS method} remove-getlastmodified! resource
+The default getter queries @code{last-modified}, which must return a
+datetime object, and formats it as expected.
+@end deftp
+
+@deftp {GOOPS method} lockdiscovery resource
+@deftpx {Function} set-discovery! resource value
+@deftpx {Function} remove-lockdiscovery! resource
+Default getter simply returns a 404 response, since locks are not yet
+implemented.
+
+The setter and remover are implemented as non-method procedures, since
+this method @emph{must} be protected.
+@end deftp
+
+@deftp  {GOOPS method} resourcetype resource
+@deftpx {GOOPS method} set-resourcetype! resource value
+@deftpx {GOOPS method} remove-resourcetype! resource value
+The default implementation returns a @code{DAV:resourcetype} element,
+containing a @code{DAV:collection} element if @code{collection?}
+returned true, and nothing otherwise.
+@end deftp
+
+@deftp {GOOPS method} supportedlock resource
+@deftpx {Function} set-supportedlock! resource value
+@deftpx {Function} remove-supportedlock! resource
+The default getter returns an empty lock list. The setter and remover
+are implemented as non-method procedures, since the @emph{must} be protected.
+@end deftp

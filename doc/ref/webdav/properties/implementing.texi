@@ -1,0 +1,75 @@
+@node Implementing Properties
+@subsection Implementing Properties
+
+Properties are provided by resource type implementations through the
+following GOOPS methods. A resource type @emph{must} implement all of
+these. It's advised to not use these methods directly for modifying
+the property set, but instead use the procedures defined above
+(@pxref{Accessing Properties}).
+
+Live properties are implemented through a getter, setter, and
+remover procedure. These procedures @emph{should} be GOOPS
+methods, to allow further specialization by sub-classes. And the
+implementing methods (getter, setter, and remover) @emph{should} be
+exported from the defining module.
+
+The getter @emph{must} always return a valid propstat object,
+containing the corresponding xml tag. However, it may return a 404
+propstat (or any other appropriate error code).
+
+Setters and removers should run any pre-conditions for executing their
+action, and must return a thunk, which when invoked performs the
+action. If a pre-condition failed, then an error must be thrown.
+When the property is protected, explicitly @code{protected-property}
+must be thrown. If either of remove or set is allowed, then both
+@emph{should} be allowed.
+
+@b{TODO} this interface should be changed to a direct system, but with
+explicit transactions with commits and rollbacks. The current API
+will, for example fail when setting extended file attributes, since a
+filesystem level permission denied will once be signaled once the set
+attempt is made.
+
+@deftp {GOOPS method} live-properties resource
+@emph{Must} return a list of pairs of xml elements and live property
+objects. The method @emph{should} merge these with properties from its
+parent class. If the same property appears multiple times, then the
+earliest instance is chosen.
+
+@example
+(append (list (cons ((xml 'ns 'tag))
+                    (make-live-property getter setter remover)))
+        (next-method))
+@end example
+
+See @ref{Default Live Properties} for the live properties defined by
+base resource, and which of those need to be implemented by the
+extending resources.
+@end deftp
+
+@deftp {Exception type} protected-property
+Error type to be thrown when a resource is protected from
+modification. Has no argument, meaning the surrounding code should
+keep track of the property trying to be modified.
+@end deftp
+
+@deftp {GOOPS method} dead-properties resource
+@emph{Must} return a list of xml elements, one for each dead property.
+@end deftp
+
+@deftp {GOOPS method} get-dead-property resource key
+Must return a @code{propstat} object, meaning that
+@code{(propstat 404 (list @var{key}))} @emph{must} be the return value if
+the property doesn't exist.
+
+@var{key} is an xml object, whose contents and attributes should be
+ignored.
+@end deftp
+
+@deftp {GOOPS method} set-dead-property!! resource value
+Run pre-condition for setting the property, and returns a thunk which,
+when evaluated, actually sets the property.
+@end deftp
+
+@deftp {GOOPS method} remove-dead-property!! resource key
+@end deftp
