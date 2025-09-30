@@ -299,7 +299,8 @@
 ;; Returns a sxml tree, with xmlns:<prefix>=namespace attributes
 (define* (namespaced-sxml->sxml tree optional: (namespace-prefixes '()))
   (let ((tree ns ((namespaced-sxml->sxml* tree) namespace-prefixes)))
-    ((get-root-element tree)
+    (modify-root-element
+     tree
      (lambda (root)
        (add-attributes root (ns-alist->attributes ns))))))
 

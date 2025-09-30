@@ -1,16 +1,15 @@
 (define-module (sxml util)
+  :use-module (srfi srfi-71)
+  :use-module ((hnh util) :select (init+last))
   :use-module (ice-9 match)
-  :export (get-root-element add-attributes))
+  :export (modify-root-element add-attributes))
 
-(define (get-root-element tree)
+(define (modify-root-element tree modifier)
   (match tree
-    (('*TOP* ('*PI* 'xml body) (root . children))
-     (lambda (modifier) `(*TOP* (*PI* xml ,body)
-                           ,(modifier `(,root ,@children)))))
-    (('*TOP* (root . children))
-     (lambda (modifier) `(*TOP* ,(modifier `(,root ,@children)))))
-    ((root . children)
-     (lambda (modifier) `(*TOP* ,(modifier `(,root ,@children)))))))
+    (('*TOP* rest ...)
+     (let ((init last (init+last rest)))
+       `(*TOP* ,@init ,(modifier last))))
+    (root (modifier root))))
 
 (define (add-attributes element added-attributes)
   (match element
