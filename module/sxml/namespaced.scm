@@ -24,19 +24,19 @@
            xml-element
            xml-element?
            xml-element*?                ; TODO why is this exported?
-           xml-element-tagname
-           xml-element-namespace
-           xml-element-attributes
-           xml-element-children
+           xml-element-tagname    xml-element-tagname*
+           xml-element-namespace  xml-element-namespace*
+           xml-element-attributes xml-element-attributes*
+           xml-element-children   xml-element-children*
 
            xml-document
-           xml-document-root
-           xml-document-pis
+           xml-document-root  xml-document-root*
+           xml-document-pis   xml-document-pis*
 
            pi-element
            pi-element?
-           pi-tag
-           pi-body
+           pi-tag  pi-tag*
+           pi-body pi-body*
            ))
 
 
