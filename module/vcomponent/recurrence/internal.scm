@@ -10,6 +10,8 @@
   :use-module (hnh util object)
   :use-module ((hnh util type) :select (list-of pair-of false?))
   :use-module (datetime)
+  :use-module (sxml namespaced)
+  :use-module ((calp namespaces) :select (xcal))
 
   :replace (count)
   :export (repeating?
@@ -144,8 +146,9 @@
     ((record-accessor <recur-rule> f) rrule))
   (filter-map
    (lambda (field)
-     (if (not (get field))
-         #f (proc field (get field))))
+     (cond ((get field)
+            => (lambda (v) (proc field v)))
+           (else #f)))
    (record-type-fields <recur-rule>)))
 
 (define (recur-rule->rrule-string rrule)
@@ -159,27 +162,29 @@
    ";"))
 
 (define (recur-rule->rrule-sxml rrule)
-  (map-fields
-   (lambda (field value)
-     (cond [(string-ci=? "UNTIL" (symbol->string field))
-            `(until
-              ,(if (date? value)
+  (concatenate
+   (map-fields
+    (lambda (field value)
+      (cond [(string-ci=? "UNTIL" (symbol->string field))
+             (list
+              ((xml xcal 'until)
+               (if (date? value)
                    (date->string value "~Y-~m-~d")
                    (datetime->string
-                    value "~Y-~m-~dT~H:~M:~S~Z")))]
-           [(string-ci=? "BYDAY" (symbol->string field))
-            (map (lambda (v)
-                   `(,(downcase-symbol field)
-                     ,(byday->string v)))
-                 value)
-            ]
-           [(string-ci=? "BY" (substring (symbol->string field)
-                                         0 2))
-            (map (lambda (v)
-                   `(,(downcase-symbol field)
-                     ,v))
-                 value)]
-           [else
-            `(,(downcase-symbol field)
-              ,(field->string field value))]))
-   rrule))
+                    value "~Y-~m-~dT~H:~M:~S~Z"))))]
+
+            [(string-ci=? "BYDAY" (symbol->string field))
+             (map (xml xcal (downcase-symbol field))
+                  (map byday->string value))]
+
+            [(string-ci=? "BY" (substring (symbol->string field)
+                                          0 2))
+             (map (xml xcal (downcase-symbol field))
+                  (map number->string value))]
+
+            [else
+             (list
+              ((xml xcal (downcase-symbol field))
+               (field->string field value)))]))
+
+    rrule)))
