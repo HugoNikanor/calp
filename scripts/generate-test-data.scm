@@ -3,6 +3,9 @@
 !#
 (add-to-load-path (string-append (dirname (dirname (current-filename))) "/module"))
 
+;;; TODO TODO TODO
+;;; This file is completely broken
+
 (use-modules (vcomponent)
              ((vcomponent recurrence parse) :select (parse-recurrence-rule))
              ((vcomponent formats xcal output) :select (vcomponent->sxcal ns-wrap))

@@ -12,9 +12,9 @@ For example
 
 Would be represented as
 @example
-`(,(xml 'a)
-  (,(xml 'b)
-   "Content"))
+((xml 'a)
+  ((xml 'b)
+    "Content"))
 @end example
 
 In this document a list with an XML tag object in its car is sometimes
@@ -30,6 +30,10 @@ Returns a sxml tree, with xmlns:<prefix>=namespace attributes
 @defun namespaced-sxml->xml tree [#:namespaces='()] [#:port='(current-output-port)]
 Serializes the namespaced sxml tree to port. @var{namespaces} should
 be an association list from namespace symbols, to prefered prefixes.
+
+Currently, there is no way to set a ``default'' namespace for the
+output, since non-qualified tags are reserved for elements without a
+namespace.
 @end defun
 
 @defun namespaced-sxml->sxml/namespaces tree [namespace-prefixes='()]

@@ -176,6 +176,7 @@
                        ((bytevector? body)
                         (-> body
                             (bytevector->string
+                             ;; TODO check content type
                              (make-transcoder (utf-8-codec)))
                             xml->namespaced-sxml))
                        (else (xml-document

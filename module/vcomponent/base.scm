@@ -50,7 +50,7 @@
 ;;;       <parameters>
 ;;;         <tzid><text>Europe/Stockholm</text></tzid>
 ;;;       </parameters>
-;;;       2020-01-01T13:37:50
+;;;       <date-time>2020-01-01T13:37:50</date-time>
 ;;;     </dtstart>
 ;;;   </properties>
 ;;; </vcomponent>
