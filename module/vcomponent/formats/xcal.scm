@@ -2,19 +2,26 @@
   :use-module (sxml namespaced)
   :use-module (sxml namespaced util)
   :use-module ((vcomponent formats xcal output)
-               :select (vcomponent->sxcal ns-wrap))
+               :select (vcomponent->sxcal))
   :use-module ((vcomponent formats xcal parse)
                :select (sxcal->vcomponent))
   :use-module ((hnh util) :select (->))
+  :use-module ((calp namespaces) :select (xcal))
   :export (serialize deserialize))
 
-(define-public xcal (string->symbol "urn:ietf:params:xml:ns:icalendar-2.0"))
-
-(define* (serialize component port key: (namespaces `((,xcal . xcal))))
-  (-> (vcomponent->sxcal component)
-      ns-wrap
-      (namespaced-sxml->xml port: port
-                            namespaces: namespaces)))
+(define* (serialize component port
+                    key:
+                    (namespaces `((,xcal . xcal)))
+                    include-pis?)
+  (namespaced-sxml->xml
+   (xml-document
+    pi: (if include-pis?
+            (list (pi-element 'xml "version=\"1.0\" encoding=\"utf-8\"")
+                  (pi-element 'xml-stylesheet "type=\"text/xsl\" href=\"xcal.xsl\""))
+            (list))
+    root: ((xml xcal 'icalendar) (vcomponent->sxcal component)))
+   port: port
+   namespaces: namespaces))
 
 (define (serialize/object component)
   (call-with-output-string (lambda (p) (serialize component p))))

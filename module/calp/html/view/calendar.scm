@@ -421,7 +421,10 @@ window.default_calendar='~a';"
           ;; rendered as xcal.
           (div (@ (style "display:none !important;")
                    (id "xcal-data"))
-               ;; TODO TODO TODO soerialize this into xml
-               ,((@ (vcomponent formats xcal output) ns-wrap)
-                 (map (@ (vcomponent formats xcal output) vcomponent->sxcal)
-                      (append regular repeating)))))))))
+               ,(lambda ()
+                  ((@ (vcomponent formats xcal) serialize)
+                   ((@ (vcomponent create) vcalendar)
+                    prodid: "TODO prodid"
+                    version: "2.0"
+                    (append regular repeating))
+                   (current-output-port)))))))))

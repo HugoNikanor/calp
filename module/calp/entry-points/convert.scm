@@ -5,6 +5,7 @@
   :use-module ((hnh util path) :select (filename-extension))
   :use-module (ice-9 getopt-long)
   :use-module (sxml simple)
+  :use-module (sxml namespaced)
   :use-module (calp translation)
   )
 
@@ -86,9 +87,10 @@
        [(xcal)
         ;; write xcal
         (lambda (component port)
-          (sxml->xml ((@ (vcomponent formats xcal output) vcomponent->sxcal)
-                      component)
-                     port))]
+          ((@ (vcomponent formats xcal) serialize)
+           component port
+           include-pis?: #t))]
+
        [else (scm-error 'misc-error "convert-main"
                         (G_ "Unexpected writer type: ~a")
                         (list to) #f)]))

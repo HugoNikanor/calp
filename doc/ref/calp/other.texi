@@ -71,15 +71,6 @@ type = 'BINARY | 'BOOLEAN | 'CAL-ADDRES | 'DATE | 'DATE-TIME
 @defun vcomponent->sxcal component
 @end defun
 
-@defun ns-wrap
-@lisp
-(define (ns-wrap sxml)
-  `(icalendar (@@ (xmlns "urn:ietf:params:xml:ns:icalendar-2.0"))
-              ,sxml))
-@end lisp
-Where @var{sxml} is expected to be the output of @var{vcomponent->sxcal}.
-@end defun
-
 @subsubsection parse
 @defun sxcal->vcomponent sxcal
 Parses a vcomponent in sxcal format. Requires that the vcomponent is

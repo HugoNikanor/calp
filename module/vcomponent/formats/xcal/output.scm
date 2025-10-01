@@ -11,7 +11,7 @@
   :use-module (calp namespaces)
   :use-module (sxml namespaced)
   :use-module (sxml namespaced util)
-  :export (vcomponent->sxcal ns-wrap))
+  :export (vcomponent->sxcal))
 
 
 (define (vline->value-tag vline)
@@ -137,7 +137,3 @@
                            props))
                   (apply (xml xcal 'components)
                          (map vcomponent->sxcal (children component)))))))
-
-(define (ns-wrap sxml)
-  ((xml xcal 'icalendar)
-   sxml))
