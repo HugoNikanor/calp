@@ -27,6 +27,14 @@ under that key. Returns a new table with the values set.
 Returns a new table with @var{key} removed.
 @end defun
 
+@deftp {Lens} table-focus key
+Lens for focusing a given field of the table. If the value exists,
+then @code{(just <value>)} is passed to the continuation, and
+@code{(nothing)} otherwise. If the value returned is
+@code{(just <value>)} then the value is set to that, while a return
+value of @code{(nothing)} removes the key from the table.
+@end deftp
+
 @defun table->list table
 Return an association list with the same content as the table.
 

@@ -1,0 +1,20 @@
+@node Optional Values
+@section Optional Values
+
+Provided by the module @code{(hnh util optional)}.
+
+@defun just x
+@defunx nothing
+@end defun
+
+@defun fromJust x
+@end defun
+
+@defun optional? x
+@defunx just? x
+@defunx nothing? x
+@end defun
+
+@deftp {Lens} just*
+Lens which focuses the value of @code{just} fields.
+@end deftp

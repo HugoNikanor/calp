@@ -26,6 +26,7 @@ of these can be useful in any project.
 @include general/coverage.texi
 
 @include general/util-type.texi
+@include general/util-optional.texi
 @include general/lens.texi
 @include general/sxml.texi
 @include general/atomic.texi

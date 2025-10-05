@@ -10,6 +10,7 @@
   :use-module (srfi srfi-88)
   :use-module (hnh util lens)
   :use-module (hnh util object)
+  :use-module (hnh util optional)
   :use-module (ice-9 curried-definitions)
   :export ((make-tree . table)
            (tree-get . table-get)
@@ -59,9 +60,13 @@
 ;; with the dummy value `'not-a-value`
 (define (((tree-focus k) tree) op)
   (cond ((tree-terminal? tree)
-         (tree-node key: k value: (op 'not-a-value)))
+         (cond ((op (nothing)) just?
+                => (lambda (v) (tree-node key: k value: (from-just v))))
+               (else (tree-terminal))))
         ((eq? k (key tree))
-         (value tree (op (value tree))))
+         (cond ((op (just (value tree)))
+                just? => (lambda (v) (value tree (from-just v))))
+               (else (nothing))))
         (else
          (modify tree (lens-compose (if (symbol<? k (key tree))
                                         left* right*)
