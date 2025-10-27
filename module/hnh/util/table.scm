@@ -55,9 +55,7 @@
   (or (tree-node? x)
       (tree-terminal? x)))
 
-;; Lens for focusing a specific eontry in a table.
-;; If the given key isn't present in the table, `op` will be called
-;; with the dummy value `'not-a-value`
+;; Lens for focusing a specific entry in a table.
 (define (((tree-focus k) tree) op)
   (cond ((tree-terminal? tree)
          (cond ((op (nothing)) just?
