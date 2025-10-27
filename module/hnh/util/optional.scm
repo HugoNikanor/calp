@@ -5,7 +5,7 @@
   :export (optional?
            just just? just*
            nothing nothing?
-           from-just))
+           from-just unjust))
 
 (define-type (just
               constructor: (lambda (c _) c)
@@ -23,3 +23,9 @@
   (if (just? optional)
       (just (f (from-just optional)))
       (nothing)))
+
+
+(define* (unjust optional optional: dflt)
+  (if (just? optional)
+      (from-just optional)
+      dflt))
