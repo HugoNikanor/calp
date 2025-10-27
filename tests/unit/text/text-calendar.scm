@@ -2,10 +2,12 @@
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
+  :use-module (hnh util env)
   :use-module (datetime)
   :use-module (text calendar))
 
-;;; TODO these tests are locale-dependant
+;;; TODO these tests require that the sv_SE.UTF-8 locale is installed
+;;; on the system.
 
 (test-equal "Start and end week are partial"
   '("    oktober 2023    "
@@ -16,7 +18,9 @@
     "16 17 18 19 20 21 22"
     "23 24 25 26 27 28 29"
     "30 31               ")
-  (graphical-calendar (date year: 2023 month: oct) wkst: mon))
+  (with-locale1
+   LC_TIME "sv_SE.UTF-8"
+   (lambda () (graphical-calendar (date year: 2023 month: oct) wkst: mon))))
 
 (test-equal "End week is full, start is partial"
   '("     april 2023     "
@@ -27,7 +31,9 @@
     "17 18 19 20 21 22 23"
     "24 25 26 27 28 29 30"
     "                    ")
-  (graphical-calendar (date year: 2023 month: apr) wkst: mon))
+  (with-locale1
+   LC_TIME "sv_SE.UTF-8"
+   (lambda () (graphical-calendar (date year: 2023 month: apr) wkst: mon))))
 
 (test-equal "Start week is full, end is partial"
   '("    oktober 2023    "
@@ -38,7 +44,9 @@
     "22 23 24 25 26 27 28"
     "29 30 31            "
     "                    ")
-  (graphical-calendar (date year: 2023 month: oct) wkst: sun))
+  (with-locale1
+   LC_TIME "sv_SE.UTF-8"
+   (lambda () (graphical-calendar (date year: 2023 month: oct) wkst: sun))))
 
 (test-equal "Exact lineup"
   '("   februari 1800    "
@@ -49,7 +57,9 @@
     "22 23 24 25 26 27 28"
     "                    "
     "                    ")
-  (graphical-calendar (date year: 1800 month: feb) wkst: thu))
+  (with-locale1
+   LC_TIME "sv_SE.UTF-8"
+   (lambda () (graphical-calendar (date year: 1800 month: feb) wkst: thu))))
 
 (test-equal "Exact lineup"
   '("   februari 1800    "
@@ -60,7 +70,9 @@
     "22 23 24 25 26 27 28"
     "                    "
     "                    ")
-  (graphical-calendar (date year: 1800 month: feb day: 18) wkst: thu))
+  (with-locale1
+   LC_TIME "sv_SE.UTF-8"
+   (lambda () (graphical-calendar (date year: 1800 month: feb day: 18) wkst: thu))))
 
 
 
@@ -77,7 +89,9 @@
   "                                                                \n")
  (with-output-to-string
    (lambda ()
-    (cal-3 (date year: 2023 month: dec)))))
+    (with-locale1
+     LC_TIME "sv_SE.UTF-8"
+     (lambda () (cal-3 (date year: 2023 month: dec)))))))
 
 
 '((text calendar))

@@ -35,6 +35,7 @@
                         mon tue wed thu fri sat sun
                         datetime->string))
   :use-module ((hnh util) :select (-> set!))
+  :use-module ((hnh util env) :select (with-locale1))
   :use-module ((srfi srfi-41) :select (stream->list))
   :use-module ((srfi srfi-88) :select (keyword->string)))
 
@@ -62,10 +63,12 @@
   (test-equal
     (string-append "STR: " (prop comp 'SUMMARY))
     (prop comp 'X-SUMMARY)
-    ;; TODO setting language='en causes messages to be in english, but date
-    ;; strings still format LC_TIME (which I have set to swedish)...
+    ;; NOTE care must be taken so LC_TIME is set to match the parameter to the recurrence rule.
     ;; TODO possibly test with other languages
-    (format-recurrence-rule (prop comp 'RRULE) 'sv)))
+    (with-locale1
+     LC_TIME "sv_SE.UTF-8"
+     (lambda ()
+       (format-recurrence-rule (prop comp 'RRULE) 'sv)))))
 
 (map run-test
      (list (vevent
