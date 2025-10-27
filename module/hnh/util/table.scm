@@ -77,34 +77,13 @@
       (tree-equal? (right a) (right b))))
 
 (define (tree-put tree k v)
-  ;; (set tree (tree-focus k) v)
-
-  (cond ((tree-terminal? tree) (tree-node key: k value: v))
-        ((eq? k (key tree)) (value tree v))
-        (else
-         (modify tree (if (symbol<? k (key tree)) left* right*)
-                 (lambda (branch) (tree-put branch k v))))))
+  (set tree (tree-focus k) (just v)))
 
 (define* (tree-get tree k optional: default)
-  ;; (case (get tree (tree-focus k))
-  ;;   ((not-a-value) default)
-  ;;   (else => it))
-
-  (cond ((tree-terminal? tree) default)
-        ((eq? k (key tree)) (value tree))
-        ((symbol<? k (key tree))
-         (tree-get (left tree) k))
-        (else
-         (tree-get (right tree) k))))
+  (unjust (get tree (tree-focus k)) default))
 
 (define (tree-remove tree k)
-  (cond ((tree-terminal? tree) tree)
-        ((eq? k (key tree))
-         (merge-trees (left tree) (right tree)))
-        ((symbol<? k (key tree))
-         (modify tree left* (lambda (t) (tree-remove t k))))
-        (else
-         (modify tree right* (lambda (t) (tree-remove t k))))))
+  (set tree (tree-focus k) (nothing)))
 
 (define (merge-trees a b)
   ;; TODO write a better version of this
