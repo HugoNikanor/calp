@@ -10,6 +10,7 @@
 
 ;; Locale objects, such as %global-locale, doesn't provide a way to access the language name,
 ;; This is for procedures which want to handle their translations manually.
+;;; TODO this is a bad idea, since with-locale1 doesn't set these
 (define (resolve-language)
   "Returns a two character symbol representing the \"current\" language. e.g. en"
   (string->symbol

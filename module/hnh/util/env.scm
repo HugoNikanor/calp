@@ -40,6 +40,7 @@
      (lambda () (chdir old-cwd)))))
 
 
+;;; TODO why is this a macro?
 (define-syntax-rule (with-locale1 category locale thunk)
   (let ((old #f))
     (dynamic-wind
@@ -48,3 +49,6 @@
         (setlocale category locale))
       thunk
       (lambda () (setlocale category old)))))
+
+;;; TODO where is with-locale (multiple)
+;;; TODO whereo is let-locale
