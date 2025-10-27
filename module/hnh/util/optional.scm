@@ -9,7 +9,7 @@
 
 (define-type (just
               constructor: (lambda (c _) c)
-              serializer: (lambda (o) `(just ,(from-just o))))
+              serializer: (lambda (o) `(just ,(serialize (from-just o)))))
   from-just)
 
 (define-type (nothing))
