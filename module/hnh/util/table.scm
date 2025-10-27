@@ -66,7 +66,7 @@
         ((eq? k (key tree))
          (cond ((op (just (value tree)))
                 just? => (lambda (v) (value tree (from-just v))))
-               (else (nothing))))
+               (else (merge-trees (left tree) (right tree)))))
         (else
          (modify tree (lens-compose (if (symbol<? k (key tree))
                                         left* right*)
