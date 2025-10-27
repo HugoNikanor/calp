@@ -3,7 +3,7 @@
   :use-module (datetime)
   :use-module (srfi srfi-17)
   :use-module (srfi srfi-26)
-  :use-module ((srfi srfi-41) :select (stream-car))
+  :use-module ((srfi srfi-41) :select (stream stream-car))
   :use-module (srfi srfi-88)
   :use-module (hnh util)
   :use-module ((hnh util io) :select (displayln))
@@ -29,8 +29,6 @@
   :use-module (oop goops)
   :use-module (oop goops describe)
   :use-module (calp translation)
-
-  :autoload (vcomponent util instance) (global-event-object)
 
   :export (main-loop))
 
@@ -325,7 +323,9 @@
     (else (next-method))))
 
 (define (main-loop date)
-  (define state (list (day-view (get-event-set global-event-object) date)))
+  ;; TODO get events
+  (define state (list (day-view (stream) #; (get-event-set global-event-object) date
+                                                                      )))
 
   (while #t
     (output (car state))

@@ -4,6 +4,7 @@
   :use-module (hnh util exceptions)
 
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-41)
 
   :use-module ((ice-9 rdelim) :select (read-string))
   :use-module ((ice-9 ftw) :select (scandir))
@@ -29,8 +30,6 @@
   :use-module (vcomponent util search)
   :use-module (datetime)
   :use-module (vcomponent formats ical output)
-
-  :autoload (vcomponent util instance) (global-event-object)
 
   :use-module (calp util config)
   :use-module (calp html view calendar)
@@ -111,7 +110,10 @@
           it
           (let ((q (prepare-query
                      (build-query-proc search-term)
-                     (get-event-set global-event-object))))
+                     ;; TODO get objects
+                     (stream)
+                     ; (get-event-set global-event-object)
+                     )))
             (hash-set! query-pages search-term q)
             q)))))
 
@@ -145,9 +147,13 @@
    (GET "/everything.ics" (start end)
         (let ((start (or start (date- (current-date) (date day: 14))))
               (end (or end (date+ (current-date) (date year: 1)))))
-          (let ((events (append
-                         (fixed-events-in-range global-event-object start end)
-                         (get-repeating-events global-event-object))))
+          (let ((events
+                 ;; TODO get events
+                 '()
+                 ;; (append
+                 ;;  (fixed-events-in-range global-event-object start end)
+                 ;;  (get-repeating-events global-event-object))
+                 ))
             (format (current-error-port) "Collected ~a events~%" (length events))
             (return '((content-type text/calendar))
                     (with-output-to-string
@@ -161,8 +167,9 @@
                   (with-output-to-string
                     (lambda ()
                       ((sxml->output html)
-                       (html-generate calendars: (get-calendars global-event-object)
-                                      events: (get-event-set global-event-object)
+                       ;; TODO TODO re-introduce calendar entries
+                       (html-generate calendars: '()  ;; (get-calendars global-event-object)
+                                      events: (stream) ;; (get-event-set global-event-object)
                                       start-date: start-date
                                       end-date: (date+ start-date (date day: 6))
                                       next-start: (lambda (d) (date+ d (date day: 7)))
@@ -176,8 +183,9 @@
                   (with-output-to-string
                     (lambda ()
                       ((sxml->output html)
-                       (html-generate calendars: (get-calendars global-event-object)
-                                      events: (get-event-set global-event-object)
+                       ;; TODO TODO re-introduce calendar entries
+                       (html-generate calendars: '() ;;  (get-calendars global-event-object)
+                                      events: (stream) ;; (get-event-set global-event-object)
                                       start-date: start-date
                                       end-date: (date- (date+ start-date (date month: 1))
                                                        (date day: 1))
@@ -195,12 +203,14 @@
            (return (build-response code: 400)
                    (G_ "uid required")))
 
-         (aif (get-event-by-uid global-event-object uid)
+         ;; TODO TODO get event by uid
+         (aif #f ;; (get-event-by-uid global-event-object uid)
               (begin
                 ;; It's hard to properly remove a file. I also want a way to undo accidental
                 ;; deletions. Therefore I simply save the X-HNH-REMOVED flag to the file, and
                 ;; then simple don't use those events when loading.
-                (remove-event global-event-object it)
+                ;; TODO TODO remove event
+                ;; (remove-event global-event-object it)
                 (set! (prop it 'X-HNH-REMOVED) #t)
                 (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
                 (unless ((@ (vcomponent formats vdir save-delete) save-event) it)
@@ -223,7 +233,10 @@
          ;; also, the calendar view already show all calendars.
          (let* ((calendar-name (base64decode cal))
                 (calendar
-                 (get-calendar-by-name global-event-object calendar-name)))
+                 ;; TODO TODO get calendar
+                 #f
+                 ;; (get-calendar-by-name global-event-object calendar-name)
+                 ))
 
            (unless calendar
              (return (build-response code: 400)
@@ -272,6 +285,9 @@
              ;; accidental overwriting.
 
              (parameterize ((warnings-are-errors #t))
+               ;; TODO TODO all this
+               #f
+               #;
                (catch*
                 (lambda () (add-and-save-event global-event-object
                                           calendar event))
@@ -329,7 +345,8 @@
                         (print-all-events))))))
 
    (GET "/calendar/:uid{.*}.xcs" (uid)
-        (aif (get-event-by-uid global-event-object uid)
+        ;; TODO TODO get event by uid
+        (aif #f ;; (get-event-by-uid global-event-object uid)
              (return '((content-type application/calendar+xml))
                      ;; TODO this is just the vevent part.
                      ;; A surounding vcalendar is required, as well as
@@ -345,7 +362,8 @@
                      (format #f (G_ "No component with UID=~a found.") uid))))
 
    (GET "/calendar/:uid{.*}.ics" (uid)
-        (aif (get-event-by-uid global-event-object uid)
+        ;; TODO TODO get event by uid
+        (aif #f ;; (get-event-by-uid global-event-object uid)
              (return '((content-type text/calendar))
                      (with-output-to-string
                        (lambda () (print-components-with-fake-parent

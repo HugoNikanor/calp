@@ -19,7 +19,6 @@
   :use-module (vcomponent recurrence)
   :use-module ((calp) :select (prodid))
   :use-module (calp translation)
-  :autoload (vcomponent util instance) (global-event-object)
   :export (component->ical-string
            print-components-with-fake-parent
            print-all-events
@@ -198,44 +197,4 @@ CALSCALE:GREGORIAN\r
    '("dummy" "local")))
 
 
-(define (print-components-with-fake-parent events)
 
-  ;; The events are probably sorted before, but until I can guarantee
-  ;; that we sort them again here. We need them sorted from earliest
-  ;; and up to send the earliest to zoneinfo->vtimezone
-  (set! events (sort* events date/-time<=? (extract 'DTSTART)))
-
-  (print-header)
-
-  (when (provided? 'zoneinfo)
-    (let ((tz-names (get-tz-names events)))
-      (for-each component->ical-string
-                ;; TODO we realy should send the earliest event from each timezone here,
-                ;; instead of just the first.
-                (map (lambda (name) (zoneinfo->vtimezone
-                                      (zoneinfo)
-                                      name (car events)))
-                     tz-names))))
-
-  (for-each component->ical-string events)
-
-  (print-footer))
-
-
-(define (print-all-events)
-  (print-components-with-fake-parent
-   (append (get-fixed-events global-event-object)
-           ;; TODO RECCURENCE-ID exceptions
-           ;; We just dump all repeating objects, since it's much cheaper to do
-           ;; it this way than to actually figure out which are applicable for
-           ;; the given date range.
-           (get-repeating-events global-event-object))))
-
-(define (print-events-in-interval start end)
-  (print-components-with-fake-parent
-   (append (fixed-events-in-range start end)
-           ;; TODO RECCURENCE-ID exceptions
-           ;; We just dump all repeating objects, since it's much cheaper to do
-           ;; it this way than to actually figure out which are applicable for
-           ;; the given date range.
-           (get-repeating-events global-event-object))))

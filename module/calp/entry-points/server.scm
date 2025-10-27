@@ -64,10 +64,13 @@ and <i>[::]</i> for IPv6</group>"))))
     (format (current-error-port) (G_ "Listening for SIGUSR1~%"))
     ;; NOTE this uses the main thread, and does therefore block HTTP requests
     ;; while reloading. However, it appears to not cause any race conditions.
-    (sigaction SIGUSR1
-      (lambda _
-        (format (current-error-port) (G_ "Received SIGUSR1, reloading calendars~%"))
-        ((@ (vcomponent util instance) reload)))))
+
+    ;; TODO re-implement dynamic reloading
+    ;; (sigaction SIGUSR1
+    ;;   (lambda _
+    ;;     (format (current-error-port) (G_ "Received SIGUSR1, reloading calendars~%"))
+    ;;     ((@ (vcomponent util instance) reload))))
+    )
 
 
 

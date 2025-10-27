@@ -49,16 +49,16 @@
   :use-module (srfi srfi-1)
   :use-module (vcomponent)
   :use-module (datetime)
-  :use-module (vcomponent util instance)
-  :use-module (vcomponent util instance methods)
   :use-module (hnh util)
   :use-module (ice-9 regex)
   :use-module (ice-9 popen)
   :export (main))
 
 
-(define event-set
-  (get-event-set global-event-object))
+;;; TODO get all events
+(define event-set (stream)
+  ; (get-event-set global-event-object)
+  )
 
 (define (get-worked-hours summary-search month year)
 

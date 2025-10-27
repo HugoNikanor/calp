@@ -9,22 +9,19 @@
   :use-module ((ice-9 regex) :select (string-match regexp-substitute))
   :use-module (ice-9 format)
 
-  :use-module ((srfi srfi-41) :select (stream-take stream-for-each))
+  :use-module ((srfi srfi-41) :select (stream stream-take stream-for-each))
   :use-module ((calp html view calendar) :select (html-generate))
   :use-module ((calp html view calendar week)
                :select (render-calendar)
                :renamer (lambda _ 'render-calendar-wide))
   :use-module ((calp html view calendar month)
                :select (render-calendar-table))
-  :use-module ((vcomponent util instance methods)
-                :select (get-calendars get-event-set))
 
   :use-module ((sxml simple) :select (sxml->xml xml->sxml))
   :use-module ((sxml transformations) :select (href-transformer))
   :use-module ((xdg basedir) :prefix xdg-)
   :use-module (calp translation)
 
-  :autoload (vcomponent util instance) (global-event-object)
   :export (main)
   )
 
@@ -103,8 +100,10 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
 (define (common target-directory count start-date chunk-length
                 render-calendar . extra-args)
 
-  (define calendars (get-calendars global-event-object))
-  (define events (get-event-set global-event-object))
+  ;; TODO get calendars from stores
+  (define calendars '())
+  ;; TODO get all events from store
+  (define events (stream))
 
   ((@ (calp util time) report-time!) "html start")
 

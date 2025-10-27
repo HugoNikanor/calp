@@ -26,5 +26,4 @@
 
 (define cm (module-public-interface (current-module)))
 (module-use! cm (resolve-interface '(vcomponent base)))
-(module-use! cm (resolve-interface '(vcomponent util instance methods)))
 

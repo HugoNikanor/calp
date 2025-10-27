@@ -41,9 +41,7 @@ profiler. Display style is one of <b>flat</b> or <b>tree</b>.</group>"))))
           (description
            ,(xml->sxml (G_ "<group>Start a Guile repl which can be connected to, defaults to the
 unix socket <i>/run/user/${UID}/calp-${PID}</i>, but it can be bound to any
-unix or TCP socket. ((@ (vcomponent util instance) global-event-object)) should
-contain all events.
-<br/>
+unix or TCP socket.<br/>
 <b>Should NOT be used in production.</b></group>"))))
 
     (config (value #t)
@@ -80,13 +78,10 @@ contain all events.
 <br/><br/>"
     (G_ "<p><b>html</b> reads calendar files from disk, and writes them to static HTML files.</p>")
     (G_ "<p><b>term</b> loads the calendars, and starts an interactive terminal interface.</p>")
-    (G_ "[UNTESTED]<br/><p><b>import</b>s a calendar object into the database.</p>")
     (G_ "<p><b>text</b> formats and justifies what it's given on standard input,
 and writes it to standard output. Similar to this text.</p>")
     (G_ "<p><b>ical</b> loads the calendar database, and immediately
 re-serializes it back into iCAL format. Useful for merging calendars.</p>")
-    (G_ "<p><b>benchmark</b> <i>module</i><br/>Runs the procedure 'run-benchmark'
-from the module (calp benchmark <i>module</i>).</p>")
     (G_ "<p><b>server</b> starts an HTTP server which dynamically loads and
 displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs
 the same output code as <b>html</b>. While the <i>/calendar/{uid}.ics</i> uses
@@ -94,7 +89,6 @@ the same code as <b>ical</b>.</p>")
     (G_ "<p><b>update-zoneinfo</b> in theory downloads and updates our local
 zoneinfo database, but is currently broken.</p>")
     (G_ "<p><b>webdav</b> --config <i>file</i>, starts the sample webdav server</p>")
-    (G_ "<p><b>info</b> prints information about the calendar database.</p>")
     "<hr/><br/>"
     ;; Header for list of available flags.
     ;; Actual list is auto generated elsewhere.
@@ -155,16 +149,13 @@ zoneinfo database, but is currently broken.</p>")
        ;; TODO chnange term to be non-interactive term
        ;; and then add interactive-term (or similar)
        ((term)   (@ (calp entry-points terminal) main))
-       ((import) (@ (calp entry-points   import) main))
        ((text)   (@ (calp entry-points     text) main))
        ((ical)   (@ (calp entry-points     ical) main))
        ((server) (@ (calp entry-points   server) main))
        ((convert) (@ (calp entry-points convert) main))
        ((tidsrapport) (@ (calp entry-points   tidsrapport) main))
-       ((benchmark) (@ (calp entry-points benchmark) main))
        ((update-zoneinfo) (@ (calp entry-points update-zoneinfo) main))
        ((webdav) (@ (calp entry-points webdav) main))
-       ((info) (@ (calp entry-points info) main))
        (else => (lambda (s)
                   (format (current-error-port)
                           (G_ "Unsupported mode of operation: ~a~%")
