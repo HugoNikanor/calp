@@ -211,8 +211,10 @@
                 ;; then simple don't use those events when loading.
                 ;; TODO TODO remove event
                 ;; (remove-event global-event-object it)
-                (set! (prop it 'X-HNH-REMOVED) #t)
-                (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
+                ;; (set! (prop it 'X-HNH-REMOVED) #t)
+                ;; (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
+                ;; TODO something like this instead:
+                ;; (remove-by-uid! store uid)
                 (unless ((@ (vcomponent formats vdir save-delete) save-event) it)
                   (return (build-response code: 500)
                           (G_ "Saving event to disk failed.")))
