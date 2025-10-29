@@ -9,16 +9,22 @@
   :use-module (srfi srfi-88)
   :use-module ((web query) :select (parse-query))
   :use-module ((web response) :select (build-response))
-  :use-module ((ice-9 iconv) :select (bytevector->string))
   :export (parse-endpoint-string
-           make-routes)
+           make-handler
+           add-route!
+           make-route
+           set-request-start-log!
+           set-request-end-log!
+           set-request-404-handler!
+           realize-handler
+           )
   )
 
 
 
 ;; Parses an endpoint description, and returns two values:
 ;; - a regex string which matches the rule
-;; - the list of symbols embedded int the string
+;; - the list of symbols embedded in the string
 ;; An endpoint string looks like
 ;; /calendar/:uid{.*}.ics
 ;; Where "/calendar/" matches literally
@@ -51,33 +57,54 @@
                   (cons (string->symbol (match:substring m 1))
                         tokens)))))))
 
-(define ((generate-case regexes r:method r:path) stx)
+
+
+
+;;; TODO replace with better object
+((@ (srfi srfi-9) define-record-type) <handler>
+ (%make-handler routes start-log end-log 404-handler)
+ handler?
+ (routes get-routes)       ; hash-table? : method -> listof <endpoint>
+ (start-log   get-request-start-log   set-request-start-log!)
+ (end-log     get-request-end-log     set-request-end-log!)
+ (404-handler get-request-404-handler set-request-404-handler!)
+ )
+
+(define (make-handler)
+  (%make-handler
+   (make-hash-table)
+   (lambda _ 'noop) ; request start log
+   (lambda _ 'noop) ; request end log
+   (lambda _        ; Default 404 handler
+     (values (build-response code: 404)
+             "404 Not Found"))))
+
+;;; TODO replace with better object
+((@ (srfi srfi-9) define-record-type) <endpoint>
+ (make-endpoint method path-rx path-parameter-names callback
+                )
+ endpoint?
+ (method get-method)
+ (path-rx get-path-rx)
+ (path-parameter-names get-path-parameter-names)
+ (callback get-callback)
+ )
+
+
+
+(define (add-route! handler route)
+  ;; (typecheck handler handler?)
+  ;; (typecheck route endpoint?)
+  (hash-set! (get-routes handler)
+             (get-method route)
+             (append
+              (hash-ref (get-routes handler) (get-method route) '())
+              (list route))))
+
+;;; Syntax around the endpoint type.
+(define-syntax (make-route stx)
   (syntax-case stx ()
-    ((method uri param-list body ...)
-     (let* ((regex tokens (parse-endpoint-string (syntax->datum #'uri)))
-            (diff intersect (lset-diff+intersection eq? (syntax->datum #'param-list)
-                                                    tokens))
-            (argument-list (if (null? diff)
-                               #'() #`(key: #,@(map (lambda (x) (datum->syntax stx x)) diff)
-                                            allow-other-keys: rest: rest)))
-            (intersect-list (map (lambda (x) (datum->syntax stx x)) intersect))
-            (rx-var (list-ref (assoc regex regexes) 1)))
-       #`((and (eq? #,r:method (quote method))
-               (regexp-exec #,rx-var #,r:path))
-          => (lambda (match-object)
-               ;; Those parameters which were present in the template uri
-               ((lambda #,intersect-list
-                  ;; Those that only are in the query string
-                  (lambda* #,argument-list body ...))
-                #,@(unless (null? intersect)
-                     (map (lambda (i) #`(match:substring match-object #,i))
-                          (cdr (iota (1+ (length intersect)))))))))))))
-
-
-
-(define-syntax (make-routes stx)
-  (syntax-case stx ()
-    ((_ options-and-routes ...)
+    ((_ (method uri param-list handler ...))
      (with-syntax ((r:method   (datum->syntax stx 'r:method))
                    (r:uri      (datum->syntax stx 'r:uri))
                    (r:version  (datum->syntax stx 'r:version))
@@ -94,85 +121,98 @@
                    (return  (datum->syntax stx 'return))
                    (request (datum->syntax stx 'request))
                    (body    (datum->syntax stx 'body))
-                   (state   (datum->syntax stx 'state))
-                   )
+                   (state   (datum->syntax stx 'state)))
 
-       (define-values (options routes)
-         (let loop ((options '()) (items #'(options-and-routes ...)))
-           (when (null? items)
-             (scm-error 'misc-error "make-routes"
-                        "Needs at least one route" '() #f))
-           ;; (format #t "options: ~s, items: ~s~%" options items)
-           (let ((kv (syntax->datum (car items))))
-             (if (keyword? kv)
-                 (loop (cons (cons kv (cadr items))
-                             options)
-                       (cddr items))
-                 (values (reverse options) items)))))
+       ;; TODO should we check that no repeat parameters exists in the path?
+       (define-values (uri-regex path-parameters)
+         (parse-endpoint-string (syntax->datum #'uri)))
 
-       ;; Ensures that all regexes are only compiled once.
-       ;; Given (GET "/today/" (view date) body ...)
-       ;; returns ("/today/" #'*random-symbol* #'(make-regexp "^/today//?$" regexp/icase))
-       (define routes-regexes
-         (map (lambda (stx-1)
-                (syntax-case stx-1 ()
-                  ((%fst uri %rest ...)
-                   (let ((regex _ (parse-endpoint-string (syntax->datum #'uri))))
-                     (list regex (datum->syntax stx (gensym "rx-"))
-                           #`(make-regexp #,(string-append "^" regex "/?$") regexp/icase))))))
-              routes))
+       #`(make-endpoint
+          (quote method)
+          (make-regexp #,(datum->syntax stx (string-append "^" uri-regex "/?$")) regexp/icase)
+          (quote #,(datum->syntax stx path-parameters))
+          (lambda (r:method r:uri r:version r:headers r:meta
+                       r:scheme r:userinfo r:host r:port r:path r:query r:fragment
+                       return request body state)
+            ;; Leading dummy variable, to ensure we always have at least one keyword argument
+            (lambda* (key: #,(datum->syntax stx (gensym "unused")) #,@#'param-list allow-other-keys:)
+              handler ...)))))))
 
-       #`(let #,(map cdr routes-regexes)
-           (lambda* (request body optional: state)
-             ;; All these bindings generate compile time warnings since the expansion
-             ;; of the macro might not use them. This isn't really a problem.
-             (let ((r:method  ((@ (web request) request-method)  request))
-                   (r:uri     ((@ (web request) request-uri)     request))
-                   (r:version ((@ (web request) request-version) request))
-                   (r:headers ((@ (web request) request-headers) request))
-                   (r:meta    ((@ (web request) request-meta)    request)))
-               (let ((r:scheme   ((@ (web uri) uri-scheme)   r:uri))
-                     (r:userinfo ((@ (web uri) uri-userinfo) r:uri))
-                     ;; uri-{host,port} is (probably) not set when we are a server,
-                     ;; fetch them from the request instead
-                     (r:host     (or ((@ (web uri) uri-host)     r:uri)
-                                     (and=> ((@ (web request) request-host) request) car)))
-                     (r:port     (or ((@ (web uri) uri-port)     r:uri)
-                                     (and=> ((@ (web request) request-host) request) cdr)))
-                     (r:path     ((@ (web uri) uri-path)     r:uri))
-                     (r:query    ((@ (web uri) uri-query)    r:uri))
-                     (r:fragment ((@ (web uri) uri-fragment) r:uri)))
 
-                 ;; TODO propper logging
-                 (display (format #f "[~a] ~a ~a:~a~a?~a~%"
-                                  "now"
-                                  ;; (datetime->string (current-datetime))
-                                  r:method r:host r:port r:path (or r:query ""))
-                          (current-error-port))
 
-                 (call-with-values
-                     (lambda ()
-                      (call/ec (lambda (return)
-                                 (apply
-                                  (with-throw-handler #t
-                                    (lambda ()
-                                      (cond #,@(map (generate-case routes-regexes #'r:method #'r:path) routes)
-                                            (else (lambda* _ (return (build-response code: 404)
-                                                                     "404 Not Fonud")))))
-                                    #,(assoc-ref options with-throw-handler:))
-                                  (append
-                                   (parse-query r:query)
+;;; Given a handler object, create the true function which may be passed to (web server)
+;;; realize-handler :: (request, body) -> (values response response-body [state])
+(define (realize-handler handler)
+  ;; (typecheck handler handler?)
+  (lambda (request request-body state)
 
-                                   ;; When content-type is application/x-www-form-urlencoded,
-                                   ;; decode them, and add it to the argument list
-                                   (let ((content-type (assoc-ref r:headers 'content-type)))
-                                     (when content-type
-                                       (let ((type args (car+cdr content-type)))
-                                         (when (eq? type 'application/x-www-form-urlencoded)
-                                           (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
-                                             (parse-query (bytevector->string body encoding)
-                                                          encoding)))))))))))
+    (let ((r:method  ((@ (web request) request-method)  request))
+          (r:uri     ((@ (web request) request-uri)     request))
+          (r:version ((@ (web request) request-version) request))
+          (r:headers ((@ (web request) request-headers) request))
+          (r:meta    ((@ (web request) request-meta)    request)))
+      (let ((r:scheme   ((@ (web uri) uri-scheme)   r:uri))
+            (r:userinfo ((@ (web uri) uri-userinfo) r:uri))
+            ;; uri-{host,port} is (probably) not set when we are a server,
+            ;; fetch them from the request instead
+            (r:host     (or ((@ (web uri) uri-host)     r:uri)
+                            (and=> ((@ (web request) request-host) request) car)))
+            (r:port     (or ((@ (web uri) uri-port)     r:uri)
+                            (and=> ((@ (web request) request-host) request) cdr)))
+            (r:path     ((@ (web uri) uri-path)     r:uri))
+            (r:query    ((@ (web uri) uri-query)    r:uri))
+            (r:fragment ((@ (web uri) uri-fragment) r:uri)))
 
-                   (case-lambda ((headers body new-state) (values headers body new-state))
-                                ((headers body)           (values headers body state))
-                                ((headers)                (values headers "" state))))))))))))
+        ;; Information about the request, passed to all callbacks registered on the handler
+        (define common-callback-args
+          (list
+           request: request request-body: request-body
+
+           method: r:method uri: r:uri version: r:version headers: r:headers
+           meta: r:version scheme: r:scheme userinfo: r:userinfo host: r:host
+           port: r:host path: r:path query: r:query))
+
+        (apply (get-request-start-log handler) common-callback-args)
+
+        (define-values (headers body new-state)
+          (call-with-values
+              (lambda ()
+                (call/ec
+                 (lambda (return)
+                   (let loop ((handlers (or (hash-ref (get-routes handler) r:method) '())))
+                     (cond ((null? handlers)
+                            (call-with-values
+                                (lambda () (apply (get-request-404-handler handler)
+                                             common-callback-args))
+                              return))
+
+                           ((regexp-exec (get-path-rx (car handlers))
+                                         r:path)
+                            => (lambda (m)
+                                 (apply ((get-callback (car handlers))
+                                         r:method r:uri r:version r:headers r:meta
+                                         r:scheme r:userinfo r:host r:port r:path r:query r:fragment
+                                         return request request-body state)
+
+                                        ;; Query parameters ALWAYS before path parameters, since
+                                        ;; lambda* takes the last given value as the one to use
+                                        ;; See the guile documentation,
+                                        ;; header "lambda* and define*" (§6.7.4.1 as of Guile 3.0.10).
+                                        (append
+                                         (parse-query r:query)
+                                         (concatenate
+                                          (map list
+                                               (map symbol->keyword (get-path-parameter-names (car handlers)))
+                                               (map (lambda (i) (match:substring m i))
+                                                    (cdr (iota (match:count m))))))))))
+
+                           (else (loop (cdr handlers))))))))
+            (case-lambda ((headers body new-state) (values headers body new-state))
+                         ((headers body)           (values headers body state))
+                         ((headers)                (values headers "" state)))))
+
+        (apply (get-request-end-log handler)
+               response-headers: headers response-body: body
+               common-callback-args)
+
+        (values headers body new-state)))))
