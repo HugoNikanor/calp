@@ -50,8 +50,7 @@
                (values port sock))
              (lambda (err proc fmt args data)
                (if (and (not (null? data))
-                        ;; errno address already in use
-                        (= 98 (car data)))
+                        (= EADDRINUSE (car data)))
                  (loop (1+ port))
                  ;; rethrow
                  (throw err fmt args data)))))))
