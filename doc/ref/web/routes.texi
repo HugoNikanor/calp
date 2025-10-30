@@ -2,27 +2,71 @@
 @section (web http make-routes)
 
 @defun parse-endpoint-string str
-Only really public for tests.
+Parses a string specifying an endpoint as per @code{make-route}.
+
+Returns two values: a reogexp like string matching the path component
+of an uri, and the list of symbols referenced in the source pattern.
 @end defun
 
-@defmac make-routes routes ...
-Expands a number of endpoint specifiers into a procedure suitable for
-use as a handler in @xref{Web Server,run-server,run-server,guile}.
+@defun make-handler
+Creates a new handler context object, which can be turned into a
+``true'' request handler through @code{realize-handler}.o
+@end defun
 
-Each form conists of
-@itemize
-@item the method (``GET'', ``POST'', ...),
-@item the path, possibly with embedded parameters,
-@item a list of parameters to capture, and
-@item the body.
+@defun (realize-handler handler) request body state
+@code{realize-handler} returns a procedure taking a request, body, and
+state variable, and returns the same. Suitable to use as a handler in
+@xref{Web Server,run-server,run-server,guile}.
+@end defun
+
+@defun set-request-start-log! handler callback
+@defunx set-request-end-log! handler callback
+@defunx set-request-404-handler! handler callback
+Sets various callbacks for parts of the request handling.
+
+Each procedure is called with the keyword arguments, with the same
+semantics as their equivalents in @code{make-route}
+@itemize @bullet{}
+@item request
+@item request-body
+@item method
+@item uri
+@item version
+@item headers
+@item meta
+@item scheme
+@item userinfo
+@item host
+@item port
+@item path
+@item query
 @end itemize
 
+@code{start-log} is called after the incomming request is parsed, but
+before a handler is picked and run. It defaults to a no-op procedure.
+
+@code{end-log} is ran after a handler is run, and a value exist.
+It also gets passed the keyword arguments @code{response-headers} and
+@code{response-body}. It defaluts to a no-op procedure.
+
+@code{404-handler} is called when no registered endpoint matches the
+request. It @emph{should} return a response object with a 404 status
+code, and defaults to a super simple ``not found'' page.
+
+@end defun
+
+
+@defun add-route! handler route
+@end defun
+
+@defmac make-route (method path parameter body ...)
+Creates an object suitable to pass as a route to @code{add-route!}.
+
 @example
-(make-routes
+(make-route
   (GET "/path/:a" (a b)
     (return '((content-type text/plain))
-            (format #f "a=~a, b=~a" a b)))
-  ...)
+            (format #f "a=~a, b=~a" a b))))
 @end example
 
 The paths can contain embedded variables, which start with

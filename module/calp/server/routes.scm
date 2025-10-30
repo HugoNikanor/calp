@@ -5,6 +5,8 @@
 
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
+  :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
 
   :use-module ((ice-9 rdelim) :select (read-string))
   :use-module ((ice-9 ftw) :select (scandir))
@@ -25,6 +27,8 @@
   :use-module ((base64) :select (base64decode))
 
   :use-module (web http make-routes)
+  :use-module ((web query) :select (parse-query))
+  :use-module ((ice-9 iconv) :select (bytevector->string))
 
   :use-module (vcomponent)
   :use-module (vcomponent util search)
@@ -127,140 +131,187 @@
 
 
 
+(define (parse-urlencoded-body headers body)
+  (cond ((assoc-ref headers 'content-type)
+         => (lambda (content-type)
+              (let ((type args (car+cdr content-type)))
+                (when (eq? type 'application/x-www-form-urlencoded)
+                  (let ((encoding (or (assoc-ref args 'encoding) "UTF-8")))
+                    (parse-query (bytevector->string body encoding)
+                                 encoding))))))
+        (else '())))
+
 ;; TODO ensure encoding on all fields which take user provided data.
 ;; Possibly a fallback which strips everything unknown, and treats
 ;; the bytevector as ascii.
 (define (make-make-routes)
-  (make-routes
+  (define handler (make-handler))
 
-   (GET "/" (html)
-        (return (build-response code: 307
-                                headers: `((Location . "/today/")
-                                           (content-type text/plain)))
-                (G_ "Redirecting to today, might take some time if server was just restarted.")))
+  (set-request-start-log!
+   handler
+   (lambda* (key: method host port path (query "") allow-other-keys:)
+    (display (format #f "[~a] ~a ~a:~a~a?~a~%"
+                     (datetime->string (current-datetime))
+                     method host port path query)
+             (current-error-port))))
 
-   (GET "/favicon.ico" ()
-        (return
-         `((content-type image/svg+xml))
-         (call-with-input-file "static/calendar.svg" read-string)))
+  (add-route!
+   handler
+   (make-route
+    (GET "/" (html)
+         (return (build-response code: 307
+                                 headers: `((Location . "/today/")
+                                            (content-type text/plain)))
+                 (G_ "Redirecting to today, might take some time if server was just restarted.")))))
 
-   (GET "/everything.ics" (start end)
-        (let ((start (or start (date- (current-date) (date day: 14))))
-              (end (or end (date+ (current-date) (date year: 1)))))
-          (let ((events
-                 ;; TODO get events
-                 '()
-                 ;; (append
-                 ;;  (fixed-events-in-range global-event-object start end)
-                 ;;  (get-repeating-events global-event-object))
-                 ))
-            (format (current-error-port) "Collected ~a events~%" (length events))
-            (return '((content-type text/calendar))
-                    (with-output-to-string
-                      (lambda () (print-components-with-fake-parent events)))))))
+  (add-route!
+   handler
+   (make-route
+    (GET "/favicon.ico" ()
+         (return
+          `((content-type image/svg+xml))
+          (call-with-input-file "static/calendar.svg" read-string)))))
 
-   ;; TODO any exception in this causes the whole page to fail
-   ;; It would be much better if most of the page could still make it.
-   (GET "/week/:start-date.html" (start-date html)
-        (let ((start-date (start-of-week (parse-iso-date start-date))))
-          (return `((content-type ,(content-type html)))
-                  (with-output-to-string
-                    (lambda ()
-                      ((sxml->output html)
-                       ;; TODO TODO re-introduce calendar entries
-                       (html-generate calendars: '()  ;; (get-calendars global-event-object)
-                                      events: (stream) ;; (get-event-set global-event-object)
-                                      start-date: start-date
-                                      end-date: (date+ start-date (date day: 6))
-                                      next-start: (lambda (d) (date+ d (date day: 7)))
-                                      prev-start: (lambda (d) (date- d (date day: 7)))
-                                      render-calendar: (@ (calp html view calendar week) render-calendar)
-                                      intervaltype: 'week)))))))
+  (add-route!
+   handler
+   (make-route
+    (GET "/everything.ics" (start end)
+         (let ((start (or start (date- (current-date) (date day: 14))))
+               (end (or end (date+ (current-date) (date year: 1)))))
+           (let ((events
+                  ;; TODO get events
+                  '()
+                  ;; (append
+                  ;;  (fixed-events-in-range global-event-object start end)
+                  ;;  (get-repeating-events global-event-object))
+                  ))
+             (format (current-error-port) "Collected ~a events~%" (length events))
+             (return '((content-type text/calendar))
+                     (with-output-to-string
+                       (lambda () (print-components-with-fake-parent events)))))))))
 
-   (GET "/month/:start-date.html" (start-date html)
-        (let ((start-date (start-of-month (parse-iso-date start-date))))
-          (return `((content-type ,(content-type html)))
-                  (with-output-to-string
-                    (lambda ()
-                      ((sxml->output html)
-                       ;; TODO TODO re-introduce calendar entries
-                       (html-generate calendars: '() ;;  (get-calendars global-event-object)
-                                      events: (stream) ;; (get-event-set global-event-object)
-                                      start-date: start-date
-                                      end-date: (date- (date+ start-date (date month: 1))
-                                                       (date day: 1))
-                                      next-start: (lambda (d) (date+ d (date month: 1)))
-                                      prev-start: (lambda (d) (date- d (date month: 1)))
-                                      render-calendar: (@ (calp html view calendar month)
-                                                          render-calendar-table)
-                                      pre-start: (start-of-week start-date)
-                                      post-end: (end-of-week (end-of-month start-date))
-                                      intervaltype: 'month
-                                      )))))))
+  ;; TODO any exception in this causes the whole page to fail
+  ;; It would be much better if most of the page could still make it.
+  (add-route!
+   handler
+   (make-route
+    (GET "/week/:start-date.html" (start-date html)
+         (let ((start-date (start-of-week (parse-iso-date start-date))))
+           (return `((content-type ,(content-type html)))
+                   (with-output-to-string
+                     (lambda ()
+                       ((sxml->output html)
+                        ;; TODO TODO re-introduce calendar entries
+                        (html-generate calendars: '() ;;  (get-calendars global-event-object)
+                                       events: (stream) ;; (get-event-set global-event-object)
+                                       start-date: start-date
+                                       end-date: (date+ start-date (date day: 6))
+                                       next-start: (lambda (d) (date+ d (date day: 7)))
+                                       prev-start: (lambda (d) (date- d (date day: 7)))
+                                       render-calendar: (@ (calp html view calendar week) render-calendar)
+                                       intervaltype: 'week)))))))))
 
-   (POST "/remove" (uid)
-         (unless uid
-           (return (build-response code: 400)
-                   (G_ "uid required")))
+  (add-route!
+   handler
+   (make-route
+    (GET "/month/:start-date.html" (start-date html)
+         (let ((start-date (start-of-month (parse-iso-date start-date))))
+           (return `((content-type ,(content-type html)))
+                   (with-output-to-string
+                     (lambda ()
+                       ((sxml->output html)
+                        ;; TODO TODO re-introduce calendar entries
+                        (html-generate calendars: '() ;;  (get-calendars global-event-object)
+                                       events: (stream) ;; (get-event-set global-event-object)
+                                       start-date: start-date
+                                       end-date: (date- (date+ start-date (date month: 1))
+                                                        (date day: 1))
+                                       next-start: (lambda (d) (date+ d (date month: 1)))
+                                       prev-start: (lambda (d) (date- d (date month: 1)))
+                                       render-calendar: (@ (calp html view calendar month)
+                                                           render-calendar-table)
+                                       pre-start: (start-of-week start-date)
+                                       post-end: (end-of-week (end-of-month start-date))
+                                       intervaltype: 'month
+                                       )))))))))
 
-         ;; TODO TODO get event by uid
-         (aif #f ;; (get-event-by-uid global-event-object uid)
-              (begin
-                ;; It's hard to properly remove a file. I also want a way to undo accidental
-                ;; deletions. Therefore I simply save the X-HNH-REMOVED flag to the file, and
-                ;; then simple don't use those events when loading.
-                ;; TODO TODO remove event
-                ;; (remove-event global-event-object it)
-                ;; (set! (prop it 'X-HNH-REMOVED) #t)
-                ;; (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
-                ;; TODO something like this instead:
-                ;; (remove-by-uid! store uid)
-                (unless ((@ (vcomponent formats vdir save-delete) save-event) it)
-                  (return (build-response code: 500)
-                          (G_ "Saving event to disk failed.")))
-                (return (build-response code: 204)))
+  (add-route!
+   handler
+   (make-route
+    (POST "/remove" (uid)
+
+          (define uid
+            (apply (lambda* (key: uid) uid)
+                   (parse-urlencoded-body r:headers body)))
+
+          (unless uid
+            (return (build-response code: 400)
+                    (G_ "uid required")))
+
+          ;; TODO TODO get event by uid
+          (aif #f ;; (get-event-by-uid global-event-object uid)
+               (begin
+                 ;; It's hard to properly remove a file. I also want a way to undo accidental
+                 ;; deletions. Therefore I simply save the X-HNH-REMOVED flag to the file, and
+                 ;; then simple don't use those events when loading.
+                 ;; TODO TODO remove event
+                 ;; (remove-event global-event-object it)
+                 ;; (set! (prop it 'X-HNH-REMOVED) #t)
+                 ;; (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
+                 ;; TODO something like this instead:
+                 ;; (remove-by-uid! store uid)
+                 (unless ((@ (vcomponent formats vdir save-delete) save-event) it)
+                   (return (build-response code: 500)
+                           (G_ "Saving event to disk failed.")))
+                 (return (build-response code: 204)))
+               (return (build-response code: 400)
+                       (format #f (G_ "No event with UID '~a'") uid))))))
+
+  ;; TODO this fails when dtstart is <date>.
+  ;; @var{cal} should be the name of the calendar encoded in base64.
+  (add-route!
+   handler
+   (make-route
+    (POST "/insert" (cal data)
+          (define-values (cal data)
+            (apply (lambda* (key: cal data) (values cal data))
+                   (parse-urlencoded-body r:headers body)))
+
+          (unless (and cal data)
+            (return (build-response code: 400)
+                    (string-append (G_ "Both 'cal' and 'data' required") "\r\n")))
+
+          ;; NOTE that this leaks which calendar exists,
+          ;; but you can only query for existance.
+          ;; also, the calendar view already show all calendars.
+          (let* ((calendar-name (base64decode cal))
+                 (calendar
+                  ;; TODO TODO get calendar
+                  #f
+                  ;; (get-calendar-by-name global-event-object calendar-name)
+                  ))
+
+            (unless calendar
               (return (build-response code: 400)
-                      (format #f (G_ "No event with UID '~a'") uid))))
+                      (format #f "~@?\r\n" (G_ "No calendar with name [~a]")
+                              calendar-name)))
 
-   ;; TODO this fails when dtstart is <date>.
-   ;; @var{cal} should be the name of the calendar encoded in base64.
-   (POST "/insert" (cal data)
+            ;; Expected form of data (but in XML) is:
+            ;; @example
+            ;; (*TOP*
+            ;;  (*PI* ...)
+            ;;  (icalendar (@ (xmlns "..."))
+            ;;   (vcalendar
+            ;;    (vevent ...))))
+            ;; @end example
 
-         (unless (and cal data)
-           (return (build-response code: 400)
-                   (string-append (G_ "Both 'cal' and 'data' required") "\r\n")))
+            ;; TODO
+            ;; However, *PI* will probably be omited, and currently events
+            ;; are sent without the vcalendar part. Earlier versions
+            ;; Also omitted the icalendar part. And I'm not sure if the
+            ;; *TOP* node is a required part of the sxml.
 
-         ;; NOTE that this leaks which calendar exists,
-         ;; but you can only query for existance.
-         ;; also, the calendar view already show all calendars.
-         (let* ((calendar-name (base64decode cal))
-                (calendar
-                 ;; TODO TODO get calendar
-                 #f
-                 ;; (get-calendar-by-name global-event-object calendar-name)
-                 ))
-
-           (unless calendar
-             (return (build-response code: 400)
-                     (format #f "~@?\r\n" (G_ "No calendar with name [~a]")
-                             calendar-name)))
-
-           ;; Expected form of data (but in XML) is:
-           ;; @example
-           ;; (*TOP*
-           ;;  (*PI* ...)
-           ;;  (icalendar (@ (xmlns "..."))
-           ;;   (vcalendar
-           ;;    (vevent ...))))
-           ;; @end example
-
-           ;; TODO
-           ;; However, *PI* will probably be omited, and currently events
-           ;; are sent without the vcalendar part. Earlier versions
-           ;; Also omitted the icalendar part. And I'm not sure if the
-           ;; *TOP* node is a required part of the sxml.
-
-           (let ((event
+            (let ((event
                    ((@ (vcomponent formats xcal parse) sxcal->vcomponent)
                     (catch 'parser-error
                       (lambda ()
@@ -276,237 +327,270 @@
                                         (G_ "XML parse error")
                                         args)))))))
 
-             (unless (eq? 'VEVENT (type event))
-               (return (build-response code: 400)
-                       (string-append (G_ "Object not a VEVENT") "\r\n")))
+              (unless (eq? 'VEVENT (type event))
+                (return (build-response code: 400)
+                        (string-append (G_ "Object not a VEVENT") "\r\n")))
 
-             ;; NOTE add-event uses the given UID if one is given,
-             ;; but generates its own if not. It might be a good idea
-             ;; to require that UID is unset here, and force users
-             ;; to use a /update endpoint to change events. This to prevent
-             ;; accidental overwriting.
-
-             (parameterize ((warnings-are-errors #t))
-               ;; TODO TODO all this
-               #f
-               #;
-               (catch*
-                (lambda () (add-and-save-event global-event-object
-                                          calendar event))
-                ((pre-unwind #t)
-                 (lambda _
-                   (let ((stack (make-stack #t)))
-                     (display-backtrace stack (current-error-port)))))
-                (warning
-                 (lambda (err fmt args)
-                   (define str (format #f "~?" fmt args))
-                   (format (current-error-port) "400 ~a~%" str)
-                   (return (build-response code: 400)
-                           str)))
-                (#t
-                 (lambda (err proc fmt args _)
-                   (define str (format #f "~a in ~a: ~?~%" err proc fmt args))
-                   (format (current-error-port) "500 ~a~%" str)
-                   (return (build-response code: 500)
-                           str)))))
-
-             (return '((content-type application/xml))
-                     (lambda (port)
-                       (sxml->xml
-                        `(properties
-                          (uid (text ,(prop event 'UID))))
-                        port))))))
-
-   ;; Get specific page by query string instead of by path.
-   ;; Useful for <form>'s, since they always submit in this form, but also
-   ;; useful when javascript is disabled, since a link to "today" needs some
-   ;; form of evaluation when clicked.
-   (GET "/today" (view date)
-        (define location
-          (build-relative-ref
-           path:
-           (format #f "/~a/~a.html"
-                   (or view "week")
-                   (date->string
-                    (cond [date => parse-iso-date]
-                          [else (current-date)])
-                    "~1"))) )
-
-        (return (build-response
-                 code: 302
-                 headers: `((location . ,location)))))
-
-   (GET "/calendar" (start end)
-        (return '((content-type text/calendar))
-                (with-output-to-string
-                  (lambda ()
-                    (if (or start end)
-                        (print-events-in-interval
-                         (aif start (parse-iso-date it) (current-date))
-                         (aif end (parse-iso-date it) (current-date)))
-                        (print-all-events))))))
-
-   (GET "/calendar/:uid{.*}.xcs" (uid)
-        ;; TODO TODO get event by uid
-        (aif #f ;; (get-event-by-uid global-event-object uid)
-             (return '((content-type application/calendar+xml))
-                     ;; TODO this is just the vevent part.
-                     ;; A surounding vcalendar is required, as well as
-                     ;; a doctype.
-                     ;; Look into changing how events carry around their
-                     ;; parent information, possibly splitting "source parent"
-                     ;; and "program parent" into different fields.
-                     (lambda (port)
-                       (sxml->xml
-                        ((@ (vcomponent formats xcal output) vcomponent->sxcal) it)
-                        port)))
-             (return (build-response code: 404)
-                     (format #f (G_ "No component with UID=~a found.") uid))))
-
-   (GET "/calendar/:uid{.*}.ics" (uid)
-        ;; TODO TODO get event by uid
-        (aif #f ;; (get-event-by-uid global-event-object uid)
-             (return '((content-type text/calendar))
-                     (with-output-to-string
-                       (lambda () (print-components-with-fake-parent
-                              (list it)))))
-             (return (build-response code: 404)
-                     (format #f (G_ "No component with UID=~a found.") uid))))
+              ;; NOTE add-event uses the given UID if one is given,
+              ;; but generates its own if not. It might be a good idea
+              ;; to require that UID is unset here, and force users
+              ;; to use a /update endpoint to change events. This to prevent
+              ;; accidental overwriting.
 
 
-   (GET "/search/text" (q)
-        (return (build-response
-                 code: 302
-                 headers:
-                 `((location
-                    . ,(build-relative-ref
-                        path: "/search/"
-                        query:
-                        (encode-query-parameters
-                         `((q . (regexp-exec
-                                 ;; TODO shouldn't q always be a string?
-                                 (make-regexp ,(->string q)
-                                              regexp/icase)
-                                 (prop event 'SUMMARY)))))
-                        ))))))
+              (parameterize ((warnings-are-errors #t))
+                ;; TODO TODO all this
+                #f
+                #;
+                (catch*
+                 (lambda () (add-and-save-event global-event-object
+                                           calendar event))
+                 ((pre-unwind #t)
+                  (lambda _
+                    (let ((stack (make-stack #t)))
+                      (display-backtrace stack (current-error-port)))))
+                 (warning
+                  (lambda (err fmt args)
+                    (define str (format #f "~?" fmt args))
+                    (format (current-error-port) "400 ~a~%" str)
+                    (return (build-response code: 400)
+                            str)))
+                 (#t
+                  (lambda (err proc fmt args _)
+                    (define str (format #f "~a in ~a: ~?~%" err proc fmt args))
+                    (format (current-error-port) "500 ~a~%" str)
+                    (return (build-response code: 500)
+                            str)))))
 
-   (GET "/search" (q p onlyfuture html)
-        (define search-term
-          (if (and q (not (string-null? q)))
-              (if onlyfuture
-                  `(and (date/-time<=? ,(current-datetime) (prop event 'DTSTART))
-                        ,(and=> q prepare-string))
-                  (and=> q prepare-string))
-              ;; NOTE This causes the paginator buttons to search for literally two quote marks,
-              ;; But oh well.
-              ""))
+              (return '((content-type application/xml))
+                      (lambda (port)
+                        (sxml->xml
+                         `(properties
+                           (uid (text ,(prop event 'UID))))
+                         port))))))))
 
-        ;; get-query-page handles paginator cache, meaning that
-        ;; a new one is only allocated when needed
-        (define paginator (get-query-page search-term))
+  ;; Get specific page by query string instead of by path.
+  ;; Useful for <form>'s, since they always submit in this form, but also
+  ;; useful when javascript is disabled, since a link to "today" needs some
+  ;; form of evaluation when clicked.
+  (add-route!
+   handler
+   (make-route
+    (GET "/today" (view date)
+         (define location
+           (build-relative-ref
+            path:
+            (format #f "/~a/~a.html"
+                    (or view "week")
+                    (date->string
+                     (cond [date => parse-iso-date]
+                           [else (current-date)])
+                     "~1"))) )
 
-        (define page (string->number (or p "0")))
+         (return (build-response
+                  code: 302
+                  headers: `((location . ,location)))))))
 
-        (define error #f)
-
-        (define search-result
-          ;; TODO Get-page only puts a time limiter per page, meaning that
-          ;; if a user requests page 1000 the server is stuck trying to
-          ;; find that page, which can take up to 1000 * timeslice = 500s = 8min+
-          ;; A timeout here, and also an actual multithreaded server should
-          ;; solve this.
-          (catch* (lambda () (get-page paginator page))
-                  (max-page
-                   (lambda (err page-number)
-                     (define location
-                       (build-relative-ref
-                        path: r:path        ; host: r:host port: r:port
-                        query: (encode-query-parameters
-                                `((p . ,page-number)
-                                  (q . ,search-term)))))
-                     (return (build-response
-                              code: 307
-                              headers: `((location . ,location))))))
-                  (#t
-                   (lambda (err callee fmt arg data)
-                     (set! error
-                       (format #f "~?~%" fmt arg))))))
-
-        (return `((content-type ,(content-type html)))
-                (lambda (port)
-                  ((sxml->output html)
-                   (search-result-page
-                    error
-                    (and=> q (negate string-null?))
-                    search-term search-result page paginator)
-                   port))))
-
-   ;; NOTE this only handles files with extensions. Limited, but since this
-   ;; is mostly for development, and something like nginx should be used in
-   ;; production it isn't a huge problem.
-
-
-   (GET "/static/:*{.*}.:ext" (* ext)
-
-        ;; Actually parsing /etc/mime.types would be better.
-        (define mime
-          (case (string->symbol ext)
-            [(js) "javascript"]
-            [else ext]))
-
-        (catch 'system-error
-          (lambda ()
-           (return
-            `((content-type ,(string->symbol (string-append "text/" mime))))
-            (call-with-input-file (path-append (static-dir) (string-append * "." ext))
-              read-string)))
-          (lambda (err proc fmt fmt-args data)
-            (warning (format #f "404|500: ~?" fmt fmt-args))
-            (if (= ENOENT (car data))
-                (return (build-response code: 404)
-                        (format #f "~?" fmt fmt-args))
-                (scm-error err proc fmt fmt-args data)))))
-
-   ;; Note that `path' will most likely start with a slash
-   (GET "/static:path{.*}" (path html)
-        (catch
-          'misc-error
-          (lambda () (return
-                 `((content-type ,(content-type html)))
+  (add-route!
+   handler
+   (make-route
+    (GET "/calendar" (start end)
+         (return '((content-type text/calendar))
                  (with-output-to-string
                    (lambda ()
-                     ((sxml->output html)
-                      (xhtml-doc
-                       (head (title ,(G_ "Calp directory listing for ") path)
-                             ,(include-css
-                               "/static/directory-listing.css"))
-                       (body ,(directory-table (static-dir) path))))))))
-          (lambda (err proc fmt fmt-args data)
-            (return (build-response code: 404)
-                    (format #f "~?" fmt fmt-args)))))
+                     (if (or start end)
+                         (print-events-in-interval
+                          (aif start (parse-iso-date it) (current-date))
+                          (aif end (parse-iso-date it) (current-date)))
+                         (print-all-events))))))))
 
-   ;; This is almost the same as /static/, but with the difference that
-   ;; we produce these images during runtime
-   (GET "/tmpfiles/:*{.*}.:ext" (* ext)
-        ;; Actually parsing /etc/mime.types would be better.
-        (define mime
-          (case (string->symbol (string-downcase ext))
-            [(png) "png"]
-            [(jpg jpeg) "jpeg"]
-            [(gif) "gif"]
-            [else ext]))
+  (add-route!
+   handler
+   (make-route
+    (GET "/calendar/:uid{.*}.xcs" (uid)
+         ;; TODO TODO get event by uid
+         (aif #f ;; (get-event-by-uid global-event-object uid)
+              (return '((content-type application/calendar+xml))
+                      ;; TODO this is just the vevent part.
+                      ;; A surounding vcalendar is required, as well as
+                      ;; a doctype.
+                      ;; Look into changing how events carry around their
+                      ;; parent information, possibly splitting "source parent"
+                      ;; and "program parent" into different fields.
+                      (lambda (port)
+                        (sxml->xml
+                         ((@ (vcomponent formats xcal output) vcomponent->sxcal) it)
+                         port)))
+              (return (build-response code: 404)
+                      (format #f (G_ "No component with UID=~a found.") uid))))))
 
-        (return
-         `((content-type ,(string->symbol (string-append "image/" mime))))
-         ;; TODO handle tmp directory globaly
-         (call-with-input-file (path-append (xdg-runtime-dir)
-                                            "calp-data" "images"
-                                            (string-append * "." ext))
-           get-bytevector-all)))
+  (add-route!
+   handler
+   (make-route
+    (GET "/calendar/:uid{.*}.ics" (uid)
+         ;; TODO TODO get event by uid
+         (aif #f ;; (get-event-by-uid global-event-object uid)
+              (return '((content-type text/calendar))
+                      (with-output-to-string
+                        (lambda () (print-components-with-fake-parent
+                               (list it)))))
+              (return (build-response code: 404)
+                      (format #f (G_ "No component with UID=~a found.") uid))))))
+
+  (add-route!
+   handler
+   (make-route
+    (GET "/search/text" (q)
+         (return (build-response
+                  code: 302
+                  headers:
+                  `((location
+                     . ,(build-relative-ref
+                         path: "/search/"
+                         query:
+                         (encode-query-parameters
+                          `((q . (regexp-exec
+                                  ;; TODO shouldn't q always be a string?
+                                  (make-regexp ,(->string q)
+                                               regexp/icase)
+                                  (prop event 'SUMMARY)))))
+                         ))))))))
+
+  (add-route!
+   handler
+   (make-route
+    (GET "/search" (q p onlyfuture html)
+         (define search-term
+           (if (and q (not (string-null? q)))
+               (if onlyfuture
+                   `(and (date/-time<=? ,(current-datetime) (prop event 'DTSTART))
+                         ,(and=> q prepare-string))
+                   (and=> q prepare-string))
+               ;; NOTE This causes the paginator buttons to search for literally two quote marks,
+               ;; But oh well.
+               ""))
+
+         ;; get-query-page handles paginator cache, meaning that
+         ;; a new one is only allocated when needed
+         (define paginator (get-query-page search-term))
+
+         (define page (string->number (or p "0")))
+
+         (define error #f)
+
+         (define search-result
+           ;; TODO Get-page only puts a time limiter per page, meaning that
+           ;; if a user requests page 1000 the server is stuck trying to
+           ;; find that page, which can take up to 1000 * timeslice = 500s = 8min+
+           ;; A timeout here, and also an actual multithreaded server should
+           ;; solve this.
+           (catch* (lambda () (get-page paginator page))
+                   (max-page
+                    (lambda (err page-number)
+                      (define location
+                        (build-relative-ref
+                         path: r:path   ; host: r:host port: r:port
+                         query: (encode-query-parameters
+                                 `((p . ,page-number)
+                                   (q . ,search-term)))))
+                      (return (build-response
+                               code: 307
+                               headers: `((location . ,location))))))
+                   (#t
+                    (lambda (err callee fmt arg data)
+                      (set! error
+                        (format #f "~?~%" fmt arg))))))
+
+         (return `((content-type ,(content-type html)))
+                 (lambda (port)
+                   ((sxml->output html)
+                    (search-result-page
+                     error
+                     (and=> q (negate string-null?))
+                     search-term search-result page paginator)
+                    port))))))
+
+  ;; NOTE this only handles files with extensions. Limited, but since this
+  ;; is mostly for development, and something like nginx should be used in
+  ;; production it isn't a huge problem.
 
 
-   (GET "/count" ()
-        ;; (sleep 1)
-        (return '((content-type text/plain))
-                (string-append (number->string state) "\n")
-                (1+ state)))))
+  (add-route!
+   handler
+   (make-route
+    (GET "/static/:*{.*}.:ext" (* ext)
+
+         ;; Actually parsing /etc/mime.types would be better.
+         (define mime
+           (case (string->symbol ext)
+             [(js) "javascript"]
+             [else ext]))
+
+         (catch 'system-error
+           (lambda ()
+             (return
+              `((content-type ,(string->symbol (string-append "text/" mime))))
+              (call-with-input-file (path-append (static-dir) (string-append * "." ext))
+                read-string)))
+           (lambda (err proc fmt fmt-args data)
+             (warning (format #f "404|500: ~?" fmt fmt-args))
+             (if (= ENOENT (car data))
+                 (return (build-response code: 404)
+                         (format #f "~?" fmt fmt-args))
+                 (scm-error err proc fmt fmt-args data)))))))
+
+  ;; Note that `path' will most likely start with a slash
+  (add-route!
+   handler
+   (make-route
+    (GET "/static:path{.*}" (path html)
+         (catch
+           'misc-error
+           (lambda () (return
+                  `((content-type ,(content-type html)))
+                  (with-output-to-string
+                    (lambda ()
+                      ((sxml->output html)
+                       (xhtml-doc
+                        (head (title ,(G_ "Calp directory listing for ") path)
+                              ,(include-css
+                                "/static/directory-listing.css"))
+                        (body ,(directory-table (static-dir) path))))))))
+           (lambda (err proc fmt fmt-args data)
+             (return (build-response code: 404)
+                     (format #f "~?" fmt fmt-args)))))))
+
+  ;; This is almost the same as /static/, but with the difference that
+  ;; we produce these images during runtime
+  (add-route!
+   handler
+   (make-route
+    (GET "/tmpfiles/:*{.*}.:ext" (* ext)
+         ;; Actually parsing /etc/mime.types would be better.
+         (define mime
+           (case (string->symbol (string-downcase ext))
+             [(png) "png"]
+             [(jpg jpeg) "jpeg"]
+             [(gif) "gif"]
+             [else ext]))
+
+         (return
+          `((content-type ,(string->symbol (string-append "image/" mime))))
+          ;; TODO handle tmp directory globaly
+          (call-with-input-file (path-append (xdg-runtime-dir)
+                                             "calp-data" "images"
+                                             (string-append * "." ext))
+            get-bytevector-all)))))
+
+
+  (add-route!
+   handler
+   (make-route
+    (GET "/count" ()
+         ;; (sleep 1)
+         (return '((content-type text/plain))
+                 (string-append (number->string state) "\n")
+                 (1+ state)))))
+
+  ;; return
+  (realize-handler handler))
