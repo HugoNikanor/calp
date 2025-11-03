@@ -25,9 +25,9 @@
   (pointer->procedure void (dynamic-func "globfree" lib)
                       '(*)))
 
-(define glob-flags (logior GLOB_MARK GLOB_BRACE GLOB_TILDE_CHECK))
+(define dflt-glob-flags (logior GLOB_MARK GLOB_BRACE GLOB_TILDE_CHECK))
 
-(define (glob str)
+(define* (glob str optional: (glob-flags dflt-glob-flags))
   (let ((bv (make-bytevector 100)))
     (let ((globret (glob% (string->pointer str)
                           glob-flags

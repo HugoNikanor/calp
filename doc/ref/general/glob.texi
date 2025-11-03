@@ -1,7 +1,7 @@
 @node Glob
 @section Glob
 
-@defun glob str
+@defun glob str [flags]
 Globs (glob(7)) on @var{str}, returing a list of files, which will be
 on the same form of the glob. E.g. @code{(glob "../*")} will return
 strings all starting with ``../''
