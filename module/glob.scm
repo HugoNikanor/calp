@@ -27,26 +27,28 @@
 
 (define dflt-glob-flags (logior GLOB_MARK GLOB_BRACE GLOB_TILDE_CHECK))
 
-(define* (glob str optional: (glob-flags dflt-glob-flags))
+(define* (glob str optional: (glob-flags dflt-glob-flags)
+               key: (nomatch (const '())))
   (let ((bv (make-bytevector 100)))
     (let ((globret (glob% (string->pointer str)
                           glob-flags
                           (procedure->pointer int glob-err (list '* int))
                           (bytevector->pointer bv))))
-      (unless (zero? globret)
-        (scm-error 'misc-error "glob"
-                   "Globret errror ~a"
-                   (list
-                    (cond ((= globret GLOB_NOSPACE) 'glob-nospace)
-                          ((= globret GLOB_ABORTED) 'glob-noabport)
-                          ((= globret GLOB_NOMATCH) 'glob-nomatch)
-                          (else globret)))
-                   #f))
-      (let* ((globstr (parse-c-struct (bytevector->pointer bv) (list size_t '* size_t)))
-             (strvec (pointer->bytevector (cadr globstr) (car globstr) 0
-					  (string->symbol (format #f "u~a" (* 8 (sizeof '*))))))
-             (ret (map (compose pointer->string make-pointer)
-                       (bytevector->uint-list strvec (native-endianness) (sizeof '*)))))
+      (cond ((= globret GLOB_NOMATCH) (nomatch))
+            ((= globret 0)
+             (let* ((globstr (parse-c-struct (bytevector->pointer bv) (list size_t '* size_t)))
+                    (strvec (pointer->bytevector (cadr globstr) (car globstr) 0
+					         (string->symbol (format #f "u~a" (* 8 (sizeof '*))))))
+                    (ret (map (compose pointer->string make-pointer)
+                              (bytevector->uint-list strvec (native-endianness) (sizeof '*)))))
 
-        (globfree (bytevector->pointer bv))
-        ret))))
+               (globfree (bytevector->pointer bv))
+               ret))
+            (else
+             (scm-error 'misc-error "glob"
+                        "Globret errror ~a"
+                        (list
+                         (cond ((= globret GLOB_NOSPACE) 'glob-nospace)
+                               ((= globret GLOB_ABORTED) 'glob-noabport)
+                               (else globret)))
+                        #f))))))

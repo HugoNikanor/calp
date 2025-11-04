@@ -1,12 +1,13 @@
 @node Glob
 @section Glob
 
-@defun glob str [flags]
+@defun glob str [flags] [#:nomatch=(const '())]
 Globs (glob(7)) on @var{str}, returing a list of files, which will be
 on the same form of the glob. E.g. @code{(glob "../*")} will return
 strings all starting with ``../''
 
-If no matches are found, a misc error is thrown.
+If no matches is found, the procedure passed through @var{#:nomatch}
+is called, and its value returned.
 @end defun
 
 
