@@ -6,6 +6,7 @@
            typecheck
            current-procedure-name))
 
+;;; TODO could this be simplified due to how build-validator-body works?
 (define-syntax list-of
   (syntax-rules ()
     ((_ variable (rule ...))
@@ -32,11 +33,11 @@
 ;; Basically a procedure body, but the variable to test is implicit.
 (define-syntax build-validator-body
   (syntax-rules (and or not)
-    ((_ variable (and clauses ...))  (and (build-validator-body variable clauses) ...))
-    ((_ variable (or clauses ...))   (or (build-validator-body variable clauses) ...))
-    ((_ variable (not clause))       (not (build-validator-body variable clause)))
-    ((_ variable (proc args ...))    (proc variable args ...))
-    ((_ variable proc)               (proc variable))))
+    ((_ v (and clauses ...))  (and (build-validator-body v clauses) ...))
+    ((_ v (or clauses ...))   (or (build-validator-body v clauses) ...))
+    ((_ v (not clause))       (not (build-validator-body v clause)))
+    ((_ v (proc args ...))    (proc v args ...))
+    ((_ v proc)               (proc v))))
 
 (define-syntax-rule (current-procedure-name)
   ;; 1 since make-stack is at top of stack
