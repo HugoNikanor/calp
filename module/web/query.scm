@@ -8,7 +8,11 @@
   :export (parse-query
            encode-query-parameters))
 
-(define* (parse-query query-string optional: (encoding "UTF-8"))
+(define* (parse-query query-string
+                      optional: (encoding "UTF-8")
+                      key: (decode-plus-to-space? #t))
+  (define (decode v)
+    (uri-decode v encoding: encoding decode-plus-to-space?: decode-plus-to-space?))
   (unless (or (not query-string) (string-null? query-string))
     (fold (lambda (str list)
             ;; only split on the first equal.
@@ -16,9 +20,9 @@
             (let ((key val
                       (cond ((string-index str #\=)
                              => (lambda (idx)
-                                  (values (uri-decode (substring str 0 idx)    encoding: encoding)
-                                          (uri-decode (substring str (1+ idx)) encoding: encoding))))
-                            (else (let ((v (uri-decode str encoding: encoding)))
+                                  (values (decode (substring str 0 idx))
+                                          (decode (substring str (1+ idx))))))
+                            (else (let ((v (decode str)))
                                     (values v v))))))
               (cons* (-> key string->symbol symbol->keyword) val list)))
           '() (string-split query-string #\&))))
