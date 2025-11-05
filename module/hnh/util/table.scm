@@ -11,6 +11,7 @@
   :use-module (hnh util lens)
   :use-module (hnh util object)
   :use-module (hnh util optional)
+  :use-module (hnh util type)
   :use-module (ice-9 curried-definitions)
   :export ((make-tree . table)
            (tree-get . table-get)
@@ -38,33 +39,55 @@
                '()
                (tree->list t))))
 
-(define-type (tree-node serializer: serialize-tree)
+(define-type (tree-node
+              serializer: serialize-tree
+              constructor: (lambda (constructor type-check)
+                             (lambda* (key: key value type
+                                            (left (tree-terminal type: type))
+                                            (right (tree-terminal type: type)))
+                               ;; (format #t "args: ~s~%" )
+                               (type-check key value left right type)
+                               (when type
+                                 (typecheck value type))
+                               (constructor key value left right type))))
   (key type: symbol?)
   value
   (left type: tree? default: (tree-terminal))
-  (right type: tree? default: (tree-terminal)))
+  (right type: tree? default: (tree-terminal))
+  (node-type type: (or procedure? false?) default: #f keyword: type))
 
 ;; Type tagged null
-(define-type (tree-terminal serializer: (lambda _ '(table))))
+(define-type (tree-terminal serializer: (lambda _ '(table)))
+  (terminal-type type: (or procedure? false?) default: #f keyword: type))
 
 ;; Wrapped for better error messages
-;;; TODO possibly only have one tree-terminal shared by everyone
-(define (make-tree) (tree-terminal))
+(define* (make-tree optional: type) (tree-terminal type: type))
 
 (define (tree? x)
   (or (tree-node? x)
       (tree-terminal? x)))
 
+(define* (type x optional: (v (nothing)))
+  (typecheck v optional?)
+  (define accessor
+   (cond ((tree-node? x) node-type)
+         ((tree-terminal? x) terminal-type)))
+  (if (just? v)
+      (accessor x (from-just v))
+      (accessor x)))
+
 ;; Lens for focusing a specific entry in a table.
 (define (((tree-focus k) tree) op)
   (cond ((tree-terminal? tree)
          (cond ((op (nothing)) just?
-                => (lambda (v) (tree-node key: k value: (from-just v))))
-               (else (tree-terminal))))
+                => (lambda (v) (tree-node key: k value: (from-just v)
+                                     type: (type tree))))
+               (else (tree-terminal type: (type tree)))))
         ((eq? k (key tree))
          (cond ((op (just (value tree)))
                 just? => (lambda (v) (value tree (from-just v))))
-               (else (merge-trees (left tree) (right tree)))))
+               (else (type (merge-trees (left tree) (right tree))
+                           (just (type tree))))))
         (else
          (modify tree (lens-compose (if (symbol<? k (key tree))
                                         left* right*)
@@ -85,6 +108,8 @@
 (define (tree-remove tree k)
   (set tree (tree-focus k) (nothing)))
 
+;;; Merge two trees.
+;;; Note that this discards type information
 (define (merge-trees a b)
   ;; TODO write a better version of this
   ;; Possibly one which re-balances the trees

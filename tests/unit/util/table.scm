@@ -81,4 +81,16 @@
 ;;; TODO test serialize-table
 ;;; TODO test alist->table
 
+(test-group "Typed tables"
+  (define t (table string?))
+  (test-equal "Successfull insert" '((a . "Hello"))
+    (table->list (table-put t 'a "Hello")))
+
+  (test-error "Type error on insert"
+    'wrong-type-arg (table-put t 'a 1))
+
+  ;; TODO test that type persists when focusing deeper nodes, and when removing nodes
+  )
+
+
 '((hnh util table))
