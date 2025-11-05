@@ -305,6 +305,7 @@
     (modify-root-element
      tree
      (lambda (root)
+       ;; TODO only include namespaces actually used in document
        (add-attributes root (ns-alist->attributes ns))))))
 
 (define* (namespaced-sxml->xml tree key:
