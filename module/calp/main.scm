@@ -65,6 +65,22 @@ unix or TCP socket.<br/>
 
     ))
 
+
+(define entry-points
+  (map (lambda (module)
+         (resolve-module `(calp entry-points ,module) ensure: #f))
+       '(html
+         ;; TODO change terminal to be non-interactive term
+         ;; and then add existing as interactive-term (or similar)
+         terminal
+         text
+         server
+         tidsrapport
+         update-zoneinfo
+         webdav
+         migrate)))
+
+
 (define module-help
   (xml->sxml
    (string-append
@@ -139,25 +155,18 @@ zoneinfo database, but is currently broken.</p>")
                                             (getpid)))]
         [repl => repl-start])
 
-  (let ((ropt (ornull (option-ref opts '() '())
-                      '("term"))))
-    ((case (string->symbol (car ropt))
-       ((html)   (@ (calp entry-points     html) main))
-       ;; TODO chnange term to be non-interactive term
-       ;; and then add interactive-term (or similar)
-       ((term)   (@ (calp entry-points terminal) main))
-       ((text)   (@ (calp entry-points     text) main))
-       ((server) (@ (calp entry-points   server) main))
-       ((tidsrapport) (@ (calp entry-points   tidsrapport) main))
-       ((update-zoneinfo) (@ (calp entry-points update-zoneinfo) main))
-       ((webdav) (@ (calp entry-points webdav) main))
-       ((migrate) (@ (calp entry-points migrate) main))
-       (else => (lambda (s)
-                  (format (current-error-port)
-                          (G_ "Unsupported mode of operation: ~a~%")
-                          s)
-                  (exit 1))))
-     ropt))
+  (let* ((ropt (ornull (option-ref opts '() '())
+                       '("terminal")))
+         (name (string->symbol (car ropt))))
+
+    (cond ((find (lambda (module) (eq? name (last (module-name module))))
+                 entry-points)
+           => (lambda (module)
+                ((module-ref module 'main) ropt)))
+          (else (format (current-error-port)
+                        (G_ "Unsupported mode of operation: ~a~%")
+                        name)
+                (exit 1))))
 
   (when stprof
     (statprof-stop)
