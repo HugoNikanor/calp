@@ -195,13 +195,13 @@
 
 (define-method (set-contenttype! (self <file-resource>) value)
   (lambda ()
-   (set-xattr! (path self) (path-append (xattr-prefix) ".mime")
+   (set-xattr! (path self) (string-append (xattr-prefix) ".mime")
                (string->utf8 value)
                follow-symlinks?: #f)))
 
 (define-method (remove-contenttype! (self <file-resource>))
   (lambda ()
-   (remove-xattr! (path self) (path-append (xattr-prefix) ".mime")
+   (remove-xattr! (path self) (string-append (xattr-prefix) ".mime")
                   follow-symlinks?: #f)))
 
 (define-method (display-name (self <file-resource>))
