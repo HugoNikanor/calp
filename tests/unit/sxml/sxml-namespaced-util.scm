@@ -37,4 +37,16 @@
                            ((xml 'b ns)
                             "Content here"))))))
 
+
+(test-group "Text Content"
+  (test-equal
+      "Hello"
+      (xml-text-content "Hello"))
+
+  (test-equal
+      "Text with bold part"
+   (xml-text-content
+    ((xml 'p) "Text with " ((xml 'b) "bold") " part"))))
+
+
 '((sxml namespaced util))

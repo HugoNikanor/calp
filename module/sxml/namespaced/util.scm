@@ -8,6 +8,7 @@
            element-matches?
            root-element
            tag-matches?
+           xml-text-content
            ))
 
 (define (xml-element-hash-key tag)
@@ -39,3 +40,12 @@
   (typecheck namespace (or symbol? false?))
   (and (eqv? tagname (xml-element-tagname xml-element))
        (eqv? namespace (xml-element-namespace xml-element))))
+
+
+(define (xml-text-content el)
+  (cond ((string? el) el)
+        ((xml-element? el)
+         (string-concatenate
+          (map xml-text-content
+               (xml-element-children el))))
+        (else "")))
