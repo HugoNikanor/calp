@@ -1,3 +1,9 @@
+;;; This is a badly written proof of concept for a data-store, which
+;;; is a CalDAV client. It doesn't work at all.
+
+;;; TODO this is a very early draft, and basically need to be
+;;; re-written from scratch to have any hope of ever working.
+
 (define-module (vcomponent data-stores caldav)
   )
 
@@ -206,11 +212,13 @@
                  (D:getetac)
                  (C:calendar-data))
          (C:filter
-          (C:comp-filter (@ (name "VCALENDAR"))
-                         (C:comp-filter (@ (name "VEVENT"))
-                                        (C:prop-filter (@ (name "UID"))
-                                                       (C:text-match (@ (collation "i;utf-8"))
-                                                                     "Admittansen"))))))))
+          (C:comp-filter
+           (@ (name "VCALENDAR"))
+           (C:comp-filter
+            (@ (name "VEVENT"))
+            (C:prop-filter (@ (name "UID"))
+                           (C:text-match (@ (collation "i;utf-8"))
+                                         "Admittansen"))))))))
 
 
 
@@ -259,10 +267,47 @@
                                        end
                                        "~Y~m~dT~H~M~S~Z")))))))))))
 
+(define (get-modified-after date)
+  (http-request 'REPORT
+                path: "/<collection>"
+                body:
+                `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
+                        (C:calendar-query
+                         (@ (xmlns:D "DAV:")
+                            (xmlns:C "urn:ietf:params:xml:ns:caldav"))
+                         (D:prop (D:getetag))
+                         (C:filter
+                          (C:comp-filter
+                           (@ (name "VCALENDAR"))
+                           (C:comp-filter
+                            (@ (name "VEVENT"))
+                            (C:prop-filter
+                             (@ (name "DTSTAMP"))
+                             (C:time-range
+                              (@ (start ,(datetime->string date "~Y~m~dT~H~M~S~Z")))))))))))
+
+  (http-request 'REPORT
+                path: "/<collection>"
+                body:
+                `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
+                        (C:calendar-query
+                         (@ (xmlns:D "DAV:")
+                            (xmlns:C "urn:ietf:params:xml:ns:caldav"))
+                         (D:prop (D:getetag))
+                         (C:filter
+                          (C:comp-filter
+                           (@ (name "VCALENDAR"))
+                           (C:comp-filter
+                            (@ (name "VEVENT"))
+                            (C:prop-filter (@ (name "DTSTAMP"))
+                                           (C:is-not-defined))))))))
+  )
+
 
 
 
 
+;;; Curl considered due to occansional bugs in Guile's built in HTTP library.
 ;; (use-modules (curl))
 ;; (define c (curl-easy-init))
 ;; (curl-easy-setopt c 'url "https://hornquist.se")
