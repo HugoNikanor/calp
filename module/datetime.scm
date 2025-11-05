@@ -212,6 +212,10 @@
 
   (datetime-date type: date? lens: date*)
   (datetime-time type: time? lens: time*)
+  ;; TODO actually implement tz.
+  ;; It should either by an integer specifying second offset to the
+  ;; epoch (so CEST would be 7200), or a string specifying the
+  ;; timezone, either like "CEST" or "Europe/Stockholm".
   tz)
 
 
