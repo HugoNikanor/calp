@@ -24,12 +24,12 @@
     (throw 'return))
 
   (let* ((locations (list "/usr/libexec/calp/tzget"
-                                 (path-append (xdg-data-home) "tzget")))
+                          (path-append (xdg-data-home) "tzget")))
          (filename (or (find file-exists? locations)
-                              (scm-error 'missing-helper "update-zoneinfo"
-                                         (G_ "tzget not installed, please put it in one of ~a")
-                                         (list locations)
-                                         (list "tzget" locations))))
+                       (scm-error 'missing-helper "update-zoneinfo"
+                                  (G_ "tzget not installed, please put it in one of ~a")
+                                  (list locations)
+                                  (list "tzget" locations))))
 
          (pipe (open-input-pipe filename))
          (names (string-split (read-line pipe) #\space)))
