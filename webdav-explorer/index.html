@@ -1,0 +1,206 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebDAV explorer</title>
+    <script>
+      /* Ugly redirect to resources loads correctly */
+      if (window.location.pathname.at(-1) !== '/') {
+        window.location += '/'
+      }
+    </script>
+    <script src="script.js"></script>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="warnings"></div>
+
+    <h3>Input</h3>
+
+    <div id="form-common" class="form-like">
+      <label for="href">Href</label>
+      <input id="href" name="href" placeholder="/resource" form="propfind-form" />
+
+      <label for="xml-output-format">XML Format</label>
+      <select name="xml-output-format" id="xml-output-format">
+        <option value="raw">Raw response</option>
+        <option value="xsl">Formatted XML</option>
+        <option value="html" selected>XML parsed into interactive HTML tree</option>
+      </select>
+    </div>
+
+    <div class="tabs">
+      <div role="tablist" aria-label="Select HTTP method">
+        <button role="tab" aria-controls="copy-panel"       id="copy-tab">COPY / MOVE</button>
+        <button role="tab" aria-controls="delete-panel"     id="delete-tab">DELETE</button>
+        <button role="tab" aria-controls="get-panel"        id="get-tab">GET / HEAD</button>
+        <button role="tab" aria-controls="lock-panel"       id="lock-tab">LOCK</button>
+        <button role="tab" aria-controls="mkcalendar-panel" id="mkcalendar-tab">MKCALENDAR</button>
+        <button role="tab" aria-controls="mkcol-panel"      id="mkcol-tab">MKCOL</button>
+        <button role="tab" aria-controls="options-panel"    id="options-tab">OPTIONS</button>
+        <button role="tab" aria-controls="propfind-panel"   id="propfind-tab" aria-selected="true">PROPFIND</button>
+        <button role="tab" aria-controls="proppatch-panel"  id="proppatch-tab">PROPPATCH</button>
+        <button role="tab" aria-controls="put-panel"        id="put-tab">PUT</button>
+        <button role="tab" aria-controls="report-panel"     id="report-tab">REPORT</button>
+        <button role="tab" aria-controls="unlock-panel"     id="unlock-tab">UNLOCK</button>
+      </div>
+
+      <div class="tab-panels">
+        <div id="propfind-panel" role="tabpanel" aria-labeledby="propfind-tab">
+          <form id="propfind-form">
+            <label for="depth">Depth</label>
+            <select name="depth" id="depth">
+              <option>0</option>
+              <option>1</option>
+              <option>Infinity</option>
+            </select>
+
+            <!-- TODO replace with with a more dynamic form.
+                 Preferably, execute a <propfind><propname/></propfind>
+                 query, then provide a checklist of the known properties,
+                 with the option to add extra properties, and a checkbox if
+                 it should be an `allprop` or not
+
+                 TODO also, sniff xml namespaces from xml responses.
+                 If response declares a namespace, it's probably of use to
+                 us.
+              -->
+            <label for="request-body">Body</label>
+            <textarea name="request-body" id="request-body"
+                      style="font-family: monospace; font-size: 80%"
+                      placeholder="<propfind xmlns=&quot;DAV:&quot;><propname /></propfind>"
+                      rows="5"
+                      spellcheck="false"
+                      ><propfind xmlns="DAV:"><propname /></propfind></textarea>
+
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="get-panel" role="tabpanel" aria-labeledby="get-tab" hidden>
+          <form id="get-form">
+            <label for="accept">Accept</label>
+            <input id="accept" name="accept"
+                   placeholder="text/calendar;q=0.5, application/xhtml+xml" />
+            <label for="head">HEAD?</label>
+            <div><!-- Wrapping div to left align the checkbox -->
+              <input id="head" name="head" type="checkbox" />
+            </div>
+
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="proppatch-panel" role="tabpanel" aria-labeledby="proppatch-tab" hidden>
+          <form id="proppatch-form">
+            <div class="warning" style="grid-column: 1 / span 2">Not Implemented</div>
+            <label for="request-body">Body</label>
+            <pre>&lt;propertyupdate xmlns="DAV:"&gt;
+  &lt;remove&gt;
+    &lt;!-- &lt;D:displayname /&gt; --&gt;
+  &lt;/remove&gt;
+  &lt;set&gt;
+    &lt;!-- &lt;D:displayname&gt;New Displayname&lt;/D:displayname&gt; --&gt;
+  &lt;/set&gt;
+&lt;/propertyupdate&gt;</pre>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="put-panel" role="tabpanel" aria-labeledby="put-tab" hidden>
+          <form id="put-form">
+            <div class="warning" style="grid-column: 1 / span 2">Not Implemented</div>
+            <label for="content-type">Content-Type</label>
+            <input placeholder="image/png" id="content-type" name="content-type" />
+            <!-- Content start indicator -->
+
+            <label for="upload">Upload</label>
+            <input type="file" id="upload" name="upload" />
+            <!-- TODO file OR text indicator -->
+            <label for="content">Content</label>
+            <textarea id="content" name="content"></textarea>
+
+            <!-- content end indicator -->
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="report-panel" role="tabpanel" aria-labeledby="report-tab" hidden>
+          <form id="report-form">
+            <div class="warning">Not Implemented</div>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="options-panel" role="tabpanel" aria-labeledby="options-tab" hidden>
+          <form id="options-form">
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="delete-panel" role="tabpanel" aria-labeledby="delete-tab" hidden>
+          <form id="delete-form">
+            <div class="warning" style="grid-column: 1 / span 2">Not Implemented</div>
+            <pre style="grid-column: 1 / span 2">Depth: Infinity</pre>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="mkcol-panel" role="tabpanel" aria-labeledby="mkcol-tab" hidden>
+          <form id="mkcol-form">
+            <div class="warning">Not Implemented</div>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="copy-panel" role="tabpanel" aria-labeledby="copy-tab" hidden>
+          <form id="copy-form">
+            <div class="warning">Not Implemented</div>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="lock-panel" role="tabpanel" aria-labeledby="lock-tab" hidden>
+          <form id="lock-form">
+            <div class="warning">Not Implemented</div>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="mkcalendar-panel" role="tabpanel" aria-labeledby="mkcalendar-tab" hidden>
+          <form id="mkcalendar-form">
+            <div class="warning">Not Implemented</div>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+        <div id="unlock-panel" role="tabpanel" aria-labeledby="unlock-tab" hidden>
+          <form id="unlock-form">
+            <div class="warning">Not Implemented</div>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+
+      </div><!-- class="tab-panels" -->
+    </div><!-- class="tabs" -->
+
+    <h3>Output</h3>
+    <details class="http-headers" open>
+      <summary>HTTP Headers</summary>
+      <dl id="http-headers"></dl>
+    </details>
+
+    <form id="xpath-form">
+      <label for="xpath">XPath</label>
+      <input id="xpath" name="xpath"
+             required="required"
+             placeholder="//D:response[substring(D:href, string-length(D:href) - 3) = '.png']" />
+      <button type="submit">Filter</button>
+    </form>
+
+    <p id="http-status"><em>No request yet done</em></p>
+    <div id="response-body"></div>
+
+  </body>
+</html>
