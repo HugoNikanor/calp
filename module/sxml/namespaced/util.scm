@@ -27,6 +27,7 @@
         list))
 
 
+;;; DEPRECATED This works on a weird frankestein between our namespaced sxml, and a list based approach.
 (define (element-matches? target-el tree)
   (and (not (null? tree))
        (equal?
