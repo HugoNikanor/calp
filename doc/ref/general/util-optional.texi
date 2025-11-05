@@ -18,3 +18,8 @@ Provided by the module @code{(hnh util optional)}.
 @deftp {Lens} just*
 Lens which focuses the value of @code{just} fields.
 @end deftp
+
+@defun unjust opt [dflt]
+Return the value of the optional @var{opt}, or @var{dflt} if there is
+nothing there.
+@end defun
