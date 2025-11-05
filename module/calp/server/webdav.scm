@@ -521,7 +521,15 @@
   (values response
           (cond ((xml-element? body*) (with-output-to-string
                                         (lambda ()
-                                          (namespaced-sxml->xml body*)
+                                          (namespaced-sxml->xml
+                                           (xml-document
+                                            pi: (list (pi-element 'xml "version=\"1.0\" encoding=\"UTF-8\""))
+                                            root: body*)
+                                           namespaces: `((,xcal . IC)
+                                                         (,webdav . D)
+                                                         (,caldav . C)
+                                                         (,calp-namespace . calp)
+                                                         ))
                                           (newline))))
                 (else body*))))
 
