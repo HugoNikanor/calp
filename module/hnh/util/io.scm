@@ -22,6 +22,9 @@
 ;; 
 ;; propagates the return value of @var{thunk} upon successfully writing
 ;; the file, and @code{#f} otherwise.
+;; TODO allow custom template for tmp-file
+;; since vdir explicitly mentions *.tmp files
+;; TODO extended file attributes (xattr)?
 (define (with-atomic-output-to-file filename thunk)
   ;; copy to enusre writable string
   (define tmpfile (string-copy (string-append
