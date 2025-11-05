@@ -1,0 +1,42 @@
+@node Bimap
+@section Bi-directional table
+
+A bi-directional hash table, provided by @code{(hnh util bimap)}. The
+directions are named ``left'' and ``right'', where each key ``from the
+left'' is a value ``to the right'', and vice versa.
+Neither direction is ``primary''.
+
+Keys are compared by @code{equal?}.
+
+@defun bimap
+Construct a new, empty, bimap.
+@end defun
+
+@defun bimap? x
+@end defun
+
+@defun get-left map k [dflt]
+@defunx get-right map k [dflt]
+Retrieve value by key.
+@end defun
+
+@defun set-left! map k v
+@defunx set-right! map k v
+Insert or replace value by key.
+@end defun
+
+@defun remove-left! map k
+@defunx remove-right! map k
+Remove entry from map.
+@end defun
+
+@defun bimap-clear! map
+Remove all entries from map.
+@end defun
+
+@defun bimap->list map [proc=cons]
+Construct a list from the bimap. The procedure will be called ``from
+the left'', meaning that @var{proc}s first value will be something
+usable as a key on the left, and its second value something usable as
+a key on the right.
+@end defun
