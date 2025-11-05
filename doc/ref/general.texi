@@ -12,6 +12,7 @@ of these can be useful in any project.
 @include general/io.texi
 @include general/bst.texi
 @include general/table.texi
+@include general/bimap.texi
 @include general/util-path.texi
 @include general/util-config.texi
 @include general/util-exceptions.texi
