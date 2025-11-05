@@ -9,7 +9,7 @@
   :use-module (calp namespaces)
   :use-module (vcomponent data-stores common)
   :use-module ((web uri) :select (string->uri))
-  :use-module ((vcomponent formats) :select (serializer))
+  :use-module ((vcomponent media-type) :select (serializer))
   :export (<calendar-collection-resource>
            calendar-collection-resource?
            make-resource
@@ -158,7 +158,7 @@
                200 (list ((xml caldav 'calendar-timezone)
                           (call-with-output-string
                             (lambda (port)
-                              ((serializer (@ (vcomponent formats ical) format))
+                              ((serializer (@ (vcomponent media-type text plain) format))
                                tz port))))))))
         (else
          (propstat 404 (list ((xml caldav 'calendar-timezone)))))))

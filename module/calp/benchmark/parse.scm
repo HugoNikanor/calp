@@ -4,6 +4,7 @@
   :use-module (glob)
   :use-module (statprof)
   :use-module (datetime)
+  :use-module (vcomponent media-type)
 
   :use-module ((srfi srfi-1) :select (concatenate))
   :use-module ((ice-9 ftw) :select (scandir))
@@ -30,7 +31,7 @@
        (display "All read\n")
        (map (lambda ( fullname)
               (let ((cal (call-with-input-file fullname
-                           (@@ (vcomponent formats ical parse) read-file))))
+                           (parser (@ (vcomponent media-type text calendar) format)))))
                 cal))
             all-calendar-files))))
 
@@ -39,7 +40,7 @@
      (lambda ()
        (display "Tokenized\n")
        (map (lambda (one-read)
-              (map (@@ (vcomponent formats ical parse) tokenize)
+              (map (@@ (vcomponent media-type text calendar parse) tokenize)
                    one-read))
             all-read))))
 
@@ -47,7 +48,7 @@
     (statprof
      (lambda ()
        (display "Parsed\n")
-       (map (@@ (vcomponent formats ical parse) parse) tokenized))))
+       (map (@@ (vcomponent media-type text calendar parse) parse) tokenized))))
 
   (format #t "~a files processed~%"
           (length parsed))

@@ -6,7 +6,7 @@
   :use-module (sxml namespaced)
   :use-module (hnh util)
   :use-module (hnh util table)
-  :use-module (vcomponent formats)
+  :use-module (vcomponent media-type)
   :use-module (vcomponent data-stores common)
   :export (<calendar-object-resource>
            calendar-object-resource?
@@ -50,11 +50,13 @@
 ;;; TODO gather this set from the module system
 (define content-types
   (alist->table
-   (list
-    (cons 'text/calendar             (@ (vcomponent formats ical) format))
-    (cons 'application/calendar+xml  (@ (vcomponent formats xcal) format))
-    (cons 'application/calendar+json (@ (vcomponent formats jcal) format))
-    )))
+   (map (lambda (media-type)
+          (cons (string->symbol (format #f "~a/~a" (car media-type) (cdr media-type)))
+                (module-ref (resolve-interface `(vcomponent media-type ,@media-type))
+                            'format)))
+        '((text calendar)
+          (application calendar+xml)
+          (application calendar+json)))))
 
 (define-method (content-type (resource <calendar-object-resource>) headers)
   "text/calendar")

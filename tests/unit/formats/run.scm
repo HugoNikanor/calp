@@ -11,9 +11,8 @@
   :use-module (rnrs io ports)
   :use-module (datetime)
   :use-module (vcomponent create)
-  :use-module ((vcomponent formats ical) :prefix #{ics:}#)
-  :use-module ((vcomponent formats xcal) :prefix #{xcs:}#)
-  :use-module ((vcomponent formats sxcal) :prefix #{sxcs:}#)
+  :use-module ((vcomponent media-type text plain) :prefix #{ics:}#)
+  :use-module ((vcomponent media-type application calendar+xml) :prefix #{xcs:}#)
   :use-module ((vcomponent) :select (vcomponent-equal?))
   :use-module (sxml namespaced)
   :use-module ((calp namespaces) :select (xcal))
@@ -111,19 +110,6 @@
    serialize: ics:serialize
    parse: ics:deserialize))
 
-;; (test-group "sxCalendar"
-;;   (run-test
-;;    "sxCalendar" "target.sxml"
-;;    serialize:
-;;    (lambda (ev p)
-;;      (pretty-print
-;;       (namespaced-sxml->sxml
-;;        ((@@ (vcomponent formats sxcal) serialize/object) ev)
-;;        `((,xcal . xcal)))
-;;       p))
-;;    ;; TODO parse
-;;    ))
-
 (test-group "xCalendar"
   (run-test
    "xCalendar" "target.xml"
@@ -137,15 +123,12 @@
 
 
 
-'((vcomponent formats xcal)
-  (vcomponent formats xcal output)
-  (vcomponent formats xcal parse)
-  (vcomponent formats xcal types)
+'((vcomponent media-type application calendar+xml)
+  (vcomponent media-type application calendar+xml output)
+  (vcomponent media-type application calendar+xml parse)
+  (vcomponent media-type application calendar+xml types)
 
-  (vcomponent formats sxcal)
-
-  (vcomponent formats ical)
-  (vcomponent formats ical output)
-  (vcomponent formats ical parse)
-  ; (vcomponent formats ical types)
+  (vcomponent media-type text calendar)
+  (vcomponent media-type text calendar output)
+  (vcomponent media-type text calendar parse)
   )

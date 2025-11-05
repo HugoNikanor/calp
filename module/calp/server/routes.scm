@@ -33,7 +33,6 @@
   :use-module (vcomponent)
   :use-module (vcomponent util search)
   :use-module (datetime)
-  :use-module (vcomponent formats ical output)
 
   :use-module (calp util config)
   :use-module (calp html view calendar)

@@ -1,4 +1,9 @@
-(define-module (vcomponent formats common types)
+;;; Commentary:
+;;; This file does NOT declare a media type, but instead contains
+;;; common operation for calendar types.
+;;; Code:
+
+(define-module (vcomponent media-type types)
   :use-module (hnh util)
   :use-module (hnh util exceptions)
   :use-module (hnh util table)
@@ -19,7 +24,7 @@
   :export (
            default-types default-type
            apparent-types apparent-type
-                      ))
+           ))
 
 
 ;;; Table mapping field names to their default types.

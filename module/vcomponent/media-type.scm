@@ -1,4 +1,4 @@
-(define-module (vcomponent formats)
+(define-module (vcomponent media-type)
   :use-module (hnh util object)
   :export (calendar-data-format
            calendar-data-format?

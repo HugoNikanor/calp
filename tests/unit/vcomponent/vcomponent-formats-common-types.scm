@@ -3,7 +3,7 @@
   :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module (hnh util table)
-  :use-module (vcomponent formats common types)
+  :use-module (vcomponent media-types types)
   :use-module (web uri)
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)
@@ -42,4 +42,4 @@
   ;; TODO maybe some more oddball types?
   )
 
-'((vcomponent formats common types))
+'((vcomponent media-type types))

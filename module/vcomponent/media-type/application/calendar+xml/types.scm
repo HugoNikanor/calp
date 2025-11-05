@@ -1,4 +1,4 @@
-(define-module (vcomponent formats xcal types)
+(define-module (vcomponent media-type application calendar+xml types)
   :use-module (hnh util)
   :use-module (hnh util table)
   :use-module (datetime)
@@ -44,7 +44,7 @@
      (hashq-set! sxml-writers simple-type
                  (lambda (p v)
                    ((xml xcal (downcase-symbol simple-type))
-                    (((@ (vcomponent formats ical types) get-writer) simple-type)
+                    (((@ (vcomponent application text calendar types) get-writer) simple-type)
                      p v)))))
 
 (hashq-set! sxml-writers 'BOOLEAN write-boolean)

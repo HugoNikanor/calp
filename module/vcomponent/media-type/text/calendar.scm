@@ -1,9 +1,9 @@
-(define-module (vcomponent formats ical)
-  :use-module ((vcomponent formats ical output)
+(define-module (vcomponent media-type text calendar)
+  :use-module ((vcomponent media-type text calendar output)
                :select (vcomponent->icalendar))
-  :use-module ((vcomponent formats ical parse)
+  :use-module ((vcomponent media-type text calendar parse)
                :select (icalendar->vcomponent))
-  :use-module (vcomponent formats)
+  :use-module (vcomponent media-type)
   :export (format))
 
 (define format

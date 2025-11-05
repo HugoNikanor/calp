@@ -424,9 +424,11 @@ window.default_calendar='~a';"
           (div (@ (style "display:none !important;")
                    (id "xcal-data"))
                ,(lambda ()
-                  ((@ (vcomponent formats xcal) serialize)
-                   ((@ (vcomponent create) vcalendar)
-                    prodid: "TODO prodid"
-                    version: "2.0"
-                    (append regular repeating))
-                   (current-output-port)))))))))
+                  (let ((serializer ((@ (vcomponent media-type) serializer)
+                                     (@ (vcomponent media type application calendar+xml) format))))
+                    (serializer
+                     ((@ (vcomponent create) vcalendar)
+                      prodid: "TODO prodid"
+                      version: "2.0"
+                      (append regular repeating))
+                     (current-output-port))))))))))

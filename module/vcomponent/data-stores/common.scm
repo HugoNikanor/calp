@@ -214,4 +214,5 @@
                        `(vcomponent data-stores ,store-name))
                       'create-instance)))
 
-    (apply constructor (parse-query (uri-query uri)))))
+    (apply constructor (parse-query (uri-query uri)
+                                    decode-plus-to-space?: #f))))

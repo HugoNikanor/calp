@@ -17,5 +17,5 @@ Some of these values are still Calp specific.
 
 @include vcomponent/create.texi
 
-@include vcomponent/data-formats.texi
+@include vcomponent/media-types.texi
 @include vcomponent/data-stores.texi

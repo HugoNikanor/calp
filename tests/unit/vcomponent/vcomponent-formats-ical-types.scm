@@ -2,7 +2,7 @@
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
-  :use-module ((vcomponent formats ical parse)
+  :use-module ((vcomponent media-type text calendar parse)
                :select (get-parser))
   :use-module (hnh util table)
   :use-module ((datetime) :select (date time datetime)))
@@ -140,4 +140,4 @@
 
 ;; TODO
 
-'((vcomponent formats ical parse))
+'((vcomponent media-type text calendar parse))

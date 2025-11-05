@@ -1,0 +1,48 @@
+@node Calendar Media Types
+@section Calendar Media Types
+
+Media types are the serialization formats for components.
+The primary serialization format is text/calendar, but many others
+exists, and new ones can fairly easily be added.
+
+Each available format should be included as
+@code{(vcomponent media-type @var{format-name} ...)}, where format
+name is the (preferably registered) media-type, split into symbols by
+the slash.
+
+@url{https://www.iana.org/assignments/media-types/media-types.xhtml}
+
+@c TODO specify if `serializer` is required or optional
+
+Each such module MUST export the symbol @code{format}, which MUST
+contain an instance of a @code{calendar-data-format}.
+
+@defun calendar-data-format
+@end defun
+
+@defun calendar-data-format? x
+@end defun
+
+@defun parser
+@end defun
+
+@defun serializer
+@end defun
+
+@subsection text/calendar
+RFC 5545
+
+@defvar format
+@end defvar
+
+@subsection application/calendar+xml
+RFC 6321
+
+@defvar format
+@end defvar
+
+@subsection application/calendar+json
+RFC 7265
+
+@defvar format
+@end defvar

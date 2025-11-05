@@ -8,8 +8,8 @@
 
 (use-modules (vcomponent)
              ((vcomponent type recurrence parse) :select (parse-recurrence-rule))
-             ((vcomponent formats xcal output) :select (vcomponent->sxcal ns-wrap))
-             ((vcomponent formats ical output) :select (component->ical-string))
+             ((vcomponent media-type application calendar+xml output) :select (vcomponent->sxcal ns-wrap))
+             ((vcomponent media-type text plain output) :select (component->ical-string))
              (vcomponent datetime)
              (datetime)
              ((datetime instance) :select (zoneinfo))

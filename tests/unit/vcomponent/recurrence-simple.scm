@@ -185,7 +185,7 @@
 
 ;;; TODO this should be part of the xCal tests
 ;; (test-assert "Test that xcal recur rules are parseable"
-;;   ((@@ (vcomponent formats xcal parse) handle-value)
+;;   ((@@ (vcomponent media-type application calendar+xml parse) handle-value)
 ;;    'recur
 ;;    'props-are-unused-for-recur
 ;;    '((freq "WEEKLY") (interval "1") (wkst "MO"))))

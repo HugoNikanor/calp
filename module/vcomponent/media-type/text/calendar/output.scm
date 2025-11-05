@@ -1,5 +1,5 @@
-(define-module (vcomponent formats ical output)
-  :use-module (vcomponent formats common types)
+(define-module (vcomponent media-type text calendar output)
+  :use-module (vcomponent media-type types)
   :use-module (vcomponent)
   :use-module (hnh util)
   :use-module (hnh util type)

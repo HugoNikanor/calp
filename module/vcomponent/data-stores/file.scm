@@ -17,7 +17,7 @@
   :use-module (vcomponent)
   :use-module (vcomponent data-stores common)
   :use-module (vcomponent type version)
-  :use-module (vcomponent formats)
+  :use-module (vcomponent media-type)
   :use-module ((vcomponent create) :select (vcalendar))
   :use-module (hnh util)
   :use-module (hnh util bimap)
@@ -126,14 +126,12 @@
   (define-values (media-type media-parameters)
     (car+cdr ((@ (web http) parse-header) 'content-type media)))
 
-  ;; TODO currently, we ignore the first half of the content type.
-  ;; This should be changed once data format modules are moved into a proper module hierarchy.
   (define media-module
-    (string->symbol (list-ref (string-split (symbol->string media-type) #\/) 1)))
+    (map string->symbol (string-split (symbol->string media-type) #\/)))
 
   (make <file-data-store>
     path: path
-    media: (module-ref (resolve-interface `(vcomponent formats ,media-module))
+    media: (module-ref (resolve-interface `(vcomponent media-type ,@media-module))
                        'format)))
 
 (define-method (initialize (self <file-internals>) args)
