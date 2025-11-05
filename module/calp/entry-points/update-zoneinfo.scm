@@ -23,11 +23,18 @@
     (print-arg-help opt-spec)
     (throw 'return))
 
-  (let* ((locations (list "/usr/libexec/calp/tzget"
-                          (path-append (xdg-data-home) "tzget")))
+  (let* ((locations (list
+                     ;; True install location. Should be configurable for package maintainers
+                     "/usr/libexec/calp/tzget"
+                     ;; Local install, should be moved to calp specific dir
+                     (path-append (xdg-data-home) "tzget")
+                     ;; Uninstalled execution.
+                     ;; We hope we are placed in a guile root directory,
+                     ;; and that we then run the correct tzget
+                     (path-append (getcwd) "scripts" "tzget")))
          (filename (or (find file-exists? locations)
-                       (scm-error 'missing-helper "update-zoneinfo"
-                                  (G_ "tzget not installed, please put it in one of ~a")
+                       (scm-error 'misc-error "update-zoneinfo"
+                                  (G_ "tzget not installed, please install it as one of ~a")
                                   (list locations)
                                   (list "tzget" locations))))
 
