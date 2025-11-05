@@ -59,9 +59,10 @@
   (modify container lens (const value)))
 
 ;;; get :: (l i, Lens l i) → i
-(define (get container lens)
+(define (get container . lenses)
   (call/ec (lambda (return)
-             (modify container lens return))))
+             (modify container (apply lens-compose lenses)
+                     return))))
 
 (define (traversed container lens)
   (define v '())

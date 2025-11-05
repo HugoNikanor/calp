@@ -19,7 +19,7 @@ arguments given.
 Like modify, but sets a fixed value.
 @end defun
 
-@defun get container lens
+@defun get container lens ...
 Get the value focused by lens. Only a single value can me focused.
 @end defun
 
