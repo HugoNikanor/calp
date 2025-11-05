@@ -25,6 +25,7 @@
       (nothing)))
 
 
+;;; TODO rewrite as macro, only evaluating dflt as needed
 (define* (unjust optional optional: dflt)
   (if (just? optional)
       (from-just optional)
