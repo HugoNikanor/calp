@@ -54,7 +54,10 @@
               constructor: (lambda (constructor typecheck)
                              (lambda (tag body)
                                (typecheck tag body)
-                               (constructor tag body))))
+                               (constructor tag body)))
+              serializer: (lambda (o) `(pi-element
+                                   ,(serialize (pi-tag o))
+                                   ,(serialize (pi-body o)))))
   (pi-tag  type: symbol?)
   (pi-body type: string?))
 
