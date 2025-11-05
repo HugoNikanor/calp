@@ -1,5 +1,5 @@
 (define-module (calp entry-points terminal)
-  :export (main)
+  :export (%summary main)
   :use-module (calp terminal)
   :use-module (vcomponent)
   :use-module (ice-9 getopt-long)
@@ -8,6 +8,9 @@
   :use-module (hnh util options)
   :use-module (calp translation)
   )
+
+(define %summary
+  (G_ "loads the calendars, and starts an interactive terminal interface."))
 
 (define options
   `((date (value #t) (single-char #\d)

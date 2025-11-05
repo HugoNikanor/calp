@@ -1,5 +1,5 @@
 (define-module (calp entry-points update-zoneinfo)
-  :export (main)
+  :export (%summary main)
   ;; :use-module (hnh util)
   :use-module (datetime)
   :use-module (srfi srfi-1)
@@ -12,6 +12,10 @@
   :use-module (ice-9 popen)
   :use-module (ice-9 format)
   :use-module (calp translation))
+
+(define %summary
+  (G_ "in theory downloads and updates our local
+zoneinfo database, but is currently broken."))
 
 (define opt-spec
   `((help (single-char #\h) (description ,(G_ "Print this help.")))))

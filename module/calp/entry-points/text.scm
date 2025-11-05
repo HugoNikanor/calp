@@ -1,5 +1,5 @@
 (define-module (calp entry-points text)
-  :export (main)
+  :export (%summary main)
   :use-module (text flow)
   :use-module (ice-9 getopt-long)
   :use-module (hnh util io)
@@ -9,6 +9,9 @@
   :use-module (srfi srfi-88)
   )
 
+(define %summary
+  (G_ "formats and justifies what it's given on standard input,
+and writes it to standard output. Similar to this text."))
 
 (define options
   `((width (value #t) (single-char #\w)

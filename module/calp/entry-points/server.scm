@@ -14,8 +14,12 @@
   :use-module ((calp server socket) :select (setup-socket))
   :use-module ((web server) :select (run-server))
 
-  :export (main))
+  :export (%summary main))
 
+(define %summary
+  (G_ "starts an HTTP server which dynamically loads and
+displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs
+the same output code as <b>html</b>. While the <i>/calendar/{uid}.ics</i> emits text/calendar."))
 
 (define options
   `((port (value #t) (single-char #\p)

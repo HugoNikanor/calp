@@ -15,9 +15,11 @@
   :use-module (calp webdav resource)
   :use-module (calp webdav resource virtual)
   :use-module ((calp webdav builder) :select (build-webdav-resource-tree))
-  :export (main))
+  :export (%summary main))
 
 
+(define %summary
+  (G_ "--config <i>file</i>, starts the sample webdav server"))
 
 ;; Resource tree declaration, MUST be set in the user supplied configuration file
 (define-config webdav-resources #f

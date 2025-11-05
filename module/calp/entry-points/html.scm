@@ -22,9 +22,11 @@
   :use-module ((xdg basedir) :prefix xdg-)
   :use-module (calp translation)
 
-  :export (main)
+  :export (main %summary)
   )
 
+(define %summary
+  (G_ "reads calendar files from disk, and writes them to static HTML files."))
 
 (define opt-spec
   `((from (value #t) (single-char #\F)

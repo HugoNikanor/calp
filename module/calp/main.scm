@@ -92,16 +92,14 @@ unix or TCP socket.<br/>
 ;; Header for following list of modes of operation
     "<center><b>" (G_ "Modes") "</b></center>
 <br/><br/>"
-    (G_ "<p><b>html</b> reads calendar files from disk, and writes them to static HTML files.</p>")
-    (G_ "<p><b>term</b> loads the calendars, and starts an interactive terminal interface.</p>")
-    (G_ "<p><b>text</b> formats and justifies what it's given on standard input,
-and writes it to standard output. Similar to this text.</p>")
-    (G_ "<p><b>server</b> starts an HTTP server which dynamically loads and
-displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs
-the same output code as <b>html</b>. While the <i>/calendar/{uid}.ics</i> emits text/calendar.</p>")
-    (G_ "<p><b>update-zoneinfo</b> in theory downloads and updates our local
-zoneinfo database, but is currently broken.</p>")
-    (G_ "<p><b>webdav</b> --config <i>file</i>, starts the sample webdav server</p>")
+
+    (string-concatenate
+     (map (lambda (module)
+            (format #f "<p><b>~a</b> ~a</p>"
+                    (last (module-name module))
+                    (module-ref module '%summary "")))
+          entry-points))
+
     "<hr/><br/>"
     ;; Header for list of available flags.
     ;; Actual list is auto generated elsewhere.
