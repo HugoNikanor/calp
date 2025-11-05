@@ -53,6 +53,7 @@
    (list
     (cons 'text/calendar             (@ (vcomponent formats ical) format))
     (cons 'application/calendar+xml  (@ (vcomponent formats xcal) format))
+    (cons 'application/calendar+json (@ (vcomponent formats jcal) format))
     )))
 
 (define-method (content-type (resource <calendar-object-resource>) headers)
