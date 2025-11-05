@@ -3,9 +3,10 @@
   :use-module (ice-9 control)
   :use-module (ice-9 curried-definitions)
   :use-module (oop goops)
+  :use-module (hnh util optional)
   :export (modify
            set
-           get
+           get get/preview
 
            identity-lens
            compose-lens
@@ -63,6 +64,15 @@
   (call/ec (lambda (return)
              (modify container (apply lens-compose lenses)
                      return))))
+
+;;; Alternative get implementation for cases when the
+;;; escape continuation might not be invoked (see `just*`).
+;;; This is basically a poor mans traversal
+(define (get/preview container . lenses)
+  (call/ec (lambda (return)
+             (modify container (apply lens-compose lenses)
+                     (compose return just))
+             (nothing))))
 
 (define (traversed container lens)
   (define v '())

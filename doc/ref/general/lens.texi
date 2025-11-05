@@ -23,6 +23,13 @@ Like modify, but sets a fixed value.
 Get the value focused by lens. Only a single value can me focused.
 @end defun
 
+@defun get/preview container lens ...
+A poor persons traversal, focusing zero or one event.
+
+If a value was focused, return @code{(just value)}, otherwise return
+@code{(nothing)}. See @code{just*} for a use case.
+@end defun
+
 @defun traversed container lens
 Similar to @code{get}, but returns a list of all focused elements.
 
