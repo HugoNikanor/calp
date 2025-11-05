@@ -537,9 +537,7 @@
 (define (uniqx = lst)
   (cond ((null? lst) lst)
         ((null? (cdr lst)) lst)
-        ((and (pair? lst)
-              (= (car lst) (cadr lst)))
-         (uniqx = (cons (car lst) (cddr lst))))
+        ((= (car lst) (cadr lst)) (uniqx = (cdr lst)))
         (else (cons (car lst)
                     (uniqx = (cdr lst))))))
 
