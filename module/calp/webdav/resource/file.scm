@@ -32,6 +32,8 @@
   pre: (ensure string?))
 
 (define-config xattr-property-prefix
+  ;; TODO is this evaluated at time of use, or time of define?
+  ;; Its only useful if it's at time of use.
   (string-append (xattr-prefix) ".webdav")
   pre: (ensure string?))
 
@@ -134,7 +136,7 @@
                                        (car pair)))))
                         (children resource))))))))))
 
-(define-method (content (self <file-resource>))
+(define-method (content (self <file-resource>) headers)
   (case (stat:type (lstat (path self)))
     ((regular) (call-with-input-file (path self)
                  get-bytevector-all binary: #t))
@@ -142,7 +144,7 @@
     ((directory)
      (cond ((get-child-by-name! self "index.html")
             (lambda (r) (and r (not (collection? r))))
-            => content)
+            => (lambda (v) (content v headers)))
            (else (directory-listing self))))
     (else => (lambda (type)
                (throw 'http 403 (format #f "Can't access content of ~s files" type))))))
@@ -185,6 +187,7 @@
                   follow-symlinks?: #f)
        => utf8->string)
       (else
+       ;; TODO actually reference a propper mime database
        (case (string->symbol (last (string-split (path self) #\.)))
          ((txt)  "text/plain; charset=utf-8")
          ((html) "text/html; charset=utf-8")
@@ -193,13 +196,13 @@
     ((directory) "text/html; charset=utf-8")
     (else #f)))
 
-(define-method (set-contenttype! (self <file-resource>) value)
+(define-method (set-getcontenttype! (self <file-resource>) value)
   (lambda ()
    (set-xattr! (path self) (string-append (xattr-prefix) ".mime")
                (string->utf8 value)
                follow-symlinks?: #f)))
 
-(define-method (remove-contenttype! (self <file-resource>))
+(define-method (remove-getcontenttype! (self <file-resource>))
   (lambda ()
    (remove-xattr! (path self) (string-append (xattr-prefix) ".mime")
                   follow-symlinks?: #f)))

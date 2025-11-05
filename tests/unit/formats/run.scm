@@ -1,3 +1,5 @@
+;;; TODO rewrite this to new format system
+
 (define-module (test formats run)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-64)
@@ -35,17 +37,14 @@
   (list
    (vevent
     attach:
-    (as-list
-     ;; TODO this creates a vline with a vline as its value
-     (list (with-parameters fmttype: "text/plain"
-                            encoding: "BASE64"
-                            value: "BINARY"
-                            (-> "\n"
-                                (string->bytevector
-                                 (make-transcoder (utf-8-codec)))))))
+    (list (with-parameters fmttype: "text/plain"
+                           encoding: "BASE64"
+                           value: "BINARY"
+                           (string->bytevector
+                            "\n" (make-transcoder (utf-8-codec)))))
     ;; categories: '("a" "b")
     class: 'PUBLIC
-    comment: (as-list (list "A comment"))
+    comment: (list "A comment")
     description: "Descrition of the event"
     description: (with-parameters language: "sv" "Beskrivning av händelsen")
     ;; geo: (geo y: 10 x: 20)
@@ -112,18 +111,18 @@
    serialize: ics:serialize
    parse: ics:deserialize))
 
-(test-group "sxCalendar"
-  (run-test
-   "sxCalendar" "target.sxml"
-   serialize:
-   (lambda (ev p)
-     (pretty-print
-      (namespaced-sxml->sxml
-       ((@@ (vcomponent formats sxcal) serialize/object) ev)
-       `((,xcal . xcal)))
-      p))
-   ;; TODO parse
-   ))
+;; (test-group "sxCalendar"
+;;   (run-test
+;;    "sxCalendar" "target.sxml"
+;;    serialize:
+;;    (lambda (ev p)
+;;      (pretty-print
+;;       (namespaced-sxml->sxml
+;;        ((@@ (vcomponent formats sxcal) serialize/object) ev)
+;;        `((,xcal . xcal)))
+;;       p))
+;;    ;; TODO parse
+;;    ))
 
 (test-group "xCalendar"
   (run-test
@@ -148,4 +147,5 @@
   (vcomponent formats ical)
   (vcomponent formats ical output)
   (vcomponent formats ical parse)
-  (vcomponent formats ical types))
+  ; (vcomponent formats ical types)
+  )

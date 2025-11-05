@@ -15,6 +15,7 @@
   :use-module (hnh util)
   :use-module (hnh util env)
   :use-module (datetime)
+  :use-module ((ice-9 regex) :select (string-match match:substring))
   :export (<resource>
            resource?
            parent
@@ -98,7 +99,7 @@
 (define-generic children)
 (define-generic collection?)
 
-(define-method (content (resource <resource>))
+(define-method (content (resource <resource>) headers)
   (if (collection? resource)
       (throw 'http 403)
       (throw 'http 500 (format #f "The given resource type failed to implement content: ~s" resource))))
@@ -109,8 +110,10 @@
   (throw 'http 405))
 
 (define-method (content-length (self <resource>))
-  (cond ((content self)
-         bytevector? => bytevector-length)
+  ;; TODO headers to content!
+  (cond ((content self '())
+         (lambda (x . _) (bytevector? x)) =>
+         (lambda (x . _) (bytevector-length x)))
         (else #f)))
 
 
@@ -161,9 +164,8 @@
   (typecheck value xml-element?)
 
   (cond ((lookup-live-property resource value)
-         ;; NOTE this drops any (xml) attributes from the value object
-         => (lambda (prop) (apply (property-setter-generator prop)
-                             resource (xml-element-children value))))
+         => (lambda (prop) ((property-setter-generator prop)
+                       resource value)))
         (else #f)))
 
 (define-generic get-dead-property)
@@ -210,6 +212,17 @@
          propstat-200? => identity)
         (else (get-live-property resource xml-tag))))
 
+(define-method (resource-class (c <resource>))
+  (propstat 200 (list ((xml calp-namespace 'resource-class)
+                       (let ((name (symbol->string (class-name (class-of c)))))
+                        (cond ((string-match "<([^>]*)>" name)
+                               => (lambda (m) (match:substring m 1)))
+                              (else name)))))))
+(define-method (set-resource-class! (r <resource>) _)
+  (throw 'protected-property))
+(define-method (remove-resource-class! (_ <resource>))
+  (throw 'protected-property))
+
 ;; Return an alist from xml-element objects without children,
 ;; to generic procedures returning that value.
 ;; SHOULD be extended by children, which append their result to this result
@@ -219,9 +232,13 @@
 ;;           specific-resource-properties))
 ;; @end example
 (define-method (live-properties (self <resource>))
-  (map (lambda (pair) (cons ((xml webdav (car pair)))
-                       (cdr pair)))
-       webdav-properties))
+  (append
+   (map (lambda (pair) (cons ((xml webdav (car pair)))
+                        (cdr pair)))
+        webdav-properties)
+   (list (cons ((xml calp-namespace 'resource-class))
+               (make-live-property resource-class set-resource-class! remove-resource-class!)))
+   ))
 
 
 
@@ -384,6 +401,7 @@
 (define-method (create-resource-copy!
                 (source <resource>) (destination <resource>) name)
   (let ((resource (create-resource! destination name)))
+    ;; TODO headers when getting source?
     (set-content! resource (content source) '())
     (for-each (lambda (prop) (set-property! resource prop))
               (dead-properties source))))

@@ -1,9 +1,9 @@
-(define-module (vcomponent recurrence display en)
+(define-module (vcomponent type recurrence display en)
   :use-module (hnh util)
-  :use-module (vcomponent recurrence internal)
+  :use-module (vcomponent type recurrence internal)
   :use-module (text util)
   :use-module (text numbers)
-  :use-module (vcomponent recurrence display common)
+  :use-module (vcomponent type recurrence display common)
   :use-module ((datetime) :select (time time->string
                                         datetime->string
                                         week-day-name))

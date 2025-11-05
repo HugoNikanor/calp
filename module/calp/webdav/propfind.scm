@@ -65,7 +65,7 @@
 
   (unless (tag-matches? sxml 'propfind webdav)
     (throw 'http 400
-           (format #f "Root of PROPFIND method must be a propfind element, got ~s"
+           (format #f "Root of PROPFIND method must be a DAV:propfind element, got ~s"
                    (with-output-to-string
                      (lambda () (namespaced-sxml->xml (xml-element-children sxml '())))))))
 

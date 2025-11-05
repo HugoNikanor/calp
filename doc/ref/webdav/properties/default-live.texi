@@ -22,11 +22,27 @@ All default setters indicate that the resource is protected.
 For information about protected resources, and how to implement live
 resources, see @ref{Implementing Properties}.
 
-@deftp  {GOOPS method} creationdate resource
-@deftpx {GOOPS method} set-creationdate! resource value
-@deftpx {GOOPS method} remove-creationdate! resource
-The default getter queries @code{creation-date}, which must return a
-datetime object. It is then formatted as expected.
+@c Macros for different namespaces, used with WebDAV property declarations.
+
+@macro nswebdav
+DAV:
+@end macro
+
+@macro nscaldav
+urn:ietf:params:xml:ns:caldav
+@end macro
+
+@macro nscalp
+http://hugo.hornquist.se/namespaces/calp
+@end macro
+
+@deftp {WebDAV property} @nswebdav{} creationdate
+    @deftp  {GOOPS method} creationdate resource
+    @deftpx {GOOPS method} set-creationdate! resource value
+    @deftpx {GOOPS method} remove-creationdate! resource
+    The default getter queries @code{creation-date}, which must return a
+    datetime object. It is then formatted as expected.
+    @end deftp
 @end deftp
 
 @deftp  {GOOPS method} displayname resource

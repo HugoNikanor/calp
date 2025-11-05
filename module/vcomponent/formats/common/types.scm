@@ -2,147 +2,109 @@
   :use-module (hnh util)
   :use-module (hnh util exceptions)
   :use-module (hnh util table)
-  :use-module ((web uri) :select (string->uri))
+  :use-module (web uri)
   :use-module (base64)
   :use-module (datetime)
+  :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
   :use-module (datetime timespec)
   :use-module (calp translation)
-  :export (get-parser))
-
-;; BINARY
-(define (parse-binary props value)
-  ;; p 30
-  (unless (string=? "BASE64" (table-get props 'ENCODING))
-    (warning (G_ "Binary field not marked ENCODING=BASE64")))
-
-  ;; For icalendar no extra whitespace is allowed in a
-  ;; binary field (except for line wrapping). This differs
-  ;; from xcal.
-  (base64-string->bytevector value))
-
-;; BOOLEAN
-(define (parse-boolean props value)
-  (cond
-   [(string=? "TRUE" value) #t]
-   [(string=? "FALSE" value) #f]
-   [else (warning (G_ "~a invalid boolean") value)]))
-
-;; CAL-ADDRESS ⇒ uri
-
-;; DATE
-(define (parse-date props value)
-  (parse-ics-date value))
-
-;; DATE-TIME
-(define (parse-datetime props value)
-  (define parsed (parse-ics-datetime value (table-get props 'TZID)))
-  ;; TODO store the original datetime value.
-  ;; This is needed since we convert it to local time,
-  ;; but we want the output to be the time stored in the database,
-  ;; Not whatever time the user happens to have
-  ;; Prevoisly, `props` was a mutable object, allowing us to interject
-  ;; properties here. This is however not the case since we switched
-  ;; to immutable tables.
-  ;; (hashq-set! props '-X-HNH-ORIGINAL parsed)
-  (get-datetime parsed))
-
-;; DURATION
-(define (parse-duration props value)
-  ((@ (vcomponent duration) parse-duration)
-   value))
-
-;; FLOAT
-;; Note that this is overly permissive, and flawed.
-;; Numbers such as @expr{1/2} is accepted as exact
-;; rationals. Some floats are rounded.
-(define (parse-float props value)
-  (string->number value))
+  :use-module (vcomponent type period)
+  :use-module ((datetime) :select (date? time? datetime?))
+  :use-module ((vcomponent type duration)   :select (duration?))
+  :use-module ((vcomponent type period)     :select (period?))
+  :use-module ((vcomponent type recurrence) :select (recur-rule?))
+  :use-module ((vcomponent type utc-offset) :select (utc-offset?))
+  :export (
+           default-types default-type
+           apparent-types apparent-type
+                      ))
 
 
-;; INTEGER
-(define (parse-integer props value)
-  (let ((n (string->number value)))
-    (unless (integer? n)
-      (warning (G_ "Non integer as integer")))
-    n))
+;;; Table mapping field names to their default types.
+;;; Field names are given in as symbols all uppercase
+;;; Types are given as symbols in all uppercase
+(define-once default-types
+  (make-parameter
+   (fold (lambda (entry default-types)
+           (let ((type fields (car+cdr entry)))
+             (fold (lambda (field default-types)
+                     (table-put default-types field type))
+                   default-types
+                   fields)))
+         (table)
+         `((DATE-TIME COMPLETED DTEND DUE DTSTART RECURRENCE-ID CREATED DTSTAMP
+                      LAST-MODIFIED ACKNOWLEDGED EXDATE)
+           (DURATION TRIGGER DURATION)
+           (PERIOD FREEBUSY)
 
-;; PERIOD
-(define (parse-period props value)
-  (let ((left right (apply values (string-split value #\/))))
-    ;; TODO timezones? VALUE=DATE?
-    (cons (parse-ics-datetime left)
-          ((if (memv (string-ref right 0)
-                  '(#\P #\+ #\-))
-               (@ (vcomponent duration) parse-duration)
-               parse-ics-datetime)
-           right))))
+           ;; General text types. Many of them have further confines on what
+           ;; is "valid" values, but no special types are required.
+           ;; Many of these are "extensible enums", which means that they
+           ;; have a number of pre-defined values, but allow extensions
+           ;; through future standards or user extensions.
+           (TEXT METHOD PRODID COMMENT DESCRIPTION LOCATION SUMMARY
+                 TZNAME CONTACT RELATED_TO UID CATEGORIES RESOURCES
+                 CLASS ACTION)
 
-;; RECUR
-(define (parse-recur props value)
-  ((@ (vcomponent recurrence parse) parse-recurrence-rule) value))
+           ;; special handling, but not in way which matters
+           (TEXT TZID)
 
-;; TEXT
-;; TODO quoted strings
-(define (parse-text props value)
-  (let loop ((rem (string->list value))
-             (str '())
-             (done '()))
-    (if (null? rem)
-        (cons (reverse-list->string str) done)
-        (case (car rem)
-          [(#\\)
-           (case (cadr rem)
-             [(#\n #\N) (loop (cddr rem) (cons #\newline str) done)]
-             [(#\; #\, #\\) => (lambda (c) (loop (cddr rem) (cons c str) done))]
-             [else => (lambda (c) (warning (G_ "Non-escapable character: ~a") c)
-                         (loop (cddr rem) str done))])]
-          [(#\,)
-           (loop (cdr rem) '() (cons (reverse-list->string str) done))]
-          [else
-           (loop (cdr rem) (cons (car rem) str) done)]))))
+           ;; Special handling
+           (TEXT REQUEST-STATUS VERSION)
 
+           ;; Strict enum types, could actually be validated here
+           (TEXT TRANSP PARTSTAT CALSCALE STATUS)
 
-;; TIME
-(define (parse-time props value)
-  ;; TODO time can have timezones...
-  (parse-ics-time value))
+           (UTC-OFFSET TZOFFSETFROM TZOFFSETTO)
 
-;; URI
-(define (parse-uri props value)
-  value)
+           (URI ATTACH TZURL URL)
 
-;; UTC-OFFSET
-(define (parse-utc-offset props value)
-  (make-timespec
-   (time
-    hour: (string->number (substring value 1 3))
-    minute: (string->number (substring value 3 5))
-    second: (if (= 7 (string-length value))
-                (string->number (substring value 5 7))
-                0))
-   ;; sign
-   (string->symbol (substring value 0 1))
-   #\z))
+           (INTEGER PERCENT-COMPLETE PRIORITY REPEAT SEQUENCE)
 
+           ;; Special handling
+           (FLOAT GEO)
 
-(define type-parsers (make-hash-table))
-(hashq-set! type-parsers 'BINARY parse-binary)
-(hashq-set! type-parsers 'BOOLEAN parse-boolean)
-(hashq-set! type-parsers 'CAL-ADDRESS parse-uri)
-(hashq-set! type-parsers 'DATE parse-date)
-(hashq-set! type-parsers 'DATE-TIME parse-datetime)
-(hashq-set! type-parsers 'DURATION parse-duration)
-(hashq-set! type-parsers 'FLOAT parse-float)
-(hashq-set! type-parsers 'INTEGER parse-integer)
-(hashq-set! type-parsers 'PERIOD parse-period)
-(hashq-set! type-parsers 'RECUR parse-recur)
-(hashq-set! type-parsers 'TEXT parse-text)
-(hashq-set! type-parsers 'TIME parse-time)
-(hashq-set! type-parsers 'URI parse-uri)
-(hashq-set! type-parsers 'UTC-OFFSET parse-utc-offset)
+           (RECUR RRULE)
 
-(define (get-parser type)
-  (or (hashq-ref type-parsers type #f)
-      (scm-error 'misc-error "get-parser" (G_ "No parser for type ~a")
-                 (list type) #f)))
+           (CAL-ADDRESS ORGANIZER ATTENDEE)))))
+
+;;; Get defalut type for the given field name
+(define (default-type key)
+  (table-get (default-types) key))
+
+;;; Assoc list from Scheme type predicates, to ical type names.
+(define-once apparent-types
+  (make-parameter
+   (list
+    (cons (@ (scheme base) bytevector?)     'BINARY)
+    (cons boolean?        'BOOLEAN)
+    (cons (lambda (v) (and (uri? v) (eq? 'mailto (uri-scheme v))))
+                          'CAL-ADDRESS)
+    (cons date?           'DATE)
+    (cons datetime?       'DATE-TIME)
+    (cons duration?       'DURATION)
+    (cons (lambda (v) (and (rational? v) (inexact? v)))
+                          'FLOAT)
+    (cons exact-integer?  'INTEGER)
+    (cons period?         'PERIOD)
+    (cons recur-rule?     'RECUR)
+    (cons string?         'TEXT)
+    (cons time?           'TIME)        ; TODO utc
+    (cons (lambda (v) (and (uri? v) (not (eq? 'mailto (uri-scheme v)))))
+                          'URI)
+    (cons utc-offset?     'UTC-OFFSET)
+
+    ;; unknown? MUST NOT be added here.
+    ;; If it where added here, it would be treated as an actual type,
+    ;; and the mechanism to ensure that the VALUE parameter is
+    ;; preserved would break.
+    )))
+
+;;; Get the apparent iCalendar type of the given Scheme value.
+(define (apparent-type value)
+  (let loop ((pairs (apparent-types)))
+    (cond ((null? pairs) #f)
+          (((caar pairs) value) (cdar pairs))
+          (else (loop (cdr pairs))))))

@@ -16,6 +16,7 @@
 (test-assert "Original table is unchanged"
   (null? (table->list (table))))
 
+;;; TODO I'm pretty sure order actually matters
 (test-equal "Insertion order doesn'(table) matter, when serializing to lists"
   (-> (table)
       (table-put 'a 10)
@@ -26,7 +27,7 @@
       (table-put 'a 10)
       table->list))
 
-;;; TODO this doesn'(table) work, since the trees don'(table) rebalance
+;;; TODO this doesn't work, since the trees don't rebalance
 (test-expect-fail "Equivalent tables are equal")
 (test-equal "Equivalent tables are equal"
   (-> (table)

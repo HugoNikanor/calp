@@ -1,11 +1,11 @@
-(define-module (vcomponent recurrence parse)
+(define-module (vcomponent type recurrence parse)
   :duplicates (last)                   ; Replace @var{count}
 
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (datetime)
   :use-module (srfi srfi-26)
-  :use-module (vcomponent recurrence internal)
+  :use-module (vcomponent type recurrence internal)
   :use-module (hnh util)
   :use-module (hnh util exceptions)
   :use-module (ice-9 match)
@@ -102,13 +102,13 @@
             (else o)))))
 
      ;; obj
-     (recur-rule freq: (@ (vcomponent recurrence internal) freq-placeholder))
+     (recur-rule freq: (@ (vcomponent type recurrence internal) freq-placeholder))
 
      ;; ((key val) ...)
      (map (cut string-split <> #\=)
           (string-split str #\;))))
 
-  (when (eq? (@ (vcomponent recurrence internal) freq-placeholder)
+  (when (eq? (@ (vcomponent type recurrence internal) freq-placeholder)
              (freq result))
     (scm-error 'wrong-type-arg
                "parse-recurrence-rule"

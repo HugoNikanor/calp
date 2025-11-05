@@ -1,6 +1,9 @@
 @node VComponent Create
 @section Vcomponent Create
 
+@c TODO most of this is probably outdated after a few rewrites. See
+@c over everything, and figure out what to keep.
+
 Procedures for declarativly creating components (instead of the
 primitive procedural API).
 

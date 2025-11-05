@@ -1,0 +1,4 @@
+@node Calendar Object
+@subsection Calendar Object
+
+@code{(calp webdav resource calendar-object)}

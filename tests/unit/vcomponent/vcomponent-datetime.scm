@@ -13,9 +13,9 @@
   :use-module (hnh util lens)
   :use-module ((datetime zic) :select (read-zoneinfo))
   :use-module (datetime timespec)
-  :use-module ((vcomponent) :select (vcomponent-equal? extract prop))
+  :use-module ((vcomponent) :select (vcomponent-equal? extract1 prop1))
   :use-module (vcomponent datetime)
-  :use-module ((vcomponent recurrence) :select (recur-rule))
+  :use-module ((vcomponent type recurrence) :select (recur-rule))
   :use-module ((vcomponent create) :select (vevent vtimezone daylight standard)))
 
 
@@ -249,7 +249,7 @@
                        (vevent dtstart: (date year: 2020 month: jan day: 1))
                        (vevent dtstart: (date year: 2021 month: dec day: 31))
                        (vevent dtstart: (date year: 2022 month: jan day: 1)))
-                 date< (extract 'DTSTART))
+                 date< (extract1 'DTSTART))
                 list->stream
                 (events-between start end)
                 stream->list
@@ -258,8 +258,8 @@
       (for-each
        (lambda (name a b)
          (test-equal name
-           (prop a 'DTSTART)
-           (prop b 'DTSTART)
+           (prop1 a 'DTSTART)
+           (prop1 b 'DTSTART)
            ))
        (map number->string (iota 10))
        expected

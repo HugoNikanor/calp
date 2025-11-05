@@ -1,0 +1,19 @@
+@node Calendar Collection
+@subsection Calendar Collection
+
+@code{(calp webdav resource calendar-collection)}
+
+@deftp {WebDAV property} @nscaldav{} calendar-description
+@end deftp
+
+@deftp {WebDAV property} @nscaldav{} calendar-timezone
+@end deftp
+
+@deftp {WebDAV property} @nscaldav{} supported-calendar-component-set
+@end deftp
+
+@deftp {WebDAV property} @nscaldav{} supported-calendar-data
+@end deftp
+
+@deftp {WebDAV property} @nscaldav{} supported-collation-set
+@end deftp

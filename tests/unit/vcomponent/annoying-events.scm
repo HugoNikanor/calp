@@ -14,7 +14,7 @@
   :use-module ((datetime) :select (date date+ date<))
   :use-module ((hnh util) :select (set!))
   :use-module (vcomponent create)
-  :use-module (vcomponent base))
+  :use-module (vcomponent))
 
 
 (define start (date year: 2021 month: 11 day: 01))
@@ -48,7 +48,7 @@
 
 (test-equal "incorrect handling of non-contigious"
   '("A" #; "C")
-  (map (extract 'SUMMARY)
+  (map (extract1 'SUMMARY)
        (stream->list
          (filter-sorted-stream
            (lambda (ev) (event-overlaps? ev start (date+ start (date day: 8))))
@@ -56,7 +56,7 @@
 
 (test-equal "correct handling of non-contigious"
   '("A" "C")
-  (map (extract 'SUMMARY)
+  (map (extract1 'SUMMARY)
        (stream->list
          (stream-filter
            (lambda (ev) (event-overlaps? ev start end))
@@ -66,5 +66,5 @@
 
 
 
-'((vcomponent base)
+'((vcomponent)
   (vcomponent datetime))

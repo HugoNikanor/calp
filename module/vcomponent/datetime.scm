@@ -2,12 +2,14 @@
   :use-module (srfi srfi-1)
   :use-module ((srfi srfi-41) :select (stream-filter))
   :use-module ((srfi srfi-41 util) :select (get-stream-interval))
-  :use-module (vcomponent base)
+  :use-module (vcomponent)
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (datetime zic)
   :use-module (hnh util)
-  :use-module ((vcomponent recurrence generate)
+  :use-module (hnh util lens)
+  :use-module (hnh util optional)
+  :use-module ((vcomponent type recurrence generate)
                :select (final-event-occurence))
   :use-module (ice-9 curried-definitions)
 
@@ -43,21 +45,21 @@
 (define (event-overlaps? event begin end)
   "Returns if the event overlaps the timespan.
 Event must have the DTSTART and DTEND protperty set."
-  (timespan-overlaps? (prop event 'DTSTART)
-                      (or (prop event 'DTEND) (prop event 'DTSTART))
+  (timespan-overlaps? (prop1 event 'DTSTART)
+                      (or (prop1 event 'DTEND) (prop1 event 'DTSTART))
                       begin end))
 
 (define (overlapping? event-a event-b)
-  (timespan-overlaps? (prop event-a 'DTSTART)
-                      (or (prop event-a 'DTEND)
-                          (if (date? (prop event-a 'DTSTART))
-                              (date+ (prop event-a 'DTSTART) (date day: 1))
-                              (prop event-a 'DTSTART)))
-                      (prop event-b 'DTSTART)
-                      (or (prop event-b 'DTEND)
-                          (if (date? (prop event-b 'DTSTART))
-                              (date+ (prop event-b 'DTSTART) (date day: 1))
-                              (prop event-b 'DTSTART)))))
+  (timespan-overlaps? (prop1 event-a 'DTSTART)
+                      (or (prop1 event-a 'DTEND)
+                          (if (date? (prop1 event-a 'DTSTART))
+                              (date+ (prop1 event-a 'DTSTART) (date day: 1))
+                              (prop1 event-a 'DTSTART)))
+                      (prop1 event-b 'DTSTART)
+                      (or (prop1 event-b 'DTEND)
+                          (if (date? (prop1 event-b 'DTSTART))
+                              (date+ (prop1 event-b 'DTSTART) (date day: 1))
+                              (prop1 event-b 'DTSTART)))))
 
 (define (event-contains? ev date/-time)
   "Does event overlap the date that contains time."
@@ -66,24 +68,24 @@ Event must have the DTSTART and DTEND protperty set."
     (event-overlaps? ev start end)))
 
 (define (event-zero-length? ev)
-  (and (datetime? (prop ev 'DTSTART))
-       (not (prop ev 'DTEND))))
+  (and (datetime? (prop1 ev 'DTSTART))
+       (not (prop1 ev 'DTEND))))
 
 (define (ev-time<? a b)
-  (date/-time<? (prop a 'DTSTART)
-                (prop b 'DTSTART)))
+  (date/-time<? (prop1 a 'DTSTART)
+                (prop1 b 'DTSTART)))
 
 ;; Returns length of the event @var{e}, as a time-duration object.
 (define (event-length e)
-  (if (not (prop e 'DTEND))
-      (if (date? (prop e 'DTSTART))
+  (if (not (prop1 e 'DTEND))
+      (if (date? (prop1 e 'DTSTART))
           (date day: 1)
           (datetime))
-      ((if (date? (prop e 'DTSTART))
+      ((if (date? (prop1 e 'DTSTART))
            date-difference
            datetime-difference)
-       (prop e 'DTEND)
-       (prop e 'DTSTART))))
+       (prop1 e 'DTEND)
+       (prop1 e 'DTSTART))))
 
 ;;
 ;; |-----|      extent of event
@@ -93,31 +95,31 @@ Event must have the DTSTART and DTEND protperty set."
 ;; 
 ;; Returns the length of the interval (X).
 (define (event-length/clamped start-date end-date e)
-  (let ((end (or (prop e 'DTEND)
-                 (if (date? (prop e 'DTSTART))
-                     (date+ (prop e 'DTSTART) (date day: 1))
-                     (prop e 'DTSTART)))))
-    (if (date? (prop e 'DTSTART))
+  (let ((end (or (prop1 e 'DTEND)
+                 (if (date? (prop1 e 'DTSTART))
+                     (date+ (prop1 e 'DTSTART) (date day: 1))
+                     (prop1 e 'DTSTART)))))
+    (if (date? (prop1 e 'DTSTART))
         (date-difference (date-min (date+ end-date (date day: 1))
                                    end)
                          (date-max start-date
-                                   (prop e 'DTSTART)))
+                                   (prop1 e 'DTSTART)))
         (datetime-difference (datetime-min (datetime date: (date+ end-date (date day: 1)))
                                            end)
                              (datetime-max (datetime date: start-date)
-                                           (prop e 'DTSTART))))))
+                                           (prop1 e 'DTSTART))))))
 
 ;; Returns the length of the part of @var{e} which is within the day
 ;; starting at the time @var{start-of-day}.
 ;; currently the secund argument is a date, but should possibly be changed
 ;; to a datetime to allow for more explicit TZ handling?
 (define (event-length/day date e)
-  (if (not (prop e 'DTEND))
-      (if (date? (prop e 'DTSTART))
+  (if (not (prop1 e 'DTEND))
+      (if (date? (prop1 e 'DTSTART))
           (time hour: 24)
           (time))
-      (let ((start (prop e 'DTSTART))
-            (end (prop e 'DTEND)))
+      (let ((start (prop1 e 'DTSTART))
+            (end (prop1 e 'DTEND)))
         (cond [(date= date (as-date start) (as-date end))
                (time- (as-time end) (as-time start))]
               ;; Starts today, end in future day
@@ -139,16 +141,17 @@ Event must have the DTSTART and DTEND protperty set."
 ;; For practical purposes, an event being long means that it shouldn't be rendered as a part
 ;; of a regular day.
 (define (long-event? ev)
-  (if (date? (prop ev 'DTSTART))
+  (if (date? (prop1 ev 'DTSTART))
       #t
-      (aif (prop ev 'DTEND)
+      (aif (prop1 ev 'DTEND)
            (datetime<= (datetime day: 1)
-                       (datetime-difference it (prop ev 'DTSTART)))
+                       (datetime-difference
+                        it (prop1 ev 'DTSTART)))
            #f)))
 
 (define (really-long-event? ev)
-  (let ((start (prop ev 'DTSTART))
-        (end (prop ev 'DTEND)))
+  (let ((start (prop1 ev 'DTSTART))
+        (end (prop1 ev 'DTEND)))
     (and end (if (date? start)
                  (date< (date+ start (date day: 1)) end)
                  (datetime< (datetime day: 1)
@@ -158,11 +161,11 @@ Event must have the DTSTART and DTEND protperty set."
 ;; DTEND of the last instance of this event.
 ;; event → (or datetime #f)
 (define (final-spanned-time event)
-  (if (not ((@ (vcomponent recurrence) repeating?) event))
-      (or (prop event 'DTEND) (prop event 'DTSTART))
+  (if (not ((@ (vcomponent type recurrence) repeating?) event))
+      (or (prop1 event 'DTEND) (prop1 event 'DTSTART))
       (let ((final (final-event-occurence event)))
         (if final
-            (aif (prop event 'DTEND)
+            (aif (prop1 event 'DTEND)
                  (datetime+ (as-datetime final) (as-datetime it))
                  (as-datetime final))
             #f))))
@@ -171,14 +174,14 @@ Event must have the DTSTART and DTEND protperty set."
 (define (events-between start-date end-date events)
   (define (overlaps e)
     (timespan-overlaps? start-date (date+ end-date (date day: 1))
-                        (prop e 'DTSTART) (or (prop e 'DTEND)
-                                              (prop e 'DTSTART))))
+                        (prop1 e 'DTSTART) (or (prop1 e 'DTEND)
+                                               (prop1 e 'DTSTART))))
 
   (stream-filter
    overlaps
    (get-stream-interval
     overlaps
-    (lambda (e) (not (date< end-date (as-date (prop e 'DTSTART)))))
+    (lambda (e) (not (date< end-date (as-date (prop1 e 'DTSTART)))))
     events)))
 
 
@@ -189,11 +192,11 @@ Event must have the DTSTART and DTEND protperty set."
 ;; by checking if zone-entry-until isn't before our DTSTART.
 (define ((relevant-zone-entry? event) zone-entry)
   (aif (zone-entry-until zone-entry)
-       (datetime<? (as-datetime (prop event 'DTSTART)) it)
+       (datetime<? (as-datetime (prop1 event 'DTSTART)) it)
        #t))
 
 (define ((relevant-zone-rule? event) rule)
-  (define start (prop event 'DTSTART))
+  (define start (prop1 event 'DTSTART))
   ;; end := datetime | #f
   (define end (final-spanned-time event))
 
@@ -239,12 +242,11 @@ Event must have the DTSTART and DTEND protperty set."
                                            (zone-entry-stdoff zone-entry)
                                            inline-rule)))
                         (let ((component
-                               (set-properties
-                                component
-                                (cons 'DTSTART last-until)
-                                (cons 'TZOFFSETFROM last-offset)
-                                (cons 'TZOFFSETTO new-timespec)
-                                (cons 'TZNAME (zone-entry-format zone-entry)))))
+                               (-> component
+                                   (set (prop* 'DTSTART)      (just last-until))
+                                   (set (prop* 'TZOFFSETFROM) (just last-offset))
+                                   (set (prop* 'TZOFFSETTO)   (just new-timespec))
+                                   (set (prop* 'TZNAME)       (just (zone-entry-format zone-entry))))))
                           (set! last-until (zone-entry-until zone-entry)
                                 last-offset new-timespec)
                           (add-child vtimezone component))))]
@@ -268,14 +270,14 @@ Event must have the DTSTART and DTEND protperty set."
                                                   (rule-save rule))))
 
                                 (let ((component
-                                       (set-properties
-                                        component
-                                        (cons 'DTSTART (rule->dtstart rule))
-                                        (cons 'TZOFFSETFROM last-offset)
-                                        (cons 'TZOFFSETTO new-timespec)
-                                        (cons 'TZNAME (zone-format
-                                                       (zone-entry-format zone-entry)
-                                                       (rule-letters rule))))))
+                                       (-> component
+                                           (set (prop* 'DTSTART)      (just (rule->dtstart rule)))
+                                           (set (prop* 'TZOFFSETFROM) (just last-offset))
+                                           (set (prop* 'TZOFFSETTO)   (just new-timespec))
+                                           (set (prop* 'TZNAME)
+                                                (just (zone-format
+                                                        (zone-entry-format zone-entry)
+                                                        (rule-letters rule)))))))
 
                                   (set! ;; NOTE this can both be a number or the
                                       ;; symbol 'maximum
@@ -285,7 +287,7 @@ Event must have the DTSTART and DTEND protperty set."
                                   (add-child
                                    vtimezone
                                    (cond ((rule->rrule rule)
-                                          => (lambda (it) (prop component 'RRULE it)))
+                                          => (lambda (it) (set component (prop* 'RRULE) (just it))))
                                          (else component))))))
                             vtimezone
                            ;; some of the rules might not apply to us since we only
@@ -300,18 +302,19 @@ Event must have the DTSTART and DTEND protperty set."
                 [else                      ; no rule
                  ;; DTSTART MUST be a datetime in local time
                  (let ((component
-                        (set-properties
-                         (vcomponent type: 'STANDARD)
-                         (cons 'DTSTART last-until)
-                         (cons 'TZOFFSETFROM last-offset)
-                         (cons 'TZOFFSETTO (zone-entry-stdoff zone-entry))
-                         (cons 'TZNAME (zone-entry-format zone-entry)))))
+                        (-> (vcomponent type: 'STANDARD)
+                            (set (prop* 'DTSTART)       (just last-until))
+                            (set (prop* 'TZOFFSETFROM)  (just last-offset))
+                            (set (prop* 'TZOFFSETTO)    (just (zone-entry-stdoff zone-entry)))
+                            (set (prop* 'TZNAME)        (just (zone-entry-format zone-entry))))))
                    (set! last-until (zone-entry-until zone-entry)
                          last-offset (zone-entry-stdoff zone-entry))
                    (add-child vtimezone component))
                  ])
           )
-        (prop (vcomponent type: 'VTIMEZONE) 'TZID zone-name)
+        (set (vcomponent type: 'VTIMEZONE)
+             (prop* 'TZID)
+             (vline value: zone-name))
+
         (filter (relevant-zone-entry? event)
-                (get-zone zoneinfo zone-name))
-        ))
+                (get-zone zoneinfo zone-name))))

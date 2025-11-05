@@ -1,17 +1,21 @@
 (define-module (vcomponent create)
-  :use-module ((vcomponent base) :prefix vcs-)
-  :use-module ((vcomponent base)
-               :select (vline key add-child prop* vline?))
-  :use-module ((srfi srfi-1) :select (fold last drop-right car+cdr))
-  :use-module (srfi srfi-17)
+  :use-module ((vcomponent) :prefix vcs-)
+  :use-module ((vcomponent)
+               :select (vline vline?
+                              add-child
+                              prop*
+                              ))
+  :use-module ((srfi srfi-1) :select (fold last drop-right car+cdr every))
+  :use-module (srfi srfi-26)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
-  :use-module ((hnh util table) :select (alist->table table?))
+  :use-module ((hnh util table) :select (table alist->table table?))
   :use-module ((hnh util) :select (swap init+last kvlist->assq ->))
   :use-module (hnh util object)
   :use-module (hnh util type)
+  :use-module (hnh util optional)
+  :use-module (hnh util lens)
   :export (with-parameters
-           as-list
            create-vcomponent
            vcalendar vevent
            vtimezone standard daylight
@@ -34,8 +38,7 @@
 
 ;; Upcase the keys in an association list. Keys must be symbols.
 (define (upcase-keys alist)
-  (map (lambda (pair) (cons (symbol-upcase (car pair))
-                       (cdr pair)))
+  (map (cut modify <> car* symbol-upcase)
        alist))
 
 
@@ -44,33 +47,24 @@
   (-> kvs kvlist->assq upcase-keys alist->table))
 
 (define-type (parameterized)
-  parameterized:value
-  (parameterized:parameters type: table?))
+  (parameterized:value keyword: value)
+  (parameterized:parameters keyword: params type: table?))
 
 ;;; This is implemented as a macro, with an external typecheck, due to
 ;;; how *when* Guile interprets different things. The check for list-value?
 ;;; fails since Guile thinks it's a syntax deffinition at this point.
 ;;; This setup waits with actually looking up list-value?, meaning that the
 ;;; symbol is a procedure when the code is actually ran.
+
+;;; TODO above comment mentions now removed typecheck
+;;; TODO try removing this, and simply using vlines directly
 (define-syntax with-parameters
   (syntax-rules ()
     ((_ kvs ... value)
-     (begin
-       (typecheck value (not (or list-value?
-                                 parameterized?
-                                 vline?)))
-       (parameterized
-        parameterized:value: value
-        parameterized:parameters: (kvlist->parameter-table (list kvs ...)))))))
+     (parameterized
+      value: value
+      params: (kvlist->parameter-table (list kvs ...))))))
 
-
-
-
-(define-type (list-value)
-  (list-value-value type: (list-of (not list-value?))))
-
-(define (as-list arg)
-  (list-value list-value-value: arg))
 
 
 
@@ -81,46 +75,32 @@
           ((even? (length attrs*)) (values attrs* '()))
           (else                    (init+last attrs*))))
 
-  (define (value->vline key value)
+  (define (value->vline value)
     (cond
-     ((vline? value)
-      (scm-error 'misc-error "create-vcomponent"
-                 "Explicit VLines should never appear when creating components: ~s"
-                 (list value) #f))
-
-     ((list-value? value)
-      (scm-error 'misc-error "create-vcomponent"
-                 "As-list can only be used at top level. key: ~s, value: ~s"
-                 (list key value) #f))
-
+     ((list? value)
+      (map value->vline value))
      ((parameterized? value)
-      (vline key: key
-             vline-value: (parameterized:value value)
-             vline-parameters: (parameterized:parameters value)))
-
-     ;; A raw value was given, embed it into a vline
-     (else (vline key: key vline-value: value))))
+      (list
+       (vline value: (parameterized:value value)
+              params: (parameterized:parameters value))))
+     (else
+      (list
+       (vline value: value)))))
 
   ;; For a given (symbol, value) pair, attach it to the given component
   (define (attach-property pair component)
     (let ((k value (car+cdr pair)))
-      (cond
-       ((and (list-value? value) (null? (list-value-value value)))
-        component)
+      (modify component (prop* k)
+              (lambda (f)
+                (just (append (unjust f '()) (value->vline value)))))))
 
-       ((list-value? value)
-        (prop* component k
-               (map (lambda (v) (value->vline k v))
-                    (list-value-value value))))
-
-       (else
-        (prop* component k (value->vline k value))))))
-
-  ;; TODO add-child requires a UID on the child
-  ;; Possibly just genenerate one here if missing
-  (fold (swap add-child)
+  (fold (lambda (child parent) (add-child parent child))
         (fold attach-property
-              (vcs-vcomponent type: type)
+              (vcs-vcomponent type: type
+                              properties:
+                              (table (lambda (l)
+                                       (and (list? l)
+                                            (every vline? l)))))
               (upcase-keys (kvlist->assq attrs)))
         children))
 

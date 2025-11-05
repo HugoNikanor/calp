@@ -14,16 +14,16 @@
 (define-module (test recurrence-advanced)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
-  :use-module ((vcomponent recurrence)
+  :use-module ((vcomponent type recurrence)
                :select (recur-rule))
-  :use-module ((vcomponent recurrence generate)
+  :use-module ((vcomponent type recurrence generate)
                :select (generate-recurrence-set))
-  :use-module ((vcomponent recurrence display)
+  :use-module ((vcomponent type recurrence display)
                :select (format-recurrence-rule))
-  :use-module ((vcomponent recurrence internal)
+  :use-module ((vcomponent type recurrence internal)
                :select (count until))
-  :use-module ((vcomponent base)
-               :select (prop prop* extract))
+  :use-module ((vcomponent)
+               :select (prop1 extract1))
   :use-module (vcomponent create)
   :use-module ((datetime)
                :select (parse-ics-datetime
@@ -52,12 +52,12 @@
 
 (define (run-test comp)
   (test-equal
-    (string-append "REC: " (prop comp 'SUMMARY))
-    (prop comp 'X-SET)
+    (string-append "REC: " (prop1 comp 'SUMMARY))
+    (prop1 comp 'X-SET)
     (let ((r (generate-recurrence-set comp)))
-      (map (extract 'DTSTART)
-           (if (or (until (prop comp 'RRULE))
-                   (count (prop comp 'RRULE)))
+      (map (extract1 'DTSTART)
+           (if (or (until (prop1 comp 'RRULE))
+                   (count (prop1 comp 'RRULE)))
              (stream->list r)
              (stream->list 20 r)))))
   (test-equal
@@ -1103,8 +1103,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              exdate:
-             (as-list
-              (list (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)))
+             (list (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00))
              rrule:
              (recur-rule
               freq: 'MONTHLY
@@ -1416,8 +1415,7 @@
              dtstart:
              (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)
              exdate:
-             (as-list
-              (list (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00)))
+             (list (datetime year: 1997 month: 09 day: 02 hour: 09 minute: 00 second: 00))
              rrule:
              (recur-rule
               freq: 'MONTHLY
@@ -1510,7 +1508,7 @@
             summary: "Exdates are applied AFTER rrule's"
             dtstart: (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
             rrule: (recur-rule freq: 'DAILY count: 5)
-            exdate: (as-list (list (datetime year: 2022 month: 06 day: 12 hour: 10 minute: 00 second: 00)))
+            exdate: (list (datetime year: 2022 month: 06 day: 12 hour: 10 minute: 00 second: 00))
             x-summary: "dagligen, totalt 5 gånger"
             x-set: (list (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
                          (datetime year: 2022 month: 06 day: 11 hour: 10 minute: 00 second: 00)
@@ -1522,7 +1520,7 @@
             summary: "RDATE:s add to the recurrence rule"
             dtstart: (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
             rrule: (recur-rule freq: 'DAILY count: 5)
-            rdate: (as-list (list (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00)))
+            rdate: (list (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00))
             x-summary: "dagligen, totalt 5 gånger"
             x-set: (list (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
                          (datetime year: 2022 month: 06 day: 11 hour: 10 minute: 00 second: 00)
@@ -1536,8 +1534,8 @@
             summary: "RDATE:s add to the recurrence rule"
             dtstart: (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
             rrule: (recur-rule freq: 'DAILY count: 5)
-            exdate: (as-list (list (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00)))
-            rdate: (as-list (list (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00)))
+            exdate: (list (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00))
+            rdate: (list (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00))
             x-summary: "dagligen, totalt 5 gånger"
             x-set: (list (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)
                          (datetime year: 2022 month: 06 day: 11 hour: 10 minute: 00 second: 00)
@@ -1552,7 +1550,7 @@
 
 
 
-'((vcomponent recurrence)
-  (vcomponent recurrence generate)
-  (vcomponent recurrence display)
-  (vcomponent recurrence internal))
+'((vcomponent type recurrence)
+  (vcomponent type recurrence generate)
+  (vcomponent type recurrence display)
+  (vcomponent type recurrence internal))

@@ -1,6 +1,8 @@
 @node Other
 @section Other
 
+@c TODO this is completely outdated
+
 @c TODO most of this text is surpassed by data formats and data stores.
 
 @defun get-parser type

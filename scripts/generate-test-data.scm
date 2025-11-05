@@ -7,7 +7,7 @@
 ;;; This file is completely broken
 
 (use-modules (vcomponent)
-             ((vcomponent recurrence parse) :select (parse-recurrence-rule))
+             ((vcomponent type recurrence parse) :select (parse-recurrence-rule))
              ((vcomponent formats xcal output) :select (vcomponent->sxcal ns-wrap))
              ((vcomponent formats ical output) :select (component->ical-string))
              (vcomponent datetime)

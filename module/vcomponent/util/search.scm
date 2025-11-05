@@ -83,7 +83,8 @@
   (eval `(lambda (event) ,@expressions)
         (make-sandbox-module
          `(
-           ((vcomponent base) prop param children type parent)
+           ;; TODO look over this import
+           ((vcomponent) prop1 param children type parent)
            ((ice-9 regex) string-match)
            ,@(bindings-for '(datetime))
            ,@all-pure-bindings)

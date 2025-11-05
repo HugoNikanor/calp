@@ -144,7 +144,7 @@
 ;;; realize-handler :: (request, body) -> (values response response-body [state])
 (define (realize-handler handler)
   ;; (typecheck handler handler?)
-  (lambda (request request-body state)
+  (lambda* (request request-body optional: state)
 
     (let ((r:method  ((@ (web request) request-method)  request))
           (r:uri     ((@ (web request) request-uri)     request))

@@ -2,8 +2,13 @@
 @subsection Implementing Properties
 
 Properties are provided by resource type implementations through the
-following GOOPS methods. A resource type @emph{must} implement all of
-these. It's advised to not use these methods directly for modifying
+following GOOPS methods. Most of these methods needs to be implemented
+for each resources type. In many cases a default implementation
+returning ``nothing'' could be applicable, but is intentionally
+omitted to require each resource type implementation to conciously
+make a decicion about not supporting a feature.
+
+It's advised to not use these methods directly for modifying
 the property set, but instead use the procedures defined above
 (@pxref{Accessing Properties}).
 
@@ -30,6 +35,12 @@ will, for example fail when setting extended file attributes, since a
 filesystem level permission denied will once be signaled once the set
 attempt is made.
 
+@deftp {Exception type} protected-property
+Error type to be thrown when a resource is protected from
+modification. Has no argument, meaning the surrounding code should
+keep track of the property trying to be modified.
+@end deftp
+
 @deftp {GOOPS method} live-properties resource
 @emph{Must} return a list of pairs of xml elements and live property
 objects. The method @emph{should} merge these with properties from its
@@ -44,17 +55,15 @@ earliest instance is chosen.
 
 See @ref{Default Live Properties} for the live properties defined by
 base resource, and which of those need to be implemented by the
-extending resources.
-@end deftp
-
-@deftp {Exception type} protected-property
-Error type to be thrown when a resource is protected from
-modification. Has no argument, meaning the surrounding code should
-keep track of the property trying to be modified.
+extending resources. These are returned by the base implementation.
 @end deftp
 
 @deftp {GOOPS method} dead-properties resource
 @emph{Must} return a list of xml elements, one for each dead property.
+
+No default implementation is given, since the ways to store properties
+are many. However, if a resource type doesn't support dead properties,
+an empty list may be returned.
 @end deftp
 
 @deftp {GOOPS method} get-dead-property resource key

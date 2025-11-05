@@ -42,6 +42,10 @@
                 getter: display-name
                 setter: set-display-name!)
 
+  (content-type init-keyword: content-type:
+                accessor: content-type*
+                init-value: #f)
+
   (dead-properties
    ;; Table, where keys are the result of xml-element-hash-key
    ;; And values are xml elements.
@@ -88,7 +92,7 @@
                (make-live-property isvirtual set-isvirtual! remove-isvirtual!)))
    (next-method)))
 
-(define-method (content (self <virtual-resource>))
+(define-method (content (self <virtual-resource>) _)
   (content* self))
 
 (define-method (set-content! (self <virtual-resource>) data headers)
@@ -97,7 +101,7 @@
 
 
 (define-method (content-type (self <virtual-resource>))
-  "application/octet-stream")
+  (content-type* self))
 
 (define-method (set-displayname! (self <virtual-resource>) value)
   (lambda () (set-display-name! self value)))
@@ -194,7 +198,7 @@
 (define-method (create-collection! (resource <virtual-resource>) name headers body)
   (when body (throw 'http 415))
 
-  (set! (collection*? parent-resource) #t)
+  (set! (collection*? resource) #t)
 
   (define child
    (make <virtual-resource>
@@ -209,7 +213,7 @@
   child)
 
 (define-method (create-resource! (resource <virtual-resource>) name)
-  (set! (collection*? parent-resource) #t)
+  (set! (collection*? resource) #t)
   (define child (make <virtual-resource> parent: resource))
   (set! (child-table resource)
     (table-put (child-table resource) (string->symbol name)

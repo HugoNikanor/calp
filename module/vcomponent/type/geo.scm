@@ -1,5 +1,4 @@
-(define-module (vcomponent geo)
-  :use-module (hnh util)
+(define-module (vcomponent type geo)
   :use-module (hnh util object)
   :use-module (srfi srfi-88)
   :export (geo geo? geo-latitude geo-longitude))

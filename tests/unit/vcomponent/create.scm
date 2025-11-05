@@ -4,27 +4,32 @@
   :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((hnh util) :select (-> sort*))
-  :use-module ((hnh util table) :select (alist->table))
-  :use-module ((vcomponent base) :select (vcomponent?))
+  :use-module ((hnh util table) :select (alist->table table->list))
+  :use-module (hnh util lens)
+  :use-module (hnh util optional)
+  :use-module ((vcomponent) :select (vcomponent?))
   :use-module (vcomponent)
   :use-module ((vcomponent create)
                :select (create-vcomponent
                         with-parameters
 
-                        as-list
                         vcalendar
                         vevent
                         vtimezone
                         standard
                         daylight))
   :use-module ((vcomponent)
-               :select (children
-                        properties
+               :select (vcomponent-children
+                        vcomponent-properties
                         type
-                        prop prop*
-                        extract
-                        param
-                        vline?)))
+
+                        prop*
+                        extract1
+
+                        vline
+
+                        vline?
+                        )))
 
 ;; vevent, vcalendar, vtimezone, standard, and daylight all trivial
 ;; and therefore not tested
@@ -32,22 +37,22 @@
 (test-group "Empty component"
  (let ((ev (create-vcomponent 'TEST)))
    (test-equal 'TEST (type ev))
-   (test-equal '() (children ev))
-   (test-equal '() (properties ev))))
+   (test-equal '() (vcomponent-children ev))
+   (test-equal '() (vcomponent-properties ev))))
 
 (test-group "Component with properties, but no children"
  (let ((ev (create-vcomponent 'TEST
                        prop: "value")))
-   (test-equal '(PROP) (map car (properties ev)))
-   (test-equal "value" (prop ev 'PROP))))
+   (test-equal '(PROP) (map car (table->list (vcomponent-properties ev))))
+   (test-equal "value" (get ev (prop* 'PROP) just* car* vline-value*))))
 
 (test-group "Component with children, but no properties"
   (let* ((child (create-vcomponent 'CHILD))
          (ev (create-vcomponent 'TEST
                         (list child))))
-    (test-equal '() (properties ev))
-    (test-equal 1 (length (children ev)))
-    ; (test-eq child (car (children ev)))
+    (test-equal '() (vcomponent-properties ev))
+    (test-equal 1 (length (vcomponent-children ev)))
+    ; (test-eq child (car (vcomponent-children ev)))
     ))
 
 (test-group "Component with both children and properties"
@@ -55,10 +60,10 @@
          (ev (create-vcomponent 'TEST
                          prop: "VALUE"
                          (list child))))
-    (test-equal '(PROP) (map car (properties ev)))
-    (test-equal "VALUE" (prop ev 'PROP))
-    (test-equal 1 (length (children ev)))
-    ; (test-eq child (car (children ev)))
+    (test-equal '(PROP) (map car (table->list (vcomponent-properties ev))))
+    (test-equal "VALUE" (get ev (prop* 'PROP) just* car* vline-value*))
+    (test-equal 1 (length (vcomponent-children ev)))
+    ; (test-eq child (car (vcomponent-children ev)))
     ))
 
 (test-group "Component with multiple children"
@@ -68,54 +73,51 @@
           (list
            (vevent summary: "Child 1")
            (vevent summary: "Child 2")))))
-    (test-equal 2 (length (children cal)))
-    (test-equal "GREGORIAN" (-> cal (prop 'CALSCALE)))
-    (let ((ch (sort* (children cal)
-                     string<? (extract 'SUMMARY))))
-      (test-equal "Child 1" (-> ch (list-ref 0) (prop 'SUMMARY)))
-      (test-equal "Child 2" (-> ch (list-ref 1) (prop 'SUMMARY))))))
+    (test-equal 2 (length (vcomponent-children cal)))
+    (test-equal "GREGORIAN" (prop1 cal 'CALSCALE))
+    (let ((ch (sort* (vcomponent-children cal)
+                     string<? (extract1 'SUMMARY))))
+      (test-equal "Child 1" (-> ch (list-ref 0) (prop1 'SUMMARY)))
+      (test-equal "Child 2" (-> ch (list-ref 1) (prop1 'SUMMARY))))))
 
 (test-group "Component with no children, where last elements value is a list"
   (let ((ev (create-vcomponent 'TEST prop: (list 1 2 3))))
-    (test-equal '() (children ev))
-    (test-equal '(PROP) (map car (properties ev)))
-    (test-equal '(1 2 3) (prop ev 'PROP))))
+    (test-equal '() (vcomponent-children ev))
+    (test-equal '(PROP) (map car (table->list (vcomponent-properties ev))))
+    ;; TODO fix this test
+    (test-equal '(1 2 3) (get ev (prop* 'PROP)))))
 
 (test-group "With parameters"
   (let ((ev (create-vcomponent 'TEST
                         prop: (with-parameters param: 1 2))))
-    (test-equal 2 (prop ev 'PROP))
-    (test-equal '(1) (param (prop* ev 'PROP) 'PARAM))))
+    (test-equal 2 (prop1 ev 'PROP))
+    (test-equal '(1) (get ev (prop* 'PROP) just* car* (param* 'PARAM)))))
+
 
 (test-group "As list"
   (let ((ev (create-vcomponent 'TEST
-                        prop: (as-list (list 1 2 3)))))
-    (test-equal '(1 2 3) (prop ev 'PROP))
-    (test-equal 3 (length (prop* ev 'PROP)))
-    (test-assert (every vline? (prop* ev 'PROP)))))
+                               prop: (list 1 2 3))))
+    ;; TODO fix
+    (test-equal '(1 2 3) (prop1 ev 'PROP))
+    (test-equal 3 (length (get ev (prop* 'PROP) just*)))
+    (test-assert (every vline? (get ev (prop* 'PROP) just*)))))
 
 (test-group "List and parameters"
   (let ((ev
          (vevent
-          prop: (as-list
-                 (list
-                  "One"
-                  (with-parameters lang: "sv" "Två")
-                  (with-parameters numeric: "3" "Three"))))))
-    (test-equal 3 (length (prop* ev 'PROP)))
-    (test-equal '("One" "Två" "Three") (prop ev 'PROP))
-    (test-assert (every vline? (prop* ev 'PROP)))
-    (test-equal (list (vline key: 'PROP
-                             vline-value: "One")
-                      (vline key: 'PROP
-                             vline-value: "Två"
-                             vline-parameters:
-                             (alist->table '((LANG . "sv"))))
-                      (vline key: 'PROP
-                             vline-value: "Three"
-                             vline-parameters:
-                             (alist->table '((NUMERIC . "3")))))
-      (prop* ev 'PROP))))
+          prop: (list
+                 "One"
+                 (with-parameters lang: "sv" "Två")
+                 (with-parameters numeric: "3" "Three")))))
+    (test-equal 3 (length (get ev (prop* 'PROP) just*)))
+    (test-equal '("One" "Två" "Three") (map vline-value (get ev (prop* 'PROP) just*)))
+    (test-assert (every vline? (get ev (prop* 'PROP) just*)))
+    (test-equal (list (vline value: "One")
+                      (vline value: "Två"
+                             params: (alist->table '((LANG . "sv"))))
+                      (vline value: "Three"
+                             params: (alist->table '((NUMERIC . "3")))))
+      (get ev (prop* 'PROP) just*))))
 
 
 (test-error "Fail on nested with-parameters"
@@ -124,18 +126,18 @@
                                  (with-parameters b: "2"
                                                   "3"))))
 
-(test-group "An empty as-list is effectively the same as not having the property"
-  (let ((ev (vevent prop: (as-list '()))))
-    (test-equal '() (properties ev))))
+;; (test-group "An empty as-list is effectively the same as not having the property"
+;;   (let ((ev (vevent prop: (as-list '()))))
+;;     (test-equal '() (vcomponent-properties ev))))
 
-(test-error "Fail on nested as-list"
-  'wrong-type-arg
-  (vevent prop: (as-list (list (as-list '())))))
+;; (test-error "Fail on nested as-list"
+;;   'wrong-type-arg
+;;   (vevent prop: (as-list (list (as-list '())))))
 
-(test-error "Fail on as-list inside with-parameters"
-  'wrong-type-arg
-  (vevent prop: (with-parameters a: "1"
-                                 (as-list '()))))
+;; (test-error "Fail on as-list inside with-parameters"
+;;   'wrong-type-arg
+;;   (vevent prop: (with-parameters a: "1"
+;;                                  (as-list '()))))
 
 
 (test-assert (vcomponent? (vcalendar)))

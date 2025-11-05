@@ -1,0 +1,9 @@
+@node VComponent SQLite Store
+@subsection VComponent SQLite Store
+
+https://notabug.org/guile-sqlite3/guile-sqlite3
+
+@code{(provide 'data-store-sqlite)}
+
+@defun create-instance #:path path
+@end defun

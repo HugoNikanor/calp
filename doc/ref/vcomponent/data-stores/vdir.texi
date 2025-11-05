@@ -1,0 +1,17 @@
+@node VComponent Vdir Store
+@subsection VComponent Vdir Store
+
+http://vdirsyncer.pimutils.org/en/latest/vdir.html
+
+@defun create-instance #:path path #:media media [#:ext="ics"] [#:href-mapping-file=(default-href-mapping-file)]
+
+@var{#:ext} is the file extension (without a leading period) which
+should be used when reading and writing the directory. Note that the
+only valid value for standard compliant Vdirs is @code{"ics"}.
+
+@var{#:href-mapping-file} is the filename where the href to local
+filename dictionary is storred.
+@end defun
+
+@deftp {config} default-href-mapping-file
+@end deftp

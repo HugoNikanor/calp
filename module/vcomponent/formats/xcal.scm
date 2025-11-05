@@ -7,12 +7,14 @@
                :select (sxcal->vcomponent))
   :use-module ((hnh util) :select (->))
   :use-module ((calp namespaces) :select (xcal))
-  :export (serialize deserialize))
+  :use-module (vcomponent formats)
+  :use-module (oop goops)
+  :export (format))
 
-(define* (serialize component port
-                    key:
-                    (namespaces `((,xcal . xcal)))
-                    include-pis?)
+(define* (vcomponent->xml component port
+                          key:
+                          (namespaces `((,xcal . xcal)))
+                          include-pis?)
   (namespaced-sxml->xml
    (xml-document
     pi: (if include-pis?
@@ -23,11 +25,8 @@
    port: port
    namespaces: namespaces))
 
-(define (serialize/object component)
-  (call-with-output-string (lambda (p) (serialize component p))))
 
-
-(define* (deserialize port)
+(define* (xml->vcomponent port)
   (-> port
       xml->namespaced-sxml
       xml-document-root
@@ -36,3 +35,8 @@
       xml-element-children car
 
       sxcal->vcomponent))
+
+(define format
+  (calendar-data-format
+   parser: xml->vcomponent
+   serializer: vcomponent->xml))

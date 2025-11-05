@@ -1,0 +1,24 @@
+@node VComponent File Store
+@subsection VComponent File Store
+
+@defun create-instance #:path path #:media media
+
+The filenames @code{/dev/stdin} and @code{/dev/stdout} have special
+handling (that is, those literal strings, regardless of operating
+system). Instead of opening the file for reading and writing, stdin
+only reads standard input, and throws an exception if tried to write
+to, while stdout creates an empty calendar object, which may be
+written to stdout.
+@end defun
+
+
+@deftp {config} xattr-prefix
+
+TODO merge this with @code{xattr-prefix} of the WebDAV <file> resource type.
+@end deftp
+
+@deftp {config} xattr-href-prefix
+Namespace used for the href to uid mapping.
+
+Defaults to @code{(string-append (xattr-prefix) ".href")}.
+@end deftp

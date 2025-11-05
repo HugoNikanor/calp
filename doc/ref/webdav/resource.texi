@@ -164,8 +164,8 @@ Must return a @code{datetime} object.
 These methods create new resources as direct children of the provided
 resource. The newly created resources are generally expected to be of
 the same type as the root resource, but may be of any type. The newly
-created resources @emph{must} be added to the child set of the child
-set of the provided resource.
+created resources @emph{must} be added to the child set of the
+provided resource.
 
 Implementations may assume that no resource with the given name exists
 in the child set of the resource. On resource creation failure, these
@@ -190,6 +190,7 @@ If a resource with @var{name} already exists in the child set of
 @end deftp
 
 @defun make-resource [#:parent=#f] args ...
+@c TODO this isn't how make-resource works, there is no parent field
 All resource implementations @emph{should} implement a procedure for
 creating resources of that type explicitly, without having a parent.
 

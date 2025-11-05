@@ -22,7 +22,7 @@
   :use-module (hnh util object)
   :use-module (hnh util type)
   :use-module (srfi srfi-71)
-  :use-module ((vcomponent recurrence internal)
+  :use-module ((vcomponent type recurrence)
                :select (byday recur-rule bymonthday))
   :use-module (calp translation)
   :export (read-zoneinfo

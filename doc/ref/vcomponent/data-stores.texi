@@ -1,36 +1,176 @@
 @node Data Stores
 @section Data Stores
+
 Data stores are persistant stores for events, such as databases or the
-file system. Each data store can support any number of data formats,
-but which is an implementation detail of that format and shouldn't be
-needed information from the high level view.
-@footnote{It is however important for interoperability with other programs}.
+file system. Data stores operate on the high level vcomponent objects
+defined by this program, and how they are stored to an underlying
+system is an implementation detail not handled by this API. Instead,
+see each individual store for details, and how they may interface with
+other programs.
 
-@c (make <calendar-store> #:path ``hello'')
+Calendar objects in themself are immutable (TODO reference other part
+of the documentation), calendar store handles the mutation required to
+properly store objects somewhere. The expected usage pattern is to
+``check out'' an object from a store (possibly locking it TODO if
+looking existed), transform the object into a new calendar object
+matching the wanted form, and handing it back to the store for storage.
 
-@defun path store
+Clients should not cache calendar objects retrieved from a store,
+since another process may at any time modify the underlying data.
+
+Currently, all data stores assume that all clients are very well
+behaved, and never tries to put an invalid entry, put an existing
+entry onto a new href, or any other funny stuff.
+
+@deftp {GOOPS class} <calendar-data-store>
+Base class for all stores. Contains no fields in itself, and shouldn't
+be instanciated, but used to provide defaults for a number of the
+below mentioned methods.
+@end deftp
+
+@defun calendar-data-store? x
 @end defun
 
-@deftp {GOOPS method} get-calendar this
-Returns a vcomponent object of type @code{VCALENDAR}. Should contain
-all @code{VEVENT} components of this calendar.
+@defun store-uri->store uri
+Given an URI object, attempt to construct the store it refers to.
+This is mostly useful for command line usage.
+@c TODO link to alternative to construct store from sexp.
+
+Store URIs are on the format @code{store:<format>?<args>}, where
+@var{<format>} refers to a data store implementation, and lookup up as
+@code{(resolve-interface `(vcomponent data-stores ,@var{format}))},
+and args is parsed into a keyword list, which the procedure
+@code{create-instance} from the afformentioned module is applied to.
+
+See each stores documentation for applicable parameters. Note that a
+stores path must be stored in a parameter instead of the URI path
+component, since path isn't applicable to all stores.
+@end defun
+
+@subsection Writing Data
+
+@deftp {GOOPS method} put-event! store href vcomponent
+Create or update a given event in the store.
+
+This method takes a VCALENDAR object, which must only contain a single
+logical event (possibly as multile VEVENT object), and any
+referenced VTIMEZONE objects.
+
+TODO who updates DTSTAMP?
+TODO who ensures component validity?
+
+Note that this doesn't guarantee a writing to the disk, see
+@code{flush!} for that.
 @end deftp
 
-@deftp {GOOPS method} get-by-uid this uid
-Return the event object with UID equal to the string @var{uid}.
+@deftp {GOOPS method} remove-by-href! store href
+Remove an entry from a store by its href. If href isn't present in the
+store, this operation should do nothing.
 @end deftp
 
-@deftp {GOOPS method} queue-save this event
-Queue a save event of @var{event} to the store.
+@c TODO `remove-by-uid`?
+
+@deftp {GOOPS method} flush! store
+Write all pending transactions to the underlying store.
 @end deftp
 
-@deftp {GOOPS method} flush this
-Force write of all queued actions.
+@subsection Reading Data
+
+@deftp {GOOPS method} list-entries store
+Retrieve all entries in the store, as a list of href, VCALENDAR
+objects pairs. Further processing (such as expansion of recurrence
+rules) MUST NOT be performed.
 @end deftp
 
-@subsection VDir
-[VDIR]: http://vdirsyncer.pimutils.org/en/latest/vdir.html
+@deftp {GOOPS method} list-entries/shallow store
+List all href's present in the store. For many stores, this could be
+much faster than actually retrieving all entries.
 
-@subsection File
+A default implementation which dispatches to @code{list-entries} exists.
+@end deftp
 
-@subsection SQLite
+@c @deftp {GOOPS method} get-by-uid store uid
+@c @end deftp
+
+@deftp {GOOPS method} get-by-href store href
+Retrive an entry by its href. Href should be assumed to only contain
+the final component part, since the ``part'' part would be stripped by
+the WebDAV server before we get here.
+@end deftp
+
+@c TODO return here once I figure out reports
+@c @deftp {GOOPS method} caldav-filter store query
+@c Runs the filter provided by the CALDAV:calendar-query REPORT
+@c (RFC 4791 §7.8.)
+@c @end deftp
+
+@subsubsection Metadata
+
+WebDAV and CalDAV specifies a number of properties which all calendar
+collections may implement. To avoid re-writing the XML parsing step
+for each data store, these methods are provided as simpler
+implementations.
+
+Each getter provides a default implementation which returns @code{#f},
+indicating that the store has no value for that resource.
+
+@c TODO shouldn't set-*! and remove-*! have default implementations,
+@c which throws `not-implemented`/`protected`?
+
+@c TODO link relevant WebDAV propreties elsewhere in the documentation
+
+@deftp  {GOOPS method} store-color store
+@deftpx {GOOPS method} set-store-color! store color
+@deftpx {GOOPS method} remove-store-color! store
+Display color for the calendar, represented as a string.
+
+This color, per RFC 7986, §5.9, should satisfy the rules for a CSS3
+color, per §4.3 of W3C.REC-css3-color-20110607@footnote{
+@example
+Celik, T., Lilley, C., and D. Baron, "CSS Color Module
+Level 3", World Wide Web Consortium Recommendation
+REC-css3-color-20110607, June 2011,
+<https://www.w3.org/TR/2011/REC-css3-color-20110607>.
+@end example
+}                               @c TODO proper references
+
+Currently, no WebDAV property is registered for this data.
+@c TODO webdav property?
+@end deftp
+
+@deftp  {GOOPS method} store-displayname store
+@deftpx {GOOPS method} set-store-displayname! store name
+@deftpx {GOOPS method} remove-store-displayname! store
+Human readable name for the component.
+
+Links to the WebDAV property DAV:displayname, and matches the NAME
+property per RFC 7986.
+
+@c TODO link DAV:displayname
+@end deftp
+
+@deftp  {GOOPS method} store-description store
+@deftpx {GOOPS method} set-store-description! store description
+@deftpx {GOOPS method} remove-store-displayname! store
+Slightly longer description of what this calendar is about.
+
+Links to the WebDAV property CalDAV:calendar-description, and matches
+to the DESCRIPTION property per RFC 7986.
+
+@c TODO link CalDAV:calendar-description
+@end deftp
+
+@deftp  {GOOPS method} store-calendar-timezone store
+@deftpx {GOOPS method} set-store-description! store timezone
+@deftpx {GOOPS method} remove-store-displayname! store
+@c TODO write this
+@c TODO link CalDAV:calendar-timezone
+@c TODO content-type negotiation, but on the actual property
+@end deftp
+
+@c This menu appears before the other subsubsections in this document,
+@c Which is exactly what we want
+@include vcomponent/data-stores/file.texi
+@include vcomponent/data-stores/vdir.texi
+@include vcomponent/data-stores/sqlite.texi
+@include vcomponent/data-stores/caldav.texi

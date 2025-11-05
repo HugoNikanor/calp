@@ -1,0 +1,7 @@
+@node Principal
+@subsection Principal
+
+@code{(calp webdav resource principal)}
+
+@deftp {WebDAV property} @nscaldav{} calendar-home-set
+@end deftp

@@ -8,9 +8,13 @@ the generialization of VCALENDAR, VEVENT, ...
 
 Some of these values are still Calp specific.
 
+@c TODO merge these two, see comments in both
 @include vcomponent/introduction.texi
 @include vcomponent/general.texi
+
+@c TODO what even is this? When is it used?
 @include vcomponent/group.texi
+
 @include vcomponent/create.texi
 
 @include vcomponent/data-formats.texi

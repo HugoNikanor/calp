@@ -1,15 +1,12 @@
 (define-module (vcomponent formats ical)
   :use-module ((vcomponent formats ical output)
-               :select (component->ical-string))
+               :select (vcomponent->icalendar))
   :use-module ((vcomponent formats ical parse)
-               :select (parse-calendar))
-  :export (serialize
-           deserialize))
+               :select (icalendar->vcomponent))
+  :use-module (vcomponent formats)
+  :export (format))
 
-
-(define (serialize component port)
-  (with-output-to-port port
-    (lambda () (component->ical-string component))))
-
-(define (deserialize port)
-  (parse-calendar port))
+(define format
+  (calendar-data-format
+   parser: icalendar->vcomponent
+   serializer: vcomponent->icalendar))

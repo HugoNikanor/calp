@@ -5,21 +5,172 @@
   :use-module (hnh util exceptions)
   :use-module (hnh util)
   :use-module (datetime)
+  :use-module (datetime timespec)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
   :use-module (srfi srfi-9 gnu)
-  :use-module (vcomponent base)
-  :use-module (vcomponent geo)
+  :use-module (vcomponent)
+  :use-module (vcomponent type geo)
+  :use-module (vcomponent type version)
+  :use-module (vcomponent type request-status)
+  :use-module (vcomponent type period)
+  :use-module (vcomponent type unknown)
+  :use-module (vcomponent type duration)
   :use-module (vcomponent formats common types)
   :use-module (calp translation)
   :use-module (hnh util lens)
   :use-module (hnh util table)
-  :export (parse-calendar))
+  :use-module (hnh util type)
+  :use-module (hnh util optional)
+  :use-module (base64)
+  :use-module (web uri)
+  :export (
+           icalendar->vcomponent
+           multi-valued-properties
+           parsers
+           get-parser
+           ))
 
 ;;; TODO a few translated strings here contain explicit newlines. Check if that
 ;;;      is preserved through the translation.
 
+;;; TODO TODO quoted vline parameters
+
+;;; TODO different parsers currently fail in different ways for invalid value.
+;;; - Some throw exceptions, crashing the program
+;;; - Some emit a warning, then wraps the raw value in an `unknown`
+;;; - some may do something else entirely.
+
+;; BINARY
+(define (parse-binary props value)
+  ;; p 30
+  (unless (string=? "BASE64" (table-get props 'ENCODING))
+    (warning (G_ "Binary field not marked ENCODING=BASE64")))
+
+  ;; For icalendar no extra whitespace is allowed in a
+  ;; binary field (except for line wrapping). This differs
+  ;; from xcal.
+  (base64-string->bytevector value))
+
+;; BOOLEAN
+(define (parse-boolean _ value)
+  (cond
+   [(string=? "TRUE" value) #t]
+   [(string=? "FALSE" value) #f]
+   [else (warning (G_ "~a invalid boolean") (unknown value))]))
+
+
+
+;; DATE-TIME
+(define (parse-datetime props value)
+  (define parsed (parse-ics-datetime value (table-get props 'TZID)))
+  ;; TODO store the original datetime value.
+  ;; This is needed since we convert it to local time,
+  ;; but we want the output to be the time stored in the database,
+  ;; Not whatever time the user happens to have
+  ;; Prevoisly, `props` was a mutable object, allowing us to interject
+  ;; properties here. This is however not the case since we switched
+  ;; to immutable tables.
+  ;; (hashq-set! props '-X-HNH-ORIGINAL parsed)
+  (get-datetime parsed))
+
+
+;; INTEGER
+(define (parse-integer _ value)
+  (let ((n (string->number value)))
+    (if (not (integer? n))
+        (begin
+          (warning (G_ "Non integer as integer"))
+          (unknown value)))
+    n))
+
+
+;; PERIOD
+(define (parse-period props value)
+  (let ((left right (apply values (string-split value #\/))))
+    ;; TODO timezones? VALUE=DATE?
+    (period start: (parse-ics-datetime left)
+            end: ((if (memv (string-ref right 0)
+                         '(#\P #\+ #\-))
+                      string->duration
+                      parse-ics-datetime)
+                  right))))
+
+
+;; TEXT
+(define (parse-text _ value)
+  (let loop ((rem (string->list value))
+             (str '()))
+    ((@ (ice-9 match) match) rem
+     (() (reverse-list->string str))
+     ((or (#\\ #\n rest ...) (#\\ #\N rest ...))
+      (loop rest (cons #\newline str)))
+     ((#\\ #\, rest ...) (loop rest (cons #\, str)))
+     ((#\\ #\; rest ...) (loop rest (cons #\; str)))
+     ((#\\ #\\ rest ...) (loop rest (cons #\\ str)))
+     ((#\\ c rest ...)
+      (warning (G_ "Non-escapable character: '~a'") c)
+      (loop rest (cons c str)))
+     ((#\, rest ...)
+      (warning (G_ "Un-escaped '~a' encountered") #\,)
+      (loop rest (cons #\, str)))
+     ((#\; rest ...)
+      (warning (G_ "Un-escaped '~a' encountered") #\;)
+      (loop rest (cons #\; str)))
+     ((c rest ...) (loop rest (cons c str))))))
+
+
+;; UTC-OFFSET
+(define (parse-utc-offset props value)
+  ;; TODO difference between this and (@ (datetime timespec) parse-timespec)
+  (make-timespec
+   (time
+    hour: (string->number (substring value 1 3))
+    minute: (string->number (substring value 3 5))
+    second: (if (= 7 (string-length value))
+                (string->number (substring value 5 7))
+                0))
+   ;; sign
+   (string->symbol (substring value 0 1))
+   #\z))
+
+;; A parser is a function with signature (table, string) → any
+;; which takes the table of vline parameters, and the raw value,
+;; and returns a parsed representation.
+;; For example:
+;;     ((get-parser 'DATE-TIME)
+;;       (list->table '((TZID . "Europe/Stockholm")))
+;;       "20201020T102030")
+(define-once parsers
+  (make-parameter
+   (alist->table
+    (list
+     (cons 'BINARY parse-binary)
+     (cons 'BOOLEAN parse-boolean)
+     (cons 'CAL-ADDRESS (lambda (_ v) (string->uri v)))
+     (cons 'DATE (lambda (_ v) (parse-ics-date v)))
+     (cons 'DATE-TIME parse-datetime)
+     (cons 'DURATION (lambda (_ v) (string->duration v)))
+     ;; Note that this is overly permissive, and flawed.
+     ;; Numbers such as @expr{1/2} is accepted as exact
+     ;; rationals. Some floats are rounded.
+     (cons 'FLOAT (lambda (_ v) (string->number v)))
+     (cons 'INTEGER parse-integer)
+     (cons 'PERIOD parse-period)
+     (cons 'RECUR (lambda (_ v) ((@ (vcomponent type recurrence parse) parse-recurrence-rule) v)))
+     (cons 'TEXT parse-text)
+     ;; TODO time can have timezones...
+     (cons 'TIME (lambda (_ v) (parse-ics-time v)))
+     (cons 'URI (lambda (_ v) (string->uri v)))
+     (cons 'UTC-OFFSET parse-utc-offset)))))
+
+;;; Get iCalendar type parser by type name
+(define (get-parser type)
+  (table-get (parsers) type))
+
+;;; TODO actually benchmark if this has any speed difference
 (define string->symbol
   (let ((ht (make-hash-table 1000)))
     (lambda (str)
@@ -28,16 +179,15 @@
             (hash-set! ht str symb)
             symb)))))
 
-;; TODO rename to parse-vcomponent, or parse-ical (?).
-(define (parse-calendar port)
+(define (icalendar->vcomponent port)
   (parse (map tokenize (read-file port))))
 
 (define-immutable-record-type <line>
   (make-line string file line)
   line?
-  (string get-string)
-  (file get-file)
-  (line get-line))
+  (string get-string)                   ; string?
+  (file get-file)                       ; string?
+  (line get-line))                      ; exact-integer?
 
 
 ;; port → (list <line>)
@@ -62,9 +212,8 @@
                        ;; then this produces multiple broken unicode characters.
                        ;; It could be solved by checking the start of the new line,
                        ;; and the tail of the old line for broken char
-                       ;; TODO what about other leading whitespace?
                        ((char=? next #\space)
-                        (read-char port) ; discard leading whitespace
+                        (read-char port) ; discard continuation marker
                         (loop (read-line port)))
                        (else
                         ;; (unread-char next)
@@ -96,173 +245,116 @@
 (define (tokenize line-obj)
   (define line (get-string line-obj))
   (define colon-idx (string-index line #\:))
+  ;; TODO fail clearer when colon-idx is false (e.g. malformed line)
   (define semi-idxs
     (let loop ((idx 0))
       (aif (string-index line #\; idx colon-idx)
            (cons it (loop (1+ it)))
            (list colon-idx (string-length line)))))
   (make-tokens
-   line-obj
-   (map (lambda (start end)
-          (substring line (1+ start) end))
-        (cons -1 semi-idxs)
-        semi-idxs)))
+    line-obj
+    (map (lambda (start end)
+           (substring line (1+ start) end))
+         (cons -1 semi-idxs)
+         semi-idxs)))
 
 
-#;
-'(ATTACH ATTENDEE CATEGORIES
-         COMMENT CONTACT EXDATE
-         REQUEST-STATUS RELATED-TO
-         RESOURCES RDATE
-         ;; x-prop
-         ;; iana-prop
-         )
+(define multi-valued-properties
+  (make-parameter
+   '(CATEGORIES
+     RESOURCES
+     FREEBUSY
+     EXDATE
+     RDATE)))
 
-(define (list-parser symbol)
-  (let ((parser (get-parser symbol)))
-    (lambda (params value)
-      (map (lambda (v) (parser params v))
-           (string-split value #\,)))))
 
-(define* (enum-parser enum optional: (allow-other #t))
-  (let ((parser (compose car (get-parser 'TEXT))))
-    (lambda (params value)
-      (let ((vv (parser params value)))
-        (when (list? vv)
-          (scm-error 'parse-error "enum-parser"
-                     (G_ "List in enum field")
-                     #f #f))
-        (let ((v (string->symbol vv)))
-          (unless (memv v enum)
-            (warning "~a ∉ { ~{~a~^, ~} }"
-                     v enum))
-          v)))))
+(define (split-carefully str delim)
+  (let loop ((rem (string->list str))
+             (str '())
+             (done '()))
+    ((@ (ice-9 match) match) rem
+      (() (reverse (cons (reverse-list->string str) done)))
+      ((#\\ c rest ...) (loop rest (cons* c #\\ str)
+                              done))
+      ((c rest ...)
+       (if (char=? c delim)
+           (loop rest '() (cons (reverse-list->string str) done))
+           (loop rest (cons c str) done))))))
 
-;; params could be made optional, with an empty hashtable as default
-(define (build-vline key value params)
-  (let ((parser
-         (cond
-          [(and=> (table-get params 'VALUE) string->symbol) => get-parser]
 
-          [(memv key '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID RDATE
-                              CREATED DTSTAMP LAST-MODIFIED
-                              ;; only on VALARM
-                              ACKNOWLEDGED
-                              ))
-           (get-parser 'DATE-TIME)]
+;; params could be made optional, with an empty table as default
+;; Returns a list of vline objects.
+;; For most types, this will be a single vline, but for
+;; `multi-valued-properties`, it may be multiple.
+;; For example,
+;; (build-vlines 'CATEGORIES "A,B" (-> (table) (table-put 'LANG "EN")))
+;; ⇒ #.(list (vline #:params (-> (table) (table-put 'LANG "EN")) #:value "A")
+;;           (vline #:params (-> (table) (table-put 'LANG "EN")) #:value "B"))
+(define (build-vlines key value params)
+  (typecheck key symbol?)
+  (typecheck value string?)
+  (typecheck params table?)             ; (table-of string?)
 
-          [(memv key '(EXDATE))
-           (list-parser 'DATE-TIME)]
+  (define (parse-text str) ((get-parser 'TEXT) '() str))
 
-          [(memv key '(TRIGGER DURATION))
-           (get-parser 'DURATION)]
+  (define parser
+    (or
+     (cond
+      ((eq? key 'GEO)
+       (lambda (_ value)
+         (apply (case-lambda ((x y) (geo x: x y: y))
+                             (_ (scm-error 'misc-error "build-vlines"
+                                           "Invalid GEO value: ~s"
+                                           (list value) #f)))
+                (map string->number (string-split value #\;)))))
 
-          [(memv key '(FREEBUSY))
-           (list-parser 'PERIOD)]
+      ((eq? key 'VERSION)
+       (lambda (_ value)
+         (apply (case-lambda
+                  ((min max) (vcalendar-version min: (parse-text min) max: (parse-text max)))
+                  ((max) (vcalendar-version max: (parse-text max))))
+                (split-carefully value #\;))))
 
-          [(memv key '(CALSCALE METHOD PRODID  COMMENT DESCRIPTION
-                             LOCATION SUMMARY TZID TZNAME
-                             CONTACT RELATED-TO UID))
-           (lambda (params value)
-             (let ((v ((get-parser 'TEXT) params value)))
-               (unless (= 1 (length v))
-                 (warning (G_ "List in non-list field: ~s") v))
-               (string-join v ",")))]
+      ((eq? key 'REQUEST-STATUS)
+       (lambda (_ value)
+         (apply (lambda* (statcode statdesc optional: extdata)
+                  (request-status
+                   statcode: (map string->number (string-split statcode #\.))
+                   statdesc: (parse-text statdesc)
+                   extdata: (and=> extdata parse-text)))
+                (split-carefully value #\;))))
 
-          ;; TEXT, but allow a list
-          [(memv key '(CATEGORIES RESOURCES))
-           ;; TODO An empty value should lead to an empty set
-           ;; currently it seems to lead to '("")
-           (get-parser 'TEXT)]
+      ;; 1. Check if we have a VALUE parameter, and in that case use that
+      ((and=> (table-get params 'VALUE) string->symbol) => get-parser)
+      ;; 3. Retrieve the default type of the field
+      ((default-type key) => get-parser)
+      (else (get-parser 'TEXT)))
+     (lambda (_ v) (unknown v))))
 
-          [(memv key '(VERSION))
-           (lambda (params value)
-             (let ((v (car ((get-parser 'TEXT) params value))))
-               (unless (and (string? v) (string=? "2.0" v))
-                 #f
-                 ;; (warning "File of unsuported version. Proceed with caution")
-                 )
-               v))]
+  ;; We remove the parameter VALUE, since we instead encode that into scheme types
+  ;; (and most output formats explicitly forbid it from being included)
+  ;; TODO TODO I believe special handling for multi-valued properties is incorrect.
+  ;; I believe that all fields (or at least those of TEXT type) will
+  ;; be split this way, unless otherwise stated.
+  (if (memv key (multi-valued-properties))
+      (map (lambda (value)
+             (vline params: (table-remove params 'VALUE)
+                    value: (parser params value)))
+           (split-carefully value #\,))
+      (list (vline params: (table-remove params 'VALUE)
+                   value: (parser params value)))))
 
-          [(memv key '(TRANSP))
-           (enum-parser '(OPAQUE TRANSPARENT) #f)]
-
-          [(memv key '(CLASS))
-           (enum-parser '(PUBLIC PRIVATE CONFIDENTIAL))]
-
-          [(memv key '(PARTSTAT))
-           (enum-parser '(NEEDS-ACTION
-                          ACCEPTED DECLINED
-                          TENTATIVE DELEGATED
-                          IN-PROCESS))]
-
-          [(memv key '(STATUS))
-           (enum-parser '(TENTATIVE
-                          CONFIRMED CANCELLED
-                          NEEDS-ACTION COMPLETED IN-PROCESS
-                          DRAFT FINAL CANCELED))]
-
-          [(memv key '(REQUEST-STATUS))
-           (scm-error 'parse-error "build-vline"
-                      (G_ "TODO Implement REQUEST-STATUS")
-                      #f #f)]
-
-          [(memv key '(ACTION))
-           (enum-parser '(AUDIO DISPLAY EMAIL
-                                NONE    ; I don't know where NONE is from
-                                        ; but it appears to be prevelant.
-                                ))]
-
-          [(memv key '(TZOFFSETFROM TZOFFSETTO))
-           (get-parser 'UTC-OFFSET)]
-
-          [(memv key '(ATTACH TZURL URL))
-           (get-parser 'URI)]
-
-          [(memv key '(PERCENT-COMPLETE PRIORITY REPEAT SEQUENCE))
-           (get-parser 'INTEGER)]
-
-          [(memv key '(GEO))
-           ;; two semicolon sepparated floats
-           (lambda (params value)
-             (let ((left right (apply values (string-split value #\;))))
-               (geo y: ((get-parser 'FLOAT) params left)
-                    x: ((get-parser 'FLOAT) params right))))]
-
-          [(memv key '(RRULE))
-           (get-parser 'RECUR)]
-
-          [(memv key '(ORGANIZER ATTENDEE))
-           (get-parser 'CAL-ADDRESS)]
-
-          [(x-property? key)
-           (compose car (get-parser 'TEXT))]
-
-          [else
-           (warning (G_ "Unknown key ~a") key)
-           (compose car (get-parser 'TEXT))])))
-
-    ;; If we produced a list create multiple VLINES from it.
-    ;; NOTE that the created vlines share parameter tables.
-    ;; TODO possibly allow vlines to reference each other, to
-    ;; indicate that all these vlines are the same.
-    (let ((parsed (parser params value)))
-      (if (list? parsed)
-          (apply values
-                 (map (lambda (p) (vline key: key vline-value: p vline-parameters: params))
-                      parsed))
-       (vline key: key vline-value: parsed vline-parameters: params)))))
-
+;; an itemline is the data field of the <tokens> object
 ;; (parse-itemline '("DTEND"  "20200407T130000"))
 ;; => DTEND
 ;; => "20200407T130000"
-;; => #<hash-table 7f76b5f82a60 0/31>
+;; => #.(table)
 (define (parse-itemline itemline)
-  (define key (string->symbol (car itemline)))
   ;; (define parameters (make-hash-table))
   (define-values (parameters value) (init+last (cdr itemline)))
   (values
-   key value
+   (string->symbol (car itemline))
+   value
    (fold (lambda (parameter table)
            (let ((idx (string-index parameter #\=)))
              ;; TODO lists in parameters
@@ -280,93 +372,87 @@
      ;; ~?
      ;; source line
      ;; source file
-     (G_ "WARNING parse error around ~a
-  ~?
-  line ~a ~a~%")
+     (G_ "Parse warning around ~a:~a (~s): ~?~%")
+     (get-file linedata)
+     (get-line linedata)
      (get-string linedata)
      fmt args
-     (get-line linedata)
-     (get-file linedata)
+
      )))
 
-;;; Property keys which are allowed multiple times
-(define repeating-properties
-  '(ATTACH ATTENDEE CATEGORIES
-           COMMENT CONTACT EXDATE
-           REQUEST-STATUS RELATED-TO
-           RESOURCES RDATE
-           ;; x-prop
-           ;; iana-prop
-           ))
 
 ;; (list <tokens>) → <vcomponent>
+;; TODO if the calendar stream ends pre-maturely (for example, a
+;; missing END:VCALENDAR), then the current stack is returned instead...
 (define (parse lst)
-  (let loop ((lst lst)
-             (stack '()))
-    (if (null? lst)
-        stack
-        (let* ((token (car lst))
-               (head (get-data token)))
-          (catch 'parse-error
-            (lambda ()
-              (parameterize ((warning-handler (warning-handler-proc token)))
-                (cond [(string=? "BEGIN" (car head))
-                       (loop (cdr lst)
-                             (cons (vcomponent type: (string->symbol (cadr head)))
-                                   stack))]
-                      [(string=? "END" (car head))
-                       (loop (cdr lst)
-                             (if (null? (cdr stack))
-                                 ;; return
-                                 (car stack)
-                                 (cons (add-child (cadr stack) (car stack))
-                                       (cddr stack))))]
-                      [else
-                       (let ((k value params (parse-itemline head)))
-                         (loop (cdr lst)
-                               (let (((values . vlines) (build-vline k value params)))
-                                 ;; TODO
-                                 ;; (set! (vline-source vline)
-                                 ;;   (get-metadata token))
+  (let loop ((lst lst)                  ; Remeaining tokens
+             (stack '()))               ; Stack of vcomponent
+    (cond ((and (null? lst) (vcomponent? stack))
+           ;; return final component
+           stack)
+          ((null? lst)
+           ;; TODO try to save last token, to give context where file
+           ;; ended pre-maturely
+           (scm-error 'misc-error "parse"
+                      "Premature end of iCalendar stream"
+                      '() #f))
+          (else
+           (let* ((token (car lst))
+                  (head (get-data token)))
+             (catch 'parse-error
+               (lambda ()
+                 (parameterize ((warning-handler (warning-handler-proc token)))
+                   (cond [(string=? "BEGIN" (car head))
+                          (loop (cdr lst)
+                                (cons (vcomponent type: (string->symbol (cadr head)))
+                                      stack))]
+                         [(string=? "END" (car head))
+                          ;; TODO check that the correct object was closed
+                          (loop (cdr lst)
+                                (if (null? (cdr stack))
+                                    ;; return
+                                    (car stack)
+                                    (cons (add-child (cadr stack) (car stack))
+                                          (cddr stack))))]
+                         [else
+                          (let ((k value params (parse-itemline head)))
+                            (loop (cdr lst)
+                                  (let ((vlines (build-vlines k value params)))
+                                    (modify stack (lens-compose car* vcomponent-properties*
+                                                                (table-focus k))
+                                            (lambda (focus)
+                                              (if (just? focus)
+                                                  (just (append (from-just focus)
+                                                                vlines))
+                                                  (just vlines)))))))])))
 
-                                 ;; See RFC 5545 p.53 for list of all repeating types
-                                 ;; (for vcomponent)
-                                 ;; TODO templetize this, and allow users to
-                                 ;; set which types are list types, but also
-                                 ;; validate this upon creation (elsewhere).
-                                 (fold (lambda (vline stack)
-                                         (modify stack car*
-                                                 (lambda (comp)
-                                                   (if (memv (key vline) repeating-properties)
-                                                       (aif (prop* comp (key vline))
-                                                            (prop* comp (key vline) (cons vline it))
-                                                            (prop* comp (key vline) (list vline)))
-                                                       ;; else
-                                                       (prop* comp (key vline) vline)))))
-                                       stack vlines))))])))
-
-            (lambda (err proc fmt fmt-args data)
-              (let ((linedata (get-metadata token)))
-                (display (format
-                          #f
-                          ;; arguments
-                          ;; linedata
-                          ;; ~?
-                          ;; source line
-                          ;; source file
-                          (G_ "ERROR parse error around ~a
+               (lambda (err proc fmt fmt-args data)
+                 (let ((linedata (get-metadata token)))
+                   (display (format
+                             #f
+                             ;; arguments
+                             ;; linedata
+                             ;; ~?
+                             ;; source line
+                             ;; source file
+                             (G_ "ERROR parse error around ~a
   ~?
   line ~a ~a
   Defaulting to string~%")
-                          (get-string linedata)
-                          fmt fmt-args
-                          (get-line linedata)
-                          (get-file linedata))
-                         (current-error-port))
-                (let ((k value params (parse-itemline head)))
-                  (loop (cdr lst)
-                        (modify stack car*
-                                (lambda (c) (prop* c key
-                                              (vline key: k
-                                                     vline-value: value
-                                                     vline-parameters: params)))))))))))))
+                             (get-string linedata)
+                             fmt fmt-args
+                             (get-line linedata)
+                             (get-file linedata))
+                            (current-error-port))
+
+                   (let ((k value params (parse-itemline head)))
+                     (loop (cdr lst)
+                           (modify stack (lens-compose car* vcomponent-properties* (table-focus k))
+                                   (lambda (focus)
+                                     (define vlines
+                                       (list (vline value: value
+                                                    params: params)))
+                                     (if (just? focus)
+                                         (just (append (from-just focus)
+                                                       vlines))
+                                         (just vlines))))))))))))))

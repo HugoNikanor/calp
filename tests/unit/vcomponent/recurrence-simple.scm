@@ -11,7 +11,7 @@
   :use-module ((srfi srfi-41)
                :select (stream-take stream-map stream->list stream-car))
   :use-module ((datetime) :select (day-stream mon))
-  :use-module ((vcomponent base) :select (extract prop))
+  :use-module ((vcomponent) :select (extract1 prop1))
   :use-module ((sxml namespaced) :select (sxml->namespaced-sxml))
   :use-module ((calp namespaces) :select (xcal))
   :use-module ((hnh util) :select (->))
@@ -19,7 +19,7 @@
   :use-module ((vcomponent create) :select (vcalendar vevent with-parameters))
   :use-module ((hnh util exceptions)
                :select (warnings-are-errors warning-handler))
-  :use-module ((vcomponent recurrence)
+  :use-module ((vcomponent type recurrence)
                :select (parse-recurrence-rule
                         recur-rule
                         generate-recurrence-set)))
@@ -68,9 +68,9 @@
     (stream->list
      5
      (stream-map
-      (extract 'DTSTART)
+      (extract1 'DTSTART)
       (generate-recurrence-set ev)))
-    (stream->list 5 (day-stream (prop ev 'DTSTART))))
+    (stream->list 5 (day-stream (prop1 ev 'DTSTART))))
 
   ;; We run the exact same thing a secound time, since I had an error with
   ;; that during development.
@@ -80,10 +80,10 @@
      (stream-take
       5
       (stream-map
-       (extract 'DTSTART)
+       (extract1 'DTSTART)
        (generate-recurrence-set ev))))
     (stream->list
-     (stream-take 5 (day-stream (prop ev 'DTSTART))))))
+     (stream-take 5 (day-stream (prop1 ev 'DTSTART))))))
 
 (let ((ev (vevent
            dtstart: (datetime year: 2019 month: mars day: 2 hour: 10)
@@ -229,6 +229,6 @@
 ;; TODO add remaining rules
 
 
-'((vcomponent recurrence)
-  (vcomponent formats ical parse)
-  (vcomponent formats xcal parse))
+'((vcomponent type recurrence)
+  (vcomponent type formats ical parse)
+  (vcomponent type formats xcal parse))

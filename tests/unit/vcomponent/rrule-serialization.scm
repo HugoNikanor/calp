@@ -1,36 +1,36 @@
 (define-module (test rrule-serialization)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
-  :use-module ((vcomponent recurrence internal)
+  :use-module ((vcomponent type recurrence internal)
                :select (recur-rule->rrule-string
                         recur-rule->rrule-sxml
                         byday))
-  :use-module ((vcomponent recurrence parse)
+  :use-module ((vcomponent type recurrence parse)
                :select (parse-recurrence-rule))
   :use-module ((ice-9 peg) :select (keyword-flatten)))
 
 (test-equal
   "Parse of week day"
   '(#f . 3)
-  ((@@ (vcomponent recurrence parse) parse-day-spec)
+  ((@@ (vcomponent type recurrence parse) parse-day-spec)
    "WE"))
 
 (test-equal
   "Parse of week day with positive offset"
   '(1 . 3)
-  ((@@ (vcomponent recurrence parse) parse-day-spec)
+  ((@@ (vcomponent type recurrence parse) parse-day-spec)
    "1WE"))
 
 (test-equal
   "Parse of week day with positive offset (and plus)"
   '(2 . 3)
-  ((@@ (vcomponent recurrence parse) parse-day-spec)
+  ((@@ (vcomponent type recurrence parse) parse-day-spec)
    "+2WE"))
 
 (test-equal
   "Parse of week day with negative offset"
   '(-3 . 3)
-  ((@@ (vcomponent recurrence parse) parse-day-spec)
+  ((@@ (vcomponent type recurrence parse) parse-day-spec)
    "-3WE"))
 
 
@@ -41,7 +41,7 @@
 
 
 (define field->string
-  (@@ (vcomponent recurrence internal)
+  (@@ (vcomponent type recurrence internal)
       field->string))
 
 (let ((rule (parse-recurrence-rule "FREQ=WEEKLY;BYDAY=MO,TU,WE")))
@@ -74,5 +74,5 @@
         (recur-rule->rrule-sxml rule)))))
 
 
-'((vcomponent recurrence internal)
-  (vcomponent recurrence parse))
+'((vcomponent type recurrence internal)
+  (vcomponent type recurrence parse))

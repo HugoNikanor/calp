@@ -40,16 +40,8 @@ to @code{#f}.
 
 @subsubsection Additional Live Properties
 
-@c TODO document the added isvirtual property
-
-@deftp {XML namespace} http://example.com/virtual
-@cindex virtual-ns
-
-Namespace used for live proprieties declared for this
-resource. Exported as @code{virtual-ns}.
-@end deftp
-
-@deftp {WebDAV property} isvirtual!
+@deftp {WebDAV property} http://example.com/virtual isvirtual
+@c TODO document
 
 @deftp  {GOOPS method} isvirtual <virtual-resource>
 @deftpx {GOOPS method} set-isvirtual! <virtual-resource> value

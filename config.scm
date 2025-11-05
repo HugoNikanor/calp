@@ -90,7 +90,7 @@
 
 ((@ (calp html filter) description-filter)
  (lambda (ev str)
-   (cond [(prop ev 'X-MICROSOFT-SKYPETEAMSMEETINGURL)
+   (cond [(prop1 ev 'X-MICROSOFT-SKYPETEAMSMEETINGURL)
           (parse-teams-description str)]
          [(regexp-exec html-rx str)
            (parse-html str)]

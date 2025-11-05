@@ -44,49 +44,8 @@
            webdav-handler
            ))
 
-;; (define (run-filter context filter-spec)
-;;   (sxml-match filter-spec
-;;               [(c:comp-filter (@ (name ,name)) . ,rest)
-;;                ;; TODO
-;;                (filter (lambda (child) (string=? name (type child)))
-;;                        (children context))]
-;;               [(c:prop-filter (@ (name ,name)))
-;;                (prop context name)
-;;                ]
-;;               [(c:prop-filter (@ (name ,name)) . ,rest)
-;;                ]
-;;               [(c:param-filter (@ (name ,name)) . ,rest)]
-;;               [(c:is-not-defined)]
-;;               [(c:text-match (@ . ,attrs) . ,data)]
-;;               [(c:time-range (@ . ,attrs))]))
-
-
-
-;; Requests can content-type be both both application/xml and text/xml, server MUST accept both (RFC 4918 8.2)
-
-;; ;; RFC 4918 8.2
-;; (catch 'parser-error
-;;   (lambda () (xml->sxml body))
-;;   (lambda (err input-port . msg)
-;;     (define err-msg
-;;       (with-output-to-string
-;;         (lambda () (for-each display msg))))
-;;     (return (build-response code: 400
-;;                             headers: ((content-type . (text/plain))))
-;;             err-msg)))
-
-;; A caldav server MUST support
-;; - RFC4918 (WebDAV) Class 1
-;; - RFC3744 WebDAV ACL including additional privilege defined in 6.1
-;; - HTTPS
-;; - ETags from RFC2616 (http)
-
-;; MKCALENDAR NOT required
-
 
 
-
-;; getcontentlanguage, "dead" property
 
 (declare-method! "PROPFIND" 'PROPFIND)
 (declare-method! "PROPPATCH" 'PROPPATCH)
@@ -196,7 +155,8 @@
                                    (map propstat->namespaced-sxml
                                         (exec-propfind property-request resource))))))))
 
-        (else (build-response code: 404))))
+        (else (values (build-response code: 404)
+                      "Failed finding child"))))
 
 
 
@@ -227,39 +187,52 @@
         (else (build-response code: 404))))
 
 
-;;; TODO shouldn't root resource actually be used?
-(define (run-options _ href request)
-  (build-response code: 200
-                  headers: `((dav . (1))
-                             ;; (DAV . "calendar-access")
-                             ;; TODO collecting this set dynamically would be fancy!
-                             (allow . (GET HEAD PUT
-                                           MKCOL PROPFIND OPTIONS
-                                           DELETE
-                                           COPY
-                                           MOVE
-                                           ;; LOCK
-                                           ;; UNLOCK
-                                           ;; REPORT
-                                           )))))
+(define (run-options root-resource href request)
+  (cond ((lookup-resource root-resource href)
+         => (lambda (resource)
+              (build-response
+               code: 200
+               headers: `((dav . (1 3
+                                    ;; TODO dispatch to method on resource
+                                    ;; "calendar-access"
+                                    ))
+
+                          ;; TODO collecting this set dynamically would be fancy!
+                          (allow . (GET HEAD PUT
+                                        MKCOL PROPFIND OPTIONS
+                                        DELETE
+                                        COPY
+                                        MOVE
+                                        ;; LOCK
+                                        ;; UNLOCK
+                                        ;; TODO return REPORT where applicable
+                                        ))))))
+        (else (build-response code: 404))))
 
 (define (run-get root-resource href request)
   (cond ((lookup-resource root-resource href)
          => (lambda (resource)
+              (define-values (rendered ct)
+               (call-with-values (lambda () (content resource (request-headers request)))
+                 (case-lambda ((rendered)
+                               (values rendered
+                                       (and=> (content-type resource)
+                                              (compose list string->symbol))))
+                              ((rendered ct) (values rendered (list (string->symbol ct)))))))
+
               (values (build-response
                        code: 200
-                       headers: (filter cdr
-                                        `((content-type
-                                           . ,(and=> (content-type resource)
-                                                     (compose list string->symbol)))
-                                          (last-modified . ,(and=> (last-modified resource)
-                                                                   (@ (datetime srfi-19) datetime->srfi-19-date)))
-                                          (content-language . ,(content-language resource))
-                                          (content-length . ,(content-length resource))
-                                          (etag . ,(etag resource)))))
+                       headers:
+                       (filter cdr
+                               `((content-type . ,ct)
+                                 (last-modified . ,(and=> (last-modified resource)
+                                                          (@ (datetime srfi-19) datetime->srfi-19-date)))
+                                 (content-language . ,(content-language resource))
+                                 (content-length . ,(content-length resource))
+                                 (etag . ,(etag resource)))))
                       ;; Content will be filtered out by Guile's
                       ;; webserver for HEAD requests.
-                      (content resource))))
+                      rendered)))
 
         (else (build-response code: 404))))
 

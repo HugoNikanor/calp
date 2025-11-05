@@ -8,24 +8,27 @@
   :use-module (srfi srfi-88)
   :use-module (hnh util table)
   :use-module (datetime)
-  :use-module (vcomponent base)
+  :use-module (vcomponent)
+  :use-module (hnh util)
+  :use-module (hnh util lens)
+  :use-module (hnh util optional)
   :use-module ((vcomponent create) :select (vevent vcalendar with-parameters)))
 
 
 
 
 (define ev
-  (prop (vcomponent type: 'DUMMY)
-        'X-KEY "value"))
+  (-> (vcomponent type: 'DUMMY)
+      (set (prop* 'X-KEY) (just "value"))))
 
 (test-eqv "Non-existant properties return #f"
-  #f (prop ev 'MISSING))
+  #f (prop1 ev 'MISSING))
 
 (test-assert "Existing property is non-false"
-  (prop ev 'X-KEY))
+  (prop1 ev 'X-KEY))
 
 (test-equal "Getting value of existing property"
-  "value" (prop ev 'X-KEY))
+  "value" (prop1 ev 'X-KEY))
 
 (define calendar (add-child (vcomponent type: 'VCALENDAR)
                             ev))
@@ -62,31 +65,30 @@
 
 (test-eqv
     "An added component extends length"
-  1 (length (children (add-child vcomponent* child))))
+  1 (length (vcomponent-children (add-child vcomponent* child))))
 
 (test-eqv
     "But the source isn't modified"
-  0 (length (children vcomponent*)))
+  0 (length (vcomponent-children vcomponent*)))
 
 (test-equal "Setting property"
-  (list (list 'KEY (vline key: 'KEY vline-value: "Value")))
-  (properties
-   (prop vcomponent* 'KEY "Value")))
+  `((KEY . ,(list (vline key: 'KEY vline-value: "Value"))))
+  (vcomponent-properties
+   (set vcomponent* (prop* 'KEY) (just "Value"))))
 
 (let ((vl (vline key: 'KEY vline-value: "Value")))
   (test-equal "Setting property vline"
-    (list (list 'KEY vl))
-    (properties
-     (prop* vcomponent* 'KEY vl))))
+    `((KEY ,vl))
+    (vcomponent-properties
+     (set vcomponent* (prop* 'KEY) (just vl)))))
 
 (test-equal "Set properties test"
   '(K1 K2)
   (map car
-   (properties
-    (apply set-properties
-           vcomponent*
-           `((K1 . "V1")
-             (K2 . "V2"))))))
+   (vcomponent-properties
+    (-> vcomponent*
+        (set (prop* 'K1) (just "V1"))
+        (set (prop* 'K2) (just "V2"))))))
 
 (test-equal "VLine string representation"
   "#.(vline #:key 'KEY #:vline-value \"Value\")"
@@ -144,14 +146,4 @@
 ;; parameters
 ;; properties
 
-(test-group "x-property?"
-  (test-assert (x-property? 'X-Extension))
-  (test-assert (not (x-property? 'Regular)))
-  (test-assert (not (x-property? '-internal))))
-
-(test-group "internal-field?"
-  (test-assert (not (internal-field? 'X-Extension)))
-  (test-assert (not (internal-field? 'Regular)))
-  (test-assert (internal-field? '-internal)))
-
-'((vcomponent base))
+'((vcomponent))

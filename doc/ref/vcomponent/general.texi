@@ -10,13 +10,8 @@ List of filepaths
 @defvr {Configuration Variable} default-calendar
 @end defvr
 
-@c ===== Concepts =====
-
-@c - internal fields
-@c DATA layout
-@c how does multiple value work?
-
-@c ===== BASE =====
+@c TODO this is still written for the old base.
+@c TODO rewrite it for the new one.
 
 @macro type {x}
 Type: @code{\x\}@*

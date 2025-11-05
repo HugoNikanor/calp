@@ -15,7 +15,7 @@
   :use-module ((calp html config) :select (edit-mode debug))
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
-  :use-module ((vcomponent recurrence) :select (repeating?))
+  :use-module ((vcomponent type recurrence) :select (repeating?))
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
                         format-recurrence-rule
@@ -40,11 +40,13 @@
            ))
 
 
+;;; TODO TODO TODO this still uses the old vcomponent system
+
 (define (xml-entities s)
   (lambda ()
     (for-each display
-     (map (lambda (c) (format #f "&#x~x;" (char->integer c)))
-          (string->list s)))))
+              (map (lambda (c) (format #f "&#x~x;" (char->integer c)))
+                   (string->list s)))))
 
 (define (format-summary ev str)
   ((summary-filter) ev str))
@@ -342,7 +344,7 @@
   `(div (@ (class "eventtext"))
         (h2 ,(G_ "Recurrences"))
         (table (@ (class "recur-components"))
-               ,@((@@ (vcomponent recurrence internal) map-fields)
+               ,@((@@ (vcomponent type recurrence internal) map-fields)
                   (lambda (key value)
                     `(tr (@ (class ,key)) (th ,key)
                          (td

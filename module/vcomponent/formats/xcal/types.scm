@@ -1,7 +1,6 @@
 (define-module (vcomponent formats xcal types)
   :use-module (hnh util)
   :use-module (hnh util table)
-  :use-module (vcomponent formats ical types)
   :use-module (datetime)
   :use-module (calp translation)
   :use-module ((calp namespaces) :select (xcal))
@@ -28,7 +27,7 @@
 
 (define (write-recur _ v)
   (apply (xml xcal 'recur)
-         ((@@ (vcomponent recurrence internal) recur-rule->rrule-sxml) v)))
+         ((@@ (vcomponent type recurrence internal) recur-rule->rrule-sxml) v)))
 
 ;; sepparate since this text shouldn't be escaped
 (define (write-text _ v)

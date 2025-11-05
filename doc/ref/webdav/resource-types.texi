@@ -11,6 +11,29 @@ Each page will document the expected use case for each resource, how
 it extends common methods, and any extra properties or rules it
 imposes for resources.
 
-@include webdav/resource-types/calendar.texi
-@include webdav/resource-types/file.texi
+@c TODO link back to <resource> here, possibly even introducing it as
+@c a ``real'' resource here, and put all default webdav properties
+@c documentation under it.
+
+@deftp {WebDAV} @nscalp{} resource-class
+@c TODO put this somewhere proper
+
+Name of the GOOPS class backing this resource. This leaks server
+configuration, and is therefor usefull when debugging a server
+configuration.
+
+Protected by default.
+
+    @deftp {GOOPS method} resource-class <resource>
+    @deftpx {GOOPS method} set-resourcce-class! <resource> value
+    @deftpx {GOOPS method} remove-resourcce-class! <resource>
+    @end deftp
+@end deftp
+
+
 @include webdav/resource-types/virtual.texi
+@include webdav/resource-types/file.texi
+@include webdav/resource-types/calendar-collection.texi
+@include webdav/resource-types/calendar-home.texi
+@include webdav/resource-types/calendar-object.texi
+@include webdav/resource-types/principal.texi

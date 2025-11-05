@@ -1,11 +1,30 @@
 (define-module (vcomponent data-stores sqlite)
   :use-module (oop goops)
   :use-module (vcomponent data-stores common)
+  :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
-  :use-module ((srfi srfi-88) :select ())
+  :use-module (srfi srfi-88)
+  ;; :use-module (vcomponent)
+  :use-module (hnh util)
+  :use-module (hnh util type)
+  :use-module (hnh util table)
   :use-module (vcomponent)
-  :use-module ((vcomponent formats ical) :prefix #{ical:}#)
-  :use-module ((hnh util) :select (aif))
+  :use-module (web uri)
+  :use-module (datetime)
+  :use-module (datetime timespec)
+  :use-module (vcomponent type duration)
+  :use-module (vcomponent type period)
+  :use-module (vcomponent type utc-offset)
+  :use-module (vcomponent type unknown)
+  :use-module (vcomponent type recurrence)
+  :use-module (vcomponent type geo)
+  :use-module (vcomponent type version)
+  :use-module (vcomponent type request-status)
+  :use-module (hnh util uuid)
+  :use-module (hnh util optional)
+  :use-module (hnh util lens)
+  :use-module (sxml namespaced)
+  :export (create-instance)
   )
 
 
@@ -15,172 +34,525 @@
     (provide 'data-store-sqlite))
   (lambda args 'no-op))
 
-;; (define (sqlite-exec db str)
-;;   (display str)
-;;   ((@ (sqlite3) sqlite-exec) db str))
-
 (define-class <sqlite-data-store> (<calendar-data-store>)
-  (database accessor: database)
-  (name init-keyword: name: getter: calendar-name)
+  (path getter: path
+        init-keyword: path:
+        init-value: #f)
+  (db accessor: database)
   )
 
-(define (initialize-database db)
-    ;;; Setup Content type
 
-  (sqlite-exec db "
-CREATE TABLE IF NOT EXISTS content_type
-( id INTEGER PRIMARY KEY AUTOINCREMENT
-, name TEXT NOT NULL
-)")
-
-  (let ((stmt (sqlite-prepare db "
-INSERT OR IGNORE INTO content_type
-( name ) VALUES ( ? )")))
-    (for-each (lambda (content-type)
-                (sqlite-reset stmt)
-                (sqlite-bind-arguments stmt )
-                (sqlite-step stmt))
-              '("ical"
-                "xcal"
-                "jcal")))
-
-    ;;; Setup calendar
-
-  (sqlite-exec db "
-CREATE TABLE IF NOT EXISTS calendar
-( id INTEGER PRIMARY KEY AUTOINCREMENT
-, name TEXT NOT NULL
-)")
-
-  (sqlite-exec db "
-CREATE TABLE IF NOT EXISTS calendar_properties
-( id INTEGER PRIMARY KEY AUTOINCREMENT
-, calendar INTEGER NOT NULL
-, key TEXT NOT NULL
-, value TEXT NOT NULL
-, FOREIGN KEY (calendar) REFERENCES calendar(id)
-)")
-
-  ;; INSERT INTO calendar_properties (id, key, value)
-  ;; VALUES ( (SELECT id FROM calendar WHERE name = 'Calendar')
-  ;;        , 'color'
-  ;;        , '#1E90FF')
-
-    ;;; Setup event
-
-  (sqlite-exec db "
-CREATE TABLE IF NOT EXISTS event
-( uid TEXT PRIMARY KEY
-, content_type INTEGER NOT NULL
-, content TEXT NOT NULL
-, calendar INTEGER NOT NULL
-, FOREIGN KEY (content_type) REFERENCES content_type(id)
-, FOREIGN KEY (calendar) REFERENCES calendar(id)
-)")
-
-  (sqlite-exec db "
-CREATE TABLE IF NOT EXISTS event_instances
-( id INTEGER PRIMARY KEY AUTOINCREMENT
-, event TEXT NOT NULL
-, start DATETIME NOT NULL
-, end DATETIME
-, FOREIGN KEY (event) REFERENCES event(uid)
-)")
-
-  (sqlite-exec db "
-CREATE TABLE IF NOT EXISTS event_instances_valid_range
-( start DATETIME NOT NULL
-, end DATETIME NOT NULL
-)")
-  )
-
-(define-method (initialize (this <sqlite-data-store>) args)
+(define-method (initialize (self <sqlite-data-store>) args)
   (next-method)
-  (if (calendar-name this)
-      (set! (database this) (sqlite-open (path this)))
-      (let ((path db-name
-             (aif (string-rindex (path this) #\#)
-                  (values (substring (path this) 0 it)
-                          (substring (path this) (1+ it)))
-                  (scm-error 'misc-error "(initialize <sqlite-data-store>)"
-                             "Target calendar name not specified"
-                             '() #f))))
-        (set! (database this) (sqlite-open path))
-        (slot-set! this 'name db-name)))
+  (typecheck (path self) string?)
+  (set! (database self) (sqlite-open (path self)))
 
-  (initialize-database (database this)))
+  (init-db (database self)))
+
+(define* (create-instance key: path)
+  (make <sqlite-data-store> path: path))
+
+(define (init-db db)
+  (sqlite-exec db "
+CREATE TABLE IF NOT EXISTS component
+( id INTEGER PRIMARY KEY AUTOINCREMENT
+, type TEXT NOT NULL
+, parent INTEGER REFERENCES component(id)
+)")
+
+  ;; Recursive component lookups are crazy slow without this
+  (sqlite-exec
+   db "CREATE INDEX IF NOT EXISTS component_parent ON component(parent)")
+
+  (sqlite-exec db "
+CREATE TABLE IF NOT EXISTS property
+( id INTEGER PRIMARY KEY AUTOINCREMENT
+, property TEXT NOT NULL
+, component INTEGER NOT NULL REFERENCES component(id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
+, type TEXT
+-- Any value type is accepted, see documentation
+-- for valid values corresponding to each property
+, value NOT NULL
+)")
+
+  ;; (sqlite-exec db "CREATE INDEX IF NOT EXISTS prop_idx ON property (property, component)")
+
+  (sqlite-exec db "
+CREATE TABLE IF NOT EXISTS parameter
+( id INTEGER PRIMARY KEY AUTOINCREMENT
+, parameter TEXT NOT NULL
+, value TEXT NOT NULL
+, property INTEGER NOT NULL REFERENCES property(id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
+)")
+
+  ;; (sqlite-exec db "CREATE INDEX IF NOT EXISTS param_idx ON PARAMETER (parameter, property)")
+
+  (sqlite-exec db "
+CREATE TABLE IF NOT EXISTS duration
+( id INTEGER PRIMARY KEY AUTOINCREMENT
+, series INTEGER NOT NULL
+, property INTEGER NOT NULL REFERENCES property(id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
+, content TEXT NOT NULL
+)")
+
+  (sqlite-exec db "
+CREATE TABLE IF NOT EXISTS period
+( id INTEGER PRIMARY KEY AUTOINCREMENT
+, property INTEGER NOT NULL REFERENCES property(id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
+, end
+)")
+
+  (sqlite-exec db "
+CREATE TABLE IF NOT EXISTS href
+(href TEXT NOT NULL PRIMARY KEY
+, component INTEGER NOT NULL REFERENCES component(id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
+)")
 
 
-(define-method (get-calendar (this <sqlite-data-store>))
-  (let ((db (database this))
-        (calendar (vcomponent type: 'VCALENDAR)))
-    (let ((stmt (sqlite-prepare db "
-SELECT key, value FROM calendar_properties cp
-LEFT JOIN calendar c ON cp.calendar = c.id
-WHERE c.name = ?
-")))
-      (sqlite-bind-arguments stmt (calendar-name this))
-      (sqlite-fold (lambda (row calendar)
-                     (let ((key (vector-ref row 0))
-                           (value (vector-ref row 1)))
-                       (set-property! calendar
-                                      (string->symbol key)
-                                      value))
-                     calendar)
-                   calendar
-                   stmt))
+  ;; TODO view to find root component from component id
 
-    (let ((stmt (sqlite-prepare db "
-SELECT content_type.name, content
-FROM event
-LEFT JOIN calendar ON event.calendar = calendar.id
-LEFT JOIN content_type ON event.content_type = content_type.id
-WHERE calendar.name = ?
-")))
-      (sqlite-bind-arguments stmt (calendar-name this))
-      (sqlite-fold (lambda (row calendar)
-                     (case (string->symbol (vector-ref row 0))
-                       ((ical)
-                        (add-child! calendar
-                                    (call-with-input-string (vector-ref row 1)
-                                      ics:deserialize))
-                        calendar)
-                       (else
-                        (scm-error 'misc-error "(get-calendar <sqlite-data-store>)"
-                                   "Only iCal data supported, got ~a"
-                                   (list (vector-ref row 0)) #f)
-                        ))
-                     )
-                   calendar
-                   stmt))
+  (sqlite-exec db "
+CREATE VIEW IF NOT EXISTS component_trace AS
+WITH RECURSIVE trace (root, id, type, parent) AS
+(
+SELECT id AS root, id, type, parent FROM component
+WHERE parent IS NULL
+UNION
+SELECT trace.root, c.id, c.type, c.parent
+FROM component c
+INNER JOIN trace ON c.parent = trace.id
+)
+SELECT root, id, type, parent FROM trace")
 
-    calendar))
+  (sqlite-exec db "CREATE INDEX IF NOT EXISTS property_component ON property(component)")
+  (sqlite-exec db "CREATE INDEX IF NOT EXISTS parameter_property ON parameter(property)")
 
+  (sqlite-exec db "
+CREATE TABLE IF NOT EXISTS metadata
+( key TEXT PRIMARY KEY NOT NULL
+, value TEXT
+)")
 
-#;
-(define-method (get-by-uid (this <sqlite-data-store>) (uid <string>))
-  (let ((stmt (sqlite-prepare db "
-SELECT name, content
-FROM event
-LEFT JOIN content_type ON event.content_type = content_type.id
-WHERE event.uid = ?")))
-    (sqlite-bind-arguments stmt uid)
-    (cond ((sqlite-step stmt)
-           => (lambda (record)
-                (case (string->symbol (vector-ref content 0))
-                  ((ics)
-                   ;; TODO dispatch to higher instance
-                   )
-                  (else
-                   (scm-error 'value-error "get-by-uid"
-                              "Can only deserialize ics (uid=~s)"
-                              (list uid) #f)))
-
-                ))
-          (else
-           ;; TODO possibly throw no-such-value
-           #f
-           ))
-
-    )
   )
+
+;; (define-method (get-all (this <sqlite-data-store>))
+;;   (throw 'not-implemented))
+
+(define (vector-car v)
+  (vector-ref v 0))
+
+(define (call-with-sqlite-transaction db proc)
+  (let ((id (uuid)))
+    (catch #t
+      (lambda ()
+        (sqlite-exec db (format #f "SAVEPOINT '~a'" id))
+        (begin1
+         (proc db)
+         (sqlite-exec db (format #f "RELEASE SAVEPOINT '~a'" id))) )
+      (lambda args
+        (sqlite-exec db (format #f "ROLLBACK TRANSACTION TO SAVEPOINT '~a'" id))
+        (sqlite-exec db (format #f "RELEASE SAVEPOINT '~a'" id))
+        (apply throw args)))))
+
+(define (get-metadata db key)
+  (let ((stmt (sqlite-prepare db "SELECT value FROM metadata WHERE key = :key")))
+    (sqlite-bind-arguments stmt key: key)
+    (begin1 (and=> (sqlite-step stmt) vector-car)
+            (sqlite-finalize stmt))))
+
+(define (set-metadata! db key value)
+  (let ((stmt (sqlite-prepare
+               db "INSERT OR REPLACE INTO metadata (key, value) VALUES (:key, :value)")))
+    (sqlite-bind-arguments stmt key: key value: value)
+    (sqlite-step stmt)
+    (sqlite-finalize stmt)))
+
+(define (remove-metadata! db key)
+  (let ((stmt (sqlite-prepare db "DELETE FROM metadata WHERE key = :key")))
+    (sqlite-bind-arguments stmt key: key)
+    (sqlite-step stmt)
+    (sqlite-finalize stmt)))
+
+;;; TODO language
+(define-method (store-displayname (this <sqlite-data-store>))
+  (get-metadata (database this) "displayname"))
+
+(define-method (set-store-displayname! (this <sqlite-data-store>) name)
+  (set-metadata! (database this) "displayname" name))
+
+(define-method (remove-store-displayname! (this <sqlite-data-store>))
+  (remove-metadata! (database this) "displayname"))
+
+;;; TODO language
+(define-method (store-description (store <sqlite-data-store>))
+  (get-metadata (database store) "description"))
+
+(define-method (set-store-description! (store <sqlite-data-store>) desc)
+  (set-metadata! (database store) "description" desc))
+
+(define-method (remove-store-description! (store <sqlite-data-store>))
+  (remove-metadata! (database store) "description"))
+
+(define-method (store-color (this <sqlite-data-store>))
+  (get-metadata (database this) "color"))
+
+(define-method (set-store-color! (this <sqlite-data-store>) name)
+  (set-metadata! (database this) "color" name))
+
+(define-method (remove-store-color! (store <sqlite-data-store>))
+  (remove-metadata! (database store) "color"))
+
+(define-method (store-calendar-timezone (store <sqlite-data-store>))
+  (call-with-sqlite-transaction
+   (database store)
+   (lambda (db)
+    (cond ((get-metadata db "calendar-timezone")
+           => (lambda (id)
+                (assoc-ref (get-entries db "c.root = :id" id: id) #f)))
+          (else #f)))))
+
+;; (define-method (write-all! (this <sqlite-data-store>) component)
+;;   (call-with-sqlite-transaction
+;;    (database this)
+;;    (lambda (db) (write-component! db component))))
+
+;;; TODO this is the only put-event! which actually uses href currently,
+;;; Ensure all uses href
+(define-method (put-event! (this <sqlite-data-store>) href component
+                           )
+  ;; TODO where is component UID conflicts handled?
+  ;; TODO check if the given HREF refers to a component with a different UID (RFC 4791 §5.3.2.1.)
+  (call-with-sqlite-transaction
+   (database this)
+   (lambda (db)
+     ;; TODO (remove-component! db ())
+     (define component-id (write-component! db component))
+     (define stmt
+       (sqlite-prepare db "INSERT OR REPLACE INTO href (href, component) VALUES (:href, :component)"))
+     (sqlite-bind-arguments stmt href: href component: component-id)
+     (sqlite-step stmt)
+     (sqlite-finalize stmt))))
+
+(define (duration->sqlite-time-offset dur)
+  (define ± (duration-sign dur))
+
+  (cond ((duration-week? dur)
+         (list (format #f "~a~a days" ± (* 7 (duration-week-count dur)))))
+        ((duration-datetime? dur)
+         (append
+          (cond ((duration-day dur)
+                 (lambda (x) (and (number? x) (not (zero? x))))
+                 => (lambda (d) (list (format #f "~a~a days" ± d))))
+                (else '()))
+          (cond ((duration-time dur)
+                 (lambda (x) (and (time? x) (not (time-zero? x))))
+                 => (lambda (t)
+                      (map (lambda (p) (format #f "~a~a ~a" ± (cdr p) (car p)))
+                           (remove (compose zero? cdr)
+                                   `((hours   . ,(hour t))
+                                     (minutes . ,(minute t))
+                                     (seconds . ,(second t)))))))
+                (else '()))))
+        (else '())))
+
+;;; TODO this should use a parameter, to allow custom types
+(define (sqlite-serialize key vline)
+  (typecheck key symbol?)
+  (typecheck vline vline?)
+  ;; Checking for differences between apparent and actual type is NOT needed, since
+  ;; we store type information regardless.
+  (let ((v (vline-value vline)))
+    (cond (((@ (scheme base) bytevector?) v) (values 'BINARY v))
+          ((boolean? v)        (values 'BOOLEAN (if v 1 0)))
+          ;; NOTE this also captures CAL-ADDRESS
+          ((uri? v)            (values 'URI (uri->string v)))
+          ((date? v)           (values 'DATE (date->string v "~Y-~m-~d")))
+          ;; TODO timezone
+          ((datetime? v)       (values 'DATE-TIME (datetime->string v "~Y-~m-~d ~H:~M:~S")))
+          ((duration? v)       (values 'DURATION (duration->string v)))
+          ((exact-integer? v)  (values 'INTEGER v))
+          ;; gulie-sqlite is weird, and REQUIRES exact numbers.
+          ;; Possibly file a bug report with them
+          ((number? v)         (values 'FLOAT (inexact->exact v)))
+          ((period? v)         (values 'TODO "TODO"))
+          ((recur-rule? v)     (values 'TODO "TODO"))
+          ((string? v)         (values 'TEXT v))
+          ;; TODO timezone
+          ((time? v) (values 'TIME (time->string v "~H:~M:~S")))
+
+          ;; TODO only have one of utc-offset and timespec
+          ((utc-offset? v)
+           (values 'UTC-OFFSET
+                   (string-append
+                    (symbol->string (offset-direction v))
+                    (time->string (offset-time v) "~H:~M:~S"))))
+          ((timespec? v)
+           (values 'UTC-OFFSET
+                   (string-append
+                    (symbol->string (timespec-sign v))
+                    (time->string (timespec-time v) "~H:~M:~S"))))
+
+          ;; `X-` prefix to GEO and VERSION, since the standard
+          ;; claims them as FLOAT and TEXT respectively, but they have
+          ;; special handling, effectively making them their own types.
+          ((geo? v)
+           (values 'X-GEO (format #f "~a;~a" (geo-latitude v) (geo-longitude v))))
+          ((vcalendar-version? v)
+           (values 'X-VERSION (string-append (cond ((version-min v)
+                                                   => (lambda (vv) (string-append vv ";")))
+                                                  (else ""))
+                                             (version-max v))))
+          ((request-status? v)
+           (values 'TODO "TODO")
+           #;
+           (values 'REQEUST-STATUS
+            (let ((v (vline-value vline)))
+              (format #t ":~a;~a" (statcode v)
+                      (escape-chars (statdesc v)))
+              (cond ((extdata v)
+                     => (lambda (v) (format #t ";~a" (escape-chars v))))))))
+
+          ((unknown? v)
+           (values 'UNKNOWN v))
+
+          (else
+           (scm-error 'misc-error "sqlite-serialize"
+                      "Don't know how to serialize following for SQLite: ~s"
+                      (list v) #f)))))
+
+
+(define-method (remove-by-href! (store <sqlite-data-store>) href)
+  (define stmt
+    (sqlite-prepare
+     (database store)
+     "DELETE FROM component WHERE id IN (SELECT id FROM component_trace WHERE href = :href"))
+  (sqlite-bind-arguments stmt href: href)
+  (sqlite-step stmt)
+  (sqlite-finalize stmt))
+
+(define* (write-component! db component optional: parent)
+  (call-with-sqlite-transaction
+   db
+   (lambda (db)
+     (define component-id
+       (let ((stmt
+              (sqlite-prepare
+               db "INSERT INTO component (type, parent) VALUES (?, ?) RETURNING id")))
+         (sqlite-bind-arguments stmt (symbol->string (type component)) parent)
+         (begin1 (vector-car (sqlite-step stmt))
+                 (sqlite-finalize stmt))))
+
+
+     (let ((property-stmt (sqlite-prepare db "
+INSERT INTO property (property, component, type, value)
+VALUES (?, ?, ?, ?)
+RETURNING id"))
+           (param-stmt (sqlite-prepare db "
+INSERT INTO parameter (parameter, value, property)
+VALUES (?, ?, ?)
+")))
+
+       (for (key . vlines) in (table->list (vcomponent-properties component))
+            (for vline in vlines
+                 (define-values (type serialized) (sqlite-serialize key vline))
+
+                 (sqlite-bind-arguments property-stmt (symbol->string key)
+                                        component-id (symbol->string type) serialized)
+                 (let ((property-id
+                        (begin1 (vector-car (sqlite-step property-stmt))
+                                (sqlite-reset property-stmt))))
+
+                   ;; TODO if value is a duration
+                   ;; insert into `duration` table
+                   ;; TODO if value is a period
+                   ;; Insert into `period` table
+
+                   (for (key . value) in (table->list (vline-parameters vline))
+                        (sqlite-bind-arguments param-stmt (symbol->string key) value property-id)
+                        (sqlite-step param-stmt)
+                        (sqlite-reset param-stmt))
+
+                   )))
+       (sqlite-finalize property-stmt)
+       (sqlite-finalize param-stmt))
+
+     (for-each (lambda (child)
+                 (write-component! db child component-id))
+               (vcomponent-children component))
+
+     component-id)))
+
+
+(define-once parsers
+ (make-parameter
+   (alist->table
+    (list
+     (cons 'BINARY identity)
+     (cons 'BOOLEAN (compose not zero?))
+
+     ;; NOTE this might not be used, if CAL-ADDRESS uris are coded as URIs.
+     (cons 'CAL-ADDRESS string->uri)
+
+     (cons 'DATE string->date)
+
+     ;; TODO how is timezone handled?
+     (cons 'DATE-TIME (lambda (v) (string->datetime v "~Y-~m-~d ~H:~M:~S~Z")))
+
+     ;; TODO parse duration
+     (cons 'DURATION identity)
+
+     (cons 'FLOAT identity)
+     (cons 'INTEGER identity)
+
+     ;; TODO (cons 'PERIOD (const 'TODO))
+     ;; TODO (cons 'RECUR (const 'TODO))
+
+     (cons 'TEXT identity)
+
+     ;; TODO timezone
+     (cons 'TIME (lambda (v) (string->time v "~H:~M:~S")))
+
+     ;; TODO [+-]time
+     (cons 'UTC-OFFSET identity)
+
+     (cons 'URI string->uri)
+
+     (cons 'X-GEO (lambda (v) (let ((p (string-split v #\;)))
+                           (geo x: (string->number (list-ref p 0))
+                                y: (string->number (list-ref p 1))))))
+     (cons 'X-VERSION (lambda (v) (vcalendar-version max: v)))      ; TODO actually parse version
+
+     ;; TODO
+     (cons 'X-REQUEST-STATUS identity)
+
+     ;; TODO maybe ensure we have text here
+     (cons 'UNKNOWN unknown)
+
+     (cons 'TODO (const "TODO"))
+
+     )
+    )))
+
+(define (get-parser type)
+  (table-get (parsers) type))
+
+(define-method (get-by-href (this <sqlite-data-store>) href)
+  (cdar
+   (get-entries (database this)
+                "href = :href"
+                href: href)))
+
+(define-method (list-entries (this <sqlite-data-store>))
+  ;; Only doing a single SQL lookup (instead of running get-entries
+  ;; for each href) takes the runtime on a store with ~2000 elements
+  ;; from 80s down to 5s, most of which is spent in the garbage collector.
+  (get-entries (database this) "true"))
+
+;;; TODO bad things happen on no-match
+(define (get-entries db filter . filter-args)
+ ;; We group parameters, since propreties may be really large, while
+ ;; component data is tiny. As it's currently written, parameters
+ ;; can't contain record or unit separator characters anywhere.
+ (define stmt (sqlite-prepare db (format #f "
+SELECT
+  c.type
+, c.parent
+, p.property
+, p.component
+, p.type
+, p.value
+, group_concat(parameter.parameter || char(0x1F) || parameter.value, char(0x1E))
+-- , href.href
+FROM component_trace c
+-- TODO this fails for components with 0 properties
+RIGHT JOIN property p ON c.id = p.component
+FULL OUTER JOIN parameter ON parameter.property = p.id
+LEFT JOIN href ON href.component = root
+WHERE ~a
+GROUP by p.id" filter)))
+
+ (apply sqlite-bind-arguments stmt filter-args)
+
+ (define-values (ids components)
+   (car+cdr
+    (sqlite-fold
+     (lambda (record state)
+       (let ((component-type      (string->symbol (vector-ref record 0)))
+             (parent-id           (string->symbol (format #f "~a" (vector-ref record 1))))
+             (property-name       (string->symbol (vector-ref record 2)))
+             (component-id        (-> (vector-ref record 3) number->string string->symbol))
+             (property-type       (string->symbol (vector-ref record 4)))
+             (property-value      (vector-ref record 5))
+             (property-parameters (vector-ref record 6)))
+
+         (define parameters
+           (aif property-parameters
+                (alist->table
+                 (map (lambda (record)
+                        (let ((pair (string-split record #\us)))
+                          (cons (string->symbol (car pair))
+                                (string-join (cdr pair) (string #\us)))))
+                      (string-split it #\rs)))
+                (table)))
+
+         (define value
+           ((or (get-parser property-type) unknown)
+            property-value))
+
+         (-> state
+             ;; - For component referenced by ID, set property
+             ;;   and parameters by property-name
+             (modify
+              (lens-compose cdr* (table-focus component-id))
+              (lambda (m-component)
+                (just
+                 (modify (unjust m-component (vcomponent type: component-type))
+                         (prop* property-name)
+                         (lambda (m-prop)
+                           (just
+                            (cons (vline params: parameters value: value)
+                                  (unjust m-prop '()))))))))
+             (modify (lens-compose car* (table-focus parent-id))
+                     (lambda (m) (just (lset-adjoin eq? (unjust m '()) component-id)))))))
+     (cons (table) (table))
+     stmt)))
+
+ (sqlite-finalize stmt)
+
+
+ ;; TODO possibly cache this list
+ (define href-by-id (make-hash-table))
+ (let ((stmt (sqlite-prepare db "SELECT component, href FROM href")))
+   (sqlite-map (lambda (v) (hash-set! href-by-id (string->symbol (format #f "~a" (vector-ref v 0))) (vector-ref v 1)))
+               stmt))
+
+ (for id in (table-get ids (string->symbol "#f"))
+      (cons (hash-ref href-by-id id)
+            (let recurse ((id id))
+              (vcomponent-children (table-get components id)
+                                   (map recurse (or (table-get ids id) '()))))
+            )))
+
+
+(define-method (list-entries/shallow (store <sqlite-data-store>))
+  (let ((stmt (sqlite-prepare (database store) "SELECT href FROM href")))
+    (begin1 (sqlite-map (lambda (v) (cons (vector-ref v 0) 'x))
+                        stmt)
+            (sqlite-finalize stmt))))
+
+
+(define-method (flush! (this <sqlite-data-store>))
+  ;; TODO possible commit any pending transactions here
+  'noop)
+
+

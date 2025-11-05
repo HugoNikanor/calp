@@ -137,6 +137,9 @@
                              (time hour: 1)
                              (event-length/day day-date e))))
 
+    ;; TODO instead of one div per day, consider setting
+    ;; column: 7 <width>
+    ;; This should allow the divs to wrap over to the next day
     `(div (@ (class "events event-container") (id ,(date-link day-date))
              (data-start ,(date->string day-date))
              (data-end ,(date->string (date+ day-date (date day: 1))) ))
@@ -144,8 +147,8 @@
                    `(div (@ (class "clock clock-" ,time))))
                  (iota 12 0 2))
           #;
-          (div (@ (class "zero-width-events"))
-               ,(map make-block zero-length-events))
+          (div (@ (class "zero-width-events")) ; ;
+          ,(map make-block zero-length-events))
           ,@(map (lambda (e) (create-block day-date e)) short-events))))
 
 

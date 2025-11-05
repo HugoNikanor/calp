@@ -1,8 +1,8 @@
-(define-module (vcomponent recurrence internal)
+(define-module (vcomponent type recurrence internal)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)           ; better keywords
-  :use-module ((vcomponent base) :select (prop))
+  :use-module ((vcomponent) :select (prop1))
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
   :use-module (ice-9 pretty-print)
@@ -17,10 +17,21 @@
   :export (repeating?
 
            recur-rule
-           freq until interval bysecond byminute byhour
-           byday bymonthday byyearday byweekno bymonth bysetpos
-           wkst
-
+           recur-rule?
+           freq freq*
+           until      until*
+           count      count*
+           interval   interval*
+           bysecond   bysecond*
+           byminute   byminute*
+           byhour     byhour*
+           byday      byday*
+           bymonthday bymonthday*
+           byyearday  byyearday*
+           byweekno   byweekno*
+           bymonth    bymonth*
+           bysetpos   bysetpos*
+           wkst       wkst*
            freq-placeholder
 
            recur-rule->rrule-string
@@ -28,10 +39,15 @@
 
            weekdays
            intervals
+
+           weekday->symbol
            ))
 
 (define weekdays
   (weekday-list sun))
+
+(define (weekday->symbol day)
+  (vector-ref #(SU MO TU WE TH FR SA) day))
 
 (define freq-placeholder (gensym))
 
@@ -44,9 +60,10 @@
 ;; but that property alone don't create a recuring event.
 (define (repeating? ev)
   "Does this event repeat?"
-  (or (prop ev 'RRULE)
-      (prop ev 'RDATE)
-      (prop ev '-X-HNH-ALTERNATIVES)))
+  (or (prop1 ev 'RRULE)
+      (prop1 ev 'RDATE)
+      ;; TODO TODO doesn't exist
+      (prop1 ev '-X-HNH-ALTERNATIVES)))
 
 (define-syntax-rule (in-range? x start end)
   (<= start x end))
@@ -120,17 +137,13 @@
   (let ((off day (car+cdr pair)))
     (string-append
      (or (and=> off number->string) "")
-     (string-upcase
-      (week-day-name day 2
-                     locale: (make-locale (list LC_TIME) "C"))))))
+     (symbol->string (weekday->symbol day)))))
 
 
 (define (field->string field value)
   (case field
     [(wkst)
-     (string-upcase
-      (week-day-name value 2
-                     locale: (make-locale (list LC_TIME) "C")))]
+     (symbol->string (weekday->symbol value))]
     [(byday)
      (string-join (map byday->string value) ",")]
     [(freq count interval)
@@ -151,6 +164,8 @@
            (else #f)))
    (record-type-fields <recur-rule>)))
 
+;;; TODO should the serializers really be here?
+
 (define (recur-rule->rrule-string rrule)
   (string-join
    (map-fields
@@ -162,29 +177,31 @@
    ";"))
 
 (define (recur-rule->rrule-sxml rrule)
-  (concatenate
-   (map-fields
-    (lambda (field value)
-      (cond [(string-ci=? "UNTIL" (symbol->string field))
-             (list
-              ((xml xcal 'until)
-               (if (date? value)
-                   (date->string value "~Y-~m-~d")
-                   (datetime->string
-                    value "~Y-~m-~dT~H:~M:~S~Z"))))]
+  (apply
+   (xml xcal 'recur)
+   (concatenate
+    (map-fields
+     (lambda (field value)
+       (cond [(string-ci=? "UNTIL" (symbol->string field))
+              (list
+               ((xml xcal 'until)
+                (if (date? value)
+                    (date->string value "~Y-~m-~d")
+                    (datetime->string
+                     value "~Y-~m-~dT~H:~M:~S~Z"))))]
 
-            [(string-ci=? "BYDAY" (symbol->string field))
-             (map (xml xcal (downcase-symbol field))
-                  (map byday->string value))]
+             [(string-ci=? "BYDAY" (symbol->string field))
+              (map (xml xcal (downcase-symbol field))
+                   (map byday->string value))]
 
-            [(string-ci=? "BY" (substring (symbol->string field)
-                                          0 2))
-             (map (xml xcal (downcase-symbol field))
-                  (map number->string value))]
+             [(string-ci=? "BY" (substring (symbol->string field)
+                                           0 2))
+              (map (xml xcal (downcase-symbol field))
+                   (map number->string value))]
 
-            [else
-             (list
-              ((xml xcal (downcase-symbol field))
-               (field->string field value)))]))
+             [else
+              (list
+               ((xml xcal (downcase-symbol field))
+                (field->string field value)))]))
 
-    rrule)))
+     rrule))))

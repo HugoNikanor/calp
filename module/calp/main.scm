@@ -80,8 +80,8 @@ unix or TCP socket.<br/>
     (G_ "<p><b>term</b> loads the calendars, and starts an interactive terminal interface.</p>")
     (G_ "<p><b>text</b> formats and justifies what it's given on standard input,
 and writes it to standard output. Similar to this text.</p>")
-    (G_ "<p><b>ical</b> loads the calendar database, and immediately
-re-serializes it back into iCAL format. Useful for merging calendars.</p>")
+;;     (G_ "<p><b>ical</b> loads the calendar database, and immediately
+;; re-serializes it back into iCAL format. Useful for merging calendars.</p>")
     (G_ "<p><b>server</b> starts an HTTP server which dynamically loads and
 displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs
 the same output code as <b>html</b>. While the <i>/calendar/{uid}.ics</i> uses
@@ -150,12 +150,13 @@ zoneinfo database, but is currently broken.</p>")
        ;; and then add interactive-term (or similar)
        ((term)   (@ (calp entry-points terminal) main))
        ((text)   (@ (calp entry-points     text) main))
+       ;; TODO remove this
        ((ical)   (@ (calp entry-points     ical) main))
        ((server) (@ (calp entry-points   server) main))
-       ((convert) (@ (calp entry-points convert) main))
        ((tidsrapport) (@ (calp entry-points   tidsrapport) main))
        ((update-zoneinfo) (@ (calp entry-points update-zoneinfo) main))
        ((webdav) (@ (calp entry-points webdav) main))
+       ((migrate) (@ (calp entry-points migrate) main))
        (else => (lambda (s)
                   (format (current-error-port)
                           (G_ "Unsupported mode of operation: ~a~%")

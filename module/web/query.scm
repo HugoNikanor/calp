@@ -1,3 +1,5 @@
+;; TODO shouldn't this be (web uri query), or are query strings
+;; applicable in other contexts?
 (define-module (web query)
   :use-module (hnh util)
   :use-module (srfi srfi-1)

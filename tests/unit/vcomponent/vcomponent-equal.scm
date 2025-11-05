@@ -4,7 +4,7 @@
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (vcomponent create)
-  :use-module (vcomponent recurrence)
+  :use-module (vcomponent type recurrence)
   :use-module ((vcomponent) :select (vcomponent-equal?))
   )
 
@@ -53,4 +53,4 @@
                   uid: "d19c9347-9a85-4432-a876-5fb9c0d24d2b")))))
 
 
-'((vcomponent base))
+'((vcomponent))

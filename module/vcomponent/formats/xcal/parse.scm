@@ -8,7 +8,7 @@
   :use-module (sxml namespaced util)
   :use-module (sxml match)
   :use-module (vcomponent)
-  :use-module (vcomponent geo)
+  :use-module (vcomponent type geo)
   :use-module (vcomponent formats common types)
   :use-module (datetime)
   :use-module (srfi srfi-1)
@@ -18,6 +18,11 @@
   :use-module (hnh util table)
   :export (sxcal->vcomponent)
   )
+
+;;; TODO TODO TODO
+;;; This doesn't work because
+;;; - it assumes "plain" sxml, but is fed namespaced sxml
+;;; - it uses the old vcomponent types
 
 ;; symbol, ht, (list a) -> non-list
 (define (handle-value type parameters value)
@@ -43,18 +48,18 @@
     [(duration)
      ((get-parser 'DURATION) parameters value)]
 
-    [(float integer) ; (3.0)
+    [(float integer)                    ; (3.0)
      (string->number (car value))]
 
     [(period)
      (sxml-match
-      (cons 'period value)
-      [(period (start ,start-dt) (end ,end-dt))
-       (cons (parse-iso-datetime start-dt)
-             (parse-iso-datetime end-dt))]
-      [(period (start ,start-dt) (duration ,duration))
-       (cons (parse-iso-datetime start-dt)
-             ((@ (vcomponent duration) parse-duration) duration))])]
+         (cons 'period value)
+       [(period (start ,start-dt) (end ,end-dt))
+        (cons (parse-iso-datetime start-dt)
+              (parse-iso-datetime end-dt))]
+       [(period (start ,start-dt) (duration ,duration))
+        (cons (parse-iso-datetime start-dt)
+              ((@ (vcomponent type duration) string->duration) duration))])]
 
     [(recur)
      ;; RFC6321 (xcal) Appendix A 3.3.10 specifies that all components should
@@ -66,7 +71,7 @@
             (lambda (type value)
               (case type
                 ((wkst)
-                 ((@ (vcomponent recurrence parse)
+                 ((@ (vcomponent type recurrence parse)
                      rfc->datetime-weekday)
                   (string->symbol value)))
                 ((freq) (string->symbol value))
@@ -84,19 +89,19 @@
                  ;; with that here to.
                  ;; [1]: https://www.rfc-editor.org/errata/eid3315
                  (string->date/-time value))
-                ((byday) ((@@ (vcomponent recurrence parse) parse-day-spec) value))
+                ((byday) ((@@ (vcomponent type recurrence parse) parse-day-spec) value))
                 ((count interval bysecond bymunite byhour
                         bymonthday byyearday byweekno
                         bymonth bysetpos)
                  (string->number value))
                 (else (scm-error 'key-error "handle-value"
-                       (G_ "Invalid type ~a, with value ~a")
-                       (list type value)
-                       #f))))))
+                                 (G_ "Invalid type ~a, with value ~a")
+                                 (list type value)
+                                 #f))))))
 
        ;; freq until count interval wkst
 
-       (apply (@ (vcomponent recurrence internal) recur-rule)
+       (apply (@ (vcomponent type recurrence internal) recur-rule)
               (concatenate
                (filter identity
                        (for key in '(bysecond byminute byhour byday bymonthday
@@ -126,11 +131,11 @@
 
     [(utc-offset) ((get-parser 'UTC-OFFSET) parameters (car value))]
 
-    [(geo) ; ((long 1) (lat 2))
+    [(geo)                              ; ((long 1) (lat 2))
      (sxml-match
-      (cons 'geo value)
-      [(geo (latitude ,y) (longitude ,x))
-       ((@ (vcomponent geo) geo) y: y x: x)])]
+         (cons 'geo value)
+       [(geo (latitude ,y) (longitude ,x))
+        ((@ (vcomponent type geo) geo) y: y x: x)])]
 
     [else (scm-error 'misc-error "handle-value"
                      "Unknown value type: ~s"

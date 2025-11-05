@@ -21,33 +21,43 @@
 
    (unless (tag-matches? body 'propertyupdate webdav)
      (throw 'http 400
-            (format #f "Root of PROPPATCH method must be a propertyupdate element, got ~s"
+            (format #f "Root of PROPPATCH method must be a DAV:propertyupdate element, got ~s"
                     (with-output-to-string
                       (lambda () (namespaced-sxml->xml (xml-element-children body '())))))))
 
+   ;; TODO The following invalid request body is accepted as a no-op,
+   ;; and gives weird output (e.g. a multistatus without a status element).
+   ;; <propertyupdate xmlns="DAV:">
+   ;;   <!-- NOTICE missing D:set element -->
+   ;;   <prop>
+   ;;     <content-type>image/png</content-type>
+   ;;   </prop>
+   ;; </propertyupdate>
+
    (define continuations
-    (concatenate
-     (for child in (xml-element-children body)
-          ;; TODO while <d:set /> and <d:remove /> both MUST have a single <d:prop /> child, we should still explicitly check that, to allow better error messages
-          (cond ((tag-matches? child 'set webdav)
-                 ;; TODO handle xmllang correctly
-                 (let ((prop-tag (find-child ((xml webdav 'prop))
-                                             (xml-element-children child))))
-                   (map (lambda (prop)
-                          (cons (xml-element-children prop '())
-                                (set-property!! resource prop)))
-                        (filter xml-element? (xml-element-children prop-tag)))))
+     (concatenate
+      (for child in (xml-element-children body)
+           ;; TODO while <d:set /> and <d:remove /> both MUST have a single <d:prop /> child, we should still explicitly check that, to allow better error messages
+           (cond ((tag-matches? child 'set webdav)
+                  ;; TODO handle xmllang correctly
+                  (let ((prop-tag (find-child ((xml webdav 'prop))
+                                              (xml-element-children child))))
+                    (map (lambda (prop)
+                           (format (current-error-port) "prop: ~s~%" prop)
+                           (cons (xml-element-children prop '())
+                                 (set-property!! resource prop)))
+                         (filter xml-element? (xml-element-children prop-tag)))))
 
-                ((tag-matches? child 'remove webdav)
-                 (let ((prop-tag (find-child ((xml webdav 'prop))
-                                             (xml-element-children child))))
-                   (map (lambda (prop)
-                          (cons (xml-element-children prop  '())
-                                (remove-property!! resource prop)))
-                        (filter xml-element? (xml-element-children prop-tag)))))
+                 ((tag-matches? child 'remove webdav)
+                  (let ((prop-tag (find-child ((xml webdav 'prop))
+                                              (xml-element-children child))))
+                    (map (lambda (prop)
+                           (cons (xml-element-children prop  '())
+                                 (remove-property!! resource prop)))
+                         (filter xml-element? (xml-element-children prop-tag)))))
 
-                (else '())
-                ))))
+                 (else '())
+                 ))))
 
    (merge-propstats
     (let loop ((continuations continuations))
@@ -65,6 +75,10 @@
                          (propstat 403 (list tag)
                                    responsedescription: "Protected property"))
                         (else
+                         (format (current-error-port)
+                                 "409 conflict while setting property: ~s"
+                                 err
+                                 )
                          (propstat 409 (list tag))))
                       (mark-remaining-as-failed-dependency (cdr continuations))))))))))
 

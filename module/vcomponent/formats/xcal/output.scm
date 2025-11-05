@@ -1,8 +1,13 @@
 (define-module (vcomponent formats xcal output)
   :use-module (hnh util)
   :use-module (hnh util exceptions)
+  :use-module (hnh util table)
+  :use-module (hnh util type)
   :use-module (vcomponent)
-  :use-module (vcomponent geo)
+  :use-module (vcomponent type geo)
+  :use-module (vcomponent type recurrence)
+  :use-module (vcomponent type version)
+  :use-module (vcomponent type request-status)
   :use-module (vcomponent formats xcal types)
   :use-module (ice-9 match)
   :use-module (datetime)
@@ -11,129 +16,102 @@
   :use-module (calp namespaces)
   :use-module (sxml namespaced)
   :use-module (sxml namespaced util)
+  :use-module (web uri)
+  :use-module (vcomponent type duration)
+  :use-module (vcomponent type period)
+  :use-module (vcomponent type utc-offset)
+  :use-module (vcomponent type unknown)
   :export (vcomponent->sxcal))
 
+;;; TODO why isn't `apparent-type` used?
 
-(define (vline->value-tag vline)
-  (define k (key vline))
+(define serializers
+  (make-parameter
+   (list (cons (@ (scheme base) bytevector?) 'TODO)
+         (cons boolean? (lambda (v) (list ((xml xcal 'boolean) (if v "true" "false")))))
+         ;; Used for both URI and CAL-ADDRESS
+         (cons uri? (compose list (xml xcal 'uri) uri->string))
+         (cons date? (compose list (xml xcal 'date) date->string))
+         (cons datetime? (compose list (xml xcal 'date-time) datetime->string))
+         (cons duration? (compose list (xml xcal 'duration) duration->string))
+         (cons exact-integer? (compose list (xml xcal 'integer) number->string))
+         (cons number? (compose list (xml xcal 'float) number->string))
+         (cons period? 'TODO)
+         (cons recur-rule? (compose list (@@ (vcomponent type recurrence internal)
+                                             recur-rule->rrule-sxml)))
+         (cons string? (compose list (xml xcal 'text)))
+         (cons time? (compose list (xml xcal 'time) time->string))
+         (cons utc-offset?
+               (lambda (v) (list
+                       ((xml xcal 'utc-offset)
+                        (utc-offset->string v "~H:~M:~S")))))
 
-  (define writer
-   (cond
-    [(and=> (param vline 'VALUE) (compose string->symbol car))
-     => get-writer]
-    [(memv k '(COMPLETED DTEND DUE DTSTART RECURRENCE-ID
-                        CREATED DTSTAMP LAST-MODIFIED
-                        ACKNOWLEDGED EXDATE))
-     (get-writer 'DATE-TIME)]
 
-    [(memv k '(TRIGGER DURATION))
-     (get-writer 'DURATION)]
+         ;;
+         (cons geo?
+               (lambda (o)
+                 (list
+                  ((xml xcal 'geo)
+                   ((xml xcal 'latitude)  (geo-latitude o))
+                   ((xml xcal 'longitude) (geo-longitude o))))))
+         ;; RFC 6321 specifies this as the only valid value
+         ;; TODO actually serialize what we have instead
+         (cons vcalendar-version? (const (list ((xml xcal 'version) "2.0"))))
+         (cons request-status?
+               (lambda (o)
+                 `(
+                   ,((xml xcal 'code) (string-join (statcode o) "."))
+                   ,((xml xcal 'description) (statdesc o))
+                   ,@(cond ((extdata o) => (lambda (data) (list ((xml xcal 'data) data))))
+                           (else '())))))
 
-    [(memv k '(FREEBUSY))
-     (get-writer 'PERIOD)]
+         ;; TODO unkown type wrapper?
+         (cons unknown? (compose list from-unknown)))))
 
-    [(memv k '(CALSCALE METHOD PRODID COMMENT DESCRIPTION
-                       LOCATION SUMMARY TZID TZNAME
-                       CONTACT RELATED-TO UID
 
-                       CATEGORIES RESOURCES
+;; Generate a complete xml representation of a given vline
+(define (vline->value-tag key vline)
+  (typecheck key symbol?)
+  (typecheck vline vline?)
 
-                       VERSION))
-     (get-writer 'TEXT)]
+  (apply
+   (xml xcal (downcase-symbol key))
+   ;; TODO make this conditional
+   (parameters-tag (vline-parameters vline))
+   (let loop ((pairs (serializers)))
+     (cond ((null? pairs) #f
+                                        ; TODO do something here
+            )
+           (((caar pairs) (vline-value vline))
+            ((cdar pairs) (vline-value vline)))
+           (else (loop (cdr pairs)))))))
 
-    [(memv k '(TRANSP
-              CLASS
-              PARTSTAT
-              STATUS
-              ACTION))
-     (lambda (p v) ((get-writer 'TEXT) p (symbol->string v)))]
 
-    [(memv k '(TZOFFSETFROM TZOFFSETTO))
-     (get-writer 'UTC-OFFSET)]
 
-    [(memv k '(ATTACH TZURL URL))
-     (get-writer 'URI)]
-
-    [(memv k '(PERCENT-COMPLETE PRIORITY REPEAT SEQUENCE))
-     (get-writer 'INTEGER)]
-
-    [(memv k '(GEO))
-     (lambda (_ v)
-       ((xml xcal 'geo)
-        (list
-         ((xml xcal 'latitude)  (geo-latitude v))
-         ((xml xcal 'longitude) (geo-longitude v)))))]
-
-    [(memv k '(RRULE))
-     (get-writer 'RECUR)]
-
-    [(memv k '(ORGANIZER ATTENDEE))
-     (get-writer 'CAL-ADDRESS)]
-
-    [(x-property? k)
-     (get-writer 'TEXT)]
-
-    [else
-     (warning (G_ "Unknown key ~a") k)
-     (get-writer 'TEXT)]))
-
-  (writer (vline-parameters vline)
-          (vline-value vline)))
-
-(define (property->value-tag pair)
-  (define-values (tag value) (car+cdr pair))
-  (if (or (eq? tag 'VALUE)
-          (internal-field? tag))
-      #f
-      (apply (xml xcal (downcase-symbol tag))
-             (map (lambda (v)
-                    ;; TODO parameter types!!!! (rfc6321 3.5.)
-                    ((xml xcal 'text) (->string v)))
-                  value))))
-
-;; ((key value ...) ...) -> #<xml parameters>
+;; Generate an XML xcal:parameters tag from a table
+;; (table-of string?) -> #<xml parameters>
 (define (parameters-tag parameters)
-  (define outparams (filter-map
-                     (lambda (x) (property->value-tag x))
-                     parameters))
+  (apply (xml xcal 'parameters)
+         (map (lambda (pair)
+                (define-values (tag value) (car+cdr pair))
 
-  (apply (xml xcal 'parameters) outparams))
+                (apply (xml xcal (downcase-symbol tag))
+                       (map (lambda (v)
+                              ;; TODO parameter types!!!! (rfc6321 3.5.)
+                              ((xml xcal 'text) (->string v)))
+                            value)))
+              (table->list parameters))))
 
 (define (vcomponent->sxcal component)
+  (typecheck component vcomponent?)
 
-  (define tagsymb (downcase-symbol (type component)))
+  ((xml xcal (downcase-symbol (type component)))
+   (apply (xml xcal 'properties)
+          (concatenate
+           (for (key . value) in (table->list (vcomponent-properties component))
+                (map (lambda (v) (vline->value-tag key v))
+                     value))))
 
-  (apply (xml xcal tagsymb)
-         (remove (compose null? xml-element-children)
-                 ;; only have <properties> when it's non-empty.
-                 (list
-                  (let ((props
-                         (filter-map
-                          (match-lambda
-                            [(? (compose internal-field? car)) #f]
-
-                            [(key (vlines ...))
-                             (apply (xml xcal (downcase-symbol key))
-                                    (remove (compose null? xml-element-children)
-                                            (cons
-                                             (parameters-tag (reduce assq-merge
-                                                                     '()
-                                                                     (map parameters vlines)))
-                                             (map vline->value-tag vlines))))]
-
-                            [(key vline)
-                             (apply (xml xcal (downcase-symbol key))
-                                    (remove (compose null? xml-element-children)
-                                            (list
-                                             (parameters-tag (parameters vline))
-                                             (vline->value-tag vline))))])
-                          ;; NOTE this sort is unnecesasary, but here so tests can work
-                          ;; Possibly add it as a flag instead
-                          (sort* (properties component)
-                                 string< (compose symbol->string car)))))
-                    (apply (xml xcal 'properties)
-                           ;; NOTE
-                           ;; (x-hnh-calendar-name (text ,(prop (parent component) 'NAME)))
-                           props))
-                  (apply (xml xcal 'components)
-                         (map vcomponent->sxcal (children component)))))))
+   ;; TODO omit this if empty
+   (apply (xml xcal 'components)
+          (map vcomponent->sxcal (vcomponent-children component)))))

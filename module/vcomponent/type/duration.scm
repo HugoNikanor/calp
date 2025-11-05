@@ -1,4 +1,4 @@
-(define-module (vcomponent duration)
+(define-module (vcomponent type duration)
   :use-module (hnh util)
   :use-module (hnh util exceptions)
   :use-module (hnh util object)
@@ -8,8 +8,18 @@
   :use-module (ice-9 match)
   :use-module (srfi srfi-1)
   :export (duration
-           parse-duration
-           format-duration
+           duration?
+
+           string->duration
+           duration->string
+
+           duration-week duration-week?
+           duration-datetime duration-datetime?
+           duration-sign
+
+           duration-week-count duration-week-count*
+           duration-day        duration-day*
+           duration-time       duration-time*
            ))
 
 (define-type (duration-week serializer: (lambda (o)
@@ -40,6 +50,8 @@
          ((duration-datetime? duration) duration-datetime-sign))
    duration))
 
+;;; TODO duration-sign* lens
+
 (define* (duration
           key: (sign '+)
           week day time)
@@ -55,7 +67,7 @@
        time: time)))
 
 
-(define (format-duration duration)
+(define (duration->string duration)
   (with-output-to-string
     (lambda ()
       (unless (eq? '+ (duration-sign duration))
@@ -92,10 +104,10 @@
                                   (? time-pattern)))
                     (capture time-pattern))))))
 
-(define (parse-duration str)
+(define (string->duration str)
   (let ((m (match-pattern dur-pattern str)))
     (unless m
-      (scm-error 'parse-error "parse-duration"
+      (scm-error 'parse-error "string->duration"
                  "~s doesn't appar to be a duration"
                  (list str)
                  #f))
@@ -118,12 +130,12 @@
                              [(M) `(minute: ,n)]
                              [(S) `(second: ,n)]
                              [else (unreachable
-                                    "parse-duration"
+                                    "string->duration"
                                     "Invalid key ~a"
                                     type)]))]
                         [a
                          (unreachable
-                          "parse-duration"
+                          "string->duration"
                           "~s not on expected form ((number <num>) type)"
                           (list a))])
                       (context-flatten (lambda (x) (and (pair? (car x))

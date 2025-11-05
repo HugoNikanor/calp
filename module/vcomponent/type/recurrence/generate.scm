@@ -1,13 +1,15 @@
-(define-module (vcomponent recurrence generate)
+(define-module (vcomponent type recurrence generate)
   :use-module (hnh util)
+  :use-module (hnh util lens)
+  :use-module (hnh util optional)
   :use-module (hnh util exceptions)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-71)
-  :use-module (vcomponent base)
-  :use-module (vcomponent recurrence internal)
-  :use-module (vcomponent recurrence parse)
+  :use-module (vcomponent)
+  :use-module (vcomponent type recurrence internal)
+  :use-module (vcomponent type recurrence parse)
 
   :use-module (datetime)
   :use-module (ice-9 curried-definitions)
@@ -334,16 +336,14 @@
 (define-stream (rrule-instances event)
   ;; 3.8.5.1 exdate are evaluated AFTER rrule (and rdate)
   (let ((rrule-stream
-         (cond ((prop event 'RRULE)
+         (cond ((prop1 event 'RRULE)
                 => (lambda (rrule)
-                     (rrule-instances-raw rrule (prop event 'DTSTART))))
+                     (rrule-instances-raw rrule (prop1 event 'DTSTART))))
                (else stream-null)))
         (rdates
-         (cond ((prop* event 'RDATE) => (lambda (v) (map vline-value v)))
-               (else '())))
+         (map vline-value (unjust (get event (prop* 'RDATE)) '())))
         (exdates
-         (cond ((prop* event 'EXDATE) => (lambda (v) (map vline-value v)))
-               (else #f))))
+         (map vline-value (unjust (get event (prop* 'EXDATE)) '()))))
 
     (let ((items (interleave-streams
                   date/-time<?
@@ -357,7 +357,7 @@
 
 
 (define (final-event-occurence event)
-  (define rrule (prop event 'RRULE))
+  (define rrule (prop1 event 'RRULE))
 
   (if (or (count rrule) (until rrule))
       (let ((instances (rrule-instances event)))
@@ -367,11 +367,11 @@
 
 (define (event-duration event)
   ;; NOTE DTEND is an optional field.
-  (let ((end (prop event 'DTEND)))
+  (let ((end (prop1 event 'DTEND)))
     (if end
         (if (date? end)
-            (date-difference end (prop event 'DTSTART))
-            (datetime-difference end (prop event 'DTSTART)))
+            (date-difference end (prop1 event 'DTSTART))
+            (datetime-difference end (prop1 event 'DTSTART)))
         #f)))
 
 ;; Return start-time + duration, wich some error checks
@@ -394,15 +394,16 @@
   (define duration (event-duration base-event))
 
   (define rrule-stream-regular
-    (if (prop base-event 'RRULE)
+    (if (prop1 base-event 'RRULE)
         (rrule-instances base-event)
         stream-null))
 
+  ;; TODO TODO -X-HNH-ALTERNATIVES doesn't exist any more
   (define alternative-times
-    (awhen (prop base-event '-X-HNH-ALTERNATIVES)
+    (awhen (prop1 base-event '-X-HNH-ALTERNATIVES)
            (list (list->stream
                   (sort*
-                   (hash-map->list (lambda (_ v) (prop v 'DTSTART)) it)
+                   (hash-map->list (lambda (_ v) (prop1 v 'DTSTART)) it)
                    date/-time<?)))))
 
   (define rrule-stream
@@ -414,23 +415,24 @@
 
   (stream-map
    (lambda (dt)
-     (cond ((prop base-event '-X-HNH-ALTERNATIVES)
+     ;; TODO TODO -X-HNH-ALTERNATIVES isn't a thing anymore
+     (cond ((prop1 base-event '-X-HNH-ALTERNATIVES)
             => (lambda (ht)
                  (aif (hash-ref ht dt)
                       it        ; RECURRENCE-ID objects come with their own DTEND
-                      (let ((ev (prop base-event 'DTSTART dt)))
+                      (let ((ev (set base-event (prop* 'DTSTART) (just dt))))
                         (if duration  ; (and (not (prop ev 'DTEND)) duration)
                             ;; p. 123 (3.8.5.3 Recurrence Rule)
                             ;; specifies that the DTEND should be updated to match how the
                             ;; initial dtend related to the initial DTSTART. It also notes
                             ;; that an event of 1 day in length might be longer or shorter
                             ;; than 24h depending on timezone shifts.
-                            (prop ev 'DTEND (get-endtime dt duration))
+                            (set ev (prop* 'DTEND) (just (get-endtime dt duration)))
                             ev)))))
            (else
-            (let ((ev (prop base-event 'DTSTART dt)))
+            (let ((ev (set base-event (prop* 'DTSTART) (just dt))))
               (if duration
-                  (prop ev 'DTEND (get-endtime dt duration))
+                  (set ev (prop* 'DTEND) (just (get-endtime dt duration)))
                   ev)))))
    rrule-stream))
 

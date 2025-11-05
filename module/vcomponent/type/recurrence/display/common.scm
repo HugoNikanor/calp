@@ -1,4 +1,4 @@
-(define-module (vcomponent recurrence display common)
+(define-module (vcomponent type recurrence display common)
   :use-module ((datetime) :select (locale-month))
   :export (rrule-month->string))
 

@@ -26,7 +26,7 @@
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-71)
 
-  :use-module ((vcomponent recurrence) :select (repeating? generate-recurrence-set))
+  :use-module ((vcomponent type recurrence) :select (repeating? generate-recurrence-set))
   :use-module ((vcomponent util group)
                :select (group-stream get-groups-between))
   :use-module ((base64) :select (base64encode))
@@ -326,7 +326,7 @@ window.default_calendar='~a';"
     ;;                                 ;; but don't put anything in
     ;;                                 ;; it.
     ;;                                 description: ""))))
-    ;;          (event (car (children cal))))
+    ;;          (event (car (vcomponent-children cal))))
     ;;     `(
     ;;       ;; (div (@ (class "template event-container") (id "event-template")
     ;;       ;;         ;; Only needed to create a duration. So actual dates
@@ -381,7 +381,7 @@ window.default_calendar='~a';"
                    ev pre-start
                    (date+ post-end (date day: 1))))
                 (stream-take-while (lambda (ev) (date<
-                                            (as-date (prop ev 'DTSTART))
+                                            (as-date (prop1 ev 'DTSTART))
                                             (date+ post-end (date day: 1))))
                                    events))))
              (repeating% regular (partition repeating? flat-events))
@@ -389,7 +389,9 @@ window.default_calendar='~a';"
               (for ev in repeating%
                    ;; TODO *why* are we removing -X-HNH-ORIGINAL here?
                    (-> ev
-                       (set-properties (cons 'UID (output-uid ev)))
+                       ;; TODO vline wrapper?
+                       (set (prop* 'UID) (just (output-uid ev)))
+                       ;; TODO prop% not a thing
                        (modify (lens-compose (prop% 'DTSTART) vline-parameters*)
                                (lambda (params) (table-remove params '-X-HNH-ORIGINAL)))
                        (modify (lens-compose (prop% 'DTEND) vline-parameters*)

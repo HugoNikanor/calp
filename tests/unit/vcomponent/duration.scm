@@ -4,7 +4,7 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (datetime)
-  :use-module (vcomponent duration))
+  :use-module (vcomponent type duration))
 
 ;;; Tests extracted from RFC5545 through the following script
 ;; #!/bin/sh
@@ -22,37 +22,37 @@
 (test-group "Parse duration"
  (test-equal (duration day: 15
                        time: (time hour: 5 second: 20))
-   (parse-duration "P15DT5H0M20S"))
- (test-equal (duration sign: '- day: 2) (parse-duration "-P2D"))
- (test-equal (duration week: 7) (parse-duration "P7W"))
+   (string->duration "P15DT5H0M20S"))
+ (test-equal (duration sign: '- day: 2) (string->duration "-P2D"))
+ (test-equal (duration week: 7) (string->duration "P7W"))
  (test-equal (duration sign: '- time: (time minute: 15))
-   (parse-duration "-PT15M"))
+   (string->duration "-PT15M"))
  (test-equal (duration time: (time minute: 15))
-   (parse-duration "PT15M"))
+   (string->duration "PT15M"))
  (test-equal (duration time: (time hour: 1))
-   (parse-duration "PT1H"))
+   (string->duration "PT1H"))
  (test-equal (duration time: (time hour: 1))
-   (parse-duration "PT1H0M0S"))
+   (string->duration "PT1H0M0S"))
  (test-equal (duration sign: '- time: (time minute: 30))
-   (parse-duration "-PT30M"))
+   (string->duration "-PT30M"))
  (test-equal (duration time: (time hour: 3))
-   (parse-duration "PT3H"))
+   (string->duration "PT3H"))
  (test-equal (duration time: (time hour: 5 minute: 30))
-   (parse-duration "PT5H30M"))
+   (string->duration "PT5H30M"))
  (test-equal (duration time: (time minute: 5))
-   (parse-duration "PT5M"))
+   (string->duration "PT5M"))
  (test-equal (duration time: (time hour: 6 minute: 30))
-   (parse-duration "PT6H30M"))
+   (string->duration "PT6H30M"))
  (test-equal (duration time: (time hour: 8 minute: 30))
-   (parse-duration "PT8H30M")))
+   (string->duration "PT8H30M")))
 
 (test-group "Format duration"
   (test-equal "P15DT5H1M20S"
-    (format-duration (duration
+    (duration->string (duration
                       day: 15
                       time: (time hour: 5 minute: 1 second: 20))))
   (test-equal "-P7W"
-    (format-duration (duration week: 7 sign: '-))))
+    (duration->string (duration week: 7 sign: '-))))
 
 (test-error "Failure to construct invalid duration"
   'misc-error
@@ -60,12 +60,12 @@
 
 (test-error "Completely wrong duration"
   'parse-error
-  (parse-duration "Something weird"))
+  (string->duration "Something weird"))
 
 (test-error "Duration with extra fluff at end"
   'warning
-  (parse-duration "-P7WH"))
+  (string->duration "-P7WH"))
 
 
 
-'((vcomponent duration))
+'((vcomponent type duration))
