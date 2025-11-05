@@ -235,139 +235,6 @@
                                        intervaltype: 'month
                                        )))))))))
 
-  (add-route!
-   handler
-   (make-route
-    (POST "/remove" (uid)
-
-          (define uid
-            (apply (lambda* (key: uid) uid)
-                   (parse-urlencoded-body r:headers body)))
-
-          (unless uid
-            (return (build-response code: 400)
-                    (G_ "uid required")))
-
-          ;; TODO TODO get event by uid
-          (aif #f ;; (get-event-by-uid global-event-object uid)
-               (begin
-                 ;; It's hard to properly remove a file. I also want a way to undo accidental
-                 ;; deletions. Therefore I simply save the X-HNH-REMOVED flag to the file, and
-                 ;; then simple don't use those events when loading.
-                 ;; TODO TODO remove event
-                 ;; (remove-event global-event-object it)
-                 ;; (set! (prop it 'X-HNH-REMOVED) #t)
-                 ;; (set! (param (prop* it 'X-HNH-REMOVED) 'VALUE) "BOOLEAN")
-                 ;; TODO something like this instead:
-                 ;; (remove-by-uid! store uid)
-                 (unless ((@ (vcomponent formats vdir save-delete) save-event) it)
-                   (return (build-response code: 500)
-                           (G_ "Saving event to disk failed.")))
-                 (return (build-response code: 204)))
-               (return (build-response code: 400)
-                       (format #f (G_ "No event with UID '~a'") uid))))))
-
-  ;; TODO this fails when dtstart is <date>.
-  ;; @var{cal} should be the name of the calendar encoded in base64.
-  (add-route!
-   handler
-   (make-route
-    (POST "/insert" (cal data)
-          (define-values (cal data)
-            (apply (lambda* (key: cal data) (values cal data))
-                   (parse-urlencoded-body r:headers body)))
-
-          (unless (and cal data)
-            (return (build-response code: 400)
-                    (string-append (G_ "Both 'cal' and 'data' required") "\r\n")))
-
-          ;; NOTE that this leaks which calendar exists,
-          ;; but you can only query for existance.
-          ;; also, the calendar view already show all calendars.
-          (let* ((calendar-name (base64decode cal))
-                 (calendar
-                  ;; TODO TODO get calendar
-                  #f
-                  ;; (get-calendar-by-name global-event-object calendar-name)
-                  ))
-
-            (unless calendar
-              (return (build-response code: 400)
-                      (format #f "~@?\r\n" (G_ "No calendar with name [~a]")
-                              calendar-name)))
-
-            ;; Expected form of data (but in XML) is:
-            ;; @example
-            ;; (*TOP*
-            ;;  (*PI* ...)
-            ;;  (icalendar (@ (xmlns "..."))
-            ;;   (vcalendar
-            ;;    (vevent ...))))
-            ;; @end example
-
-            ;; TODO
-            ;; However, *PI* will probably be omited, and currently events
-            ;; are sent without the vcalendar part. Earlier versions
-            ;; Also omitted the icalendar part. And I'm not sure if the
-            ;; *TOP* node is a required part of the sxml.
-
-            (let ((event
-                   ((@ (vcomponent formats xcal parse) sxcal->vcomponent)
-                    (catch 'parser-error
-                      (lambda ()
-                        (-> data
-                            (xml->sxml namespaces: (list ical-namespace))
-                            ((sxpath '(// IC:vevent)))
-                            ;; TODO Multiple event components
-                            car
-                            (move-to-namespace #f)))
-                      (lambda (err port . args)
-                        (return (build-response code: 400)
-                                (format #f "~a ~{~a~}\r\n"
-                                        (G_ "XML parse error")
-                                        args)))))))
-
-              (unless (eq? 'VEVENT (type event))
-                (return (build-response code: 400)
-                        (string-append (G_ "Object not a VEVENT") "\r\n")))
-
-              ;; NOTE add-event uses the given UID if one is given,
-              ;; but generates its own if not. It might be a good idea
-              ;; to require that UID is unset here, and force users
-              ;; to use a /update endpoint to change events. This to prevent
-              ;; accidental overwriting.
-
-
-              (parameterize ((warnings-are-errors #t))
-                ;; TODO TODO all this
-                #f
-                #;
-                (catch*
-                 (lambda () (add-and-save-event global-event-object
-                                           calendar event))
-                 ((pre-unwind #t)
-                  (lambda _
-                    (let ((stack (make-stack #t)))
-                      (display-backtrace stack (current-error-port)))))
-                 (warning
-                  (lambda (err fmt args)
-                    (define str (format #f "~?" fmt args))
-                    (format (current-error-port) "400 ~a~%" str)
-                    (return (build-response code: 400)
-                            str)))
-                 (#t
-                  (lambda (err proc fmt args _)
-                    (define str (format #f "~a in ~a: ~?~%" err proc fmt args))
-                    (format (current-error-port) "500 ~a~%" str)
-                    (return (build-response code: 500)
-                            str)))))
-
-              (return '((content-type application/xml))
-                      (lambda (port)
-                        (sxml->xml
-                         `(properties
-                           (uid (text ,(prop event 'UID))))
-                         port))))))))
 
   ;; Get specific page by query string instead of by path.
   ;; Useful for <form>'s, since they always submit in this form, but also
@@ -391,51 +258,6 @@
                   code: 302
                   headers: `((location . ,location)))))))
 
-  (add-route!
-   handler
-   (make-route
-    (GET "/calendar" (start end)
-         (return '((content-type text/calendar))
-                 (with-output-to-string
-                   (lambda ()
-                     (if (or start end)
-                         (print-events-in-interval
-                          (aif start (parse-iso-date it) (current-date))
-                          (aif end (parse-iso-date it) (current-date)))
-                         (print-all-events))))))))
-
-  (add-route!
-   handler
-   (make-route
-    (GET "/calendar/:uid{.*}.xcs" (uid)
-         ;; TODO TODO get event by uid
-         (aif #f ;; (get-event-by-uid global-event-object uid)
-              (return '((content-type application/calendar+xml))
-                      ;; TODO this is just the vevent part.
-                      ;; A surounding vcalendar is required, as well as
-                      ;; a doctype.
-                      ;; Look into changing how events carry around their
-                      ;; parent information, possibly splitting "source parent"
-                      ;; and "program parent" into different fields.
-                      (lambda (port)
-                        (sxml->xml
-                         ((@ (vcomponent formats xcal output) vcomponent->sxcal) it)
-                         port)))
-              (return (build-response code: 404)
-                      (format #f (G_ "No component with UID=~a found.") uid))))))
-
-  (add-route!
-   handler
-   (make-route
-    (GET "/calendar/:uid{.*}.ics" (uid)
-         ;; TODO TODO get event by uid
-         (aif #f ;; (get-event-by-uid global-event-object uid)
-              (return '((content-type text/calendar))
-                      (with-output-to-string
-                        (lambda () (print-components-with-fake-parent
-                               (list it)))))
-              (return (build-response code: 404)
-                      (format #f (G_ "No component with UID=~a found.") uid))))))
 
   (add-route!
    handler
@@ -583,6 +405,7 @@
             get-bytevector-all)))))
 
 
+
   (add-route!
    handler
    (make-route
@@ -591,6 +414,16 @@
          (return '((content-type text/plain))
                  (string-append (number->string state) "\n")
                  (1+ state)))))
+
+  ;; TODO these have been removed, and MUST be replaced by WebDAV resources
+
+  ;; POST /remove
+  ;; POST /insert
+  ;; GET /calendar
+  ;;   get a standalone calendar object, possibly limited by the
+  ;;   parameters `start` and `end`.
+  ;; GET /calendar/:uid{.*}.xcs
+  ;; GET /calendar/:uid{.*}.ics
 
   ;; return
   (realize-handler handler))
