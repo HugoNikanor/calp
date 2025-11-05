@@ -2,7 +2,7 @@
 @section Primitives
 
 What Scheme lacks is a proper object system. This library solves that
-problem @emph{once and for all}!
+problem @emph{once and for all}!@footnote{@emph{Once and for all}!}
 
 The records created through this library are all immutale, where each
 field becomes a multiple dispatch procedure, whence called with a
