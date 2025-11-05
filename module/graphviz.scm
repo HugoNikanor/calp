@@ -81,8 +81,12 @@
 
 (define lib "graphviz/guile/libgv_guile")
 
-(load-extension
- (format #f "~a/~a.so"
-         "/usr/lib" ; LIBRARY PATH
-         lib)
- "SWIG_init")
+(catch 'misc-error
+  (lambda ()
+   (load-extension
+    (format #f "~a/~a.so"
+            "/usr/lib"                  ; LIBRARY PATH
+            lib)
+    "SWIG_init")
+   (provide 'graphviz))
+  (lambda _ 'no-op))
