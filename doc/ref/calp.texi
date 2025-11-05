@@ -78,11 +78,32 @@ text @footnote{Improvements welcome}
 
 @node Index
 @unnumbered Index
+
+@c TODO can we get an index sorted by special types?
+@c For example, a list of all `@deftp {WebDAV properties}`
+
+@node Concept Index
+@section Concept Index
 @printindex cp
+
+@node Function Index
+@section Function Index
 @printindex fn
+
+@node Keystroke Index
+@section Keystroke Index
 @printindex ky
+
+@node Program Index
+@section Program Index
 @printindex pg
+
+@node Data Type Index
+@section Data Type Index
 @printindex tp
+
+@node Variable Index
+@section Variable Index
 @printindex vr
 
 @bye
