@@ -66,19 +66,17 @@ unix or TCP socket.<br/>
     ))
 
 
+;; TODO change terminal to be non-interactive term
+;; and then add existing as interactive-term (or similar)
+
 (define entry-points
   (map (lambda (module)
          (resolve-module `(calp entry-points ,module) ensure: #f))
-       '(html
-         ;; TODO change terminal to be non-interactive term
-         ;; and then add existing as interactive-term (or similar)
-         terminal
-         text
-         server
-         tidsrapport
-         update-zoneinfo
-         webdav
-         migrate)))
+       (map string->symbol
+            ;; Using a private procedure is ugly, but it does *exactly* what we want.
+            ;; Vendor it if need be
+            ((@@ (scripts list) find-submodules)
+             '(calp entry-points)))))
 
 
 (define module-help
