@@ -35,8 +35,8 @@
     ,@(when (until record)
         (list
          (cons 'until
-               (cond ((until record) date? date->string)
-                     ((until record) datetime? datetime->string)
+               (cond ((until record) date?     => date->string)
+                     ((until record) datetime? => datetime->string)
                      (else (scm-error
                             'misc-error "recur-rule->scm-json"
                             "Unexpected value in until field of recurrence rule: ~s"
