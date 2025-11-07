@@ -7,7 +7,8 @@
 ;; inherited by stty
 (define (get-terminal-size)
  (let ((rpipe wpipe (car+cdr (pipe))))
-   (system (format #f "stty size > /proc/~s/fd/~s"
-                   (getpid) (port->fdes wpipe)))
-   (values (read rpipe)
-           (read rpipe))))
+   (if (= 0 (system (format #f "stty size > /proc/~s/fd/~s"
+                        (getpid) (port->fdes wpipe))))
+       (values (read rpipe)
+               (read rpipe))
+       (values 0 0))))
