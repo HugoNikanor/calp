@@ -112,7 +112,7 @@
                                              attributes: (alist->table attrs))))))
 
 (define (attribute xml attr)
-  (assoc-ref (xml-element-attributes xml) attr))
+  (table-get (xml-element-attributes xml) attr))
 
 (define (add-child child el)
   (xml-element-children el (cons child (xml-element-children el))))
