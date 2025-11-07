@@ -25,6 +25,7 @@
 
            list-entries/shallow
            list-entries
+           entry-count
            get-by-uid
            get-by-href
            ;; caldav-filter
@@ -145,6 +146,10 @@
 (define-generic list-entries/shallow)
 (define-method (list-entries/shallow (store <calendar-data-store>))
   (map car (list-entries store)))
+
+(define-generic entry-count)
+(define-method (entry-count (store <calendar-data-store>))
+  (length (list-entries/shallow store)))
 
 ;;; list-entries :: store -> (list-of (pair-of href? vcomponent?))
 ;;; Wheore each top level vcomponent is a VCALENDAR

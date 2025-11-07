@@ -550,6 +550,10 @@ GROUP by p.id" filter)))
                         stmt)
             (sqlite-finalize stmt))))
 
+(define-method (entry-count (store <sqlite-data-store>))
+  (let ((stmt (sqlite-prepare (database store) "SELECT count(1) FROM href")))
+    (begin1 (vector-car (sqlite-step stmt))
+            (sqlite-finalize stmt))))
 
 (define-method (flush! (this <sqlite-data-store>))
   ;; TODO possible commit any pending transactions here

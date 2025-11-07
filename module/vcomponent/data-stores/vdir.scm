@@ -223,6 +223,12 @@
 (define-method (list-entries (store <vdir-data-store>))
   (hash-map->list cons (event-by-href store)))
 
+(define-method (entry-count (store <vdir-data-store>))
+  ;; This works, but is currently worthless, since we load all the
+  ;; data in the constructor.
+  (length (glob (path-append (path store)
+                             (string-append "*." (file-extension store))))))
+
 ;;; TODO get-by-uid
 ;;; TODO caldav-filter
 
