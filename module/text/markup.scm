@@ -23,6 +23,7 @@
                 [(bold) 1]
                 [(italic) 3]
                 [(invert) 7]
+                [(strike) 9]
                 [else (scm-error 'misc-error "esc"
                                  "Unknown escape: ~s"
                                  (car effect) #f)]))))
@@ -67,6 +68,7 @@
                         )]
     [(b) (string-append (esc 'bold) (string-concatenate (map sxml->ansi-text body)) (esc))]
     [(i em) (string-append (esc 'italic) (string-concatenate (map sxml->ansi-text body)) (esc))]
+    [(s) (string-append (esc 'strike) (string-concatenate (map sxml->ansi-text body)) (esc))]
     ;; NOOP, but for future use.
     [(code) (string-concatenate (map sxml->ansi-text body))]
     [(blockquote) (string-concatenate
