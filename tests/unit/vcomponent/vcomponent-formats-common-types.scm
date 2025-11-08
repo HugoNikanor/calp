@@ -7,7 +7,6 @@
   :use-module (web uri)
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)
-  :use-module (vcomponent type utc-offset)
   :use-module (vcomponent type recurrence)
   :use-module ((datetime) :select (date time datetime)))
 

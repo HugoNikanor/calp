@@ -2,6 +2,7 @@
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module (ice-9 format)
   :use-module (ice-9 curried-definitions)
+  :use-module (ice-9 regex)
   :use-module (hnh util exceptions)
   :use-module (hnh util)
   :use-module (datetime)
@@ -123,18 +124,16 @@
 
 
 ;; UTC-OFFSET
+;;; (@ (datetime timespec) parse-time-spec) parses timespecs as they
+;;; appear in zoneinfo files.
 (define (parse-utc-offset props value)
-  ;; TODO difference between this and (@ (datetime timespec) parse-timespec)
-  (make-timespec
-   (time
-    hour: (string->number (substring value 1 3))
-    minute: (string->number (substring value 3 5))
-    second: (if (= 7 (string-length value))
-                (string->number (substring value 5 7))
-                0))
-   ;; sign
-   (string->symbol (substring value 0 1))
-   #\z))
+  (cond ((string-match "^([+-])([0-9]{4,6})$" value)
+         => (lambda (m)
+              (make-timespec
+               (string->time (string-pad-right (match:substring m 2) 6 #\0)
+                             "~H~M~S")
+               (string->symbol (match:substring m 1))
+               #\z)))))
 
 ;; A parser is a function with signature (table, string) → any
 ;; which takes the table of vline parameters, and the raw value,

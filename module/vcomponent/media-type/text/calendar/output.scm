@@ -11,10 +11,10 @@
   :use-module (vcomponent type period)
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type request-status)
-  :use-module (vcomponent type utc-offset)
   :use-module (vcomponent type version)
   :use-module (vcomponent type unknown)
   :use-module (datetime)
+  :use-module (datetime timespec)
   :use-module (web uri)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -52,6 +52,12 @@
                                 "~Y~m~dT~H~M~S~Z")
               (duration->string (period-end v)))) )
 
+(define (timespec->string timespec)
+  (string-append
+   (symbol->string (timespec-sign timespec))
+   (time->string (timespec-time timespec) "~H~M~S")))
+
+
 (define (escape-chars str)
   (define (escape char)
     (string #\\ char))
@@ -62,6 +68,7 @@
             ((#\, #\; #\\) => escape)
             (else => string)))
         (string->list str))))
+
 
 (define-once serializers
   (make-parameter
@@ -86,7 +93,7 @@
          (cons string? escape-chars)
          ;; TODO TODO timezone
          (cons time? (lambda (v) (time->string v "~H~M~S")))
-         (cons utc-offset? (lambda (v) (utc-offset->string v "~H~M~S")))
+         (cons timespec? timespec->string)
          (cons unknown? from-unknown))))
 
 (define (serialize obj)

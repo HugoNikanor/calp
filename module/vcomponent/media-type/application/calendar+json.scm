@@ -5,7 +5,6 @@
   :use-module (vcomponent media-type types)
   :use-module (vcomponent type period)
   :use-module (vcomponent type recurrence)
-  :use-module (vcomponent type utc-offset)
   :use-module (vcomponent type geo)
   :use-module (vcomponent type version)
   :use-module (vcomponent type request-status)
@@ -15,6 +14,7 @@
   :use-module (hnh util table)
   :use-module (hnh util type)
   :use-module (datetime)
+  :use-module (datetime timespec)
   :use-module (web uri)
   :export ((jcal-format . format)))
 
@@ -98,7 +98,11 @@
          (cons string? identity)
          ;; TODO timezone
          (cons time? time->string)
-         (cons utc-offset? (lambda (v) (utc-offset->string v "~H:~M:~S")))
+         (cons timespec?
+               (lambda (v)
+                 (string-append
+                  (symbol->string (timespec-sign v))
+                  (time->string (timespec-time v) "~H:~M:~S"))))
 
          (cons geo? (lambda (v) (vector (geo-latitude v) (geo-longitude v))))
 

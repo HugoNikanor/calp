@@ -11,6 +11,7 @@
   :use-module (vcomponent media-type application calendar+xml types)
   :use-module (ice-9 match)
   :use-module (datetime)
+  :use-module (datetime timespec)
   :use-module (srfi srfi-1)
   :use-module (calp translation)
   :use-module (calp namespaces)
@@ -19,7 +20,6 @@
   :use-module (web uri)
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)
-  :use-module (vcomponent type utc-offset)
   :use-module (vcomponent type unknown)
   :export (vcomponent->sxcal))
 
@@ -41,10 +41,12 @@
                                              recur-rule->rrule-sxml)))
          (cons string? (compose list (xml xcal 'text)))
          (cons time? (compose list (xml xcal 'time) time->string))
-         (cons utc-offset?
+         (cons timespec?
                (lambda (v) (list
                        ((xml xcal 'utc-offset)
-                        (utc-offset->string v "~H:~M:~S")))))
+                        (string-append
+                         (symbol->string (timespec-sign v))
+                         (time->string (timespec-time v) "~H:~M:~S"))))))
 
 
          ;;

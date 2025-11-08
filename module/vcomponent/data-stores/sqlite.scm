@@ -14,7 +14,6 @@
   :use-module (datetime timespec)
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)
-  :use-module (vcomponent type utc-offset)
   :use-module (vcomponent type unknown)
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type geo)
@@ -290,12 +289,6 @@ CREATE TABLE IF NOT EXISTS metadata
           ;; TODO timezone
           ((time? v) (values 'TIME (time->string v "~H:~M:~S")))
 
-          ;; TODO only have one of utc-offset and timespec
-          ((utc-offset? v)
-           (values 'UTC-OFFSET
-                   (string-append
-                    (symbol->string (offset-direction v))
-                    (time->string (offset-time v) "~H:~M:~S"))))
           ((timespec? v)
            (values 'UTC-OFFSET
                    (string-append
