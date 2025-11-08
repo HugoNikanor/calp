@@ -86,9 +86,12 @@
           specs))
 
 
+;;; [+-]?\d\d:\d\d:\d\d[swugz]
 (define* (parse-time-spec
                  string optional: (suffixes '(#\s #\w #\u #\g #\z)))
   (let ((type string
+              ;; TODO this allows an arbitrary number of extra chars
+              ;; after the type specifier. Why?
           (cond [(string-rindex string (list->char-set suffixes))
                  => (lambda (idx)
                       (values (string-ref string idx)
