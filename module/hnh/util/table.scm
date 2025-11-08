@@ -33,11 +33,8 @@
 
 (define (serialize-tree t)
   `(-> (table)
-       ,@(fold (lambda (p done)
-                 (cons `(table-put ,(serialize (car p)) ,(serialize (cdr p)))
-                       done))
-               '()
-               (tree->list t))))
+       ,@(map (lambda (p) `(table-put ,(serialize (car p)) ,(serialize (cdr p))))
+              (tree->list t))))
 
 (define-type (tree-node
               serializer: serialize-tree
