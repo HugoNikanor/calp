@@ -317,6 +317,10 @@
         (else #f)))
 
 
+;;; TODO this allows VFREEBUSY to be inserted.
+;;; I'm pretty sure that isn't correct, and only here since we try to
+;;; import the result of a calendar-query REPORT response.
+
 (define-method (put-event! (this <file-data-store>) href component)
   (typecheck component vcomponent?)
 
@@ -330,16 +334,23 @@
   (define groups (group-by type (vcomponent-children component)))
 
   ;; - assert that at least one vevent exists
-  (unless (assoc-ref groups 'VEVENT)
+  (unless (or (assoc-ref groups 'VEVENT)
+              (assoc-ref groups 'VTODO)
+              (assoc-ref groups 'VFREEBUSY))
     (scm-error 'misc-error "put-event!<file-data-store>"
-               "At least one VEVENT component must exist"
+               "At least one VEVENT or VTODO component must exist"
                '() #f))
+
+  ;; TODO ensure we only have VEVENT or VTODO
 
   ;; - assert all VEVENT children share the same UID
   ;;   NOTE this throws if any component lacks an UID
-  (unless (apply string=? (map (extract1 'UID) (assoc-ref groups 'VEVENT)))
+  (unless (apply string=? (map (extract1 'UID)
+                               (append (or (assoc-ref groups 'VEVENT) '())
+                                       (or (assoc-ref groups 'VTODO) '())
+                                       (or (assoc-ref groups 'VFREEBUSY) '()))))
     (scm-error 'misc-error "put-event!<file-data-store>"
-               "Not all VEVENT components have the same id"
+               "Not all VEVENT or VTODO components have the same id"
                '() #f))
 
   ;; - TODO assert all referenced VTIMEZONEs exist in the child set
@@ -351,9 +362,15 @@
 
   ;; - update `event-by-uid`
   (define int (force (internals this)))
-  (define uid (prop1 (car (assoc-ref groups 'VEVENT)) 'UID))
+  (define uid (prop1 (car
+                      (append (or (assoc-ref groups 'VEVENT) '())
+                              (or (assoc-ref groups 'VTODO) '())
+                              (or (assoc-ref groups 'VFREEBUSY) '())))
+                     'UID))
   (hash-set! (%event-by-uid int) uid
-             (assoc-ref groups 'VEVENT))
+             (or (assoc-ref groups 'VEVENT)
+                 (assoc-ref groups 'VTODO)
+                 (assoc-ref groups 'VFREEBUSY)))
 
   ;; - update `tz-by-tzid` (possible checking that the provided
   ;;   timezone declarations are semantically equivalent to the
