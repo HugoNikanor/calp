@@ -30,10 +30,9 @@
                     (("sqlite"
                       (calendar-collection "store:sqlite?path=/tmp/calendar.db"))
                      ("calendar.ics"
-                      ;; TODO change media type once it actually changes to text/icalendar
-                      (calendar-collection "store:file?path=/tmp/calendar.ics&media=*/ical"))
+                      (calendar-collection "store:file?path=/tmp/calendar.ics&media=text/calendar"))
                      ("vdir"
-                      (calendar-collection "store:vdir?path=/tmp/Calendar.vdir&media=*/ical"))
+                      (calendar-collection "store:vdir?path=/tmp/Calendar.vdir&media=text/calendar"))
                      ;; ("calendar.xcs"
                      ;;  (calendar-collection "store:file?path=/tmp/calendar.xcs&media=application/calendar+xml"))
                      ;; ("calendar.json"
