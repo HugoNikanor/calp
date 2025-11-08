@@ -97,11 +97,9 @@
          (map (lambda (pair)
                 (define-values (tag value) (car+cdr pair))
 
-                (apply (xml xcal (downcase-symbol tag))
-                       (map (lambda (v)
-                              ;; TODO parameter types!!!! (rfc6321 3.5.)
-                              ((xml xcal 'text) (->string v)))
-                            value)))
+                ((xml xcal (downcase-symbol tag))
+                 ;; TODO parameter types!!!! (rfc6321 3.5.)
+                 ((xml xcal 'text) value)))
               (table->list parameters))))
 
 (define (vcomponent->sxcal component)
