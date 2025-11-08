@@ -511,7 +511,7 @@
                              ))
                                         ; "19:56"
                          )
-                   "\xa0—\xa0"
+                   "&nbsp;—&nbsp;"
                    (time (@ (class "dtend")
                             (data-property "dtend")
                             (data-fmt "~L~H:~M")
