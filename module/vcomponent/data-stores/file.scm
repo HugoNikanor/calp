@@ -27,6 +27,7 @@
   :use-module (hnh util table)
   :use-module (hnh util type)
   :use-module (hnh util uuid)
+  :use-module (hnh util io)
   :use-module (calp util config)
   :use-module (xattr)
   :use-module (ice-9 regex)
@@ -396,8 +397,7 @@
     ((serializer (data-format this))
      (merged-calendar this)
      port)
-    (unless (zero? (port-column port))
-      (newline port)))
+    (ensure-newline port))
 
   (cond ((string=? "/dev/stdout" (path this))
          (run (current-output-port)))

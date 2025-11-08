@@ -5,6 +5,7 @@
            with-atomic-output-to-file
            call-with-tmpfile
            displayln
+           ensure-newline
            ->port))
 
 
@@ -77,3 +78,7 @@
         (else (scm-error 'misc-error "->port"
                          "Not a port or string"
                          (list port-or-string) #f))))
+
+(define* (ensure-newline optional: (port (current-output-port)))
+  (unless (zero? (port-column port))
+    (newline port)))

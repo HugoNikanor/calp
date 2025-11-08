@@ -41,3 +41,7 @@ Open file at path, and return its content as a string.
 @defun displayln x [port]
 Calls @code{display}, followed by @code{newline}.
 @end defun
+
+@defun ensure-newline [port]
+Outputs a line break, unless the port is at the start of a line.
+@end defun
