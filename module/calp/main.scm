@@ -1,7 +1,7 @@
 ;; -*- geiser-scheme-implementation: guile -*-
 (define-module (calp main)
   :use-module ((hnh util) :select (awhen))
-  :use-module ((hnh util path) :select (path-append))
+  :use-module ((hnh util path) :select (path-append file-hidden?))
 
   :use-module (srfi srfi-1)
   :use-module ((srfi srfi-88) :select ()) ; keyword syntax
@@ -69,17 +69,20 @@ unix or TCP socket.<br/>
 ;; TODO change terminal to be non-interactive term
 ;; and then add existing as interactive-term (or similar)
 
+;; It would be cleaner to resolve all modules here. However, the flag
+;; to only load the module once it's used doesn't seem to work, meaning
+;; that we have to write our own lazy loader.
+;; (We want lazy-loading, in case any entry point decides to do much work top level)
 (define entry-points
-  (map (lambda (module)
-         (resolve-module `(calp entry-points ,module) ensure: #f))
-       (map string->symbol
-            ;; Using a private procedure is ugly, but it does *exactly* what we want.
-            ;; Vendor it if need be
-            ((@@ (scripts list) find-submodules)
-             '(calp entry-points)))))
+  (map string->symbol
+       (remove file-hidden?
+        ;; Using a private procedure is ugly, but it does *exactly* what we want.
+        ;; Vendor it if need be
+        ((@@ (scripts list) find-submodules)
+         '(calp entry-points)))))
 
 
-(define module-help
+(define (module-help)
   (xml->sxml
    (string-append
     "<group><br/>
@@ -92,9 +95,10 @@ unix or TCP socket.<br/>
 <br/><br/>"
 
     (string-concatenate
-     (map (lambda (module)
+     (map (lambda (entry-point)
+            (define module (resolve-interface `(calp entry-points ,entry-point)))
             (format #f "<p><b>~a</b> ~a</p>"
-                    (last (module-name module))
+                    entry-point
                     (module-ref module '%summary "")))
           entry-points))
 
@@ -130,7 +134,7 @@ unix or TCP socket.<br/>
   ;; help printing moved below some other stuff to allow
   ;; print-configuration-and-return to show bound values.
   (awhen (option-ref opts 'help #f)
-         (display (sxml->ansi-text module-help)
+         (display (sxml->ansi-text (module-help))
                   (current-output-port))
          (print-arg-help options)
          (throw 'return))
@@ -155,10 +159,10 @@ unix or TCP socket.<br/>
                        '("terminal")))
          (name (string->symbol (car ropt))))
 
-    (cond ((find (lambda (module) (eq? name (last (module-name module))))
-                 entry-points)
-           => (lambda (module)
-                ((module-ref module 'main) ropt)))
+    (cond ((memv name entry-points)
+            ((module-ref (resolve-interface `(calp entry-points ,name))
+                         'main)
+             ropt))
           (else (format (current-error-port)
                         (G_ "Unsupported mode of operation: ~a~%")
                         name)
