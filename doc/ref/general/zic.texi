@@ -6,7 +6,7 @@ kind they are.
 
 Refer to zic(8) and the AT field of rules.
 
-@defun make-timespec time sign type
+@defun timespec time sign type
 
 @defun timespec? x
 @end defun
@@ -28,7 +28,24 @@ char
 The ``empty'' timespec.
 @end defun
 
-@defun timespec-add specs ...
+@defun timespec+ timespecs ...
+Add a series of timespecs, which must all be of the same type
+(technically not, an the only ``issue'' is that a warning will be
+signaled, but it's nonsence to add timespecs of differing types).
+
+@example
+(timespec+ (timespec #01:00:00 '+ 'wall)
+           (timespec #01:00:00 '+ 'wall))
+⇒ (timespec #02:00:00 '+ 'wall)
+
+(timespec+ (timespec #01:00:00 '+ 'wall)
+           (timespec #01:40:00 '- 'wall))
+⇒ (timespec #00:40:00 '- 'wall)
+
+(timespec+ (timespec #01:00:00 '+ 'wall)
+           (timespec (time hour: 300) '+ 'wall))
+⇒ (timespec (time hour: 301) '+ 'wall)
+@end example
 @end defun
 
 @defun parse-time-spec string [suffixes='(#\s #\w #\u #\g #\z)]

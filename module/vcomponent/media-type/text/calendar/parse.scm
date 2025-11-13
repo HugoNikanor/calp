@@ -129,11 +129,14 @@
 (define (parse-utc-offset props value)
   (cond ((string-match "^([+-])([0-9]{4,6})$" value)
          => (lambda (m)
-              (make-timespec
+              (timespec
                (string->time (string-pad-right (match:substring m 2) 6 #\0)
                              "~H~M~S")
                (string->symbol (match:substring m 1))
-               #\z)))))
+               'utc)))
+        (else (scm-error 'misc-error "parse-utc-offset"
+                         "String not parsable as a UTC-OFFSET: ~s"
+                         (list value) #f))))
 
 ;; A parser is a function with signature (table, string) → any
 ;; which takes the table of vline parameters, and the raw value,

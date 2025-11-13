@@ -102,6 +102,9 @@
            time->decimal-hour
            datetime->decimal-hour
 
+           time->seconds
+           seconds->time
+
            date-range
 
            datetime->string
@@ -651,6 +654,22 @@
                [else (-> dt datetime-date day)])))
     (-> dt datetime-time time->decimal-hour
         (+ (* date-diff 24)))))
+
+
+(define (time->seconds t)
+  (+ (* 60 60 (hour t))
+     (* 60 (minute t))
+     (second t)))
+
+(define (seconds->time s)
+  (when (negative? s)
+    (scm-error 'misc-error "seconds->time"
+               "Can't convert negative seconds to time values: ~s"
+               (list s) #f))
+  (let* ((hours minutes* (floor/ s (* 60 60)))
+         (minutes seconds (floor/ minutes* 60)))
+    (time hour: hours minute: minutes second: seconds)))
+
 
 ;; Returns a list of all dates from start to end.
 ;; both inclusive

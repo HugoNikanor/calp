@@ -12,7 +12,7 @@
 ;;; Code:
 (define-module (datetime zic)
   :use-module ((hnh util)
-               :select (awhen group when sort* iterate group-by))
+               :select (awhen group when sort* iterate group-by set!))
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (datetime)
   :use-module (datetime timespec)
@@ -21,37 +21,46 @@
   :use-module (srfi srfi-1)
   :use-module (hnh util object)
   :use-module (hnh util type)
+  :use-module (hnh util lens)
   :use-module (srfi srfi-71)
   :use-module ((vcomponent type recurrence)
                :select (byday recur-rule bymonthday))
   :use-module (calp translation)
   :export (read-zoneinfo
 
-           #| note that make-rule isn't exported |#
-           zi-rule?
+           zi-rule zi-rule?
            rule-name rule-from rule-to rule-in
            rule-on rule-at rule-save rule-letters
 
-           #| note that make-zone-entry isn't exported |#
-           zone-entry?
+           zone-entry zone-entry?
            zone-entry-stdoff zone-entry-rule
            zone-entry-format zone-entry-until
 
-           zoneinfo?
+           zone-link zone-link?
+           link-name link-target
 
-           get-zone
-           get-rule
+           zoneinfo?
+           get-zone get-rule
 
            rule->dtstart
            rule->rrule
 
            zone-format
+
+           execute-day-spec
+
+           parsed-zic-intermediary
+           parsed-zic-intermediary?
+           intermediary-rules intermediary-rules*
+           intermediary-zones intermediary-zones*
+           intermediary-links intermediary-links*
+           intermediary->zoneinfo
            ))
 
 
 ;; returns a <zoneinfo> object
 (define (read-zoneinfo ports-or-filenames)
-  (parsed-zic->zoneinfo
+  (parsed-zic->intermediary
    (concatenate
     (map (lambda (port-or-filename)
            (if (port? port-or-filename)
@@ -66,11 +75,14 @@
 (define-type (zi-rule)                  ; EXPORTED
   (rule-name    type: symbol?)
   (rule-from    type: (or integer? ; year
-                       (memv '(minimum maximum))))
+                       ; (memv '(minimum maximum))
+                          ))
   (rule-to      type: (or integer? ; year
-                     (memv '(only minimum maximum))))
+                     (memv '(only #; minimum maximum
+                                         ))))
   ;; type should always be "-"
   ;; (rule-type type: (eq? "-") default: "-")
+
   (rule-in      type: integer?); month number
   (rule-on      type: (or integer? ; month day
                      (tuple-of (eq? 'last)
@@ -85,8 +97,9 @@
 ;;; TODO zone-entry collision
 
 (define-type (zone-entry)               ; EXPORTED
+  ;; NOTE the letter for this timespec doesn't matter
   (zone-entry-stdoff keyword: stdoff type: timespec?)
-  (zone-entry-rule   keyword: rule   type: (or false? symbol? timespec?))
+  (zone-entry-rule   keyword: rule   type: (or symbol? timespec?))
   (zone-entry-format keyword: format type: string?)
   (zone-entry-until  keyword: until  type: (or false? datetime?)))
 
@@ -95,7 +108,7 @@
   (zone-name    type: string?)
   (zone-entries type: (list-of zone-entry?)))
 
-(define-type (link)                     ; INTERNAL
+(define-type (zone-link)                ; Exported
   (link-name   type: string? keyword: name)
   (link-target type: string? keyword: target))
 
@@ -120,6 +133,20 @@
       (scm-error 'misc-error "get-rule" "No rule ~a" (list name) #f)))
 
 
+
+(define (execute-day-spec base-date day-spec)
+  (match day-spec
+    ((? number? on) (day base-date on))
+    (('last n)
+     (iterate (lambda (d) (date- d (date day: 1)))
+              (lambda (d) (eqv? n (week-day d)))
+              (day base-date (days-in-month base-date))))
+    (((? (lambda (x) (memv x '(< >))) <>) wday base-day)
+     (iterate (lambda (d) ((if (eq? '< <>)
+                          date- date+)
+                      d (date day: 1)))
+              (lambda (d) (eqv? wday (week-day d)))
+              (day base-date base-day)))))
 
 ;; takes an (abriviated) month name, and returns the
 ;; number of that month.
@@ -178,27 +205,37 @@
 
 
 (define* (parse-until year optional: (month "Jan") (day "1") (tm "-"))
-  ;; I'm pretty sure that the until rule never has a negative time component
-  (let ((timespec (parse-time-spec tm)))
-    (datetime date: (date year:  (string->number year)
-                          month: (month-name->number month)
-                          day:   (string->number day))
-              time: (timespec-time timespec)
-              tz: (case (timespec-type timespec)
-                    [(#\s) (warning (G_ "what even is \"Standard time\"‽")) ""]
-                    [(#\w) #f]
-                    ;; Since we might represent times before UTC existed
-                    ;; this is a bit of a lie. But it should work.
-                    [(#\u #\g #\z) "UTC"]))))
+  (let ((timespec (parse-time-spec tm))
+        (base-date (date year:  (string->number year)
+                         month: (month-name->number month)
+                         day:   1)))
+
+    ;; TODO TODO
+    ;; I believe tm can't be negative (since that would be written as
+    ;; a positive value the previous day). However, it can be in any of wall,
+    ;; utc, or standard time (defaulting to wall)
+    ;; We DON'T store that in the TZ component of the datetime object,
+    ;; since that is reserved for timezone names
+    ;; (even though utc could be coded as UTC, and wall as #f, that
+    ;; leaves standard time).
+    ;; Instead, we should return a new type, datetime-spec
+    (datetime date: (execute-day-spec base-date (parse-day-spec day))
+              time: (timespec-time timespec))))
 
 
 (define (parse-zone stdoff rule format . until)
   (zone-entry
    stdoff: (parse-time-spec stdoff)
-   rule: (cond [(string=? "-" rule) #f]
+   rule: (cond [(string=? "-" rule)
+                (timespec (time) '+ 'standard)]
                [(char-alphabetic? (string-ref rule 0))
                 (string->symbol rule)]
-               [else (parse-time-spec rule)])
+               [else
+                (let ((s (parse-time-spec rule)))
+                  (modify s timespec-type*
+                          (lambda (t)
+                            (or t (if (time-zero? (timespec-time s))
+                                      'standard 'daylight)))))])
    format: format
    until: (if (null? until)
               #f (apply parse-until until))))
@@ -215,12 +252,15 @@
 
 ;; Returns a list of zones, rules, and links
 (define (parse-zic-file port)
+  (define lineno 0)
   (let loop ((done '()) (continued #f))
     ;; NOTE
     ;; whitespace and #\# are techically allowed in names, if the name
     ;; is quoted. There however doesn't appear to be ANY quoted strings
     ;; in the zoneinfo db.
     (let ((str (read-line port)))
+      (set! lineno = 1+)
+      ;; (format (current-error-port) "line ~a: ~s~%" lineno str)
       (if (eof-object? str)
           done
           (let ((tokens (string-tokenize (strip-comments str))))
@@ -250,8 +290,15 @@
                                                     (parse-from to))
                                        rule-in: (month-name->number in)
                                        rule-on: (parse-day-spec on)
-                                       rule-at: (parse-time-spec at)
-                                       rule-save: (parse-time-spec save '(#\s #\d))
+                                       rule-at: (modify (parse-time-spec at)
+                                                        timespec-type*
+                                                        (lambda (t) (or t 'wall)))
+                                       rule-save:
+                                       (let ((s (parse-time-spec save)))
+                                         (modify s timespec-type*
+                                                 (lambda (t)
+                                                   (or t (if (time-zero? (timespec-time s))
+                                                             'standard 'daylight)))))
                                        rule-letters: (if (string= letters "-")
                                                          "" letters))))
                         (loop (cons rule done)
@@ -267,7 +314,7 @@
                                   #f))))
 
                      (("Link" target name)
-                      (loop (cons (link name: name target: target)
+                      (loop (cons (zone-link name: name target: target)
                                   done) #f))
                      (_
                       ;; NOTE an earlier version of the code the parsers for those.
@@ -279,53 +326,73 @@
                                  #f)))]))))))
 
 
-;; Takes a list of zones, rules, and links (as provided by parse-zic-file), and
-;; returns a zoneinfo object
-(define (parsed-zic->zoneinfo lst)
+(define-type (parsed-zic-intermediary)
+  (intermediary-rules keyword: rules type: (list-of (pair-of symbol? (list-of zi-rule?))))
+  (intermediary-zones keyword: zones type: (list-of (pair-of string? (list-of zone-entry?))))
+  (intermediary-links keyword: links type: (list-of zone-link?)))
+
+(define (intermediary->zoneinfo intermediary)
+  (typecheck intermediary parsed-zic-intermediary?)
 
   (define zones (make-hash-table))
   (define rules (make-hash-table))
 
+  ;; group rules and put in map
+  (for-each (lambda (group) (hashq-set! rules (car group) (cdr group)))
+            (intermediary-rules intermediary))
+
+  ;; put zones in map
+  (for-each (lambda (zone) (hash-set! zones (car zone) (cdr zone)))
+            (intermediary-zones intermediary))
+
+  ;; resolve links to extra entries in the zone map
+  (for-each (lambda (link)
+              (let* ((name (link-name link))
+                     (target (link-target link))
+                     (target-item (hash-ref zones target #f)))
+                ;; TODO link chains are allowed, but none appear in the dataset
+                (if (not target-item)
+                    (warning (G_ "Unresolved link, target missing ~a -> ~a") name target)
+                    (hash-set! zones name target-item))))
+            (intermediary-links intermediary))
+
+  (zoneinfo rules: rules zones: zones)
+  )
+
+;; Takes a list of zones, rules, and links (as provided by parse-zic-file), and
+;; returns a zoneinfo object
+(define (parsed-zic->intermediary lst)
   (let ((groups (group-by (lambda (item)
                             (cond [(zi-rule? item) 'rule]
                                   [(zone? item) 'zone]
-                                  [(link? item) 'link]
+                                  [(zone-link? item) 'link]
                                   [else (warning "Unknown item type ~a" item) #f]))
                           lst)))
 
-    ;; group rules and put in map
-    (awhen (assoc-ref groups 'rule)
-      (for-each (lambda (group)
-                  (hashq-set! rules
-                              (car group)
-                              (sort* (cdr group)
-                                     (lambda (a b) (if (eq? 'minimum) #t (< a b)))
-                                     rule-from)))
-                (group-by rule-name it)))
+    (parsed-zic-intermediary
+     links: (or (assoc-ref groups 'link) '())
+     zones: (map (lambda (zone) (cons (zone-name zone) (zone-entries zone)))
+                 (or (assoc-ref groups 'zone) '()))
+     rules: (cond ((assoc-ref groups 'rule)
+                   => (lambda (rules)
+                        (map (lambda (group)
+                               (cons (car group)
+                                     (sort* (cdr group)
+                                            (lambda (a b) (if (eq? 'minimum) #t (< a b)))
+                                            rule-from)))
+                             (group-by rule-name rules))))
+                  (else '())))
+))
 
-    ;; put zones in map
-    (awhen (assoc-ref groups 'zone)
-      (for-each (lambda (zone)
-                  (hash-set! zones (zone-name zone) (zone-entries zone)))
-                it))
-
-    ;; resolve links to extra entries in the zone map
-    (awhen (assoc-ref groups 'link)
-      (for-each (lambda (link)
-                  (let* ((name (link-name link))
-                         (target (link-target link))
-                         (target-item (hash-ref zones target #f)))
-                    (if (not target-item)
-                        (warning (G_ "Unresolved link, target missing ~a -> ~a") name target)
-                        (hash-set! zones name target-item))))
-                it))
-
-    (zoneinfo rules: rules zones: zones)))
+(define parsed-zic->zoneinfo
+  (compose intermediary->zoneinfo
+           parsed-zic->intermediary))
 
 
 
 
 ;; The first time this rule was/will be applied
+;;; TODO move this to another module
 (define (rule->dtstart rule)
   ;; NOTE 'minimum and 'maximum represent the begining and end of time.
   ;; since I don't have a way to represent those ideas I just set a very
@@ -340,23 +407,11 @@
 
   (define dt
     (datetime
-     date:
-     (match (rule-on rule)
-       ((? number? on) (day d on))
-       (('last n)
-        (iterate (lambda (d) (date- d (date day: 1)))
-                 (lambda (d) (eqv? n (week-day d)))
-                 (day d (days-in-month d))))
-       (((? (lambda (x) (memv x '(< >))) <>) wday base-day)
-        (iterate (lambda (d) ((if (eq? '< <>)
-                             date- date+)
-                         d (date day: 1)))
-                 (lambda (d) (eqv? wday (week-day d)))
-                 (day d base-day))))
+     date: (execute-day-spec d (rule-on rule))
      tz: (case (timespec-type (rule-at rule))
-           ((#\w) #f)
-           ((#\s) (warning (G_ "what even is \"Standard time\"‽")) #f)
-           ((#\u #\g #\z) "UTC"))))
+           ((wall) #f)
+           ((standard) #f)
+           ((utc) "UTC"))))
 
   (let ((timespec (rule-at rule)))
     ((case (timespec-sign timespec)
@@ -366,6 +421,7 @@
      (datetime time: (timespec-time timespec)))
     ))
 
+;;; TODO *really* move this rule to another module
 (define (rule->rrule rule)
   (if (eq? 'only (rule-to rule))
       #f
@@ -403,24 +459,39 @@
                    (cons (ceiling-quotient base-day 7)
                          wday))))))))
 
-;; special case of format which works with %s and %z
-(define (zone-format fmt-string arg)
-  (let ((idx (string-index fmt-string #\%)))
-    (case (string-ref fmt-string (1+ idx))
-      [(#\s) (string-replace fmt-string arg
-                             idx (+ idx 2))]
-      [(#\z)
-       ;; NOTE No zones seem to currently use %z formatting.
-       ;; '%z' is NOT a format string, but information about another format string.
-       (warning (G_ "%z not yet implemented"))
-       fmt-string]
+;; special case of `format` which works with %s and %z
+;; TODO rename to something like zone-printf
+(define (zone-format fmt-string arg utc-offset)
+  (typecheck fmt-string string?)
+  (typecheck arg string?)
+  (typecheck utc-offset timespec?)
 
-      [else (scm-error 'misc-error "zone-format"
-                       ;; first slot is the errornous character,
-                       ;; second is the whole string, third is the index
-                       ;; of the faulty character.
-                       (G_ "Invalid format char ~s in ~s at position ~a")
-                       (list (string-ref fmt-string (1+ idx))
-                             fmt-string
-                             (1+ idx))
-                       #f)])))
+  (cond ((string-index fmt-string #\%)
+         => (lambda (idx)
+              (string-replace fmt-string
+               (case (string-ref fmt-string (1+ idx))
+                 [(#\s) arg]
+
+                 [(#\z)
+                  (let ((t (timespec-time utc-offset)))
+                    (string-append
+                     (symbol->string (timespec-sign utc-offset))
+                     (time->string t "~H")
+                     (cond ((= 0 (minute t) (second t)) "")
+                           ((= 0 (second t)) (time->string t "~M"))
+                           (else (time->string t "~M~S")))))]
+
+                 ;; Not standard, but it feels like good faith to have it
+                 [(#\%) "%"]
+
+                 [else (scm-error 'misc-error "zone-format"
+                                  ;; first slot is the errornous character,
+                                  ;; second is the whole string, third is the index
+                                  ;; of the faulty character.
+                                  (G_ "Invalid format char ~s in ~s at position ~a")
+                                  (list (string-ref fmt-string (1+ idx))
+                                        fmt-string
+                                        (1+ idx))
+                                  #f)])
+               idx (+ idx 2))))
+        (else fmt-string)))
