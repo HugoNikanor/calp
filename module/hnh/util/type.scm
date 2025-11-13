@@ -45,14 +45,14 @@
 
 (define-syntax typecheck
   (syntax-rules ()
-    ((_ variable type-clause)
+    ((_ expr type-clause)
      (let ((procedure-name (current-procedure-name)))
-       (typecheck variable type-clause procedure-name)))
-    ((_ variable type-clause procedure-name)
-     (unless (build-validator-body variable type-clause)
+       (typecheck expr type-clause procedure-name)))
+    ((_ expr type-clause procedure-name)
+     (unless (build-validator-body expr type-clause)
        (scm-error 'wrong-type-arg procedure-name
-                  "Invalid value for ~s. Expected ~s, got ~s"
-                  (list (quote variable) (quote type-clause) variable)
+                  "The expression `~s' doesn't satisfy the type `~s'. Evaluated to ~s"
+                  (list (quote expr) (quote type-clause) expr)
                   #f)))))
 
 ;;; For use in typechecks, since
