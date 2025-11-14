@@ -143,11 +143,6 @@ unix or TCP socket.<br/>
     (format #t (G_ "Calp version ~a~%") (@ (calp) version))
     (throw 'return))
 
-  ;; always load zoneinfo if available.
-  (let ((z (path-append (xdg-data-home) "calp" "zoneinfo.scm")))
-    (when (file-exists? z)
-      (primitive-load z)))
-
   ;; Start repl late, since configuration items are implemented as properties,
   ;; meaning that they are thread local (and the repl lives in its own thread).
   (cond [(eqv? #t repl) (repl-start (format #f "~a/calp-~a"

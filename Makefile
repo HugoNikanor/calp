@@ -93,7 +93,6 @@ install: all calp-release
 	$(MAKE) -C system install
 	$(MAKE) -C doc/ref install
 	install -m 644 -D -t $(DESTDIR)/usr/share/doc/calp README.md
-	install -m 755 -D -t $(DESTDIR)/usr/lib/calp/ scripts/tzget
 	install -m755 -D calp-release $(DESTDIR)/usr/bin/calp
 
 # TODO a test completed with no errors should emit a .test-accepted
