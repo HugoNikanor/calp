@@ -40,6 +40,7 @@
            link-name link-target
 
            zoneinfo?
+           zoneinfo-zones zoneinfo-rules
            get-zone get-rule
 
            rule->dtstart
@@ -55,6 +56,8 @@
            intermediary-zones intermediary-zones*
            intermediary-links intermediary-links*
            intermediary->zoneinfo
+
+           limit-intermediary
            ))
 
 
@@ -331,6 +334,80 @@
   (intermediary-zones keyword: zones type: (list-of (pair-of string? (list-of zone-entry?))))
   (intermediary-links keyword: links type: (list-of zone-link?)))
 
+
+(define (resolve-link intermediary root-link)
+  (typecheck intermediary parsed-zic-intermediary?)
+  (typecheck root-link zone-link?)
+
+  (cons root-link
+   (let loop ((link root-link))
+     (cond
+      ((find (lambda (candidate)
+               (string=? (link-target link) (link-name candidate)))
+             (intermediary-links intermediary))
+       => (lambda (link) (cons link (loop link))))
+      ((assoc (link-target link) (intermediary-zones intermediary))
+       => list)
+      (else
+       (scm-error 'msic-error "resolve-link"
+                  "Broken link found in zic intermediary: ~s, starting from ~s"
+                  (list root-link link) #f))))))
+
+
+;;; TODO test this
+(define (limit-intermediary intermediary . zone-names)
+  (typecheck intermediary parsed-zic-intermediary?)
+  (typecheck zone-names (list-of string?))
+  ;; select all links matching any of zones
+  (define link-roots
+   (filter (lambda (candidate) (member (link-name candidate) zone-names))
+           (intermediary-links intermediary)))
+
+  ;; select all links while resolving to zones
+  (define-values (links indirect-zones)
+    (car+cdr
+     (fold (lambda (root-link st)
+             (fold (lambda (entry st)
+                     (cond ((zone-link? entry)
+                            (modify st car*
+                                    (lambda (links)
+                                      (lset-adjoin (lambda (a b) (string=? (link-name a) (link-name b)))
+                                                   links entry))))
+                           (else
+                            (modify st cdr*
+                                    (lambda (zones)
+                                      (lset-adjoin (lambda (a b) (string=? (car a) (car b)))
+                                                   zones entry))))))
+                   st (resolve-link intermediary root-link)))
+           (cons '() '())
+           link-roots)))
+
+
+  (define zones
+    (lset-union
+     (lambda (a b) (string=? (car a) (car b)))
+     indirect-zones
+     (filter (lambda (p) (member (car p) zone-names))
+             (intermediary-zones intermediary))))
+
+  (define rule-names
+   (fold (lambda (zone rule-names)
+           (apply lset-adjoin eq? rule-names
+                  (filter symbol? (map zone-entry-rule (cdr zone)))))
+         '()
+         zones))
+
+
+  (define rules
+    (filter (lambda (rule) (memv (car rule) rule-names))
+            (intermediary-rules intermediary)))
+
+  (parsed-zic-intermediary
+   rules: rules
+   zones: zones
+   links: links
+   ))
+
 (define (intermediary->zoneinfo intermediary)
   (typecheck intermediary parsed-zic-intermediary?)
 
@@ -347,17 +424,11 @@
 
   ;; resolve links to extra entries in the zone map
   (for-each (lambda (link)
-              (let* ((name (link-name link))
-                     (target (link-target link))
-                     (target-item (hash-ref zones target #f)))
-                ;; TODO link chains are allowed, but none appear in the dataset
-                (if (not target-item)
-                    (warning (G_ "Unresolved link, target missing ~a -> ~a") name target)
-                    (hash-set! zones name target-item))))
+              (hash-set! zones (link-name link)
+                         (cdr (last (resolve-link intermediary link)))))
             (intermediary-links intermediary))
 
-  (zoneinfo rules: rules zones: zones)
-  )
+  (zoneinfo rules: rules zones: zones))
 
 ;; Takes a list of zones, rules, and links (as provided by parse-zic-file), and
 ;; returns a zoneinfo object
