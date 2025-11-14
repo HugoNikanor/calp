@@ -17,6 +17,7 @@
                         span-upto
                         ))
   :use-module ((hnh util env) :select (with-locale1))
+  :use-module (hnh util type)
 
   :use-module (hnh util object)
   :use-module (hnh util lens)
@@ -215,11 +216,7 @@
 
   (datetime-date type: date? lens: date*)
   (datetime-time type: time? lens: time*)
-  ;; TODO actually implement tz.
-  ;; It should either by an integer specifying second offset to the
-  ;; epoch (so CEST would be 7200), or a string specifying the
-  ;; timezone, either like "CEST" or "Europe/Stockholm".
-  tz)
+  (tz type: (or false? string?)))
 
 
 (define (datetime->http-date dt)
