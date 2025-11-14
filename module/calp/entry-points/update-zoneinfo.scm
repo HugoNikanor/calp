@@ -1,53 +1,180 @@
+;;; TODO move this to (scripts update-zoneinfo)
 (define-module (calp entry-points update-zoneinfo)
   :export (%summary main)
-  ;; :use-module (hnh util)
   :use-module (datetime)
+  :use-module (datetime zic)
   :use-module (srfi srfi-1)
+  :use-module (hnh util)
   :use-module (hnh util path)
+  :use-module (hnh util env)
   :use-module ((hnh util io) :select (with-atomic-output-to-file))
+  :use-module (hnh util options)
+  :use-module ((hnh util object) :select (serialize))
   :use-module ((xdg basedir) :prefix xdg-)
   :use-module ((ice-9 rdelim) :select (read-line))
-  :use-module (hnh util options)
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 popen)
-  :use-module (ice-9 format)
-  :use-module (calp translation))
+  :use-module (ice-9 pretty-print)
+  :use-module ((crypto) :select (sha256 checksum->string))
+  :use-module ((scheme base) :select (read-bytevector))
+  :use-module (sxml simple)
+  :use-module ((text markup) :select (sxml->ansi-text))
+  :use-module (calp translation)
+)
 
 (define %summary
-  (G_ "in theory downloads and updates our local
-zoneinfo database, but is currently broken."))
+  (G_ "Downloads zoneinfo data, and updates the vendored timezone module."))
 
 (define opt-spec
-  `((help (single-char #\h) (description ,(G_ "Print this help.")))))
+  `((help (single-char #\h) (description ,(G_ "Print this help.")))
+    (output (single-char #\o)
+            (value filename)
+            (description ,(G_ "File to write the generated code to.")))
+    (module-name (value module)
+     (description ,(G_ "Name of the generated module, as per <code>define-module</code>.
+Given as a space-delimeted list of symbols, and defaults to <code>datetime timezone vendored-tzdb</code>.")))
+    (tzdb-name (value name)
+     (description ,(G_ "Symbol which the module will export the database through. Defaults to <code>zoneinfo-database</code>")))
+
+    ;; TODO --force-download :: Force re-download. Even if present in cache
+    ;; TODO --print-zones :: instead of emitting codes, print found zones
+    ;; TODO --cache-dir
+    ))
+
+(define (module-help)
+  (string-append
+   (G_ "<p>Usage: <b>update-zoneinfo</b> [<i>flags</i>] [<i>limiter</i> ...]</p>")))
+
+(define (print-help)
+  (display (sxml->ansi-text (xml->sxml (module-help)))))
+
+;;; Checks the leng th of a port, and sets seek to 0
+(define (port-length port)
+  (seek port 0 SEEK_END)
+  (begin1 (seek port 0 SEEK_CUR)
+          (seek port 0 SEEK_SET)))
+
+(define (checksum-file path)
+  (define bytes
+    (call-with-input-file path
+      (lambda (port) (read-bytevector (port-length port) port))
+      binary: #t))
+  (sha256 bytes))
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt opt-spec)))
 
   (when (option-ref opts 'help #f)
+    (print-help)
     (print-arg-help opt-spec)
     (throw 'return))
 
-  (let* ((locations (list
-                     ;; True install location. Should be configurable for package maintainers
-                     "/usr/libexec/calp/tzget"
-                     ;; Local install, should be moved to calp specific dir
-                     (path-append (xdg-data-home) "tzget")
-                     ;; Uninstalled execution.
-                     ;; We hope we are placed in a guile root directory,
-                     ;; and that we then run the correct tzget
-                     (path-append (getcwd) "scripts" "tzget")))
-         (filename (or (find file-exists? locations)
-                       (scm-error 'misc-error "update-zoneinfo"
-                                  (G_ "tzget not installed, please install it as one of ~a")
-                                  (list locations)
-                                  (list "tzget" locations))))
+  (define cache-dir (path-append (xdg-cache-home) "calp"))
+  (define tzdata-dir "tzdata")
+  (define tar "tzdata-latest.tar.gz")
+  (define make-rule (symbol->string (gensym "print-tzdata")))
 
-         (pipe (open-input-pipe filename))
-         (names (string-split (read-line pipe) #\space)))
-    (with-atomic-output-to-file (path-append (xdg-data-home) "calp" "zoneinfo.scm")
+  ;; TODO use a non-throwing mkdir -p
+  (catch #t (lambda ()  (mkdir cache-dir)) list)
+  ;; chdir, to make tar and curl commands easier
+  (with-working-directory
+   cache-dir
+   (lambda ()
+     (unless (file-exists? "tzdata")
+       ;; system instead of proper port io, since I'm lazy
+       (let-env ((tar_file tar)
+                 (tzdata_dir tzdata-dir))
+                (system "test -f \"$tar_file\" || curl -sOL \"https://www.iana.org/time-zones/repository/$tar_file\"")
+                (mkdir tzdata-dir)
+                (system "tar xf \"$tar_file\" -C \"$tzdata_dir\"")))))
+
+  (define port (open-file (path-append cache-dir tzdata-dir "Makefile") "re+"))
+  ;; (flock port LOCK_EX)
+  (seek port 0 SEEK_END)
+
+  (define len (seek port 0 SEEK_CUR))
+  (define zone-names
+    (dynamic-wind
+      (lambda () 'noop)
       (lambda ()
-        (format #t ";;; Autogenerated file~%;;; Last updated ~a~%~y~%"
-                (datetime->string (current-datetime))
-                `((@ (datetime instance) tz-list) (quote ,names)))))
+        (format port ".PHONY: ~a\n" make-rule)
+        (format port "~a:\n" make-rule)
+        (display "\t@echo $(TDATA_TO_CHECK)\n" port)
+        (force-output port)
+        (define pipe (open-pipe* OPEN_READ "make" "--quiet" "-C" (path-append cache-dir tzdata-dir) make-rule))
+        (begin1 (string-split (read-line pipe) #\space)
+                (close-port pipe)))
+      (lambda ()
+        (truncate-file port len)
+        (close-port port))))
 
-    (close-pipe pipe)))
+  (define checksum (checksum->string (checksum-file (path-append cache-dir tar))))
+
+  (with-atomic-output-to-file (path-append cache-dir "zones.sexp")
+    (lambda ()
+      (display ";;; Autogenerated by  `calp update-zoneinfo`") (newline)
+      ;; TODO don't hard-code url
+      (display ";;; See https://git.hornquist.se/calp") (newline)
+      (pretty-print
+       `((archive . ,tar)
+         (checksum . ,checksum)
+         (names . ,zone-names)))))
+
+  (define complete-intermediary
+    (read-zoneinfo (map (lambda (tz) (path-append cache-dir tzdata-dir tz))
+                        zone-names)))
+
+  (define intermediary
+    (let ((limiters (option-ref opts '() '())))
+      (cond ((null? limiters) complete-intermediary)
+            (else (apply limit-intermediary complete-intermediary limiters)))))
+
+  (define (run)
+    (emit-code intermediary
+               output-module: (map string->symbol
+                                   (string-split (option-ref opts 'module-name
+                                                             "datetime timezone vendored-tzdb")
+                                                 #\space))
+               tzdb-name: (string->symbol (option-ref opts 'tzdb-name "zoneinfo-database"))
+               filename: tar
+               checksum: checksum
+               limiters: (option-ref opts '() '())))
+
+  (cond ((option-ref opts 'output #f)
+         => (lambda (filename)
+              (with-output-to-file filename run)))
+        (else (run))))
+
+(define* (emit-code intermediary key: output-module tzdb-name filename checksum limiters)
+  ;; These strings are NOT translated, since we want the output to be
+  ;; bytewise identical, to not invalidate the compiler cache.
+  (format #t ";;; Commentary:~%")
+  (format #t ";;; This is an autogenerated file~%")
+  (format #t ";;; Generated from ~s~%" filename)
+  (format #t ";;; With sha256 checksum:~%")
+  (format #t ";;; ~a~%" checksum)
+  (if (null? limiters)
+      (format #t ";;; With all available zones included~%")
+      (format #t ";;; Limited to the explicitly mentioned zones:~%;;; ~s~%"
+              limiters))
+  (format #t ";;; Code:~%")
+
+  (newline)
+
+  (pretty-print
+   ;; #:keyword syntax used, since they tend to serialize the same, and
+   ;; define-module is weird with keywords
+   `(define-module ,output-module
+      #:use-module ((datetime) #:select (datetime date time))
+      #:use-module ((datetime timespec) #:select (timespec))
+      #:use-module ((datetime zic)
+                    #:select (parsed-zic-intermediary
+                              intermediary->zoneinfo
+                              zone-entry zi-rule zone-link
+                              ))
+      #:export (,tzdb-name)))
+
+  (newline)
+
+  (pretty-print
+   `(define ,tzdb-name (intermediary->zoneinfo ,(serialize intermediary)))))
