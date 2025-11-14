@@ -63,6 +63,16 @@ binary, such as `guile3`.  Guild by defaults also uses this, but if a
 separate guild version is explicitly required then the env/make var
 `GUILD` can be set (but this shouldn't be needed).
 
+### Other development details.
+The file `module/datetime/timezone/vendored-tzdb.scm` as present in the repo is
+explicitly limited, since the complete zoneinfo database takes forever (2+
+minutes on my machine) to compile. However, even during development you do want
+a version of the file without the warning. Running
+
+    git update-index --skip-worktree module/datetime/timezone/vendored-tzdb.scm
+
+before will ignore any local modifications.
+
 Techical Details
 ----------------
 - Internally all weeks start on sunday, which is repsenented as `0`.
