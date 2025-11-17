@@ -60,6 +60,8 @@
            univ
            unique
 
+           predicate-list-get
+
            vector-last
 
            ->string
@@ -551,6 +553,12 @@
 (define (uniq lst) (uniqx eq? lst))
 (define (univ lst) (uniqx eqv? lst))
 (define (unique lst) (uniqx equal? lst))
+
+
+
+(define (predicate-list-get lst v)
+  (and=> (find (lambda (p) ((car p) v)) lst)
+         cdr))
 
 
 

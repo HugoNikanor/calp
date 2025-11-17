@@ -309,6 +309,12 @@ non-unique keys, returning all mathing records (instead of just the first).
 @end lisp
 @end defun
 
+@defun predicate-list-get lst v
+A predicate list is an assoc-like list, but instead have predicates in
+the car cell of each pair. This procedure finds the first pair whose
+predicate is true when applied to @var{v}, and returns the cdr of that
+cell.
+@end defun
 
 @defun vector-last v
 Returns the last element of @var{v}.
