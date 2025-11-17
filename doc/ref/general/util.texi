@@ -267,8 +267,9 @@ list, in which case @var{->} inserts item as the second argument
 (after the operand), and @var{->>} inserts it last.
 @end defmac
 
-@defun downcase-symbol
-Converts a symbol to lower case.
+@defun upcase-symbol
+@defunx downcase-symbol
+Converts a symbol to upper or lower case.
 @end defun
 
 

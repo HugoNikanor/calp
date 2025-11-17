@@ -46,6 +46,7 @@
            -> ->>
 
            downcase-symbol
+           upcase-symbol
            group
            iterate
            valued-map
@@ -489,6 +490,12 @@
   (-> symb
       symbol->string
       string-downcase
+      string->symbol))
+
+(define (upcase-symbol symb)
+  (-> symb
+      symbol->string
+      string-upcase
       string->symbol))
 
 
