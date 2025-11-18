@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <xcal:icalendar xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0">
   <xcal:vcalendar>
     <xcal:properties>
@@ -8,6 +8,11 @@
       <xcal:prodid>
         <xcal:text>-//CALP-TEST//x.y</xcal:text>
       </xcal:prodid>
+      <xcal:request-status>
+        <xcal:code>3.1</xcal:code>
+        <xcal:description>Invalid property value</xcal:description>
+        <xcal:data>DTSTART:96-Apr-01</xcal:data>
+      </xcal:request-status>
       <xcal:version>
         <xcal:text>2.0</xcal:text>
       </xcal:version>
@@ -36,12 +41,15 @@
             <xcal:date-time>2023-05-10T10:20:00</xcal:date-time>
           </xcal:completed>
           <xcal:description>
+            <xcal:text>Description of the event</xcal:text>
+          </xcal:description>
+          <xcal:description>
             <xcal:parameters>
               <xcal:language>
                 <xcal:text>sv</xcal:text>
               </xcal:language>
             </xcal:parameters>
-            <xcal:text>Beskrivning av h&#xE4;ndelsen</xcal:text>
+            <xcal:text>Beskrivning av händelsen</xcal:text>
           </xcal:description>
           <xcal:dtstart>
             <xcal:date-time>2023-05-01T00:00:00</xcal:date-time>

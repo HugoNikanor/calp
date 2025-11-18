@@ -1,0 +1,34 @@
+["vcalendar",
+  [
+    [ "geo", {}, "float", [ 58.41086, 15.62157 ] ],
+    [ "request-status", {}, "text", [ "3.1", "Invalid property value", "DTSTART:96-Apr-01" ] ],
+    [ "version", {}, "text", "2.0;3.0" ],
+    [ "x-binary", { "encoding": "BASE64" }, "binary", "IF9fX19fXwo8IHRlc3QgPgogLS0tLS0tCiAgICAgICAgXCAgIF5fX14KICAgICAgICAgXCAgKG9vKVxfX19fX19fCiAgICAgICAgICAgIChfXylcICAgICAgIClcL1wKICAgICAgICAgICAgICAgIHx8LS0tLXcgfAogICAgICAgICAgICAgICAgfHwgICAgIHx8Cg==" ],
+    [ "x-boolean", {"x-expected": "true"}, "boolean", true ],
+    [ "x-boolean", {"x-expected": "false"}, "boolean", false ],
+    [ "x-cal-address", {}, "cal-address", "mailto:hugo@example.com" ],
+    [ "x-date", {}, "date", "2025-01-02" ],
+    [ "x-date-time", { "tzid": "Europe/Stockholm" }, "date-time", "2025-01-02T03:04:05"
+    ], [ "x-duration", {}, "duration", "-P5DT7H" ],
+    [ "x-float", {}, "float", 3.141592653589793 ],
+    [ "x-integer", {}, "integer", 1729 ],
+    [ "x-period", {}, "period", [ "2025-01-02T03:04:05", "P1D" ] ],
+    [ "x-recur", {}, "recur", { "freq": "MONTHLY", "byday": [ "MO", "TU", "WE", "TH", "FR" ], "bysetpos": -1 } ],
+    [ "x-text", {}, "text", "This is some text" ],
+    [ "x-time", {}, "time", "10:20:30" ],
+    [ "x-unknown", {}, "text", "Handle, This!" ],
+    [ "x-uri", {}, "uri", "https://example.com" ],
+    [ "x-utc-offset", {}, "utc-offset", "+02:00" ]
+  ],
+  [
+    ["vevent",
+      [
+        [ "comment", {}, "text", "Event part mostly exists to make this a \"compliant\" entry. Otherwise, this entry only exists to provide one instance of each known data-type as a property on the surrounding calendar object.\nGEO, VERSION, and REQUEST-STATUS are added to the calendars properties, since those have special handling, but no VALUE parameter to specify that such handling should occur. Likewise, X-UNKNOWN lacks a VALUE parameter, and should be parsed as an unknown (and therefore opaque) type." ],
+        [ "dtstamp", {}, "date-time", "2025-11-01T00:00:00Z" ],
+        [ "dtstart", {}, "date-time", "2025-11-01T00:00:00Z" ],
+        [ "uid", {}, "text", "sample-event" ]
+      ],
+      []
+    ]
+  ]
+]

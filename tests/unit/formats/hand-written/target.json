@@ -1,0 +1,33 @@
+["vcalendar",
+ [
+   ["calscale", {}, "text", "GREGORIAN"],
+   ["prodid", {}, "text", "-//CALP-TEST//x.y"],
+   ["request-status", {}, "text", [
+     "3.1",
+     "Invalid property value",
+     "DTSTART:96-Apr-01"
+   ]],
+   ["version", {}, "text", "2.0"]
+ ],
+ [
+   ["vevent",
+    [
+      ["attach", {"encoding": "BASE64", "fmttype": "text/plain"},
+       "binary", "Cg=="],
+      ["class", {}, "text", "PUBLIC"],
+      ["comment", {}, "text", "A comment"],
+      ["completed", {}, "date-time", "2023-05-10T10:20:00"],
+      ["description", {}, "text", "Description of the event"],
+      ["description", {"language": "sv"}, "text",
+       "Beskrivning av händelsen"],
+      ["dtstart", {}, "date-time", "2023-05-01T00:00:00"],
+      ["location", {}, "text", "Room 5"],
+      ["priority", {}, "integer", 5],
+      ["status", {}, "text", "CANCELLED"],
+      ["summary", {}, "text", "Event summary"],
+      ["uid", {}, "text", "e4e812b8-dbb9-438d-ba56-ab58321fe4e1"]
+    ],
+    []
+   ]
+ ]
+]

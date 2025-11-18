@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+GEO:58.41086;15.62157
+REQUEST-STATUS:3.1;Invalid property value;DTSTART:96-Apr-01
+VERSION:2.0;3.0
+X-BINARY;ENCODING=BASE64;VALUE=BINARY:IF9fX19fXwo8IHRlc3QgPgogLS0tLS0tCiAgICAgICAgXCAgIF5fX14KICAgICAgICAgXCAgKG9vKVxfX19fX19fCiAgICAgICAgICAgIChfXylcICAgICAgIClcL1wKICAgICAgICAgICAgICAgIHx8LS0tLXcgfAogICAgICAgICAgICAgICAgfHwgICAgIHx8Cg==
+X-BOOLEAN;VALUE=BOOLEAN;X-EXPECTED=true:TRUE
+X-BOOLEAN;VALUE=BOOLEAN;X-EXPECTED=false:FALSE
+X-CAL-ADDRESS;VALUE=CAL-ADDRESS:mailto:hugo@example.com
+X-DATE;VALUE=DATE:20250102
+X-DATE-TIME;TZID=Europe/Stockholm;VALUE=DATE-TIME:20250102T030405
+X-DURATION;VALUE=DURATION:-P5DT7H
+X-FLOAT;VALUE=FLOAT:3.141592653589793
+X-INTEGER;VALUE=INTEGER:1729
+X-PERIOD;VALUE=PERIOD:20250102T030405/P1D
+X-RECUR;VALUE=RECUR:FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1
+X-TEXT:This is some text
+X-TIME;VALUE=TIME:102030
+X-UNKNOWN:Handle\, This!
+X-URI;VALUE=URI:https://example.com
+X-UTC-OFFSET;VALUE=UTC-OFFSET:+0200
+BEGIN:VEVENT
+COMMENT:Event part mostly exists to make this a "compliant" entry. Otherwise\, this entry only exists to provide one instance of each known data-type as a property on the surrounding calendar object.\nGEO\, VERSION\, and REQUEST-STATUS are added to the calendars properties\, since those have special handling\, but no VALUE parameter to specify that such handling should occur. Likewise\, X-UNKNOWN lacks a VALUE parameter\, and should be parsed as an unknown (and therefore opaque) type.
+DTSTAMP:20251101T000000Z
+DTSTART:20251101T000000Z
+UID:sample-event
+END:VEVENT
+END:VCALENDAR

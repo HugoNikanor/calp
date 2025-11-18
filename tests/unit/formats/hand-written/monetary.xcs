@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xcal:icalendar xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0">
+ <xcal:vcalendar>
+  <xcal:properties>
+   <xcal:price>
+    <xcal:monetary>
+     <xcal:currency>USD</xcal:currency>
+     <xcal:amount>10.20</xcal:amount>
+    </xcal:monetary>
+   </xcal:price>
+  </xcal:properties>
+ </xcal:vcalendar>
+</xcal:icalendar>
+
