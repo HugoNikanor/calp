@@ -18,7 +18,9 @@
            vcomponent-children vcomponent-children*
            vcomponent-properties vcomponent-properties*
 
+           vline-equal?
            vcomponent-equal?
+           vcomponent-diff
 
            prop*
            prop1
@@ -32,27 +34,24 @@
                  )
    )
 
-;; (define (serialize-vline v)
-;;   `(vline vline-value: ,(serialize (vline-value v))
-;;           ,@(if (table-empty? (vline-parameters v))
-;;                 '()
-;;                 `(vline-parameters: ,(serialize (vline-parameters v))))))
+(define (serialize-vline v)
+  `(vline value: ,(serialize (vline-value v))
+          ,@(if (table-empty? (vline-parameters v))
+                '()
+                `(params: ,(serialize (vline-parameters v))))))
 
 
-(define-type (vline ; serializer: serialize-vline
-              )
+(define-type (vline serializer: serialize-vline)
   (vline-parameters default: (table)
                     type: table?
                     keyword: params)
-  (vline-value keyword: value)
-  ; (vline-source default: "" type: string?)
-  )
+  (vline-value keyword: value))
 
-;; (define (vline-equal? a b)
-;;   (and (equal? (vline-value a)
-;;                (vline-value b))
-;;        (equal? (sort* (table->list (vline-parameters a)) string<? (compose symbol->string car))
-;;                (sort* (table->list (vline-parameters b)) string<? (compose symbol->string car)))))
+(define (vline-equal? a b)
+  (and (equal? (vline-value a)
+               (vline-value b))
+       (table-equal? (vline-parameters a)
+                     (vline-parameters b))))
 
 
 (define-type (vcomponent ; serializer: serialize-vcomponent
@@ -66,40 +65,36 @@
                          type: table?
                          keyword: properties)
   (vcomponent-children default: '() type: (list-of vcomponent?)
-                       keyword: children)
-  ; (parent     default: #f      type: (or false? vcomponent?))
-  )
+                       keyword: children))
 
 (define (add-child parent child)
   (modify parent vcomponent-children*
           (lambda (c) (append c (list child)))))
 
 (define (vcomponent-equal? a b)
-  ;; TODO implement
-  (throw 'not-implemented))
+  (and (eqv? (type a) (type b))
+       (table-equal?
+        (vcomponent-properties a)
+        (vcomponent-properties b)
+        (lambda (ax bx) (lset= vline-equal? ax bx)))
+       (lset= vcomponent-equal?
+              (vcomponent-children a)
+              (vcomponent-children b))))
 
-;; (define (vcomponent-equal? a b)
-;;   (and (eqv? (type a) (type b))
-;;        (= (length (vcomponent-children a)) (length (vcomponent-children b)))
-;;        ;; TODO this doesn't work, since UID isn't guarnteed to exist
-;;        (every vcomponent-equal?
-;;             (sort* (vcomponent-children a) string< (extract 'UID))
-;;             (sort* (vcomponent-children b) string< (extract 'UID)))
-;;        (every (lambda (a b)
-;;                 (and (eq? (car a) (car b))
-;;                      (cond ((and (list? (cadr a))
-;;                                  (list? (cadr b)))
-;;                             (every vline-equal?
-;;                                    (cadr a)
-;;                                    (cadr b)))
-;;                            ((and (not (list? (cadr a)))
-;;                                  (not (list? (cadr b))))
-;;                             (vline-equal? (cadr a)
-;;                                           (cadr b)))
-;;                            (else #f))))
-;;               (table->list (vcomponent-properties (properties a)))
-;;               (table->list (vcomponent-properties (properties b))))))
-
+(define (vcomponent-diff a b)
+  (append
+   (if (eqv? (type a) (type b))
+       '()
+       `(diff type ,(type a) ,(type b)))
+   (table-diff
+    (vcomponent-properties a)
+    (vcomponent-properties b)
+    (lambda (ax bx) (lset= vline-equal? ax bx)))
+   ;; NOTE this assumes same order for children.
+   ;; This isn't correct, but there is no obvious way to sort children
+   (append-map vcomponent-diff
+               (vcomponent-children a)
+               (vcomponent-children b))))
 
 ;;; Lenses
 ;;; - focus non-existant member of collection?
@@ -172,35 +167,3 @@
 
 (define (param* key)
   (lens-compose vline-parameters* (table-focus key)))
-
-;;; Changes:
-;;; - prop* is now a lens instead of an accessor
-;;; - prop is removed
-;;; - prop% is removed
-;;; - children is a list again
-
-
-
-
-
-;;; Alternative 1:
-;;;   We embed each individual event in a calendar component
-;;; Pros:
-;;; - closer to how iCalendar wants to work
-;;; - parity with vdir
-;;; Cons:
-;;; - "needless" calendar wrapper for each event
-;;; - might seem weird for stores with multiple events in one store
-;;;   (duplicate calendar object for each event?)
-
-;;; Alternative 2:
-;;;   We keep extract the vevents
-;;; Pros:
-;;; - less needless wrapper
-;;; Cons:
-;;; - x-hnh-alternatives
-;;; - we lose data only present in the calendar part
-
-
-;;; Consider: we have a list of data stores
-;;; From each data stores, we load a number of VCALENDAR objects.
