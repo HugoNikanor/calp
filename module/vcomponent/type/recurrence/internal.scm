@@ -4,15 +4,11 @@
   :use-module (srfi srfi-88)           ; better keywords
   :use-module ((vcomponent) :select (prop1))
   :use-module (ice-9 i18n)
-  :use-module (ice-9 format)
   :use-module (ice-9 pretty-print)
   :use-module (hnh util)
   :use-module (hnh util object)
   :use-module ((hnh util type) :select (list-of pair-of false?))
   :use-module (datetime)
-  :use-module (sxml namespaced)
-  :use-module ((calp namespaces) :select (xcal))
-
   :replace (count)
   :export (repeating?
 
@@ -32,15 +28,13 @@
            bymonth    bymonth*
            bysetpos   bysetpos*
            wkst       wkst*
-           freq-placeholder
-
-           recur-rule->rrule-string
-           recur-rule->rrule-sxml
 
            weekdays
            intervals
 
            weekday->symbol
+
+           byday->string
            ))
 
 (define weekdays
@@ -72,7 +66,8 @@
   ;; Interval and wkst have default values, since those are assumed
   ;; anyways, and having them set frees us from having to check them at
   ;; the use site.
-  (lambda* (key: freq until count (interval 1) bysecond byminute
+  (lambda* (key: (freq freq-placeholder) until count (interval 1)
+                 bysecond byminute
                  byhour byday bymonthday byyearday byweekno bymonth
                  bysetpos (wkst monday))
     ;; Allow `(cons #f day)' to be written as just `day'.
@@ -140,68 +135,4 @@
      (symbol->string (weekday->symbol day)))))
 
 
-(define (field->string field value)
-  (case field
-    [(wkst)
-     (symbol->string (weekday->symbol value))]
-    [(byday)
-     (string-join (map byday->string value) ",")]
-    [(freq count interval)
-     (format #f "~a" value)]
-    [(until)
-     (if (date? value)
-         (date->string value "~Y~m~d")
-         (datetime->string value "~Y~m~dT~H~M~S~Z"))]
-    [else (format #f "~{~a~^,~}" value)]))
 
-(define (map-fields proc rrule)
-  (define (get f)
-    ((record-accessor <recur-rule> f) rrule))
-  (filter-map
-   (lambda (field)
-     (cond ((get field)
-            => (lambda (v) (proc field v)))
-           (else #f)))
-   (record-type-fields <recur-rule>)))
-
-;;; TODO should the serializers really be here?
-
-(define (recur-rule->rrule-string rrule)
-  (string-join
-   (map-fields
-    (lambda (field value)
-      (string-append
-       (string-upcase (symbol->string field))
-       "=" (field->string field value)))
-    rrule)
-   ";"))
-
-(define (recur-rule->rrule-sxml rrule)
-  (apply
-   (xml xcal 'recur)
-   (concatenate
-    (map-fields
-     (lambda (field value)
-       (cond [(string-ci=? "UNTIL" (symbol->string field))
-              (list
-               ((xml xcal 'until)
-                (if (date? value)
-                    (date->string value "~Y-~m-~d")
-                    (datetime->string
-                     value "~Y-~m-~dT~H:~M:~S~Z"))))]
-
-             [(string-ci=? "BYDAY" (symbol->string field))
-              (map (xml xcal (downcase-symbol field))
-                   (map byday->string value))]
-
-             [(string-ci=? "BY" (substring (symbol->string field)
-                                           0 2))
-              (map (xml xcal (downcase-symbol field))
-                   (map number->string value))]
-
-             [else
-              (list
-               ((xml xcal (downcase-symbol field))
-                (field->string field value)))]))
-
-     rrule))))

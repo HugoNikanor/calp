@@ -5,7 +5,6 @@
   :use-module (hnh util type)
   :export (xml-element-hash-key
            find-child
-           element-matches?
            root-element
            tag-matches?
            xml-text-content
@@ -25,14 +24,6 @@
   (find (lambda (x) (and (xml-element? x)
                     (equal? target* (xml-element-hash-key x))))
         list))
-
-
-;;; DEPRECATED This works on a weird frankestein between our namespaced sxml, and a list based approach.
-(define (element-matches? target-el tree)
-  (and (not (null? tree))
-       (equal?
-        (xml-element-hash-key target-el)
-        (xml-element-hash-key (car tree)))))
 
 
 (define* (tag-matches? xml-element tagname optional: namespace)

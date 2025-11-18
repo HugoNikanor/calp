@@ -134,11 +134,6 @@ Returns the first element of @var{list} which matches the tagname and
 namespace of @var{target}.
 @end defun
 
-@defun element-matches? element node
-Checks that the bare element @var{element} has the same tagname and
-namespaces as the begining tag of @var{node}.
-@end defun
-
 @defun on-root-element proc tree
 Apply proc to the root element of the tree. The root elemnet here is
 assumed to be the topmost ``regular'' xml component.

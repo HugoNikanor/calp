@@ -188,13 +188,6 @@ Get the date component from a call to @code{current-datetime}.
 @end defun
 
 
-@defun get-datetime datetime
-Takes a datetime in any timezone, and renormalize it to local time (as
-defined by the environment variable TZ). This means that given UTC
-10:00 new years day would return 11:00 new years day if ran in sweden.
-@end defun
-
-
 @defun as-date date/-time
 @defunx as-time date/-time
 Both procedures takes a <date>, <time>, or <datetime>, and return
@@ -414,6 +407,15 @@ Similar to @code{time->decimal-hour}, but also looks at the date component.
 
 @var{start-date} is required if either the month of year component of
 @var{dt} is non-zero (since months and years have a variable number of hours).
+@end defun
+
+@defun time->seconds time
+Convert a time value to an integer number of seconds.
+@end defun
+
+@defun seconds->time seconds
+Convert a positive integer denoting a number of seconds, to its
+corresponding time value.
 @end defun
 
 @defun date-range start end [increment=(date day: 1)]
@@ -663,7 +665,6 @@ or date.
 
 @defun parse-ics-date str
 @defunx parse-ics-time str
-@defunx parse-ics-datetime str [zone]
 Parses dates per RFC5545.
 @end defun
 

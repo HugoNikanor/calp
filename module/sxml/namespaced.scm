@@ -29,7 +29,7 @@
            xml-element-attributes xml-element-attributes*
            xml-element-children   xml-element-children*
 
-           xml-document
+           xml-document xml-document?
            xml-document-root  xml-document-root*
            xml-document-pis   xml-document-pis*
 
@@ -178,9 +178,11 @@
    CHAR-DATA-HANDLER
    (lambda (s1 s2 seed)
      (define s
-       (if trim-whitespace?
-           (string-trim-both (string-append s1 s2))
-           (string-append s1 s2)))
+       ;; It appears that s2 is the empty string, except for when an
+       ;; entity was parsed, in which case it's the exansion of the
+       ;; entity. If we encounter a newline entity, we want to preserve it.
+       (string-append (if trim-whitespace? (string-trim-both s1) s1)
+                      s2))
      (if (string-null? s)
          seed
          (modify seed (lens-compose (find* xml-element*?)

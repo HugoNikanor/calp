@@ -238,7 +238,7 @@ Event must have the DTSTART and DTEND protperty set."
           (cond [(zone-entry-rule zone-entry) timespec?
                  => (lambda (inline-rule)
                       (let ((component (vcomponent type: 'DAYLIGHT))
-                            (new-timespec (timespec-add
+                            (new-timespec (timespec+
                                            (zone-entry-stdoff zone-entry)
                                            inline-rule)))
                         (let ((component
@@ -265,7 +265,7 @@ Event must have the DTSTART and DTEND protperty set."
                                                ;; so this is a fair compromize.
                                                (if (string-null? (rule-letters rule))
                                                    'STANDARD 'DAYLIGHT)))
-                                   (new-timespec (timespec-add
+                                   (new-timespec (timespec+
                                                   (zone-entry-stdoff zone-entry)
                                                   (rule-save rule))))
 
@@ -277,7 +277,9 @@ Event must have the DTSTART and DTEND protperty set."
                                            (set (prop* 'TZNAME)
                                                 (just (zone-format
                                                         (zone-entry-format zone-entry)
-                                                        (rule-letters rule)))))))
+                                                        (rule-letters rule)
+                                                        ;; TODO UTC offsett
+                                                        ))))))
 
                                   (set! ;; NOTE this can both be a number or the
                                       ;; symbol 'maximum

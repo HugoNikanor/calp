@@ -108,7 +108,4 @@
 
 ;;; Get the apparent iCalendar type of the given Scheme value.
 (define (apparent-type value)
-  (let loop ((pairs (apparent-types)))
-    (cond ((null? pairs) #f)
-          (((caar pairs) value) (cdar pairs))
-          (else (loop (cdr pairs))))))
+  (predicate-list-get (apparent-types) value))

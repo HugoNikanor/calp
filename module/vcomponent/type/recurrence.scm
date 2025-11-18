@@ -7,10 +7,7 @@
   :use-module (vcomponent type recurrence internal)
   :re-export (
               generate-recurrence-set
-              parse-recurrence-rule
               repeating?
-
-              recur-rule->rrule-string
 
               recur-rule
               recur-rule?
@@ -32,5 +29,7 @@
               weekdays
               intervals
               weekday->symbol
+
+              byday->string
               ))
 

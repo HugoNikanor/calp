@@ -120,7 +120,6 @@
            string->date/-time
            parse-ics-date
            parse-ics-time
-           parse-ics-datetime
            parse-iso-date
            parse-iso-time
            parse-iso-datetime
@@ -284,23 +283,6 @@
 
 
 
-
-;; datetime → datetime
-;; Takes a datetime in any timezone, and renormalize it to local time
-;; (as defined by the environment variable TZ).
-;; This means that given UTC 10:00 new years day
-;; would return 11:00 new years day if ran in sweden.
-(define (get-datetime dt)
-  (let ((v (datetime->tm dt)))
-    (let ((tm
-           (localtime ; localtime convertion since the returned tm object is
-            (car      ; in the parsed timezone.
-             (cond [(not (tz dt)) (mktime v)]
-                   [(string=? "local" (tz dt)) (mktime v)]
-                   [else (mktime v (tz dt))])))))
-      ;; strip tz-name, to conform with my local time.
-      (-> (tm->datetime tm)
-          (tz #f)))))
 
 (define (as-date date/-time)
   (cond [date/-time datetime? => datetime-date]
@@ -682,7 +664,7 @@
 (define* (datetime->string
           datetime
           optional:
-          (fmt "~1T~3")
+          (fmt "~1T~3~z")
           (locale %global-locale)
           key: allow-unknown?)
   (define date (datetime-date datetime))
@@ -711,11 +693,28 @@
                    ((#\B) (display (locale-month       (month date) locale)))
                    ((#\b) (display (locale-month-short (month date) locale)))
                    ((#\Z) (when (equal? "UTC" (tz datetime)) (display "Z")))
+                   ((#\z) (display
+                           (cond ((not (tz datetime)) "") ; local time
+                                 ((string=? "UTC" (tz datetime))
+                                  "Z")  ; special case
+                                 (else
+                                  ""    ;TODO
+                                  #;
+                                  (let ((offset name ((@ (datetime timezone) query-timezone)
+                                                      datetime)))
+                                    ((@ (datetime timespec) timespec->string)
+                                     offset))))))
+                   ;; date(1) has the following
+                   ;; %z ⇒ -0400 (numeric offset)
+                   ;; %:z ⇒ -04:00 (numeric offset, colons)
+                   ;; %::s ⇒ -04:00:00 (numeric offset, force precission)
+                   ;; %Z ⇒ EDT (name of timezone)
+                   ;; %z and %Z also exists in strftime(3)
                    (else (unless allow-unknown?
                            (scm-error 'misc-error "datetime->string"
-                                  "Invalid format token ~a"
-                                  (list token)
-                                  #f))))
+                                      "Invalid format token ~a"
+                                      (list token)
+                                      #f))))
                  #f)
                 (else (unless (char=? #\~ token) (display token)) token)))
             #f
@@ -796,6 +795,7 @@ Returns -1 on failure"
                               dt)
                         (err "mismatched symbol, expected ~s got ~s" #\~ (car str)))]
              [(#\Z)
+              ;; TODO more timezone support
               (if (eq? #\Z (car str))
                   (loop (cdr str)
                         (cddr fmt)
@@ -910,12 +910,6 @@ Returns -1 on failure"
 
 (define (parse-ics-time str)
   (string->time str "~H~M~S"))
-
-(define* (parse-ics-datetime str optional: zone)
-  (let ((dt (string->datetime str "~Y~m~dT~H~M~S~Z")))
-    (if (tz dt)
-        dt
-        (tz dt zone))))
 
 (define (parse-iso-date str)
   (string->date str))

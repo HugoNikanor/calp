@@ -344,26 +344,28 @@
   `(div (@ (class "eventtext"))
         (h2 ,(G_ "Recurrences"))
         (table (@ (class "recur-components"))
-               ,@((@@ (vcomponent type recurrence internal) map-fields)
-                  (lambda (key value)
-                    `(tr (@ (class ,key)) (th ,key)
-                         (td
-                          ;; TODO Should these date string be translated?
-                          ,(case key
-                             ((wkst) (week-day-name value))
-                             ((until) (if (date? value)
-                                          (date->string value)
-                                          (datetime->string value)))
-                             ((byday) (add-enumeration-punctuation
-                                       (map (lambda (pair)
-                                              (string-append
-                                               (if (car pair)
-                                                   (format #f "~a " (car pair))
-                                                   "")
-                                               (week-day-name (cdr pair))))
-                                            value)))
-                             (else (->string value))))))
-                  (prop event 'RRULE)))))
+               ,@(filter identity
+                  (record->list
+                   (lambda (key value)
+                     (and value
+                      `(tr (@ (class ,key)) (th ,key)
+                           (td
+                            ;; TODO Should these date string be translated?
+                            ,(case key
+                               ((wkst) (week-day-name value))
+                               ((until) (if (date? value)
+                                            (date->string value)
+                                            (datetime->string value)))
+                               ((byday) (add-enumeration-punctuation
+                                         (map (lambda (pair)
+                                                (string-append
+                                                 (if (car pair)
+                                                     (format #f "~a " (car pair))
+                                                     "")
+                                                 (week-day-name (cdr pair))))
+                                              value)))
+                               (else (->string value)))))))
+                   (prop event 'RRULE))))))
 
 
 ;; Return a unique identifier for a specific instance of an event.
