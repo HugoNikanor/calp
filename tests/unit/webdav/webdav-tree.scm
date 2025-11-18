@@ -61,7 +61,7 @@
   (test-assert (resource? resource))
   (test-assert (file-resource? resource))
   ;; (test-equal "/files/greeting" (href->string (href resource)))
-  (test-equal "Hello, World!\n" (bytevector->string (content resource) (native-transcoder)))
+  (test-equal "Hello, World!\n" (bytevector->string (content resource '()) (native-transcoder)))
  )
 
 '((calp webdav resource)

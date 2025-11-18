@@ -11,7 +11,7 @@
   :use-module (datetime)
   :use-module ((hnh util) :select (->> sort*))
   :use-module (hnh util lens)
-  :use-module ((datetime zic) :select (read-zoneinfo))
+  :use-module ((datetime zic) :select (intermediary->zoneinfo read-zoneinfo))
   :use-module (datetime timespec)
   :use-module ((vcomponent) :select (vcomponent-equal? extract1 prop1))
   :use-module (vcomponent datetime)
@@ -292,7 +292,7 @@ Link    Europe/Zurich  Europe/Vaduz
          (zoneinfo
           (call-with-input-string
               zoneinfo-sample
-            (compose read-zoneinfo list)))
+            (compose intermediary->zoneinfo read-zoneinfo list)))
 
          (timezone-component
           ;; Seed random to stable UID's.

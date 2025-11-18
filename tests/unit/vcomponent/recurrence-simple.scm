@@ -19,8 +19,10 @@
   :use-module ((vcomponent create) :select (vcalendar vevent with-parameters))
   :use-module ((hnh util exceptions)
                :select (warnings-are-errors warning-handler))
+  :use-module ((vcomponent media-type text calendar parse)
+               :select (parse-recurrence-rule))
   :use-module ((vcomponent type recurrence)
-               :select (parse-recurrence-rule
+               :select (
                         recur-rule
                         generate-recurrence-set)))
 

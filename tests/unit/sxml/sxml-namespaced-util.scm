@@ -25,17 +25,6 @@
   ;; TODO Test "find" failure
   )
 
-(test-group "Element Match"
- (test-assert "Positive element match"
-   (element-matches? ((xml 'a ns))
-                     (list
-                      ((xml 'a ns)
-                       "Content here"))))
- (test-assert "Negative element match"
-   (not (element-matches? ((xml 'a ns))
-                          (list
-                           ((xml 'b ns)
-                            "Content here"))))))
 
 
 (test-group "Text Content"

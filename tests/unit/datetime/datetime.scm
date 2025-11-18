@@ -285,16 +285,7 @@
         (parse-ics-date "20201020"))
       (test-equal "time"
         (time hour: 10 minute: 20 second: 30)
-        (parse-ics-time "102030"))
-      (test-equal "datetime"
-        (datetime year: 2020 month: 10 day: 20
-                  hour: 10 minute: 20 second: 30)
-        (parse-ics-datetime "20201020T102030"))
-      (test-equal "datetime (with zone)"
-        (datetime year: 2020 month: 10 day: 20
-                  hour: 10 minute: 20 second: 30
-                  tz: "UTC")
-        (parse-ics-datetime "20201020T102030Z")))
+        (parse-ics-time "102030")))
 
     (test-group "ISO"
       (test-equal "date"

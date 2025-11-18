@@ -3,7 +3,7 @@
   :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module (hnh util table)
-  :use-module (vcomponent media-types types)
+  :use-module (vcomponent media-type types)
   :use-module (web uri)
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)

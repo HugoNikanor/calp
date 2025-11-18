@@ -26,7 +26,7 @@
                :select (prop1 extract1))
   :use-module (vcomponent create)
   :use-module ((datetime)
-               :select (parse-ics-datetime
+               :select (
                         datetime
                         datetime-date
                         time

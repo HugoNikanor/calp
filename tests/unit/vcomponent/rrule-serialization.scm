@@ -2,36 +2,34 @@
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
   :use-module ((vcomponent type recurrence internal)
-               :select (recur-rule->rrule-string
-                        recur-rule->rrule-sxml
-                        byday))
-  :use-module ((vcomponent type recurrence parse)
+               :select (byday))
+  :use-module ((vcomponent media-type text calendar parse)
                :select (parse-recurrence-rule))
+  :use-module ((vcomponent media-type text calendar output)
+               :select (recur-rule->rrule-string))
+  :use-module ((vcomponent media-type application calendar+xml output)
+               :select (recur-rule->rrule-sxml))
   :use-module ((ice-9 peg) :select (keyword-flatten)))
 
 (test-equal
   "Parse of week day"
   '(#f . 3)
-  ((@@ (vcomponent type recurrence parse) parse-day-spec)
-   "WE"))
+  (parse-day-spec "WE"))
 
 (test-equal
   "Parse of week day with positive offset"
   '(1 . 3)
-  ((@@ (vcomponent type recurrence parse) parse-day-spec)
-   "1WE"))
+  (parse-day-spec "1WE"))
 
 (test-equal
   "Parse of week day with positive offset (and plus)"
   '(2 . 3)
-  ((@@ (vcomponent type recurrence parse) parse-day-spec)
-   "+2WE"))
+  (parse-day-spec "+2WE"))
 
 (test-equal
   "Parse of week day with negative offset"
   '(-3 . 3)
-  ((@@ (vcomponent type recurrence parse) parse-day-spec)
-   "-3WE"))
+  (parse-day-spec "-3WE"))
 
 
 ;; numeric prefixes in the BYDAY list is only valid when
@@ -41,7 +39,7 @@
 
 
 (define field->string
-  (@@ (vcomponent type recurrence internal)
+  (@@ (vcomponent media-type text calendar output)
       field->string))
 
 (let ((rule (parse-recurrence-rule "FREQ=WEEKLY;BYDAY=MO,TU,WE")))
