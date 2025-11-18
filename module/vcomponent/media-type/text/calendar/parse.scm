@@ -19,6 +19,7 @@
   :use-module (vcomponent type period)
   :use-module (vcomponent type unknown)
   :use-module (vcomponent type duration)
+  :use-module (vcomponent type recurrence)
   :use-module (vcomponent media-type types)
   :use-module (calp translation)
   :use-module (hnh util lens)
@@ -27,11 +28,16 @@
   :use-module (hnh util optional)
   :use-module (base64)
   :use-module (web uri)
+  :use-module ((vcomponent type recurrence parse) :select (parse-day-spec))
   :export (
            icalendar->vcomponent
            multi-valued-properties
            parsers
            get-parser
+
+           split-carefully
+
+           parse-recurrence-rule
            ))
 
 ;;; TODO a few translated strings here contain explicit newlines. Check if that
@@ -47,13 +53,14 @@
 ;; BINARY
 (define (parse-binary props value)
   ;; p 30
-  (unless (string=? "BASE64" (table-get props 'ENCODING))
-    (warning (G_ "Binary field not marked ENCODING=BASE64")))
 
-  ;; For icalendar no extra whitespace is allowed in a
-  ;; binary field (except for line wrapping). This differs
-  ;; from xcal.
-  (base64-string->bytevector value))
+  (values
+   (case (string->symbol (or (table-get props 'ENCODING) "BASE64"))
+     ((BASE64) (base64-string->bytevector value))
+     (else => (lambda (enc) (scm-error 'misc-error "parse-binary"
+                                  "Unknown encoding of binary data: ~s"
+                                  (list enc) #f))))
+   (table-remove props 'ENCODING)))
 
 ;; BOOLEAN
 (define (parse-boolean _ value)
@@ -66,16 +73,9 @@
 
 ;; DATE-TIME
 (define (parse-datetime props value)
-  (define parsed (parse-ics-datetime value (table-get props 'TZID)))
-  ;; TODO store the original datetime value.
-  ;; This is needed since we convert it to local time,
-  ;; but we want the output to be the time stored in the database,
-  ;; Not whatever time the user happens to have
-  ;; Prevoisly, `props` was a mutable object, allowing us to interject
-  ;; properties here. This is however not the case since we switched
-  ;; to immutable tables.
-  ;; (hashq-set! props '-X-HNH-ORIGINAL parsed)
-  (get-datetime parsed))
+  (values (modify (string->datetime value "~Y~m~dT~H~M~S~Z")
+                  tz* (lambda (tz) (or tz (table-get props 'TZID))))
+          (table-remove props 'TZID)))
 
 
 ;; INTEGER
@@ -91,13 +91,15 @@
 ;; PERIOD
 (define (parse-period props value)
   (let ((left right (apply values (string-split value #\/))))
-    ;; TODO timezones? VALUE=DATE?
-    (period start: (parse-ics-datetime left)
-            end: ((if (memv (string-ref right 0)
-                         '(#\P #\+ #\-))
-                      string->duration
-                      parse-ics-datetime)
-                  right))))
+    (values (period start: (modify (string->datetime left "~Y~m~dT~H~M~S~Z")
+                                   tz* (lambda (tz) (or tz (table-get props 'TZID))))
+                    end: ((if (memv (string-ref right 0)
+                                 '(#\P #\+ #\-))
+                              string->duration
+                              (lambda (v) (modify (string->datetime v "~Y~m~dT~H~M~S~Z")
+                                             tz* (lambda (tz) (or tz (table-get props 'TZID))))))
+                          right))
+            (table-remove props 'TZID))))
 
 
 ;; TEXT
@@ -138,6 +140,74 @@
                          "String not parsable as a UTC-OFFSET: ~s"
                          (list value) #f))))
 
+
+
+
+(define* (string->number/throw string optional: (radix 10))
+  (or (string->number string radix)
+      (scm-error 'wrong-type-arg
+                 "string->number/throw"
+                 "Can't parse ~s as number in base ~a"
+                 (list string radix) (list string radix))))
+
+;; RFC 5545, Section 3.3.10. Recurrence Rule, states that the UNTIL value MUST have
+;; the same type as the DTSTART of the event (date or datetime). I have seen events
+;; in the wild which didn't follow this. I consider that an user error.
+(define (parse-recurrence-rule str )
+  (define result
+    (fold
+     (lambda (kv o)
+       (let ((key (car kv))
+             (val (cadr kv)))
+         (let-lazy
+          ((symb (string->symbol val))
+           ;; NOTE until MUST have the same value type as DTSTART
+           ;; on the object. Idealy we would save that type and
+           ;; check it here. That however is impractical since we
+           ;; might encounter the RRULE field before the DTSTART
+           ;; field.
+           (date (if (= 8 (string-length val))
+                     (parse-ics-date val)
+                     (string->datetime val "~Y~m~dT~H~M~S~Z")))
+           (day (rfc->datetime-weekday (string->symbol val)))
+           (days (map parse-day-spec (string-split val #\,)))
+           (num  (string->number/throw val))
+           (nums (map string->number/throw (string-split val #\,))))
+
+          ;; It's an error to give BYHOUR and smaller for pure dates.
+          ;; 3.3.10. p 41
+          (case (string->symbol key)
+            ((UNTIL)      (until      o date))
+            ((COUNT)      (count      o num))
+            ((INTERVAL)   (interval   o num))
+            ((FREQ)       (freq       o symb))
+            ((WKST)       (wkst       o day))
+            ((BYSECOND)   (bysecond   o nums))
+            ((BYMINUTE)   (byminute   o nums))
+            ((BYHOUR)     (byhour     o nums))
+            ((BYMONTH)    (bymonth    o nums))
+            ((BYDAY)      (byday      o days))
+            ((BYMONTHDAY) (bymonthday o nums))
+            ((BYYEARDAY)  (byyearday  o nums))
+            ((BYSETPOS)   (bysetpos   o nums))
+            ((BYWEEKNO)   (byweekno   o nums))
+            (else o)))))
+
+     ;; obj
+     (recur-rule)
+
+     ;; ((key val) ...)
+     (map (cut string-split <> #\=)
+          (string-split str #\;))))
+
+  ;; NOTE previously, we checked if freq actually had a value here.
+  ;; Maybe do that again
+
+  result)
+
+
+
+
 ;; A parser is a function with signature (table, string) → any
 ;; which takes the table of vline parameters, and the raw value,
 ;; and returns a parsed representation.
@@ -161,7 +231,7 @@
      (cons 'FLOAT (lambda (_ v) (string->number v)))
      (cons 'INTEGER parse-integer)
      (cons 'PERIOD parse-period)
-     (cons 'RECUR (lambda (_ v) ((@ (vcomponent type recurrence parse) parse-recurrence-rule) v)))
+     (cons 'RECUR (lambda (_ v) (parse-recurrence-rule v)))
      (cons 'TEXT parse-text)
      ;; TODO time can have timezones...
      (cons 'TIME (lambda (_ v) (parse-ics-time v)))
@@ -304,7 +374,7 @@
      (cond
       ((eq? key 'GEO)
        (lambda (_ value)
-         (apply (case-lambda ((x y) (geo x: x y: y))
+         (apply (case-lambda ((y x) (geo x: x y: y))
                              (_ (scm-error 'misc-error "build-vlines"
                                            "Invalid GEO value: ~s"
                                            (list value) #f)))
@@ -340,11 +410,16 @@
   ;; be split this way, unless otherwise stated.
   (if (memv key (multi-valued-properties))
       (map (lambda (value)
-             (vline params: (table-remove params 'VALUE)
-                    value: (parser params value)))
+             (call-with-values (lambda () (parser params value))
+               (lambda* (value optional: (params params))
+                 (vline params: (table-remove params 'VALUE)
+                        value: value))))
            (split-carefully value #\,))
-      (list (vline params: (table-remove params 'VALUE)
-                   value: (parser params value)))))
+      (list
+       (call-with-values (lambda () (parser params value))
+         (lambda* (value optional: (params params))
+           (vline params: (table-remove params 'VALUE)
+                  value: value))))))
 
 ;; an itemline is the data field of the <tokens> object
 ;; (parse-itemline '("DTEND"  "20200407T130000"))

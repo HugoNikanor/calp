@@ -5,6 +5,7 @@
   :use-module (hnh util type)
   :use-module (hnh util table)
   :use-module (hnh util optional)
+  :use-module ((hnh util object) :select (record->list/filtered))
   :use-module (hnh util lens)
   :use-module (vcomponent type duration)
   :use-module (vcomponent type geo)
@@ -18,9 +19,15 @@
   :use-module (web uri)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
+  :use-module (ice-9 format)
+  :use-module (base64)
   :export (vcomponent->icalendar
-           serializers))
+           serializers
+           recur-rule->rrule-string
+           icalendar-wrap-length))
 
+(define-once icalendar-wrap-length
+  (make-parameter 70))
 
 (define* (vcomponent->icalendar component optional: (port (current-output-port)))
   (typecheck component vcomponent?)
@@ -43,20 +50,73 @@
        (display "\r\n")))
 
 
-(define (period->string v)
-  (format #f "~a/~a"
-          (datetime->string (period-start v)
-                            "~Y~m~dT~H~M~S~Z")
-          (if (datetime? (period-end v))
-              (datetime->string (period-end v)
-                                "~Y~m~dT~H~M~S~Z")
-              (duration->string (period-end v)))) )
+;;; NOTE this is identical to the matching in application/celandar+json
+(define (period->string params v)
+  ;; (tz start) MUST equal (tz end) (if end is a datetime object)
+  (call-with-values (lambda () (serialize-datetime params (period-start v)))
+    (lambda* (start optional: (params params))
+      (values
+       (format #f "~a/~a"
+               start
+               (if (datetime? (period-end v))
+                   (datetime->string
+                    (period-end v)
+                    ;; NOTE this assumes that ~Z only outputs "Z" or "".
+                    "~Y~m~dT~H~M~S~Z")
+                   (duration->string (period-end v))))
+       params))))
 
-(define (timespec->string timespec)
+;;; NOTE this is identical to the matching in application/celandar+json
+(define (timespec->string _ timespec)
   (string-append
    (symbol->string (timespec-sign timespec))
-   (time->string (timespec-time timespec) "~H~M~S")))
+   (let ((t (timespec-time timespec)))
+     (time->string t
+      (if (zero? (second t))
+          "~H~M"
+          "~H~M~S")))))
 
+
+;;; NOTE this is identical to the matching in application/celandar+json
+(define (serialize-datetime params v)
+  (define dt-format "~Y~m~dT~H~M~S~Z")
+  (cond ((not (tz v))
+         (datetime->string (tz v #f) dt-format))
+        ((string=? "UTC" (tz v))
+         (datetime->string v dt-format))
+        (else
+         (values (datetime->string (tz v #f) dt-format)
+                 (table-put params 'TZID (tz v))))))
+
+
+(define (recur-rule->rrule-string _ rrule)
+
+  (define (field->string field value)
+    (case field
+      [(wkst)
+       (symbol->string (weekday->symbol value))]
+      [(byday)
+       (string-join (map byday->string value) ",")]
+      [(freq count interval)
+       (format #f "~a" value)]
+      [(until)
+       (if (date? value)
+           (date->string value "~Y~m~d")
+           (datetime->string value "~Y~m~dT~H~M~S~Z"))]
+      [else (format #f "~{~a~^,~}" value)]))
+
+  (string-join
+   (record->list/filtered
+    (lambda (k v)
+      (if (or (not v)
+              (and (eq? k 'interval) (= v 1))
+              (and (eq? k 'wkst) (= v mon)))
+          #f
+          (string-append
+           (string-upcase (symbol->string k))
+           "=" (field->string k v))))
+    rrule)
+   ";"))
 
 (define (escape-chars str)
   (define (escape char)
@@ -73,34 +133,31 @@
 (define-once serializers
   (make-parameter
    (list (cons (@ (scheme base) bytevector?)
-               (@ (base64) bytevector->base64-string))
-         (cons boolean? (lambda (v) (if v "TRUE" "FALSE")))
+               (lambda (params v)
+                 (values (bytevector->base64-string v)
+                         (table-put params 'ENCODING "BASE64"))))
+         (cons boolean? (lambda (_ v) (if v "TRUE" "FALSE")))
          ;; Used for both URI and CAL-ADDRESS
-         (cons uri? uri->string)
-         (cons date?
-               (lambda (v) (date->string v "~Y~m~d")))
-         ;; TODO TODO timezone
-         (cons datetime?
-               ;; NOTE We really should output TZID from param here, but
-               ;; we first need to change so these writers can output
-               ;; parameters.
-               (lambda (v) (datetime->string v "~Y~m~dT~H~M~S~Z")))
-         (cons duration? duration->string)
+         (cons uri? (lambda (_ v) (uri->string v)))
+         (cons date? (lambda (_ v) (date->string v "~Y~m~d")))
+         (cons datetime? serialize-datetime)
+         (cons duration? (lambda (_ v) (duration->string v)))
          ;; Used for both FLOAT and INTEGER
-         (cons number? number->string)
+         (cons number? (lambda (_ v) (number->string v)))
          (cons period? period->string)
          (cons recur-rule? recur-rule->rrule-string)
-         (cons string? escape-chars)
+         (cons string? (lambda (_ v) (escape-chars v)))
          ;; TODO TODO timezone
-         (cons time? (lambda (v) (time->string v "~H~M~S")))
+         (cons time? (lambda (_ v) (time->string v "~H~M~S")))
          (cons timespec? timespec->string)
-         (cons unknown? from-unknown))))
+         (cons unknown? (lambda (_ v) (from-unknown v))))))
 
-(define (serialize obj)
-  (let loop ((pairs (serializers)))
-    (cond ((null? pairs) #f)
-          (((caar pairs) obj) ((cdar pairs) obj))
-          (else (loop (cdr pairs))))))
+(define (ics-serialize parameters obj)
+  (cond ((predicate-list-get (serializers) obj)
+         => (lambda (serializer) (serializer parameters obj)))
+        (else (scm-error 'misc-error "serialize"
+                         "Unknown type stored in vline: ~s, failed to serialize ~s"
+                         (list obj (length (serializers))) #f))))
 
 
 
@@ -111,12 +168,13 @@
 ;; not a problem.
 ;; Setting the wrap-len to slightly lower than allowed also help
 ;; us not overshoot.
-(define* (icalendar-linewrap string key: (wrap-len 70))
-  (cond [(< wrap-len (string-length string))
-         (format #f "~a\r\n ~a"
-                 (string-take string wrap-len)
-                 (icalendar-linewrap (string-drop string wrap-len)))]
-        [else string]))
+(define* (icalendar-linewrap string key: wrap-len)
+  (let ((wrap-len (or wrap-len (icalendar-wrap-length))))
+    (cond [(< wrap-len (string-length string))
+           (format #f "~a\r\n ~a"
+                   (string-take string wrap-len)
+                   (icalendar-linewrap (string-drop string wrap-len)))]
+          [else string])))
 
 
 (define (vline->string key vline)
@@ -134,38 +192,32 @@
 
         ((VERSION)
          (display ":")
-         (cond ((version-min v)
-                => (lambda (min) (format #t "~a;" (escape-chars min)))))
-         (display (escape-chars (version-max v))))
+         (display (string-join (map escape-chars (string-split (vcalendar-version->string v) #\;))
+                               ";")))
 
         ((REQUEST-STATUS)
-         (format #t ":~a;~a" (statcode v)
+         (format #t ":~a;~a" (string-join (map number->string (statcode v)) ".")
                  (escape-chars (statdesc v)))
          (cond ((extdata v)
                 => (lambda (v) (format #t ";~a" (escape-chars v))))))
 
         (else
-         (let ((serialized (serialize v)))
+         (call-with-values (lambda () (ics-serialize (vline-parameters vline) v))
+           (lambda* (serialized optional: (params (vline-parameters vline)))
+             ;; TODO quote:ing
+             (map (lambda (pair) (format #t ";~a=~a" (car pair) (cdr pair)))
+                  (table->list
+                   (modify params
+                           (table-focus 'VALUE)
+                           (lambda (specified)
+                             (let ((apparent (apparent-type v)))
+                               (if (eq? apparent (or (default-type key) 'TEXT))
+                                   (nothing)
+                                   (cond (apparent => just)
+                                         (else specified))))))))
 
-           (unless serialized
-             (scm-error 'misc-error "vline->string"
-                        "Unknown type stored in vline: ~s, failed to serialize"
-                        (list vline) #f))
-
-           ;; TODO quote:ing
-           (map (lambda (pair) (format #t ";~a=~a" (car pair) (cdr pair)))
-                (table->list
-                 (modify (vline-parameters vline)
-                         (table-focus 'VALUE)
-                         (lambda (specified)
-                           (let ((apparent (apparent-type v)))
-                             (if (eq? apparent (or (default-type key) 'TEXT))
-                                 (nothing)
-                                 (cond (apparent => just)
-                                       (else specified))))))))
-
-           (format #t ":~a" serialized)
-           )))))
+             (format #t ":~a" serialized)
+             ))))))
 
   ;; If we have alternatives, splice them in here.
   ;; TODO -X-HNH-ALTERNATIVES isn't a thing anymore
