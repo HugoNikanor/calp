@@ -6,6 +6,7 @@
   :use-module (hnh util type)
   :export (define-type
             serialize set-record-type-serializer!
+            record->list record->list/filtered
             serializers
             with-serializers
             ))
@@ -209,6 +210,8 @@
      (call-with-output-string (lambda (p_) (printer o p_)))
      p)))
 
+
+
 ;; Return a form, which when evaluated, returns the source object.
 ;; Compare this with "write", which outputs a string which returns the
 ;; source object when read back in.
@@ -273,6 +276,32 @@
 
 
 
+(define-once object-to-rtd (list))
+
+(define (set-object-to-rtd! type-predicate rtd)
+  (set! object-to-rtd (cons (cons type-predicate rtd) object-to-rtd)))
+
+;;; NOTE Consider the option of allowing the user (of the library) to
+;;; cache the result of find-rtd, instead of having to search for it each
+;;; time record->list is used.
+
+(define (find-rtd record)
+  (or (predicate-list-get object-to-rtd record)
+      (scm-error
+       'misc-error "find-rtd"
+       "Record appears to not be created through (@ (hnh util object) define-type): ~s"
+       (list record) #f)))
+
+(define (record->list proc record)
+  (let ((rtd (find-rtd record)))
+    (map (lambda (field) (proc field ((record-accessor rtd field) record)))
+         (record-type-fields rtd))))
+
+(define (record->list/filtered proc record)
+  (filter identity (record->list proc record)))
+
+
+
 (define-syntax (define-type stx)
   (syntax-case stx ()
     ((_ (name attribute ...) field ...)
@@ -333,6 +362,8 @@
                                           #`(#,(symbol->keyword keyword)
                                              ,(serialize (#,(datum->syntax stx field-name) r)))))
                                       (map get-field-name-and-keyword #'(field ...)))))))))
+
+             (set-object-to-rtd! <type>? <type>)
 
              ;; if printer in attribute
              (set-record-type-printer!
