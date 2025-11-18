@@ -3,6 +3,7 @@
   :use-module (hnh util exceptions)
   :use-module (hnh util table)
   :use-module (hnh util type)
+  :use-module (hnh util object)
   :use-module (vcomponent)
   :use-module (vcomponent type geo)
   :use-module (vcomponent type recurrence)
@@ -21,51 +22,137 @@
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)
   :use-module (vcomponent type unknown)
-  :export (vcomponent->sxcal))
+  :use-module (base64)
+  :export (vcomponent->sxcal
+           serializers
+
+           recur-rule->rrule-sxml
+           ))
 
 ;;; TODO why isn't `apparent-type` used?
 
-(define serializers
+
+(define (recur-rule->sxml rrule)
+  (apply
+   (xml xcal 'recur)
+   (concatenate
+    (record->list
+     (lambda (field value)
+       (cond [(or (not value)
+                  (and (eq? field 'interval) (= 1 value))
+                  (and (eq? field 'wkst) (= mon value)))
+              '()]
+             [(eq? 'until field)
+              (list
+               ((xml xcal 'until)
+                (if (date? value)
+                    (date->string value "~Y-~m-~d")
+                    (datetime->string
+                     value "~Y-~m-~dT~H:~M:~S~Z"))))]
+
+             [(eq? 'byday field)
+              (map (xml xcal field)
+                   (map byday->string value))]
+
+             [(string=? "by" (substring (symbol->string field)
+                                           0 2))
+              (map (xml xcal field)
+                   (map number->string value))]
+
+             [(memv field '(wkst))
+              (list ((xml xcal field)
+                     (symbol->string (weekday->symbol value))))]
+
+             [(memv field '(freq))
+              (list ((xml xcal field)
+                     (symbol->string value)))]
+
+             [(memv field '(count interval))
+              (list ((xml xcal field)
+                     (number->string value)))]
+
+             [else
+              (scm-error 'misc-error "recur-rule->sxml"
+                         "Unknown key: ~s"
+                         (list field) #f)]))
+
+     rrule))))
+
+(define (datetime->sxml parameters dt)
+  (define (->xml dt)
+    (list ((xml xcal 'date-time) (datetime->string dt))))
+  (cond ((not (tz dt)) (->xml dt))
+        ((string=? "UTC" (tz dt)) (->xml dt))
+        (else
+         (values (->xml (tz dt #f))
+                 (table-put parameters 'TZID (tz dt))))))
+
+(define (period->sxml params v)
+  (call-with-values (lambda () (datetime->sxml params (period-start v)))
+    (lambda* (serialized optional: (params params))
+      (values
+       (list
+        ((xml xcal 'period)
+         ;; NOTE make datetime->sxml return a more bare value
+         (apply (xml xcal 'start) (map xml-text-content serialized))
+         (if (datetime? (period-end v))
+             ((xml xcal 'end)
+              (datetime->string
+               (period-end v)
+               ;; NOTE this assumes that ~Z only outputs "Z" or "".
+               "~Y-~m-~dT~H:~M:~S~Z"))
+             ((xml xcal 'duration)
+              (duration->string (period-end v))))))
+       params))))
+
+
+(define-once serializers
   (make-parameter
-   (list (cons (@ (scheme base) bytevector?) 'TODO)
-         (cons boolean? (lambda (v) (list ((xml xcal 'boolean) (if v "true" "false")))))
+   (list (cons (@ (scheme base) bytevector?)
+               (lambda (params v)
+                 (values (list ((xml xcal 'binary) (bytevector->base64-string v)))
+                         (table-put params 'ENCODING "BASE64"))))
+         (cons boolean? (lambda (_ v) (list ((xml xcal 'boolean) (if v "true" "false")))))
          ;; Used for both URI and CAL-ADDRESS
-         (cons uri? (compose list (xml xcal 'uri) uri->string))
-         (cons date? (compose list (xml xcal 'date) date->string))
-         (cons datetime? (compose list (xml xcal 'date-time) datetime->string))
-         (cons duration? (compose list (xml xcal 'duration) duration->string))
-         (cons exact-integer? (compose list (xml xcal 'integer) number->string))
-         (cons number? (compose list (xml xcal 'float) number->string))
-         (cons period? 'TODO)
-         (cons recur-rule? (compose list (@@ (vcomponent type recurrence internal)
-                                             recur-rule->rrule-sxml)))
-         (cons string? (compose list (xml xcal 'text)))
-         (cons time? (compose list (xml xcal 'time) time->string))
+         (cons uri? (lambda (_ v) (list ((xml xcal 'uri) (uri->string v)))))
+         (cons date? (lambda (_ v) (list ((xml xcal 'date) (date->string v)))))
+         (cons datetime? datetime->sxml)
+
+         (cons duration? (lambda (_ v) (list ((xml xcal 'duration) (duration->string v)))))
+         (cons exact-integer? (lambda (_ v) (list ((xml xcal 'integer) (number->string v)))))
+         (cons number? (lambda (_ v) (list ((xml xcal 'float) (number->string v)))))
+         (cons period? period->sxml)
+         (cons recur-rule? (lambda (_ v) (list (recur-rule->sxml v))))
+         (cons string? (lambda (_ v) (list ((xml xcal 'text) v))))
+         (cons time? (lambda (_ v) (list ((xml xcal 'time) (time->string v)))))
          (cons timespec?
-               (lambda (v) (list
-                       ((xml xcal 'utc-offset)
-                        (string-append
-                         (symbol->string (timespec-sign v))
-                         (time->string (timespec-time v) "~H:~M:~S"))))))
+               (lambda (_ v) (list
+                         ((xml xcal 'utc-offset)
+                          (string-append
+                           (symbol->string (timespec-sign v))
+                           (let ((t (timespec-time v)))
+                             (time->string
+                              t (if (zero? (second t))
+                                    "~H:~M" "~H:~M:~S"))))))))
 
 
          ;;
          (cons geo?
-               (lambda (o)
+               (lambda (_ o)
                  (list
-                  ((xml xcal 'geo)
-                   ((xml xcal 'latitude)  (geo-latitude o))
-                   ((xml xcal 'longitude) (geo-longitude o))))))
+                  ((xml xcal 'latitude)  (number->string (geo-latitude o)))
+                  ((xml xcal 'longitude) (number->string (geo-longitude o))))))
          ;; RFC 6321 specifies this as the only valid value
          ;; TODO actually serialize what we have instead
-         (cons vcalendar-version? (const (list ((xml xcal 'version) "2.0"))))
+         (cons vcalendar-version?
+               (lambda (_ v) (list ((xml xcal 'text) (vcalendar-version->string v)))))
          (cons request-status?
-               (lambda (o)
-                 `(
-                   ,((xml xcal 'code) (string-join (statcode o) "."))
-                   ,((xml xcal 'description) (statdesc o))
-                   ,@(cond ((extdata o) => (lambda (data) (list ((xml xcal 'data) data))))
-                           (else '())))))
+               (lambda (_ o)
+                 (cons*
+                  ((xml xcal 'code) (string-join (map number->string (statcode o)) "."))
+                  ((xml xcal 'description) (statdesc o))
+                  (cond ((extdata o) => (lambda (data) (list ((xml xcal 'data) data))))
+                        (else '())))))
 
          ;; TODO unkown type wrapper?
          (cons unknown? (compose list from-unknown)))))
@@ -76,17 +163,21 @@
   (typecheck key symbol?)
   (typecheck vline vline?)
 
-  (apply
-   (xml xcal (downcase-symbol key))
-   ;; TODO make this conditional
-   (parameters-tag (vline-parameters vline))
-   (let loop ((pairs (serializers)))
-     (cond ((null? pairs) #f
-                                        ; TODO do something here
-            )
-           (((caar pairs) (vline-value vline))
-            ((cdar pairs) (vline-value vline)))
-           (else (loop (cdr pairs)))))))
+  (call-with-values
+      (lambda ()
+        (cond ((predicate-list-get (serializers) (vline-value vline))
+               => (lambda (serializer) (serializer (vline-parameters vline) (vline-value vline))))
+              (else (scm-error 'misc-error "vline->value-tag"
+                               "Unknown type stored in vline: ~s, failed to serialize"
+                               (list vline) #f))))
+
+    (lambda* (contents optional: (parameters (vline-parameters vline)))
+      (if (table-empty? parameters)
+          (apply (xml xcal (downcase-symbol key))
+                 contents)
+          (apply (xml xcal (downcase-symbol key))
+                 (parameters-tag parameters)
+                 contents)))))
 
 
 
@@ -105,13 +196,15 @@
 (define (vcomponent->sxcal component)
   (typecheck component vcomponent?)
 
-  ((xml xcal (downcase-symbol (type component)))
-   (apply (xml xcal 'properties)
-          (concatenate
-           (for (key . value) in (table->list (vcomponent-properties component))
-                (map (lambda (v) (vline->value-tag key v))
-                     value))))
+  (apply (xml xcal (downcase-symbol (type component)))
+         (apply (xml xcal 'properties)
+                (concatenate
+                 (for (key . value) in (table->list (vcomponent-properties component))
+                      (map (lambda (v) (vline->value-tag key v))
+                           value))))
 
-   ;; TODO omit this if empty
-   (apply (xml xcal 'components)
-          (map vcomponent->sxcal (vcomponent-children component)))))
+         (if (null? (vcomponent-children component))
+             '()
+             (list
+              (apply (xml xcal 'components)
+                     (map vcomponent->sxcal (vcomponent-children component)))))))

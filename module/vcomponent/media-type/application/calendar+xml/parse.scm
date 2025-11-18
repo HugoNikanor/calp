@@ -1,275 +1,295 @@
 (define-module (vcomponent media-type application calendar+xml parse)
-  :use-module (hnh util)
-  :use-module (hnh util exceptions)
-  :use-module (base64)
-  :use-module (ice-9 match)
-  :use-module (calp namespaces)
-  :use-module (sxml namespaced)
-  :use-module (sxml namespaced util)
-  :use-module (sxml match)
-  :use-module (vcomponent)
-  :use-module (vcomponent type geo)
-  :use-module (vcomponent media-type types)
-  :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
-  :use-module (calp translation)
+  :use-module (vcomponent)
+  :use-module (vcomponent media-type types)
+  :use-module (vcomponent type period)
+  :use-module (vcomponent type recurrence)
+  :use-module (vcomponent type recurrence parse)
+  :use-module (vcomponent type geo)
+  :use-module (vcomponent type version)
+  :use-module (vcomponent type request-status)
+  :use-module (vcomponent type unknown)
+  :use-module (vcomponent type duration)
+  :use-module (hnh util)
   :use-module (hnh util table)
-  :export (sxcal->vcomponent)
-  )
+  :use-module (hnh util optional)
+  :use-module (hnh util lens)
+  :use-module (hnh util type)
+  :use-module (datetime)
+  :use-module (datetime timespec)
+  :use-module (web uri)
+  :use-module (base64)
+  :use-module (sxml namespaced)
+  :use-module (sxml namespaced util)
+  :use-module ((calp namespaces) :select (xcal))
+  :use-module (ice-9 regex)
+  :export (sxml->vcomponent
+           parsers))
 
-;;; TODO TODO TODO
-;;; This doesn't work because
-;;; - it assumes "plain" sxml, but is fed namespaced sxml
-;;; - it uses the old vcomponent types
 
-;; symbol, ht, (list a) -> non-list
-(define (handle-value type parameters value)
-  (case type
-
-    [(binary)
-     ;; rfc6321 allows whitespace in binary
-     (base64-string->bytevector
-      (string-delete char-set:whitespace (car value)))]
-
-    [(boolean) (string=? "true" (car value))]
-
-    ;; TODO possibly trim whitespace on text fields
-    [(cal-address uri text unknown) (string-concatenate value)]
-
-    [(date)
-     ;; TODO this is correct, but ensure remaining types
-     (hashq-set! parameters 'VALUE "DATE")
-     (parse-iso-date (car value))]
-
-    [(date-time) (parse-iso-datetime (car value))]
-
-    [(duration)
-     ((get-parser 'DURATION) parameters value)]
-
-    [(float integer)                    ; (3.0)
-     (string->number (car value))]
-
-    [(period)
-     (sxml-match
-         (cons 'period value)
-       [(period (start ,start-dt) (end ,end-dt))
-        (cons (parse-iso-datetime start-dt)
-              (parse-iso-datetime end-dt))]
-       [(period (start ,start-dt) (duration ,duration))
-        (cons (parse-iso-datetime start-dt)
-              ((@ (vcomponent type duration) string->duration) duration))])]
-
-    [(recur)
-     ;; RFC6321 (xcal) Appendix A 3.3.10 specifies that all components should
-     ;; come in a specified order, and by extension that all components of the
-     ;; same type should follow each other. Actually checking that is harder
-     ;; than to just accept anything in any order. It would also make us less
-     ;; robust for other implementations with other ideas.
-     (let ((parse-value-of-that-type
-            (lambda (type value)
-              (case type
-                ((wkst)
-                 ((@ (vcomponent type recurrence parse)
-                     rfc->datetime-weekday)
-                  (string->symbol value)))
-                ((freq) (string->symbol value))
-                ((until)
-                 ;; RFC 6321 (xcal), p. 30 specifies type-until as
-                 ;;     type-until = element until {
-                 ;;         type-date |
-                 ;;         type-date-time
-                 ;;     }
-                 ;; but doesn't bother defining type-date[-time]...
-                 ;; This is acknowledged in errata 3315 [1], but
-                 ;; it lacks a solution...
-                 ;; Seeing as RFC 7265 (jcal) in Example 2 (p. 16)
-                 ;; show the date as a direct string we will roll
-                 ;; with that here to.
-                 ;; [1]: https://www.rfc-editor.org/errata/eid3315
-                 (string->date/-time value))
-                ((byday) ((@@ (vcomponent type recurrence parse) parse-day-spec) value))
-                ((count interval bysecond bymunite byhour
-                        bymonthday byyearday byweekno
-                        bymonth bysetpos)
-                 (string->number value))
-                (else (scm-error 'key-error "handle-value"
-                                 (G_ "Invalid type ~a, with value ~a")
-                                 (list type value)
-                                 #f))))))
-
-       ;; freq until count interval wkst
-
-       (apply (@ (vcomponent type recurrence internal) recur-rule)
-              (concatenate
-               (filter identity
-                       (for key in '(bysecond byminute byhour byday bymonthday
-                                              byyearday byweekno bymonth bysetpos
-                                              freq until count interval wkst)
-                            (cond ((find-child ((xml xcal key)) value)
-                                   => (lambda (v)
-                                        (case key
-                                          ;; These fields all have zero or one value
-                                          ((freq until count interval wkst)
-                                           (list (symbol->keyword key)
-                                                 (parse-value-of-that-type
-                                                  key (cadr v))))
-                                          ;; these fields take lists
-                                          ((bysecond byminute byhour byday bymonthday
-                                                     byyearday byweekno bymonth bysetpos)
-                                           (list (symbol->keyword key)
-                                                 (map (lambda (v) (parse-value-of-that-type key v))
-                                                      (cadr v))))
-                                          (else (scm-error 'misc-error "handle-value"
-                                                           "Invalid key ~s"
-                                                           (list key)
-                                                           #f)))))
-                                  (else #f)))))))]
-
-    [(time) (parse-iso-time (car value))]
-
-    [(utc-offset) ((get-parser 'UTC-OFFSET) parameters (car value))]
-
-    [(geo)                              ; ((long 1) (lat 2))
-     (sxml-match
-         (cons 'geo value)
-       [(geo (latitude ,y) (longitude ,x))
-        ((@ (vcomponent type geo) geo) y: y x: x)])]
-
-    [else (scm-error 'misc-error "handle-value"
-                     "Unknown value type: ~s"
-                     (list type) #f)]))
-
-(define (symbol-upcase symb)
-  (-> symb
-      symbol->string
-      string-upcase
-      string->symbol))
-
-(define (handle-parameters parameters)
-
-  ;; (assert (element-matches? (xml xcal 'parameters)
-  ;;                           parameters))
-
-  (fold (lambda (param table)
-          (define ptag (xml-element-tagname (car param)))
-          ;; (define-values (ptype pvalue) (car+cdr cdr))
-          ;; TODO multi-valued parameters!!!
-          (define-values (pytpe pvalue) (car+cdr (cadr param)))
-          ;; TODO parameter type (rfc6321 3.5.)
+(define (sxml->parameters el)
+  (fold (lambda (el params)
           ;; TODO namespaces
-          (table-put table (symbol-upcase ptag)
-                    (concatenate pvalue)))
+          (define parameter-name (xml-element-tagname el))
+          ;; TODO parameter types! (rfc6321 3.5.)
+          (table-put params (upcase-symbol parameter-name)
+                     (xml-text-content el)))
         (table)
-        (cdr parameters)))
+        (xml-element-children el)))
 
-(define* (parse-enum str enum optional: (allow-other #t))
-  (let ((symb (string->symbol str)))
-    (unless (memv symb enum)
-      (warning "~a ∉ { ~{~a~^, ~} }" symb enum))
-    symb))
+(define (sxml->recur els)
+  (fold (lambda (el rule)
+          (case (xml-element-tagname el)
+            ((freq) (freq rule (string->symbol (xml-text-content el))))
+            ((wkst) (wkst rule (-> el
+                                   xml-text-content
+                                   string->symbol
+                                   rfc->datetime-weekday)))
+            ((until)
+             ;; TODO date values
+             (until rule (string->datetime (xml-text-content el)
+                                           "~Y-~m-~dT~H:~M:~S~Z")))
+            ((count)
+             (count rule (string->number (xml-text-content el))))
+            ((interval)
+             (interval rule (string->number (xml-text-content el))))
 
 
-;; symbol non-list -> non-list
-(define (handle-tag xml-tag data)
-  (define tag-name (xml-element-tagname xml-tag))
-  (case tag-name
-    [(request-status)
-     ;; TODO
-     (warning (G_ "Request status not yet implemented"))
-     #f]
+            ((bysecond byminute byhour bymonthday byyearday byweekno bymonth bysetpos)
+             (define accessor
+               (case (xml-element-tagname el)
+                 ((bysecond) bysecond) ((byminute) byminute) ((byhour) byhour)
+                 ((bymonthday) bymonthday) ((byyearday) byyearday)
+                 ((byweekno) byweekno) ((bymonth) bymonth) ((bysetpos) bysetpos)))
+             (accessor rule
+                       (snoc (string->number (xml-text-content el))
+                             (or (accessor rule) '()))))
 
-    ((transp) (parse-enum
-               data '(OPAQUE TRANSPARENT) #f))
-    ((class) (parse-enum
-              data '(PUBLIC PRIVATE CONFIDENTIAL)))
-    ((partstat) (parse-enum
-                 data '(NEEDS-ACTION ACCEPTED DECLINED TENTATIVE
-                                     DELEGATED IN-PROCESS)))
-    ((status) (parse-enum
-               data '(TENTATIVE CONFIRMED CANCELLED NEEDS-ACTION COMPLETED
-                                IN-PROCESS DRAFT FINAL CANCELED)))
-    ((action) (parse-enum
-               data '(AUDIO DISPLAY EMAIL NONE)))
-    [else data]))
+            ((byday) (byday rule
+                            (snoc (parse-day-spec (xml-text-content el))
+                                  (or (byday rule) '()))))
+            (else (scm-error 'misc-error "sxml->recur"
+                             "" '() #f))))
+        (recur-rule)
+        els))
 
-(define (handle-single-property component tree)
-  (define xml-tag (car tree))
-  (define tag (xml-element-tagname xml-tag))
-  (define tag* (symbol-upcase tag))
+;;; TODO this is identical to the one in jcal
+(define (parse-utc-offset s)
+  (cond ((string-match "^([+-])([0-9]{2}):([0-9]{2})(:([0-9]{2}))?$" s)
+         => (lambda (m)
+              (timespec (time hour: (string->number (match:substring m 2))
+                              minute: (string->number (match:substring m 3))
+                              second: (cond ((match:substring m 5) => string->number)
+                                            (else 0)))
+                        (string->symbol (match:substring m 1))
+                        ;; TODO is this correct?
+                        'utc)))))
 
-  (define body (cdr tree))
+;;; Like `find`, but returns 2 values:
+;;; - the found value
+;;; - the rest of the list, in the same order as the source, with the found value removed.
+(define (find/pop pred lst)
+  (let loop ((lst lst)
+             (visited '()))
+    (cond ((null? lst) (values (nothing) (reverse visited)))
+          ((pred (car lst))
+           (values (just (car lst)) (append (reverse visited) (cdr lst))))
+          (else (loop (cdr lst)
+                      (cons (car lst) visited))))))
 
-  ;; TODO request-status
-  (define-values (parameters data)
-    (if (element-matches? (xml xcal 'parameters)
-                          (car body))
-        (values (handle-parameters (car body))
-                (cdr body))
-        (values (make-hash-table)
-                body)))
+(define (sxml->period props v)
+  (define start
+    (xml-text-content
+     (find-child ((xml xcal 'start))
+                 (xml-element-children v))))
 
-  (fold (lambda (typetag component)
-          (define type (xml-element-tagname (car typetag)))
-          ;; TODO multi valued data
-          (define raw-value (cdr typetag))
-          (define vline*
-            (vline type: tag*
-                   value: (handle-tag
-                           xml-tag
-                           (let ((v (handle-value type parameters raw-value)))
-                             ;; TODO possibly more list fields
-                             ;; (if (eq? tag 'categories)
-                             ;;     (string-split v #\,)
-                             ;;     v)
+  (values
+   (period
+    start: (modify
+            (string->datetime start "~Y-~m-~dT~H:~M:~S~Z")
+            tz* (lambda (tz) (or tz (table-get props 'TZID))))
+    end:
+    (cond ((find-child ((xml xcal 'end))
+                       (xml-element-children v))
+           => (lambda (end)
+                (modify
+                 (string->datetime end "~Y-~m-~dT~H:~M:~S~Z")
+                 tz* (lambda (tz) (or tz (table-get props 'TZID))))))
+          ((find-child ((xml xcal 'duration))
+                       (xml-element-children v))
+           => (compose string->duration xml-text-content))
+          (else (scm-error 'misc-error "sxml->period"
+                           "No xcal:end or xcal:period element found"
+                           '() #f))))
+   (table-remove props 'TZID)))
 
-                             v))
-                   parameters: parameters))
-          (if (memv tag* '(ATTACH ATTENDEE CATEGORIES
-                               COMMENT CONTACT EXDATE
-                               REQUEST-STATUS RELATED-TO
-                               RESOURCES RDATE
-                               ;; x-prop
-                               ;; iana-prop
-                               ))
-              (aif (prop* component tag*)
-                   (prop* component tag* (cons vline* it))
-                   (prop* component tag* (list vline*)))
-              (prop* component tag* vline*)))
-        component data))
+(define (snoc x xs)
+  (append xs (list x)))
 
-;; Note
-;; This doesn't verify the inter-field validity of the object,
-;; meaning that value(DTSTART) == DATE and value(DTEND) == DATE-TIME
-;; are possibilities, which other parts of the code will crash on.
-;; TODO
-;; since we are feeding user input into this it really should be fixed.
-(define (sxcal->vcomponent sxcal)
+(define-once parsers
+  (make-parameter
+   (alist->table
+    (list
+     (cons 'binary
+           (lambda (params v)
+             (values
+              (case (string->symbol (or (table-get params 'ENCODING) "BASE64"))
+                ((BASE64) (base64-string->bytevector
+                           (string-delete char-set:whitespace (xml-text-content v))))
+                (else => (lambda (enc) (scm-error 'misc-error "xcal-parser"
+                                             "Unknown encoding of binary data: ~s"
+                                             (list enc) #f))))
+              (table-remove params 'ENCODING))))
+     (cons 'boolean (lambda (_ v) (not (not (member (string-downcase (xml-text-content v))
+                                               '("true" "1"))))))
+     (cons 'cal-address (lambda (_ v) (string->uri (xml-text-content v))))
+     (cons 'date (lambda (_ v) (string->date (xml-text-content v) "~Y-~m-~d")))
+     (cons 'date-time
+           (lambda (props value)
+             ;; NOTE this is identical to the application/calendar+json one
+             (values (modify (string->datetime (xml-text-content value)
+                                               "~Y-~m-~dT~H:~M:~S~Z")
+                             tz* (lambda (tz) (or tz (table-get props 'TZID))))
+                     (table-remove props 'TZID))))
 
-  ;; TODO the surrounding icalendar element needs to be removed BEFORE this procedue is called
+     (cons 'duration (lambda (_ v) (string->duration (xml-text-content v))))
 
-  (define xml-tag (car sxcal))
-  (define type (symbol-upcase (xml-element-tagname xml-tag)))
+     (cons 'float   (lambda (_ v) (string->number (xml-text-content v))))
+     (cons 'integer (lambda (_ v) (string->number (xml-text-content v))))
+     (cons 'period sxml->period)
+     (cons 'recur (lambda (_ v) (sxml->recur (xml-element-children v))))
+     (cons 'text (lambda (_ v) (xml-text-content v)))
+     (cons 'time (lambda (_ v) (string->time (xml-text-content v)
+                                        "~H:~M:~S")))
+     (cons 'uri (lambda (_ v) (string->uri (xml-text-content v))))
+     (cons 'utc-offset (lambda (_ v) (parse-utc-offset (xml-text-content v))))
 
-  (let ((component
-         (aif (find-child ((xml xcal 'properties)) (cdr sxcal))
-              ;; Loop over multi valued fields, creating one vline
-              ;; for every value. So
-              ;;     KEY;p=1:a,b
-              ;; would be expanded into
-              ;;     KEY;p=1:a
-              ;;     KEY;p=1:b
-              (fold swap handle-single-property
-                    (vcomponent type: type) (cdr it))
-              (vcomponent type: type))))
+     ))))
 
-    ;; children
-    (aif (find-child ((xml xcal 'components)) (cdr sxcal))
-           ;; NOTE Order of children is insignificant, but this allows
-           ;;      diffs to be stable (which is used by the format tests).
-         (fold (swap add-child)
-               component
-               (map sxcal->vcomponent
-                    (reverse (cdr it))))
-         component)))
+
+;;; Input:
+;;;    <xcal:dtstart>
+;;;      <xcal:parameters>
+;;;        <xcal:tzid><xcal:text>Europe/Stockholm</xcal:text></xcal:tzid>
+;;;      </xcal:parameters>
+;;;      <xcal:date-time>2025-11-16T22:32:41</xcal:date-time>
+;;;    </xcal:dtstart>
+;;; output:
+;;;    (vline value: (datetime date: #2025-11-16 time: #22:32:41 tz: "Europe/Stockholm"))
+;;; namespace of all component is asumed to be xcal
+(define (sxml->vlines el)
+
+  (let ((m-params values
+                  (find/pop (lambda (e) (tag-matches? e 'parameters xcal))
+                            (xml-element-children el))))
+
+    ;; - parse parameters
+    (let ((params (sxml->parameters (unjust m-params ((xml xcal 'parameters))))))
+      (map (lambda (type-el)
+             (cond ((table-get (parsers) (xml-element-tagname type-el))
+                    => (lambda (parser)
+                         ;; - pass parameters and unparsed value tag to procedure
+                         (call-with-values (lambda () (parser params type-el))
+                           ;; - retrieve value (and optionall parameters) from procedure
+                           (lambda* (result optional: (params params))
+                             ;; - create vline object
+                             (vline params: params value: result)))))
+                   (else (scm-error 'misc-error "sxml->vlines"
+                                    "No parser for ~s"
+                                    (list type-el) #f))))
+           values))))
+
+(define (sxml->vcomponent/object data)
+  (typecheck data xml-element?)
+
+  (unless (eq? xcal (xml-element-namespace data))
+    (scm-error 'misc-error "sxml->vcomponent/object"
+               "Non xcal component given as object root: ~s"
+               (list (xml-element-hash-key data)) #f))
+
+  (vcomponent
+   type: (upcase-symbol (xml-element-tagname data))
+   properties:
+   (cond ((find-child ((xml xcal 'properties))
+                      (xml-element-children data))
+          => (lambda (el)
+               (fold
+                (lambda (el props)
+                  (if (eq? xcal (xml-element-namespace el))
+                      (let ((values
+                             (case (xml-element-tagname el)
+                               ;; TODO vline parameters for the special types
+                               ((geo)
+                                (define (f x)
+                                  (string->number
+                                   (xml-text-content
+                                    (find-child ((xml xcal x))
+                                                (xml-element-children el)))))
+                                (list
+                                 (vline value:
+                                        (geo y: (f 'latitude)
+                                             x: (f 'longitude)))))
+                               ((request-status)
+                                (list
+                                 (vline value:
+                                        (request-status
+                                         statcode: (map string->number
+                                                        (string-split
+                                                         (xml-text-content
+                                                          (find-child ((xml xcal 'code))
+                                                                      (xml-element-children el)))
+                                                         #\.))
+                                         statdesc: (xml-text-content
+                                                    (find-child ((xml xcal 'description))
+                                                                (xml-element-children el)))
+                                         extdata: (and=> (find-child ((xml xcal 'data))
+                                                                     (xml-element-children el))
+                                                         xml-text-content)))))
+                               ((version)
+                                (list
+                                 (vline
+                                  value:
+                                  (apply
+                                   (case-lambda ((min max)
+                                                 (vcalendar-version min: min max: max))
+                                                ((max)
+                                                 (vcalendar-version max: max)))
+                                   (string-split (xml-text-content el) #\;)))))
+
+                               (else
+                                (sxml->vlines el)))))
+
+
+                        (modify props (table-focus (upcase-symbol (xml-element-tagname el)))
+                                (lambda (m) (just (append values (unjust m '()))))))
+
+                      (modify props (table-focus 'XML)
+                              (lambda (m)
+                                (just
+                                 (cons (vline value: el)
+                                       (unjust m '())))))))
+                (table)
+                (xml-element-children el))))
+         (else (table)))
+   children: (cond ((find-child ((xml xcal 'components))
+                                (xml-element-children data))
+                    => (lambda (el) (map sxml->vcomponent/object
+                                    (xml-element-children el))))
+                   (else '()))))
+
+(define (sxml->vcomponent data)
+  (define root
+    (cond ((xml-document? data)
+           (xml-document-root data))
+          ((xml-element? data)
+           data)
+          (else (scm-error 'misc-error "sxml->vcomponent"
+                           "Non-xml document given: ~s"
+                           (list data) #f))))
+
+  (sxml->vcomponent/object
+   (if (tag-matches? root 'icalendar xcal)
+       (car (xml-element-children root))
+       root)))
