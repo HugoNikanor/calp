@@ -6,6 +6,8 @@
   :use-module (hnh util type)
   :export (define-type
             serialize set-record-type-serializer!
+            serializers
+            with-serializers
             ))
 
 
@@ -217,7 +219,7 @@
 ;;       (format port "#.~s" object))
 ;; assuming that the fluid `read-eval?` is set to `#t`.
 
-(define serializers (list))
+(define-once serializers (make-parameter (list)))
 
 (define (set-record-type-serializer! type-predicate serializer)
   ;; NOTE New serializers are pre-pended. This allows serializers to
@@ -225,11 +227,11 @@
   ;; later. It however comes with the slight downside that `symbol?`
   ;; is one of the last serializers tested, which might make the code
   ;; slightly slower.
-  (set! serializers (cons (cons type-predicate serializer) serializers)))
+  (serializers (cons (cons type-predicate serializer) (serializers))))
 
 (define (serialize object)
-  (cond ((find (lambda (p) ((car p) object)) serializers)
-         => (lambda (p) ((cdr p) object)))
+  (cond ((predicate-list-get (serializers) object)
+         => (lambda (s) (s object)))
         ;; Assume self-quoting
         (else object)))
 
@@ -260,6 +262,14 @@
 (set-record-type-serializer!
  list?
  (lambda (obj) `(list ,@(map serialize obj))))
+
+(define-syntax with-serializers
+  (syntax-rules ()
+    ((_ ((pred serializer) ...)
+        body ...)
+     (parameterize ((serializers (cons* (cons pred serializer) ...
+                                        (serializers))))
+       body ...))))
 
 
 
