@@ -7,6 +7,7 @@
 
 (define-module (hnh util table)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (hnh util lens)
   :use-module (hnh util object)
@@ -17,11 +18,13 @@
            (tree-get . table-get)
            (tree-put . table-put)
            (tree-remove . table-remove)
+           (tree-pop . table-pop)
            (tree->list . table->list)
            (tree? . table?)
            (tree-terminal? . table-empty?)
            (tree-focus . table-focus)
            (tree-equal? . table-equal?)
+           (tree-diff . table-diff)
            (serialize-tree . serialize-table)
            (alist->tree . alist->table)))
 
@@ -76,34 +79,85 @@
 ;; Lens for focusing a specific entry in a table.
 (define (((tree-focus k) tree) op)
   (cond ((tree-terminal? tree)
-         (cond ((op (nothing)) just?
-                => (lambda (v) (tree-node key: k value: (from-just v)
-                                     type: (type tree))))
-               (else (tree-terminal type: (type tree)))))
+         (let ((ret (op (nothing))))
+           (cond ((just? ret)
+                  (tree-node key: k value: (from-just ret)
+                             type: (type tree)))
+                 ((nothing? ret) (tree-terminal type: (type tree)))
+                 (else (scm-error 'misc-error "tree-focus"
+                                  "Non-wrapped value returned to tree-focus: ~s"
+                                  (list ret)
+                                  #f)))))
         ((eq? k (key tree))
-         (cond ((op (just (value tree)))
-                just? => (lambda (v) (value tree (from-just v))))
-               (else (type (merge-trees (left tree) (right tree))
-                           (just (type tree))))))
+         (let ((ret (op (just (value tree)))))
+          (cond ((just? ret) (value tree (from-just ret)))
+                ((nothing? ret) (type (merge-trees (left tree) (right tree))
+                                      (just (type tree))))
+                (else (scm-error 'misc-error "tree-focus"
+                                 "Non-wrapped value returned to tree-focus: ~s"
+                                 (list ret)
+                                 #f)))))
         (else
          (modify tree (lens-compose (if (symbol<? k (key tree))
                                         left* right*)
                                     (tree-focus k))
                  op))))
 
-(define (tree-equal? a b)
+(define* (tree-equal? a b optional: (comperator equal?))
   (or (and (tree-terminal? a) (tree-terminal? b))
-      (tree-equal? (left a) (left b))
-      (tree-equal? (right a) (right b))))
+      (let loop ((as (tree->list a))
+                 (b b))
+        (if (null? as)
+            (tree-terminal? b)
+            (let ((v rest (tree-pop b (caar as))))
+              (and (not (nothing? v))
+                   (comperator (from-just v) (cdar as))
+                   (loop (cdr as) rest)))))))
+
+;;; Returns a list of diff-objects, where diff objects on the form
+;;; '(absent ,table ,key) ; where table is the symbol 'a or 'b
+;;; '(diff ,key ,a-value ,b-value)
+(define* (tree-diff a b optional: (comperator equal?))
+  (if (and (tree-terminal? a) (tree-terminal? b))
+      '()
+      (let loop ((as (tree->list a))
+                 (b b))
+        (cond ((and (null? as) (tree-terminal? b)) '())
+              ((null? as)
+               (map (lambda (p) `(absent a ,(car p)))
+                    (tree->list b)))
+              (else
+               (let ((v rest (tree-pop b (caar as))))
+                 (cond ((nothing? v)
+                        (cons `(absent b ,(caar as))
+                              (loop (cdr as) rest)))
+                       ((comperator (from-just v) (cdar as))
+                        (loop (cdr as) rest))
+                       (else
+                        (cons (list 'diff (caar as) (cdar as) (from-just v))
+                              (loop (cdr as) rest))))))))))
 
 (define (tree-put tree k v)
   (set tree (tree-focus k) (just v)))
 
+;;; TODO rename to `tree-ref`?
 (define* (tree-get tree k optional: default)
   (unjust (get tree (tree-focus k)) default))
 
 (define (tree-remove tree k)
   (set tree (tree-focus k) (nothing)))
+
+;;; Returns 2 values
+;;; - maybe (the focused value)
+;;; - the table without that key
+(define (tree-pop tree k)
+  (let ((result (nothing)))
+    (let ((resulting-tree
+           (modify tree (tree-focus k)
+                   (lambda (m)
+                     (set! result m)
+                     (nothing)))))
+      (values result resulting-tree))))
 
 ;;; Merge two trees.
 ;;; Note that this discards type information
