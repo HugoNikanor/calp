@@ -81,20 +81,34 @@
               (vcomponent-children a)
               (vcomponent-children b))))
 
+(define (sort-vcomponents-by-best-effort lst)
+  (sort lst
+        (lambda (a b)
+          (cond ((eq? (type a) (type b))
+                 (< (length (table->list (vcomponent-properties a)))
+                    (length (table->list (vcomponent-properties b))))
+                 ;; TODO further tests, maybe including
+                 ;; - names of properties
+                 ;; - values of properties (if all same name)
+                 ;; - number of children
+                 ;; - this function recursed on the children
+                 )
+                (else
+                 (string< (symbol->string (type a))
+                          (symbol->string (type b))))))))
+
 (define (vcomponent-diff a b)
   (append
    (if (eqv? (type a) (type b))
        '()
-       `(diff type ,(type a) ,(type b)))
+       `((diff type ,(type a) ,(type b))))
    (table-diff
     (vcomponent-properties a)
     (vcomponent-properties b)
     (lambda (ax bx) (lset= vline-equal? ax bx)))
-   ;; NOTE this assumes same order for children.
-   ;; This isn't correct, but there is no obvious way to sort children
    (append-map vcomponent-diff
-               (vcomponent-children a)
-               (vcomponent-children b))))
+               (sort-vcomponents-by-best-effort (vcomponent-children a))
+               (sort-vcomponents-by-best-effort (vcomponent-children b)))))
 
 ;;; Lenses
 ;;; - focus non-existant member of collection?
