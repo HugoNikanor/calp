@@ -178,7 +178,7 @@
 
 (define-syntax-rule (print-and-return expr)
   (let ((result expr))
-    (display (format #f "~a [~a]~%" result (quote expr))
+    (display (format #f "~s [~s]~%" result (quote expr))
              (current-error-port))
     result))
 
