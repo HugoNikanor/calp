@@ -78,6 +78,8 @@
 
      rrule))))
 
+;;; TODO this is basically (@ (vcompoanent media-type common) serialize-datetime),
+;;; But with an xml wrapper. Use that one, and only handle xml wrapping here
 (define (datetime->sxml parameters dt)
   (define (->xml dt)
     (list ((xml xcal 'date-time) (datetime->string dt))))
@@ -87,6 +89,7 @@
          (values (->xml (tz dt #f))
                  (table-put parameters 'TZID (tz dt))))))
 
+;;; TODO simplify this by using serialize-period instead
 (define (period->sxml params v)
   (call-with-values (lambda () (datetime->sxml params (period-start v)))
     (lambda* (serialized optional: (params params))

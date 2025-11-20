@@ -1,17 +1,8 @@
 (define-module (vcomponent data-stores sqlite)
   :use-module (oop goops)
-  :use-module (vcomponent data-stores common)
-  :use-module (srfi srfi-1)
-  :use-module (srfi srfi-71)
-  :use-module (srfi srfi-88)
-  ;; :use-module (vcomponent)
-  :use-module (hnh util)
-  :use-module (hnh util type)
-  :use-module (hnh util table)
   :use-module (vcomponent)
-  :use-module (web uri)
-  :use-module (datetime)
-  :use-module (datetime timespec)
+  :use-module (vcomponent data-stores common)
+  :use-module (vcomponent media-type common)
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)
   :use-module (vcomponent type unknown)
@@ -19,9 +10,18 @@
   :use-module (vcomponent type geo)
   :use-module (vcomponent type version)
   :use-module (vcomponent type request-status)
-  :use-module (hnh util uuid)
-  :use-module (hnh util optional)
+  :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
+  :use-module (hnh util)
   :use-module (hnh util lens)
+  :use-module (hnh util optional)
+  :use-module (hnh util table)
+  :use-module (hnh util type)
+  :use-module (hnh util uuid)
+  :use-module (web uri)
+  :use-module (datetime)
+  :use-module (datetime timespec)
   :use-module (sxml namespaced)
   :export (create-instance)
   )
@@ -276,24 +276,37 @@ CREATE TABLE IF NOT EXISTS metadata
           ;; NOTE this also captures CAL-ADDRESS
           ((uri? v)            (values 'URI (uri->string v)))
           ((date? v)           (values 'DATE (date->string v "~Y-~m-~d")))
-          ;; TODO timezone
-          ((datetime? v)       (values 'DATE-TIME (datetime->string v "~Y-~m-~d ~H:~M:~S")))
+          ((datetime? v)
+           (values 'DATE-TIME
+                   (datetime->string v "~Y-~m-~d ~H:~M:~S")
+                   (if (tz v)
+                       (table-put (vline-parameters vline)
+                                  'TZID (tz v))
+                       (vline-parameters vline))))
           ((duration? v)       (values 'DURATION (duration->string v)))
           ((exact-integer? v)  (values 'INTEGER v))
           ;; gulie-sqlite is weird, and REQUIRES exact numbers.
           ;; Possibly file a bug report with them
           ((number? v)         (values 'FLOAT (inexact->exact v)))
-          ((period? v)         (values 'TODO "TODO"))
-          ((recur-rule? v)     (values 'TODO "TODO"))
+
+          ((period? v)
+           (let ((start end params (serialize-period (vline-parameters vline) v "~Y-~m-~d ~H:~M:~S~Z")))
+
+             (values 'PERIOD
+                     (format #f "~a/~a" start end)
+                     params)))
+
+          ((recur-rule? v)
+           (values 'RECUR
+                   ((@ (vcomponent media-type text calendar output) recur-rule->rrule-string)
+                    (vline-parameters vline)
+                    v)))
           ((string? v)         (values 'TEXT v))
           ;; TODO timezone
           ((time? v) (values 'TIME (time->string v "~H:~M:~S")))
 
           ((timespec? v)
-           (values 'UTC-OFFSET
-                   (string-append
-                    (symbol->string (timespec-sign v))
-                    (time->string (timespec-time v) "~H:~M:~S"))))
+           (values 'UTC-OFFSET (timespec->string v)))
 
           ;; `X-` prefix to GEO and VERSION, since the standard
           ;; claims them as FLOAT and TEXT respectively, but they have
@@ -306,14 +319,16 @@ CREATE TABLE IF NOT EXISTS metadata
                                                   (else ""))
                                              (version-max v))))
           ((request-status? v)
-           (values 'TODO "TODO")
-           #;
-           (values 'REQEUST-STATUS
-            (let ((v (vline-value vline)))
-              (format #t ":~a;~a" (statcode v)
-                      (escape-chars (statdesc v)))
-              (cond ((extdata v)
-                     => (lambda (v) (format #t ";~a" (escape-chars v))))))))
+           (values 'X-REQUEST-STATUS
+                   (with-output-to-string
+                     (lambda ()
+                       (define escape-chars
+                         (@ (vcomponent media-type text calendar output) escape-chars))
+                       ;; NOTE this is identical to the code in text/calendar, bar a colon
+                       (format #t "~a;~a" (string-join (map number->string (statcode v)) ".")
+                               (escape-chars (statdesc v)))
+                       (cond ((extdata v)
+                              => (lambda (v) (format #t ";~a" (escape-chars v)))))))))
 
           ((unknown? v)
            (values 'UNKNOWN v))
@@ -357,7 +372,10 @@ VALUES (?, ?, ?)
 
        (for (key . vlines) in (table->list (vcomponent-properties component))
             (for vline in vlines
-                 (define-values (type serialized) (sqlite-serialize key vline))
+                 (define-values (type serialized parameters)
+                   (call-with-values (lambda () (sqlite-serialize key vline))
+                     (lambda* (t s optional: (p (vline-parameters vline)))
+                       (values t s p))))
 
                  (sqlite-bind-arguments property-stmt (symbol->string key)
                                         component-id (symbol->string type) serialized)
@@ -370,7 +388,7 @@ VALUES (?, ?, ?)
                    ;; TODO if value is a period
                    ;; Insert into `period` table
 
-                   (for (key . value) in (table->list (vline-parameters vline))
+                   (for (key . value) in (table->list parameters)
                         (sqlite-bind-arguments param-stmt (symbol->string key) value property-id)
                         (sqlite-step param-stmt)
                         (sqlite-reset param-stmt))
@@ -390,48 +408,54 @@ VALUES (?, ?, ?)
  (make-parameter
    (alist->table
     (list
-     (cons 'BINARY identity)
-     (cons 'BOOLEAN (compose not zero?))
+     (cons 'BINARY (lambda (_ v) v))
+     (cons 'BOOLEAN (lambda (_ v) (not (= v 0))))
 
      ;; NOTE this might not be used, if CAL-ADDRESS uris are coded as URIs.
-     (cons 'CAL-ADDRESS string->uri)
+     (cons 'CAL-ADDRESS (lambda (_ v) (string->uri v)))
 
-     (cons 'DATE string->date)
+     (cons 'DATE (lambda (_ v) (string->date v)))
 
-     ;; TODO how is timezone handled?
-     (cons 'DATE-TIME (lambda (v) (string->datetime v "~Y-~m-~d ~H:~M:~S~Z")))
+     ;; TODO datetime is always stored as is,
+     ;; with datetime stored in a paremeter.
+     (cons 'DATE-TIME (lambda (params v)
+                        (values (tz (string->datetime v "~Y-~m-~d ~H:~M:~S")
+                                    (table-get params 'TZID))
+                                (table-remove params 'TZID))))
 
-     ;; TODO parse duration
-     (cons 'DURATION identity)
+     (cons 'DURATION (lambda (_ v) (string->duration v)))
 
-     (cons 'FLOAT identity)
-     (cons 'INTEGER identity)
+     (cons 'FLOAT (lambda (_ v) v))
+     (cons 'INTEGER (lambda (_ v) v))
 
-     ;; TODO (cons 'PERIOD (const 'TODO))
-     ;; TODO (cons 'RECUR (const 'TODO))
+     (cons 'PERIOD (lambda (p v)
+                     ((@ (vcomponent media-type text calendar parse) parse-period)
+                      p v "~Y-~m-~d ~H:~M:~S~Z")))
+     (cons 'RECUR (lambda (_ v) ((@ (vcomponent media-type text calendar parse) parse-recurrence-rule) v)))
 
-     (cons 'TEXT identity)
+     (cons 'TEXT (lambda (_ v) v))
 
      ;; TODO timezone
-     (cons 'TIME (lambda (v) (string->time v "~H:~M:~S")))
+     (cons 'TIME (lambda (_ v) (string->time v "~H:~M:~S")))
 
-     ;; TODO [+-]time
-     (cons 'UTC-OFFSET identity)
+     (cons 'UTC-OFFSET (lambda (_ v) (parse-time-spec v)))
 
-     (cons 'URI string->uri)
+     (cons 'URI (lambda (_ v) (string->uri v)))
 
-     (cons 'X-GEO (lambda (v) (let ((p (string-split v #\;)))
-                           (geo x: (string->number (list-ref p 0))
-                                y: (string->number (list-ref p 1))))))
-     (cons 'X-VERSION (lambda (v) (vcalendar-version max: v)))      ; TODO actually parse version
+     (cons 'X-GEO (lambda (_ v) (let ((p (string-split v #\;)))
+                             (geo y: (string->number (list-ref p 0))
+                                  x: (string->number (list-ref p 1))))))
+     (cons 'X-VERSION (lambda (_ v)
+                        (apply (case-lambda
+                                 ((min max)
+                                  (vcalendar-version min: min max: max))
+                                 ((max)
+                                  (vcalendar-version max: max)))
+                               (string-split v #\;))))
 
-     ;; TODO
-     (cons 'X-REQUEST-STATUS identity)
+     (cons 'X-REQUEST-STATUS
+           (lambda (_ v) ((@ (vcomponent media-type text calendar parse) parse-request-status) v)))
 
-     ;; TODO maybe ensure we have text here
-     (cons 'UNKNOWN unknown)
-
-     (cons 'TODO (const "TODO"))
 
      )
     )))
@@ -488,7 +512,7 @@ GROUP by p.id" filter)))
              (property-value      (vector-ref record 5))
              (property-parameters (vector-ref record 6)))
 
-         (define parameters
+         (define parameters*
            (aif property-parameters
                 (alist->table
                  (map (lambda (record)
@@ -498,9 +522,17 @@ GROUP by p.id" filter)))
                       (string-split it #\rs)))
                 (table)))
 
-         (define value
-           ((or (get-parser property-type) unknown)
-            property-value))
+         (define-values (value parameters)
+           (call-with-values
+               (lambda ()
+                ((or (get-parser property-type)
+                     (lambda (_ v)
+                       ;; ensure we have text here
+                       (unknown (format #f "~a" v))))
+                 parameters*
+                 property-value))
+             (lambda* (v optional: (p parameters*))
+               (values v p))))
 
          (-> state
              ;; - For component referenced by ID, set property
@@ -551,5 +583,4 @@ GROUP by p.id" filter)))
 (define-method (flush! (this <sqlite-data-store>))
   ;; TODO possible commit any pending transactions here
   'noop)
-
 

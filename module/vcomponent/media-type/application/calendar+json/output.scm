@@ -3,6 +3,7 @@
   :use-module (srfi srfi-71)
   :use-module (vcomponent)
   :use-module (vcomponent media-type types)
+  :use-module (vcomponent media-type common)
   :use-module (vcomponent type period)
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type geo)
@@ -65,18 +66,6 @@
       (vector code (statdesc status))))
 
 
-;;; NOTE this is identical to (@ (vcomponent media-type text calendar output) serialize-datetime)
-(define (serialize-datetime params v)
-  (define dt-format "~Y-~m-~dT~H:~M:~S~Z")
-  (cond ((not (tz v))
-         (datetime->string (tz v #f) dt-format))
-        ((string=? "UTC" (tz v))
-         (datetime->string v dt-format))
-        (else
-         (values (datetime->string (tz v #f) dt-format)
-                 (table-put params 'TZID (tz v))))))
-
-
 (define serializers
   (make-parameter
    (list (cons (@ (scheme base) bytevector?)
@@ -89,21 +78,14 @@
          ;; Used for both URI and CAL-ADDRESS
          (cons uri? (lambda (_ v) (uri->string v)))
          (cons date? (lambda (_ v) (date->string v)))
-         (cons datetime? serialize-datetime)
+         (cons datetime? (serialize-datetime "~Y-~m-~dT~H:~M:~S~Z"))
          (cons duration? (lambda (_ v) (duration->string v)))
          (cons number? (lambda (_ v) v))
          (cons period?
-               ;; NOTE this is identical to the matching procedure for text/calendar
-               (lambda (params v)
-                 (call-with-values (lambda () (serialize-datetime params (period-start v)))
-                   (lambda* (start optional: (params params))
-                     (values
-                      (vector start
-                              (if (datetime? (period-end v))
-                                  (datetime->string (period-end v)
-                                                    "~Y-~m-~dT~H:~M:~S~Z")
-                                  (duration->string (period-end v))))
-                      params)))))
+               (lambda (p v)
+                 (let ((start end params (serialize-period p v "~Y-~m-~dT~H:~M:~S~Z")))
+                   (values (vector start end)
+                           params))))
          (cons recur-rule? recur-rule->scm-json)
          (cons string? (lambda (_ v) v))
          ;; TODO timezone

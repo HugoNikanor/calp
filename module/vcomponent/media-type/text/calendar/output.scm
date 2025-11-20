@@ -1,5 +1,6 @@
 (define-module (vcomponent media-type text calendar output)
   :use-module (vcomponent media-type types)
+  :use-module (vcomponent media-type common)
   :use-module (vcomponent)
   :use-module (hnh util)
   :use-module (hnh util type)
@@ -24,6 +25,7 @@
   :export (vcomponent->icalendar
            serializers
            recur-rule->rrule-string
+           escape-chars
            icalendar-wrap-length))
 
 (define-once icalendar-wrap-length
@@ -50,21 +52,6 @@
        (display "\r\n")))
 
 
-;;; NOTE this is identical to the matching in application/celandar+json
-(define (period->string params v)
-  ;; (tz start) MUST equal (tz end) (if end is a datetime object)
-  (call-with-values (lambda () (serialize-datetime params (period-start v)))
-    (lambda* (start optional: (params params))
-      (values
-       (format #f "~a/~a"
-               start
-               (if (datetime? (period-end v))
-                   (datetime->string
-                    (period-end v)
-                    ;; NOTE this assumes that ~Z only outputs "Z" or "".
-                    "~Y~m~dT~H~M~S~Z")
-                   (duration->string (period-end v))))
-       params))))
 
 ;;; NOTE this is identical to the matching in application/celandar+json
 (define (timespec->string _ timespec)
@@ -75,18 +62,6 @@
       (if (zero? (second t))
           "~H~M"
           "~H~M~S")))))
-
-
-;;; NOTE this is identical to the matching in application/celandar+json
-(define (serialize-datetime params v)
-  (define dt-format "~Y~m~dT~H~M~S~Z")
-  (cond ((not (tz v))
-         (datetime->string (tz v #f) dt-format))
-        ((string=? "UTC" (tz v))
-         (datetime->string v dt-format))
-        (else
-         (values (datetime->string (tz v #f) dt-format)
-                 (table-put params 'TZID (tz v))))))
 
 
 (define (recur-rule->rrule-string _ rrule)
@@ -140,11 +115,15 @@
          ;; Used for both URI and CAL-ADDRESS
          (cons uri? (lambda (_ v) (uri->string v)))
          (cons date? (lambda (_ v) (date->string v "~Y~m~d")))
-         (cons datetime? serialize-datetime)
+         (cons datetime? (serialize-datetime "~Y~m~dT~H~M~S~Z"))
          (cons duration? (lambda (_ v) (duration->string v)))
          ;; Used for both FLOAT and INTEGER
          (cons number? (lambda (_ v) (number->string v)))
-         (cons period? period->string)
+         (cons period?
+               (lambda (p v)
+                 (let ((start end params (serialize-period p v "~Y~m~dT~H~M~S~Z")))
+                   (values (format #f "~a/~a" start end)
+                           params))))
          (cons recur-rule? recur-rule->rrule-string)
          (cons string? (lambda (_ v) (escape-chars v)))
          ;; TODO TODO timezone

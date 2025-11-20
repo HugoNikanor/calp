@@ -38,6 +38,8 @@
            split-carefully
 
            parse-recurrence-rule
+           parse-period
+           parse-request-status
            ))
 
 ;;; TODO a few translated strings here contain explicit newlines. Check if that
@@ -89,14 +91,14 @@
 
 
 ;; PERIOD
-(define (parse-period props value)
+(define* (parse-period props value optional: (dt-fmt "~Y~m~dT~H~M~S~Z"))
   (let ((left right (apply values (string-split value #\/))))
-    (values (period start: (modify (string->datetime left "~Y~m~dT~H~M~S~Z")
+    (values (period start: (modify (string->datetime left dt-fmt)
                                    tz* (lambda (tz) (or tz (table-get props 'TZID))))
                     end: ((if (memv (string-ref right 0)
                                  '(#\P #\+ #\-))
                               string->duration
-                              (lambda (v) (modify (string->datetime v "~Y~m~dT~H~M~S~Z")
+                              (lambda (v) (modify (string->datetime v dt-fmt)
                                              tz* (lambda (tz) (or tz (table-get props 'TZID))))))
                           right))
             (table-remove props 'TZID))))
@@ -354,6 +356,16 @@
            (loop rest (cons c str) done))))))
 
 
+(define (parse-request-status value)
+  (define (parse-text str) ((get-parser 'TEXT) '() str))
+  (apply (lambda* (statcode statdesc optional: extdata)
+           (request-status
+            statcode: (map string->number (string-split statcode #\.))
+            statdesc: (parse-text statdesc)
+            extdata: (and=> extdata parse-text)))
+         (split-carefully value #\;)))
+
+
 ;; params could be made optional, with an empty table as default
 ;; Returns a list of vline objects.
 ;; For most types, this will be a single vline, but for
@@ -387,14 +399,7 @@
                   ((max) (vcalendar-version max: (parse-text max))))
                 (split-carefully value #\;))))
 
-      ((eq? key 'REQUEST-STATUS)
-       (lambda (_ value)
-         (apply (lambda* (statcode statdesc optional: extdata)
-                  (request-status
-                   statcode: (map string->number (string-split statcode #\.))
-                   statdesc: (parse-text statdesc)
-                   extdata: (and=> extdata parse-text)))
-                (split-carefully value #\;))))
+      ((eq? key 'REQUEST-STATUS) (lambda (_ value) (parse-request-status value)))
 
       ;; 1. Check if we have a VALUE parameter, and in that case use that
       ((and=> (table-get params 'VALUE) string->symbol) => get-parser)
