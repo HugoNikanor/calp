@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS component
 , parent INTEGER REFERENCES component(id)
 )")
 
+  (sqlite-exec db "CREATE INDEX IF NOT EXISTS component_type ON component(type)")
+
   ;; Recursive component lookups are crazy slow without this
   (sqlite-exec
    db "CREATE INDEX IF NOT EXISTS component_parent ON component(parent)")
@@ -76,6 +78,7 @@ CREATE TABLE IF NOT EXISTS property
 , value NOT NULL
 )")
 
+  (sqlite-exec db "CREATE INDEX IF NOT EXISTS property_property ON property(property)")
   ;; (sqlite-exec db "CREATE INDEX IF NOT EXISTS prop_idx ON property (property, component)")
 
   (sqlite-exec db "
