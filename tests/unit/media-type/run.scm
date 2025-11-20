@@ -1,4 +1,4 @@
-(define-module (test formats run)
+(define-module (test media-type run)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
