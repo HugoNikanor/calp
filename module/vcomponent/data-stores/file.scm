@@ -48,7 +48,7 @@
 
 ;;; Return the xattr key used to reference a given href
 (define (href-xattr href)
-  (string-append (xattr-href-prefix) href))
+  (string-append (xattr-href-prefix) "." href))
 
 ;;; Evaluates `expr` and returns its value, if it throws an ENOENT
 ;;; error, instead return `deflt`. All other errors are re-thrown.
@@ -391,10 +391,7 @@
   (when href
     (remove-by-uid! store uid)
 
-    (queue-remove-xattr!
-     int
-     (string-append (xattr-href-prefix)
-                    "." href))))
+    (queue-remove-xattr! int (href-xattr href))))
 
 ;;; Note: this method doesn't update the href map (by design)
 (define-method (remove-by-uid! (store <file-data-store>) uid)
