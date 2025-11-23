@@ -155,6 +155,24 @@
                    (icalendar-linewrap (string-drop string wrap-len)))]
           [else string])))
 
+(define (quote-parameter-value str)
+  (cond
+   ((string-index
+     str
+     (-> char-set:iso-control
+         (char-set-delete #\tab)
+         (char-set-adjoin #\")))
+    => (lambda (idx)
+         (scm-error 'misc-error "vline->string"
+                    "Unrepresentable character present in parameter value: ~s, ~s"
+                    (list str (string-ref str idx))
+                    #f)))
+
+   ((string-index str (char-set #\; #\: #\,))
+    (format #f "\"~a\"" str))
+
+   (else str)))
+
 
 (define (vline->string key vline)
   (typecheck key symbol?)
@@ -183,32 +201,19 @@
         (else
          (call-with-values (lambda () (ics-serialize (vline-parameters vline) v))
            (lambda* (serialized optional: (params (vline-parameters vline)))
-             ;; TODO quote:ing
-             (map (lambda (pair) (format #t ";~a=~a" (car pair) (cdr pair)))
+             (map (lambda (pair)
+                    (format #t ";~a=~a" (car pair) (quote-parameter-value (cdr pair))))
                   (table->list
+                   ;; TODO I think I do `modify` here, to handle cases where an unknown type is passed through the system.
+                   ;; TODO ensure I actually handle unknown types correctly at the parse point, and rewrite this comment to match
                    (modify params
                            (table-focus 'VALUE)
                            (lambda (specified)
                              (let ((apparent (apparent-type v)))
                                (if (eq? apparent (or (default-type key) 'TEXT))
                                    (nothing)
-                                   (cond (apparent => just)
+                                   (cond (apparent => (compose just symbol->string))
                                          (else specified))))))))
 
              (format #t ":~a" serialized)
-             ))))))
-
-  ;; If we have alternatives, splice them in here.
-  ;; TODO -X-HNH-ALTERNATIVES isn't a thing anymore
-  #;
-  (cond [(prop component '-X-HNH-ALTERNATIVES)
-         => (lambda (alts) (hash-map->list (lambda (_ comp)
-                                        (unless (eq? component comp)
-                                          (component->ical-string comp)))
-                                      alts))]))
-
-
-
-
-
-
+             )))))))

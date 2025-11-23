@@ -1,7 +1,8 @@
 (define-module (vcomponent media-type text calendar parse)
-  :use-module ((ice-9 rdelim) :select (read-line))
-  :use-module (ice-9 format)
   :use-module (ice-9 curried-definitions)
+  :use-module (ice-9 format)
+  :use-module (ice-9 match)
+  :use-module (ice-9 rdelim)
   :use-module (ice-9 regex)
   :use-module (hnh util exceptions)
   :use-module (hnh util)
@@ -42,15 +43,43 @@
            parse-request-status
            ))
 
-;;; TODO a few translated strings here contain explicit newlines. Check if that
-;;;      is preserved through the translation.
-
-;;; TODO TODO quoted vline parameters
-
 ;;; TODO different parsers currently fail in different ways for invalid value.
 ;;; - Some throw exceptions, crashing the program
 ;;; - Some emit a warning, then wraps the raw value in an `unknown`
 ;;; - some may do something else entirely.
+
+;;; BINARY throws on unknown encodnig, returns incorrect data on malformed data
+;;; BOOLEAN never fails
+;;; DATE throws on malformed date
+;;; DATETIME throws on malformed date
+;;; DURATION throws on malformed data
+;;; FLOAT returns #f
+;;; INTEGER return `(unknown <data>)`
+;;; PERIOD throws on malformed data
+;;; PERIOD throws on malformed data
+;;; RECUR throws on malformed data
+;;; TEXT never fails
+;;; TIME throws on malformed data
+;;; UTC-OFFSET throws on malformed data
+
+;;; GEO throws
+;;; VERSION never fails
+;;; REQUEST-STATUS throws on malformed data
+
+
+;;; (map tokenize)
+;;; for each "real" line, extract the key, parse the parameters, and return the value unparsed
+;;; (parse)
+;;; build structure, and parse property values
+
+(define (icalendar->vcomponent port)
+  (parse (map tokenize (read-lines/folded port))))
+
+
+;; (parse
+;;  (map tokenize
+;;       (bytevector->unfolded-lines
+;;        (get-bytevector-all port))))
 
 ;; BINARY
 (define (parse-binary props value)
@@ -86,8 +115,8 @@
     (if (not (integer? n))
         (begin
           (warning (G_ "Non integer as integer"))
-          (unknown value)))
-    n))
+          (unknown value))
+        n)))
 
 
 ;; PERIOD
@@ -108,23 +137,23 @@
 (define (parse-text _ value)
   (let loop ((rem (string->list value))
              (str '()))
-    ((@ (ice-9 match) match) rem
-     (() (reverse-list->string str))
-     ((or (#\\ #\n rest ...) (#\\ #\N rest ...))
-      (loop rest (cons #\newline str)))
-     ((#\\ #\, rest ...) (loop rest (cons #\, str)))
-     ((#\\ #\; rest ...) (loop rest (cons #\; str)))
-     ((#\\ #\\ rest ...) (loop rest (cons #\\ str)))
-     ((#\\ c rest ...)
-      (warning (G_ "Non-escapable character: '~a'") c)
-      (loop rest (cons c str)))
-     ((#\, rest ...)
-      (warning (G_ "Un-escaped '~a' encountered") #\,)
-      (loop rest (cons #\, str)))
-     ((#\; rest ...)
-      (warning (G_ "Un-escaped '~a' encountered") #\;)
-      (loop rest (cons #\; str)))
-     ((c rest ...) (loop rest (cons c str))))))
+    (match rem
+      (() (reverse-list->string str))
+      ((or (#\\ #\n rest ...) (#\\ #\N rest ...))
+       (loop rest (cons #\newline str)))
+      ((#\\ #\, rest ...) (loop rest (cons #\, str)))
+      ((#\\ #\; rest ...) (loop rest (cons #\; str)))
+      ((#\\ #\\ rest ...) (loop rest (cons #\\ str)))
+      ((#\\ c rest ...)
+       (warning (G_ "Non-escapable character: '~a'") c)
+       (loop rest (cons c str)))
+      ((#\, rest ...)
+       (warning (G_ "Un-escaped '~a' encountered") #\,)
+       (loop rest (cons #\, str)))
+      ((#\; rest ...)
+       (warning (G_ "Un-escaped '~a' encountered") #\;)
+       (loop rest (cons #\; str)))
+      ((c rest ...) (loop rest (cons c str))))))
 
 
 ;; UTC-OFFSET
@@ -155,7 +184,7 @@
 ;; RFC 5545, Section 3.3.10. Recurrence Rule, states that the UNTIL value MUST have
 ;; the same type as the DTSTART of the event (date or datetime). I have seen events
 ;; in the wild which didn't follow this. I consider that an user error.
-(define (parse-recurrence-rule str )
+(define (parse-recurrence-rule _ str)
   (define result
     (fold
      (lambda (kv o)
@@ -233,7 +262,7 @@
      (cons 'FLOAT (lambda (_ v) (string->number v)))
      (cons 'INTEGER parse-integer)
      (cons 'PERIOD parse-period)
-     (cons 'RECUR (lambda (_ v) (parse-recurrence-rule v)))
+     (cons 'RECUR parse-recurrence-rule)
      (cons 'TEXT parse-text)
      ;; TODO time can have timezones...
      (cons 'TIME (lambda (_ v) (parse-ics-time v)))
@@ -253,8 +282,6 @@
             (hash-set! ht str symb)
             symb)))))
 
-(define (icalendar->vcomponent port)
-  (parse (map tokenize (read-file port))))
 
 (define-immutable-record-type <line>
   (make-line string file line)
@@ -264,73 +291,67 @@
   (line get-line))                      ; exact-integer?
 
 
-;; port → (list <line>)
-(define (read-file port)
-  (define fname (port-filename port))
+;; Like `read-line`, but both \n and \r\n are considered newlines, and trimmed
+(define (read-line/crnl port)
+  (let ((line (read-line port)))
+    (if (eof-object? line)
+        line
+        (string-trim-right line #\return))))
+
+;; TODO if the line is folded inside a unicode character
+;; then this produces multiple broken unicode characters.
+;; It could be solved by checking the start of the new line,
+;; and the tail of the old line for broken char
+(define (read-line/folded port)
+  (let loop ((done (read-line/crnl port)) (lines 1))
+    (if (memv (peek-char port) '(#\space #\tab))
+        (begin
+          (read-char port)              ; Discard continuation marker
+          (loop (string-append done (read-line/crnl port))
+                (1+ lines)))
+        (values done lines))))
+
+
+;; Read all (folded) lines in a file, and return a list of <line> objects.
+(define (read-lines/folded port)
   (let loop ((line-number 1) (done '()))
-    (let ((ostr (open-output-string)))
-      (define ret
-        (let loop ((line (read-line port)))
-          (if (eof-object? line)
-              'eof
-              (let ((line (string-trim-right line #\return)))
-               (let ((next (peek-char port)))
-                 (display line ostr)
-                 (cond ((eof-object? next)
-                        'final-line)
-                       ;; Line Wrapping
-                       ;; If the first character on a line is space (whitespace?)
-                       ;; then it's a continuation line, and should be merged
-                       ;; with the one preceeding it.
-                       ;; TODO if the line is split inside a unicode character
-                       ;; then this produces multiple broken unicode characters.
-                       ;; It could be solved by checking the start of the new line,
-                       ;; and the tail of the old line for broken char
-                       ((char=? next #\space)
-                        (read-char port) ; discard continuation marker
-                        (loop (read-line port)))
-                       (else
-                        ;; (unread-char next)
-                        'line)))))))
-      (case ret
-        ((line)
-         (let ((str (get-output-string ostr)))
-           (close-port ostr)
-           (loop (1+ line-number)
-                 (cons (make-line str fname line-number)
-                       done))))
-        ((eof)
-         (close-port ostr)
-         (reverse! done))
-        ((final-line)
-         (let ((str (get-output-string ostr)))
-           (close-port ostr)
-           (reverse! (cons (make-line str fname line-number)
-                           done))))))))
+    (let ((line line-count (read-line/folded port)))
+      (if (eof-object? line)
+          (reverse! done)
+          (begin
+            (loop (+ line-number line-count)
+                  (cons (make-line line (port-filename port) line-number)
+                        done)))))))
 
 (define-immutable-record-type <tokens>
   (make-tokens metadata data)
   tokens?
   (metadata get-metadata) ; <line>
-  (data get-data) ; (key kv ... value)
+  (data get-data) ; (property-name (parameter-name . parameter-value) ... content)
   )
 
 ;; <line> → <tokens>
 (define (tokenize line-obj)
-  (define line (get-string line-obj))
-  (define colon-idx (string-index line #\:))
-  ;; TODO fail clearer when colon-idx is false (e.g. malformed line)
-  (define semi-idxs
-    (let loop ((idx 0))
-      (aif (string-index line #\; idx colon-idx)
-           (cons it (loop (1+ it)))
-           (list colon-idx (string-length line)))))
   (make-tokens
-    line-obj
-    (map (lambda (start end)
-           (substring line (1+ start) end))
-         (cons -1 semi-idxs)
-         semi-idxs)))
+   line-obj
+   (call-with-input-string (get-string line-obj)
+     (lambda (p)
+       (define property-name (read-delimited ";:" p 'peek))
+       (cons property-name
+             (case (read-char p)
+               ((#\:) (list (read-delimited "" p)))
+               ((#\;)
+                (let loop ()
+                  (define parameter-name (read-delimited "=" p))
+                  (define parameter-value
+                    (if (char=? #\" (peek-char p))
+                        (begin (read-char p)
+                               (read-delimited "\"" p))
+                        (read-delimited ";:" p 'peek)))
+                  (cons (cons parameter-name parameter-value)
+                        (case (read-char p)
+                          ((#\:) (list (read-delimited "" p)))
+                          ((#\;) (loop))))))))))))
 
 
 (define multi-valued-properties
@@ -346,7 +367,7 @@
   (let loop ((rem (string->list str))
              (str '())
              (done '()))
-    ((@ (ice-9 match) match) rem
+    (match rem
       (() (reverse (cons (reverse-list->string str) done)))
       ((#\\ c rest ...) (loop rest (cons* c #\\ str)
                               done))
@@ -426,25 +447,6 @@
            (vline params: (table-remove params 'VALUE)
                   value: value))))))
 
-;; an itemline is the data field of the <tokens> object
-;; (parse-itemline '("DTEND"  "20200407T130000"))
-;; => DTEND
-;; => "20200407T130000"
-;; => #.(table)
-(define (parse-itemline itemline)
-  ;; (define parameters (make-hash-table))
-  (define-values (parameters value) (init+last (cdr itemline)))
-  (values
-   (string->symbol (car itemline))
-   value
-   (fold (lambda (parameter table)
-           (let ((idx (string-index parameter #\=)))
-             ;; TODO lists in parameters
-             (table-put table (string->symbol (substring parameter 0 idx))
-                        (substring parameter (1+ idx)))))
-         (table)
-         parameters)))
-
 (define ((warning-handler-proc token) fmt . args)
   (let ((linedata (get-metadata token)))
     (format
@@ -462,79 +464,48 @@
 
      )))
 
+(define (update-property stack key vlines)
+  (modify stack (lens-compose car* vcomponent-properties*
+                              (table-focus key))
+          (lambda (focus)
+            (just (append (unjust focus '())
+                          vlines)))))
+
 
 ;; (list <tokens>) → <vcomponent>
-;; TODO if the calendar stream ends pre-maturely (for example, a
-;; missing END:VCALENDAR), then the current stack is returned instead...
 (define (parse lst)
-  (let loop ((lst lst)                  ; Remeaining tokens
-             (stack '()))               ; Stack of vcomponent
-    (cond ((and (null? lst) (vcomponent? stack))
-           ;; return final component
-           stack)
-          ((null? lst)
-           ;; TODO try to save last token, to give context where file
-           ;; ended pre-maturely
-           (scm-error 'misc-error "parse"
-                      "Premature end of iCalendar stream"
-                      '() #f))
-          (else
-           (let* ((token (car lst))
-                  (head (get-data token)))
+  (let loop ((lst lst)                 ; Remaining tokens
+             (stack (list (vcomponent type: 'DUMMY))))              ; Stack of vcomponent
+    (if (null? lst)
+        (-> stack car vcomponent-children car)
+        (parameterize ((warning-handler (warning-handler-proc (car lst))))
+          (match (get-data (car lst))
+            (("BEGIN" type)
+             (loop (cdr lst)
+                   (cons (vcomponent type: (string->symbol type))
+                         stack)))
+
+            (("END" _)
+             ;; TODO check that the correct object was closed
+             (loop (cdr lst)
+                   (cons (add-child (cadr stack) (car stack))
+                         (cddr stack))))
+
+            ((key (parameter-key . parameter-value) ... value)
+             (define params (fold (lambda (k v params) (table-put params (string->symbol k) v))
+                                  (table)
+                                  parameter-key parameter-value))
+
              (catch 'parse-error
                (lambda ()
-                 (parameterize ((warning-handler (warning-handler-proc token)))
-                   (cond [(string=? "BEGIN" (car head))
-                          (loop (cdr lst)
-                                (cons (vcomponent type: (string->symbol (cadr head)))
-                                      stack))]
-                         [(string=? "END" (car head))
-                          ;; TODO check that the correct object was closed
-                          (loop (cdr lst)
-                                (if (null? (cdr stack))
-                                    ;; return
-                                    (car stack)
-                                    (cons (add-child (cadr stack) (car stack))
-                                          (cddr stack))))]
-                         [else
-                          (let ((k value params (parse-itemline head)))
-                            (loop (cdr lst)
-                                  (let ((vlines (build-vlines k value params)))
-                                    (modify stack (lens-compose car* vcomponent-properties*
-                                                                (table-focus k))
-                                            (lambda (focus)
-                                              (if (just? focus)
-                                                  (just (append (from-just focus)
-                                                                vlines))
-                                                  (just vlines)))))))])))
+                 (loop (cdr lst)
+                       (update-property stack
+                                        (string->symbol key)
+                                        (build-vlines (string->symbol key)
+                                                      value params))))
 
                (lambda (err proc fmt fmt-args data)
-                 (let ((linedata (get-metadata token)))
-                   (display (format
-                             #f
-                             ;; arguments
-                             ;; linedata
-                             ;; ~?
-                             ;; source line
-                             ;; source file
-                             (G_ "ERROR parse error around ~a
-  ~?
-  line ~a ~a
-  Defaulting to string~%")
-                             (get-string linedata)
-                             fmt fmt-args
-                             (get-line linedata)
-                             (get-file linedata))
-                            (current-error-port))
-
-                   (let ((k value params (parse-itemline head)))
-                     (loop (cdr lst)
-                           (modify stack (lens-compose car* vcomponent-properties* (table-focus k))
-                                   (lambda (focus)
-                                     (define vlines
-                                       (list (vline value: value
-                                                    params: params)))
-                                     (if (just? focus)
-                                         (just (append (from-just focus)
-                                                       vlines))
-                                         (just vlines))))))))))))))
+                 (warning "Marking field as `unknown`")
+                 (loop (cdr lst)
+                       (update-property stack (list (vline value: (unknown data)
+                                                           params: params))))))))))))
