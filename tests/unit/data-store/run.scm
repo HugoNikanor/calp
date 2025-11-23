@@ -37,7 +37,7 @@
              (call-with-input-file
                  (path-append
                   (dirname (dirname (current-filename)))
-                  "formats" file)
+                  "media-type" file)
                (parser
                 (@ (vcomponent media-type text calendar) format))))))
 

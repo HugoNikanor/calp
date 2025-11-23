@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xcal:icalendar xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0">
+ <xcal:vcalendar>
+  <xcal:properties>
+   <xcal:version>
+    <xcal:text>2.0</xcal:text>
+   </xcal:version>
+  </xcal:properties>
+  <xcal:components>
+   <xcal:vevent>
+    <xcal:properties>
+     <xcal:summary>
+      <xcal:parameters>
+       <xcal:x-param>
+        <xcal:text>Quoted; sure, thing!</xcal:text>
+       </xcal:x-param>
+      </xcal:parameters>
+      <xcal:text>See parameter</xcal:text>
+     </xcal:summary>
+    </xcal:properties>
+   </xcal:vevent>
+  </xcal:components>
+ </xcal:vcalendar>
+</xcal:icalendar>

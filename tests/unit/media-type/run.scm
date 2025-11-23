@@ -39,6 +39,10 @@
 ;;; TODO validate event for correctness here:
 ;;; - All fields have expected values
 
+;;; TODO Double quote symbols (ASCII 0x22) CAN NEVER appear in
+;;; parameters, since they lack any escape mechanism. This technically
+;;; only applies to iCalendar itself, since all other formats are assumed
+;;; to have real escape rules.
 
 
 
@@ -80,6 +84,7 @@
 (for file in (list
               "hand-written/target"
               "hand-written/types"
+              "hand-written/quoted-params"
               "rfc-provided/ex1"
               "rfc-provided/ex2"
               ;; "hand-written/monetary"
