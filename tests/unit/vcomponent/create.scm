@@ -37,8 +37,8 @@
 (test-group "Empty component"
  (let ((ev (create-vcomponent 'TEST)))
    (test-equal 'TEST (type ev))
-   (test-equal '() (vcomponent-children ev))
-   (test-equal '() (vcomponent-properties ev))))
+   (test-equal '() (table->list (vcomponent-children ev)))
+   (test-equal '() (table->list (vcomponent-properties ev)))))
 
 (test-group "Component with properties, but no children"
  (let ((ev (create-vcomponent 'TEST
@@ -50,7 +50,7 @@
   (let* ((child (create-vcomponent 'CHILD))
          (ev (create-vcomponent 'TEST
                         (list child))))
-    (test-equal '() (vcomponent-properties ev))
+    (test-equal '() (table->list (vcomponent-properties ev)))
     (test-equal 1 (length (vcomponent-children ev)))
     ; (test-eq child (car (vcomponent-children ev)))
     ))

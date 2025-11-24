@@ -15,11 +15,12 @@
   :use-module ((sxml namespaced) :select (sxml->namespaced-sxml))
   :use-module ((calp namespaces) :select (xcal))
   :use-module ((hnh util) :select (->))
+  :use-module ((hnh util table) :select (table))
   :use-module (datetime)
   :use-module ((vcomponent create) :select (vcalendar vevent with-parameters))
   :use-module ((hnh util exceptions)
                :select (warnings-are-errors warning-handler))
-  :use-module ((vcomponent media-type text calendar parse)
+  :use-module ((vcomponent media-type text calendar parse-semantics)
                :select (parse-recurrence-rule))
   :use-module ((vcomponent type recurrence)
                :select (
@@ -33,10 +34,10 @@
 ;;; Test that basic parsing or recurrence rules work.
 
 (test-equal (recur-rule freq: 'HOURLY wkst: mon interval: 1)
-  (parse-recurrence-rule "FREQ=HOURLY"))
+  (parse-recurrence-rule (table) "FREQ=HOURLY"))
 
 (test-equal (recur-rule freq: 'HOURLY count: 3 interval: 1 wkst: mon)
-  (parse-recurrence-rule "FREQ=HOURLY;COUNT=3"))
+  (parse-recurrence-rule (table) "FREQ=HOURLY;COUNT=3"))
 
 ;;; Test that recurrence rule parsing fails where appropriate
 
@@ -44,13 +45,13 @@
                (warning-handler (lambda _ "")))
   (test-error "Invalid FREQ"
     'wrong-type-arg
-    (parse-recurrence-rule "FREQ=ERR;COUNT=3"))
+    (parse-recurrence-rule (table) "FREQ=ERR;COUNT=3"))
   (test-error "Negative COUNT"
     'wrong-type-arg
-    (parse-recurrence-rule "FREQ=HOURLY;COUNT=-1"))
+    (parse-recurrence-rule (table) "FREQ=HOURLY;COUNT=-1"))
   (test-error "Invalid COUNT"
     'wrong-type-arg
-    (parse-recurrence-rule "FREQ=HOURLY;COUNT=err")))
+    (parse-recurrence-rule (table) "FREQ=HOURLY;COUNT=err")))
 
 ;;; Test that basic recurrence works
 ;;; also see the neighbour test file recurrence.scm for more tests.

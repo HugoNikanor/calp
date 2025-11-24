@@ -23,10 +23,10 @@
               x-key: (with-parameters a: "1" b: "2"
                                       "Some text")))
 
-(test-equal '("1")
+(test-equal "1"
   (get v (prop* 'X-KEY) just* car* (param* 'A) just*))
 
-(test-equal '("2")
+(test-equal "2"
   (get v (prop* 'X-KEY) just* car* (param* 'A) just*))
 
 (test-equal (nothing)

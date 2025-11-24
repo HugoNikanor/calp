@@ -434,7 +434,7 @@ VALUES (?, ?, ?)
      (cons 'PERIOD (lambda (p v)
                      ((@ (vcomponent media-type text calendar parse) parse-period)
                       p v "~Y-~m-~d ~H:~M:~S~Z")))
-     (cons 'RECUR (@ (vcomponent media-type text calendar parse) parse-recurrence-rule))
+     (cons 'RECUR (@ (vcomponent media-type text calendar parse-semantics) parse-recurrence-rule))
 
      (cons 'TEXT (lambda (_ v) v))
 
@@ -457,7 +457,7 @@ VALUES (?, ?, ?)
                                (string-split v #\;))))
 
      (cons 'X-REQUEST-STATUS
-           (lambda (_ v) ((@ (vcomponent media-type text calendar parse) parse-request-status) v)))
+           (lambda (_ v) ((@ (vcomponent media-type text calendar parse-semantics) parse-request-status) v)))
 
 
      )

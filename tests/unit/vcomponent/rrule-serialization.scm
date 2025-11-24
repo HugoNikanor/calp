@@ -3,12 +3,14 @@
   :use-module (srfi srfi-88)
   :use-module ((vcomponent type recurrence internal)
                :select (byday))
-  :use-module ((vcomponent media-type text calendar parse)
+  :use-module ((vcomponent media-type text calendar parse-semantics)
                :select (parse-recurrence-rule))
   :use-module ((vcomponent media-type text calendar output)
                :select (recur-rule->rrule-string))
   :use-module ((vcomponent media-type application calendar+xml output)
                :select (recur-rule->rrule-sxml))
+  :use-module ((hnh util table) :select (table))
+  :use-module ((vcomponent type recurrence parse) :select (parse-day-spec))
   :use-module ((ice-9 peg) :select (keyword-flatten)))
 
 (test-equal
@@ -42,7 +44,7 @@
   (@@ (vcomponent media-type text calendar output)
       field->string))
 
-(let ((rule (parse-recurrence-rule "FREQ=WEEKLY;BYDAY=MO,TU,WE")))
+(let ((rule (parse-recurrence-rule (table) "FREQ=WEEKLY;BYDAY=MO,TU,WE")))
   (test-equal
     "Direct return of parsed value"
     "MO,TU,WE"
@@ -56,7 +58,7 @@
         '(interval byday wkst freq)
         (recur-rule->rrule-sxml rule)))))
 
-(let ((rule (parse-recurrence-rule "FREQ=WEEKLY;BYDAY=+1MO,1TU,-2FR")))
+(let ((rule (parse-recurrence-rule (table) "FREQ=WEEKLY;BYDAY=+1MO,1TU,-2FR")))
   (test-equal
     "Direct return of parsed value"
     "1MO,1TU,-2FR"

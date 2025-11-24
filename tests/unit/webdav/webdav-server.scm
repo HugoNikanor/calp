@@ -86,7 +86,6 @@
              ((xml webdav 'prop)
               ((xml webdav 'supportedlock))
               ((xml webdav 'resourcetype) ((xml webdav 'collection)))
-              ((xml webdav 'getcontenttype) "application/octet-stream")
               ((xml webdav 'getcontentlength) "0")
               ((xml webdav 'creationdate) (datetime->string (current-datetime)
                                                             "~Y-~m-~dT~H:~M:~SZ")))

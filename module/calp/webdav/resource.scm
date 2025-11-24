@@ -401,8 +401,9 @@
 (define-method (create-resource-copy!
                 (source <resource>) (destination <resource>) name)
   (let ((resource (create-resource! destination name)))
-    ;; TODO headers when getting source?
-    (set-content! resource (content source) '())
+    ;; TODO headers when getting source!
+    ;; TODO headers when setting resource?
+    (set-content! resource (content source '()) '())
     (for-each (lambda (prop) (set-property! resource prop))
               (dead-properties source))))
 

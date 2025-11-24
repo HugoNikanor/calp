@@ -26,7 +26,7 @@
 
 (define resource (make <virtual-resource>
                    ;; local-path: '("")
-                   name: "*root"
+                   ;; name: "*root"
                    content: #vu8(1 2 3 4)
                    creation-time: dt))
 

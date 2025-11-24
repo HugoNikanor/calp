@@ -312,11 +312,10 @@ Event must have the DTSTART and DTEND protperty set."
                    (set! last-until (zone-entry-until zone-entry)
                          last-offset (zone-entry-stdoff zone-entry))
                    (add-child vtimezone component))
-                 ])
-          )
-        (set (vcomponent type: 'VTIMEZONE)
-             (prop* 'TZID)
-             (vline value: zone-name))
+                 ]))
+
+        (-> (vcomponent type: 'VTIMEZONE)
+            (set (prop* 'TZID) (just (vline value: zone-name))))
 
         (filter (relevant-zone-entry? event)
                 (get-zone zoneinfo zone-name))))

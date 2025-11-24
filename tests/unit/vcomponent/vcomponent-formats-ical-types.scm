@@ -5,6 +5,7 @@
   :use-module ((vcomponent media-type text calendar parse)
                :select (get-parser))
   :use-module (hnh util table)
+  :use-module (web uri)
   :use-module ((datetime) :select (date time datetime)))
 
 
@@ -110,7 +111,7 @@
 
 (define parse-recur (get-parser 'RECUR))
 
-;; (test-eq (@ (vcomponent type recurrence parse) parse-recurrence-rule))
+;; (test-eq (@ (vcomponent type recurrence parse-semantics) parse-recurrence-rule))
 
 
 

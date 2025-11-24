@@ -7,6 +7,7 @@
   :use-module (hnh util type)
   :use-module (hnh util table)
   :use-module (hnh util lens)
+  :use-module (hnh util optional)
   :use-module (sxml namespaced)
   :use-module (sxml namespaced util)
   :use-module (calp webdav resource)
@@ -79,8 +80,8 @@
   (format port "#<<virtual-resource> creation-date=~s, content=~s collection=~s>"
           (creation-date self)
           (catch 'decoding-error
-            (lambda () (utf8->string (content self)))
-            (lambda _ (content self)))
+            (lambda () (utf8->string (content* self)))
+            (lambda _ (content* self)))
           (collection? self)))
 
 (define (make-resource . args)
@@ -133,7 +134,7 @@
     (set! (dead-properties% resource)
       (set (dead-properties% resource)
            (table-focus (xml-element-hash-key value))
-           value))))
+           (just value)))))
 
 (define-method (remove-dead-property!! (resource <virtual-resource>) xml-tag)
   (typecheck xml-tag xml-element?)
