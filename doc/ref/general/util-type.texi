@@ -96,3 +96,48 @@ is much clearer than
 Convenience type, accepting any value.
 @end defun
 
+
+@subsection Named Types
+
+Named types are provided by the module @code{(hnh util named-type)},
+to avoid loops in the dependency graph.
+
+@defmac named-type type
+Due to how @code{typecheck} works, the fancy type combinators can only
+be used without explicitly passing along a variable when deployed
+within the @code{typecheck} form@footnote{@code{(hnh util object)}
+gets around this by just expanding into @code{typecheck} forms}.
+
+Sometimes you however need higher ordered types, the following works,
+but reports @code{my-type} as the invalid type, which is less than
+helpful.
+@example
+(define my-type (lambda (x) (list-of x string?)))
+(typecheck '("") my-type)
+@end example
+
+Instead, named types exists, which does the macro expansion usually
+done in @code{typecheck} ahead of time, and gives a record which can
+later be passed to typecheck (double parenthesis due to how
+typecheck expands), which does exactly what the inline version would
+have done:
+
+@example
+(define my-type (named-type (list-of string?))
+(typecheck '("")
+           ((named-type-type my-type))
+           (current-procedure-name)
+           (named-type-name my-type))
+@end example
+@end defmac
+
+@defun named-type? x
+@end defun
+
+@defun named-type-name named-type
+Returns the source expression, quoted.
+@end defun
+
+@defun named-type-type named-type
+Returns a procedure matching the declared type
+@end defun
