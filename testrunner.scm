@@ -275,12 +275,12 @@ Flags:
   Limit execution to a single test suite. Should be given as a
   directory, and that directory should contain a number of test
   files. See files in tests/unit for available suites.
-  Mutualy exclusive with --file.
+  Can be given multiple times, and alongside --file
 
   Example: tests/unit/general
 --file filename
   Only runs tests from the given file.
-  Mutually exlusive with --suite.
+  Can be given multiple times, and used alongside --suite
 --list|-l
   Don't run test, but list all files which would have been ran.
 --nice increment
@@ -329,11 +329,20 @@ Flags:
     (verbose? #t))
 
   (define test-files
-    (cond ((option-ref options 'suite #f)
-           => (lambda (suite)
-                (glob (path-append suite "*.scm"))))
-          ((option-ref options 'file #f) => list)
-          (else (glob "tests/unit/**/*.scm"))))
+    (let ((selected
+           (let loop ((options args))
+             (cond ((null? options) '())
+                   ((string=? "--file" (car options))
+                    (cons (cadr options)
+                          (loop (cddr options))))
+                   ((string=? "--suite" (car options))
+                    (append (glob (path-append (cadr options) "*.scm"))
+                            (loop (cddr options))))
+                   (else (loop (cdr options)))))))
+      (if (null? selected)
+          (glob "tests/unit/**/*.scm")
+          selected)))
+
 
   (nice (string->number (option-ref options 'nice "10")))
 
