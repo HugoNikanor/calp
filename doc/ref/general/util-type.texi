@@ -65,7 +65,7 @@ rather, spliced into another macro).
 Also used if new ``primitives'' are to be added, such as list-of.
 @end defmac
 
-@defmac typecheck variable type-clause [procedure-name=(current-procedure-name)]
+@defmac typecheck variable type-clause [procedure-name=(current-procedure-name)] [type-source=(quote type-clause)]
 Checks @var{variable} against @var{type-clause}, and raises
 @code{'wrong-type-arg} if it fails. @var{procedure-name} is used
 as the calling procedure for @code{scm-error}.

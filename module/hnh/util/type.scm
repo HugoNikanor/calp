@@ -52,12 +52,16 @@
   (syntax-rules ()
     ((_ expr type-clause)
      (let ((procedure-name (current-procedure-name)))
-       (typecheck expr type-clause procedure-name)))
+       (typecheck expr type-clause procedure-name (quote type-clause))))
+
     ((_ expr type-clause procedure-name)
+     (typecheck expr type-clause procedure-name (quote type-clause)))
+
+    ((_ expr type-clause procedure-name type-source)
      (unless (build-validator-body expr type-clause)
        (scm-error 'wrong-type-arg procedure-name
                   "The expression `~s' doesn't satisfy the type `~s'. Evaluated to ~s"
-                  (list (quote expr) (quote type-clause) expr)
+                  (list (quote expr) type-source expr)
                   #f)))))
 
 ;;; For use in typechecks, since
