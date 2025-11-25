@@ -2,7 +2,8 @@
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
   :use-module ((hnh util) :select (->))
-  :use-module (hnh util table))
+  :use-module (hnh util table)
+  :use-module (hnh util named-type))
 
 (test-assert "Empty tables are empty" (null? (table->list (table))))
 
@@ -82,7 +83,7 @@
 ;;; TODO test alist->table
 
 (test-group "Typed tables"
-  (define t (table string?))
+  (define t (table (named-type string?)))
   (test-equal "Successfull insert" '((a . "Hello"))
     (table->list (table-put t 'a "Hello")))
 

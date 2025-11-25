@@ -13,6 +13,7 @@
   :use-module (hnh util object)
   :use-module (hnh util optional)
   :use-module (hnh util type)
+  :use-module (hnh util named-type)
   :use-module (ice-9 curried-definitions)
   :export ((make-tree . table)
            (tree-get . table-get)
@@ -35,7 +36,7 @@
   (string< (symbol->string args) ...))
 
 (define (serialize-tree t)
-  `(-> (table)
+  `(-> (table ,@(if (type t) (list (serialize (type t))) '()))
        ,@(map (lambda (p) `(table-put ,(serialize (car p)) ,(serialize (cdr p))))
               (tree->list t))))
 
@@ -45,20 +46,23 @@
                              (lambda* (key: key value type
                                             (left (tree-terminal type: type))
                                             (right (tree-terminal type: type)))
-                               ;; (format #t "args: ~s~%" )
                                (type-check key value left right type)
                                (when type
-                                 (typecheck value type))
+                                 (typecheck value ((named-type-type type))
+                                            "tree-node" (named-type-name type)))
                                (constructor key value left right type))))
   (key type: symbol?)
   value
   (left type: tree? default: (tree-terminal))
   (right type: tree? default: (tree-terminal))
-  (node-type type: (or procedure? false?) default: #f keyword: type))
+  (node-type type: (or false? named-type?) default: #f keyword: type))
 
-;; Type tagged null
-(define-type (tree-terminal serializer: (lambda _ '(table)))
-  (terminal-type type: (or procedure? false?) default: #f keyword: type))
+;; Tree node without content. Holds a reference to the type, which it
+;; will share when added to
+(define-type (tree-terminal
+              serializer:
+              (lambda (t) `(table ,@(if (type t) (list (serialize (type t))) '()))))
+  (terminal-type type: (or false? named-type?) default: #f keyword: type))
 
 ;; Wrapped for better error messages
 (define* (make-tree optional: type) (tree-terminal type: type))
@@ -90,13 +94,13 @@
                                   #f)))))
         ((eq? k (key tree))
          (let ((ret (op (just (value tree)))))
-          (cond ((just? ret) (value tree (from-just ret)))
-                ((nothing? ret) (type (merge-trees (left tree) (right tree))
-                                      (just (type tree))))
-                (else (scm-error 'misc-error "tree-focus"
-                                 "Non-wrapped value returned to tree-focus: ~s"
-                                 (list ret)
-                                 #f)))))
+           (cond ((just? ret) (value tree (from-just ret)))
+                 ((nothing? ret) (type (merge-trees (left tree) (right tree))
+                                       (just (type tree))))
+                 (else (scm-error 'misc-error "tree-focus"
+                                  "Non-wrapped value returned to tree-focus: ~s"
+                                  (list ret)
+                                  #f)))))
         (else
          (modify tree (lens-compose (if (symbol<? k (key tree))
                                         left* right*)
