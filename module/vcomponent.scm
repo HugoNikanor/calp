@@ -5,6 +5,7 @@
   :use-module (hnh util optional)
   :use-module (hnh util table)
   :use-module (hnh util type)
+  :use-module (hnh util named-type)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -54,12 +55,10 @@
 (define-type (vcomponent ; serializer: serialize-vcomponent
               )
   (type type: symbol?)
-  ;; (table-of (non-empty-list-of vline?))
-  (vcomponent-properties default: (table
-                                   (lambda (l)
-                                     (and (list? l)
-                                          (every vline? l))))
+  (vcomponent-properties default: (table (named-type (non-empty-list-of vline?)))
                          type: table?
+                         ;; TODO remove this keyword, since it allows to create
+                         ;; tables without the typecheck
                          keyword: properties)
   (vcomponent-children default: '() type: (list-of vcomponent?)
                        keyword: children))
