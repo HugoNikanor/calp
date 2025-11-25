@@ -2,9 +2,11 @@
   :use-module ((srfi srfi-1) :select (every))
   :export (build-validator-body
            list-of pair-of pair-of* tuple-of
-           false?
+           non-empty-list-of
+           false? any-type
            typecheck
-           current-procedure-name))
+           current-procedure-name
+           ))
 
 ;;; TODO could this be simplified due to how build-validator-body works?
 (define-syntax list-of
@@ -15,6 +17,9 @@
     ((_ variable rule)
      (and (list? variable)
           (every rule variable)))))
+
+(define-syntax-rule (non-empty-list-of v p)
+  (build-validator-body v (pair-of p (list-of p))))
 
 (define-syntax-rule (pair-of variable a b)
   (and (pair? variable)
@@ -60,3 +65,6 @@
 ;;; is much clearer than
 ;;;   (or not integer?)
 (define false? not)
+
+;;; For compound types where any field is ok
+(define any-type (const #t))

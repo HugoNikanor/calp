@@ -32,6 +32,10 @@ we would otherwise have one hell of a namespace conflict}
 Checks if @var{variable} is a list, and that every element satisfies type-clause.
 @end defmac
 
+@defmac non-empty-list-of variable type-clause
+Alias for @code{(pair-of @var{type-clause} (list-of @var{type-clause}))}.
+@end defmac
+
 @defmac pair-of variable car-type-clause cdr-type-clause
 Check if @var{variable} is a cons-pair, and that the car satisfies
 @var{car-type-clause}, and that the cdr satisfies @var{cdr-type-clause}.
@@ -86,3 +90,9 @@ is much clearer than
 (or not integer?)
 @end example
 @end defun
+
+
+@defun any-type
+Convenience type, accepting any value.
+@end defun
+
