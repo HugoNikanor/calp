@@ -138,13 +138,16 @@
   (test-runner-on-group-begin! runner
     ;; count is number of #f
     (lambda (runner name count)
-      (if (<= depth 0)
-          (format #t "~a ~a ~a~%"
-                  (make-string 10 #\=)
-                  name
-                  (make-string 10 #\=))
-          (when (verbose?)
-            (format #t "~a~a~%" (make-string (* depth 2) #\space) name)))
+      (cond ((<= depth 0)
+              (format #t "~a ~a ~a~%"
+                      (make-string 10 #\=)
+                      name
+                      (make-string 10 #\=)))
+            ((verbose?)
+             (format #t "~a~a~%" (make-string (* depth 2) #\space) name))
+            ((= depth 1)
+             (format #t "~a: " name))
+            (else #f))
       (set! depth (1+ depth))))
 
   (test-runner-on-group-end! runner
