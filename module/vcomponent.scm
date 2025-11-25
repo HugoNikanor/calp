@@ -29,10 +29,7 @@
            param*
 
            add-child
-
-           set-prop
-                 )
-   )
+           ))
 
 (define (serialize-vline v)
   `(vline value: ,(serialize (vline-value v))
@@ -126,58 +123,6 @@
 
 (define (extract1 key)
   (lambda (e) (prop1 e key)))
-
-;;; TODO actually write the prop1* lens
-;;; The "obvious" implementation of
-;;;     (define (prop1* key) (lens-compose (prop* key) just* car*))
-;;; works as expected for `get`(`/preview`), but doesn't work for the
-;;; modify case, since the `just*` can't focus on nothing.
-
-;;; When accessed, focuses (optional-of vline?)
-;;; If `just?` is returned, replace the car of the list with the value
-;;; (or create it if it didn't exist before)
-;;; If `nothing?` is returned,
-;; (define (((prop1* key) component) op)
-;;   (modify component (prop* key)
-;;           (lambda (focus)
-;;             (if (nothing? focus)
-;;                 (cond ((op #f) => (compose just list))
-;;                       (else (nothing)))
-;;                 (cond ((op (car (from-just focus)))
-;;                        => (lambda (n) (set focus (lens-compose just* car*) n)))
-;;                       (else
-;;                        (let ((old (from-just focus)))
-;;                          (if (null? (cdr old))
-;;                              (nothing)
-;;                              ;; Is this sensible behaviour?
-;;                              ;; Removing the first element
-;;                              (modify focus just* cdr)))))))))
-
-
-;; (define (set-prop1 component key value)
-;;   (typecheck value vline?)
-;;   (modify component (prop* key)
-;;           (lambda (field)
-;;             (cond ((just? field)
-;;                    (set field (lens-compose just* car*)
-;;                         value))
-;;                   (else (just (list value)))))))
-
-(define (set-prop component key values)
-  (typecheck values (list-of vline?))
-  (set component (prop* key)
-       (just values)))
-
-
-;; (define (children vcomponent)
-;;   (vcomponent-children vcomponent))
-
-
-;; (define (add-child parent child)
-;;   (modify parent vcomponent-children*
-;;           (lambda (ch) (cons (modify child parent* parent) ch))))
-
-;;; remove-property
 
 (define (param* key)
   (lens-compose vline-parameters* (table-focus key)))
