@@ -23,6 +23,7 @@
            vcomponent-equal?
            vcomponent-diff
 
+           prop%
            prop*
            prop1
            extract1
@@ -115,6 +116,11 @@
 ;;; If `just` an object is returned, it MUST be a non-empty list of vlines.
 (define (prop* key)
   (lens-compose vcomponent-properties* (table-focus key)))
+
+;;; Retrive all vlines for a key, or #f if not present.
+;;; TODO rename this to simply `prop`, once all instances of the old `prop` is gone
+(define (prop% component key)
+  (unjust (get component (prop* key)) #f))
 
 (define (prop1 component key)
   (unjust (get/preview component (prop* key) just* car* vline-value*)
