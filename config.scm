@@ -14,7 +14,7 @@
   ((@ (calp html config) edit-mode) #t)
   )
 
-((@ (vcomponent config) calendar-files) (glob "~/.local/var/cal/*"))
+;; ((@ (vcomponent config) calendar-files) (glob "~/.local/var/cal/*"))
 
 (define my-courses
   '((TSEA82 . "Datorteknik")

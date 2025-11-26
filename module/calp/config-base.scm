@@ -12,5 +12,7 @@
             (srfi srfi-88)
             (datetime)
             (vcomponent)
-            (glob)
+            ;; (glob) is really slow (0.3s) to load,
+            ;; Unclear if it's due to the C parser not expanding properly during macro expansion, or if it's hard to find the actual bindings.
+            ;; (glob)
             ))
