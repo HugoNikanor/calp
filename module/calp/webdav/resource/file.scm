@@ -150,10 +150,16 @@
                (throw 'http 403 (format #f "Can't access content of ~s files" type))))))
 
 (define-method (set-content! (self <file-resource>) data headers)
-  (cond ((bytevector? data)
-         (call-with-output-file (path self)
-           (lambda (port) (put-bytevector port data)))
-         #f)
+  (cond ((collection? self)
+         ;; "Method Not Allowed", since filesystems usually lacks the
+         ;; ability to store data in the directory file. It's also
+         ;; extra needed since we support "virtual" content on GET for
+         ;; collections.
+         (throw 'http 405))
+   ((bytevector? data)
+    (call-with-output-file (path self)
+      (lambda (port) (put-bytevector port data)))
+    #f)
         ((string? data)
          (call-with-output-file (path self)
            (lambda (port) (put-string port data)))
