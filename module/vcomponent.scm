@@ -87,9 +87,7 @@
 (define-type (vcomponent serializer: serialize-vcomponent)
   (type type: symbol?)
   (vcomponent-properties default: (table (named-type (non-empty-list-of vline?)))
-                         type: table?
-                         ;; TODO remove this keyword, since it allows to create
-                         ;; tables without the typecheck
+                         type: (table-of (non-empty-list-of vline?))
                          keyword: properties)
   (vcomponent-children default: '() type: (list-of vcomponent?)
                        keyword: children))

@@ -141,23 +141,24 @@
 (define (parse/component data)
   (match data
     (#(type properties children)
-     (vcomponent type: (-> type string-upcase string->symbol)
-                 properties:
-                 (vector-fold
-                  (match-lambda*
-                    ((_ tbl #(field params type values ...))
-                     (let ((key (-> field string-upcase string->symbol)))
-                       (modify tbl (table-focus key)
-                               (lambda (m)
-                                 (just
-                                  (append
-                                   (map (lambda (v) (parse-value
-                                                key
-                                                (-> type string-upcase string->symbol)
-                                                (parse-params params)
-                                                v))
-                                        values)
-                                   (unjust m '()))))))))
-                  (table)
-                  properties)
-                 children: (map parse/component (vector->list children))))))
+     (modify
+      (vcomponent type: (-> type string-upcase string->symbol)
+                  children: (map parse/component (vector->list children)))
+      vcomponent-properties*
+      (lambda (prop-table)
+        (vector-fold
+         (match-lambda*
+           ((_ tbl #(field params type values ...))
+            (let ((key (-> field string-upcase string->symbol)))
+              (modify tbl (table-focus key)
+                      (lambda (m)
+                        (just
+                         (append
+                          (map (lambda (v) (parse-value
+                                       key
+                                       (-> type string-upcase string->symbol)
+                                       (parse-params params)
+                                       v))
+                               values)
+                          (unjust m '()))))))))
+         prop-table properties))))))

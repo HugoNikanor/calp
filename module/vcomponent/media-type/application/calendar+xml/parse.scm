@@ -209,75 +209,76 @@
                "Non xcal component given as object root: ~s"
                (list (xml-element-hash-key data)) #f))
 
-  (vcomponent
-   type: (upcase-symbol (xml-element-tagname data))
-   properties:
-   (cond ((find-child ((xml xcal 'properties))
-                      (xml-element-children data))
-          => (lambda (el)
-               (fold
-                (lambda (el props)
-                  (if (eq? xcal (xml-element-namespace el))
-                      (let ((values
-                             (case (xml-element-tagname el)
-                               ;; TODO vline parameters for the special types
-                               ((geo)
-                                (define (f x)
-                                  (string->number
-                                   (xml-text-content
-                                    (find-child ((xml xcal x))
-                                                (xml-element-children el)))))
-                                (list
-                                 (vline value:
-                                        (geo y: (f 'latitude)
-                                             x: (f 'longitude)))))
-                               ((request-status)
-                                (list
-                                 (vline value:
-                                        (request-status
-                                         statcode: (map string->number
-                                                        (string-split
-                                                         (xml-text-content
-                                                          (find-child ((xml xcal 'code))
-                                                                      (xml-element-children el)))
-                                                         #\.))
-                                         statdesc: (xml-text-content
-                                                    (find-child ((xml xcal 'description))
-                                                                (xml-element-children el)))
-                                         extdata: (and=> (find-child ((xml xcal 'data))
-                                                                     (xml-element-children el))
-                                                         xml-text-content)))))
-                               ((version)
-                                (list
-                                 (vline
-                                  value:
-                                  (apply
-                                   (case-lambda ((min max)
-                                                 (vcalendar-version min: min max: max))
-                                                ((max)
-                                                 (vcalendar-version max: max)))
-                                   (string-split (xml-text-content el) #\;)))))
+  (modify
+   (vcomponent
+    type: (upcase-symbol (xml-element-tagname data))
+    children: (cond ((find-child ((xml xcal 'components))
+                                 (xml-element-children data))
+                     => (lambda (el) (map sxml->vcomponent/object
+                                     (xml-element-children el))))
+                    (else '())))
+   vcomponent-properties*
+   (lambda (prop-table)
+     (cond ((find-child ((xml xcal 'properties))
+                        (xml-element-children data))
+            => (lambda (el)
+                 (fold
+                  (lambda (el props)
+                    (if (eq? xcal (xml-element-namespace el))
+                        (let ((values
+                               (case (xml-element-tagname el)
+                                 ;; TODO vline parameters for the special types
+                                 ((geo)
+                                  (define (f x)
+                                    (string->number
+                                     (xml-text-content
+                                      (find-child ((xml xcal x))
+                                                  (xml-element-children el)))))
+                                  (list
+                                   (vline value:
+                                          (geo y: (f 'latitude)
+                                               x: (f 'longitude)))))
+                                 ((request-status)
+                                  (list
+                                   (vline value:
+                                          (request-status
+                                           statcode: (map string->number
+                                                          (string-split
+                                                           (xml-text-content
+                                                            (find-child ((xml xcal 'code))
+                                                                        (xml-element-children el)))
+                                                           #\.))
+                                           statdesc: (xml-text-content
+                                                      (find-child ((xml xcal 'description))
+                                                                  (xml-element-children el)))
+                                           extdata: (and=> (find-child ((xml xcal 'data))
+                                                                       (xml-element-children el))
+                                                           xml-text-content)))))
+                                 ((version)
+                                  (list
+                                   (vline
+                                    value:
+                                    (apply
+                                     (case-lambda ((min max)
+                                                   (vcalendar-version min: min max: max))
+                                                  ((max)
+                                                   (vcalendar-version max: max)))
+                                     (string-split (xml-text-content el) #\;)))))
 
-                               (else
-                                (sxml->vlines el)))))
+                                 (else
+                                  (sxml->vlines el)))))
 
+                          (modify props (table-focus (upcase-symbol (xml-element-tagname el)))
+                                  (lambda (m) (just (append values (unjust m '()))))))
 
-                        (modify props (table-focus (upcase-symbol (xml-element-tagname el)))
-                                (lambda (m) (just (append values (unjust m '()))))))
-
-                      (modify props (table-focus 'XML)
-                              (lambda (m)
-                                (just
-                                 (cons (vline value: el)
-                                       (unjust m '())))))))
-                (table)
-                (xml-element-children el))))
-         (else (table)))
-   children: (cond ((find-child ((xml xcal 'components))
-                                (xml-element-children data))
-                    => (lambda (el) (map sxml->vcomponent/object
-                                    (xml-element-children el))))
-                   (else '()))))
+                        (modify props (table-focus 'XML)
+                                (lambda (m)
+                                  (just
+                                   (cons (vline value: el)
+                                         (unjust m '())))))))
+                  prop-table
+                  (xml-element-children el))))
+           (else prop-table)))))
 
 (define (sxml->vcomponent data)
   (define root
