@@ -330,7 +330,7 @@
                                 ;; primitive constructor
                                 make-<type>
                                 ;; Type validator
-                                (lambda #,(map syntax-first #'(field ...))
+                                (lambda #,(map get-keyword-name #'(field ...))
                                   (constructor-validator field) ...))))
                        (else #`(lambda* (key: #,@(map lambda*-stx #'(field ...)))
                                  ;; Type validators
