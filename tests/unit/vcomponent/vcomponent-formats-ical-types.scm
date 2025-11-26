@@ -132,7 +132,9 @@
 
 (define parse-uri (get-parser 'URI))
 
-(test-equal "Test uri is passthrough" 74 (parse-uri #f 74))
+(test-equal "Test uri is parsing uris"
+  ((@ (web uri) build-uri) 'http host: "example.com")
+  (parse-uri #f "http://example.com"))
 
 
 

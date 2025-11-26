@@ -8,7 +8,8 @@
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)
   :use-module (vcomponent type recurrence)
-  :use-module ((datetime) :select (date time datetime)))
+  :use-module ((datetime) :select (date time datetime))
+  :use-module ((datetime timespec) :select (timespec)))
 
 
 ;;; TODO test with custom types appended to default-types
@@ -35,9 +36,10 @@
   (test-equal 'TEXT        (apparent-type "Hello"))
   (test-equal 'TIME        (apparent-type (time)))
   (test-equal 'URI         (apparent-type (string->uri "https://example.com")))
-  (test-equal 'UTC-OFFSET  (apparent-type (utc-offset dir: '+ offset: (time))))
+  (test-equal 'UTC-OFFSET  (apparent-type (timespec (time) '+ 'utc)))
 
-  (test-equal #f (apparent-type (sqrt -1)))
+  (test-equal "Unknsown types return false"
+    #f (apparent-type (sqrt -1)))
   ;; TODO maybe some more oddball types?
   )
 

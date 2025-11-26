@@ -61,7 +61,7 @@
          (stream-filter
            (lambda (ev) (event-overlaps? ev start end))
            (stream-take-while
-             (lambda (ev) (date< (prop ev 'DTSTART) end))
+             (lambda (ev) (date< (prop1 ev 'DTSTART) end))
              ev-set)))))
 
 

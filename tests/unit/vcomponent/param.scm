@@ -27,7 +27,7 @@
   (get v (prop* 'X-KEY) just* car* (param* 'A) just*))
 
 (test-equal "2"
-  (get v (prop* 'X-KEY) just* car* (param* 'A) just*))
+  (get v (prop* 'X-KEY) just* car* (param* 'B) just*))
 
 (test-equal (nothing)
   (get/preview v (prop* 'X-KEY) just* car* (param* 'C) just*))

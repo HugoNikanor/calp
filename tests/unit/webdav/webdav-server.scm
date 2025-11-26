@@ -197,9 +197,9 @@
     <z:test/>
   </prop>
 </propfind>" prop-ns)))))
-    (test-equal 207 (response-code response))
-    (test-equal '(application/xml) (response-content-type response))
-    (test-assert (xml-element? body))
+    (test-equal "Excpected code" 207 (response-code response))
+    (test-equal "Expected content type" '(application/xml) (response-content-type response))
+    (test-assert "XML response body" (xml-element? body))
 
     ;; (format (current-error-port) "Here~%")
     ;; ;; The crash is after here
@@ -226,15 +226,20 @@
 
 
 (test-group "run-options"
-  (let ((head body (run-op (run-options root-resource #f #f))))
-    (test-equal "options head"
+  (let ((head body (run-op (run-options root-resource '() #f))))
+    (test-equal "found options head"
       (build-response
        code: 200
-       headers: `((dav . (1))
+       headers: `((dav . (1 3))
                   (allow . (GET HEAD PUT MKCOL PROPFIND OPTIONS DELETE COPY MOVE))))
       head)
-    (test-equal "options body"
-      "" body)))
+    (test-equal "found options body"
+      "" body))
+
+  (let ((head _ (run-op (run-options root-resource '("nonexistant") #f))))
+    (test-equal "missing options"
+      (build-response code: 404)
+      head)))
 
 
 
@@ -315,12 +320,12 @@
 
 ;;; Run COPY
 (test-group "run-copy"
-  (let ((root-resource (make <virtual-resource> collection?: #t)))
-    (set-content! (create-resource! root-resource "a") (string->utf8 "Content of A"))
-    (let ((a (lookup-resource root-resource '("a"))))
-      (set-property! a ((xml prop-ns 'test) "prop-value"))
-      ;; Extra child added to ensure deep copy works
-      (set-content! (create-resource! a "d") (string->utf8 "Content of d")))
+  (let* ((root-resource (make <virtual-resource> collection?: #t))
+         (a (create-resource! root-resource "a")))
+    (set-content! a (string->utf8 "Content of A"))
+    (set-property! a ((xml prop-ns 'test) "prop-value"))
+    ;; Extra child added to ensure deep copy works
+    (set-content! (create-resource! a "d") (string->utf8 "Content of d"))
 
     (test-group "cp /a /c"
       (let ((response _ (run-op (run-copy root-resource '("a")
@@ -335,12 +340,22 @@
       (let ((c (lookup-resource root-resource '("c"))))
         (test-assert "New resource present in tree" c)
         (test-equal "Content was correctly copied"
-          "Content of A" (utf8->string (content c)))
+          "Content of A" (utf8->string (content c '())))
         (test-equal "Property was correctly copied"
           (propstat 200
                     (list ((xml prop-ns 'test)
                             "prop-value")))
-          (get-property c ((xml prop-ns 'test))))))
+          (get-property c ((xml prop-ns 'test))))
+        (test-assert "Copy remainied a collection?"
+          (collection? c)))
+
+      (let ((d (lookup-resource root-resource '("c" "d"))))
+        (test-assert "Deep copy worked" d)
+        (test-equal "Deep copy content transfered"
+          "Content of d" (utf8->string (content d '())))
+        (test-assert "Deep copy stayed a non-collection?"
+          (not (collection? d))))
+      )
 
     (test-group "cp --no-clobber /c /a"
       (let ((response _ (run-op (run-copy root-resource '("c")

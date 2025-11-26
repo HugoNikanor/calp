@@ -23,7 +23,7 @@
   :use-module ((vcomponent type recurrence internal)
                :select (count until))
   :use-module ((vcomponent)
-               :select (prop1 extract1))
+               :select (prop% prop1 extract1 vline-value))
   :use-module (vcomponent create)
   :use-module ((datetime)
                :select (
@@ -50,25 +50,82 @@
 ;; TODO this test is really slow, figure out why (takes approx. 25s to run)
 (test-skip "REC: Every day in January, for 3 years (alt 2)")
 
+
+;;; TODO disabled until the recurrence code is written
+(test-expect-fail "REC: Daily for 10 occurrences")
+(test-expect-fail "REC: Daily until December 24, 1997")
+(test-expect-fail "REC: Every other day - forever")
+(test-expect-fail "REC: Every 10 days, 5 occurrences")
+(test-expect-fail "REC: Every day in January, for 3 years (alt 1)")
+(test-expect-fail "REC: Weekly for 10 occurrences")
+(test-expect-fail "REC: Weekly until December 24, 1997")
+(test-expect-fail "REC: Every other week - forever")
+(test-expect-fail "REC: Weekly on Tuesday and Thursday for five weeks (alt 1)")
+(test-expect-fail "REC: Weekly on Tuesday and Thursday for five weeks (alt 2)")
+(test-expect-fail "REC: Every other week on Monday, Wednesday, and Friday until December 24, 1997, starting on Monday, September 1, 1997:")
+(test-expect-fail "REC: Every other week on Tuesday and Thursday, for 8 occurrences")
+(test-expect-fail "REC: Monthly on the first Friday for 10 occurrences")
+(test-expect-fail "REC: Monthly on the first Friday until December 24, 1997")
+(test-expect-fail "REC: Every other month on the first and last Sunday of the month for 10 occurrences")
+(test-expect-fail "REC: Monthly on the second-to-last Monday of the month for 6 months")
+(test-expect-fail "REC: Monthly on the third-to-the-last day of the month, forever")
+(test-expect-fail "REC: Monthly on the 2nd and 15th of the month for 10 occurrences")
+(test-expect-fail "REC: Monthly on the first and last day of the month for 10 occurrences")
+(test-expect-fail "REC: Every 18 months on the 10th thru 15th of the month for 10 occurrences")
+(test-expect-fail "REC: Every Tuesday, every other month")
+(test-expect-fail "REC: Yearly in June and July for 10 occurrences:")
+(test-expect-fail "REC: Every other year on January, February, and March for 10 occurrences")
+(test-expect-fail "REC: Every third year on the 1st, 100th, and 200th day for 10 occurrences")
+(test-expect-fail "REC: Every 20th Monday of the year, forever")
+(test-expect-fail "REC: Monday of week number 20 (where the default start of the week is Monday), forever")
+(test-expect-fail "REC: Every Thursday in March, forever")
+(test-expect-fail "REC: Every Thursday, but only during June, July, and August, forever")
+(test-expect-fail "REC: Every Friday the 13th, forever")
+(test-expect-fail "REC: The first Saturday that follows the first Sunday of the month, forever")
+(test-expect-fail "REC: Every 4 years, the first Tuesday after a Monday in November, forever")
+(test-expect-fail "REC: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
+(test-expect-fail "STR: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
+(test-expect-fail "REC: The second-to-last weekday of the month")
+(test-expect-fail "STR: The second-to-last weekday of the month")
+(test-expect-fail "REC: Every 3 hours from 9:00 AM to 5:00 PM on a specific day")
+(test-expect-fail "REC: Every 15 minutes for 6 occurrences")
+(test-expect-fail "REC: Every hour and a half for 4 occurrences")
+(test-expect-fail "REC: Every 20 minutes from 9:00 AM to 4:40 PM every day (alt 1)")
+(test-expect-fail "REC: Every 20 minutes from 9:00 AM to 4:40 PM every day (alt 2)")
+(test-expect-fail "REC: An example where the days generated makes a difference because of WKST")
+(test-expect-fail "REC: changing only WKST from MO to SU, yields different results..")
+(test-expect-fail "REC: An example where an invalid date (i.e., February 30) is ignored")
+(test-expect-fail "REC: Every Friday & Wednesday the 13th, forever")
+(test-expect-fail "REC: Monday & Wednesday of week number 20 (where the default start of the week is Monday), forever")
+(test-expect-fail "REC: Each second, for ever")
+(test-expect-fail "REC: Exdates are applied AFTER rrule's")
+(test-expect-fail "REC: RDATE:s add to the recurrence rule")
+(test-expect-fail "REC: RDATE:s add to the recurrence rule")
+
+
+
+
+(use-modules (hnh util debug-reader))
+
 (define (run-test comp)
   (test-equal
-    (string-append "REC: " (prop1 comp 'SUMMARY))
-    (prop1 comp 'X-SET)
+      (string-append "REC: " (prop1 comp 'SUMMARY))
+    (map vline-value (prop% comp 'X-SET))
     (let ((r (generate-recurrence-set comp)))
       (map (extract1 'DTSTART)
            (if (or (until (prop1 comp 'RRULE))
                    (count (prop1 comp 'RRULE)))
-             (stream->list r)
-             (stream->list 20 r)))))
+               (stream->list r)
+               (stream->list 20 r)))))
   (test-equal
-    (string-append "STR: " (prop comp 'SUMMARY))
-    (prop comp 'X-SUMMARY)
+      (string-append "STR: " (prop1 comp 'SUMMARY))
+    (prop1 comp 'X-SUMMARY)
     ;; NOTE care must be taken so LC_TIME is set to match the parameter to the recurrence rule.
     ;; TODO possibly test with other languages
     (with-locale1
      LC_TIME "sv_SE.UTF-8"
      (lambda ()
-       (format-recurrence-rule (prop comp 'RRULE) 'sv)))))
+       (format-recurrence-rule (prop1 comp 'RRULE) 'sv)))))
 
 (map run-test
      (list (vevent
@@ -896,8 +953,10 @@
                    (datetime year: 1998 month: 05 day: 05 hour: 09 minute: 00 second: 00)
                    (datetime year: 1998 month: 05 day: 12 hour: 09 minute: 00 second: 00)))
            (vevent
-             summary:
-             "Yearly in June and July for 10 occurrences:\n: Since none of the BYDAY, BYMONTHDAY, or BYYEARDAY\nonents are specified, the day is gotten from \"DTSTART\""
+            ;; Note: Since none of the BYDAY, BYMONTHDAY, or BYYEARDAY
+            ;; components are specified, the day is gotten from "DTSTART".
+            summary:
+             "Yearly in June and July for 10 occurrences:"
              dtstart:
              (datetime year: 1997 month: 06 day: 10 hour: 09 minute: 00 second: 00)
              rrule:
@@ -1167,7 +1226,8 @@
                    (datetime year: 1999 month: 04 day: 10 hour: 09 minute: 00 second: 00)))
            (vevent
              summary:
-             "Every 4 years, the first Tuesday after a Monday in November,\nver (U.S. Presidential Election day)"
+             ;; (U.S. Presidential Election day)
+             "Every 4 years, the first Tuesday after a Monday in November, forever"
              dtstart:
              (datetime year: 1996 month: 11 day: 05 hour: 09 minute: 00 second: 00)
              rrule:

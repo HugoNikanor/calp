@@ -38,9 +38,10 @@
   (test-equal "Null case" "" (encode-query-parameters '()))
   (test-equal "Single simple" "a=10" (encode-query-parameters '((a . 10))))
   (test-equal "Multi simple" "a=10&b=20" (encode-query-parameters '((a . 10) (b . 20))))
-  (test-equal "Strings are `write' encoded" "a=%22Hello%22" (encode-query-parameters '((a . "Hello"))))
-  (test-equal "Strings are URI encoded" "a=%22Hello%20World%22" (encode-query-parameters '((a . "Hello World"))))
-  (test-equal "Symbols are `write' and URI encoded"
+  (test-equal "Strings" "a=Hello" (encode-query-parameters '((a . "Hello"))))
+  (test-equal "Strings are URI encoded" "a=Hello%20World" (encode-query-parameters '((a . "Hello World"))))
+  (test-equal "Symbols are display and URI encoded"
+    ;; #{Hello World}#
     "a=%23%7BHello%20World%7D%23" (encode-query-parameters `((a . ,(string->symbol "Hello World"))))))
 
 

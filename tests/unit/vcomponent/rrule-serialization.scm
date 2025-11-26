@@ -8,10 +8,12 @@
   :use-module ((vcomponent media-type text calendar output)
                :select (recur-rule->rrule-string))
   :use-module ((vcomponent media-type application calendar+xml output)
-               :select (recur-rule->rrule-sxml))
+               :select (recur-rule->sxml))
   :use-module ((hnh util table) :select (table))
   :use-module ((vcomponent type recurrence parse) :select (parse-day-spec))
-  :use-module ((ice-9 peg) :select (keyword-flatten)))
+  :use-module ((calp namespaces) :select (xcal))
+  :use-module (sxml namespaced)
+  :use-module ((datetime) :select (mon tue wed fri)))
 
 (test-equal
   "Parse of week day"
@@ -40,38 +42,35 @@
 ;; (p. 41)
 
 
-(define field->string
-  (@@ (vcomponent media-type text calendar output)
-      field->string))
+(let ((rule (parse-recurrence-rule
+             (table) "FREQ=WEEKLY;BYDAY=MO,TU,WE")))
+  (test-equal "Direct return of parsed value"
+    (list (cons #f mon)
+          (cons #f tue)
+          (cons #f wed))
+    (byday rule))
+  (test-equal "Direct return, but as SXML"
+    ((xml xcal 'recur)
+     ((xml xcal 'freq) "WEEKLY")
+     ((xml xcal 'byday) "MO")
+     ((xml xcal 'byday) "TU")
+     ((xml xcal 'byday) "WE"))
+    (recur-rule->sxml rule)))
 
-(let ((rule (parse-recurrence-rule (table) "FREQ=WEEKLY;BYDAY=MO,TU,WE")))
-  (test-equal
-    "Direct return of parsed value"
-    "MO,TU,WE"
-    (field->string 'byday (byday rule)))
-  (test-equal
-    "Direct return, but as SXML"
-    '((byday "MO") (byday "TU") (byday "WE"))
-    (filter
-      (lambda (pair) (eq? 'byday (car pair)))
-      (keyword-flatten
-        '(interval byday wkst freq)
-        (recur-rule->rrule-sxml rule)))))
-
-(let ((rule (parse-recurrence-rule (table) "FREQ=WEEKLY;BYDAY=+1MO,1TU,-2FR")))
-  (test-equal
-    "Direct return of parsed value"
-    "1MO,1TU,-2FR"
-    (field->string 'byday (byday rule)))
-  (test-equal
-    "Direct return, but as SXML"
-    '((byday "1MO") (byday "1TU") (byday "-2FR"))
-    (filter
-      (lambda (pair) (eq? 'byday (car pair)))
-      ;; TODO why is keyword-flatten used here?
-      (keyword-flatten
-        '(interval byday wkst freq)
-        (recur-rule->rrule-sxml rule)))))
+(let ((rule (parse-recurrence-rule
+             (table) "FREQ=WEEKLY;BYDAY=+1MO,1TU,-2FR")))
+  (test-equal "Direct return of parsed value"
+    (list (cons 1 mon)
+          (cons 1 tue)
+          (cons -2 fri))
+    (byday rule))
+  (test-equal "Direct return, but as SXML"
+    ((xml xcal 'recur)
+     ((xml xcal 'freq) "WEEKLY")
+     ((xml xcal 'byday) "1MO")
+     ((xml xcal 'byday) "1TU")
+     ((xml xcal 'byday) "-2FR"))
+    (recur-rule->sxml rule)))
 
 
 '((vcomponent type recurrence internal)

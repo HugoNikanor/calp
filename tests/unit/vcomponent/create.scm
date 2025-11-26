@@ -37,7 +37,7 @@
 (test-group "Empty component"
  (let ((ev (create-vcomponent 'TEST)))
    (test-equal 'TEST (type ev))
-   (test-equal '() (table->list (vcomponent-children ev)))
+   (test-equal '() (vcomponent-children ev))
    (test-equal '() (table->list (vcomponent-properties ev)))))
 
 (test-group "Component with properties, but no children"
@@ -84,23 +84,26 @@
   (let ((ev (create-vcomponent 'TEST prop: (list 1 2 3))))
     (test-equal '() (vcomponent-children ev))
     (test-equal '(PROP) (map car (table->list (vcomponent-properties ev))))
-    ;; TODO fix this test
-    (test-equal '(1 2 3) (get ev (prop* 'PROP)))))
+    (test-equal (just (list (vline value: 1)
+                            (vline value: 2)
+                            (vline value: 3)))
+      (get ev (prop* 'PROP)))))
+
 
 (test-group "With parameters"
   (let ((ev (create-vcomponent 'TEST
                         prop: (with-parameters param: 1 2))))
     (test-equal 2 (prop1 ev 'PROP))
-    (test-equal '(1) (get ev (prop* 'PROP) just* car* (param* 'PARAM)))))
+    (test-equal (just 1) (get ev (prop* 'PROP) just* car* (param* 'PARAM)))))
 
 
 (test-group "As list"
   (let ((ev (create-vcomponent 'TEST
                                prop: (list 1 2 3))))
-    ;; TODO fix
-    (test-equal '(1 2 3) (prop1 ev 'PROP))
+    (test-equal 1 (prop1 ev 'PROP))
     (test-equal 3 (length (get ev (prop* 'PROP) just*)))
     (test-assert (every vline? (get ev (prop* 'PROP) just*)))))
+
 
 (test-group "List and parameters"
   (let ((ev
@@ -125,20 +128,6 @@
   (vevent prop: (with-parameters a: "1"
                                  (with-parameters b: "2"
                                                   "3"))))
-
-;; (test-group "An empty as-list is effectively the same as not having the property"
-;;   (let ((ev (vevent prop: (as-list '()))))
-;;     (test-equal '() (vcomponent-properties ev))))
-
-;; (test-error "Fail on nested as-list"
-;;   'wrong-type-arg
-;;   (vevent prop: (as-list (list (as-list '())))))
-
-;; (test-error "Fail on as-list inside with-parameters"
-;;   'wrong-type-arg
-;;   (vevent prop: (with-parameters a: "1"
-;;                                  (as-list '()))))
-
 
 (test-assert (vcomponent? (vcalendar)))
 (test-eq 'VCALENDAR (type (vcalendar)))

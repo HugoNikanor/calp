@@ -13,7 +13,7 @@
   :use-module (hnh util lens)
   :use-module ((datetime zic) :select (intermediary->zoneinfo read-zoneinfo))
   :use-module (datetime timespec)
-  :use-module ((vcomponent) :select (vcomponent-equal? extract1 prop1))
+  :use-module ((vcomponent) :select (vcomponent-diff extract1 prop1))
   :use-module (vcomponent datetime)
   :use-module ((vcomponent type recurrence) :select (recur-rule))
   :use-module ((vcomponent create) :select (vevent vtimezone daylight standard)))
@@ -303,26 +303,25 @@ Link    Europe/Zurich  Europe/Vaduz
              (vevent summary: "Zoneinfo test"
                      dtstart: (datetime year: 2020 month: jan day: 10 hour: 10))))))
 
-    (test-assert
-        (vcomponent-equal?
-         (vtimezone tzid: "Europe/Zurich"
-                    (list
-                     (daylight
-                      dtstart: (datetime year: 1981 month: 3 day: 29 hour: 1 tz: "UTC")
-                      rrule: (recur-rule freq: 'YEARLY interval: 1 byday: `((-1 . ,sun)) bymonth: '(3) wkst: monday)
-                      tzname: "CEST"
-                      ;; TODO why isn't this 'hour: 1'?
-                      tzoffsetfrom: (timespec (time hour: 0) '+ 'wall)
-                      tzoffsetto: (timespec (time hour: 2) '+ 'wall)
-                      uid: "d19c9347-9a85-4432-a876-5fb9c0d24d2b")
-                     (standard
-                      dtstart: (datetime year: 1996 month: 10 day: 27 hour: 1 tz: "UTC")
-                      rrule: (recur-rule freq: 'YEARLY interval: 1 byday: `((-1 . ,sun)) bymonth: '(10) wkst: monday)
-                      tzname: "CET"
-                      tzoffsetfrom: (timespec (time hour: 2) '+ 'wall)
-                      tzoffsetto: (timespec (time hour: 1) '+ 'wall)
-                      uid: "7dce30d4-6aaa-4cfb-85dc-813f74d7f4a9")))
-         timezone-component)))
+    (test-equal
+        '()
+      (vcomponent-diff
+       (vtimezone tzid: "Europe/Zurich"
+                  (list
+                   (daylight
+                    dtstart: (datetime year: 1981 month: 3 day: 29 hour: 1 tz: "UTC")
+                    rrule: (recur-rule freq: 'YEARLY interval: 1 byday: `((-1 . ,sun)) bymonth: '(3) wkst: monday)
+                    tzname: "CEST"
+                    ;; TODO why isn't this 'hour: 1'?
+                    tzoffsetfrom: (timespec (time hour: 0) '+ #f)
+                    tzoffsetto: (timespec (time hour: 2) '+ #f))
+                   (standard
+                    dtstart: (datetime year: 1996 month: 10 day: 27 hour: 1 tz: "UTC")
+                    rrule: (recur-rule freq: 'YEARLY interval: 1 byday: `((-1 . ,sun)) bymonth: '(10) wkst: monday)
+                    tzname: "CET"
+                    tzoffsetfrom: (timespec (time hour: 2) '+ #f)
+                    tzoffsetto: (timespec (time hour: 1) '+ #f))))
+       timezone-component)))
 
   ;; TODO these tests
   ;; (let* () "min max")

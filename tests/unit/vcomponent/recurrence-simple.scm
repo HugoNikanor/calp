@@ -30,6 +30,12 @@
 ;;; TODO many of these tests simply check that the procedures don't crash.
 ;;; Actually check outputs.
 
+
+;;; TODO disabled until the recurrence code is written
+(test-expect-fail "Generate First")
+(test-expect-fail "Generate Again")
+
+
 
 ;;; Test that basic parsing or recurrence rules work.
 

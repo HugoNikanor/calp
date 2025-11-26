@@ -117,6 +117,7 @@
           reference
           (string-append file ".json")
           jcal:format
+          ;; TODO (@ (json) scm->json) alreaddy has a #:pretty flag
           formatter: (lambda (v) (jq v "."))))
 
        ))
