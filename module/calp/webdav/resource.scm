@@ -391,11 +391,21 @@
     (for-each (lambda (prop) (set-property! resource prop))
               (dead-properties source))
 
+    ;; HTTP errors are expected, all other errors means that the
+    ;; resource implementation is faulty, or leaking internal details.
+    (catch 'http
+      ;; NOTE this may be slow for resources with dynamic content, especially in cases
+      ;; where the destination don't allow content.
+      (lambda () (set-content! resource (content source '()) '()))
+      (lambda _ 'noop))
+
     (case depth
       ((0) 'noop)
       ((infinity)
        (for (name . child) in (children source)
-            (create-collection-copy! child resource name 'infinity))))))
+            (if (collection? child)
+                (create-collection-copy! child resource name 'infinity)
+                (create-resource-copy!   child resource name)))))))
 
 
 (define-method (create-resource-copy!
