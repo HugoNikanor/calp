@@ -39,6 +39,8 @@
            store-calendar-timezone set-store-calendar-timezone! remove-store-calendar-timezone!
 
            store-uri->store
+
+           store-uri
            ))
 
 ;;; TODO TODO TODO
@@ -221,3 +223,7 @@
 
     (apply constructor (parse-query (uri-query uri)
                                     decode-plus-to-space?: #f))))
+
+
+;;; TODO document
+(define-generic store-uri)

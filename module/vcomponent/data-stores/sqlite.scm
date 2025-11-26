@@ -20,6 +20,7 @@
   :use-module (hnh util type)
   :use-module (hnh util uuid)
   :use-module (web uri)
+  :use-module ((web query) :select (encode-query-parameters))
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (sxml namespaced)
@@ -50,6 +51,12 @@
 
 (define* (create-instance key: path)
   (make <sqlite-data-store> path: path))
+
+(define-method (store-uri (store <sqlite-data-store>))
+  (build-uri 'store
+             path: "sqlite"
+             query: (encode-query-parameters
+                     `((path . ,(path store))))))
 
 (define (init-db db)
   (sqlite-exec db "

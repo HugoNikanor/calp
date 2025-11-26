@@ -32,6 +32,8 @@
   :use-module (xattr)
   :use-module (ice-9 regex)
   :use-module ((scheme base) :select (string->utf8 utf8->string))
+  :use-module ((web uri) :select (build-uri))
+  :use-module ((web query) :select (encode-query-parameters))
   :export (create-instance)
   )
 
@@ -134,6 +136,21 @@
     path: path
     media: (module-ref (resolve-interface `(vcomponent media-type ,@media-module))
                        'format)))
+
+
+(define-method (store-uri (store <file-data-store>))
+  (build-uri 'store
+             path: "file"
+             query: (encode-query-parameters
+                     `((path . ,(path store))
+                       ;; Note that media type is required to create a
+                       ;; store, but technically optional for media
+                       ;; types (and media types can report invalid
+                       ;; values also). This is just a best effort.
+                       ,@(cond ((media-type (data-format store))
+                                => (lambda (t) `((media . ,t))))
+                               (else '()))))))
+
 
 (define-method (initialize (self <file-internals>) args)
   (next-method)

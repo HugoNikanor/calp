@@ -16,6 +16,8 @@
   :use-module ((ice-9 regex) :select (string-match))
   :use-module (glob)
   :use-module (vcomponent media-type)
+  :use-module ((web uri) :select (build-uri))
+  :use-module ((web query) :select (encode-query-parameters))
   :export (create-instance)
   )
 
@@ -212,6 +214,23 @@
     media: (module-ref (resolve-interface `(vcomponent media-type ,@media-module))
                        'format)
     href-mapping-file: href-mapping-file))
+
+(define-method (store-uri (store <vdir-data-store>))
+  (build-uri 'store
+             path: "vdir"
+             query: (encode-query-parameters
+                     `((path . ,(path store))
+                       ;; Note that media type is required to create a
+                       ;; store, but technically optional for media
+                       ;; types (and media types can report invalid
+                       ;; values also). This is just a best effort.
+                       ,@(cond ((media-type (data-format store))
+                                => (lambda (t) `((media . ,t))))
+                               (else '()))
+                       ,@(unless (string=? (href-mapping-file store)
+                                           (default-href-mapping-file))
+                           `((href-mapping-file . ,(href-mapping-file store))))
+                       ))))
 
 
 ;;; TODO this is really slow for some reason (~2s for 2000 entries)
