@@ -49,14 +49,24 @@
 
 (define testdir (mkdtemp "/tmp/calp-store-XXXXXX"))
 
-(for uri in (list
-             (format #f "store:file?path=~a&media=text/calendar"
-                     (path-append testdir "path-store.ics"))
-             (format #f "store:vdir?path=~a&media=text/calendar"
-                     (path-append testdir "vdir-store"))
+(define uris
+ (list
+  (format #f "store:file?path=~a&media=text/calendar"
+          (path-append testdir "path-store.ics"))
+  (format #f "store:vdir?path=~a&media=text/calendar"
+          (path-append testdir "vdir-store"))
+  ))
+
+;;; Explicitly load the module, since the feature test won't work otherwise
+(use-modules (vcomponent data-stores sqlite))
+(when (provided? 'data-store-sqlite)
+  (set! uris
+    (append uris
+            (list
              (format #f "store:sqlite?path=~a"
-                     (path-append testdir "sqlite-store.db"))
-             )
+                     (path-append testdir "sqlite-store.db"))))))
+
+(for uri in uris
 
      (test-group uri
        (let ((store (-> uri string->uri store-uri->store)))

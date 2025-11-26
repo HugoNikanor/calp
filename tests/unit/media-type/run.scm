@@ -112,6 +112,9 @@
           xcs:format
           formatter: xmllint))
 
+       (unless (provided? 'formats-jcal)
+         (test-skip "jCal"))
+
        (test-group "jCal"
          (run-test
           reference
