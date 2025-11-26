@@ -386,10 +386,12 @@
         (datetime+ start-time (as-datetime duration)) ]
        [else (error "Bad type")]))
 
+(define (generate-recurrence-set base-event)
+  (stream base-event))
 
 ;; <vevent> -> (stream <vevent>)
 ;; TODO memoize this?
-(define (generate-recurrence-set base-event)
+(define (generate-recurrence-set/old base-event)
 
   (define duration (event-duration base-event))
 
