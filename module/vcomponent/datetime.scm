@@ -3,6 +3,7 @@
   :use-module ((srfi srfi-41) :select (stream-filter))
   :use-module ((srfi srfi-41 util) :select (get-stream-interval))
   :use-module (vcomponent)
+  :use-module (vcomponent create)
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (datetime zic)
@@ -237,60 +238,54 @@ Event must have the DTSTART and DTEND protperty set."
   (fold (lambda (zone-entry vtimezone)
           (cond [(zone-entry-rule zone-entry) timespec?
                  => (lambda (inline-rule)
-                      (let ((component (vcomponent type: 'DAYLIGHT))
-                            (new-timespec (timespec+
+                      (let* ((new-timespec (timespec+
                                            (zone-entry-stdoff zone-entry)
-                                           inline-rule)))
-                        (let ((component
-                               (-> component
-                                   (set (prop* 'DTSTART)      (just last-until))
-                                   (set (prop* 'TZOFFSETFROM) (just last-offset))
-                                   (set (prop* 'TZOFFSETTO)   (just new-timespec))
-                                   (set (prop* 'TZNAME)       (just (zone-entry-format zone-entry))))))
-                          (set! last-until (zone-entry-until zone-entry)
-                                last-offset new-timespec)
-                          (add-child vtimezone component))))]
+                                           inline-rule))
+                             (component
+                              (daylight
+                               dtstart: last-until
+                               tzoffsetfrom: last-offset
+                               tzoffsetto: new-timespec
+                               tzname: (zone-entry-format zone-entry))))
+                        (set! last-until (zone-entry-until zone-entry)
+                              last-offset new-timespec)
+                        (add-child vtimezone component)))]
 
                 [(zone-entry-rule zone-entry)
                  => (lambda (rule-name)
                       (fold (lambda (rule vtimezone)
-                              (let ((component (vcomponent
-                                                type:
-                                               ;; NOTE the zoneinfo database doesn't
-                                               ;; come with information if a given
-                                               ;; rule is in standard or daylight time,
-                                               ;; since that's mostly nonsencical
-                                               ;; (e.g. war- and peacetime).
-                                               ;; But the ical standard requires that,
-                                               ;; so this is a fair compromize.
-                                               (if (string-null? (rule-letters rule))
-                                                   'STANDARD 'DAYLIGHT)))
-                                   (new-timespec (timespec+
+                              (let* ((new-timespec (timespec+
                                                   (zone-entry-stdoff zone-entry)
-                                                  (rule-save rule))))
+                                                  (rule-save rule)))
+                                     (component (create-vcomponent
+                                                 ;; NOTE the zoneinfo database doesn't
+                                                 ;; come with information if a given
+                                                 ;; rule is in standard or daylight time,
+                                                 ;; since that's mostly nonsencical
+                                                 ;; (e.g. war- and peacetime).
+                                                 ;; But the ical standard requires that,
+                                                 ;; so this is a fair compromize.
+                                                 (if (string-null? (rule-letters rule))
+                                                     'STANDARD 'DAYLIGHT)
 
-                                (let ((component
-                                       (-> component
-                                           (set (prop* 'DTSTART)      (just (rule->dtstart rule)))
-                                           (set (prop* 'TZOFFSETFROM) (just last-offset))
-                                           (set (prop* 'TZOFFSETTO)   (just new-timespec))
-                                           (set (prop* 'TZNAME)
-                                                (just (zone-format
-                                                        (zone-entry-format zone-entry)
-                                                        (rule-letters rule)
-                                                        ;; TODO UTC offsett
-                                                        ))))))
+                                                 dtstart: (rule->dtstart rule)
+                                                 tzoffsetfrom: last-offset
+                                                 tzoffsetto: new-timespec
+                                                 tzname: (zone-format (zone-entry-format zone-entry)
+                                                                      (rule-letters rule)
+                                                                      ;; TODO UTC offset, what do we actually want here?
+                                                                      (timespec-zero)))))
 
-                                  (set! ;; NOTE this can both be a number or the
-                                      ;; symbol 'maximum
-                                      last-until (zone-entry-until zone-entry)
-                                      last-offset new-timespec)
+                                (set! ;; NOTE this can both be a number or the
+                                    ;; symbol 'maximum
+                                    last-until (zone-entry-until zone-entry)
+                                    last-offset new-timespec)
 
-                                  (add-child
-                                   vtimezone
-                                   (cond ((rule->rrule rule)
-                                          => (lambda (it) (set component (prop* 'RRULE) (just it))))
-                                         (else component))))))
+                                (add-child
+                                 vtimezone
+                                 (cond ((rule->rrule rule)
+                                        => (lambda (it) (set component (prop* 'RRULE) (just (list (vline value: it))))))
+                                       (else component)))))
                             vtimezone
                            ;; some of the rules might not apply to us since we only
                            ;; started using that rule set later. It's also possible
@@ -304,18 +299,18 @@ Event must have the DTSTART and DTEND protperty set."
                 [else                      ; no rule
                  ;; DTSTART MUST be a datetime in local time
                  (let ((component
-                        (-> (vcomponent type: 'STANDARD)
-                            (set (prop* 'DTSTART)       (just last-until))
-                            (set (prop* 'TZOFFSETFROM)  (just last-offset))
-                            (set (prop* 'TZOFFSETTO)    (just (zone-entry-stdoff zone-entry)))
-                            (set (prop* 'TZNAME)        (just (zone-entry-format zone-entry))))))
+                        (standard
+                         dtstart: last-until
+                         tzoffsetfrom: last-offset
+                         tzoffsetto: (zone-entry-stdoff zone-entry)
+                         tzname: (zone-entry-format zone-entry))))
                    (set! last-until (zone-entry-until zone-entry)
                          last-offset (zone-entry-stdoff zone-entry))
                    (add-child vtimezone component))
                  ]))
 
         (-> (vcomponent type: 'VTIMEZONE)
-            (set (prop* 'TZID) (just (vline value: zone-name))))
+            (set (prop* 'TZID) (just (list (vline value: zone-name)))))
 
         (filter (relevant-zone-entry? event)
                 (get-zone zoneinfo zone-name))))
