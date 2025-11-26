@@ -7,7 +7,12 @@
 (define-module (xattr)
   :use-module (system foreign)
   :use-module ((rnrs bytevectors gnu) :select (bytevector-slice))
-  :use-module (scheme base)
+  :use-module ((scheme base) :select (bytevector-append
+                                      string->utf8
+                                      bytevector-length
+                                      bytevector-u8-ref
+                                      make-bytevector
+                                      utf8->string))
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
