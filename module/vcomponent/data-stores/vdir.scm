@@ -48,10 +48,6 @@
    getter: href-mapping-file
    init-form: (default-href-mapping-file))
 
-  (file-extension
-   init-keyword: ext:
-   getter: file-extension
-   init-value: "ics")
   )
 
 
@@ -120,7 +116,6 @@
   (typecheck (path self) string?)
   (typecheck (data-format self) calendar-data-format?)
   (typecheck (href-mapping-file self) string?)
-  (typecheck (file-extension self) string?)
 
   (catch 'system-error
     (lambda () (mkdir (path self)))
@@ -149,8 +144,7 @@
               (hash-set! entry-by-filename (basename filename)
                          (call-with-input-file filename
                            (parser (data-format self)))))
-            (glob (path-append (path self)
-                               (string-append "*." (file-extension self)))))
+            (glob (glob-pattern self)))
 
   ;; (format (current-error-port)
   ;;         "filename-by-href: ~s~%entry-by-filename: ~s~%"
@@ -197,9 +191,13 @@
   ;; event-by-href.
   )
 
+(define (glob-pattern store)
+  (path-append (path store)
+               (string-append
+                "*." (or (file-extension (data-format store)) "ics"))))
+
 (define* (create-instance key: path media
-                          (href-mapping-file (default-href-mapping-file))
-                          (ext "ics"))
+                          (href-mapping-file (default-href-mapping-file)))
   (typecheck path string?)
   (typecheck media string?)
 
@@ -213,8 +211,7 @@
     path: path
     media: (module-ref (resolve-interface `(vcomponent media-type ,@media-module))
                        'format)
-    href-mapping-file: href-mapping-file
-    ext: ext))
+    href-mapping-file: href-mapping-file))
 
 
 ;;; TODO this is really slow for some reason (~2s for 2000 entries)
@@ -226,8 +223,7 @@
 (define-method (entry-count (store <vdir-data-store>))
   ;; This works, but is currently worthless, since we load all the
   ;; data in the constructor.
-  (length (glob (path-append (path store)
-                             (string-append "*." (file-extension store))))))
+  (length (glob (glob-pattern store))))
 
 ;;; TODO get-by-uid
 ;;; TODO caldav-filter
@@ -247,11 +243,12 @@
            ;; be created for the file. This will lead to the entry
            ;; being effectively duplicated, since we list entries by
            ;; their hrefs.
+           (define ext (or (file-extension (data-format store)) "ics"))
            (define filename
-             (if (string-match (format #f "[.]~a$" (file-extension store))
+             (if (string-match (format #f "[.]~a$" ext)
                                href)
                  href
-                 (string-append href "." (file-extension store))))
+                 (string-append href "." ext)))
            ;; NOTE this is where append to the filename-by-href file could be useful
            (hash-set! (filename-by-href store) href filename)
            filename)))
