@@ -26,7 +26,7 @@
   :export (vcomponent->sxcal
            serializers
 
-           recur-rule->rrule-sxml
+           recur-rule->sxml
            ))
 
 ;;; TODO why isn't `apparent-type` used?

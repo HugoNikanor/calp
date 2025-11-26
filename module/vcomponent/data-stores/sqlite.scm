@@ -439,7 +439,7 @@ VALUES (?, ?, ?)
      (cons 'INTEGER (lambda (_ v) v))
 
      (cons 'PERIOD (lambda (p v)
-                     ((@ (vcomponent media-type text calendar parse) parse-period)
+                     ((@ (vcomponent media-type text calendar parse-semantics) parse-period)
                       p v "~Y-~m-~d ~H:~M:~S~Z")))
      (cons 'RECUR (@ (vcomponent media-type text calendar parse-semantics) parse-recurrence-rule))
 

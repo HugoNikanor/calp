@@ -532,6 +532,7 @@
 
 ;; special case of `format` which works with %s and %z
 ;; TODO rename to something like zone-printf
+;; TODO why is utc-offset required?
 (define (zone-format fmt-string arg utc-offset)
   (typecheck fmt-string string?)
   (typecheck arg string?)

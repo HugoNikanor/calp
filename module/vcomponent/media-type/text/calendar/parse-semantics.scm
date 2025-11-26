@@ -63,7 +63,6 @@
 ;;; FLOAT returns #f
 ;;; INTEGER return `(unknown <data>)`
 ;;; PERIOD throws on malformed data
-;;; PERIOD throws on malformed data
 ;;; RECUR throws on malformed data
 ;;; TEXT never fails
 ;;; TIME throws on malformed data

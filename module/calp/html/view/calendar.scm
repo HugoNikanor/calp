@@ -391,10 +391,9 @@ window.default_calendar='~a';"
                    (-> ev
                        ;; TODO vline wrapper?
                        (set (prop* 'UID) (just (output-uid ev)))
-                       ;; TODO prop% not a thing
-                       (modify (lens-compose (prop% 'DTSTART) vline-parameters*)
+                       (modify (lens-compose (prop* 'DTSTART) vline-parameters*)
                                (lambda (params) (table-remove params '-X-HNH-ORIGINAL)))
-                       (modify (lens-compose (prop% 'DTEND) vline-parameters*)
+                       (modify (lens-compose (prop* 'DTEND) vline-parameters*)
                                (lambda (params) (table-remove params '-X-HNH-ORIGINAL)))))))
 
         `(

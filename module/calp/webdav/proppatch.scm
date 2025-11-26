@@ -43,7 +43,6 @@
                   (let ((prop-tag (find-child ((xml webdav 'prop))
                                               (xml-element-children child))))
                     (map (lambda (prop)
-                           (format (current-error-port) "prop: ~s~%" prop)
                            (cons (xml-element-children prop '())
                                  (set-property!! resource prop)))
                          (filter xml-element? (xml-element-children prop-tag)))))
