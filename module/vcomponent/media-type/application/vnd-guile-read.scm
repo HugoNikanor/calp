@@ -10,18 +10,23 @@
 
 (define-once parse-modules
   (make-parameter
-   `(((hnh util) ->)
-     ((hnh util table) table table-put)
-     ((datetime) date time datetime)
+   `(
+     ((datetime)
+      date time datetime
+      mon tue wed thu fri sat sun
+      )
      ((datetime timespec) timespec)
-     ((vcomponent) vline vcomponent)
+     ((vcomponent create)
+      create-vcomponent with-parameters
+      vcalendar vevent vtodo vjournal vfreebusy
+      vtimezone valarm standard daylight)
      ((vcomponent type duration) duration)
      ((vcomponent type geo) geo)
      ((vcomponent type period) period)
      ((vcomponent type recurrence) recur-rule)
      ((vcomponent type request-status) request-status)
      ((vcomponent type version) vcalendar-version)
-     ((web uri) string->uri)) ))
+     ((web uri) string->uri))))
 
 (define format
   (calendar-data-format

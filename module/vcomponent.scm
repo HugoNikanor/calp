@@ -53,8 +53,38 @@
                      (vline-parameters b))))
 
 
-(define-type (vcomponent ; serializer: serialize-vcomponent
-              )
+(define (serialize-vcomponent c)
+
+  (define (serialize-vline* vline)
+    (if (table-empty? (vline-parameters vline))
+        (serialize (vline-value vline))
+        `(with-parameters
+          ,@(concatenate
+             (map (lambda (pair)
+                    (list (symbol->keyword (downcase-symbol (car pair)))
+                          (serialize (cdr pair))))
+                  (table->list (vline-parameters vline))))
+          ,(serialize (vline-value vline)))))
+
+  `(,@(if (memv (downcase-symbol (type c))
+             '(vcalendar vevent vtodo vjournal vfreebusy vtimezone valarm standard daylight))
+          `(,(downcase-symbol (type c)))
+          `(create-vcomponent ',(type c)))
+
+    ,@(concatenate
+       (map (lambda (p)
+              (define-values (key lines) (car+cdr p))
+              `(,(symbol->keyword (downcase-symbol key))
+                ,(if (null? (cdr lines))
+                     (serialize-vline* (car lines))
+                     `(list ,@(map serialize-vline* lines)))))
+            (table->list (vcomponent-properties c))))
+
+    ,@(if (null? (vcomponent-children c))
+          '()
+          `((list ,@(map serialize (vcomponent-children c)))))))
+
+(define-type (vcomponent serializer: serialize-vcomponent)
   (type type: symbol?)
   (vcomponent-properties default: (table (named-type (non-empty-list-of vline?)))
                          type: table?

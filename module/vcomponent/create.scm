@@ -5,7 +5,7 @@
                               add-child
                               prop*
                               ))
-  :use-module ((srfi srfi-1) :select (fold last drop-right car+cdr every))
+  :use-module ((srfi srfi-1) :select (fold last drop-right car+cdr every concatenate))
   :use-module (srfi srfi-26)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -18,7 +18,8 @@
   :export (with-parameters
            create-vcomponent
            vcalendar vevent
-           vtimezone standard daylight
+           vtodo vjournal vfreebusy
+           vtimezone valarm standard daylight
            ))
 
 
@@ -47,7 +48,7 @@
   (-> kvs kvlist->assq upcase-keys alist->table))
 
 (define-type (parameterized)
-  (parameterized:value keyword: value)
+  (parameterized:value keyword: value type: ((negate parameterized?)))
   (parameterized:parameters keyword: params type: table?))
 
 ;;; This is implemented as a macro, with an external typecheck, due to
@@ -78,7 +79,7 @@
   (define (value->vline value)
     (cond
      ((list? value)
-      (map value->vline value))
+      (concatenate (map value->vline value)))
      ((parameterized? value)
       (list
        (vline value: (parameterized:value value)
@@ -92,29 +93,28 @@
     (let ((k value (car+cdr pair)))
       (modify component (prop* k)
               (lambda (f)
-                (just (append (unjust f '()) (value->vline value)))))))
+                (just (append (unjust f '())
+                              (value->vline value)))))))
 
-  (fold (lambda (child parent) (add-child parent child))
-        (fold attach-property
-              (vcs-vcomponent type: type
-                              properties:
-                              (table (lambda (l)
-                                       (and (list? l)
-                                            (every vline? l)))))
-              (upcase-keys (kvlist->assq attrs)))
-        children))
+  (fold attach-property
+        (vcs-vcomponent type: type children: children)
+        (upcase-keys (kvlist->assq attrs))))
 
 (define (vcalendar . attrs)
   (apply create-vcomponent 'VCALENDAR attrs))
-
 (define (vevent . attrs)
   (apply create-vcomponent 'VEVENT attrs))
-
+(define (vtodo . attrs)
+  (apply create-vcomponent 'VTODO attrs))
+(define (vjournal . attrs)
+  (apply create-vcomponent 'VJOURNAL attrs))
+(define (vfreebusy . attrs)
+  (apply create-vcomponent 'VFREEBUSY attrs))
 (define (vtimezone . attrs)
   (apply create-vcomponent 'VTIMEZONE attrs))
-
+(define (valarm . attrs)
+  (apply create-vcomponent 'VALARM attrs))
 (define (standard . attrs)
   (apply create-vcomponent 'STANDARD attrs))
-
 (define (daylight . attrs)
   (apply create-vcomponent 'DAYLIGHT attrs))
