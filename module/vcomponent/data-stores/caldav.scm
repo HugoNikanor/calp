@@ -161,7 +161,7 @@
 
 
 
-(get-principal) ; => "/principals/uid/a3298201184/"
+;; (get-principal) ; => "/principals/uid/a3298201184/"
 
 (get-calendar-home-set "/principals/uid/a3298201184/")
 ;; => "/calendars/a3298201184/"
@@ -186,122 +186,128 @@
              host: "dav.fruux.com"
              path: "/calendars/a3298201184/b85ba2e9-18aa-4451-91bb-b52da930e977/ff95c36c-6ae9-4aa0-b08f-c52d84bf4f26.ics"))
 
-(define-values (response body)
-  (dav uri
-       method: 'GET
-       authorization: auth))
+(define (get-sample)
+ (define-values (response body)
+   (dav uri
+        method: 'GET
+        authorization: auth))
+ 'done)
 
 
 
 
-(define-values (response body)
-  (dav uri
-       method: 'PROPFIND
-       authorization: auth
-       body:
-       `(C:supported-collation-set (@ (xmlns:C ,caldav)))))
+(define (propfind-sample)
+ (define-values (response body)
+   (dav uri
+        method: 'PROPFIND
+        authorization: auth
+        body:
+        `(C:supported-collation-set (@ (xmlns:C ,caldav)))))
+ 'done)
 
-(define-values (response body)
-  (dav uri
-       method: 'REPORT
-       authorization: auth
-       body:
-       `(C:calendar-query
-         (@ (xmlns:C ,caldav))
-         (D:prop (@ (xmlns:D "DAV:"))
-                 (D:getetac)
-                 (C:calendar-data))
-         (C:filter
-          (C:comp-filter
-           (@ (name "VCALENDAR"))
+(define (report-sample)
+ (define-values (response body)
+   (dav uri
+        method: 'REPORT
+        authorization: auth
+        body:
+        `(C:calendar-query
+          (@ (xmlns:C ,caldav))
+          (D:prop (@ (xmlns:D "DAV:"))
+                  (D:getetac)
+                  (C:calendar-data))
+          (C:filter
            (C:comp-filter
-            (@ (name "VEVENT"))
-            (C:prop-filter (@ (name "UID"))
-                           (C:text-match (@ (collation "i;utf-8"))
-                                         "Admittansen"))))))))
+            (@ (name "VCALENDAR"))
+            (C:comp-filter
+             (@ (name "VEVENT"))
+             (C:prop-filter (@ (name "UID"))
+                            (C:text-match (@ (collation "i;utf-8"))
+                                          "Admittansen"))))))))
+ 'done)
 
 
 
 
 
 
-(define (add)
- ;; add new event
- (http-request 'PUT
-               path: "/path-on-server/<filename>.ics"
-               headers:
-               ((if-none-match "*")
-                (content-type "text/calendar"))
-               body: (ics:serialize event-with-wrapping-calendar)
-               ))
+;; (define (add)
+;;  ;; add new event
+;;  (http-request 'PUT
+;;                path: "/path-on-server/<filename>.ics"
+;;                headers:
+;;                `((if-none-match "*")
+;;                  (content-type "text/calendar"))
+;;                body: (ics:serialize event-with-wrapping-calendar)
+;;                ))
 
 
-(define (get-by-time-range)
-  (http-request 'REPORT
-                path: "/calendar/<calendar-name>"
-                body:
-                ;; See RFC 4791 7.8.1
-                `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
-                        (C:calendar-query
-                         (@ (xmlns:D "DAV:")
-                            (xmlns:C "urn:ietf:params:xml:ns:caldav"))
-                         (D:prop
-                          (D:getetag)
-                          (C:calendar-data
-                           (C:comp
-                            (@ (name "VCALENDAR"))
-                            (C:prop (@ (name "VERSION")))
-                            (C:prop (@ name "VEVENT")
-                                    (C:prop (@ (name "SUMMARY")))
-                                    ...))))
-                         (C:filter
-                          (C:comp-filter
-                           (@ (name "VCALENDAR"))
-                           (C:comp-filter
-                            (@ (name "VEVENT"))
-                            (C:time-range
-                             (@ (start ,(datetime->string
-                                         start
-                                         "~Y~m~dT~H~M~S~Z"))
-                                (end ,(datetime->string
-                                       end
-                                       "~Y~m~dT~H~M~S~Z")))))))))))
+;; (define (get-by-time-range)
+;;   (http-request 'REPORT
+;;                 path: "/calendar/<calendar-name>"
+;;                 body:
+;;                 ;; See RFC 4791 7.8.1
+;;                 `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
+;;                         (C:calendar-query
+;;                          (@ (xmlns:D "DAV:")
+;;                             (xmlns:C "urn:ietf:params:xml:ns:caldav"))
+;;                          (D:prop
+;;                           (D:getetag)
+;;                           (C:calendar-data
+;;                            (C:comp
+;;                             (@ (name "VCALENDAR"))
+;;                             (C:prop (@ (name "VERSION")))
+;;                             (C:prop (@ name "VEVENT")
+;;                                     (C:prop (@ (name "SUMMARY")))
+;;                                     ...))))
+;;                          (C:filter
+;;                           (C:comp-filter
+;;                            (@ (name "VCALENDAR"))
+;;                            (C:comp-filter
+;;                             (@ (name "VEVENT"))
+;;                             (C:time-range
+;;                              (@ (start ,(datetime->string
+;;                                          start
+;;                                          "~Y~m~dT~H~M~S~Z"))
+;;                                 (end ,(datetime->string
+;;                                        end
+;;                                        "~Y~m~dT~H~M~S~Z")))))))))))
 
-(define (get-modified-after date)
-  (http-request 'REPORT
-                path: "/<collection>"
-                body:
-                `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
-                        (C:calendar-query
-                         (@ (xmlns:D "DAV:")
-                            (xmlns:C "urn:ietf:params:xml:ns:caldav"))
-                         (D:prop (D:getetag))
-                         (C:filter
-                          (C:comp-filter
-                           (@ (name "VCALENDAR"))
-                           (C:comp-filter
-                            (@ (name "VEVENT"))
-                            (C:prop-filter
-                             (@ (name "DTSTAMP"))
-                             (C:time-range
-                              (@ (start ,(datetime->string date "~Y~m~dT~H~M~S~Z")))))))))))
+;; (define (get-modified-after date)
+;;   (http-request 'REPORT
+;;                 path: "/<collection>"
+;;                 body:
+;;                 `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
+;;                         (C:calendar-query
+;;                          (@ (xmlns:D "DAV:")
+;;                             (xmlns:C "urn:ietf:params:xml:ns:caldav"))
+;;                          (D:prop (D:getetag))
+;;                          (C:filter
+;;                           (C:comp-filter
+;;                            (@ (name "VCALENDAR"))
+;;                            (C:comp-filter
+;;                             (@ (name "VEVENT"))
+;;                             (C:prop-filter
+;;                              (@ (name "DTSTAMP"))
+;;                              (C:time-range
+;;                               (@ (start ,(datetime->string date "~Y~m~dT~H~M~S~Z")))))))))))
 
-  (http-request 'REPORT
-                path: "/<collection>"
-                body:
-                `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
-                        (C:calendar-query
-                         (@ (xmlns:D "DAV:")
-                            (xmlns:C "urn:ietf:params:xml:ns:caldav"))
-                         (D:prop (D:getetag))
-                         (C:filter
-                          (C:comp-filter
-                           (@ (name "VCALENDAR"))
-                           (C:comp-filter
-                            (@ (name "VEVENT"))
-                            (C:prop-filter (@ (name "DTSTAMP"))
-                                           (C:is-not-defined))))))))
-  )
+;;   (http-request 'REPORT
+;;                 path: "/<collection>"
+;;                 body:
+;;                 `(*TOP* (*PI* xml "version=\"1.0\" encoding=\"utf-8\"")
+;;                         (C:calendar-query
+;;                          (@ (xmlns:D "DAV:")
+;;                             (xmlns:C "urn:ietf:params:xml:ns:caldav"))
+;;                          (D:prop (D:getetag))
+;;                          (C:filter
+;;                           (C:comp-filter
+;;                            (@ (name "VCALENDAR"))
+;;                            (C:comp-filter
+;;                             (@ (name "VEVENT"))
+;;                             (C:prop-filter (@ (name "DTSTAMP"))
+;;                                            (C:is-not-defined))))))))
+;;   )
 
 
 
