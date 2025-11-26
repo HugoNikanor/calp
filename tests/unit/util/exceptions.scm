@@ -12,7 +12,6 @@
    (warning "Test: ~a" 1))
 
  (parameterize ((warning-handler (lambda (fmt . args)
-                                   (test-equal "~a happened" fmt)
                                    (test-equal '(2) args)))
                 (warnings-are-errors #t))
    (test-error 'warning

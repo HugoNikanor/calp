@@ -376,7 +376,7 @@
 (define ((warning-handler-proc content-line) fmt . args)
   (let ((linedata (content-line-metadata content-line)))
     (format
-     #f
+     #t
      ;; arguments:
      ;; linedata
      ;; ~?

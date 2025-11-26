@@ -9,21 +9,19 @@ Warnings are like exceptions, but only fatal when wanted.
 @defun warning fmt args ...
 Emit a warning.
 
-If the parameter @var{warnings-are-errors} is true, then an exception
-of type @code{'warning} will be raised, with @var{fmt} and @var{args}
-as arguments.
+First, the procedure stored in @code{warning-handler} is called with
+the format and arguments, and output set to the current error port.
+If @code{warnings-are-errors} is true, then an exception of type
+@code{warning} is thrown, the format string and argument list.
 
-If that parameter is false, then the procedure in
-@var{warning-handler} will instead be called.
+@var{fmt} must be a basic Guile format string. @var{args} is the
+arguments to this format string.
 @end defun
 
 @deftp {parameter} warning-handler
-Parameter containing proceudre which will be called for non-throwing
-warnings. This procedure is assumed by the program to log the warning
-in some way, and continue program flow. But anything goes.
-
-The procedure is given a format specifier (as per Scheme's basic
-@code{format}), along with the correct number of arguments.
+A procedure which logs all warnings (irregardless of if warnings are
+errors or not), in a way deemed fit by the user. The default handler
+simply emits a message to the current error port.
 @end deftp
 
 @deftp {parameter} warnings-are-errors

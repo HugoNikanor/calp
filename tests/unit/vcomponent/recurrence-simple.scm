@@ -47,17 +47,15 @@
 
 ;;; Test that recurrence rule parsing fails where appropriate
 
-(parameterize ((warnings-are-errors #t)
-               (warning-handler (lambda _ "")))
-  (test-error "Invalid FREQ"
-    'wrong-type-arg
-    (parse-recurrence-rule (table) "FREQ=ERR;COUNT=3"))
-  (test-error "Negative COUNT"
-    'wrong-type-arg
-    (parse-recurrence-rule (table) "FREQ=HOURLY;COUNT=-1"))
-  (test-error "Invalid COUNT"
-    'wrong-type-arg
-    (parse-recurrence-rule (table) "FREQ=HOURLY;COUNT=err")))
+(test-error "Invalid FREQ"
+  'wrong-type-arg
+  (parse-recurrence-rule (table) "FREQ=ERR;COUNT=3"))
+(test-error "Negative COUNT"
+  'wrong-type-arg
+  (parse-recurrence-rule (table) "FREQ=HOURLY;COUNT=-1"))
+(test-error "Invalid COUNT"
+  'wrong-type-arg
+  (parse-recurrence-rule (table) "FREQ=HOURLY;COUNT=err"))
 
 ;;; Test that basic recurrence works
 ;;; also see the neighbour test file recurrence.scm for more tests.

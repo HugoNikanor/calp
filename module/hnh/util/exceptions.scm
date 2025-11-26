@@ -18,7 +18,7 @@
 (define warning-handler
   (make-parameter
    (lambda (fmt . args)
-     (format #f "WARNING: ~?~%" fmt args))))
+     (format #t "WARNING: ~?~%" fmt args))))
 
 (define warnings-are-errors
   (make-parameter #f))
@@ -26,8 +26,9 @@
 ;; forwards return from warning-hander. By default returns an unspecified value,
 ;; but instances are free to provide a proper return value and use it.
 (define (warning fmt . args)
-  (display (apply (warning-handler) fmt (or args '()))
-           (current-error-port))
+  (with-output-to-port (current-error-port)
+    (lambda ()
+      (apply (warning-handler) fmt args)))
   (when (warnings-are-errors)
     (throw 'warning fmt args)))
 
