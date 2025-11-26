@@ -30,6 +30,8 @@
 
 (define format
   (calendar-data-format
+   media-type: "application/vnd.guile-read"
+   file-extension: "sexp"
    serializer:
    (lambda* (r p key: pretty?)
      (when pretty?

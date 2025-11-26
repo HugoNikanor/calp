@@ -10,4 +10,6 @@
 (define format
   (calendar-data-format
    parser: icalendar->vcomponent
-   serializer: (lambda args (apply vcomponent->icalendar args))))
+   serializer: (lambda args (apply vcomponent->icalendar args))
+   media-type: "text/calendar"
+   file-extension: "ics"))

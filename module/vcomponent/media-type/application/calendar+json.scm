@@ -22,4 +22,6 @@
 (define jcal-format
   (calendar-data-format
    serializer: vcomponent->json
-   parser: json->vcomponent))
+   parser: json->vcomponent
+   media-type: "application/calendar+json"
+   file-extension: "json"))

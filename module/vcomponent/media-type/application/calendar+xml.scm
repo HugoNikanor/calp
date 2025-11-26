@@ -38,4 +38,6 @@
 (define format
   (calendar-data-format
    parser: xml->vcomponent
-   serializer: vcomponent->xml))
+   serializer: vcomponent->xml
+   media-type: "application/calendar+xml"
+   file-extension: "xcs"))
