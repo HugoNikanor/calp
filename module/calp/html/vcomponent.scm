@@ -234,10 +234,11 @@
                                              (href
                                               "/search/?"
                                               ,(encode-query-parameters
-                                                `((q . (member
-                                                        ,(->string c)
-                                                        (or (prop event 'CATEGORIES)
-                                                            '())))))))
+                                                `((q . ,(format #f "~s"
+                                                                `(member
+                                                                  ,(->string c)
+                                                                  (or (prop event 'CATEGORIES)
+                                                                      '()))))))))
                                           ,c))
                                     it)))
 

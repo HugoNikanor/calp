@@ -57,11 +57,11 @@
                                        "?"
                                        ,(encode-query-parameters
                                          `((p . ,p)
-                                           (q . ,search-term)))))
+                                           (q . ,(format #f "~s" search-term))))))
                                    ,p)))
                     (lambda (p) `(a (@ (href
                                    "?"
                                    ,(encode-query-parameters
                                      `((p . ,p)
-                                       (q . ,search-term)))))
+                                       (q . ,(format #f "~s" search-term))))))
                                "»")))))))))

@@ -28,13 +28,11 @@
           '() (string-split query-string #\&))))
 
 
-;; TODO why this format for values?
-;; TODO why aren't we encoding the keys?
 (define (encode-query-parameters parameters)
   (string-join
    (map (lambda (p)
           (format #f "~a=~a"
-                  (car p)
-                  (uri-encode (with-output-to-string (lambda () (write (cdr p)))))))
+                  (uri-encode (with-output-to-string (lambda () (display (car p)))))
+                  (uri-encode (with-output-to-string (lambda () (display (cdr p)))))))
         parameters)
    "&"))
