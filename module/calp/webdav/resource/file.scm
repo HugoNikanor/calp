@@ -205,7 +205,7 @@
 (define-method (set-getcontenttype! (self <file-resource>) value)
   (lambda ()
    (set-xattr! (path self) (string-append (xattr-prefix) ".mime")
-               (string->utf8 value)
+               (string->utf8 (xml-text-content value))
                follow-symlinks?: #f)))
 
 (define-method (remove-getcontenttype! (self <file-resource>))
@@ -223,7 +223,7 @@
 (define-method (set-displayname! (self <file-resource>) value)
   (lambda () (set-xattr! (path self)
                     (string-append (xattr-prefix) ".displayname")
-                    (string->utf8 value)
+                    (string->utf8 (xml-text-content value))
                     follow-symlinks?: #f)))
 
 (define-method (remove-displayname! (self <file-resource>))
