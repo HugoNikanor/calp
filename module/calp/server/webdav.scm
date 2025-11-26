@@ -237,6 +237,13 @@
         (else (build-response code: 404))))
 
 
+;;; TODO put this somewhere propper
+(define (content-type->string ct)
+  (string-append (symbol->string (car ct))
+                 (string-concatenate
+                  (map (lambda (p) (format #f ";~a=~a" (car p) (cdr p)))
+                       (cdr ct)))))
+
 (define (run-put root-resource href request request-body)
 
   ;; Helper procedure, since the code is shared between the creation
@@ -251,7 +258,8 @@
 
     (cond ((request-content-type request)
            => (lambda (content-type)
-                (set-property! resource ((xml webdav 'getcontenttype) content-type)))))
+                (set-property! resource ((xml webdav 'getcontenttype)
+                                         (content-type->string content-type))))))
     etag)
 
   ;; TODO handle If, If-Match, and similar headers
