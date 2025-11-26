@@ -222,7 +222,7 @@
 
                                ;; Neither BINARY nor URI
                                (else (scm-error 'misc-error "fmt-single-event"
-                                                "Unknown attachement type ~s, expected BINARY or UID"
+                                                "Unknown attachement type ~s, expected BINARY or URI"
                                                 (list (and=> (param attach 'VALUE) car))
                                                 #f)))))
 
