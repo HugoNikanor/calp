@@ -93,5 +93,19 @@
   ;; TODO test that type persists when focusing deeper nodes, and when removing nodes
   )
 
+(test-group "Table diff"
+  (test-equal "No diff"
+    '()
+    (table-diff
+     (alist->table '((a . 1) (b . 2)))
+     (alist->table '((b . 2) (a . 1)))))
+
+  (test-equal "Various diffs"
+    '((absent b k1)
+      (diff k2 "x" "y")
+      (absent a k3))
+    (table-diff (alist->table '((k1 . 1) (k2 . "x")))
+                (alist->table '((k3 . 3) (k2 . "y"))))))
+
 
 '((hnh util table))
