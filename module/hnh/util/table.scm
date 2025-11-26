@@ -16,6 +16,8 @@
   :use-module (hnh util named-type)
   :use-module (ice-9 curried-definitions)
   :export ((make-tree . table)
+           (tree-type . table-type)
+           (tree-of . table-of)
            (tree-get . table-get)
            (tree-put . table-put)
            (tree-remove . table-remove)
@@ -36,7 +38,7 @@
   (string< (symbol->string args) ...))
 
 (define (serialize-tree t)
-  `(-> (table ,@(if (type t) (list (serialize (type t))) '()))
+  `(-> (table ,@(if (tree-type t) (list (serialize (tree-type t))) '()))
        ,@(map (lambda (p) `(table-put ,(serialize (car p)) ,(serialize (cdr p))))
               (tree->list t))))
 
@@ -61,7 +63,7 @@
 ;; will share when added to
 (define-type (tree-terminal
               serializer:
-              (lambda (t) `(table ,@(if (type t) (list (serialize (type t))) '()))))
+              (lambda (t) `(table ,@(if (tree-type t) (list (serialize (tree-type t))) '()))))
   (terminal-type type: (or false? named-type?) default: #f keyword: type))
 
 ;; Wrapped for better error messages
@@ -71,14 +73,26 @@
   (or (tree-node? x)
       (tree-terminal? x)))
 
-(define* (type x optional: (v (nothing)))
+
+
+(define* (tree-type x optional: (v (nothing)))
   (typecheck v optional?)
   (define accessor
-   (cond ((tree-node? x) node-type)
-         ((tree-terminal? x) terminal-type)))
+    (cond ((tree-node? x) node-type)
+          ((tree-terminal? x) terminal-type)))
   (if (just? v)
       (accessor x (from-just v))
       (accessor x)))
+
+
+(define-syntax-rule (tree-of var inner)
+  (and (tree? var)
+       (tree-type var)
+       ;; NOTE this unfortunately breaks type aliasing.
+       ;; Figure out how to expand
+       (equal? (quote inner)
+               (named-type-name (tree-type var)))))
+
 
 ;; Lens for focusing a specific entry in a table.
 (define (((tree-focus k) tree) op)
@@ -86,8 +100,8 @@
          (let ((ret (op (nothing))))
            (cond ((just? ret)
                   (tree-node key: k value: (from-just ret)
-                             type: (type tree)))
-                 ((nothing? ret) (tree-terminal type: (type tree)))
+                             type: (tree-type tree)))
+                 ((nothing? ret) (tree-terminal type: (tree-type tree)))
                  (else (scm-error 'misc-error "tree-focus"
                                   "Non-wrapped value returned to tree-focus: ~s"
                                   (list ret)
@@ -95,8 +109,8 @@
         ((eq? k (key tree))
          (let ((ret (op (just (value tree)))))
            (cond ((just? ret) (value tree (from-just ret)))
-                 ((nothing? ret) (type (merge-trees (left tree) (right tree))
-                                       (just (type tree))))
+                 ((nothing? ret) (tree-type (merge-trees (left tree) (right tree))
+                                            (just (tree-type tree))))
                  (else (scm-error 'misc-error "tree-focus"
                                   "Non-wrapped value returned to tree-focus: ~s"
                                   (list ret)
