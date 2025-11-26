@@ -26,12 +26,18 @@
 (define format
   (calendar-data-format
    serializer:
-   (lambda (r p)
+   (lambda* (r p key: pretty?)
+     (when pretty?
+       (display ";;; -*- mode: scheme -*-\n" p))
      ;; NOTE this isn't configurable, since the general serialization API
      ;; already exists, and we are just using that.
      (with-serializers
       ((uri? (lambda (u) `(string->uri ,(uri->string u)))))
-      (write (serialize r) p)))
+      ((if pretty?
+           (@ (ice-9 pretty-print) pretty-print)
+           write)
+       (serialize r)
+       p)))
    parser: (lambda (p)
              (eval-in-sandbox
               (read p)
