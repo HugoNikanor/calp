@@ -69,14 +69,7 @@
           (lambda (c) (append c (list child)))))
 
 (define (vcomponent-equal? a b)
-  (and (eqv? (type a) (type b))
-       (table-equal?
-        (vcomponent-properties a)
-        (vcomponent-properties b)
-        (lambda (ax bx) (lset= vline-equal? ax bx)))
-       (lset= vcomponent-equal?
-              (vcomponent-children a)
-              (vcomponent-children b))))
+  (equal? '() (vcomponent-diff a b)))
 
 (define (sort-vcomponents-by-best-effort lst)
   (sort lst
