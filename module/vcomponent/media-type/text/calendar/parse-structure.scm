@@ -98,7 +98,10 @@
        (define property-name (read-delimited ";:" p 'peek))
        (cons property-name
              (case (read-char p)
-               ((#\:) (list (read-delimited "" p)))
+               ((#\:)
+                (list
+                 (if (eof-object? (peek-char p))
+                     "" (read-delimited "" p))))
                ((#\;)
                 (let loop ()
                   (define parameter-name (read-delimited "=" p))
@@ -109,5 +112,7 @@
                         (read-delimited ";:" p 'peek)))
                   (cons (cons parameter-name parameter-value)
                         (case (read-char p)
-                          ((#\:) (list (read-delimited "" p)))
+                          ((#\:) (list
+                                  (if (eof-object? (peek-char p))
+                                      "" (read-delimited "" p))))
                           ((#\;) (loop))))))))))))

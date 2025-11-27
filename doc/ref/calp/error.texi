@@ -30,15 +30,6 @@ Thrown by (calp util config), in some scenarios.
 Errors thrown by our make-shift C parser.
 @end deftp
 
-@deftp{Error Type} decoding-error
-thrown by base64 in some cases
-@end deftp
-
-@deftp{Error Type} parse-error
-Thrown by some things related to parsing, but not all.
-@TODO{normalize parsing errors further}
-@end deftp
-
 @deftp{Error Type} graph-error
 The first element of data is guaranteed to be the graph which caused
 the error.

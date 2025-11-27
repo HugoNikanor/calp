@@ -1,0 +1,7 @@
+@c TODO actually link this page
+
+@deftp {Error} calendar-parse-error cont type field value fmt args
+@end deftp
+
+@defun raise-calendar-parse-error [#:type] [#:value] [#:msg] [#:arguments]
+@end defun

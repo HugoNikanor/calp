@@ -48,13 +48,13 @@
 ;;; Test that recurrence rule parsing fails where appropriate
 
 (test-error "Invalid FREQ"
-  'wrong-type-arg
+  'calendar-parse-error
   (parse-recurrence-rule (table) "FREQ=ERR;COUNT=3"))
 (test-error "Negative COUNT"
-  'wrong-type-arg
+  'calendar-parse-error
   (parse-recurrence-rule (table) "FREQ=HOURLY;COUNT=-1"))
 (test-error "Invalid COUNT"
-  'wrong-type-arg
+  'calendar-parse-error
   (parse-recurrence-rule (table) "FREQ=HOURLY;COUNT=err"))
 
 ;;; Test that basic recurrence works

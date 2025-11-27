@@ -7,6 +7,7 @@
   :use-module (ice-9 peg)
   :use-module (ice-9 match)
   :use-module (srfi srfi-1)
+  :use-module (vcomponent media-type parse-error)
   :export (duration
            duration?
 
@@ -107,13 +108,15 @@
 (define (string->duration str)
   (let ((m (match-pattern dur-pattern str)))
     (unless m
-      (scm-error 'parse-error "string->duration"
-                 "~s doesn't appar to be a duration"
-                 (list str)
-                 #f))
+      (raise-calendar-parse-error
+       type: 'DURATION
+       value: str))
 
     (unless (= (peg:end m) (string-length str))
-      (warning "Garbage at end of duration"))
+      (raise-calendar-parse-error
+       type: 'DURATION
+       value: str
+       msg: "Garbage at end of duration"))
 
     (let* ((tree (peg:tree m))
            (sign (case (string->symbol (car tree))

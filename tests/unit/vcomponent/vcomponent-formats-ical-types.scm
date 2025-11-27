@@ -21,7 +21,8 @@
 (test-equal #t (parse-boolean #f "TRUE"))
 (test-equal #f (parse-boolean #f "FALSE"))
 
-(test-error 'warning (parse-boolean #f "ANYTHING ELSE"))
+(test-error 'calendar-parse-error
+  (parse-boolean #f "ANYTHING ELSE"))
 
 
 
@@ -88,17 +89,17 @@
     #f
     "123451234512345123456666123456"))
 
-;; TODO is this expected behaivour?
-(test-error 'warning (parse-integer #f "failure"))
+(test-error 'calendar-parse-error
+  (parse-integer #f "failure"))
 
 (test-error
   "Non-integers aren't integers"
-  'warning
+  'calendar-parse-error
   (parse-integer #f "1.1"))
 
-(test-equal
-  "But exact floats are"
-  1.0
+(test-error
+  "Neither are exact floats"
+  'calendar-parse-error
   (parse-integer #f "1.0"))
 
 

@@ -29,6 +29,7 @@
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type recurrence parse)
   :use-module (vcomponent media-type types)
+  :use-module (vcomponent media-type parse-error)
   :use-module (calp translation)
   :use-module (base64)
   :use-module (web uri)
@@ -43,34 +44,19 @@
            get-parser
 
            split-carefully
+
+           ;; TODO stop exporting these, make everything done through get-parser
            parse-recurrence-rule
            parse-period
            parse-request-status
            ))
 
 
-
-;;; TODO different parsers currently fail in different ways for invalid value.
-;;; - Some throw exceptions, crashing the program
-;;; - Some emit a warning, then wraps the raw value in an `unknown`
-;;; - some may do something else entirely.
-
-;;; BINARY throws on unknown encodnig, returns incorrect data on malformed data
-;;; BOOLEAN never fails
-;;; DATE throws on malformed date
-;;; DATETIME throws on malformed date
-;;; DURATION throws on malformed data
-;;; FLOAT returns #f
-;;; INTEGER return `(unknown <data>)`
-;;; PERIOD throws on malformed data
-;;; RECUR throws on malformed data
-;;; TEXT never fails
-;;; TIME throws on malformed data
-;;; UTC-OFFSET throws on malformed data
-
-;;; GEO throws
-;;; VERSION never fails
-;;; REQUEST-STATUS throws on malformed data
+;;; NOTE Any failure in parsing due to malformed data MUST result in a
+;;; 'calendar-parse-error being thrown. Any other error arising from
+;;; malform data is consigered a BUG.
+;;; Note however that semantic errors, such as an end time comming
+;;; before a start time is NOT (neccecerily) validated here.
 
 ;; BINARY
 (define (parse-binary props value)
@@ -78,54 +64,91 @@
 
   (values
    (case (string->symbol (or (table-get props 'ENCODING) "BASE64"))
-     ((BASE64) (base64-string->bytevector value))
-     (else => (lambda (enc) (scm-error 'misc-error "parse-binary"
-                                  "Unknown encoding of binary data: ~s"
-                                  (list enc) #f))))
+     ((BASE64)
+      (catch 'decoding-error (lambda () (base64-string->bytevector value))
+        (lambda (_ proc fmt args data)
+          (raise-calendar-parse-error
+           type: 'BINARY
+           value: value
+           msg: (format #f "Error in ~s: ~?"
+                        proc fmt args)
+           ))))
+     (else => (lambda (enc)
+                (raise-calendar-parse-error
+                 type: 'BINARY
+                 value: value
+                 msg: "Unknown encoding of binary data:"
+                 args: (list enc)))))
    (table-remove props 'ENCODING)))
 
 ;; BOOLEAN
 (define (parse-boolean _ value)
   (cond
-   [(string=? "TRUE" value) #t]
-   [(string=? "FALSE" value) #f]
-   [else (warning (G_ "~a invalid boolean") (unknown value))]))
+   [(string-ci=? "TRUE"  value) #t]
+   [(string-ci=? "FALSE" value) #f]
+   [else (raise-calendar-parse-error
+          type: 'BOOLEAN
+          value: value
+          msg: "Invalid boolean")]))
 
+
+;; DATE
+(define (parse-date _ value)
+  (catch 'misc-error
+    (lambda () (parse-ics-date value))
+    (lambda (_ proc fmt args data)
+      (raise-calendar-parse-error
+       type: 'DATE
+       value: value
+       msg: (format #f "~?" fmt args)))))
+
+;;; TIME
+(define (parse-time _ value)
+ (catch 'misc-error
+    (lambda () (parse-ics-time value))
+    (lambda (_ proc fmt args data)
+      (raise-calendar-parse-error
+       type: 'TIME
+       value: value
+       msg: (format #f "~?" fmt args)))))
 
 
 ;; DATE-TIME
 (define (parse-datetime props value)
-  (values (modify (string->datetime value "~Y~m~dT~H~M~S~Z")
-                  tz* (lambda (tz) (or tz (table-get props 'TZID))))
-          (table-remove props 'TZID)))
-
-
-;; INTEGER
-(define (parse-integer _ value)
-  (let ((n (string->number value)))
-    (if (not (integer? n))
-        (begin
-          (warning (G_ "Non integer as integer"))
-          (unknown value))
-        n)))
+  ;; Catch outermost, to not make any assumptions about the properties
+  (catch 'misc-error
+    (lambda ()
+      (values (modify (string->datetime value "~Y~m~dT~H~M~S~Z")
+                      tz* (lambda (tz) (or tz (table-get props 'TZID))))
+              (table-remove props 'TZID)))
+    (lambda (_ proc fmt args data)
+      (raise-calendar-parse-error
+       type: 'DATE-TIME
+       value: value
+       msg: (format #f "~?" fmt args)))))
 
 
 ;; PERIOD
 (define* (parse-period props value optional: (dt-fmt "~Y~m~dT~H~M~S~Z"))
-  (let ((left right (apply values (string-split value #\/))))
-    (values (period start: (modify (string->datetime left dt-fmt)
-                                   tz* (lambda (tz) (or tz (table-get props 'TZID))))
-                    end: ((if (memv (string-ref right 0)
-                                 '(#\P #\+ #\-))
-                              string->duration
-                              (lambda (v) (modify (string->datetime v dt-fmt)
-                                             tz* (lambda (tz) (or tz (table-get props 'TZID))))))
-                          right))
-            (table-remove props 'TZID))))
+  (match (string-split value #\/)
+    ((left right)
+     (values (period start: (modify (string->datetime left dt-fmt)
+                                    tz* (lambda (tz) (or tz (table-get props 'TZID))))
+                     end: ((if (memv (string-ref right 0)
+                                  '(#\P #\+ #\-))
+                               string->duration
+                               (lambda (v) (modify (string->datetime v dt-fmt)
+                                              tz* (lambda (tz) (or tz (table-get props 'TZID))))))
+                           right))
+             (table-remove props 'TZID)))
+    (_ (raise-calendar-parse-error
+        type: 'PERIOD
+        value: value))))
 
 
 ;; TEXT
 (define (parse-text _ value)
+
   (let loop ((rem (string->list value))
              (str '()))
     (match rem
@@ -146,6 +169,21 @@
        (loop rest (cons #\; str)))
       ((c rest ...) (loop rest (cons c str))))))
 
+;;; FLOAT
+(define (parse-float _ v)
+  (let ((x (string->number v)))
+    (unless x
+      (raise-calendar-parse-error
+       type: 'FLOAT
+       value: v
+       msg: "Malformed float"))
+    (unless (real? x)
+      (raise-calendar-parse-error
+       type: 'FLOAT
+       value: v
+       msg: "Float parsed as non-real number"))
+    x))
+
 
 ;; UTC-OFFSET
 ;;; (@ (datetime timespec) parse-time-spec) parses timespecs as they
@@ -158,19 +196,28 @@
                              "~H~M~S")
                (string->symbol (match:substring m 1))
                'utc)))
-        (else (scm-error 'misc-error "parse-utc-offset"
-                         "String not parsable as a UTC-OFFSET: ~s"
-                         (list value) #f))))
+        (else (raise-calendar-parse-error
+               type: 'UTC-OFFSET
+               value: value
+               msg: "Not parseable as a UTC-OFFSET"))))
 
 
 
 
-(define* (string->number/throw string optional: (radix 10))
-  (or (string->number string radix)
-      (scm-error 'wrong-type-arg
-                 "string->number/throw"
-                 "Can't parse ~s as number in base ~a"
-                 (list string radix) (list string radix))))
+(define* (string->integer/throw optional: (type 'INTEGER))
+  (lambda* (string optional: (radix 10))
+    (let ((n (string->number string radix)))
+      (when (not n)
+        (raise-calendar-parse-error
+         type: type
+         value: string
+         msg: "String not parsable as number"))
+      (unless (exact-integer? n)
+        (raise-calendar-parse-error
+         type: type
+         value: n
+         msg: "Parsed value not an exact integer"))
+      n)))
 
 ;; RFC 5545, Section 3.3.10. Recurrence Rule, states that the UNTIL value MUST have
 ;; the same type as the DTSTART of the event (date or datetime). I have seen events
@@ -193,27 +240,35 @@
                      (string->datetime val "~Y~m~dT~H~M~S~Z")))
            (day (rfc->datetime-weekday (string->symbol val)))
            (days (map parse-day-spec (string-split val #\,)))
-           (num  (string->number/throw val))
-           (nums (map string->number/throw (string-split val #\,))))
+           (num  ((string->integer/throw 'RECUR) val))
+           (nums (map (string->integer/throw 'RECUR) (string-split val #\,))))
 
           ;; It's an error to give BYHOUR and smaller for pure dates.
           ;; 3.3.10. p 41
-          (case (string->symbol key)
-            ((UNTIL)      (until      o date))
-            ((COUNT)      (count      o num))
-            ((INTERVAL)   (interval   o num))
-            ((FREQ)       (freq       o symb))
-            ((WKST)       (wkst       o day))
-            ((BYSECOND)   (bysecond   o nums))
-            ((BYMINUTE)   (byminute   o nums))
-            ((BYHOUR)     (byhour     o nums))
-            ((BYMONTH)    (bymonth    o nums))
-            ((BYDAY)      (byday      o days))
-            ((BYMONTHDAY) (bymonthday o nums))
-            ((BYYEARDAY)  (byyearday  o nums))
-            ((BYSETPOS)   (bysetpos   o nums))
-            ((BYWEEKNO)   (byweekno   o nums))
-            (else o)))))
+          (catch 'wrong-type-arg
+            (lambda ()
+             (case (string->symbol key)
+               ((UNTIL)      (until      o date))
+               ((COUNT)      (count      o num))
+               ((INTERVAL)   (interval   o num))
+               ((FREQ)       (freq       o symb))
+               ((WKST)       (wkst       o day))
+               ((BYSECOND)   (bysecond   o nums))
+               ((BYMINUTE)   (byminute   o nums))
+               ((BYHOUR)     (byhour     o nums))
+               ((BYMONTH)    (bymonth    o nums))
+               ((BYDAY)      (byday      o days))
+               ((BYMONTHDAY) (bymonthday o nums))
+               ((BYYEARDAY)  (byyearday  o nums))
+               ((BYSETPOS)   (bysetpos   o nums))
+               ((BYWEEKNO)   (byweekno   o nums))
+               (else o)))
+            (lambda (_ procedure fmt args data)
+              (raise-calendar-parse-error
+               type: 'RECUR
+               value: str
+               msg: (format #f "~?" fmt args))
+              )))))
 
      ;; obj
      (recur-rule)
@@ -229,6 +284,11 @@
 
 
 
+(define (parse-uri _ v)
+  (or (string->uri v)
+      (raise-calendar-parse-error
+       type: 'CAL-ADDRESS
+       value: v))  )
 
 ;; A parser is a function with signature (table, string) → any
 ;; which takes the table of vline parameters, and the raw value,
@@ -243,21 +303,21 @@
     (list
      (cons 'BINARY parse-binary)
      (cons 'BOOLEAN parse-boolean)
-     (cons 'CAL-ADDRESS (lambda (_ v) (string->uri v)))
-     (cons 'DATE (lambda (_ v) (parse-ics-date v)))
+     (cons 'CAL-ADDRESS parse-uri)
+     (cons 'DATE parse-date)
      (cons 'DATE-TIME parse-datetime)
      (cons 'DURATION (lambda (_ v) (string->duration v)))
      ;; Note that this is overly permissive, and flawed.
      ;; Numbers such as @expr{1/2} is accepted as exact
      ;; rationals. Some floats are rounded.
-     (cons 'FLOAT (lambda (_ v) (string->number v)))
-     (cons 'INTEGER parse-integer)
+     (cons 'FLOAT parse-float)
+     (cons 'INTEGER (lambda (_ v) ((string->integer/throw) v)))
      (cons 'PERIOD parse-period)
      (cons 'RECUR parse-recurrence-rule)
      (cons 'TEXT parse-text)
      ;; TODO time can have timezones...
-     (cons 'TIME (lambda (_ v) (parse-ics-time v)))
-     (cons 'URI (lambda (_ v) (string->uri v)))
+     (cons 'TIME parse-time)
+     (cons 'URI parse-uri)
      (cons 'UTC-OFFSET parse-utc-offset)))))
 
 ;;; Get iCalendar type parser by type name
@@ -331,9 +391,10 @@
      ((eq? key 'GEO)
       (lambda (_ value)
         (apply (case-lambda ((y x) (geo x: x y: y))
-                            (_ (scm-error 'misc-error "build-vlines"
-                                          "Invalid GEO value: ~s"
-                                          (list value) #f)))
+                            (_
+                             (raise-calendar-parse-error
+                              type: 'GEO
+                              value: value)))
                (map string->number (string-split value #\;)))))
 
      ((eq? key 'VERSION)
@@ -440,22 +501,15 @@
                          (cddr stack))))
 
             ((key (parameter-key . parameter-value) ... value)
-             (define params (fold (lambda (k v params) (table-put params (string->symbol k) v))
-                                  (table)
-                                  parameter-key parameter-value))
+             (define params
+               (fold (lambda (k v params)
+                       (table-put params (string->symbol k) v))
+                     (table)
+                     parameter-key parameter-value))
 
-             (catch 'parse-error
-               (lambda ()
-                 (loop (cdr lst)
-                       (update-property stack
-                                        (string->symbol key)
-                                        (build-vlines (string->symbol key)
-                                                      value params))))
-
-               (lambda (err proc fmt fmt-args data)
-                 (warning "Marking field as `unknown`")
-                 (loop (cdr lst)
-                       (update-property stack
-                                        (string->symbol key)
-                                        (list (vline value: (unknown data)
-                                                     params: params))))))))))))
+             (loop (cdr lst)
+                   (update-property
+                    stack
+                    (string->symbol key)
+                    (build-vlines (string->symbol key)
+                                  value params)))))))))

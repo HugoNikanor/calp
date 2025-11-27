@@ -768,6 +768,7 @@ Returns -1 on failure"
                            key: return-trailing)
 
   (define (err fmt . args)
+    ;; TODO throw a unique error type?
     (scm-error 'misc-error "string->datetime"
                (string-append "When parsing ~s as ~s; " fmt)
                (cons* string format-specifier args)
@@ -858,6 +859,9 @@ Returns -1 on failure"
               ;; e.g. --0507,
               (let* ((pre post (span-upto 2 char-numeric? str))
                      (num (-> pre list->string string->number)))
+                (unless num
+                  (err "Missing '~~~a' integer. Tail: ~s"
+                       (cadr fmt) (list->string str)))
                 (loop
                  post
                  (cddr fmt)

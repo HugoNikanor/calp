@@ -38,7 +38,7 @@
   (test-equal 'URI         (apparent-type (string->uri "https://example.com")))
   (test-equal 'UTC-OFFSET  (apparent-type (timespec (time) '+ 'utc)))
 
-  (test-equal "Unknsown types return false"
+  (test-equal "Unknown types return false"
     #f (apparent-type (sqrt -1)))
   ;; TODO maybe some more oddball types?
   )

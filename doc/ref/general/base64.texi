@@ -20,3 +20,7 @@ Base64 side is strings, while data is bytevectors.
 Highest level Base64 procedures. Both encoded and decoded data is
 strings.
 @end defun
+
+@deftp {Error} decoding-error proc fmt args data
+Failure to decode base64 data.
+@end deftp

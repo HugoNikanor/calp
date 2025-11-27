@@ -59,11 +59,11 @@
   (duration week: 1 day: 1))
 
 (test-error "Completely wrong duration"
-  'parse-error
+  'calendar-parse-error
   (string->duration "Something weird"))
 
 (test-error "Duration with extra fluff at end"
-  'warning
+  'calendar-parse-error
   (string->duration "-P7WH"))
 
 
