@@ -18,16 +18,22 @@
   (srfi srfi-88)
 
   (hnh module-introspection all-modules)
-  (hnh module-introspection module-introspection)
+  (hnh module-introspection)
   ((hnh util io)
-   :select (read-all))
+   :select (read-all ensure-newline))
 
   ((calp translation)
    :select (translate))
   )
 
+(format #t ";;;~%")
+(format #t ";;; Found configurable options in the program~%")
+(format #t ";;;~%")
+
 ;; TODO split this into separate read and write stages
-;; TODO and add texinfo output (besides ini output)
+;; TODO Add extra output formats
+;; - Texinfo
+;; - actual configuration files
 (for (filename module-name)
   in (all-files-and-modules-under-directory "module")
   (define forms (call-with-input-file filename (lambda (p) (read-all read p))))
@@ -37,16 +43,19 @@
                    (eq? 'define-config (car form))))
             forms))
   (unless (null? configurations)
-    (format #t "~%[~{~a~^ ~}]" module-name)
+    (newline)
+    (format #t "[~{~a~^ ~}]~%" module-name)
     (for-each (match-lambda
                 (('define-config name default kvs ...)
                  (cond ((memv description: kvs)
                         => (match-lambda
-                             ((description: ('_ desc) rest ...)
-                              (format #t "~%; ~a"
+                             ((description: (_ desc) rest ...)
+                              (format #t ";; ~a~%"
                                       (gettext desc "calp")))
                              ((description: desc rest ...)
-                              (format #t "~%; ~a" desc)))))
-                 (format #t "~%~a = ~s~%"
+                              (format #t ";; ~a~%" desc)))))
+                 (format #t "~a = ~s~%"
                          name default)))
               configurations)))
+
+(newline)
