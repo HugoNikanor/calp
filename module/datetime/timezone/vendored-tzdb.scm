@@ -4,7 +4,7 @@
 ;;; With sha256 checksum:
 ;;; 11810413345fc7805017e27ea9fa4885fd74cd61b2911711ad038f5d28d71474
 ;;; Limited to the explicitly mentioned zones:
-;;; ("UTC")
+;;; - UTC
 ;;; Code:
 
 (define-module
@@ -20,18 +20,16 @@
  #:export
  (zoneinfo-database))
 
-;;; This block is manually inserted.
-(with-output-to-port (current-error-port)
-  (lambda ()
-    (display "***************************************************") (newline)
-    (display "* Warning! (datetime) is compiled with only a     *") (newline)
-    (display "* very basic timezoneo database.                  *") (newline)
-    (display "* Run: calp update-zoneinfo -o \\                  *") (newline)
-    (display "*  $LOAD_PATH/datetime/timezone/vendored-tzdb.scm *") (newline)
-    (display "* (Especially if you're distributing the library!)*") (newline)
-    (display "***************************************************") (newline)
-    ))
-;;; End manuall block
+(with-output-to-port
+ (current-error-port)
+ (lambda ()
+   (display "************************************************************\n")
+   (display "WARNING! (datetime) is compiled with only a very basic\n")
+   (display "timezone database. Generate a new one by running:\n")
+   (display "calp update-zoneinfo \\\n")
+   (display "    -o $LOAD_PATH/datetime/timezone/vendored-tzdb.scm \\\n")
+   (display "    [limeted zone set (defaults to all zones)]\n")
+   (display "************************************************************\n")))
 
 (define zoneinfo-database
   (intermediary->zoneinfo

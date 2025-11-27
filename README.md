@@ -73,6 +73,13 @@ a version of the file without the warning. Running
 
 before will ignore any local modifications.
 
+If the checked in file needs to be updated, add add back to the
+worktree (`--no-skip-worktree`), and run
+
+    ./calp update-zoneinfo --include-default-warning \
+        -o module/datetime/timezone/vendored-tzdb.scm \
+        UTC
+
 Techical Details
 ----------------
 - Internally all weeks start on sunday, which is repsenented as `0`.

@@ -36,6 +36,9 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
     (tzdb-name (value name)
      (description ,(G_ "Symbol which the module will export the database through. Defaults to <code>zoneinfo-database</code>")))
 
+    (include-default-warning
+     (description ,(G_ "Include a warning block, instructing the user to override the file")))
+
     ;; TODO --force-download :: Force re-download. Even if present in cache
     ;; TODO --print-zones :: instead of emitting codes, print found zones
     ;; TODO --cache-dir
@@ -138,14 +141,16 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
                tzdb-name: (string->symbol (option-ref opts 'tzdb-name "zoneinfo-database"))
                filename: tar
                checksum: checksum
-               limiters: (option-ref opts '() '())))
+               limiters: (option-ref opts '() '())
+               include-default-warning: (option-ref opts 'include-default-warning #f) ))
 
   (cond ((option-ref opts 'output #f)
          => (lambda (filename)
               (with-output-to-file filename run)))
         (else (run))))
 
-(define* (emit-code intermediary key: output-module tzdb-name filename checksum limiters)
+(define* (emit-code intermediary key: output-module tzdb-name filename checksum limiters
+                    include-default-warning)
   ;; These strings are NOT translated, since we want the output to be
   ;; bytewise identical, to not invalidate the compiler cache.
   (format #t ";;; Commentary:~%")
@@ -155,8 +160,11 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
   (format #t ";;; ~a~%" checksum)
   (if (null? limiters)
       (format #t ";;; With all available zones included~%")
-      (format #t ";;; Limited to the explicitly mentioned zones:~%;;; ~s~%"
-              limiters))
+      (begin
+       (format #t ";;; Limited to the explicitly mentioned zones:~%")
+       (for-each (lambda (zone)
+                   (format #t ";;; - ~a~%" zone))
+                 limiters)))
   (format #t ";;; Code:~%")
 
   (newline)
@@ -175,6 +183,20 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
       #:export (,tzdb-name)))
 
   (newline)
+
+  (when include-default-warning
+    (pretty-print
+     `(with-output-to-port (current-error-port)
+        (lambda ()
+          (display "************************************************************\n")
+          (display "WARNING! (datetime) is compiled with only a very basic\n")
+          (display "timezone database. Generate a new one by running:\n")
+          (display "calp update-zoneinfo \\\n")
+          (display "    -o $LOAD_PATH/datetime/timezone/vendored-tzdb.scm \\\n")
+          (display "    [limeted zone set (defaults to all zones)]\n")
+          (display "************************************************************\n"))))
+
+    (newline))
 
   (pretty-print
    `(define ,tzdb-name (intermediary->zoneinfo ,(serialize intermediary)))))
