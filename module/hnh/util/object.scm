@@ -56,9 +56,10 @@
             => (lambda (type-stx)
                  (with-syntax ((type type-stx))
                    #'(unless (build-validator-body name* type)
-                       (scm-error 'wrong-type-arg "validator"
-                                  "Invalid value for `~s'. Expected ~s, got ~s"
-                                  (list (quote name) (quote type) name*) #f)))))
+                       (scm-error 'wrong-type-arg (symbol->string (quote name))
+                                  "~s doesn't satisfy ~s"
+                                  (list name* (quote type))
+                                  #f)))))
            (else #f)))
     ((_ name) #f)))
 
