@@ -249,7 +249,7 @@
             (lambda ()
              (case (string->symbol key)
                ((UNTIL)      (until      o date))
-               ((COUNT)      (count      o num))
+               ((COUNT)      (recur-count o num))
                ((INTERVAL)   (interval   o num))
                ((FREQ)       (freq       o symb))
                ((WKST)       (wkst       o day))

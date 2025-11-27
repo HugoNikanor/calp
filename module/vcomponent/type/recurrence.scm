@@ -13,7 +13,7 @@
               recur-rule?
               freq freq*
               until      until*
-              count      count*
+              recur-count recur-count*
               interval   interval*
               bysecond   bysecond*
               byminute   byminute*

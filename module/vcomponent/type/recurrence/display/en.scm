@@ -129,7 +129,7 @@
                      ;; TODO ordinal on ~d?
                      it "~B ~d, ~Y at ~k:~M")
                     ))
-     (cond [(not (count rrule)) ""]
-           [(= 1 (count rrule)) (list ", " (count rrule) " time in total")]
-           [(count rrule) (list ", " (count rrule) " times in total")]
+     (cond [(not (recur-count rrule)) ""]
+           [(= 1 (recur-count rrule)) (list ", " (recur-count rrule) " time in total")]
+           [(recur-count rrule) (list ", " (recur-count rrule) " times in total")]
            [else "ERROR"])))))

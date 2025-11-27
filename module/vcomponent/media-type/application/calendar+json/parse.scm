@@ -39,7 +39,8 @@
             ((until)
              ;; TODO date values
              (until rule (string->datetime (cdr pair) "~Y-~m-~dT~H:~M:~S~Z")))
-            ((count interval) (count rule (cdr pair)))
+            ((count)      (recur-count rule (cdr pair)))
+            ((interval)   (interval   rule (cdr pair)))
             ((bysecond)   (bysecond   rule (to-vector (cdr pair))))
             ((byminute)   (byminute   rule (to-vector (cdr pair))))
             ((byhour)     (byhour     rule (to-vector (cdr pair))))

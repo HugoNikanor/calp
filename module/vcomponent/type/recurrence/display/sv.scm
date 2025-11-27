@@ -138,7 +138,7 @@
                      ;; TODO ordinal on ~d?
                      it "den ~d ~B, ~Y kl. ~k:~M")
                     ))
-     (cond [(not (count rrule)) ""]
-           [(= 1 (count rrule)) (list ", totalt " (count rrule) " gång")]
-           [(count rrule) (list ", totalt " (count rrule) " gånger")]
+     (cond [(not (recur-count rrule)) ""]
+           [(= 1 (recur-count rrule)) (list ", totalt " (recur-count rrule) " gång")]
+           [(recur-count rrule) (list ", totalt " (recur-count rrule) " gånger")]
            [else "ERROR"])))))

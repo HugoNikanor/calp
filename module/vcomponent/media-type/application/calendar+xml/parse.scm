@@ -52,7 +52,7 @@
              (until rule (string->datetime (xml-text-content el)
                                            "~Y-~m-~dT~H:~M:~S~Z")))
             ((count)
-             (count rule (string->number (xml-text-content el))))
+             (recur-count rule (string->number (xml-text-content el))))
             ((interval)
              (interval rule (string->number (xml-text-content el))))
 

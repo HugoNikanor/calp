@@ -66,7 +66,11 @@
               (list ((xml xcal field)
                      (symbol->string value)))]
 
-             [(memv field '(count interval))
+             [(memv field '(recur-count))
+              (list ((xml xcal 'count)
+                     (number->string value)))]
+
+             [(memv field '(interval))
               (list ((xml xcal field)
                      (number->string value)))]
 

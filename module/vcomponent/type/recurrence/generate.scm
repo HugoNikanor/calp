@@ -321,7 +321,7 @@
    (generate-posibilities* rrule start-date)))
 
 (define-stream (limit-rrule-stream rrule < date-stream)
-  (cond [(count rrule) => (lambda (c) (stream-take c date-stream))]
+  (cond [(recur-count rrule) => (lambda (c) (stream-take c date-stream))]
         [(until rrule) => (lambda (end) (stream-take-while (lambda (dt) (< dt end)) date-stream))]
         [else date-stream]))
 
@@ -359,7 +359,7 @@
 (define (final-event-occurence event)
   (define rrule (prop1 event 'RRULE))
 
-  (if (or (count rrule) (until rrule))
+  (if (or (recur-count rrule) (until rrule))
       (let ((instances (rrule-instances event)))
         (stream-ref instances (1- (stream-length instances))))
       #f))

@@ -72,7 +72,7 @@
        (symbol->string (weekday->symbol value))]
       [(byday)
        (string-join (map byday->string value) ",")]
-      [(freq count interval)
+      [(freq recur-count interval)
        (format #f "~a" value)]
       [(until)
        (if (date? value)
@@ -88,7 +88,9 @@
               (and (eq? k 'wkst) (= v mon)))
           #f
           (string-append
-           (string-upcase (symbol->string k))
+           (case k
+             ((recur-count) "COUNT")
+             (else (string-upcase (symbol->string k))))
            "=" (field->string k v))))
     rrule)
    ";"))

@@ -9,14 +9,13 @@
   :use-module (hnh util object)
   :use-module ((hnh util type) :select (list-of pair-of false?))
   :use-module (datetime)
-  :replace (count)
   :export (repeating?
 
            recur-rule
            recur-rule?
            freq freq*
            until      until*
-           count      count*
+           recur-count recur-count*
            interval   interval*
            bysecond   bysecond*
            byminute   byminute*
@@ -92,7 +91,7 @@
   `(recur-rule
     ,@(when (freq record) `(freq: ,(serialize (freq record))))
     ,@(when (until record) `(until: ,(serialize (until record))))
-    ,@(when (count record) `(count: ,(serialize (count record))))
+    ,@(when (recur-count record) `(count: ,(serialize (recur-count record))))
     ,@(when (interval record) `(interval: ,(serialize (interval record))))
     ,@(when (bysecond record) `(bysecond: ,(serialize (bysecond record))))
     ,@(when (byminute record) `(byminute: ,(serialize (byminute record))))
@@ -113,7 +112,7 @@
               serializer: serialize-recur-rule)
   (freq       type: (memv intervals))
   (until      type: (or false? date? datetime?))
-  (count      type: (or false? (and integer? positive?)))
+  (recur-count type: (or false? (and integer? positive?)))
   (interval   type: (and integer? positive?))
   (bysecond   type: (or false? (list-of (in-range? 0 60))))
   (byminute   type: (or false? (list-of (in-range? 0 59))))

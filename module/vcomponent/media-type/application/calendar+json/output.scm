@@ -36,9 +36,11 @@
              (and (eq? key 'wkst) (= value mon))
              )
          #f
-         (cons key
+         (cons (case key
+                 ((recur-count) 'count)
+                 (else key))
                (case key
-                 ((freq count interval)
+                 ((freq recur-count interval)
                   value)
                  ((bysecond byminute byhour bymonthday byyearday byweekno bymonth bymonthpos bysetpos)
                   (list->vector/1 value))
