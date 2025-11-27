@@ -20,7 +20,7 @@
                :select (generate-recurrence-set))
   :use-module ((vcomponent type recurrence display)
                :select (format-recurrence-rule))
-  :use-module ((vcomponent type recurrence internal)
+  :use-module ((vcomponent type recurrence)
                :select (count until))
   :use-module ((vcomponent)
                :select (prop% prop1 extract1 vline-value))

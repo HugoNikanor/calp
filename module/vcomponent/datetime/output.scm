@@ -36,7 +36,7 @@
                           (date->string d (G_ "~e ~b"))
                           ;; NOTE only show time when it's different than the start time?
                           ;; or possibly only when FREQ is hourly or lower.
-                          (if (memv ((@ (vcomponent type recurrence internal) freq)
+                          (if (memv ((@ (vcomponent type recurrence) freq)
                                   (prop1 ev 'RRULE))
                                  '(HOURLY MINUTELY SECONDLY))
                               ;; [FRR] Exception date with time

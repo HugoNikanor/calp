@@ -150,7 +150,6 @@
 '((vcomponent media-type application calendar+xml)
   (vcomponent media-type application calendar+xml output)
   (vcomponent media-type application calendar+xml parse)
-  (vcomponent media-type application calendar+xml types)
 
   (vcomponent media-type application calendar+json)
   (vcomponent media-type application calendar+json output)

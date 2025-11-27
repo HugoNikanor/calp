@@ -4,7 +4,9 @@
   :use-module (srfi srfi-88)
   :use-module (datetime)
   :use-module (datetime timespec)
-  :use-module (datetime zic))
+  :use-module (datetime zic)
+  :use-module ((vcomponent type recurrence)
+               :select (recur-rule)))
 
 
 (test-expect-fail "Simple Leap")
@@ -336,7 +338,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
 
 (test-group "rule->rrule"
             (test-equal "Basic example, and to = maximum"
-              ((@ (vcomponent type recurrence internal) recur-rule)
+              (recur-rule
                freq: 'YEARLY interval: 1 wkst: mon
                byday: (list (cons -1 sun))
                bymonth: (list oct))
@@ -366,7 +368,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                 rule-letters: "")))
 
             (test-equal "with definitive to year"
-              ((@ (vcomponent type recurrence internal) recur-rule)
+              (recur-rule
                freq: 'YEARLY interval: 1 wkst: mon
                byday: (list (cons -1 tue))
                bymonth: (list oct)
@@ -383,7 +385,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                 rule-letters: "")))
 
             (test-equal "on being a month day"
-              ((@ (vcomponent type recurrence internal) recur-rule)
+              (recur-rule
                freq: 'YEARLY interval: 1 wkst: mon
                bymonthday: (list 2)
                bymonth: (list oct))
@@ -399,7 +401,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                 rule-letters: "")))
 
             (test-equal "on being first day after date"
-              ((@ (vcomponent type recurrence internal) recur-rule)
+              (recur-rule
                freq: 'YEARLY interval: 1 wkst: mon
                byday: (list (cons 1 mon))
                bymonth: (list oct))

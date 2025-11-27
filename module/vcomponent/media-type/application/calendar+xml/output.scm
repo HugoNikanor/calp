@@ -9,7 +9,6 @@
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type version)
   :use-module (vcomponent type request-status)
-  :use-module (vcomponent media-type application calendar+xml types)
   :use-module (ice-9 match)
   :use-module (datetime)
   :use-module (datetime timespec)
