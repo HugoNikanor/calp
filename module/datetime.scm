@@ -15,6 +15,7 @@
                         swap
                         label
                         span-upto
+                        when unless
                         ))
   :use-module ((hnh util env) :select (with-locale1))
   :use-module (hnh util type)
@@ -205,9 +206,21 @@
        (validator date time tz)
        (constructor date time tz)))))
 
+(define (datetime-serializer dt)
+  (let ((d (datetime-date dt))
+        (t (datetime-time dt)))
+    `(datetime
+      ,@(unless (zero? (year d))   `(year:   ,(year d)))
+      ,@(unless (zero? (month d))  `(month:  ,(month d)))
+      ,@(unless (zero? (day d))    `(day:    ,(day d)))
+      ,@(unless (zero? (hour t))   `(hour:   ,(hour t)))
+      ,@(unless (zero? (minute t)) `(minute: ,(minute t)))
+      ,@(unless (zero? (second t)) `(second: ,(second t)))
+      ,@(when (tz dt) `(tz: ,(tz dt))))))
+
 (define-type (datetime
               constructor: datetime-constructor-constructor
-              serializer: (lambda (r) `(datetime date: ,(datetime-date r) time: ,(datetime-time r) tz: ,(serialize (tz r))))
+              serializer: datetime-serializer
               printer: (lambda (r p)
                          (if (and (tz r) (not (string=? "UTC" (tz r))))
                              (write (datetime->sexp r) p) ; NOCOV
