@@ -5,12 +5,29 @@ An immutable table, where all operations on the table return a new
 table with the wanted changes carried out. All keys @emph{must} be
 symbols.
 
-@defun table
-Constructs a new empty table.
+@defun table [named-type]
+Constructs a new empty table. A named type can be given, in which case
+all elements inserted into the table will be checked against the type.
 @end defun
 
 @defun table? x
 Is @var{x} a table?
+@end defun
+
+@defun table-type table
+Returns the named type for the table, or @code{#f}.
+@end defun
+
+@defmac table-of var type
+Syntax for defining tables of a given type.
+
+@example
+(typecheck var (table-of string?))
+@end example
+@end defmac
+
+@defun table-empty? table
+Checks if the table is empty.
 @end defun
 
 @defun table-get table key [default=#f]
@@ -43,4 +60,34 @@ The keys will be sorted.
 
 @defun alist->table alist
 Construct a new table from the given alist.
+@end defun
+
+@defun table-equal? a b [comperator=equal?]
+Checks if @var{a} and @var{b} have the same key set, and that for each
+key the element in @var{a} and @var{b} are equal, in regards to @var{comperator}.
+@end defun
+
+@defun table-diff a b [comperator=equal?]
+Checks what's different between the two tables. It returns a list of
+forms, where each form is one of the following:
+
+@itemize @bullet{}
+@item @code{`(absent a ,key)}
+@var{key} is only present in the second table given.
+@item @code{`(absent b ,key)}
+@var{key} is only present in the first table given.
+@item @code{`(diff ,key ,a-val ,b-val)}
+@var{key} is present in both tables, and in the first table has the
+value @var{a-val}, and @var{b-val} in the second.
+@end itemize
+
+The order each diff form is returned is unspecified.
+@end defun
+
+@defun table-pop table key
+Returns 2 values:
+@itemize @bullet
+@item the focused value, as an optional
+@item the table without the specified key
+@end itemize
 @end defun
