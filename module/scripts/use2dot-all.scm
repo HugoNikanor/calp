@@ -7,15 +7,38 @@
   :use-module (hnh module-introspection all-modules)
   :use-module (hnh util options)
   :use-module (ice-9 getopt-long)
+  :use-module (ice-9 match)
   :export (main))
 
 (define default-remove
  '((srfi srfi-1)
-   (srfi srfi-26)
-   (srfi srfi-41)
+   (srfi srfi-26)                       ; cut
+   (srfi srfi-41)                       ; streams (maybe actually include)
+   (srfi srfi-71)                       ; extended let syntax
+   (srfi srfi-88)                       ; keywords
 
    (ice-9 match)
    (ice-9 format)))
+
+;;; Edges which want to be colored.
+;;; Each entry is a list on the form
+;;; both from: and to: are mandatory, and are either
+;;; - <a list of module matches>, or
+;;; - (not <a list of module matches>)
+;;; A module match is either an exact name, or a wildcard, matching
+;;; any module which shares the prefix.
+;;; Note that `(mod *)` matches `(mod)`.
+;;; Rules are applied from top to bottom, meaning that later rules
+;;; takes precedence.
+;;; TODO make this configurable
+(define bad-edge-types
+  (reverse
+   '(("red"
+      from: (not (calp *))
+      to:   ((calp *)))
+     ("blue"
+      from: (not (vcomponent *) (calp *))
+      to:   ((vcomponent *))))))
 
 (define option-spec
   `((engine (value #t)
@@ -31,6 +54,8 @@
     (remove
      (value #t)
      (description "Modules to remove from check, usually since to many other modules depend on them."))
+    (bad-only
+     (description "Only show the \"bad\" edges."))
     (ignore-default-remove
      (description "Don't ignore the modules which are ignored by default, which are:" (br)
                   ,@(append-map (lambda (item) (list (with-output-to-string (lambda () (display item))) '(br)))
@@ -84,6 +109,13 @@
              (format (current-error-port) "Target directory required~%")
              (exit 1))
             (else (car remaining)))))
+
+  (when (option-ref options 'bad-only #f)
+    (set! bad-edge-types
+      (cons '("#00000000"
+              from: ((*))
+              to: ((*)))
+            bad-edge-types)))
 
   ;; End of command line parsing
 
@@ -178,20 +210,53 @@
       calpgraphs))
 
 
+  (define (shares-prefix? a b)
+    (or (null? a)
+        (null? b)
+        (and (eq? (car a) (car b))
+             (shares-prefix? (cdr a) (cdr b)))))
+
+  (define (find-matching-module node nodes)
+    (find (lambda (candidate)
+            (match candidate
+              ((parts ... '*)
+               (shares-prefix? node parts))
+              ((parts ...)
+               (equal? node parts))))
+          nodes))
+
+  (define (check-module node choices)
+    (match choices
+      (('not nodes ...)
+       (not (find-matching-module node nodes)))
+      ((nodes ...)
+       (find-matching-module node nodes))))
+
   (for-each (lambda (edge)
               (let ((gv-edge (gv.edge graph
                                       (format #f "~a" (edge-down edge))
                                       (format #f "~a" (edge-up edge))
                                       )))
-                (when (and (eq? 'calp (car (edge-up edge)))
-                           (not (eq? 'calp (car (edge-down edge)))))
-                  (gv.setv gv-edge "color" "red"))
-                (when (and (memv (car (edge-up edge)) '(vcomponent calp))
-                           (not (memv (car (edge-down edge)) '(vcomponent calp ))))
-                  (gv.setv gv-edge "color" "blue"))
-                ))
+                ;; "down" depends on "up"
+                (for-each
+                 (lambda (bad-edge-type)
+                   (when
+                    (and (check-module (edge-up edge) (cadr (memv to: bad-edge-type)))
+                         (check-module (edge-down edge) (cadr (memv from: bad-edge-type))))
+
+                    (gv.setv gv-edge "color" (car bad-edge-type))))
+                 bad-edge-types)))
             (remove-edges to-remove
                           ((scan files) 'edges)))
 
   (gv.layout graph engine)
-  (gv.render graph "pdf" output-file))
+  (gv.render graph "pdf" output-file)
+
+  (format #t "Graph written to: ~a~%" output-file)
+  (format #t "Edge colors (later ones takes precedence):~%")
+  (for-each (lambda (d)
+              (format #t "~a edges, ~s → ~s~%"
+                      (car d)
+                      (cadr (memv from: d))
+                      (cadr (memv to: d))))
+            bad-edge-types))
