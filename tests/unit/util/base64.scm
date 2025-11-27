@@ -42,4 +42,9 @@
 
 (test-equal #vu8(0 1 2 3) (base64-string->bytevector "AAECAw=="))
 
+;;; TODO some invalid strings are accepted as a bunch of null bytes
+;;; for example
+;;; (base64-string->bytevector "@@") ⇒ #vu8(0)
+;;; (base64-string->bytevector "@@@") ⇒ #vu8(0 0)
+
 '((base64))
