@@ -41,6 +41,13 @@
                        (unique-symbols (list body)))))))
 
 (define (main . args)
+  (unless (provided? 'graphviz)
+    (with-output-to-port (current-error-port)
+      (lambda ()
+        (display "Graphviz isn't available on this system") (newline)
+        (display "Aborting execution") (newline)))
+    (exit 1))
+
   (define options (getopt-long (cons "peg-to-graph" args)
                                (getopt-opt option-spec)))
   (define engine (option-ref options 'engine "dot"))
