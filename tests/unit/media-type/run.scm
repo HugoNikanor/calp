@@ -33,6 +33,7 @@
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)
   :use-module (vcomponent type request-status)
+  :use-module (vcomponent type unknown)
   )
 
 ;;; TODO multi-valued fields
@@ -46,7 +47,7 @@
 
 
 
-(define* (run-test reference-object serialized-file media-type key: (formatter identity))
+(define* (run-test test-name reference-object serialized-file media-type* key: (formatter identity))
 
   ;; Assert serialize is set
 
@@ -61,18 +62,34 @@
   ;; serialized into the target format
   (define serialized-component
     (call-with-output-string
-      (lambda (port) ((serializer media-type) reference-object port))))
+      (lambda (port) ((serializer media-type*) reference-object port))))
 
   ;; Check that the serialization suceeded
-  (test-equal "Serialize"
+  (test-equal (format #f "Serialize ~s" test-name)
     (formatter target) (formatter serialized-component))
 
   ;; If a parser is given, check that re-parsing the serialized component
   ;; returns the original component.
-  (cond ((parser media-type)
+  (cond ((parser media-type*)
          => (lambda (parse)
-              (test-equal "Parse"
-                '()
+              (test-equal (format #f "Parse ~s" test-name)
+                (cond
+                 ((and (equal? "text/calendar" (media-type media-type*))
+                       (string=? "hand-written/types" test-name))
+                  ;; iCalendar properties with unknown types are
+                  ;; treated defaulting to strings, which means that a
+                  ;; unknown field explicitly tagged as being of type
+                  ;; TEXT is indistinguishable from one without a type
+                  ;; tag. All other formats explicitly differentiate
+                  ;; between these with mandatory type tags.
+                  ;;
+                  ;; Changing the .sexp file to contain an `unknown`
+                  ;; value would give the same problem in the other
+                  ;; direction, and error on all other types.
+                  `((diff X-TEXT
+                          (,(vline value: "This is some text"))
+                          (,(vline value: (unknown "This is some text"))))))
+                 (else '()))
                 (vcomponent-diff
                  reference-object
                  (call-with-input-string target parse)
@@ -85,6 +102,8 @@
               "hand-written/target"
               "hand-written/types"
               "hand-written/quoted-params"
+              "hand-written/unknown-value-type"
+              "hand-written/x-integer"
               "rfc-provided/ex1"
               "rfc-provided/ex2"
               ;; "hand-written/monetary"
@@ -101,12 +120,14 @@
          ;; Set linewrap to "infinity", to allow easier diffs
          (parameterize (((@ (vcomponent media-type text calendar output) icalendar-wrap-length) 1000))
            (run-test
+            file
             reference
             (string-append file ".ics")
             ics:format)))
 
        (test-group "xCal"
          (run-test
+          file
           reference
           (string-append file ".xcs")
           xcs:format
@@ -117,6 +138,7 @@
 
        (test-group "jCal"
          (run-test
+          file
           reference
           (string-append file ".json")
           jcal:format

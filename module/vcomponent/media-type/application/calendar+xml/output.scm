@@ -157,8 +157,13 @@
                   (cond ((extdata o) => (lambda (data) (list ((xml xcal 'data) data))))
                         (else '())))))
 
-         ;; TODO unkown type wrapper?
-         (cons unknown? (compose list from-unknown)))))
+         (cons unknown?
+               (lambda (_ o)
+                 (list
+                  ((xml xcal (cond ((unknown-type o)
+                                    => (compose string->symbol string-downcase))
+                                   (else 'unknown)))
+                   (from-unknown o))))))))
 
 
 ;; Generate a complete xml representation of a given vline
@@ -169,7 +174,9 @@
   (call-with-values
       (lambda ()
         (cond ((predicate-list-get (serializers) (vline-value vline))
-               => (lambda (serializer) (serializer (vline-parameters vline) (vline-value vline))))
+               => (lambda (serializer)
+                    (serializer (vline-parameters vline)
+                                (vline-value vline))))
               (else (scm-error 'misc-error "vline->value-tag"
                                "Unknown type stored in vline: ~s, failed to serialize"
                                (list vline) #f))))

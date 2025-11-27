@@ -16,7 +16,7 @@
     [ "x-recur", {}, "recur", { "freq": "MONTHLY", "byday": [ "MO", "TU", "WE", "TH", "FR" ], "bysetpos": -1 } ],
     [ "x-text", {}, "text", "This is some text" ],
     [ "x-time", {}, "time", "10:20:30" ],
-    [ "x-unknown", {}, "text", "Handle, This!" ],
+    [ "x-unknown", {}, "unknown", "Handle, This!" ],
     [ "x-uri", {}, "uri", "https://example.com" ],
     [ "x-utc-offset", {}, "utc-offset", "+02:00" ]
   ],

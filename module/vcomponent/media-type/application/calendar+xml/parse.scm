@@ -165,6 +165,7 @@
                                         "~H:~M:~S")))
      (cons 'uri (lambda (_ v) (string->uri (xml-text-content v))))
      (cons 'utc-offset (lambda (_ v) (parse-utc-offset (xml-text-content v))))
+     (cons 'unknown (lambda (_ v) (unknown (xml-text-content v))))
 
      ))))
 
@@ -196,9 +197,12 @@
                            (lambda* (result optional: (params params))
                              ;; - create vline object
                              (vline params: params value: result)))))
-                   (else (scm-error 'misc-error "sxml->vlines"
-                                    "No parser for ~s"
-                                    (list type-el) #f))))
+                   (else
+                    (vline params: params
+                           value:
+                           (unknown
+                            (xml-text-content type-el)
+                            (-> type-el xml-element-tagname symbol->string string-upcase ))))))
            values))))
 
 (define (sxml->vcomponent/object data)

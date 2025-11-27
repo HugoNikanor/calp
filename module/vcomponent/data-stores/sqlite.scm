@@ -341,7 +341,9 @@ CREATE TABLE IF NOT EXISTS metadata
                               => (lambda (v) (format #t ";~a" (escape-chars v)))))))))
 
           ((unknown? v)
-           (values 'UNKNOWN v))
+           (values (cond ((unknown-type v) => string->symbol)
+                         (else 'UNKNOWN))
+                   (from-unknown v)))
 
           (else
            (scm-error 'misc-error "sqlite-serialize"
@@ -535,12 +537,17 @@ GROUP by p.id" filter)))
          (define-values (value parameters)
            (call-with-values
                (lambda ()
-                ((or (get-parser property-type)
-                     (lambda (_ v)
-                       ;; ensure we have text here
-                       (unknown (format #f "~a" v))))
-                 parameters*
-                 property-value))
+                 ((or (get-parser property-type)
+                      (lambda (_ v)
+                        (unknown
+                         ;; As long as we never put in anything except
+                         ;; strings, we will never get anything other back
+                         v
+                         (and (not (eq? 'UNKNOWN property-type))
+                              (symbol->string property-type))
+                         )))
+                  parameters*
+                  property-value))
              (lambda* (v optional: (p parameters*))
                (values v p))))
 
@@ -564,13 +571,21 @@ GROUP by p.id" filter)))
 
  (sqlite-finalize stmt)
 
-
  ;; TODO possibly cache this list
  (define href-by-id (make-hash-table))
  (let ((stmt (sqlite-prepare db "SELECT component, href FROM href")))
-   (sqlite-map (lambda (v) (hash-set! href-by-id (string->symbol (format #f "~a" (vector-ref v 0))) (vector-ref v 1)))
+   (sqlite-map (lambda (v) (hash-set! href-by-id (string->symbol (format #f "~a" (vector-ref v 0)))
+                                 (vector-ref v 1)))
                stmt))
 
+ ;; TODO TODO we actually only fetch components which have at least one property.
+ ;; That means that the following (semantically invalid) iCalendar
+ ;; stream crashes, since there is no #f key.
+ ;;   BEGIN:VCALENDAR
+ ;;     BEGIN:VEVENT
+ ;;       UID:2134566
+ ;;     END:VEVENT
+ ;;   END:VCALENDAR
  (for id in (table-get ids (string->symbol "#f"))
       (cons (hash-ref href-by-id id)
             (let recurse ((id id))

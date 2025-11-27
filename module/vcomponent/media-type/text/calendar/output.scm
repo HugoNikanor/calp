@@ -129,7 +129,15 @@
          ;; TODO TODO timezone
          (cons time? (lambda (_ v) (time->string v "~H~M~S")))
          (cons timespec? timespec->string)
-         (cons unknown? (lambda (_ v) (from-unknown v))))))
+         (cons unknown?
+               (lambda (p v)
+                 (values (from-unknown v)
+                         ;; unknown-value is ALWAYS a string, and strings
+                         ;; don't have a type indicator here
+                         (if (and (unknown-type v)
+                                  (not (string=? "TEXT" (unknown-type v))))
+                             (table-put p 'VALUE (unknown-type v))
+                             p)))))))
 
 (define (ics-serialize parameters obj)
   (cond ((predicate-list-get (serializers) obj)

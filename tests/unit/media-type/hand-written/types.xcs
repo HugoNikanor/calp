@@ -85,7 +85,7 @@
         <xcal:time>10:20:30</xcal:time>
       </xcal:x-time>
       <xcal:x-unknown>
-        <xcal:text>Handle, This!</xcal:text>
+        <xcal:unknown>Handle, This!</xcal:unknown>
       </xcal:x-unknown>
       <xcal:x-uri>
         <xcal:uri>https://example.com</xcal:uri>

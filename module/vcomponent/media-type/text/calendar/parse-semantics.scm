@@ -327,31 +327,52 @@
   (define (parse-text str) ((get-parser 'TEXT) '() str))
 
   (define parser
-    (or
-     (cond
-      ((eq? key 'GEO)
-       (lambda (_ value)
-         (apply (case-lambda ((y x) (geo x: x y: y))
-                             (_ (scm-error 'misc-error "build-vlines"
-                                           "Invalid GEO value: ~s"
-                                           (list value) #f)))
-                (map string->number (string-split value #\;)))))
+    (cond
+     ((eq? key 'GEO)
+      (lambda (_ value)
+        (apply (case-lambda ((y x) (geo x: x y: y))
+                            (_ (scm-error 'misc-error "build-vlines"
+                                          "Invalid GEO value: ~s"
+                                          (list value) #f)))
+               (map string->number (string-split value #\;)))))
 
-      ((eq? key 'VERSION)
-       (lambda (_ value)
-         (apply (case-lambda
-                  ((min max) (vcalendar-version min: (parse-text min) max: (parse-text max)))
-                  ((max) (vcalendar-version max: (parse-text max))))
-                (split-carefully value #\;))))
+     ((eq? key 'VERSION)
+      (lambda (_ value)
+        (apply (case-lambda
+                 ((min max) (vcalendar-version min: (parse-text min) max: (parse-text max)))
+                 ((max) (vcalendar-version max: (parse-text max))))
+               (split-carefully value #\;))))
 
-      ((eq? key 'REQUEST-STATUS) (lambda (_ value) (parse-request-status value)))
+     ((eq? key 'REQUEST-STATUS) (lambda (_ value) (parse-request-status value)))
 
-      ;; 1. Check if we have a VALUE parameter, and in that case use that
-      ((and=> (table-get params 'VALUE) string->symbol) => get-parser)
-      ;; 3. Retrieve the default type of the field
-      ((default-type key) => get-parser)
-      (else (get-parser 'TEXT)))
-     (lambda (_ v) (unknown v))))
+     ;; 1. Check if we have a VALUE parameter, and in that case use that
+     ((-> (table-get params 'VALUE)
+          (and=> string->symbol)
+          (and=> get-parser))
+      => identity)
+
+     ;; An explicit value is specified, but we lack a parser for that value
+     ;; Carry the contents in an unknown wrapper
+     ((table-get params 'VALUE)
+      => (lambda (typename)
+           (lambda (_ v)
+             (unknown v typename))))
+
+     ;; 3. Retrieve the default type of the field
+     ((default-type key) => get-parser)
+     (else
+      ;; NOTE RFC 5545 §3.8.8.2 explicitly states:
+      ;; > The value type for [Non-Standard Properties] is
+      ;; > TEXT. Optionally, the value type can be any of the other
+      ;; > valid value types.
+      ;; However, processing them as little as possible, and tagging
+      ;; them as unknown is a safer card, and requires the user to
+      ;; either acnowledge that what they are doing is non-standard.
+      (lambda (params value)
+        (cond ((table-get params 'VALUE)
+               => (lambda (type)
+                    (unknown value type)))
+              (else (unknown value)))))))
 
   ;; We remove the parameter VALUE, since we instead encode that into scheme types
   ;; (and most output formats explicitly forbid it from being included)

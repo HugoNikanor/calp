@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xcal:icalendar xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0">
+  <xcal:vcalendar>
+    <xcal:properties>
+      <xcal:version>
+        <xcal:text>2.0</xcal:text>
+      </xcal:version>
+    </xcal:properties>
+    <xcal:components>
+      <xcal:vevent>
+        <xcal:properties>
+          <xcal:uid>
+            <xcal:text>2a1f6996-12f4-4352-a333-a918213d5ff1</xcal:text>
+          </xcal:uid>
+          <xcal:x-price>
+            <xcal:x-type>Very Expensive</xcal:x-type>
+          </xcal:x-price>
+        </xcal:properties>
+      </xcal:vevent>
+    </xcal:components>
+  </xcal:vcalendar>
+</xcal:icalendar>

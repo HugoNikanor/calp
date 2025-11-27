@@ -110,6 +110,7 @@
   (cond
    ((eq? key 'GEO)
     (vline params: params value: (match value (#(lat lon) (geo x: lon y: lat)))))
+
    ((eq? key 'REQUEST-STATUS)
     (vline
      params: params
@@ -119,6 +120,7 @@
                       statdesc: desc
                       extdata: data))
                    (vector->list value))))
+
    ((eq? key 'VERSION)
     (vline
      params: params
@@ -128,11 +130,17 @@
                           ((max)
                            (vcalendar-version max: max)))
              (string-split value #\;))))
+
    ((table-get (parsers) type)
     => (lambda (p) (call-with-values (lambda () (p params value))
                 (lambda* (value optional: (params params))
                   (vline params: params value: value)))))
-   (else (vline params: params value: (unknown value)))))
+
+   (else
+    (vline params: params
+           value: (unknown value
+                           (and (not (eq? 'UNKNOWN type))
+                                (-> type symbol->string string-upcase)))))))
 
 (define (parse-params params)
   (alist->table (map (lambda (p) (modify p car* (compose string->symbol string-upcase)))

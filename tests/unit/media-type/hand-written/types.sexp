@@ -30,7 +30,7 @@
             #:wkst 1)
  #:x-text "This is some text"
  #:x-time #10:20:30
- #:x-unknown "Handle, This!"
+ #:x-unknown (unknown "Handle, This!")
  #:x-uri (string->uri "https://example.com")
  #:x-utc-offset (timespec (time #:hour 2) '+ 'utc)
  (list (vevent

@@ -1,0 +1,12 @@
+["vcalendar",
+ [["version", {}, "text", "2.0"]],
+ [
+   ["vevent",
+    [["comment", {}, "text",
+      "X-INTEGER should NOT be parsed as an int."],
+     ["uid", {}, "text",
+      "5e99bea0-4ffd-4741-ba26-381a687ed88d"],
+     ["x-integer", {}, "unknown", "10"]
+    ],
+    []]
+ ]]

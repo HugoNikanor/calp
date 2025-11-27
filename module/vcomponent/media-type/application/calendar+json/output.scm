@@ -130,15 +130,21 @@
               (for (key . vlines) in (table->list (vcomponent-properties component))
                    ;; TODO group vlines by identical parameters
                    (for vline in vlines
+                        (define value (vline-value vline))
+                        (define in-params (vline-parameters vline))
                         (call-with-values
-                            (lambda () (value->scm-json (vline-parameters vline) (vline-value vline)))
-                          (lambda* (value optional: (parameters (vline-parameters vline)))
+                            (lambda () (value->scm-json in-params value))
+                          (lambda* (serialized optional: (out-params in-params))
                             (vector (-> key symbol->string string-downcase)
                                     (map (lambda (p) (modify p car* (compose string-downcase
                                                                         symbol->string)))
-                                         (table->list parameters))
-                                    (-> (or (apparent-type (vline-value vline)) 'UNKNOWN)
-                                        symbol->string string-downcase)
-                                    value
+                                         (table->list out-params))
+                                    (cond ((apparent-type value)
+                                           => (compose string-downcase symbol->string))
+                                          ((and (unknown? value)
+                                                (unknown-type value))
+                                           => string-downcase)
+                                          (else "unknown"))
+                                    serialized
                                     )))))))
             (list->vector (map serialize/object (vcomponent-children component))))))

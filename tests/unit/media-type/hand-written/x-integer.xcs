@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xcal:icalendar xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0">
+  <xcal:vcalendar>
+    <xcal:properties>
+      <xcal:version>
+        <xcal:text>2.0</xcal:text>
+      </xcal:version>
+    </xcal:properties>
+    <xcal:components>
+      <xcal:vevent>
+        <xcal:properties>
+          <xcal:comment>
+            <xcal:text>X-INTEGER should NOT be parsed as an int.</xcal:text>
+          </xcal:comment>
+          <xcal:uid>
+            <xcal:text>5e99bea0-4ffd-4741-ba26-381a687ed88d</xcal:text>
+          </xcal:uid>
+          <xcal:x-integer>
+            <xcal:unknown>10</xcal:unknown>
+          </xcal:x-integer>
+        </xcal:properties>
+      </xcal:vevent>
+    </xcal:components>
+  </xcal:vcalendar>
+</xcal:icalendar>

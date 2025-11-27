@@ -1,0 +1,8 @@
+["vcalendar",
+ [["version", {}, "text", "2.0"]],
+ [
+   ["vevent",
+    [["uid", {}, "text",
+      "2a1f6996-12f4-4352-a333-a918213d5ff1"],
+    ["x-price", {}, "x-type", "Very Expensive"]],
+    []]]]
