@@ -8,10 +8,9 @@ Provided by module @code{(hnh util io)}.
 Like @code{open-*-file}, but ``-'' gives @code{standard-@{input,output@}}.
 @end defun
 
-@defun read-lines port
-Return a list of all lines read from port.
-
-The trailing newlines are @emph{not} part of the string.
+@defun read-all reader port
+Repeatedly apply @var{reader} to @var{port} until eof is reached, and
+return a list of the results.
 @end defun
 
 @defun with-atomic-output-to-file filename thunk

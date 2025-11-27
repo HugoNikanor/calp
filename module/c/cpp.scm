@@ -6,7 +6,7 @@
   :use-module (ice-9 regex)
   :use-module ((rnrs io ports) :select (call-with-port))
   :use-module (ice-9 format)
-  :use-module ((hnh util io) :select (read-lines))
+  :use-module ((hnh util io) :select (read-all))
   :use-module (hnh util graph)
   :use-module (c lex)
   :use-module (c parse)
@@ -131,7 +131,7 @@
        (call-with-port
         (open-input-pipe
          (string-append "cpp -dM " header-file))
-        read-lines)))
+        (lambda (p) (read-all (@ (ice-9 rdelim) read-line) p)))))
 
 (define-macro (include# header-file . args)
 

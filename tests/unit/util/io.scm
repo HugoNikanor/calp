@@ -4,7 +4,7 @@
   :use-module (srfi srfi-88)
   :use-module (hnh util io))
 
-(test-equal "read-lines"
+(test-equal "read-all/lines"
   '("Test module tree"
     "================"
     ""
@@ -12,7 +12,7 @@
     ""
     "Changing any of these files requires a full re-run of all tests.")
   (call-with-input-file "tests/test-module-tree/README.md"
-    read-lines))
+    (lambda (p) (read-all (@ (ice-9 rdelim) read-line) p))))
 
 ;;; TODO how do you even unit test these?
 ;;; TODO with-atomic-output-to-file

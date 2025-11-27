@@ -1,7 +1,6 @@
 (define-module (hnh util io)
   :use-module ((hnh util) :select (begin1))
-  :use-module ((ice-9 rdelim) :select (read-line))
-  :export (read-lines
+  :export (read-all
            with-atomic-output-to-file
            call-with-tmpfile
            displayln
@@ -10,10 +9,10 @@
 
 
 
-(define (read-lines port)
-  (let ((line (read-line port)))
+(define (read-all reader port)
+  (let ((line (reader port)))
     (if (eof-object? line)
-        '() (cons line (read-lines port)))))
+        '() (cons line (read-all reader port)))))
 
 ;; Same functionality as the regular @var{with-output-to-file}, but
 ;; with the difference that either everything is written, or nothing
