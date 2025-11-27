@@ -1,9 +1,9 @@
 (define-module (calp)
-  :export (version prodid))
+  :export (calp-version prodid))
 
 ;; Update me on new release
-(define version "0.6.1")
+(define calp-version "0.6.1")
 
 (define (prodid)
   (format #f "-//hugo//calp ~a//EN"
-          (@ (calp) version)))
+          (@ (calp) calp-version)))

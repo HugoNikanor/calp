@@ -381,7 +381,7 @@
 
 
 ;; For all headers:
-;; `((server ,(format #f "calp/~a" (@ (calp) version)))
+;; `((server ,(format #f "calp/~a" (@ (calp) calp-version)))
 ;;   (date ,(datetime->string (current-datetime)
 ;;                            "~a, ~d ~b ~Y ~H:~M:~S GMT"))
 ;;   (connection keep-alive))

@@ -5,7 +5,7 @@
 
 (test-assert "Calp version is a proper version string"
              (string-match "^[0-9]+[.][0-9]+([.][0-9]+)?(-.*)?$"
-                          version))
+                          calp-version))
 
 (test-assert "Prodid returns a string"
              (string? (prodid)))

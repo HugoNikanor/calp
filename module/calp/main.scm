@@ -58,7 +58,7 @@ unix or TCP socket.<br/>
 
     (version (single-char #\v)
              (description ,(format #f (G_ "Display version, which is ~a btw.")
-                                   (@ (calp) version))))
+                                   (@ (calp) calp-version))))
 
     (help (single-char #\h)
           (description ,(G_ "Print this help")))
@@ -140,7 +140,7 @@ unix or TCP socket.<br/>
          (throw 'return))
 
   (when (option-ref opts 'version #f)
-    (format #t (G_ "Calp version ~a~%") (@ (calp) version))
+    (format #t (G_ "Calp version ~a~%") (@ (calp) calp-version))
     (throw 'return))
 
   ;; Start repl late, since configuration items are implemented as properties,
