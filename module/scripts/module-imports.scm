@@ -13,10 +13,10 @@
 (define-module (scripts module-imports)
   :use-module ((srfi srfi-1) :select (lset-difference))
   :use-module ((rnrs lists) :select (remp filter partition))
+  :use-module ((hnh util io) :select (read-all))
   :use-module ((hnh module-introspection)
                :select (module-declaration?
-                        unique-symbols
-                        get-forms))
+                        unique-symbols))
   :use-module ((hnh module-introspection module-uses) :select (module-uses*))
   :export (main)
   )
@@ -32,7 +32,8 @@
   ;; TODO Module declaration can reside inside a cond-expand block
   (define-values (module-declaration-list forms)
     (partition module-declaration?
-               (reverse (call-with-input-file filename get-forms))))
+               (call-with-input-file filename
+                 (lambda (p) (read-all read p)))))
 
   ;; All symbols in source file, which are not in module declaration.
   ;; Otherwise all explicitly imported symbols would be marked as

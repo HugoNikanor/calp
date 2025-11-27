@@ -26,11 +26,6 @@ Checks if @var{form} starts with @code{'define-module}.
 In a list of forms, find the first one which satisfies @code{module-declarations?}.
 @end defun
 
-@defun get-forms port
-Repeatadly call @code{read} on @var{port}, and return a list of the
-read forms in order of occurence in the file.
-@end defun
-
 @node Module Uses
 @section Module Uses
 

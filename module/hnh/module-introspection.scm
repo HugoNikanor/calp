@@ -4,7 +4,6 @@
   :export (unique-symbols
            find-module-declaration
            module-declaration?
-           get-forms
            ))
 
 
@@ -21,10 +20,3 @@
 (define (find-module-declaration forms)
   (and=> (find module-declaration? forms)
          cadr))
-
-(define (get-forms port)
-  (let loop ((done '()))
-    (let ((form (read port)))
-      (if (eof-object? form)
-          done
-          (loop (cons form done))))))

@@ -3,6 +3,7 @@
   :use-module (ice-9 ftw)
   :use-module (ice-9 match)
   :use-module (hnh util path)
+  :use-module (hnh util io)
   :use-module (hnh module-introspection)
   :export (all-files-and-modules-under-directory
            all-files-under-directory
@@ -35,8 +36,9 @@
 (define (all-files-and-modules-under-directory dir)
   (map (lambda (file)
          (list file
-               (call-with-input-file file
-                 (compose find-module-declaration get-forms))))
+               (find-module-declaration
+                (call-with-input-file file
+                  (lambda (p) (read-all read p))))))
        (all-files-under-directory dir ".scm")))
 
 (define (all-modules-under-directory dir)

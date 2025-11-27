@@ -16,13 +16,5 @@
          :export (nothing))
        (define nothing '()))))
 
-(test-equal "All forms"
-    '((define (f x)
-        (* x 2))
-      (define-module (a)
-        :use-module (srfi srfi-1)
-        :export (f)))
-  (call-with-input-file "tests/test-module-tree/a.scm" get-forms))
-
 
 '((hnh module-introspection))

@@ -19,8 +19,8 @@
 
   (hnh module-introspection all-modules)
   (hnh module-introspection module-introspection)
-  ((hnh module-introspection)
-   :select (get-forms))
+  ((hnh util io)
+   :select (read-all))
 
   ((calp translation)
    :select (translate))
@@ -30,7 +30,7 @@
 ;; TODO and add texinfo output (besides ini output)
 (for (filename module-name)
   in (all-files-and-modules-under-directory "module")
-  (define forms (call-with-input-file filename get-forms))
+  (define forms (call-with-input-file filename (lambda (p) (read-all read p))))
   (define configurations
     (filter (lambda (form)
               (and (list? form) (not (null? form))

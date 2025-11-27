@@ -8,6 +8,7 @@
 (define-module (scripts module-dependants)
   :use-module (hnh util)
   :use-module (hnh util path)
+  :use-module (hnh util io)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (ice-9 ftw)
@@ -53,7 +54,8 @@
 (define (main . args)
   (define target-file (realpath (car args)))
   (define target-forms
-    (reverse (call-with-input-file target-file get-forms)))
+    (call-with-input-file target-file
+      (lambda (p) (read-all read p))))
   (define target-module
     (find-module-declaration target-forms))
   ;; (define target-symbols (unique-symbols target-forms))
@@ -64,7 +66,8 @@
     (map (lambda (file)
            (catch #t
             (lambda ()
-              (define forms (call-with-input-file file get-forms))
+              (define forms (call-with-input-file file
+                              (lambda (p) (read-all read p))))
               (define module (and=> (-> forms find-module-declaration) resolve-module))
               (define source-symbols (unique-symbols forms))
 

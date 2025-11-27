@@ -14,6 +14,16 @@
   (call-with-input-file "tests/test-module-tree/README.md"
     (lambda (p) (read-all (@ (ice-9 rdelim) read-line) p))))
 
+
+(test-equal "read-all/forms"
+    '((define-module (a)
+        :use-module (srfi srfi-1)
+        :export (f))
+      (define (f x)
+        (* x 2)))
+  (call-with-input-file "tests/test-module-tree/a.scm"
+    (lambda (p) (read-all read p))))
+
 ;;; TODO how do you even unit test these?
 ;;; TODO with-atomic-output-to-file
 ;;; TODO call-with-tmpfile

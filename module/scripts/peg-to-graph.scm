@@ -1,7 +1,8 @@
 (define-module (scripts peg-to-graph)
   :use-module ((graphviz) :prefix #{gv:}#)
   :use-module ((hnh module-introspection)
-               :select (unique-symbols get-forms))
+               :select (unique-symbols))
+  :use-module ((hnh util io) :select (read-all))
   :use-module (srfi srfi-1)
   :use-module (ice-9 match)
   :use-module (hnh util options)
@@ -57,7 +58,8 @@
                         (and (list? x)
                              (not (null? x))
                              (eq? 'define-peg-pattern (car x))))
-                      (call-with-input-file input-file get-forms)))
+                      (call-with-input-file input-file
+                        (lambda (p) (read-all read p)))))
 
     (gv:layout graph engine)
     (gv:render graph "pdf" output-file)))
