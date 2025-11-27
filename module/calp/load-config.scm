@@ -1,34 +1,33 @@
-(cond-expand
-  (guile-3
-   (define-module (calp load-config)
-     :declarative? #f))
-  (else
-   (define-module (calp load-config)
-     )))
+(define-module (calp load-config)
+  :use-module (srfi srfi-1)
+  :use-module (srfi srfi-88)
+  :use-module (calp translation)
+  :use-module (hnh util path)
+  :use-module (hnh util io)
+  :use-module ((xdg basedir) :prefix xdg-)
+  :use-module (ice-9 sandbox)
+  :export (load-config find-config-file))
+
 
-(use-modules (srfi srfi-1)
-             (calp translation)
-             (hnh util path)
-             ((xdg basedir) :prefix xdg-))
-
-(export load-config find-config-file)
+(define (all-bindings-in module)
+  (cons module
+        (module-map (lambda (a _) a) (resolve-interface module))))
 
 (define (load-config config-file)
  ;; Load config
  ;; Sandbox and "stuff" not for security from the user. The config script is
  ;; assumed to be "safe". Instead it's so we can control the environment in
  ;; which it is executed.
- (catch #t
-   (lambda () (load config-file))
-   (lambda args
-     (format (current-error-port)
-             ;; Two arguments:
-             ;; Configuration file path,
-             ;; thrown error arguments
-             (G_ "Failed loading config file ~a~%~s~%")
-             config-file
-             args
-             ))))
+
+  (define forms
+    (call-with-input-file config-file
+      (lambda (p) (read-all read p))))
+
+  (eval-in-sandbox
+   `(begin ,@forms)
+   time-limit: 10
+   bindings: (cons* (all-bindings-in '(guile))
+                    all-pure-and-impure-bindings)))
 
 
 (define (find-config-file altconfig)
@@ -36,7 +35,7 @@
          (if (file-exists? altconfig)
              altconfig
              (scm-error 'misc-error
-                        "wrapped-main"
+                        "find-config-file"
                         (G_ "Configuration file ~a missing")
                         (list altconfig)
                         #f))]
