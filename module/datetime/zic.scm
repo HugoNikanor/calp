@@ -319,12 +319,14 @@
                      (("Link" target name)
                       (loop (cons (zone-link name: name target: target)
                                   done) #f))
+                     ;; There may exist a parser Leap and Expires in the git history
+                     (("Leap" _ ...)
+                      (throw 'not-implemented (G_ "Leap seconds aren't yet implemented")))
+                     (("Expires" _ ...)
+                      (throw 'not-implemented (G_ "Leap seconds aren't yet implemented")))
                      (_
-                      ;; NOTE an earlier version of the code the parsers for those.
-                      ;; They were removed since they were unused, uneeded, and was
-                      ;; technical dept.
                       (scm-error 'misc-error "parse-zic-file"
-                                 (G_ "Invalid key ~s. Note that leap seconds and expries rules aren't yet implemented.")
+                                 (G_ "Invalid key ~s.")
                                  (list (car tokens))
                                  #f)))]))))))
 

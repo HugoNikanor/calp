@@ -8,10 +8,6 @@
   :use-module ((vcomponent type recurrence)
                :select (recur-rule)))
 
-
-(test-expect-fail "Simple Leap")
-(test-expect-fail "Simple Expire")
-
 (define big-sample
  "# Rule  NAME  FROM  TO    -  IN   ON       AT    SAVE  LETTER/S
 Rule    Swiss 1941  1942  -  May  Mon>=1   1:00  1:00  S
@@ -132,12 +128,12 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
               (call-with-input-string "Link Europe/Istanbul Asia/Istanbul"
                 parse-zic-file))
 
-            (test-equal "Simple Leap"
+            (test-error "Simple Leap"
               'not-yet-implemented
               (call-with-input-string "Leap 2016 Dec 31 23:59:60 + S"
                 parse-zic-file))
 
-            (test-equal "Simple Expire"
+            (test-error "Simple Expire"
               'not-yet-implemented
               (call-with-input-string "Expires 2020 Dec 28 00:00:00"
                 parse-zic-file))
