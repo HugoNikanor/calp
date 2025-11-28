@@ -3,7 +3,7 @@
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
   :use-module (datetime)
-  :use-module ((vcomponent) :select (vcomponent-equal?))
+  :use-module ((vcomponent) :select (vcomponent-diff))
   :use-module (vcomponent create)
   :use-module (vcomponent util group))
 
@@ -11,78 +11,76 @@
   (stream-map (lambda (p) (cons (car p) (stream->list (cdr p))))
               groups))
 
-;;; TODO I don't know why these tests fail. The reported diffs looks good.
-;;; It might be that `equal?` doesn't work for all types, or something
-;;; else entirely.
-(test-expect-fail "group-stream")
-(test-expect-fail "Subset of all events")
-
-(test-equal "group-stream"
-  (list (list (date year: 2020 month: jan day: 1)
-              (vevent
-               dtstart: (datetime year: 2020 month: jan day: 1 hour: 0)
-               dtend:   (datetime year: 2020 month: jan day: 1 hour: 10)))
-        (list (date year: 2020 month: jan day: 02))
-        (list (date year: 2020 month: jan day: 03))
-        (list (date year: 2020 month: jan day: 04))
-        (list (date year: 2020 month: jan day: 05))
-        (list (date year: 2020 month: jan day: 06))
-        (list (date year: 2020 month: jan day: 07))
-        (list (date year: 2020 month: jan day: 08))
-        (list (date year: 2020 month: jan day: 09))
-        (list (date year: 2020 month: jan day: 10)
-              (vevent
-               dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-               dtend:   (datetime year: 2020 month: jan day: 10 hour: 10))
-              (vevent
-               dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-               dtend:   (datetime year: 2020 month: jan day: 14 hour: 10)))
-        (list (date year: 2020 month: jan day: 11)
-              (vevent
-               dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-               dtend:   (datetime year: 2020 month: jan day: 14 hour: 10)))
-        (list (date year: 2020 month: jan day: 12)
-              (vevent
-               dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-               dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))
-              (vevent
-               dtstart: (date     year: 2020 month: jan day: 12)))
-        (list (date year: 2020 month: jan day: 13)
-              (vevent
-               dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-               dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))
-              )
-        (list (date year: 2020 month: jan day: 14)
-              (vevent
-               dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-               dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))
-              )
-        (list (date year: 2020 month: jan day: 15)
-              (vevent
-               dtstart: (datetime year: 2020 month: jan day: 15 hour: 0)
-               dtend:   (datetime year: 2020 month: jan day: 15 hour: 10)))
-        (list (date year: 2020 month: jan day: 16)))
-
-  (stream->list
-   16 (force-groups
-       (group-stream
-        (stream (vevent dtstart: (datetime year: 2020 month: jan day: 1 hour: 0)
-                        dtend:   (datetime year: 2020 month: jan day: 1 hour: 10))
-                (vevent dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-                        dtend:   (datetime year: 2020 month: jan day: 10 hour: 10))
-                (vevent dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-                        dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))
-                (vevent dtstart: (date     year: 2020 month: jan day: 12))
-                (vevent dtstart: (datetime year: 2020 month: jan day: 15 hour: 0)
-                        dtend:   (datetime year: 2020 month: jan day: 15 hour: 10)))))))
-
 (define (test-groups expected actual)
   (for-each (lambda (group-e group-a)
-              (test-equal (car group-e) (car group-a))
-              (test-equal (length (cdr group-e)) (length (cdr group-a)))
-              (for-each (lambda (e a) (test-assert (vcomponent-equal? e a)))
+              (test-equal "Matching dates" (car group-e) (car group-a))
+              (test-equal "Same number of entries"
+                (length (cdr group-e)) (length (cdr group-a)))
+              (for-each (lambda (e a) (test-equal "Matching components"
+                                   '() (vcomponent-diff e a)))
                         (cdr group-e) (cdr group-a)))
             expected actual))
+
+(test-group "group-stream"
+  (test-groups
+   (list (list (date year: 2020 month: jan day: 1)
+               (vevent
+                dtstart: (datetime year: 2020 month: jan day: 1 hour: 0)
+                dtend:   (datetime year: 2020 month: jan day: 1 hour: 10)))
+         (list (date year: 2020 month: jan day: 02))
+         (list (date year: 2020 month: jan day: 03))
+         (list (date year: 2020 month: jan day: 04))
+         (list (date year: 2020 month: jan day: 05))
+         (list (date year: 2020 month: jan day: 06))
+         (list (date year: 2020 month: jan day: 07))
+         (list (date year: 2020 month: jan day: 08))
+         (list (date year: 2020 month: jan day: 09))
+         (list (date year: 2020 month: jan day: 10)
+               (vevent
+                dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+                dtend:   (datetime year: 2020 month: jan day: 10 hour: 10))
+               (vevent
+                dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+                dtend:   (datetime year: 2020 month: jan day: 14 hour: 10)))
+         (list (date year: 2020 month: jan day: 11)
+               (vevent
+                dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+                dtend:   (datetime year: 2020 month: jan day: 14 hour: 10)))
+         (list (date year: 2020 month: jan day: 12)
+               (vevent
+                dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+                dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))
+               (vevent
+                dtstart: (date     year: 2020 month: jan day: 12)))
+         (list (date year: 2020 month: jan day: 13)
+               (vevent
+                dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+                dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))
+               )
+         (list (date year: 2020 month: jan day: 14)
+               (vevent
+                dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+                dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))
+               )
+         (list (date year: 2020 month: jan day: 15)
+               (vevent
+                dtstart: (datetime year: 2020 month: jan day: 15 hour: 0)
+                dtend:   (datetime year: 2020 month: jan day: 15 hour: 10)))
+         (list (date year: 2020 month: jan day: 16)))
+
+   (stream->list
+    16 (force-groups
+        (group-stream
+         (stream (vevent dtstart: (datetime year: 2020 month: jan day: 1 hour: 0)
+                         dtend:   (datetime year: 2020 month: jan day: 1 hour: 10))
+                 (vevent dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+                         dtend:   (datetime year: 2020 month: jan day: 10 hour: 10))
+                 (vevent dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+                         dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))
+                 (vevent dtstart: (date     year: 2020 month: jan day: 12))
+                 (vevent dtstart: (datetime year: 2020 month: jan day: 15 hour: 0)
+                         dtend:   (datetime year: 2020 month: jan day: 15 hour: 10))))))))
+
 
 (test-group "get-groups-between"
   (let ((groups
@@ -96,25 +94,26 @@
                   (vevent dtstart: (date     year: 2020 month: jan day: 12))
                   (vevent dtstart: (datetime year: 2020 month: jan day: 15 hour: 0)
                           dtend:   (datetime year: 2020 month: jan day: 15 hour: 10))))))
-    (test-equal "Subset of all events"
-        (list (list (date year: 2020 month: jan day: 05))
-              (list (date year: 2020 month: jan day: 06))
-              (list (date year: 2020 month: jan day: 07))
-              (list (date year: 2020 month: jan day: 08))
-              (list (date year: 2020 month: jan day: 09))
-              (list (date year: 2020 month: jan day: 10)
-                    (vevent
-	             dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-	             dtend:   (datetime year: 2020 month: jan day: 10 hour: 10))
+    (test-group "Subset of all events"
+      (test-groups
+       (list (list (date year: 2020 month: jan day: 05))
+             (list (date year: 2020 month: jan day: 06))
+             (list (date year: 2020 month: jan day: 07))
+             (list (date year: 2020 month: jan day: 08))
+             (list (date year: 2020 month: jan day: 09))
+             (list (date year: 2020 month: jan day: 10)
+                   (vevent
+	            dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+	            dtend:   (datetime year: 2020 month: jan day: 10 hour: 10))
 
-                    (vevent
-	             dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
-	             dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))))
+                   (vevent
+	            dtstart: (datetime year: 2020 month: jan day: 10 hour: 0)
+	            dtend:   (datetime year: 2020 month: jan day: 14 hour: 10))))
 
-      (stream->list
-       (force-groups (get-groups-between groups
-                                         (date year: 2020 month: jan day: 5)
-                                         (date year: 2020 month: jan day: 10)))))
+       (stream->list
+        (force-groups (get-groups-between groups
+                                          (date year: 2020 month: jan day: 5)
+                                          (date year: 2020 month: jan day: 10))))))
 
     (test-equal "Subset not containing any events"
         (list (list (date year: 2020 month: feb day: 5))
