@@ -30,6 +30,8 @@
 
 (define options
   `((port (value #t) (single-char #\p)
+          ;; TODO rewrite this, but with proper grammar
+          ;; See swedish translation for inspiration
           (description ,(G_ "TCP port to bind to.
 If --randport is also given, this is used as the minimum port to attempt to bind to.
 ")))

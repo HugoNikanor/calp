@@ -18,7 +18,7 @@
 
 (define %summary
   (G_ "starts an HTTP server which dynamically loads and
-displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs
+displays events. The endpoints <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs
 the same output code as <b>html</b>. While the <i>/calendar/{uid}.ics</i> emits text/calendar."))
 
 (define options

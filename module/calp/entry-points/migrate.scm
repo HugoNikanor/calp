@@ -26,7 +26,7 @@
 
 (define opt-spec
   `((config (single-char #\c) (value file)
-            (description ,(G_ "Configuration where stores are defined")))
+            (description ,(G_ "Configuration file where stores are defined")))
     (in (value #t) (single-char #\i)
         (description ,(G_ "Store to use as input, by uri or name")))
     (out (value #t) (single-char #\o)

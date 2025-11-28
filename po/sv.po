@@ -667,10 +667,10 @@ msgid   "List of default zoneinfo files to be parsed"
 msgstr  "Lista av standardzoninfofiler att ladda"
 
 msgid   "<p><b>server</b> starts an HTTP server which dynamically loads and\n"
-        "displays events. The <i>/month/{date}.html</i> &amp; <i>/week/{date}."
-        "html</i> runs\n"
-        "the same output code as <b>html</b>. While the <i>/calendar/{uid}."
-        "ics</i> uses\n"
+        "displays events. The <i>/month/{date}.html</i> &amp; <i>/week/"
+        "{date}.html</i> runs\n"
+        "the same output code as <b>html</b>. While the <i>/calendar/"
+        "{uid}.ics</i> uses\n"
         "the same code as <b>ical</b>.</p>"
 msgstr  "<p><b>server</b> startar en HTTP-server vilken dynamiskt laddar och "
         "visar händelser. Addresserna <i>/month/{date}.html</i> &amp; <i>/"
@@ -956,3 +956,238 @@ msgstr  "slut (~a) måste vara större en eller lika med start (~a)"
 msgid   "Redirecting to today, might take some time if server was just "
         "restarted."
 msgstr  "Omdirigerar till idag, kan ta viss tid om servern just startated om."
+
+msgid   "Color"
+msgstr  "Färg"
+
+#. TODO option to emit this, since it may be slow
+msgid   "Nr. Entries"
+msgstr  "Ant. Inlägg"
+
+#, scheme-format
+msgid   "stdoff: ~a, rule: ~a, name: ~a, until: ~a~%"
+msgstr  "förskjutning: ~a, regel: ~a, namn: ~a, t.o.m.: ~a~%"
+
+#. TODO comments to the translator
+#. This is on the format
+#. "$RULE_NAME: $DATE_RANGE, $CHANGEOVER, at
+#. $TIME_TYPE $TIME, set local offset to $TIME"
+#. For example
+#. "EU: 1979-1995, on the last Sunday of September, at
+#. UTC +01:00:00u, set local offset to +00:00:00s".
+#, scheme-format
+msgid   "~a: ~a, ~a, at ~a ~a, set local offset to ~a~%"
+msgstr  "~a: ~a, ~a, vid ~a ~a, ställ lokal tidsförskjutning till ~a~%"
+
+msgid   "unmodified local time"
+msgstr  "omodifierad lokal tid"
+
+msgid   "local time"
+msgstr  "lokal tid"
+
+#, scheme-format
+msgid   "time type '~a'"
+msgstr  "tidstype '~a'"
+
+#. "third of october"
+#. "on the third of october"
+#. "on the third of october" ($CHANGEOVER)
+#, scheme-format
+msgid   "on the ~a of ~a"
+msgstr  "den ~a ~a"
+
+#. "last sunday of october"
+#. "on the last sunday of october"
+#. "on the last sunday of october" ($CHANGEOVER)
+#, scheme-format
+msgid   "on the last ~a of ~a"
+msgstr  "den sista ~aen i ~a"
+
+#. "First sunday on or after 3 october"
+#. "First sunday on or after 3 october" ($CHANGEOVER)
+#, scheme-format
+msgid   "on the first ~a on or after ~a ~a"
+msgstr  "den första ~aen på eller efter ~a ~a"
+
+#. last sunday on or before 3 october"
+#. last sunday on or before 3 october" ($CHANGEOVER)
+#, scheme-format
+msgid   "on the last ~a on or before ~a ~a"
+msgstr  "~aen senast den ~a ~a"
+
+msgid   "Downloads zoneinfo data, and updates the vendored timezone module."
+msgstr  "Ladda ner zoninfodata, och uppdatera den inbakade tidszonsmodulen."
+
+msgid   "File to write the generated code to."
+msgstr  "Fil till vilken den genererade koden skrivs."
+
+msgid   "Name of the generated module, as per <code>define-module</code>.\n"
+        "Given as a space-delimeted list of symbols, and defaults to "
+        "<code>datetime timezone vendored-tzdb</code>."
+msgstr  "Namn på gen genererade modulen, enligt <code>define-module<ocode>.\n"
+        "Ges som en mellanslagsavgränsad lista av symboler, och blir "
+        "<code>datetime timezone vendored-tzdb</code> om inget angets."
+
+msgid   "Symbol which the module will export the database through. Defaults "
+        "to <code>zoneinfo-database</code>"
+msgstr  "Symbol modulen kommer exportera databasen under. Blir <code>zoneinfo-"
+        "database</code> om inget annat angetts."
+
+msgid   "<p>Usage: <b>update-zoneinfo</b> [<i>flags</i>] [<i>limiter</"
+        "i> ...]</p>"
+msgstr  "<p>Användning: <b>update-zoneinfo</b> [<i>flaggor</i>] "
+        "[<i>begränsare</i> ...]</p>"
+
+msgid   "formats and justifies what it's given on standard input,\n"
+        "and writes it to standard output. Similar to this text."
+msgstr  "formaterar och justerar vad den är given på standardin,\n"
+        "and skriver det till standardout. Liknande den här texten."
+
+msgid   "loads the calendars, and starts an interactive terminal interface."
+msgstr  "ladder kalendrarna, och startar det interaktiva terminalgränssnittet."
+
+msgid   "--config <i>file</i>, starts the sample webdav server"
+msgstr  "--config <i>fil</i>, startar exempelwebdavservern"
+
+#. TODO rewrite this, but with proper grammar
+#. See swedish translation for inspiration
+msgid   "TCP port to bind to.\n"
+        "If --randport is also given, this is used as the minimum port to "
+        "attempt to bind to.\n"
+msgstr  "TCP-port att binda till.\n"
+        "Om --randport även randport är satt kommer det här argumentet att "
+        "istället aggera minimiport att försöka binda till.\n"
+
+msgid   "Start the server at a random port.\n"
+        "The port number will be written to the file given as an argument."
+msgstr  "Startar server på en slumpmässigt vald port.\n"
+        "Portnumret kommer skrivas till filen given som argument."
+
+msgid   "Configuration file describing resource tree."
+msgstr  "Konfigurationsfil beskrivande resursträdet"
+
+msgid   "reads calendar files from disk, and writes them to static HTML files."
+msgstr  "läser kalenderfiler från disk, och skriver dem till statiska HTML-"
+        "filer."
+
+msgid   "starts an HTTP server which dynamically loads and\n"
+        "displays events. The <i>/month/{date}.html</i> &amp; <i>/week/"
+        "{date}.html</i> runs\n"
+        "the same output code as <b>html</b>. While the <i>/calendar/"
+        "{uid}.ics</i> emits text/calendar."
+msgstr  ""
+
+msgid   "Configuration file where stores are defined"
+msgstr  "Konfigurationsfil i vilken datalager är definierade"
+
+msgid   "Store to use as input, by uri or name"
+msgstr  "Datalager att läsa från, per URI eller namn"
+
+msgid   "Store to use as output, by uri or name"
+msgstr  "Datalager att skriva till, per URI eller namn"
+
+msgid   "List all configured stores, in the provided data format"
+msgstr  "Lista alla uppsatta datalager, i enlighet med det valda formatet"
+
+msgid   "Get info and data from calendar stores."
+msgstr  "Plocka info och data från kalenderförvar."
+
+msgid   "Calendar store to access, by <s>name or</s> uri."
+msgstr  "Kalenderförvar att nyttja, per <s>namn eller</s> URI."
+
+#. "<p>" () "</p>"
+#. "<p>" (G_ "<b>list-stores</b> List all pre-configured stores.") "</p>"
+msgid   "<b>info</b> Print general information about a store."
+msgstr  "<b>info<ob> skriv ut generell information om datalager."
+
+msgid   "<b>list-entries</b> List all entries in the store, as hrefs."
+msgstr  "<b>list-entries</b> lista alla inlägg i datalagret per deras 'hrefs'."
+
+msgid   "<b>get</b> <i>href</i> Get a specific entry by its href."
+msgstr  "<b>get</b> <i>href</i> plocka ut ett given inlägg per dess 'href'."
+
+msgid   "Media type to format output as, such as text/calendar"
+msgstr  "Mediatyp att formatera utdatan som, så som text/calendar"
+
+#, scheme-format
+msgid   "No entry with href ~s in store~%"
+msgstr  "Inget inlägg relateret till href ~s i datalagret~%"
+
+msgid   "Query the zoneinfo database."
+msgstr  "Sök i zoninfodatabasen."
+
+msgid   "Timezone for input date, defaults to UTC."
+msgstr  "Tidszon för indatumet, med UTC om inget är angivet."
+
+msgid   "Timezone for output date, defaults to UTC."
+msgstr  "Tidszon för utdatumet, med UTC om inget är angivet."
+
+msgid   "Format of input date, see string->datetime for format."
+msgstr  "Format för indatumet, se string->datetime för format."
+
+msgid   "Format to output result in, see datetime->string for format."
+msgstr  "Format för utresultatet, se datetime->string för format."
+
+#, scheme-format
+msgid   "Unknown mode of operation: ~s~%"
+msgstr  "Okänt operationsläge: ~s~%"
+
+#, scheme-format
+msgid   "Unknown argument: ~s~%"
+msgstr  "Oknänt argument: ~s~%"
+
+msgid   "<group>Start a Guile repl which can be connected to, defaults to "
+        "the\n"
+        "unix socket <i>/run/user/${UID}/calp-${PID}</i>, but it can be bound "
+        "to any\n"
+        "unix or TCP socket.<br/>\n"
+        "<b>Should NOT be used in production.</b></group>"
+msgstr  ""
+
+#, scheme-format
+msgid   "Non-escapable character: '~a'"
+msgstr  "Tecken utan specialhantering: '~a'"
+
+#, scheme-format
+msgid   "Un-escaped '~a' encountered"
+msgstr  "Ej särhanterat '~a' påträffat"
+
+#. arguments:
+#. linedata
+#. ~?
+#. source line
+#. source file
+#, scheme-format
+msgid   "Parse warning around ~a:~a (~s): ~?~%"
+msgstr  "Inläsningsvarning i trakten av ~a:~a (~s): ~?~%"
+
+msgid   "Convert between calendar media types."
+msgstr  "Konvertera mellan kalendermediatyper"
+
+msgid   "Media type of input"
+msgstr  "Mediatyp för indata"
+
+msgid   "Media type of output"
+msgstr  "Mediatyp för utdata"
+
+msgid   "<p>Usage: <b>convert</b> [<i>flags</i> ...]</p>"
+msgstr  "<p>Användring: <b>convert</b> [<i>flaggor</i> ...]</p>"
+
+msgid   "<p>By default, media type is infered from the input and output "
+        "filename</p>"
+msgstr  "<p>Som standard hanteras mediatyperna enligt filändelserna</p>"
+
+msgid   "Include a warning block, instructing the user to override the file"
+msgstr  "Inkludera ett varningsblock, vilket instruerar användaren att skriva "
+        "över filen"
+
+msgid   "starts an HTTP server which dynamically loads and\n"
+        "displays events. The endpoints <i>/month/{date}.html</i> &amp; <i>/"
+        "week/{date}.html</i> runs\n"
+        "the same output code as <b>html</b>. While the <i>/calendar/"
+        "{uid}.ics</i> emits text/calendar."
+msgstr  ""
+
+#, scheme-format
+msgid   "Unknown store mode: ~s~%"
+msgstr  ""
