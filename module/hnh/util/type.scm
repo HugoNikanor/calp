@@ -8,7 +8,6 @@
            current-procedure-name
            ))
 
-;;; TODO could this be simplified due to how build-validator-body works?
 (define-syntax list-of
   (syntax-rules ()
     ((_ variable (rule ...))

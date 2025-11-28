@@ -111,9 +111,6 @@
   (data-format getter: data-format init-keyword: media: init-value: #f)
   (internals   getter: internals))
 
-(define (vcalendar? x)
-  (and (vcomponent? x)
-       (eq? 'VCALENDAR (type x))))
 
 (define-method (initialize (self <file-data-store>) args)
   (next-method)

@@ -31,6 +31,9 @@
            param*
 
            add-child
+
+           vcalendar? vevent? vtodo? vjournal? vfreebusy?
+           vtimezone? valarm? standard? daylight?
            ))
 
 (define (serialize-vline v)
@@ -41,10 +44,13 @@
 
 
 (define-type (vline serializer: serialize-vline)
-  (vline-parameters default: (table)
+  ;; NOTE adding the type clause to the table causes vline-equal?
+  ;; to fail for seemingly identical lines.
+  (vline-parameters default: (table #; (named-type string?))
                     type: table?
                     keyword: params)
-  (vline-value keyword: value))
+  (vline-value keyword: value
+               type: (not vline?)))
 
 (define (vline-equal? a b)
   (and (equal? (vline-value a)
@@ -152,3 +158,13 @@
 
 (define (param* key)
   (lens-compose vline-parameters* (table-focus key)))
+
+(define (vcalendar? x) (and (vcomponent? x) (eq? 'VCALENDAR (type x))))
+(define (vevent?    x) (and (vcomponent? x) (eq? 'VEVENT    (type x))))
+(define (vtodo?     x) (and (vcomponent? x) (eq? 'VTODO     (type x))))
+(define (vjournal?  x) (and (vcomponent? x) (eq? 'VJOURNAL  (type x))))
+(define (vfreebusy? x) (and (vcomponent? x) (eq? 'VFREEBUSY (type x))))
+(define (vtimezone? x) (and (vcomponent? x) (eq? 'VTIMEZONE (type x))))
+(define (valarm?    x) (and (vcomponent? x) (eq? 'VALARM    (type x))))
+(define (standard?  x) (and (vcomponent? x) (eq? 'STANDARD  (type x))))
+(define (daylight?  x) (and (vcomponent? x) (eq? 'DAYLIGHT  (type x))))

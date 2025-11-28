@@ -1,6 +1,7 @@
 (define-module (hnh util optional)
   :use-module (srfi srfi-88)
   :use-module (hnh util object)
+  :use-module (hnh util type)
   :use-module (ice-9 curried-definitions)
   :export (optional?
            just just? just*
@@ -19,14 +20,19 @@
       (nothing? x)))
 
 
+(define-syntax-rule (optional-of x p)
+  (or (nothing? x)
+      (and (just? x)
+           (build-validator-body (from-just x) p))))
+
+
 (define ((just* optional) f)
   (if (just? optional)
       (just (f (from-just optional)))
       (nothing)))
 
 
-;;; TODO rewrite as macro, only evaluating dflt as needed
-(define* (unjust optional optional: dflt)
+(define-syntax-rule (unjust optional dflt)
   (if (just? optional)
       (from-just optional)
       dflt))

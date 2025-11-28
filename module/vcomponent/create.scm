@@ -10,8 +10,8 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module ((hnh util table) :select (table alist->table table?))
-  :use-module ((hnh util) :select (swap init+last kvlist->assq ->))
-  :use-module (hnh util object)
+  :use-module ((hnh util) :select (swap init+last kvlist->assq ->
+                                        upcase-symbol))
   :use-module (hnh util type)
   :use-module (hnh util optional)
   :use-module (hnh util lens)
@@ -24,50 +24,15 @@
 
 
 
-;; Convert a scheme keyword to a symbol suitable for us
-(define (keyword->key keyword)
-  (-> keyword
-      keyword->string
-      string-upcase                     ; NOCOV
-      string->symbol))
-
-(define (symbol-upcase symbol)
-  (-> symbol
-      symbol->string
-      string-upcase                     ; NOCOV
-      string->symbol))
-
 ;; Upcase the keys in an association list. Keys must be symbols.
 (define (upcase-keys alist)
-  (map (cut modify <> car* symbol-upcase)
+  (map (cut modify <> car* upcase-symbol)
        alist))
 
-
-
-(define (kvlist->parameter-table kvs)
-  (-> kvs kvlist->assq upcase-keys alist->table))
-
-(define-type (parameterized)
-  (parameterized:value keyword: value type: ((negate parameterized?)))
-  (parameterized:parameters keyword: params type: table?))
-
-;;; This is implemented as a macro, with an external typecheck, due to
-;;; how *when* Guile interprets different things. The check for list-value?
-;;; fails since Guile thinks it's a syntax deffinition at this point.
-;;; This setup waits with actually looking up list-value?, meaning that the
-;;; symbol is a procedure when the code is actually ran.
-
-;;; TODO above comment mentions now removed typecheck
-;;; TODO try removing this, and simply using vlines directly
-(define-syntax with-parameters
-  (syntax-rules ()
-    ((_ kvs ... value)
-     (parameterized
-      value: value
-      params: (kvlist->parameter-table (list kvs ...))))))
-
-
-
+;;; Macro to access pattern matching, could easily be a procedure.
+(define-syntax-rule (with-parameters kvs ... value)
+  (vline params: (-> (list kvs ...) kvlist->assq upcase-keys alist->table)
+         value: value) )
 
 (define (create-vcomponent type . attrs*)
   ;; Split the subforms into attributes and children
@@ -80,10 +45,8 @@
     (cond
      ((list? value)
       (concatenate (map value->vline value)))
-     ((parameterized? value)
-      (list
-       (vline value: (parameterized:value value)
-              params: (parameterized:parameters value))))
+     ((vline? value)
+      (list value))
      (else
       (list
        (vline value: value)))))

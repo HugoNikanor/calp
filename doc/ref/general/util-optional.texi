@@ -15,6 +15,11 @@ Provided by the module @code{(hnh util optional)}.
 @defunx nothing? x
 @end defun
 
+@defmac optional-of var type
+Syntax for an optional which is only allowed to hold a specific
+value. Note that nothings are untyped, so all nothings are the same.
+@end defmac
+
 @deftp {Lens} just*
 Lens which focuses the value of @code{just} fields.
 @end deftp
