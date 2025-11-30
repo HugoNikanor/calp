@@ -23,7 +23,7 @@
 (define-syntax-rule (optional-of x p)
   (or (nothing? x)
       (and (just? x)
-           (build-validator-body (from-just x) p))))
+           (expand-validator (from-just x) p))))
 
 
 (define ((just* optional) f)

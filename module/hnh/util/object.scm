@@ -55,7 +55,7 @@
      (cond ((kv-ref #'(kvs ...) type:)
             => (lambda (type-stx)
                  (with-syntax ((type type-stx))
-                   #'(unless (build-validator-body name* type)
+                   #'(unless (expand-validator name* type)
                        (scm-error 'wrong-type-arg (symbol->string (quote name))
                                   "~s doesn't satisfy ~s"
                                   (list name* (quote type))

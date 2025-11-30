@@ -11,7 +11,7 @@
 (define-syntax-rule (named-type expr)
   (named-type-container
    name: (quote expr)
-   type: (lambda (x) (build-validator-body x expr))))
+   type: (lambda (x) (expand-validator x expr))))
 
 
 (define-type (named-type-container

@@ -115,7 +115,7 @@ Since a type (in Scheme) is defined by the set of values which
 satisfies a predicate, new types can of course always be created by
 simply creating a new predicate. However, for higher ordered types you
 usually want a generic interface which also gives reasonable error outputs.
-At the core of this is the macro @code{build-validator-body}, which
+At the core of this is the macro @code{expand-validator}, which
 given a variable name and a type clause (as seen above) returns a form
 where the variable is applied to each value. All built-in compound
 types are built using this. For example, here is the definition of
@@ -124,11 +124,11 @@ types are built using this. For example, here is the definition of
 @example
 (define-syntax-rule (pair-of variable a b)
   (and (pair? variable)
-       (build-validator-body (car variable) a)
-       (build-validator-body (cdr variable) b)))
+       (expand-validator (car variable) a)
+       (expand-validator (cdr variable) b)))
 @end example
 
-@defmac build-validator-body variable type-clause
+@defmac expand-validator variable type-clause
 @end defmac
 
 @subsection Named Types

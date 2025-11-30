@@ -1,6 +1,6 @@
 (define-module (hnh util type)
   :use-module ((srfi srfi-1) :select (every))
-  :export (build-validator-body
+  :export (expand-validator
            list-of pair-of pair-of* tuple-of
            non-empty-list-of
            false? any-type
@@ -12,22 +12,22 @@
   (syntax-rules ()
     ((_ variable (rule ...))
      (and (list? variable)
-          (every (lambda (x) (build-validator-body x (rule ...))) variable)))
+          (every (lambda (x) (expand-validator x (rule ...))) variable)))
     ((_ variable rule)
      (and (list? variable)
           (every rule variable)))))
 
 (define-syntax-rule (non-empty-list-of v p)
-  (build-validator-body v (pair-of p (list-of p))))
+  (expand-validator v (pair-of p (list-of p))))
 
 (define-syntax-rule (pair-of variable a b)
   (and (pair? variable)
-       (build-validator-body (car variable) a)
-       (build-validator-body (cdr variable) b)))
+       (expand-validator (car variable) a)
+       (expand-validator (cdr variable) b)))
 
 (define-syntax pair-of*
   (syntax-rules ()
-    ((_ variable a)       (build-validator-body variable a))
+    ((_ variable a)       (expand-validator variable a))
     ((_ variable a b ...) (pair-of variable a (pair-of* b ...)))))
 
 (define-syntax-rule (tuple-of variable a ... b)
@@ -35,11 +35,12 @@
 
 ;; DSL for specifying type predicates
 ;; Basically a procedure body, but the variable to test is implicit.
-(define-syntax build-validator-body
+;;; TODO rename to expand-validator
+(define-syntax expand-validator
   (syntax-rules (and or not)
-    ((_ v (and clauses ...))  (and (build-validator-body v clauses) ...))
-    ((_ v (or clauses ...))   (or (build-validator-body v clauses) ...))
-    ((_ v (not clause))       (not (build-validator-body v clause)))
+    ((_ v (and clauses ...))  (and (expand-validator v clauses) ...))
+    ((_ v (or clauses ...))   (or (expand-validator v clauses) ...))
+    ((_ v (not clause))       (not (expand-validator v clause)))
     ((_ v (proc args ...))    (proc v args ...))
     ((_ v proc)               (proc v))))
 
@@ -57,7 +58,7 @@
      (typecheck expr type-clause procedure-name (quote type-clause)))
 
     ((_ expr type-clause procedure-name type-source)
-     (unless (build-validator-body expr type-clause)
+     (unless (expand-validator expr type-clause)
        (scm-error 'wrong-type-arg procedure-name
                   "The expression `~s' doesn't satisfy the type `~s'. Evaluated to ~s"
                   (list (quote expr) type-source expr)
