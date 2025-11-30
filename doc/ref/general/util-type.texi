@@ -1,32 +1,86 @@
 @node Type utilities
 @section Type utilities
+@anchor{typecheck}
 
-Provided by the module @code{(hnh util type)}
+In the most general sense, Scheme types are defined as the set of
+values which satisfies a given predicate. The module @code{(hnh util
+type)} provides a run-time type system in Scheme based on this
+premise.
+At its core is the macro @code{typecheck}, which validates a value
+against a type expression, and throws a @code{wrong-type-arg} error if
+the given value doesn't satisfy the type. For example:
 
-@subsection Type Clauses
-@anchor{type-clause}
-@cindex type-clause
-
-Type clauses are an effective way of writing compound predicates
-without explicitly mentioning the variable at all steps.
-
-The simplest type predicate is a single symbol, which is directly
-called on the object:
 @example
-predicate? ⇒ (predicate? x)
+(define (integer-list-cons x xs)
+  (typecheck x integer?)
+  (typecheck xs (list-of integer?))
+  (cons x xs))
 @end example
 
-Otherwise, if the predicate is a list then the variable is spliced
-into the argument list in the first position:
-@example
-(proc args ...) ⇒ (proc x args ...)
-@end example
+Type expressions, such as @code{integer?} or @code{(list-of integer?)}
+are short-forms for validating a value against all given predicates.
+Given a value @var{x}, they are evaluated as:
+@itemize
+@item @var{predicate?}
+are procedures applied directly to @var{x}, like @code{string?}
+@item (@var{proc} @var{args} ...)
+applies @var{proc} to @var{x}, with @var{args} as rest arguments.
+For example @code{(eq? 'symbol)} tests if @var{x} is @code{symbol}.
+@item (and @var{clauses} ...)
+applies each clause according to these rules, and requires that all
+hold true. Regular short-circuiting rules for Scheme apply.
+@item (or @var{clauses} ...)
+applies each clause according to these rules, and is satisfied if at
+least one returns true. Regular short-circuiting rules for Scheme apply.
+@item (not @var{clause})
+applies the inner clause to @var{x}, then negates the result.
+For example @code{(not string?)} is the type of everything except strings.
+@end itemize
 
-The two primitives @code{and} and @code{or} are also available, which
-both take an arbitrary number of predicates, and calls them in order,
-with Scheme's usual short-circuiting rules.
-@footnote{@code{and} and @code{or} doesn't have to be primitives, but
-we would otherwise have one hell of a namespace conflict}
+@defmac typecheck variable type-clause [procedure-name=(current-procedure-name)] [type-source='type-clause]
+Asserts that the @var{variable} satisfies @var{type-clause}.
+
+@var{procedure-name} is used for the error printout, and should only
+be overwritten when the environment fails to find the find the name,
+or if it's needed for clarity (for example if there exists many
+procedures which share names, and you want to specify which module you
+are coming from).
+
+@var{type-source} overrides how the expected type is supposed to look,
+for the error printout. Generally, you want the type printout to be
+exactly what was given to @code{typecheck}. However, if a type needs
+to be stored in a variable along the line, this is useful. @ref{Named Types}.
+@end defmac
+
+@deftp {Error} wrong-type-arg procedure fmt args #f
+@end deftp
+
+@defmac current-procedure-name
+Attempts to scan the call-stack for the name of the currently
+evaluating procedure, and returns that, or @code{#f} if not found.
+
+Note that this tends to fail with weird call-stacks.
+@end defmac
+
+@subsection Utility Types
+
+@defun false? x
+An alias of @code{not}. Usefull in type predicates when introducing optional
+types, since
+@example
+(or false? integer?)
+@end example
+is much clearer than
+@example
+(or not integer?)
+@end example
+@end defun
+
+@defun any-type
+Type accepting any value.
+@end defun
+
+@subsection Built-in Higher Ordered Types
 
 @defmac list-of variable type-clause
 Checks if @var{variable} is a list, and that every element satisfies type-clause.
@@ -55,51 +109,30 @@ For example, @code{(tuple-of string? number? number?)} would match a
 list of length 3, starting with one string followed by two numbers.
 @end defmac
 
-@subsection Definitions
+@subsection Defining new Types
+
+Since a type (in Scheme) is defined by the set of values which
+satisfies a predicate, new types can of course always be created by
+simply creating a new predicate. However, for higher ordered types you
+usually want a generic interface which also gives reasonable error outputs.
+At the core of this is the macro @code{build-validator-body}, which
+given a variable name and a type clause (as seen above) returns a form
+where the variable is applied to each value. All built-in compound
+types are built using this. For example, here is the definition of
+@code{pair-of}:
+
+@example
+(define-syntax-rule (pair-of variable a b)
+  (and (pair? variable)
+       (build-validator-body (car variable) a)
+       (build-validator-body (cdr variable) b)))
+@end example
 
 @defmac build-validator-body variable type-clause
-``Entry point'' of type clauses. Inserts variable into the
-type-clause, returning something ready to be passed along the eval (or
-rather, spliced into another macro).
-
-Also used if new ``primitives'' are to be added, such as list-of.
 @end defmac
-
-@defmac typecheck variable type-clause [procedure-name=(current-procedure-name)] [type-source=(quote type-clause)]
-Checks @var{variable} against @var{type-clause}, and raises
-@code{'wrong-type-arg} if it fails. @var{procedure-name} is used
-as the calling procedure for @code{scm-error}.
-
-Useful at the start of procedures.
-@end defmac
-
-@deftp {Error} wrong-type-arg procedure fmt args #f
-@end deftp
-
-@defmac current-procedure-name
-Returns the current procedure name as a symbol, or @code{#f} if not found.
-@end defmac
-
-
-@defun false? x
-An alias of @code{not}. Usefull in type predicates when introducing optional
-types, since
-@example
-(or false? integer?)
-@end example
-is much clearer than
-@example
-(or not integer?)
-@end example
-@end defun
-
-
-@defun any-type
-Convenience type, accepting any value.
-@end defun
-
 
 @subsection Named Types
+@anchor{Named Types}
 
 Named types are provided by the module @code{(hnh util named-type)},
 to avoid loops in the dependency graph.
@@ -113,9 +146,10 @@ gets around this by just expanding into @code{typecheck} forms}.
 Sometimes you however need higher ordered types, the following works,
 but reports @code{my-type} as the invalid type, which is less than
 helpful.
+
 @example
 (define my-type (lambda (x) (list-of x string?)))
-(typecheck '("") my-type)
+(typecheck '(2) my-type)
 @end example
 
 Instead, named types exists, which does the macro expansion usually
