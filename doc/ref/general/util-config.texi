@@ -1,69 +1,58 @@
 @node Configuration
-
 @section Configuration
 
-Provided by the module @code{(calp util config)}.
+At their core, configurable fields are simply Guile parameters, with
+some documentation attached to them. At program startup, a
+configuration file is loaded, which simply sets these parameters.
 
-@b{TODO: This module has changed quite a bit, see commit:}
-@code{f1532b4eca797f5aab4ec1a693a767a7a3e603c9}
+Configuration loading is done through the @code{(calp load-config)} module.
 
-Configuration items are similar to regular defines, but global to the
-entire program, and assignable before they are declared.
-Their primary purpose is to allow a user supplied @file{config.scm},
-without needing all appropriate modules already loaded.
+@defun load-config filename
+Runs code in the given file.
+@end defun
 
-@defmac define-config name default kw-parameters ...
-Declares a new configuration variable named @var{named}, with the
-default value @var{default}. @var{kw-parameters} are given on Guile's
-standard @code{hash: value} form. @pxref{get-property} for available parameters.
+@defun find-config-file [alternative]
+If @var{alternative} is given, attempt to load that file, and fail
+otherwise.
+If @var{alternative} isn't given, attempt to load one of the following
+in order, and fail if none is found:
+@itemize @bullet
+@item @code{$XDG_CONFIG_HOME/calp/config.scm}
+@item @code{$XDG_CONFIG_DIRS/calp/config.scm}
+(note that config-dirs is a list)
+@item @code{/etc/calp/config.scm}
+@end itemize
+@end defun
+
+Declaration of configurable fields is done through the module
+@code{(calp util config)}. Note however that since the configuration
+file is simply a scheme script, it can set any field as it sees fit,
+not just the explicitly configurable ones.
+
+@defmac define-config name default parameters ...
+
+    @deftp {Parameter} #:pre procedure
+        Procedure called on the set configuration value before
+        it is saved. This allows transformation of the value,
+        and validation checking.
+
+        If the procedure returns @code{#f}, then an error is signaled.
+    @end deftp
+
+    @deftp {Parameter} #:post procedure
+        Procedure called on the (potentially converted by pre)
+        configuration value. Intended to be used to update further fields.
+    @end deftp
+
+    @deftp {Parameter} #:description desc
+        A plain-text description of the configurable field.
+
+        This should be marked for translation. Note however that the
+        define-syntax macro removes this text, and translation is
+        completely handled by external tools.
+    @end deftp
+
 @end defmac
-
-@defun get-property config-name property-key
-@anchor{get-property}
-Returns a metadata-slot value for the given configuration setting.
-
-Each declared configuration item has (at least) the following metadata
-slots:
-
-@table @samp
-@item description
-Short human-readable description of this configuration item.
-
-@item source-module
-Module in which this item was declared. Automatically filled in by @code{define-config}.
-
-@item pre
-Procedure which can pre-process or validate set values. Think about it
-as if @code{(set-config! key value)} expands to
-@code{(true-set-config! key (pre value))},
-with the bonus that if @code{pre value} returns @code{#f} then the
-assignment fail.
-
-@item post
-Procedure to run after the value is set. For example for updating a
-local parameter.
-@example
-(define-public week-start (make-parameter sun))
-(define-config week-start sun
-  description: "First day of week"
-  pre: (ensure (lambda (x) (<= sun x sat)))
-  post: week-start)
-@end example
-@end table
-
-@findex set-property!
-Note that @code{set-property!} doesn't exist, since properties are read-only.
-@end defun
-
-@defun set-config! name value
-Sets the @var{value} of the configuration variable @var{name}.
-@end defun
-
-@defun get-config key [default]
-Retrieve the configured value for @var{key}. Throws an error if key
-isn't set, and @var{default} isn't given (to differentiate it from
-@code{#f} being set.
-@end defun
 
 @defun {(ensure predicate)} value
 Helper procedure for @code{pre} hooks. Curried function which checks
@@ -76,21 +65,9 @@ if @var{value} satisfies @var{predicate}, and if so returns @var{value}.
 @end example
 @end defun
 
-@defun get-configuration-documentation
-Collects all variables we know about (both defined and non-defined
-(but set)), and builds a markup-tree with information about them.
-@c TODO document markup format, link it here
-@end defun
+@subsection Entry Point
 
-@defun format-procedure procedure
-Procedure mainly used by @code{get-configuration-documentation}. Gives
-a simple string representation of the given procedure.
-
-@example
-(format-procedure format-procedure)
-⇒ "format-procedure(proc)"
-
-(format-procedure (lambda* (key: (a 1)) (+ a 3)))
-⇒ "λkey: a"
-@end example
-@end defun
+@deftp {Entry Point} get-config
+Searches the code base for configuration declarations, and prints them
+all in a ini-like format.
+@end deftp

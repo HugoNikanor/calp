@@ -30,7 +30,7 @@
                     all-pure-and-impure-bindings)))
 
 
-(define (find-config-file altconfig)
+(define* (find-config-file optional: altconfig)
   (cond [altconfig
          (if (file-exists? altconfig)
              altconfig
@@ -48,5 +48,9 @@
                             (apply path-append sysconfdir end))
                           (xdg-config-dirs))
                    ,(apply path-append "/etc" end))))
-         => identity])
+         => identity]
+
+        [else (scm-error 'misc-error "find-config-file"
+                         "No configuration file found"
+                         '() #f)])
   )

@@ -116,9 +116,8 @@ unix or TCP socket.<br/>
   (define opts (getopt-long args (getopt-opt options) stop-at-first-non-option: #t))
   (define stprof (option-ref opts 'statprof #f))
   (define repl (option-ref opts 'repl #f))
-  (define altconfig (option-ref opts 'config #f))
 
-  (define config-file (find-config-file altconfig))
+  (define config-file (find-config-file (option-ref opts 'config #f)))
 
   (when stprof (statprof-start))
 
