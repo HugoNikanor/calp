@@ -1,21 +1,65 @@
 @node VComponents
 @chapter VComponents
+@cindex component
+@cindex vcomponent
+@cindex property
+@cindex parameter
 
-Procedures for manipulating VComponents.
-VComponents are the general container type as specified by RFC5545
-(iCalendar). The term VComponent isn't from the standard, but rather
-the generialization of VCALENDAR, VEVENT, ...
+A VComponent is the generalized term for the objects found in calendar
+files (VCalendar, VEvent, ...). A component consists of a typename
+(``VCALENDAR''), a list of properties (``SUMMARY:Some text''), and a
+list of children (which are VComponent themselves). The calendar
+standard RFC 5545 (and subsequent standards) limits valid component
+types, which properties are present in each type of component, and how
+components can nest. However, there are no such constraint on these
+objects.
 
-Some of these values are still Calp specific.
+Consider the following iCalendar stream (indented for readability):
 
-@c TODO merge these two, see comments in both
-@include vcomponent/introduction.texi
-@include vcomponent/general.texi
+@example
+BEGIN:VCALENDAR
+    X-VERSION:2.0
+    BEGIN:VEVENT
+        CATEGORIES;LANGUAGE=en:APPOINTMENT
+        CATEGORIES:EDUCATION
+    END:VEVENT
+END:VCALENDAR
+@end example
 
-@c TODO what even is this? When is it used?
-@include vcomponent/group.texi
+This would be equivalent to the value obtained by evaluating the
+scheme expression
 
+@lisp
+(vcomponent
+ type: 'VCALENDAR
+ proprties: (alist->table
+             `((X-VERSION . (,(vline value: "2.0")))))
+ children:
+ (list
+  (vcomponent
+   type: 'VEVENT
+   properties:
+   (alist->table
+    `((CATEGORIES
+       . (,(vline
+            params: (alist->table '((LANGUAGE . "EN")))
+            value: "APPOINTMENT")
+        ,(vline value: "EDUCATION"))))))))
+@end lisp
+
+Of note here is that: properties are always stored in lists of vline
+objects, since that's the most general form, and handles list values;
+and that children are stored in an (effectively) unordered list, since
+no common sorting key is available (only some types require a UID field).
+
+The value of property parameters are always strings.
+Property values are mapped to corresponding scheme types, see TODO
+
+@include vcomponent/base.texi
+@include vcomponent/value-types.texi
 @include vcomponent/create.texi
-
 @include vcomponent/media-types.texi
 @include vcomponent/data-stores.texi
+
+@c @c TODO what even is this? When is it used?
+@c @include vcomponent/group.texi

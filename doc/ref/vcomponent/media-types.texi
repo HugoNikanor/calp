@@ -17,17 +17,27 @@ the slash.
 Each such module MUST export the symbol @code{format}, which MUST
 contain an instance of a @code{calendar-data-format}.
 
+@c TODO document how parsers are expected to handle malformed data
+@c possibly:
+@c - throw an exception with a key like 'icalendar-parse-error
+@c - contain a continuation object, which allows the user to
+@c   substitute in a value
+@c - note that components are generally considered ``valid'' or
+@c ``invalid'', and that ``partially valid'' is the same as ``invalid''.
+
 @defun calendar-data-format
+    @defun parser
+    @end defun
+
+    @defun serializer
+    @end defun
+
+    @c TODO document media-type and file-extension
 @end defun
 
 @defun calendar-data-format? x
 @end defun
 
-@defun parser
-@end defun
-
-@defun serializer
-@end defun
 
 @subsection text/calendar
 RFC 5545

@@ -1,0 +1,93 @@
+@node iCalendar value types
+@section iCalendar value types
+
+The iCalendar standard defines the following value types for all
+properties. Exactly how types serialize depends on the media type,
+@c TODO link media-type documentation
+however, some notes are made regarding parsing and serialization with
+regards to vline parameters for some values.
+
+@deftp {iCalendar type} BINARY
+Managed as bytevectors. Parsers should strip the @code{ENCODING}
+parameter from the vline, while using it to serialize the data, and
+@emph{must} attach a proper @code{ENCODING} parameter when serializing
+the data back@footnote{RFC5545 @emph{requires} base-64 encoding, it is
+however written in a way to invite other encoding alternatives to be
+added in the future}.
+@end deftp
+
+@deftp {iCalendar type} BOOLEAN
+Managed as scheme booleans.
+@end deftp
+
+@deftp {iCalendar type} CAL-ADDRESS
+Managed as Guile uri objects, where the uri scheme is ``mailto:''. All
+other schemes will map to @code{URI} (see below).
+@end deftp
+
+@deftp {iCalendar type} DATE
+Maps to date objects from @code{(datetime)}.
+@end deftp
+
+@deftp {iCalendar type} DATE-TIME
+Maps to datetime objects from @code{(datetime)}. If a TZID parameter
+is present, then that must be removed from the Guile representation,
+and instead stored in the @code{tz} field of the datetime object.
+Upon serializing, the timezone must be returned to the parameter set.
+@end deftp
+
+@deftp {iCalendar type} DURATION
+TODO
+@end deftp
+
+@deftp {iCalendar type} FLOAT
+Maps to Guile's rational numbers.
+@end deftp
+
+@deftp {iCalendar type} INTEGER
+Maps to Guile's exact integer.
+@end deftp
+
+@deftp {iCalendar type} PERIOD
+TODO
+@end deftp
+
+@deftp {iCalendar type} RECUR
+TODO
+@end deftp
+
+@deftp {iCalendar type} TEXT
+Maps to Guile strings.
+@end deftp
+
+@deftp {iCalendar type} TIME
+Maps to time objects from @code{(datetime)}.
+@end deftp
+
+@deftp {iCalendar type} URI
+Maps to Guile's URI objects, unless the scheme is ``mailto:'', in
+which case the object becomes a @code{CAL-ADDRESS} (see above).
+@end deftp
+
+@deftp {iCalendar type} UTC-OFFSET
+TODO
+@end deftp
+
+@subsection Pseudo types
+
+The iCalendar standard claims the three following properties as
+@code{FLOAT}, @code{TEXT}, and @code{TEXT} respectively. However, they
+all have special parsing rules outside of their claimed value
+type. Therefor, we map them to distinct Guile types.
+
+@deftp {iCalendar type} GEO
+TODO
+@end deftp
+
+@deftp {iCalendar type} REQUEST-STATUS
+TODO
+@end deftp
+
+@deftp {iCalendar type} VERSION
+TODO
+@end deftp

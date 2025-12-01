@@ -55,8 +55,11 @@ A default implementation which searches the list returned by
 @var{children} is provided.
 @end deftp
 
-@defun lookup-resource resource path
-Recursively look up a resource by path.
+@defun lookup-resource resource path [#:create?]
+Recursively look up a resource by path, where @var{path} is a list of
+resource names. The empty list denotes the current resource.
+
+Dispatches to @code{get-child-by-name!} for each level.
 @end defun
 
 @defun all-resources-under resource [path-prefix='()]
@@ -105,7 +108,9 @@ calendar resource would only accept calendar content. If the given
 content is in any way unacceptable, an http exception should be thrown.
 
 A default implementation exists, which simply throws an http error
-with code 405.
+with code 405. Custom implementantion may want to allow content on
+non-collection resources, but may still fail (with http 405) on
+collections.
 @end deftp
 
 @subsection Resource Data

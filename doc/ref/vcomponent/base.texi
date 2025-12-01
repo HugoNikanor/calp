@@ -1,0 +1,106 @@
+@node VComponent Fundamentals
+@section VComponent Fundamentals
+
+These are the fundamental procedures and types for creating and
+manipulating vcomponent objects (followed below by some helper
+procedures). All vcomponent objects are immutable records, and
+@emph{must} never contain mutable components@footnote{Almost
+everything in Guile is mutable if you try hard enough. Please refrain
+from breaking the immutable promise in your code}.
+
+@defun vcomponent #:type=type [#:children=(list)]
+Base object for all components.
+
+    @defun type vcomponent [type]
+    @defunx vcomponent-properties vcomponent [table]
+    @defunx vcomponent-children vcomponent [list]
+
+    @end defun
+
+    @deftp {Lens} type* vcomponent
+    @deftpx {Lens} vcomponent-properties* vcomponent
+    @deftpx {Lens} vcomponent-children* vcomponent
+
+    @end deftp
+
+@end defun
+
+@defun vcomponent? x
+@end defun
+
+@defun vline
+    @defun vline-parameters vline [table]
+    @defunx vline-value vline [value]
+    @end defun
+
+    @deftp {Lens} vline-parameters*
+    @deftpx {Lens} vline-value*
+    @end deftp
+@end defun
+
+@defun vline? x
+@end defun
+
+@subsection Utilities
+
+@deftp {Lens} prop* key
+Focus a specific property in a component. Like table focus, return
+@code{just} the value if it exists, and @code{nothing} if it doesn't,
+and adds and removes values by the @code{just}/@code{nothing} value
+returned.
+
+Actual values (both focused and returned) @emph{must} always be lists
+of @code{vline} objects.
+@end deftp
+
+@defun prop1 component key
+Retrieve the value of the first vline of the property @var{key} in
+@var{component}, if it exists, or @code{#f} otherwise.
+@end defun
+
+@defun (extract1 key) component
+Curried version of @code{prop1}.
+@end defun
+
+@defun prop% component key
+Returns either a list of vlines, or @code{#f}.
+@end defun
+
+@defun add-child parent child
+Returns a new component, which is @var{parent} with @var{child} added
+to the end of the parents child set.
+@end defun
+
+@defun vline-equal? a b
+Returns true if the value stored in both vlines are @code{equal?}, and
+if their parameter sets are @code{table-equal?}.
+@end defun
+
+@defun vcomponent-equal? a b
+Checks if the diff between @var{a} and @var{b} is null.
+@end defun
+
+@defun vcomponent-diff a b
+Attempts to calculate a diff between the two vcomponents.
+Diffs the type of the components by literal value, the properties of
+both through a table-diff, where each property is seen as an unordered
+set of vlines.
+
+This is applied recursively. However, no total ordering exist for
+vcomponents, so all children are instead sorted by ``best
+effort''. The exact calculation of the ``sorting key'' is currently an
+implementation detail.
+@end defun
+
+@defun  vcalendar? x
+@defunx vevent? x
+@defunx vtodo? x
+@defunx vjournal? x
+@defunx vfreebusy? x
+@defunx vtimezone? x
+@defunx valarm? x
+@defunx standard? x
+@defunx daylight? x
+Utility predicates which checks if the given object is a vcomponent,
+and has the desired type.
+@end defun

@@ -1,41 +1,49 @@
 @node VComponent Create
 @section Vcomponent Create
 
-@c TODO most of this is probably outdated after a few rewrites. See
-@c over everything, and figure out what to keep.
-
 Procedures for declarativly creating components (instead of the
-primitive procedural API).
+primitive ``procedural'' API).
 
-@defun create-vcomponent type [key: prop] ... children
-Creates a new vcomponent of @var{type}. Each kv-pair should contain a
-keyword @var{key}, and a value which is either a direct value, or the
-return value of @code{with-parameters} or
-@code{as-list}. @var{children} should be a list of other vcomponent's.
+@defun create-vcomponent type [key: prop] ... [children]
+Creates a new vcomponent of @var{type} (such as @code{VCALENDAR} or @code{VEVENT}.
+
+After that follows a list of alternating keyword objects, and
+values which will map to the property values. The keywords are
+converted to symbols and up-cased. Each value is either an explicit
+vline object, a @code{with-parameters} form, a ``raw'' Guile value, or
+a list of the aforementioned.
+
+The final argument may be a (non-keyworded) list of vcomponents, which
+will become the created components children.
+
+@example
+(create-vcomponent 'VEVENT
+  summary: "My event"
+  dtstart: (with-parameters tzid: "Europe/Stockholm" (current-datetime))
+  categories: (list "A" "B")
+  (list (valarm)))
+@end example
+@end defun
+
+@defun with-parameters [key: param] ... value
+Allows setting parameters for a property in conjunction with @code{create-vcomponent}.
+
+@var{value} follows the same rules as in @code{create-vcomponent}. Multiple
+@var{key}, @var{value} pairs can be given, where each key must be a keyword.
+
+Technically, this is just an alternative syntax for creating vlines.
 @end defun
 
 @defun vcalendar
 @defunx vevent
+@defunx vtodo
+@defunx vjournal
+@defunx vfreebusy
 @defunx vtimezone
+@defunx valarm
 @defunx standard
 @defunx daylight
 Calls @code{create-vcomponent}, with type set to the procedure name (but
 up-cased).
 @end defun
 
-@defun with-parameters [key: param] ... value
-Allows setting parameters for a property as created by @code{create-vcomponent}.
-
-@var{value} follows the same rules as in @code{create-vcomponent}. Multiple
-@var{key}, @var{value} pairs can be given, where each key must be a keyword.
-@end defun
-
-@defun as-list lst
-Allows setting list values when using @code{create-vcomponent}.
-
-Without this a list value would be stored as a single value, while
-with this a list of values is instead stored (as, for example, in EXDATE).
-
-A list of list types could be hard-coded, but even then this procedure
-is needed since custom types might need it.
-@end defun
