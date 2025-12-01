@@ -4,19 +4,16 @@
   :use-module (ice-9 curried-definitions)
   :use-module (hnh util)
   :use-module (hnh util type)
+  :use-module (hnh util serialize)
   :export (define-type
-            serialize set-record-type-serializer!
-            record->list record->list/filtered
-            serializers
-            with-serializers
-            ))
+            record->list record->list/filtered))
 
 
 
 ;; If given a syntax list extract the first lexeme, if given a "symbol", return that.
 (define (syntax-first stx)
   (syntax-case stx ()
-    ((a rest ...) #'a)
+    ((a _ ...) #'a)
     (a #'a)))
 
 (define (construct-syntax stx base transform)
@@ -45,8 +42,9 @@
 ;; Each variable gets its own unless form, to enable better error messages
 (define-syntax (validator stx)
   (syntax-case stx ()
-    ;; This form may be expanded both from the constructor, and from
-    ;; accessor procedures.
+    ;; This form may be expanded both from:
+    ;; - the constructor, and
+    ;; - the accessor procedures.
     ;; In the constructor a different name may be used for the variable,
     ;; due to custom keyword arguments being a thing.
     ;; The field `name*' represents the variable holding the value
@@ -55,11 +53,7 @@
      (cond ((kv-ref #'(kvs ...) type:)
             => (lambda (type-stx)
                  (with-syntax ((type type-stx))
-                   #'(unless (expand-validator name* type)
-                       (scm-error 'wrong-type-arg (symbol->string (quote name))
-                                  "~s doesn't satisfy ~s"
-                                  (list name* (quote type))
-                                  #f)))))
+                   #'(typecheck name* type (symbol->string (quote name))))))
            (else #f)))
     ((_ name) #f)))
 
@@ -182,11 +176,6 @@
            (else #'name)))
     (name #'name)))
 
-(define (get-field-name field)
-  (syntax-case field ()
-    ((name _ ...) #'name)
-    (name #'name)))
-
 (define (get-field-name-and-keyword field)
   (syntax-case field ()
     ((name kvs ...)
@@ -210,70 +199,6 @@
     (display
      (call-with-output-string (lambda (p_) (printer o p_)))
      p)))
-
-
-
-;; Return a form, which when evaluated, returns the source object.
-;; Compare this with "write", which outputs a string which returns the
-;; source object when read back in.
-;; For example `(write 'a)` would output `a`, while `(serialize 'a)`
-;; would return `(quote a)`
-;; A valid (but ugly) implementation of `write` would be:
-;;     (define (write object port)
-;;       (format port "#.~s" object))
-;; assuming that the fluid `read-eval?` is set to `#t`.
-
-(define-once serializers (make-parameter (list)))
-
-(define (set-record-type-serializer! type-predicate serializer)
-  ;; NOTE New serializers are pre-pended. This allows serializers to
-  ;; be overwritten, and allows more specific serializers to be added
-  ;; later. It however comes with the slight downside that `symbol?`
-  ;; is one of the last serializers tested, which might make the code
-  ;; slightly slower.
-  (serializers (cons (cons type-predicate serializer) (serializers))))
-
-(define (serialize object)
-  (cond ((predicate-list-get (serializers) object)
-         => (lambda (s) (s object)))
-        ;; Assume self-quoting
-        (else object)))
-
-(set-record-type-serializer!
- symbol?
- (lambda (obj)
-   (catch #t (lambda ()
-               ;; A bug in Guile makes symbols which look
-               ;; like floating point numbers with exponents
-               ;; larger than allowed to fail to write. For
-               ;; example, (string->symbol "1e500<anything>")
-               ;; crashes when printed, as if `1e500` was
-               ;; trying to be evaluated.
-               (with-output-to-string (lambda () (write obj)))
-               `(quote ,obj))
-     (lambda _ `(string->symbol ,(symbol->string obj))))))
-
-;; (set-record-type-serializer!
-;;  circular-list?
-;;  (lambda (obj) '(circular-lists-not-yet-supported)))
-
-
-(set-record-type-serializer!
- pair?
- (lambda (pair) `(cons ,(serialize (car pair))
-                  ,(serialize (cdr pair)))))
-
-(set-record-type-serializer!
- list?
- (lambda (obj) `(list ,@(map serialize obj))))
-
-(define-syntax with-serializers
-  (syntax-rules ()
-    ((_ ((pred serializer) ...)
-        body ...)
-     (parameterize ((serializers (cons* (cons pred serializer) ...
-                                        (serializers))))
-       body ...))))
 
 
 
@@ -349,10 +274,6 @@
                        => identity)
                       (else
                        #`(lambda (r)
-                           ;; TODO instead of (<name> [key: value] ...) pairs, output
-                           ;; (apply <name> (concatenate `([(key value)] ...)))
-                           ;; This is a worthless extra step, but it makes pretty-print
-                           ;; behave better
                            `(name
                              #,@(concatenate
                                  (map (lambda (pair)

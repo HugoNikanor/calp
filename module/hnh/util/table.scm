@@ -12,6 +12,7 @@
   :use-module (hnh util lens)
   :use-module (hnh util object)
   :use-module (hnh util optional)
+  :use-module (hnh util serialize)
   :use-module (hnh util type)
   :use-module (hnh util named-type)
   :use-module (ice-9 curried-definitions)

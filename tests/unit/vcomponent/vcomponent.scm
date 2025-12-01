@@ -12,7 +12,7 @@
   :use-module (hnh util)
   :use-module (hnh util lens)
   :use-module (hnh util optional)
-  :use-module ((hnh util object) :select (serialize))
+  :use-module ((hnh util serialize) :select (serialize))
   :use-module ((vcomponent create) :select (vevent vcalendar with-parameters)))
 
 

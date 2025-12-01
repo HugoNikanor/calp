@@ -2,6 +2,7 @@
   :use-module (hnh util)
   :use-module (hnh util exceptions)
   :use-module (hnh util object)
+  :use-module (hnh util serialize)
   :use-module (hnh util type)
   :use-module (datetime)
   :use-module (ice-9 peg)

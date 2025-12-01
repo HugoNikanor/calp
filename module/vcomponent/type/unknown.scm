@@ -5,6 +5,7 @@
   :use-module ((hnh util) :select (when))
   :use-module ((hnh util type) :select (false?))
   :use-module (hnh util object)
+  :use-module (hnh util serialize)
   :use-module (srfi srfi-88)
   :export (unknown
            unknown?

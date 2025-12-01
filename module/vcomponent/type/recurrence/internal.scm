@@ -7,6 +7,7 @@
   :use-module (ice-9 pretty-print)
   :use-module (hnh util)
   :use-module (hnh util object)
+  :use-module (hnh util serialize)
   :use-module ((hnh util type) :select (list-of pair-of false?))
   :use-module (datetime)
   :export (repeating?

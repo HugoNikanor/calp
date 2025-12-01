@@ -53,10 +53,10 @@
 (test-error "Giving an invalid type to a setter throws an error"
             'wrong-type-arg (f2-x (f2) 'hello))
 (test-equal "The error includes the name of the field, the expected type, and the given value"
-  '("f2-x" hello integer?)
+  '("f2-x" (f2-x integer? hello))
   (catch 'wrong-type-arg (lambda () (f2-x (f2) 'hello))
     (lambda (err proc fmt args data)
-      (cons proc args))))
+      (list proc args))))
 
 (test-equal "Typed setter updates the value"
             (f2 f2-x: 10) (f2-x (f2) 10))

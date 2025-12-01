@@ -3,6 +3,7 @@
   :use-module (hnh util lens)
   :use-module (hnh util optional)
   :use-module (hnh util exceptions)
+  :use-module (hnh util type)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
@@ -392,6 +393,7 @@
 ;; <vevent> -> (stream <vevent>)
 ;; TODO memoize this?
 (define (generate-recurrence-set/old base-event)
+  (typecheck base-event vcalendar?)
 
   (define duration (event-duration base-event))
 

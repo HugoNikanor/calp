@@ -1,0 +1,17 @@
+@node Serializers
+@section Serializers
+
+@code{(hnh util serialize)}
+
+@defun serialize object
+@anchor{serialize}
+Return a form, which when evaluated, returns an object as identical to
+@var{object} as possible.
+
+For example, symbols are serialized as @code{`(quote ,symbol)}, and
+pairs as @code{`(cons ,(serialize (car pair)) ,(serialize (cdr pair)))}.
+@end defun
+
+@defun set-record-type-serializer! type-predicate serializer
+Register a serializer for a given type.
+@end defun

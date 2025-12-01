@@ -1,6 +1,7 @@
 (define-module (hnh util optional)
   :use-module (srfi srfi-88)
   :use-module (hnh util object)
+  :use-module (hnh util serialize)
   :use-module (hnh util type)
   :use-module (ice-9 curried-definitions)
   :export (optional?

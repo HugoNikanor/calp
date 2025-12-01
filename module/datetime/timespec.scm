@@ -8,6 +8,7 @@
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (hnh util type)
   :use-module (hnh util object)
+  :use-module (hnh util serialize)
   :use-module (hnh util lens)
   :use-module (datetime)
   :use-module (srfi srfi-1)

@@ -9,6 +9,7 @@
   :use-module (hnh util state-monad)
   :use-module ((hnh util io) :select (->port))
   :use-module (hnh util object)
+  :use-module (hnh util serialize)
   :use-module (hnh util type)
   :use-module (hnh util table)
   :use-module ((hnh util lens) :select (car* cdr* modify lens-compose))

@@ -9,7 +9,7 @@
   :use-module (hnh util env)
   :use-module ((hnh util io) :select (with-atomic-output-to-file))
   :use-module (hnh util options)
-  :use-module ((hnh util object) :select (serialize))
+  :use-module ((hnh util serialize) :select (serialize))
   :use-module ((xdg basedir) :prefix xdg-)
   :use-module ((ice-9 rdelim) :select (read-line))
   :use-module (ice-9 getopt-long)

@@ -1,7 +1,8 @@
 ;;; Should really be application/vnd.guile-read, but periods aren't
 ;;; allowed in guile module names.
 (define-module (vcomponent media-type application vnd-guile-read)
-  :use-module ((hnh util object) :select (serialize with-serializers))
+  :use-module ((hnh util serialize)
+               :select (serialize with-serializers))
   :use-module (vcomponent media-type)
   :use-module (ice-9 sandbox)
   :use-module (srfi srfi-88)
