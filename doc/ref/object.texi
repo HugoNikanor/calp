@@ -1,4 +1,150 @@
 @node Yet Another Object System
 @chapter Yet Another Object System
 
-@include object/object.texi
+What Scheme lacks is a proper object system. This library solves that
+problem @emph{once and for all}!@footnote{@emph{Once and for all}!}
+
+The records created through this library are all immutale, where each
+field becomes a multiple dispatch procedure, whence called with a
+single argument returns the value of that field, and when called with
+two values (first one being the object, second being the new value)
+returns a new instance of the object, with the field in question
+replaced.
+
+@defmac define-type (name type-parameters ...) fields ...
+Introduce a new type, disjoint from all previously defined types.
+
+@c Each field is either a symbol, or a list where the first element is a
+@c symbol, and the remaining elements are alternating keywords and
+@c values, as per @ref{Field Parameters}. All fields are optional by
+@c default, but can be made non-optional through its type parameter.
+
+@c The example below creates a new type called @var{type}, with a custom
+@c printer which always displays the string ``TYPE''. It has two fields,
+@c @var{x}, which must be an integer, and @var{y}, which can have any
+@c type, but gets the value ``Hello'' in none is given.
+@c @example
+@c (define-type (type #:printer (lambda (r p) (display "TYPE" p)))
+@c   (x #:type integer?)
+@c   (y #:default "Hello"))
+@c @end example
+
+@var{type-parameters} is a key-value list, where the valid keys are
+
+@deffn {Type Parameter} #:constructor (λ (primitive-constructor type-validator))
+The default constructor for these types simply takes a keyword-value
+list, validates each argument in regard to the defined types, and
+constructs a final object. However; sometimes a more advanced
+constructor is needed, which can be added through this parameter.
+
+The custom constructor is called with two values:
+
+@itemize
+@item the types primitive (and usually hidden) constructor,
+which takes as many arguments as there are fields, in the order given
+in define-type, and
+@item the type validator procedure, which also takes all arguments,
+but instead either returns an undefined value if everything is fine,
+or throws @code{'wrong-type-arg} otherwise.
+@end itemize
+The procedure should then return a new procedure, which will be bound
+as the constructor for the type. Note that default values are current
+disregarded with custom constructors.
+
+A custom constructor for the type above might look like
+@example
+(lambda (primitive-constructor type-check)
+  (lambda* (#:key x y)
+    (type-check x y)
+    (primitive-constructor x y)))
+@end example
+@end deffn
+
+@deffn {Type Parameter} #:printer (λ (record port))
+Use a custom printer for the type.
+
+If no printer is given, then one equivalent to the following is used:
+@example
+(lambda (r p) (format p "#.~y" (serialize r)))
+@end example
+@end deffn
+
+@deffn {Type Parameter} #:serializer (lambda (object))
+Procedure for serializing this type (@ref{serialize}). Defaults to a
+form mimicing the default constructor.
+@end deffn
+
+Each field declares a part of the record, along with relevant metadata
+about that field. The most basic declaration is a bare symbol, which
+adds a field which can hold anything. However, a list with the target
+name as its first element can instead be given, with the tail
+containing keyword arguments as follows
+
+@deffn {Field Parameter} #:default value
+Value the field should get if not given.
+@end deffn
+
+@deffn {Field Parameter} #:type type-clause
+A type predicate that the field must obey.
+@var{type-clause} is spliced directly into @code{typecheck} forms, @ref{typecheck}.
+@end deffn
+
+@deffn {Field Parameter} #:keyword name
+Specify an alternative keyword to use for this parameter when creating
+new instances of the object. Note that @var{name} should be a bare
+symbol, and @emph{not} a keyword object.
+
+@example
+(define-type (my-type)
+  (my-type-x keyword: x))
+@end example
+@end deffn
+
+@deffn {Field Parameter} #:accessor name
+Explicit name for the accessor of this field. Will otherwise use the
+fields name.
+
+Each accessor is a procedure which either
+@itemize
+@item retrives the field from the record (if one argument was given), or
+@item returns a new record with that field replaced (if two arguments
+where given).
+@end itemize
+
+@end deffn
+
+@deffn {Field Parameter} #:lens name
+Explicit name for the lens
+@c TODO link to lens documentation
+focusing this field. Will use the fields
+name, with a star (``*'') appended by if unset..
+@end deffn
+
+Each type introduces a number of bindings, which are@footnote{
+@var{<name>} here refers to the name of the type
+}:
+
+@defun @var{<name>} [kv-args ...]
+Type constructor. Takes key-value arguments. Where the keys are the
+names of the fields.
+@end defun
+
+@defun @var{<name>}? x
+Type predicate.
+@end defun
+
+And for each field @var{<field>}:
+
+@end defmac
+
+@section Helper Functions
+
+@defun record->list procedure record
+For each field in @var{record}, apply @var{procedure} to the symbol of
+the fields name, and the value of the field, and collect the results
+into a list.
+@end defun
+
+@defun record->list/filtered procedure record
+Like @code{record->list}, but only calls not returning @code{#f} are collected.
+@end defun

@@ -12,6 +12,16 @@ For example, symbols are serialized as @code{`(quote ,symbol)}, and
 pairs as @code{`(cons ,(serialize (car pair)) ,(serialize (cdr pair)))}.
 @end defun
 
+@defvar serializers
+Parameter holding all serializers, as a list of pairs of type
+predicates and serializer procedures.
+@end defvar
+
+@defmac with-serializers ((pred serializer) ...) body ...
+Run the extent of @var{body} with the given serializers prepended to
+the set of serializers.
+@end defmac
+
 @defun set-record-type-serializer! type-predicate serializer
 Register a serializer for a given type.
 @end defun
