@@ -206,6 +206,8 @@
        (constructor date time tz)))))
 
 (define (datetime-serializer dt)
+  ;; record->list NOT used, since we look at parts of the fields
+  ;; directly
   (let ((d (datetime-date dt))
         (t (datetime-time dt)))
     `(datetime
@@ -533,6 +535,7 @@
 ;; => (#2020-06-15 #2020-06-22 #2020-06-29)
 ;; @end example
 ;; week-day, date → (list date)
+;; TODO remane procdure, and clarify documentation
 (define (all-wday-in-month wday month-date)
   (stream->list
    (stream-take-while

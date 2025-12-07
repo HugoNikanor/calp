@@ -78,11 +78,10 @@
 (define-type (zi-rule)                  ; EXPORTED
   (rule-name    type: symbol?)
   (rule-from    type: (or integer? ; year
-                       ; (memv '(minimum maximum))
                           ))
   (rule-to      type: (or integer? ; year
-                     (memv '(only #; minimum maximum
-                                         ))))
+                          (memv '(only maximum))))
+
   ;; type should always be "-"
   ;; (rule-type type: (eq? "-") default: "-")
 

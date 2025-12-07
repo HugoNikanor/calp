@@ -287,7 +287,9 @@
 
              (set-object-to-rtd! <type>? <type>)
 
-             ;; if printer in attribute
+             ;; TODO in interactive guile sessions, if a big enough
+             ;; list of objects are printed at once, then readline
+             ;; fails due to to many open files.
              (set-record-type-printer!
               ;; Wrap printer is used, since sometimes
               ;; the output port closes to early (not

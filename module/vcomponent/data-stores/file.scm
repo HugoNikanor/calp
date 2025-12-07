@@ -34,6 +34,7 @@
   :use-module ((scheme base) :select (string->utf8 utf8->string))
   :use-module ((web uri) :select (build-uri))
   :use-module ((web query) :select (encode-query-parameters))
+  :use-module (calp translation)
   :export (create-instance)
   )
 
@@ -72,9 +73,9 @@
                getter: data-format
                init-value: #f)
 
-  (root-object  accessor: %root-object
-                setter: %set-root-object!
-                )                       ; type: vcomponent?
+  ;; type: vcomponent?
+  (root-object  accessor: %root-object)
+
   (event-by-uid getter: %event-by-uid init-form: (make-hash-table))
   (tz-by-tzid   getter: %tz-by-tzid   init-form: (make-hash-table))
 
@@ -253,7 +254,8 @@
   (define int (force (internals this)))
   (for (uid . event) in (hash-map->list cons (%event-by-uid int))
        (cons (format #f "~a.ics" uid)
-             (wrap-components (%root-object int) (%tz-by-tzid int) event))))
+             (wrap-components (%root-object int) (%tz-by-tzid int)
+                              event))))
 
 (define-method (store-color (this <file-data-store>))
   (let ((root (%root-object (force (internals this)))))
@@ -277,6 +279,7 @@
     (or (prop1 root 'NAME)
         (prop1 root 'X-WR-CALNAME))))
 
+;;; TODO language property on description
 (define-method (store-description (this <file-data-store>))
   (let ((root (%root-object (force (internals this)))))
     (or (prop1 root 'DESCRIPTION)

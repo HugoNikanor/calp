@@ -48,6 +48,7 @@ signaled, but it's nonsence to add timespecs of differing types).
 @end example
 @end defun
 
+@c TODO suffixes is removed as an argument
 @defun parse-time-spec string [suffixes='(#\s #\w #\u #\g #\z)]
 More or less follows the pattern @code{-?[0-9]@{2@}(:[0-9]@{2@})@{0,2@}[swugz]}.
 @end defun

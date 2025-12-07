@@ -23,7 +23,7 @@
   (logical-line-content keyword: content type: string?)
   (logical-line-file keyword: file type: (or string? false?)
                      default: #f)
-  (locical-line-line keyword: line type: (or exact-integer? false?)
+  (logical-line-line keyword: line type: (or exact-integer? false?)
                      default: #f))
 
 (define-type (content-line)

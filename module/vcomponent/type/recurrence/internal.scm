@@ -90,20 +90,11 @@
 
 (define (serialize-recur-rule record)
   `(recur-rule
-    ,@(when (freq record) `(freq: ,(serialize (freq record))))
-    ,@(when (until record) `(until: ,(serialize (until record))))
-    ,@(when (recur-count record) `(count: ,(serialize (recur-count record))))
-    ,@(when (interval record) `(interval: ,(serialize (interval record))))
-    ,@(when (bysecond record) `(bysecond: ,(serialize (bysecond record))))
-    ,@(when (byminute record) `(byminute: ,(serialize (byminute record))))
-    ,@(when (byhour record) `(byhour: ,(serialize (byhour record))))
-    ,@(when (byday record) `(byday: ,(serialize (byday record))))
-    ,@(when (bymonthday record) `(bymonthday: ,(serialize (bymonthday record))))
-    ,@(when (byyearday record) `(byyearday: ,(serialize (byyearday record))))
-    ,@(when (byweekno record) `(byweekno: ,(serialize (byweekno record))))
-    ,@(when (bymonth record) `(bymonth: ,(serialize (bymonth record))))
-    ,@(when (bysetpos record) `(bysetpos: ,(serialize (bysetpos record))))
-    ,@(when (wkst record) `(wkst: ,(serialize (wkst record))))))
+    ,@(concatenate
+       (record->list/filtered
+        (lambda (key value)
+          (and value (list (symbol->keyword key) (serialize value))))
+        record))))
 
 ;;; Both interval and wkst are optional by the standard.
 ;;; We however default those to 1 and monday in the constructor

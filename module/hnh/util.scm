@@ -315,6 +315,7 @@
 (define (as-symb s)
   (if (string? s) (string->symbol s) s))
 
+;;; TODO why doesn't this return pairs?
 (define (enumerate lst)
   (zip (iota (length lst))
        lst))
