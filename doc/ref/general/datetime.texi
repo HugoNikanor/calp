@@ -136,12 +136,23 @@ Creates a new <datetime>. If @var{date} or @var{time} is given, those
 are used. Otherwise, a date object is created from @var{year},
 @var{month} and @var{day}, and time is respectively created from
 @var{hour}, @var{minute} and @var{second}.
+
+@var{tz} is an optional string specifying the timezone.
 @end defun
 
-@defun get-date
-@defunx get-timezone
-Note that @code{get-time} doesn't exists.
+@defun datetime-date dt [d]
+@defunx datetime-time dt [t]
+@defunx tz dt [zonename]
+Accessors for the contents of a datetime object.
 @end defun
+
+
+@deftp  {Lens} date*
+@deftpx {Lens} time*
+@deftpx {Lens} tz*
+Lenses for focusing the fields of the datetime object.
+@end deftp
+
 @end deftp
 
 

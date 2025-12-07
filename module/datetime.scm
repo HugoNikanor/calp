@@ -41,11 +41,8 @@
 
            datetime
            datetime?
-           ;; get-date
-           ;; get-timezone
-           datetime-date
-           datetime-time
-           date* time*
+           datetime-date date*
+           datetime-time time*
            tz tz*
 
            date-zero?
