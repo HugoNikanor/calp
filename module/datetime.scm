@@ -62,10 +62,12 @@
            leap-year?
            days-in-month
            days-in-year
+           weeks-in-year
 
            start-of-month
            end-of-month
            start-of-year
+           end-of-year
 
            date-stream
            day-stream
@@ -342,6 +344,9 @@
                          (list (month date) date)
                          #f))))
 
+(define* (weeks-in-year date optional: (wkst (week-start)))
+  (week-number (end-of-year date) wkst))
+
 (define (days-in-year date)
   (if (leap-year? (year date))
       366 365))
@@ -356,6 +361,11 @@
   (-> date
       (day 1)
       (month 1)))
+
+(define (end-of-year d)
+  (-> (start-of-year d)
+      (date+ (date year: 1))
+      (date- (date day: 1))))
 
 (define (date-stream date-increment start-day)
   (stream-iterate (lambda (d) (date+ d date-increment))

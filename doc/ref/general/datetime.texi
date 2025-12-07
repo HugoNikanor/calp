@@ -235,6 +235,11 @@ Note that the day component is ignored.
 Returns how many days are in the year pointed to by @var{date}.
 @end defun
 
+@defun weeks-in-year date [wkst=(week-start)]
+Returns the number of weeks in a year, or if you want, the week number
+for the last of December.
+@end defun
+
 @defun start-of-month date
 Returns a <date> object equal to date, but with the day component set
 to 1.
