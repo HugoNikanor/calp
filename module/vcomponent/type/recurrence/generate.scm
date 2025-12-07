@@ -1,442 +1,439 @@
 (define-module (vcomponent type recurrence generate)
+  :use-module (vcomponent)
+  :use-module (vcomponent type recurrence internal)
   :use-module (hnh util)
+  :use-module (hnh util type)
+  :use-module (hnh util exceptions)
   :use-module (hnh util lens)
   :use-module (hnh util optional)
-  :use-module (hnh util exceptions)
-  :use-module (hnh util type)
+  :use-module (hnh util table)
+  :use-module (datetime)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-26)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-71)
-  :use-module (vcomponent)
-  :use-module (vcomponent type recurrence internal)
-  :use-module (vcomponent type recurrence parse)
-
-  :use-module (datetime)
+  :use-module (srfi srfi-88)
   :use-module (ice-9 curried-definitions)
+  :export (find-base-instance
+           generate-recurrence-set
+           ))
 
-  :export (rrule-instances
-           final-event-occurence
-           generate-recurrence-set))
+;;; TODO move this to the "Commentary" section
+;;; This is primarily for "dumb" data stores (e.g. file and vdir).
+;;; The default assumption for these procedures are that they work on a single logical event (e.g. all vevent objects share an UID), wrapped in a vcalendar.
+;;; Behaviour if a "complete" vcalendar with multiple distinct logical events (e.g. they have different UID's is *UNDEFINED*).
+
+
+;; Find the base instance of a recurring event.
+;; If a component consists an RRULE or RDATE property
+;; then that component is choosen. Otherwise, the entry with the earliest DTSTART is selected.
+;; Returns 2 values:
+;; - the base instance of the event
+;; - a list of all remaining entries, unordered
+(define (find-base-instance event)
+  (typecheck event vcalendar?)
+  (define focus
+    (or (find (lambda (component)
+                (or (prop1 component 'RRULE)
+                    (prop1 component 'RDATE)))
+              (vcomponent-children event))
+        (find-extreme
+         (vcomponent-children event)
+         datetime<
+         (compose as-datetime (extract1 'DTSTART)))))
+
+  (values focus (delq focus (vcomponent-children event))))
 
 
 
 
+;; This table is copied "directly" from RFC5545, with just some minor
+;; text masaging into making it valid scheme code.
+;; Order of rows is IMPORTANT, since it is used to determine the order
+;; in which the rules are applied. It goes from top to bottom.
+;; Column order is insignificant, but must be kept in sync with
+;; column-indices.
+(define rrule-table
+  (list->array ; Needed since (datetime) highjacked the #2 reader macro
+   2
+   '((_          || SECONDLY MINUTELY HOURLY  DAILY   WEEKLY MONTHLY YEARLY)
+     ;; ---------||----------------------------------------------------------
+     (BYMONTH    || Limit    Limit    Limit   Limit   Limit  Limit   Expand)
+     (BYWEEKNO   || N/A      N/A      N/A     N/A     N/A    N/A     Expand)
+     (BYYEARDAY  || Limit    Limit    Limit   N/A     N/A    N/A     Expand)
+     (BYMONTHDAY || Limit    Limit    Limit   Limit   N/A    Expand  Expand)
+     (BYDAY      || Limit    Limit    Limit   Limit   Expand Note-1  Note-2)
+     (BYHOUR     || Limit    Limit    Limit   Expand  Expand Expand  Expand)
+     (BYMINUTE   || Limit    Limit    Expand  Expand  Expand Expand  Expand)
+     (BYSECOND   || Limit    Expand   Expand  Expand  Expand Expand  Expand)
+     (BYSETPOS   || Limit    Limit    Limit   Limit   Limit  Limit   Limit))))
 
-;; Returns #t if any of the predicates return true when applied to object.
-(define (any-predicate object predicates)
-  ((@ (srfi srfi-1) any)
-   (lambda (pred) (pred object))
-   predicates))
+(define column-indices
+ '((SECONDLY . 2) (MINUTELY . 3) (HOURLY . 4) (DAILY . 5)
+   (WEEKLY . 6) (MONTHLY . 7) (YEARLY . 8)))
 
-;; NOTE these should be renamed
-(define (all rrule . args) (filter-map (lambda (proc) (proc rrule)) args))
-(define (any rrule . args) (any-predicate rrule args))
+(define rrule-accessors
+  (list
+   (cons 'BYMONTH    bymonth)
+   (cons 'BYWEEKNO   byweekno)
+   (cons 'BYYEARDAY  byyearday)
+   (cons 'BYMONTHDAY bymonthday)
+   (cons 'BYDAY      byday)
+   (cons 'BYHOUR     byhour)
+   (cons 'BYMINUTE   byminute)
+   (cons 'BYSECOND   bysecond)
+   (cons 'BYSETPOS   bysetpos)))
 
-;; Return #f or a procedure which conses @var{symbol} to each element returned
-;; by @var{accessor} applied to @var{rrule}.
-(define ((extender accessor symbol) rrule)
-  (and=> (accessor rrule) (lambda (v) (map (lambda (x) (cons symbol x)) v))))
+
 
-;; Return #f or a procedure which conses @var{symbol} to the return of
-;; @var{accessor} applied to @var{rrule}.
-(define ((limiter accessor symbol) rrule)
-  (and=> (accessor rrule) (lambda (v) (cons symbol v))))
+(define ((limiter-positive-int dt-accessor) rrule-accessor rrule dt-list)
+  (filter (lambda (dt) (memv (dt-accessor dt)
+                     (or (rrule-accessor rrule) '())))
+          dt-list))
 
+(define ((limiter-int dt-accessor dt-max-value) rrule-accessor rrule dt-list)
+  (filter (lambda (dt)
+            (find (lambda (x)
+                    (= x (if (positive? x)
+                             (dt-accessor dt)
+                             (- (dt-max-value dt)
+                                (dt-accessor dt)))))
+                  (or (rrule-accessor rrule) '())))
+          dt-list))
 
-;; rrule → (list extension-rule)
-(define (all-extenders rrule)
-  (let ((second    (extender bysecond   'BYSECOND))
-        (minute    (extender byminute   'BYMINUTE))
-        (hour      (extender byhour     'BYHOUR))
-        (day       (extender byday      'BYDAY))
-        (monthday  (extender bymonthday 'BYMONTHDAY))
-        (yearday   (extender byyearday  'BYYEARDAY))
-        (weekno    (extender byweekno   'BYWEEKNO))
-        (month     (extender bymonth    'BYMONTH))
-        ;; (bysetpos bysetpos)
-        )
-    (apply cross-product
-           (case (freq rrule)
-             ((YEARLY)   (all rrule month weekno yearday monthday
-                              ;; see Note 2, p. 44
-                              (if (any rrule yearday monthday
-                                       ;; weekno and month are still expanders. They however
-                                       ;; cause day to be omited here to prevent datetimes
-                                       ;; from being generated from both directions.
-                                       ;; They are instead handled under BYWEEKNO & BYMONTH
-                                       ;; respectively.
-                                       weekno month)
-                                  (const #f)
-                                  day)
-                              hour minute second))
-             ((MONTHLY)  (all rrule monthday (if (monthday rrule) (const #f) day) hour minute second))
-             ((WEEKLY)   (all rrule day hour minute second))
-             ((DAILY)    (all rrule hour minute second))
-             ((HOURLY)   (all rrule minute second))
-             ((MINUTELY) (all rrule second))
-             ((SECONDLY) (all rrule #| null |#))
-             ))))
+(define (run-bysetpos _ rrule dt-list)
+  (map (lambda (pos)
+         (let ((len (length dt-list)))
+           (list-ref dt-list
+                     (if (positive? pos)
+                         (- pos 1)
+                         (- len (- pos))))))
+       (bysetpos rrule)))
 
+;; > Recurrence rules may generate recurrence instances with an invalid
+;; > date (e.g., February 30) or nonexistent local time (e.g., 1:30 AM
+;; > on a day where the local time is moved forward by an hour at 1:00
+;; > AM).  Such recurrence instances MUST be ignored and MUST NOT be
+;; > counted as part of the recurrence set.
+;; To ensure we only have valid date(times), we add 0 to the date.
+;; This causes the date to be re-normalized to a valid date,
+;; effectively checking if we have a "real" date.
 
-(define (all-limiters rrule)
-  (let ((second    (limiter bysecond   'BYSECOND))
-        (minute    (limiter byminute   'BYMINUTE))
-        (hour      (limiter byhour     'BYHOUR))
-        (day       (limiter byday      'BYDAY))
-        (monthday  (limiter bymonthday 'BYMONTHDAY))
-        (yearday   (limiter byyearday  'BYYEARDAY))
-        (weekno    (limiter byweekno   'BYWEEKNO))
-        (month     (limiter bymonth    'BYMONTH))
-        ;; (bysetpos bysetpos)
-        )
-    (case (freq rrule)
-      ((YEARLY)   (all rrule day #| setpos |#))
-      ((MONTHLY)  (all rrule month day #| setpos |#))
-      ((WEEKLY)   (all rrule month #| setpos |#))
-      ((DAILY)    (all rrule month monthday day #| setpos |#))
-      ((HOURLY)   (all rrule month yearday monthday day hour #| setpos |#))
-      ((MINUTELY) (all rrule month yearday monthday day hour minute #| setpos |#))
-      ((SECONDLY) (all rrule month yearday monthday day hour minute second #| setpos |#)))))
+(define ((expander-int rule-applier) rrule-accessor rrule dt-list)
+  (filter (lambda (dt) (datetime= dt (datetime+ dt (datetime))))
+          (append-map (lambda (dt)
+                        (map (lambda (x) (rule-applier x dt))
+                             (rrule-accessor rrule)))
+                      dt-list)))
 
-;; next, done
-;; (a, a → values a), a, (list a) → values a
-(define (branching-fold proc init collection)
-  (if (null? collection)
-      init
-      (call-with-values
-          (lambda () (proc (car collection) init))
-        (lambda vv
-          (apply values
-                 (concatenate
-                  (map (lambda (v)
-                         (call-with-values
-                             (lambda () (branching-fold proc v (cdr collection)))
-                           list))
-                       vv)))))))
+;;; TODO
+;; > The WKST rule part specifies the day on which the workweek starts.
+;; > Valid values are MO, TU, WE, TH, FR, SA, and SU.  This is
+;; > significant when a WEEKLY "RRULE" has an interval greater than 1,
+;; > and a BYDAY rule part is specified.  This is also significant when
+;; > in a YEARLY "RRULE" when a BYWEEKNO rule part is specified.  The
+;; > default value is MO.
 
-;; (a := (date|datetime)), rrule, extension-rule → a
-(define (update date-object rrule extension-rule)
-  ;; Branching fold instead of regular fold since BYDAY
-  ;; can extend the recurrence set in weird ways.
-  (branching-fold
-   (lambda (rule dt)
-     (let* ((key value (car+cdr rule))
-            (d (if (date? dt) dt (datetime-date dt)))
-            ;; NOTE It's proably an error to give BYHOUR, BYMINUTE, and BYSECOND
-            ;; rules for a date object. This doesn't warn if those are given, but
-            ;; instead silently discards them.
-            (t (as-time dt))
-            (to-dt (lambda (o)
-                     (if (date? dt)
-                         (if (date? o) o d)
-                         (if (date? o)
-                             (datetime date: o time: t tz: (tz dt))
-                             (datetime date: d time: o tz: (tz dt)))))))
-       (case key
-         [(BYMONTH)
-          (if (and (eq? 'YEARLY (freq rrule))
-                   (byday rrule)
-                   (not (or (byyearday rrule)
-                            (bymonthday rrule))))
-              (valued-map
-               to-dt
-               (concatenate
-                (map (lambda (wday)
-                       (all-wday-in-month
-                        wday (start-of-month (month d value))))
-                     (map cdr (byday rrule)))))
-
-              ;; else
-              (to-dt (month d value)))]
-
-         [(BYDAY)
-          (let* ((offset value (car+cdr value)))
-            (case (freq rrule)
-              [(WEEKLY)
-               ;; set day to that day in the week which d lies within
-               (to-dt (date+ (start-of-week d (wkst rrule))
-                             (date day: (modulo (- value (wkst rrule))
-                                                7))))]
-
-              [(MONTHLY)
-               (let ((instances (all-wday-in-month value (start-of-month d))))
-                 (catch 'out-of-range
-                   (lambda ()
-                     (cond [(eqv? #f offset)
-                            ;; every of that day in this month
-                            (valued-map to-dt instances)]
-
-                           [(positive? offset)
-                            (to-dt (list-ref instances (1- offset)))]
-
-                           [(negative? offset)
-                            (to-dt (list-ref (reverse instances)
-                                             (1- (- offset))))]))
-
-                   (lambda (err proc fmt args  . rest)
-                     (warning "BYDAY out of range for MONTHLY.
- Possibly stuck in infinite loop")
-                     dt)))]
-
-              [(YEARLY)
-               (let ((instances (all-wday-in-year
-                                 value (start-of-year d))))
-                 (to-dt
-                  (if (positive? offset)
-                      (list-ref instances (1- offset))
-                      (list-ref (reverse instances) (1- (- offset))))))
-               ]))]
-
-         [(BYWEEKNO)
-          (let ((start-of-week (date-starting-week value d (wkst rrule))))
-            (if (and (eq? 'YEARLY (freq rrule))
-                     (byday rrule))
-                (stream->values
-                 (stream-map to-dt
-                  (stream-filter
-                   (lambda (d) (memv (week-day d) (map cdr (byday rrule))))
-                   (stream-take 7 (day-stream start-of-week)))))
-
-                ;; else
-                (to-dt start-of-week)))]
-
-         [(BYYEARDAY) (to-dt (date+ (start-of-year d)
-                                    (date day: (1- value))))]
-         [(BYMONTHDAY)
-          (to-dt (day d
-                      (if (positive? value)
-                          value (+ 1 value (days-in-month d)))))]
-         [(BYHOUR) (to-dt (hour t value))]
-         [(BYMINUTE) (to-dt (minute t value))]
-         [(BYSECOND) (to-dt (second t value))]
-         [else (scm-error 'wrong-type-arg "update"
-                          "Unrecognized by-extender ~s"
-                          key #f)])))
-   date-object
-   extension-rule))
-
-
-;; (or 'YEARLY 'MONTHLY 'WEEKLY 'HOURLY 'MINUTELY 'SECONDLY)
-;; → <datetime>
-(define (make-date-increment rr)
-  (case (freq rr)
-    [(YEARLY)   (datetime date: (date year: (interval rr)))]
-    [(MONTHLY)  (datetime date: (date month: (interval rr)))]
-    [(WEEKLY)   (datetime date: (date day: (* 7 (interval rr))))]
-    [(DAILY)    (datetime date: (date day: (interval rr)))]
-    [(HOURLY)   (datetime time: (time hour: (interval rr)))]
-    [(MINUTELY) (datetime time: (time minute: (interval rr)))]
-    [(SECONDLY) (datetime time: (time second: (interval rr)))]
-    [else (error "Bad freq")]))
-
-;; NOTE
-;; [3.8.5.3. description]
-;; The initial DTSTART SHOULD be synchronized with the RRULE.
-;; An unsynchronized DTSTART/RRULE results in an undefined recurrence set.
-
-;; rrule, (a := date|datetime) → (stream a)
-(define-stream (extend-recurrence-set rrule base-date)
-  (stream-append
-   ;; If no BY-rules are present just add the base-date to the set.
-   ;; NOTE a possible alternative version (which would probably be better)
-   ;; would be to always add the base-date to the set, and make sure that the
-   ;; updated date ≠ base-date
-   ;; A third alternative would be to add a by rule for the current type. for example:
-   ;; FREQ=MONTHLY => BYMONTHDAY=(day base-date)
-   (if (null? (all-extenders rrule))
-       (stream base-date)
-       (list->stream
-        (sort*
-         (concatenate
-          (map (lambda (ext)
-                 (call-with-values (lambda () (update base-date rrule ext))
-                   list))
-               (all-extenders rrule)))
-         (if (date? base-date) date< datetime<))))
-   (extend-recurrence-set
-    rrule
-    (if (date? base-date)
-        (date+ base-date (datetime-date (make-date-increment rrule)))
-        (datetime+ base-date (make-date-increment rrule))))))
-
-(define ((month-mod d) value)
-  (if (positive? value)
-      value (+ value 1 (days-in-month d))))
-
-;; returns a function which takes a datetime and is true
-;; if the datetime is part of the reccurrence set, and
-;; false otherwise.
-;; 
-;; limiters → (a → bool)
-(define (limiters->predicate limiters)
-  (lambda (dt)
-   (let loop ((remaining limiters))
-     (if (null? remaining)
-         #t
-         (let ((key values (car+cdr (car remaining)))
-               (t (as-time dt))
-               (d (if (date? dt) dt (datetime-date dt))))
-           (and (case key
-                  [(BYMONTH) (memv (month d) values)]
-                  [(BYMONTHDAY) (memv (day d) (map (month-mod d) values))]
-                  [(BYYEARDAY) (memv (year-day d) values)]
-                  [(BYDAY) (memv (week-day d) (map cdr values))]
-                  [(BYHOUR) (memv (hour t) values)]
-                  [(BYMINUTE) (memv (minute t) values)]
-                  [(BYSECOND) (memv (second t) values)]
-                  ;; [(BYSETPOS)]
-                  [else
-                   (error "Unknown by-limiter")])
-                (loop (cdr remaining))))))))
-
-
-(define-stream (limit-recurrence-set rrule date-stream)
-  (stream-filter
-   ;; filter inlavid datetimes (feb 30, times droped due to zone-shift, ...)
+;; day-enumerator
+;; rrule
+;; dt-list
+(define ((byday-expander day-enumerator start-of-interval) _ rrule dt-list)
+  (append-map
    (lambda (dt)
-     (let ((d (as-date dt))
-           (t (as-time dt)))
-       (and (<= 0 (hour t) 23)
-            (<= 0 (minute t) 59)
-            (<= 0 (second t) 60)
-            (<= 1 (month d) 12)
-            (<= 1 (day d) (days-in-month d)))))
-   (stream-filter
-    (limiters->predicate (all-limiters rrule))
-    date-stream)))
+     (append-map
+      (lambda (day-spec)
+        (map (lambda (d) (datetime-date dt d))
+             (cond ((car day-spec)
+                    => (lambda (c)
+                         (list
+                          (list-ref ((if (positive? c) identity reverse)
+                                     (day-enumerator (cdr day-spec)
+                                                     (start-of-interval
+                                                      (datetime-date dt))))
+                                    (1- (abs c))))))
+                   (else
+                    (day-enumerator (cdr day-spec)
+                                    (start-of-interval
+                                     (datetime-date dt)))))))
+      (byday rrule)))
+   dt-list))
 
-;; (a := <date|datetime>) => <rrule>, a → (stream a)
-(define-stream (generate-posibilities* rrule start-date)
-  (limit-recurrence-set
-   rrule
-   (extend-recurrence-set
-    rrule start-date)))
-
-(define-stream (generate-posibilities rrule start-date)
-  ;; Some expanders can produce dates before our start time.
-  ;; For example FREQ=WEEKLY;BYDAY=MO where DTSTART is
-  ;; anything after monday. This filters these out.
-  (stream-drop-while
-   (lambda (d) (date/-time< d start-date))
-   (generate-posibilities* rrule start-date)))
-
-(define-stream (limit-rrule-stream rrule < date-stream)
-  (cond [(recur-count rrule) => (lambda (c) (stream-take c date-stream))]
-        [(until rrule) => (lambda (end) (stream-take-while (lambda (dt) (< dt end)) date-stream))]
-        [else date-stream]))
-
-(define-stream (rrule-instances-raw rrule start-date)
-  (limit-rrule-stream rrule (if (date? start-date)
-                                date<= datetime<=)
-                      (generate-posibilities rrule start-date)))
-
-;; Recurring <vcomponent> → (stream <date|datetime>)
-;; TODO rename this procedure (to something like event-instances), allowing
-;; rrule-instances-raw to take its place
-(define-stream (rrule-instances event)
-  ;; 3.8.5.1 exdate are evaluated AFTER rrule (and rdate)
-  (let ((rrule-stream
-         (cond ((prop1 event 'RRULE)
-                => (lambda (rrule)
-                     (rrule-instances-raw rrule (prop1 event 'DTSTART))))
-               (else stream-null)))
-        (rdates
-         (map vline-value (unjust (get event (prop* 'RDATE)) '())))
-        (exdates
-         (map vline-value (unjust (get event (prop* 'EXDATE)) '()))))
-
-    (let ((items (interleave-streams
-                  date/-time<?
-                  (list (list->stream rdates)
-                        rrule-stream))))
-      ;; `If' outside to avoid running stream-remove when it
-      ;; would always be false
-      (if exdates
-          (stream-remove (lambda (dt) (member dt exdates)) items)
-          items))))
+;; (define ((byday-expander/year) rrule dt-list)
+;;   (append-map
+;;    (lambda (dt)
+;;      ;; TODO this can easily create duplicates, for example if both FR and 1FR are noted.
+;;      ;; This is however a problem for all types, see if RFC specifies something about it
+;;      (append-map
+;;       (lambda (day-spec)
+;;         (cond ((car day-spec)
+;;                => (lambda (c)
+;;                     (list
+;;                      (if (positive? c)
+;;                          (list-ref (all-wday-in-year dt)
+;;                                    (1- c))
+;;                          (list-ref (reverse (all-wday-in-year dt))
+;;                                    (1- c))))))
+;;               (else
+;;                (all-wday-in-year (cdr day-spec)
+;;                                   dt))))
+;;       (byday rrule)))
+;;    dt-list)
+;;   )
 
 
-(define (final-event-occurence event)
-  (define rrule (prop1 event 'RRULE))
+
 
-  (if (or (recur-count rrule) (until rrule))
-      (let ((instances (rrule-instances event)))
-        (stream-ref instances (1- (stream-length instances))))
-      #f))
+(define (get-limiter-for row-name)
+  (case row-name
+    ((BYMONTH) (limiter-positive-int (compose month datetime-date)))
+    ((BYYEARDAY)
+     (limiter-int (compose year-day datetime-date)
+                  (compose days-in-year datetime-date)))
+    ((BYMONTHDAY)
+     (limiter-int (compose day datetime-date)
+                  (compose days-in-month datetime-date)))
+    ((BYDAY)
+     ;; This is only relevant for WEEKLY, so we can safely assume that the
+     ;; offset prefix is forbidden here, so for each spec we drop the prefix
+     ;; TODO it's used in other contexts also, but with the same rules
+     (lambda (_ rrule dt-list)
+       ((limiter-positive-int (compose week-day datetime-date))
+        (compose (cut map cdr <>) byday)
+        rrule dt-list)))
+
+    ((BYHOUR)   (limiter-positive-int (compose hour   datetime-time)))
+    ((BYMINUTE) (limiter-positive-int (compose minute datetime-time)))
+    ((BYSECOND) (limiter-positive-int (compose second datetime-time)))
+    ((BYSETPOS) run-bysetpos)
+    (else (scm-error 'misc-error "get-limiter-for"
+                     "No limiter for ~s"
+                     (list row-name) #f))))
+
+(define (get-expander-for row-name week-start)
+  (case row-name
+    ((BYMONTH)
+     (expander-int
+      (lambda (month-no dt)
+        (modify dt date*
+                (lambda (d) (set d month* month-no))))))
+
+    ((BYWEEKNO)
+     (expander-int
+      (lambda (week-no dt)
+        (modify dt date*
+                (lambda (d)
+                  (date-starting-week (if (positive? week-no)
+                                          week-no
+                                          (- (weeks-in-year d) week-no))
+                                      d week-start))))))
+
+    ((BYYEARDAY)
+     (expander-int
+      (lambda (yearday dt)
+        (modify dt date*
+                (lambda (d)
+                  (if (positive? yearday)
+                      (date+ (start-of-year d)
+                             (date day: (1- yearday)))
+                      (date- (date+ (start-of-year d) (date year: 1))
+                             (date day: (- yearday)))))))))
+
+    ((BYMONTHDAY)
+     (expander-int
+      (lambda (monthday dt)
+        (modify dt date*
+                (lambda (d)
+                  (set d day*
+                       (if (positive? monthday)
+                           monthday
+                           (- (days-in-month d)
+                              (1- (- monthday))))))))))
+
+    ((BYDAY)
+     ;; This is only relevant for WEEKLY, so we can safely assume that the
+     ;; offset prefix is forbidden here, so for each spec we drop the prefix
+     ;; TODO it's used in other contexts also, but with the same rules
+     (lambda (_ rrule dt-list)
+      ((expander-int
+        (lambda (weekday dt)
+          (modify dt date*
+                  (lambda (d)
+                    (date+ (start-of-week d week-start)
+                           (date day: (modulo (- weekday week-start) 7)))))))
+       (compose (cut map cdr <>) byday)
+       rrule dt-list)))
+
+    ((BYHOUR)
+     (expander-int (lambda (h dt) (set dt (lens-compose time* hour*) h))))
+
+    ((BYMINUTE)
+     (expander-int (lambda (m dt) (set dt (lens-compose time* minute*) m))))
+
+    ((BYSECOND)
+     (expander-int (lambda (m dt) (set dt (lens-compose time* minute*) m))))))
+
+
 
 
-(define (event-duration event)
-  ;; NOTE DTEND is an optional field.
-  (let ((end (prop1 event 'DTEND)))
-    (if end
-        (if (date? end)
-            (date-difference end (prop1 event 'DTSTART))
-            (datetime-difference end (prop1 event 'DTSTART)))
-        #f)))
+;; Base cases is now a stream of lists of datetime objects.
+;; Each expander and limiter is given this list in turn, and MUST
+;; return a new list of datetime objects, with corresponding entries
+;; added or removed. The complete list of posibilities is then retrieved through
+;; TODO it is possible for multiple seeds to generate the same rule!
+;; For example FREQ=YEARLY;BYMONTH=1,2;BYWEEKNO=5;WKST=MO, with the
+;; start of 2025-01-01:
+;; BYMONTH expansion gives us
+;;   (stream (list #2025-01-01 #2025-02-01) ...)
+;; BYWEEKNO expansion gives us
+;;   (stream (append (list #2025-01-27)
+;;                   (list #2025-01-27))
+;;           ...)
+;; It's easy to fix in this case, but could two non-adjacent entries
+;; be equal?
 
-;; Return start-time + duration, wich some error checks
-(define (get-endtime start-time duration)
- (cond [(date? start-time)
-        (unless (date? duration)
-          (warning "Expected date, got ~a" duration))
-        (date+ start-time (as-date duration))]
-       [(datetime? start-time)
-        (unless (datetime? duration)
-          (warning "Expected datetime, got ~a" duration))
-        (datetime+ start-time (as-datetime duration)) ]
-       [else (error "Bad type")]))
+(define (rrule-instances start rrule)
+  (typecheck start datetime?)
+  (typecheck rrule recur-rule?)
 
-(define (generate-recurrence-set base-event)
-  (stream base-event))
+  ;; eval FREQ and INTERVAL
+  (define increment
+    (case (freq rrule)
+      ((SECONDLY) (datetime second:   (interval rrule)))
+      ((MINUTELY) (datetime minute:   (interval rrule)))
+      ((HOURLY)   (datetime hour:     (interval rrule)))
+      ((DAILY)    (datetime day:      (interval rrule)))
+      ((WEEKLY)   (datetime day: (* 7 (interval rrule))))
+      ((MONTHLY)  (datetime month:    (interval rrule)))
+      ((YEARLY)   (datetime year:     (interval rrule)))
+      (else (unreachable "evaluate-recurrence-set"
+                         "Invalid recurrence rule frequency: ~s"
+                         (list rrule)))))
 
-;; <vevent> -> (stream <vevent>)
-;; TODO memoize this?
-(define (generate-recurrence-set/old base-event)
-  (typecheck base-event vcalendar?)
+  (define base-cases
+    (->> start
+         (stream-iterate (lambda (x) (datetime+ x increment)))
+         (stream-map list)))
 
-  (define duration (event-duration base-event))
+  ;; look up rule depending on freq
+  (define expanded
+    (stream-unique
+     (stream-concat
+      (stream-map
+       (lambda (seed)
+         (list->stream
+          (fold (lambda (row-idx dt-list)
+                  (define row-name (array-ref rrule-table row-idx 0))
+                  (define accessor (assoc-ref rrule-accessors row-name))
 
-  (define rrule-stream-regular
-    (if (prop1 base-event 'RRULE)
-        (rrule-instances base-event)
-        stream-null))
+                  (cond ((not (accessor rrule))
+                         dt-list)
+                        (else
+                         (sort*
+                          ((case (array-ref rrule-table row-idx (assoc-ref column-indices (freq rrule)))
+                             ((Limit)  (get-limiter-for  row-name))
+                             ((Expand) (get-expander-for row-name (wkst rrule)))
+                             ((Note-1)
+                              (cond ((bymonthday rrule)
+                                     (get-limiter-for 'BYDAY))
+                                    (else (byday-expander all-wday-in-month
+                                                          start-of-month))))
+                             ((Note-2)
+                              (cond ((or (byyearday rrule) (bymonthday rrule))
+                                     (get-limiter-for 'BYDAY))
+                                    ((byweekno rrule)
+                                     (get-expander-for 'BYDAY (wkst rrule)))
+                                    ((bymonth rrule)
+                                     (byday-expander all-wday-in-month
+                                                     start-of-month))
+                                    (else (byday-expander all-wday-in-year
+                                                          start-of-year))))
 
-  ;; TODO TODO -X-HNH-ALTERNATIVES doesn't exist any more
-  (define alternative-times
-    (awhen (prop1 base-event '-X-HNH-ALTERNATIVES)
-           (list (list->stream
-                  (sort*
-                   (hash-map->list (lambda (_ v) (prop1 v 'DTSTART)) it)
-                   date/-time<?)))))
+                             ((N/A) (scm-error 'misc-error "evaluate-recurrence-set"
+                                               "~a invalid for ~a frequency"
+                                               (list row-name (freq rrule))
+                                               #f))
+                             (else
+                              => (lambda (symb)
+                                   (scm-error 'misc-error "evaluate-recurrence-set"
+                                              "Unknown rule entry ~s, found at <~a, ~a>"
+                                              (list symb (freq rrule) row-name)
+                                              #f))))
+                           (assoc-ref rrule-accessors row-name)
+                           rrule dt-list)
+                          datetime<=))))
+                seed
+                (let ((data-start 1))
+                 (iota (- (car (array-dimensions rrule-table)) data-start) data-start)))
+          ))
+       base-cases))))
 
-  (define rrule-stream
-    ;; TODO remove duplicates
-    (interleave-streams
-     date/-time<?
-     (cons rrule-stream-regular
-           alternative-times)))
+  (define limited-expanded
+    (stream-drop-while (lambda (dt) (datetime< dt start)) expanded))
+
+  ;; then finally apply COUNT and UNTIL
+  (cond ((recur-count rrule) => (lambda (c) (stream-take c limited-expanded)))
+        ((until rrule) => (lambda (u) (stream-take-while
+                                  (lambda (dt) (datetime<= dt (as-datetime u)))
+                                  limited-expanded)))
+        (else limited-expanded)))
+
+
+(define (generate-recurrence-set component)
+  (typecheck component vcalendar?)
+  ;; TODO
+  ;; - SEQUENCE
+
+  ;; find base event
+  (define-values (base rest) (find-base-instance component))
+  ;; Make note of all exceptions.
+  (define recurrence-id-exceptions
+   (fold (lambda (component rec-id-table)
+           (cond ((prop% component 'RECURRENCE-ID)
+                  => (lambda (rid)
+                       ;; TODO parameter RANGE=THISANDFUTURE
+                       (table-put rec-id-table
+                                  (-> rid car vline-value
+                                      as-datetime datetime->string
+                                      string->symbol)
+                                  component)))
+                 (else rec-id-table)))
+         (table)
+         rest))
+
+  ;; Duration of event, when the base has a DTEND value.
+  ;; DURATION values are ignored, since those are carried through automatically.
+  (define duration
+    (and=> (prop1 base 'DTEND)
+           (lambda (end) (datetime-difference (as-datetime end)
+                                         (as-datetime (prop1 base 'DTSTART))))))
 
   (stream-map
    (lambda (dt)
-     ;; TODO TODO -X-HNH-ALTERNATIVES isn't a thing anymore
-     (cond ((prop1 base-event '-X-HNH-ALTERNATIVES)
-            => (lambda (ht)
-                 (aif (hash-ref ht dt)
-                      it        ; RECURRENCE-ID objects come with their own DTEND
-                      (let ((ev (set base-event (prop* 'DTSTART) (just dt))))
-                        (if duration  ; (and (not (prop ev 'DTEND)) duration)
-                            ;; p. 123 (3.8.5.3 Recurrence Rule)
-                            ;; specifies that the DTEND should be updated to match how the
-                            ;; initial dtend related to the initial DTSTART. It also notes
-                            ;; that an event of 1 day in length might be longer or shorter
-                            ;; than 24h depending on timezone shifts.
-                            (set ev (prop* 'DTEND) (just (get-endtime dt duration)))
-                            ev)))))
-           (else
-            (let ((ev (set base-event (prop* 'DTSTART) (just dt))))
-              (if duration
-                  (set ev (prop* 'DTEND) (just (get-endtime dt duration)))
-                  ev)))))
-   rrule-stream))
+     (or (table-get recurrence-id-exceptions (-> dt datetime->string string->symbol))
+         (-> base
+             (set (prop* 'DTSTART)
+                  (just (list (vline value: (if (datetime? (prop1 base 'DTSTART))
+                                                dt (datetime-date dt))))))
+             (set (prop* 'DTEND)
+                  (if duration
+                      (just (list (vline value:
+                                         (let ((end (datetime+ dt duration)))
+                                           (if (datetime? (prop1 base 'DTSTART))
+                                               end (datetime-date end))))))
+                      (nothing))))))
 
+   ;; If EXDATE exists, omit those entries
+   (stream-remove
+    (lambda (dt) (member dt (or (map (compose as-datetime vline-value) (or (prop% base 'EXDATE) '())))))
+    (interleave-streams
+     datetime<
+     (list
+      ;; if rdate exists, sort these and put them into a stream
+      ;; NOTE that rdats amy be datetime?, date?, or period?
+      (list->stream (sort* (map (compose as-datetime vline-value) (or (prop% base 'RDATE) '()))
+                           datetime<))
+      ;; (if rrule exists, run rrule-instances)
+      (rrule-instances
+       (as-datetime (prop1 base 'DTSTART))
+       (prop1 base 'RRULE)))))))

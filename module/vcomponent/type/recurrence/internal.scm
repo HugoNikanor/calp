@@ -2,18 +2,18 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)           ; better keywords
-  :use-module ((vcomponent) :select (prop1))
+  :use-module ((vcomponent) :select (prop1 vcomponent-children vcalendar? vevent?))
   :use-module (ice-9 i18n)
   :use-module (ice-9 pretty-print)
   :use-module (hnh util)
   :use-module (hnh util object)
   :use-module (hnh util serialize)
   :use-module ((hnh util type) :select (list-of pair-of false?))
+  :use-module (hnh util type)
   :use-module (datetime)
-  :export (repeating?
-
-           recur-rule
+  :export (recur-rule
            recur-rule?
+           recurring?
            freq freq*
            until      until*
            recur-count recur-count*
@@ -49,15 +49,14 @@
   `(SECONDLY MINUTELY HOURLY DAILY WEEKLY MONTHLY YEARLY
              ,freq-placeholder))
 
-
-;; EXDATE is also a property linked to recurense rules
-;; but that property alone don't create a recuring event.
-(define (repeating? ev)
-  "Does this event repeat?"
-  (or (prop1 ev 'RRULE)
-      (prop1 ev 'RDATE)
-      ;; TODO TODO doesn't exist
-      (prop1 ev '-X-HNH-ALTERNATIVES)))
+;; Is the given event a recurring instance?
+(define (recurring? event)
+  (typecheck event vcalendar?)
+  (let ((entries
+         (filter vevent? (vcomponent-children event))))
+    (or (< 1 (length entries))
+        (prop1 (car entries) 'RRULE)
+        (prop1 (car entries) 'RDATE))))
 
 (define-syntax-rule (in-range? x start end)
   (<= start x end))
@@ -114,7 +113,7 @@
   (bymonthday type: (or false? (list-of (and (not zero?) (in-range? -31 31)))))
   (byyearday  type: (or false? (list-of (and (not zero?) (in-range? -366 366)))))
   (byweekno   type: (or false? (list-of (and (not zero?) (in-range? -53 53)))))
-  (bymonth    type: (or false? (list-of (and (not zero?) (in-range? -12 12)))))
+  (bymonth    type: (or false? (list-of (in-range? 1 12))))
   (bysetpos   type: (or false? (list-of (and (not zero?) (in-range? -366 366)))))
   (wkst       type: (memv weekdays)))
 

@@ -15,7 +15,7 @@
   :use-module ((calp html config) :select (edit-mode debug))
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
-  :use-module ((vcomponent type recurrence) :select (repeating?))
+  :use-module ((vcomponent type recurrence) :select (recurring?))
   :use-module ((vcomponent datetime output)
                :select (fmt-time-span
                         format-recurrence-rule
@@ -376,7 +376,7 @@
   (string-concatenate
    (cons
     (prop event 'UID)
-    (when (repeating? event)
+    (when (recurring? event)
       ;; TODO this will break if a UID already looks like this...
       ;; Just using a pre-generated unique string would solve it,
       ;; until someone wants to break us. Therefore, we just give

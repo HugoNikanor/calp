@@ -4,22 +4,23 @@
   :use-module ((srfi srfi-41 util) :select (get-stream-interval))
   :use-module (vcomponent)
   :use-module (vcomponent create)
+  :use-module (vcomponent type recurrence)
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (datetime zic)
   :use-module (hnh util)
   :use-module (hnh util lens)
   :use-module (hnh util optional)
-  :use-module ((vcomponent type recurrence generate)
-               :select (final-event-occurence))
+  :use-module (hnh util type)
+  :use-module (hnh util exceptions)
   :use-module (ice-9 curried-definitions)
+  :use-module (ice-9 match)
 
   :export (#;parse-datetime
            event-overlaps?
            overlapping?
            event-contains?
            event-zero-length?
-           ev-time<?
 
            event-length
            event-length/clamped
@@ -44,13 +45,22 @@
            ((16) "~Y~m~dT~H~M~S~z"))))  ; UTC-time
 
 (define (event-overlaps? event begin end)
-  "Returns if the event overlaps the timespan.
+  "Check if the event overlaps the timespan.
 Event must have the DTSTART and DTEND protperty set."
+  (typecheck event vevent?)
   (timespan-overlaps? (prop1 event 'DTSTART)
-                      (or (prop1 event 'DTEND) (prop1 event 'DTSTART))
+                      (cond ((prop1 event 'DURATION) => (lambda (dur)
+                                                          ;; TODO something like `start + duration`
+                                                          (throw 'DURATION-NOT-IMPLEMENTED)))
+                            ((prop1 event 'DTEND) => identity)
+                            (else (prop1 event 'DTSTART)))
                       begin end))
 
+;;; Check if two instances of events overlap
 (define (overlapping? event-a event-b)
+  (typecheck event-a vevent?)
+  (typecheck event-b vevent?)
+  ;; TODO DURATION
   (timespan-overlaps? (prop1 event-a 'DTSTART)
                       (or (prop1 event-a 'DTEND)
                           (if (date? (prop1 event-a 'DTSTART))
@@ -64,17 +74,17 @@ Event must have the DTSTART and DTEND protperty set."
 
 (define (event-contains? ev date/-time)
   "Does event overlap the date that contains time."
+  (typecheck ev vevent?)
+  (typecheck date/-time (or date? datetime?))
   (let* ((start (as-date date/-time))
          (end (date+ start (date day: 1))))
     (event-overlaps? ev start end)))
 
 (define (event-zero-length? ev)
+  (typecheck ev vevent?)
   (and (datetime? (prop1 ev 'DTSTART))
-       (not (prop1 ev 'DTEND))))
-
-(define (ev-time<? a b)
-  (date/-time<? (prop1 a 'DTSTART)
-                (prop1 b 'DTSTART)))
+       (not (prop1 ev 'DTEND))
+       (not (prop1 ev 'DURATION))))
 
 ;; Returns length of the event @var{e}, as a time-duration object.
 (define (event-length e)
@@ -96,6 +106,9 @@ Event must have the DTSTART and DTEND protperty set."
 ;; 
 ;; Returns the length of the interval (X).
 (define (event-length/clamped start-date end-date e)
+  (typecheck start-date (or date? datetime?))
+  (typecheck end-date (or date? datetime?))
+  (typecheck e vevent?)
   (let ((end (or (prop1 e 'DTEND)
                  (if (date? (prop1 e 'DTSTART))
                      (date+ (prop1 e 'DTSTART) (date day: 1))
@@ -115,6 +128,8 @@ Event must have the DTSTART and DTEND protperty set."
 ;; currently the secund argument is a date, but should possibly be changed
 ;; to a datetime to allow for more explicit TZ handling?
 (define (event-length/day date e)
+  (typecheck date (or date? datetime?))
+  (typecheck e vevent?)
   (if (not (prop1 e 'DTEND))
       (if (date? (prop1 e 'DTSTART))
           (time hour: 24)
@@ -144,11 +159,15 @@ Event must have the DTSTART and DTEND protperty set."
 (define (long-event? ev)
   (if (date? (prop1 ev 'DTSTART))
       #t
-      (aif (prop1 ev 'DTEND)
-           (datetime<= (datetime day: 1)
-                       (datetime-difference
-                        it (prop1 ev 'DTSTART)))
-           #f)))
+      (cond ((prop1 ev 'DTEND)
+             => (lambda (e)
+                  (datetime<= (datetime day: 1)
+                              (datetime-difference
+                               e (prop1 ev 'DTSTART))) ))
+            ((prop1 ev 'DURATION)
+             ;; TODO actually write
+             #t)
+            (else #f))))
 
 (define (really-long-event? ev)
   (let ((start (prop1 ev 'DTSTART))
@@ -158,18 +177,6 @@ Event must have the DTSTART and DTEND protperty set."
                  (datetime< (datetime day: 1)
                             (datetime-difference end start))))))
 
-
-;; DTEND of the last instance of this event.
-;; event → (or datetime #f)
-(define (final-spanned-time event)
-  (if (not ((@ (vcomponent type recurrence) repeating?) event))
-      (or (prop1 event 'DTEND) (prop1 event 'DTSTART))
-      (let ((final (final-event-occurence event)))
-        (if final
-            (aif (prop1 event 'DTEND)
-                 (datetime+ (as-datetime final) (as-datetime it))
-                 (as-datetime final))
-            #f))))
 
 ;; date, date, [sorted-stream events] → [sorted-stream events]
 (define (events-between start-date end-date events)
@@ -191,47 +198,35 @@ Event must have the DTSTART and DTEND protperty set."
 
 ;; Checks if the given zone-entry is relevant for this event
 ;; by checking if zone-entry-until isn't before our DTSTART.
-(define ((relevant-zone-entry? event) zone-entry)
+(define ((relevant-zone-entry? start-dt) zone-entry)
+  (typecheck start-dt datetime?)
+  (typecheck zone-entry zone-entry?)
+
   (aif (zone-entry-until zone-entry)
-       (datetime<? (as-datetime (prop1 event 'DTSTART)) it)
+       (datetime<? start-dt it)
        #t))
 
-(define ((relevant-zone-rule? event) rule)
-  (define start (prop1 event 'DTSTART))
-  ;; end := datetime | #f
-  (define end (final-spanned-time event))
+;;; Creates a predicate, which tests if a given zoneinfo rule
+;;; overlapps with the given interval.
+(define ((relevant-zone-rule? start-year end-year) rule)
+  (typecheck start-year integer?)
+  (typecheck end-year (or false? integer?))
+  (typecheck rule zi-rule?)
 
-  (define start-y (year (as-date start)))
+  (match (list end-year (rule-to rule))
+    [(#f 'only)    (= start-year (rule-from rule))]
+    [(_  'only)    (<= start-year (rule-from rule) end-year)]
+    [(_  'maximum) (<= (rule-from rule) start-year)]
+    [(#f rule-to) (<= (rule-from rule) start-year rule-to)]
+    [(_  rule-to) (or (<= start-year (rule-from rule) end-year)
+                       (<= start-year rule-to end-year))]))
 
-  (if end
-      (let ((end-y (and end (year (as-date end)))))
-        (cond [(and (eq? 'minimum (rule-from rule))
-                    (eq? 'maximum (rule-to rule)))
-               #t]
-              [(eq? 'minimum (rule-from rule))
-               (< start-y (rule-to rule))]
-              [(eq? 'maximum (rule-to rule))
-               (< (rule-from rule) end-y)]
-              [(eq? 'only (rule-to rule))
-               (<= start-y (rule-from rule) end-y)]
-              [else
-               (timespan-overlaps? start end
-                                   (date year: (rule-from rule))
-                                   (date year: (1+ (rule-to rule))))]))
-      (cond [(and (eq? 'minimum (rule-from rule))
-                  (eq? 'maximum (rule-to rule)))
-             #t]
-            [(eq? 'minimum (rule-from rule))
-             (< start-y (rule-to rule))]
-            [(eq? 'maximum (rule-to rule))
-             #t]
-            [(eq? 'only (rule-to rule))
-             (<= start-y (rule-from rule))]
-            [else
-             (<= (rule-from rule) start-y (rule-to rule))])))
+(define* (zoneinfo->vtimezone zoneinfo zone-name start-dt optional: end-year)
+  (typecheck zoneinfo zoneinfo?)
+  (typecheck zone-name string?)
+  (typecheck start-dt datetime?)
+  (typecheck end-year (or integer? false?))
 
-;; event is for limiter
-(define (zoneinfo->vtimezone zoneinfo zone-name event)
   (define last-until (datetime date: (date month: 1 day: 1)))
   (define last-offset (timespec-zero))
 
@@ -239,8 +234,8 @@ Event must have the DTSTART and DTEND protperty set."
           (cond [(zone-entry-rule zone-entry) timespec?
                  => (lambda (inline-rule)
                       (let* ((new-timespec (timespec+
-                                           (zone-entry-stdoff zone-entry)
-                                           inline-rule))
+                                            (zone-entry-stdoff zone-entry)
+                                            inline-rule))
                              (component
                               (daylight
                                dtstart: last-until
@@ -255,8 +250,8 @@ Event must have the DTSTART and DTEND protperty set."
                  => (lambda (rule-name)
                       (fold (lambda (rule vtimezone)
                               (let* ((new-timespec (timespec+
-                                                  (zone-entry-stdoff zone-entry)
-                                                  (rule-save rule)))
+                                                    (zone-entry-stdoff zone-entry)
+                                                    (rule-save rule)))
                                      (component (create-vcomponent
                                                  ;; NOTE the zoneinfo database doesn't
                                                  ;; come with information if a given
@@ -287,30 +282,19 @@ Event must have the DTSTART and DTEND protperty set."
                                         => (lambda (it) (set component (prop* 'RRULE) (just (list (vline value: it))))))
                                        (else component)))))
                             vtimezone
-                           ;; some of the rules might not apply to us since we only
-                           ;; started using that rule set later. It's also possible
-                           ;; that we stopped using a ruleset which continues existing.
-                           ;;
-                           ;; Both these are filtered here.
-                           (filter
-                            (relevant-zone-rule? event)
-                            (get-rule zoneinfo rule-name))))]
+                            ;; some of the rules might not apply to us since we only
+                            ;; started using that rule set later. It's also possible
+                            ;; that we stopped using a ruleset which continues existing.
+                            ;;
+                            ;; Both these are filtered here.
+                            (filter
+                             (relevant-zone-rule? (year (datetime-date start-dt)) end-year)
+                             (get-rule zoneinfo rule-name))))]
 
-                [else                      ; no rule
-                 ;; DTSTART MUST be a datetime in local time
-                 (let ((component
-                        (standard
-                         dtstart: last-until
-                         tzoffsetfrom: last-offset
-                         tzoffsetto: (zone-entry-stdoff zone-entry)
-                         tzname: (zone-entry-format zone-entry))))
-                   (set! last-until (zone-entry-until zone-entry)
-                         last-offset (zone-entry-stdoff zone-entry))
-                   (add-child vtimezone component))
-                 ]))
+                [else (unreachable "zoneinfo->vtimezone" "" '())]))
 
         (-> (vcomponent type: 'VTIMEZONE)
             (set (prop* 'TZID) (just (list (vline value: zone-name)))))
 
-        (filter (relevant-zone-entry? event)
+        (filter (relevant-zone-entry? start-dt)
                 (get-zone zoneinfo zone-name))))

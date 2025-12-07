@@ -7,7 +7,7 @@
   :use-module (vcomponent type recurrence internal)
   :re-export (
               generate-recurrence-set
-              repeating?
+              recurring?
 
               recur-rule
               recur-rule?

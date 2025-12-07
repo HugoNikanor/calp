@@ -26,7 +26,7 @@
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-71)
 
-  :use-module ((vcomponent type recurrence) :select (repeating? generate-recurrence-set))
+  :use-module ((vcomponent type recurrence) :select (recurring? generate-recurrence-set))
   :use-module ((vcomponent util group)
                :select (group-stream get-groups-between))
   :use-module ((base64) :select (base64encode))
@@ -384,7 +384,7 @@ window.default_calendar='~a';"
                                             (as-date (prop1 ev 'DTSTART))
                                             (date+ post-end (date day: 1))))
                                    events))))
-             (repeating% regular (partition repeating? flat-events))
+             (repeating% regular (partition recurring? flat-events))
              (repeating
               (for ev in repeating%
                    ;; TODO *why* are we removing -X-HNH-ORIGINAL here?

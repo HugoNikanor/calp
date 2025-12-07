@@ -39,79 +39,22 @@
   :use-module ((srfi srfi-41) :select (stream->list))
   :use-module ((srfi srfi-88) :select (keyword->string)))
 
-(test-expect-fail "REC: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
-
-(test-expect-fail "STR: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
-
-(test-expect-fail "REC: The second-to-last weekday of the month")
-
+;;; Not yet implemented
 (test-expect-fail "STR: The second-to-last weekday of the month")
-
-;; TODO this test is really slow, figure out why (takes approx. 25s to run)
-(test-skip "REC: Every day in January, for 3 years (alt 2)")
-
-
-;;; TODO disabled until the recurrence code is written
-(test-expect-fail "REC: Daily for 10 occurrences")
-(test-expect-fail "REC: Daily until December 24, 1997")
-(test-expect-fail "REC: Every other day - forever")
-(test-expect-fail "REC: Every 10 days, 5 occurrences")
-(test-expect-fail "REC: Every day in January, for 3 years (alt 1)")
-(test-expect-fail "REC: Weekly for 10 occurrences")
-(test-expect-fail "REC: Weekly until December 24, 1997")
-(test-expect-fail "REC: Every other week - forever")
-(test-expect-fail "REC: Weekly on Tuesday and Thursday for five weeks (alt 1)")
-(test-expect-fail "REC: Weekly on Tuesday and Thursday for five weeks (alt 2)")
-(test-expect-fail "REC: Every other week on Monday, Wednesday, and Friday until December 24, 1997, starting on Monday, September 1, 1997:")
-(test-expect-fail "REC: Every other week on Tuesday and Thursday, for 8 occurrences")
-(test-expect-fail "REC: Monthly on the first Friday for 10 occurrences")
-(test-expect-fail "REC: Monthly on the first Friday until December 24, 1997")
-(test-expect-fail "REC: Every other month on the first and last Sunday of the month for 10 occurrences")
-(test-expect-fail "REC: Monthly on the second-to-last Monday of the month for 6 months")
-(test-expect-fail "REC: Monthly on the third-to-the-last day of the month, forever")
-(test-expect-fail "REC: Monthly on the 2nd and 15th of the month for 10 occurrences")
-(test-expect-fail "REC: Monthly on the first and last day of the month for 10 occurrences")
-(test-expect-fail "REC: Every 18 months on the 10th thru 15th of the month for 10 occurrences")
-(test-expect-fail "REC: Every Tuesday, every other month")
-(test-expect-fail "REC: Yearly in June and July for 10 occurrences:")
-(test-expect-fail "REC: Every other year on January, February, and March for 10 occurrences")
-(test-expect-fail "REC: Every third year on the 1st, 100th, and 200th day for 10 occurrences")
-(test-expect-fail "REC: Every 20th Monday of the year, forever")
-(test-expect-fail "REC: Monday of week number 20 (where the default start of the week is Monday), forever")
-(test-expect-fail "REC: Every Thursday in March, forever")
-(test-expect-fail "REC: Every Thursday, but only during June, July, and August, forever")
-(test-expect-fail "REC: Every Friday the 13th, forever")
-(test-expect-fail "REC: The first Saturday that follows the first Sunday of the month, forever")
-(test-expect-fail "REC: Every 4 years, the first Tuesday after a Monday in November, forever")
-(test-expect-fail "REC: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
 (test-expect-fail "STR: The third instance into the month of one of Tuesday, Wednesday, or Thursday, for the next 3 months")
-(test-expect-fail "REC: The second-to-last weekday of the month")
-(test-expect-fail "STR: The second-to-last weekday of the month")
-(test-expect-fail "REC: Every 3 hours from 9:00 AM to 5:00 PM on a specific day")
-(test-expect-fail "REC: Every 15 minutes for 6 occurrences")
-(test-expect-fail "REC: Every hour and a half for 4 occurrences")
-(test-expect-fail "REC: Every 20 minutes from 9:00 AM to 4:40 PM every day (alt 1)")
-(test-expect-fail "REC: Every 20 minutes from 9:00 AM to 4:40 PM every day (alt 2)")
-(test-expect-fail "REC: An example where the days generated makes a difference because of WKST")
-(test-expect-fail "REC: changing only WKST from MO to SU, yields different results..")
-(test-expect-fail "REC: An example where an invalid date (i.e., February 30) is ignored")
-(test-expect-fail "REC: Every Friday & Wednesday the 13th, forever")
-(test-expect-fail "REC: Monday & Wednesday of week number 20 (where the default start of the week is Monday), forever")
-(test-expect-fail "REC: Each second, for ever")
-(test-expect-fail "REC: Exdates are applied AFTER rrule's")
-(test-expect-fail "REC: RDATE:s add to the recurrence rule")
-(test-expect-fail "REC: RDATE:s add to the recurrence rule")
 
 
 
+;;; TODO write speed tests for some deranged cases
+;;; For example, FREQ=YEARLY;BYSECOND=60,..,1
 
-(use-modules (hnh util debug-reader))
+
 
 (define (run-test comp)
   (test-equal
       (string-append "REC: " (prop1 comp 'SUMMARY))
     (map vline-value (prop% comp 'X-SET))
-    (let ((r (generate-recurrence-set comp)))
+    (let ((r (generate-recurrence-set (vcalendar (list comp)))))
       (map (extract1 'DTSTART)
            (if (or (until       (prop1 comp 'RRULE))
                    (recur-count (prop1 comp 'RRULE)))
@@ -1286,7 +1229,9 @@
              (recur-rule
               freq: 'MONTHLY
               byday: (list mon tue wed thu fri)
-              bysetpos: (list -2))
+              bysetpos: (list -2)
+              count: 5                  ; added by me
+              )
              x-summary:
              "NOT YET IMPLEMENTED"
              x-set:
@@ -1434,7 +1379,7 @@
                    (datetime year: 1997 month: 08 day: 24 hour: 09 minute: 00 second: 00)))
            (vevent
              summary:
-             "changing only WKST from MO to SU, yields different results.."
+             "changing only WKST from MO to SU, yields different results."
              dtstart:
              (datetime year: 1997 month: 08 day: 05 hour: 09 minute: 00 second: 00)
              rrule:
@@ -1588,8 +1533,10 @@
                          (datetime year: 2022 month: 06 day: 13 hour: 10 minute: 00 second: 00)
                          (datetime year: 2022 month: 06 day: 14 hour: 10 minute: 00 second: 00)
                          (datetime year: 2022 month: 06 day: 20 hour: 10 minute: 00 second: 00) ; added by rdate
-                         )
-            )
+                         ))
+
+           ;; TODO test where rdata exactly matches entry added by rrule
+
            (vevent
             summary: "RDATE:s add to the recurrence rule"
             dtstart: (datetime year: 2022 month: 06 day: 10 hour: 10 minute: 00 second: 00)

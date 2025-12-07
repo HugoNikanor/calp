@@ -78,13 +78,6 @@
   (test-assert (not (event-zero-length? (vevent dtstart: (datetime)
                                                dtend: (datetime))))))
 
-(test-assert "ev-time<?"
-  (ev-time<?
-   (vevent summary: "A"
-           dtstart: (datetime year: 2020 month: apr day: 1 hour: 10))
-   (vevent summary: "B"
-           dtstart: (datetime year: 2020 month: apr day: 1 hour: 11))))
-
 (test-group "event-length"
   (test-equal "Datetime, with DTEND"
     (datetime day: 2 hour: 17)
@@ -298,10 +291,8 @@ Link    Europe/Zurich  Europe/Vaduz
           ;; Seed random to stable UID's.
           (parameterize (((@ (hnh util uuid) seed) (seed->random-state 0)))
             (zoneinfo->vtimezone
-             zoneinfo
-             "Europe/Zurich"
-             (vevent summary: "Zoneinfo test"
-                     dtstart: (datetime year: 2020 month: jan day: 10 hour: 10))))))
+             zoneinfo "Europe/Zurich"
+             (datetime year: 2020 month: jan day: 10 hour: 10)))))
 
     (test-equal
         '()
@@ -321,12 +312,12 @@ Link    Europe/Zurich  Europe/Vaduz
                     tzname: "CET"
                     tzoffsetfrom: (timespec (time hour: 2) '+ #f)
                     tzoffsetto: (timespec (time hour: 1) '+ #f))))
-       timezone-component)))
+       timezone-component))
 
-  ;; TODO these tests
-  ;; (let* () "min max")
-  ;; (let () "min - time")
-  ;; (let "only")
+    ;; TODO test where the requested timezone isn't available
+    )
+
+  ;; TODO Test where we have "FROM: only" rules
   )
 
 
