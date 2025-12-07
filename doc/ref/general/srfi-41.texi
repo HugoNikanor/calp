@@ -93,6 +93,14 @@ of words.
 @end lisp
 @end defun
 
+@defun stream-uniq strm
+@defunx stream-univ strm
+@defunx stream-unique strm
+@defunx stream-uniqx = strm
+Returns a new stream, which is @var{strm} with sequential duplicates
+truncated. See also @code{uniqx}.
+@end defun
+
 @defun stream-timeslice-limit stream timeslice
 Wrap a stream in time limits. Each element has at most @var{timeslice}
 seconds to produce a value, otherwise the stream ends. Useful for finding the

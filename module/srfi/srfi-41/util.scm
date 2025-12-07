@@ -19,7 +19,12 @@
            stream-split
            stream-paginate
            stream-timeslice-limit
-           stream-split-by))
+           stream-split-by
+           stream-uniqx
+           stream-uniq
+           stream-univ
+           stream-unique
+           ))
 
 (define (stream-car+cdr stream)
   (values (stream-car stream)
@@ -159,3 +164,16 @@
        (stream-cons (reverse (cons x accumulated)) (loop '()  xs)))
       ((x . xs)
        (loop (cons x accumulated) xs)))))
+
+
+(define (stream-uniqx = strm)
+  (cond ((stream-null? strm) strm)
+        ((stream-null? (stream-cdr strm)) strm)
+        ((= (stream-car strm) (stream-ref strm 1))
+         (stream-uniqx = (stream-cdr strm)))
+        (else (stream-cons (stream-car strm)
+                           (stream-uniqx = (stream-cdr strm))))))
+
+(define (stream-uniq strm) (stream-uniqx eq? strm))
+(define (stream-univ strm) (stream-uniqx eqv? strm))
+(define (stream-unique strm) (stream-uniqx equal? strm))
