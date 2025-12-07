@@ -159,10 +159,10 @@ and the @var{cadr} is the corresponding element of the original list
 
 
 @defun unval proc [n=0]
-Takes a procedure returning multiple values, and returns a function
+Takes a procedure returning multiple values, and returns a procedure
 which takes the same arguments as the original procedure, but only
-returns one of the procedures. Which procedure can be sent as an
-additional parameter.
+returns one of the return values. Which value to return can be sent as
+an additional parameter.
 @end defun
 
 
@@ -184,7 +184,14 @@ Like @var{map}, but also works for improper lists.
 
 
 @defun assq-merge a b
-@c TODO
+Merges two association lists, comparing with eq.
+The cdrs in all pairs in both lists should be lists,
+If a key is present in both then the contents of b is
+put @emph{before} the contents in a.
+@example
+(assq-merge '((k 1)) '((k 2)))
+=> ((k 2 1))
+@end example
 @end defun
 
 @defun kvlist->assq

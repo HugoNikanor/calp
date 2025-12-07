@@ -319,9 +319,6 @@
   (zip (iota (length lst))
        lst))
 
-;; Takes a procedure returning multiple values, and returns a procedure which
-;; takes the same arguments as the original procedure, but only returns one of
-;; the return values. Which value to return can be sent as an additional parameter.
 (define* (unval proc optional: (n 0))
   (lambda args
     (call-with-values (lambda () (apply proc args))
@@ -347,14 +344,6 @@
          (cons (proc (car dotted-list))
                (map/dotted proc (cdr dotted-list))))))
 
-;; Merges two association lists, comparing with eq.
-;; The cdrs in all pairs in both lists should be lists,
-;; If a key is present in both then the contents of b is
-;; put @emph{before} the contents in a.
-;; @example
-;; (assq-merge '((k 1)) '((k 2)))
-;; => ((k 2 1))
-;; @end example
 (define (assq-merge a b)
   (fold (lambda (entry alist)
           (let* ((k v (car+cdr entry))
