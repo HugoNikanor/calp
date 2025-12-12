@@ -1,3 +1,5 @@
+;;; TODO Guile 3.0.11 includes SRFI-207, which exports bytevector->base64 and base64->bytevector.
+;;; Evaluate if they can replace this library
 (define-module (base64)
   :use-module ((srfi srfi-71) :select (let*))
   :use-module (srfi srfi-88) ; suffix keywords
