@@ -1,6 +1,5 @@
 (define-module (test html caltable)
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module (calp translation)
 

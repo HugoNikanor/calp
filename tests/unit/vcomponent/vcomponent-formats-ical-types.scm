@@ -1,6 +1,5 @@
 (define-module (test vcomponent-formats-ical-types)
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((vcomponent media-type text calendar parse)
                :select (get-parser))

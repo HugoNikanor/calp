@@ -1,6 +1,5 @@
 (define-module (test sxml-namespaced)
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module (ice-9 match)
   :use-module (sxml namespaced)

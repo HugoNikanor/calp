@@ -1,6 +1,5 @@
 (define-module (test vcomponent-text-calendar-types)
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (vcomponent media-type text calendar parse-semantics)
   :use-module (hnh util table)
   )

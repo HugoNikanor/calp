@@ -1,6 +1,5 @@
 (define-module (test text-big-numbers)
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (text big-numbers))
 
 (test-assert (power-of-10? #e1e100))

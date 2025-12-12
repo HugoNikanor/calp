@@ -1,6 +1,5 @@
 (define-module (test xmllint)
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module (hnh test xmllint))
 

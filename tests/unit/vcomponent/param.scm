@@ -5,7 +5,6 @@
 
 (define-module (test param)
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((vcomponent)
                :select (prop* param* vline?))

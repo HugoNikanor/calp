@@ -1,7 +1,6 @@
 (define-module (test create)
   :use-module ((srfi srfi-1) :select (every))
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((hnh util) :select (-> sort*))
   :use-module ((hnh util table) :select (alist->table table->list))

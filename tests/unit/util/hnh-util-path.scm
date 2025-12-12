@@ -1,6 +1,5 @@
 (define-module (test hnh-util-path)
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module ((hnh util env) :select (with-working-directory))
   :use-module (hnh util path))

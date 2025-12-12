@@ -111,10 +111,6 @@
 
 ;;; Vendored files, and therefore shouldn't be tested
 
- ("module/srfi/srfi-64/test-error.scm"
-  "15a0eb700de629a9e79aec8a1fde113fbc9542d052163ede46b433d630b7b01c"
-  2)
-
  ("module/sxml/html.scm"
   "b4ffca46c9c723f6828e32d8798f1bbc89c2bfcb6f1368906b2d4bdef11951db"
   2)

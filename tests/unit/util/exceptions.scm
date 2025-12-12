@@ -1,6 +1,5 @@
 (define-module (test exceptions)
   :use-module (srfi srfi-64)
-  :use-module (srfi srfi-64 test-error)
   :use-module (srfi srfi-88)
   :use-module (hnh util exceptions))
 

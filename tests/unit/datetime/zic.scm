@@ -129,12 +129,12 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                 parse-zic-file))
 
             (test-error "Simple Leap"
-              'not-yet-implemented
+              'not-implemented
               (call-with-input-string "Leap 2016 Dec 31 23:59:60 + S"
                 parse-zic-file))
 
             (test-error "Simple Expire"
-              'not-yet-implemented
+              'not-implemented
               (call-with-input-string "Expires 2020 Dec 28 00:00:00"
                 parse-zic-file))
 
