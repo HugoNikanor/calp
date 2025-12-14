@@ -21,12 +21,15 @@
   :use-module (hnh util type)
 
   :use-module (hnh util object)
+  :use-module (hnh util serialize)
   :use-module (hnh util lens)
 
   :use-module (ice-9 i18n)
   :use-module (ice-9 format)
   :use-module (ice-9 regex)
   :use-module (ice-9 match)
+  :use-module (ice-9 curried-definitions)
+
   :use-module (calp util config)
 
   :export (date
@@ -150,27 +153,27 @@
 
 ;;; Enums
 
-(define-public jan  1) (define-public january 1)
-(define-public feb  2) (define-public february 2)
-(define-public mar  3) (define-public mars 3)
-(define-public apr  4) (define-public april 4)
+(define-public jan  1) (define-public january jan)
+(define-public feb  2) (define-public february feb)
+(define-public mar  3) (define-public mars mar)
+(define-public apr  4) (define-public april apr)
 (define-public may  5)
-(define-public jun  6) (define-public june 6)
-(define-public jul  7) (define-public july 7)
-(define-public aug  8) (define-public august 8)
-(define-public sep  9) (define-public september 9)
-(define-public oct 10) (define-public october 10)
-(define-public nov 11) (define-public november 11)
-(define-public dec 12) (define-public december 12)
+(define-public jun  6) (define-public june jun)
+(define-public jul  7) (define-public july jul)
+(define-public aug  8) (define-public august aug)
+(define-public sep  9) (define-public september sep)
+(define-public oct 10) (define-public october oct)
+(define-public nov 11) (define-public november nov)
+(define-public dec 12) (define-public december dec)
 
 
-(define-public sun 0) (define-public sunday 0)
-(define-public mon 1) (define-public monday 1)
-(define-public tue 2) (define-public tuesday 2)
-(define-public wed 3) (define-public wednesday 3)
-(define-public thu 4) (define-public thursday 4)
-(define-public fri 5) (define-public friday 5)
-(define-public sat 6) (define-public saturday 6)
+(define-public sun 0) (define-public sunday sun)
+(define-public mon 1) (define-public monday mon)
+(define-public tue 2) (define-public tuesday tue)
+(define-public wed 3) (define-public wednesday wed)
+(define-public thu 4) (define-public thursday thu)
+(define-public fri 5) (define-public friday fri)
+(define-public sat 6) (define-public saturday sat)
 
 
 ;;; Configuration
@@ -196,14 +199,21 @@
 
 (define (datetime-constructor-constructor constructor validator)
   (let ((date% date)
-        (time% time))
+        (time% time)
+        (tz% tz))
    (lambda* (key: date time tz
                   (year 0) (month 0) (day 0)
-                  (hour 0) (minute 0) (second 0))
-     (let ((date (or date (date% year: year month: month day: day)))
-           (time (or time (time% hour: hour minute: minute second: second))))
-       (validator date time tz)
-       (constructor date time tz)))))
+                  (hour 0) (minute 0) (second 0)
+                  rest: rest)
+     (if (and (not (or date time tz))
+              (= 0 year month day hour minute second)
+              (= 2 (length rest))
+              (not (any keyword? rest)))
+         (apply tz% rest)
+         (let ((date (or date (date% year: year month: month day: day)))
+               (time (or time (time% hour: hour minute: minute second: second))))
+           (validator date time tz)
+           (constructor date time tz))))))
 
 (define (datetime-serializer dt)
   ;; record->list NOT used, since we look at parts of the fields
@@ -224,7 +234,9 @@
               serializer: datetime-serializer
               printer: (lambda (r p)
                          (if (and (tz r) (not (string=? "UTC" (tz r))))
-                             (write (datetime->sexp r) p) ; NOCOV
+                             (format p "#.(datetime ~a ~s)"
+                                     (datetime->string r "#~1T~3")
+                                     (tz r))
                              (display (datetime->string r "#~1T~3~Z") p))))
 
   (datetime-date type: date? lens: date*)
@@ -550,9 +562,8 @@
     (week-stream (find-first-week-day wday year-date)))))
 
 
-(define (in-date-range? start-date end-date)
-  (lambda (date)
-    (date<= start-date date end-date)))
+(define ((in-date-range? start-date end-date) date)
+  (date<= start-date date end-date))
 
 ;; Returns a list of the seven week days, with @var{week-start}
 ;; as the beginning of the week.
@@ -951,29 +962,13 @@ Returns -1 on failure"
   ;; TODO as-date?
   (parse-iso-datetime str))
 
-(define (date->sexp d)
-  `(date year: ,(year d)
-         month: ,(month d)
-         day: ,(day d)))
-
-(define (time->sexp t)
-  `(time hour: ,(hour t)
-         minute: ,(minute t)
-         second: ,(second t)))
-
-(define* (datetime->sexp dt optional: verbose)
-  `(datetime date: ,(if verbose (date->sexp (datetime-date dt)) (datetime-date dt))
-             time: ,(if verbose (time->sexp (datetime-time dt)) (datetime-time dt))
-             tz: ,(tz dt)))
-
 
 (define (date-reader chr port)
-  (define (dt->sexp dt) (datetime->sexp dt #t))
   (unread-char chr port)
-  (let ((data (string->date/-time (symbol->string (read port)))))
-    (cond [data datetime? => dt->sexp]
-          [data time? => time->sexp]
-          [data date? => date->sexp])))
+  (-> (read port)
+      symbol->string
+      string->date/-time
+      serialize))
 
 (read-hash-extend #\0 date-reader)
 (read-hash-extend #\1 date-reader)
@@ -1424,12 +1419,9 @@ Returns -1 on failure"
 
 ;; NOTE, this is only properly defined when end is greater than start.
 (define (datetime-difference end start)
-  ;; NOTE Makes both start and end datetimes in the current local time.
   (let ((fixed-time overflow (time- (datetime-time end)
                                     (datetime-time start))))
     (datetime date: (date-difference (date- (datetime-date end)
                                             (date day: overflow))
                                      (datetime-date start))
-              time: fixed-time
-              ;; TODO TZ
-              )))
+              time: fixed-time)))
