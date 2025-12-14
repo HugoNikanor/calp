@@ -176,9 +176,13 @@
 
 
 
+;;; TODO move this to another module
 (define-syntax-rule (print-and-return expr)
   (let ((result expr))
-    (display (format #f "~s [~s]~%" result (quote expr))
+    (display (format #f (if (isatty? (current-error-port))
+                            "~s \x1b[2m[~s]\x1b[m~%"
+                            "~s [~s]~%")
+                     result (quote expr))
              (current-error-port))
     result))
 
@@ -427,7 +431,7 @@
       '()
       (let ((last rest (car+cdr (reverse args))))
         (reduce-right cross-product% '()
-                      (reverse (cons (map list last) rest ))))))
+                      (reverse (cons (map list last) rest))))))
 
 ;; Given an arbitary tree, do a pre-order traversal, appending all strings.
 ;; non-strings also allowed, converted to strings and also appended.
