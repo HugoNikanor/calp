@@ -1000,7 +1000,8 @@ Returns -1 on failure"
 
 (define (datetime= . args)
   (reduce (lambda (a b)
-            (and (date= (datetime-date a) (datetime-date b))
+            (and b
+                 (date= (datetime-date a) (datetime-date b))
                  (time= (datetime-time a) (datetime-time b))
                  a))
           #t args))
