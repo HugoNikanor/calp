@@ -62,20 +62,32 @@
   ;; u, g, z - Universal time, all three are synonyms due to historical reasons
   (timespec-type type: (or false? (memv '(standard daylight wall utc)))))
 
-(define (timespec->string timespec)
+(define* (timespec->string timespec optional: (precision 'h))
   (typecheck timespec timespec?)
-  (format #f "~a~a~a"
-          (timespec-sign timespec)
-          (time->string (timespec-time timespec))
-          (case (timespec-type timespec)
-            ((standard) "s")
-            ((daylight) "d")
-            ((wall) "w")
-            ((utc) "u")
-            ((#f) "")
-            (else
-             ;; Unknown type, emit this as an error
-             "!"))))
+  (typecheck precision (memv '(h m s)))
+
+  (with-output-to-string
+    (lambda ()
+      (define t (timespec-time timespec))
+      (display (timespec-sign timespec))
+      (display (time->string t "~H"))
+      (when (or (memv precision '(m s))
+                (not (= 0 (minute t) (second t))))
+        (display (time->string t ":~M"))
+        (when (or (memv precision '(s))
+                  (not (= 0 (second t))))
+          (display (time->string t ":~S"))))
+      ;; Print milis here once we store them
+      (display
+       (case (timespec-type timespec)
+         ((standard) "s")
+         ((daylight) "d")
+         ((wall) "w")
+         ((utc) "u")
+         ((#f) "")
+         (else
+          ;; Unknown type, emit this as an error
+          "!"))))))
 
 (define (timespec+ . timespecs)
   #;
