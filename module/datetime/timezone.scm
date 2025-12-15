@@ -6,15 +6,37 @@
   :use-module (ice-9 match)
   :use-module (ice-9 regex)
   :use-module (datetime)
-  :use-module (datetime zic)
+  :use-module ((datetime zic)
+               :select (
+                        zi-rule?
+                        rule-from
+                        rule-to
+                        rule-in
+                        rule-on
+                        rule-at
+                        rule-save
+                        rule-letters
+
+                        zone-entry
+                        zone-entry-stdoff
+                        zone-entry-rule
+                        zone-entry-format
+                        zone-entry-until
+
+                        get-rule
+                        get-zone
+
+                        execute-day-spec
+                        zone-format
+                                ))
   :use-module (datetime timespec)
   :use-module (hnh util)
   :use-module (hnh util type)
   :use-module (hnh util lens)
   :export (zoneinfo
-           utc->zone zone->utc
-           from-utc to-utc
-           to-timezone
+           utc->zone
+           zone->utc
+           zone->zone
 
            query-timezone
            datetime+/zoneinfo
@@ -24,26 +46,20 @@
 
 
 
-;;; TODO instances where we move from one advanced rule to another advanced rule break.
+;;; TODO instances where we move from one advanced zone rule to
+;;; another advanced rule break (within a timezone, has nothing to do with
+;;; multiple timezones).
 ;;; For example, the following crashes
 ;;;     $ ./calp tz convert -f America/New_York 1946-01-01T00:00
 ;;; Solution is to extend generate-backwards to work with multiple
 ;;; zone entries at once, picking appropriate rules as needed.
 
-;;; TODO document that incrementing times is only properly defined in UTC, see all */zoneinfo procedures below
-
 ;;; TODO zic files go hard on having standard or wall time. Part of the reason is to differentiate between multiple instances of the same timestamp (which happens when we go from daylights saving time to standard time)
 
-
-
-
-;;; TDOO document me
-;;; TODO This should get auto-initialized somehow.
-;;; Probalm is that (get-zoneinfo) is specific to calp.
-;;; Maybe compile the zone info database to sexpressions, and export it as
-;;; (datetime timezone vendored-tzdb)
-(define-once zoneinfo
-  (make-parameter #f))
+(define zoneinfo
+  (make-parameter
+   (@ (datetime timezone vendored-tzdb)
+      zoneinfo-database)))
 
 
 ;;; TODO document me
@@ -125,45 +141,49 @@
 ;; - datetime moved to specified zone
 ;; - name of the zone
 ;; - UTC offset
-(define (utc->zone dt zone-name)
+(define (utc->zone/name dt zone-name)
   (typecheck dt datetime?)
   (typecheck zone-name string?)
 
-  (define zone
+  (define zone-entry
     (find (lambda (zone)
             (cond ((not (zone-entry-until zone)) zone)
                   ;; TODO UNTIL is only *usually* in wall time
                   ((datetime< dt (datetime-timespec-add
                                   (zone-entry-until zone)
                                   (timespec-negate
-                                   (timespec+
-                                    (zone-entry-stdoff zone)
-                                    (zone-entry-rule zone)))))
+                                   ;; timespec+
+                                   (zone-entry-stdoff zone)
+                                   ;; TODO this is USUALLY a symbol
+                                   ;; referencing a zone, not a literal offset!
+                                   ; (zone-entry-rule zone)
+                                   )))
                    zone)
                   (else #f)))
           (get-zone (zoneinfo) zone-name)))
 
 
-  (cond ((not zone)
+  (cond ((not zone-entry)
          (scm-error 'misc-error "utc->zone"
                     "Failed finding any relevant offset"
                     '() #f))
 
-        ((timespec? (zone-entry-rule zone))
-         (let ((offset (timespec+ (zone-entry-rule zone)
-                                  (zone-entry-stdoff zone))))
-           (values (datetime-timespec-add dt offset)
+        ((timespec? (zone-entry-rule zone-entry))
+         (let ((offset (timespec+ (zone-entry-rule zone-entry)
+                                  (zone-entry-stdoff zone-entry))))
+           (values (-> (datetime-timespec-add dt offset)
+                       (tz zone-name))
                    offset
-                   (zone-entry-format zone))))
+                   (zone-entry-format zone-entry))))
 
-        (else                           ; symbolic name for zone
+        (else ; symbolic rule name
          (define y (year (datetime-date dt)))
          (define changeovers
            (interleave-streams
             (lambda (a b) (datetime>= (car a) (car b)))
             (map (lambda (rule) (generate-backwards y rule))
                  (find-relevant-rule-instances
-                  dt (get-rule (zoneinfo) (zone-entry-rule zone))))))
+                  dt (get-rule (zoneinfo) (zone-entry-rule zone-entry))))))
 
          ;; Past changeovers is a stream of pairs, where each value is:
          ;; a datetime of "unspecified" format, meaning that it may be in UTC, or may be in local time. How it should be interpreted depends on the rule in the cdr.
@@ -188,14 +208,14 @@
                      (datetime>=
                       (datetime-timespec-add
                        dt
-                       (timespec+ (zone-entry-stdoff zone)
+                       (timespec+ (zone-entry-stdoff zone-entry)
                                   (rule-save rule-prev)))
                       tm))
                     ((standard)
                      ;; time is in standard offset with regards to stdoff of the zone
                      ;; Convert time to utc, and compare.
                      (datetime>=
-                      (datetime-timespec-add dt (zone-entry-stdoff zone))
+                      (datetime-timespec-add dt (zone-entry-stdoff zone-entry))
                       tm))
                     (else (scm-error 'misc-error "utc->zone"
                                      "Unexpected timespec type in rule-at: ~s"
@@ -209,11 +229,12 @@
                              ;; (which might contain rules themselves)
                              (stream (cons #f #f)))))))
 
-         (let ((offset (timespec+ (zone-entry-stdoff zone)
+         (let ((offset (timespec+ (zone-entry-stdoff zone-entry)
                                   (rule-save rule))))
-           (values (datetime-timespec-add dt offset)
+           (values (-> (datetime-timespec-add dt offset)
+                       (tz zone-name))
                    offset
-                   (run-zone-format (zone-entry-format zone)
+                   (run-zone-format (zone-entry-format zone-entry)
                                     rule offset))))))
 
 
@@ -221,14 +242,14 @@
 ;; Difference here is that `dt` is wall time in the specified zone
 ;; The returned offset is still in the "regular" direction, meaning that
 ;; (returned dt) + (returned offset) == input dt
-(define (zone->utc dt zone-name)
+(define (zone->utc/name dt)
   (define zone
     (find (lambda (zone)
             (cond ((not (zone-entry-until zone)) zone)
                   ;; TODO UNTIL is only *usually* in wall time
                   ((datetime<= dt (zone-entry-until zone)) zone)
                   (else #f)))
-          (get-zone (zoneinfo) zone-name)))
+          (get-zone (zoneinfo) (tz dt))))
 
   (cond ((not zone)
          (scm-error 'misc-error "utc->zone"
@@ -238,7 +259,9 @@
         ((timespec? (zone-entry-rule zone))
          (let ((offset (timespec+ (zone-entry-rule zone)
                                   (zone-entry-stdoff zone))))
-           (values (datetime-timespec-add dt (timespec-negate offset))
+           (values (-> dt
+                       (datetime-timespec-add (timespec-negate offset))
+                       (tz "UTC"))
                    offset
                    (zone-entry-format zone))))
 
@@ -291,7 +314,9 @@
 
          (let ((offset (timespec+ (zone-entry-stdoff zone)
                                   (rule-save rule))))
-           (values (datetime-timespec-add dt (timespec-negate offset))
+           (values (-> dt
+                       (datetime-timespec-add (timespec-negate offset))
+                       (tz "UTC"))
                    offset
                    (run-zone-format (zone-entry-format zone)
                                     rule offset))))))
@@ -302,8 +327,8 @@
 ;; treated as hour offsets up to (and including) the value of 99, after
 ;; which they become hours and minutes (meaning that UTC+0100 == UTC+1).
 ;; The "UTC" part is optional
-(define-once utc-offset-rx
-  (make-regexp "^(UTC)?([+-])(([0-9]{2}):([0-9]{2})|[0-9]+)$"))
+(define utc-offset-rx
+  (make-regexp "^(UTC)?([+-])(([0-9]{1,2}):([0-9]{2})|[0-9]+)$"))
 
 (define (parse-utc-offset s)
   (and=> (regexp-exec utc-offset-rx  s)
@@ -327,25 +352,31 @@
             #f))))
 
 
-(define (from-utc dt identifier)
+(define (utc->zone dt identifier)
+  (typecheck (tz dt) (and string? (string= "UTC")))
   (cond ((parse-utc-offset identifier)
          => (lambda (offset)
-              (values (datetime-timespec-add dt offset)
+              (define name (string-append "UTC" (timespec->string offset)))
+              (values (-> (datetime-timespec-add dt offset)
+                          (tz name))
                       offset
-                      (string-append "UTC" (timespec->string offset)))))
-        (else (utc->zone dt identifier))))
+                      name)))
+        (else (utc->zone/name dt identifier))))
 
-(define (to-utc dt identifier)
-  (cond ((parse-utc-offset identifier)
+(define (zone->utc dt)
+  (typecheck (tz dt) string?)
+  (cond ((parse-utc-offset (tz dt))
          => (lambda (offset)
-              (values (datetime-timespec-add dt (timespec-negate offset))
+              (values (-> (datetime-timespec-add dt (timespec-negate offset))
+                          (tz "UTC"))
                       offset
                       (string-append "UTC" (timespec->string offset)))))
-        (else (zone->utc dt identifier))))
+        (else (zone->utc/name dt))))
 
-(define (to-timezone dt identifier)
-  (let ((utc-dt ((unval to-utc) dt (tz dt))))
-    (from-utc utc-dt identifier)))
+(define (zone->zone dt identifier)
+  (typecheck (tz dt) string?)
+  (let ((utc-dt ((unval zone->utc) dt)))
+    ((unval utc->zone) utc-dt identifier)))
 
 ;;; Retrieve UTC offset, and pretty name from a given timezone
 (define (query-timezone dt)
@@ -353,7 +384,7 @@
          => (lambda (offset) (values offset (string-append "UTC" (timespec->string offset)))))
         ;; NOTE this is a ridiculous way to query the data.
         ;; Write an actually query procedure
-        (else (let ((_ offset name (utc->zone ((unval zone->utc) dt (tz dt)) (tz dt))))
+        (else (let ((_ offset name (utc->zone ((unval zone->utc) dt) (tz dt))))
                 (values offset name)))))
 
 
@@ -367,8 +398,8 @@
 (define (datetime±/zoneinfo datetime± dt dt-difference)
   (cond ((tz dt)
          => (lambda (zone)
-              (let ((utc-dt ((unval to-utc) dt zone)))
-                ((unval from-utc)
+              (let ((utc-dt ((unval zone->utc) dt)))
+                ((unval utc->zone)
                  (datetime± utc-dt dt-difference)
                  zone))))
         (else (datetime- dt dt-difference))))
@@ -382,9 +413,9 @@
 (define (datetime-difference/zoneinfo end start)
   (cond ((and (tz start) (tz end))
          (datetime-difference
-          ((unval to-utc) end (tz end))
-          ((unval to-utc) start (tz start))))
-        ((not (or (tz start) (tz end)) )
+          ((unval zone->utc) end)
+          ((unval zone->utc) start)))
+        ((not (or (tz start) (tz end)))
          (datetime-difference end start))
         (else
          (scm-error 'misc-error "datetime-difference/zoneinfo"
@@ -393,8 +424,10 @@
 
 ;;; TODO comperators (datetime<, ...)
 
+;;; TODO extend output format to include zoneinfo
 ;; (define (showoff)
-;;   (define start-time #2025-03-30T01:59:55)
+;;   (define start-time (-> #2025-03-30T01:59:55
+;;                          (tz "Europe/Stockholm")))
 ;;   (let loop ((dt start-time)
 ;;              (i 0))
 ;;     (if (> i 10)
@@ -410,5 +443,5 @@
 ;;         'done
 ;;         (begin
 ;;           (format #t "~a~%" (datetime->string dt))
-;;           (loop (datetime+/zoneinfo dt (datetime second: 1) "Europe/Stockholm")
+;;           (loop (datetime+/zoneinfo dt (datetime second: 1))
 ;;                 (1+ i))))) )

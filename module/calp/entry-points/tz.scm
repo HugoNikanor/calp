@@ -209,13 +209,16 @@
 
   (for input-datetime in input-datetimes
        (let* ((utc input-offset pretty-input-name
-                   (to-utc input-datetime input-zone-name))
+                   (zone->utc (-> input-datetime (tz input-zone-name))))
               (output-datetime output-offset pretty-output-name
-                               (from-utc utc output-zone-name))
+                               (utc->zone utc output-zone-name))
               (output-fmt
                (option-ref opts 'output-format "~Y-~m-~dT~H:~M:~S")))
-         (format #t "~a ~a = ~a ~a~%"
+         ;; 2025-12-09T04:33:18+01:00 (CET)
+         (format #t "~a~a (~a) = ~a~a (~a)~%"
                  (datetime->string input-datetime output-fmt)
+                 (timespec->string (timespec-type input-offset #f) 'm)
                  pretty-input-name
                  (datetime->string output-datetime output-fmt)
+                 (timespec->string (timespec-type output-offset #f) 'm)
                  pretty-output-name))))
