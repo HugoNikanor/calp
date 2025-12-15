@@ -18,7 +18,6 @@
   :use-module (sxml namespaced)
   :use-module ((calp namespaces) :select (xcal))
   :use-module (hnh test xmllint)
-  :use-module (hnh test jq)
 
   ;; Requirements for the reference component
   :use-module ((hnh util) :select (->))
@@ -142,8 +141,12 @@
           reference
           (string-append file ".json")
           jcal:format
-          ;; TODO (@ (json) scm->json) alreaddy has a #:pretty flag
-          formatter: (lambda (v) (jq v "."))))
+          formatter:
+          (lambda (v)
+            (with-output-to-string
+              (lambda ()
+                (-> (call-with-input-string v (@ (json) json->scm))
+                    ((@ (json) scm->json) pretty: #t)))))))
 
        ))
 
