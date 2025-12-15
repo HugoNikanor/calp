@@ -4,7 +4,7 @@
 ;;; Code:
 
 (define-module (datetime timespec)
-  :use-module ((hnh util) :select (unless))
+  :use-module ((hnh util) :select (unless awhen))
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (hnh util type)
   :use-module (hnh util object)
@@ -39,14 +39,18 @@
 (define-type (timespec
               constructor:
               (lambda (constructor type-check)
-                (lambda (time sign type)
+                (lambda* (time optional: (sign '+) type)
                   (type-check time sign type)
                   (constructor time sign type)))
               serializer:
               (lambda (r)
-                `(timespec ,(serialize (timespec-time r))
-                           ,(serialize (timespec-sign r))
-                           ,(serialize (timespec-type r)))))
+                `(timespec ,(timespec-time r)
+                           ,@(if (and (eq? '+ (timespec-sign r))
+                                      (not (timespec-type r)))
+                                 '()
+                                 `(,(serialize (timespec-sign r))))
+                           ,@(awhen (timespec-type r)
+                                    (list (serialize it))))))
   (timespec-time type: time?)
   (timespec-sign type: (memv '(+ -)))
   ;; types:
@@ -129,13 +133,18 @@
    dt (datetime time: (timespec-time ts))))
 
 
-;;; [+-]?\d\d:\d\d:\d\d[swugz]
 ;; "+10:20:30.13"
+;; suffix   = "s" / "w" / "u" / "g" / "z" / "d"
+;; hour     = 1*2DIGIT
+;; minute   = 2DIGIT
+;; second   = 2DIGIT
+;; milis    = *DIGIT
+;; timespec = ["+" / "-"] hour [":" minute [":" second ["." millis]]] [suffix]
 (define-once timespec-rx
   (make-regexp "^([+-])?([0-9]{1,2})(:([0-9]{2}))?(:([0-9]{2}))?([.]([0-9]*))?([swugzd])?$"))
 (define (parse-time-spec string)
   (cond ((string=? string "-")
-         (timespec (time) '+ #f))
+         (timespec (time)))
         ((regexp-exec timespec-rx string)
          => (lambda (m)
               (timespec
