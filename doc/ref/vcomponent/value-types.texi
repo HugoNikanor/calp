@@ -1,5 +1,5 @@
 @node iCalendar value types
-@section iCalendar value types
+@subsection iCalendar value types
 
 The iCalendar standard defines the following value types for all
 properties. Exactly how types serialize depends on the media type,
@@ -73,7 +73,7 @@ which case the object becomes a @code{CAL-ADDRESS} (see above).
 TODO
 @end deftp
 
-@subsection Pseudo types
+@subsubsection Pseudo types
 
 The iCalendar standard claims the three following properties as
 @code{FLOAT}, @code{TEXT}, and @code{TEXT} respectively. However, they

@@ -55,9 +55,13 @@ no common sorting key is available (only some types require a UID field).
 The value of property parameters are always strings.
 Property values are mapped to corresponding scheme types, see TODO
 
+@node VComponents During Runtime
+@section VComponents During Runtime
+
 @include vcomponent/base.texi
 @include vcomponent/value-types.texi
 @include vcomponent/create.texi
+
 @include vcomponent/media-types.texi
 @include vcomponent/data-stores.texi
 

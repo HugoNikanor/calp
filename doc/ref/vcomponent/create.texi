@@ -1,5 +1,5 @@
 @node VComponent Create
-@section Vcomponent Create
+@subsection Vcomponent Create
 
 Procedures for declarativly creating components (instead of the
 primitive ``procedural'' API).

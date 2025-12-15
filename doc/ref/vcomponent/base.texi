@@ -1,5 +1,5 @@
 @node VComponent Fundamentals
-@section VComponent Fundamentals
+@subsection VComponent Fundamentals
 
 These are the fundamental procedures and types for creating and
 manipulating vcomponent objects (followed below by some helper
@@ -41,7 +41,7 @@ Base object for all components.
 @defun vline? x
 @end defun
 
-@subsection Utilities
+@subsubsection Utilities
 
 @deftp {Lens} prop* key
 Focus a specific property in a component. Like table focus, return
