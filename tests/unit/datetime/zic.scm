@@ -306,7 +306,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
             ;; NOTE this doesn't test read-zoneinfos ability to
             ;; - take filenames
             ;; - take multiple items
-            (let ((zoneinfo (call-with-input-string big-sample (compose intermediary->zoneinfo read-zoneinfo list))))
+            (let ((zoneinfo (call-with-input-string big-sample
+                              (compose intermediary->zoneinfo read-zoneinfo))))
               (test-assert "get-zone returns a zone-entry object"
                 (every zone-entry? (get-zone zoneinfo "Europe/Zurich")))
               (test-equal "A link resolves to the same object as its target"
@@ -455,7 +456,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
 Link Greenwich G_M_T
 Link Etc/GMT Greenwich
 Zone Etc/GMT 0 - GMT
-" (compose read-zoneinfo list)))
+" read-zoneinfo))
 
   (let ((root-link (zone-link name: (symbol->string (gensym))
                               target: "G_M_T")))

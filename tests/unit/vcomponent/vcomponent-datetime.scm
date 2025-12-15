@@ -285,7 +285,7 @@ Link    Europe/Zurich  Europe/Vaduz
          (zoneinfo
           (call-with-input-string
               zoneinfo-sample
-            (compose intermediary->zoneinfo read-zoneinfo list)))
+            (compose intermediary->zoneinfo read-zoneinfo)))
 
          (timezone-component
           ;; Seed random to stable UID's.

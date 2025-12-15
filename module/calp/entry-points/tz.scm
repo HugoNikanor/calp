@@ -57,7 +57,7 @@
   ;; 0.1-0.2s
   ;; (define intermediary ((@ (calp timezone) get-zoneinfo)))
   (define intermediary
-   (read-zoneinfo ((@ (glob) glob) "~/.cache/calp/tzdata/{africa,antarctica,asia,australasia,europe,northamerica,southamerica,etcetera,factory,backward}")))
+   (apply read-zoneinfo ((@ (glob) glob) "~/.cache/calp/tzdata/{africa,antarctica,asia,australasia,europe,northamerica,southamerica,etcetera,factory,backward}")))
   (define zoneinfo (intermediary->zoneinfo intermediary))
   ;; 0.05s, but takes forever to compile
   ;; (define zoneinfo (@ (datetime timezone vendored-tzdb) zoneinfo-database))

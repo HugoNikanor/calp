@@ -124,8 +124,9 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
          (names . ,zone-names)))))
 
   (define complete-intermediary
-    (read-zoneinfo (map (lambda (tz) (path-append cache-dir tzdata-dir tz))
-                        zone-names)))
+    (apply read-zoneinfo
+           (map (lambda (tz) (path-append cache-dir tzdata-dir tz))
+                zone-names)))
 
   (define intermediary
     (let ((limiters (option-ref opts '() '())))

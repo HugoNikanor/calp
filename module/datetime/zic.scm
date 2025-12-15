@@ -62,7 +62,7 @@
 
 
 ;; returns a <zoneinfo> object
-(define (read-zoneinfo ports-or-filenames)
+(define (read-zoneinfo . ports-or-filenames)
   (parsed-zic->intermediary
    (concatenate
     (map (lambda (port-or-filename)
