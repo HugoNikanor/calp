@@ -1,0 +1,14 @@
+@node SRFI-19 compatibility
+@section Converting to SRFI-19 date objects
+
+The module @code{(datetime srfi-19)} provides procedures for
+converting to SRFI-19 date objects.
+
+@defun datetime->srfi-19-date dt
+@end defun
+
+@defun date->srfi-19-date d
+@end defun
+
+@defun time->srfi-19-date t
+@end defun

@@ -1,0 +1,144 @@
+@node Timezone Compiler
+@section Timezone Compiler
+
+@c TODO execute-day-spec
+
+The module @code{(datetime zic)} handles parsing of the and querying
+of the static time zone database as provided by the IANA
+(@url{https://www.iana.org/time-zones})@footnote{Sometimes known as
+the Olsen timezone database}. For an introduction to the format, see
+@url{https://manpage.me/?q=zic(8), zic(8)}.
+
+@c TODO link to update-zoneinfo entry point
+
+@subsection Querying the zoneinfo database
+
+@defun get-zone zoneinfo name
+Takes a zoneinfo object, and a name as a string (probably something
+like ``Europe/Stockholm''), and returns a list of zone-entries.
+@end defun
+
+@defun get-rule zoneinfo name
+Gets a list of rule objects, sorted in chronological order.
+@var{name} is a symbol.
+@end defun
+
+
+@defun zoneinfo-zones
+@end defun
+
+@defun zoneinfo-rules
+@end defun
+
+@subsection Loading the Zoneinfo Database
+
+Complete zoneinfo objects are retrieved through
+@code{intermediary->zoneinfo}. There are two ways to create an
+intermediary zoneinfo representation. Either directly, through
+@code{parsed-zic-intermediary}, or through @code{read-zoneinfo}.
+The reason for this setup is that zoneinfo is sourced from the
+aformentioned IANA database, but since loading dynamic data files
+during runtime is annoying, we instead serialize the database to
+Scheme code, and let the Guile compiler handle it for us.
+
+The intermediary object can be passed to @code{serialize} to obtain an
+expression evaluating to an equivalent intermediary.
+
+@defun zoneinfo? x
+@end defun
+
+@defun parsed-zic-intermediary? x
+@end defun
+
+@defun intermediary->zoneinfo
+Compiles the intermediary zoneinfo representation to a real zoneinfo
+database. This is the only way to obtain a zoneinfo instance.
+@end defun
+
+@defun read-zoneinfo port-or-filename ...
+Read the zoneinfo database from a number of files, as per
+zic(8), and returns the intermediary representation. Sees the files as
+a collective, effectively concatenating them before interpreting them,
+since the zoneinfo database is distributed on that format.
+@end defun
+
+@defun parsed-zic-intermediary #:rules rules #:zones zones #:links links
+Manually construct an intermediary. @var{rules} is an assoc list from
+symbols specifying rule names, to list of zi-rule objects. @var{zones}
+is an assoc list from zone names as strings to lists of zone
+entries. @var{links} is a list of zone link objects.
+@end defun
+
+@defun limit-intermediary intermediary zone-names ...
+Limit an intermediary zoneinfo object to only a select few zones. Used
+by the @code{update-zoneinfo} entry point, to speed up compilation
+times during development.
+@end defun
+
+@subsection Inner Zoneinfo Records
+
+@defun zone-entry
+
+       @defun zone-entry?
+       @end defun
+
+       @defun  zone-entry-stdoff
+       @defunx zone-entry-rule
+       @defunx zone-entry-format
+       @defunx zone-entry-until
+       @end defun
+
+Lenses for the fields are currently not exported, since the objets are
+assumed read-only once created.
+
+@end defun
+
+@defun zi-rule
+
+       The file format also has the field @code{type}, but it should
+       @emph{always} be unset, so is omitted from this implementation.
+
+       @defun zi-rule?
+       @end defun
+
+       @defun  rule-name
+       @defunx rule-from
+       @defunx rule-to
+       @defunx rule-in
+       @defunx rule-on
+       @defunx rule-at
+       @defunx rule-save
+       @defunx rule-letters
+       @end defun
+
+Lenses for the fields are currently not exported, since the objets are
+assumed read-only once created.
+
+@end defun
+
+@defun zone-link
+
+       @defun zone-link?
+       @end defun
+
+       @defun  link-name
+       @defunx link-target
+       @end defun
+
+@end defun
+
+@subsection Other Stuff
+
+@defun rule->dtstart rule
+Returns the first time a given rule happens.
+@end defun
+
+@defun rule->rrule rule
+Converts a given zoneinfo rule into a recurrence rule, of all times
+that change occurs.
+@end defun
+
+@defun zone-format fmt-string arg
+A special case of format, which handles the format strings containing
+``%s'' and ``%z''.
+@end defun

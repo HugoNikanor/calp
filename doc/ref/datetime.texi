@@ -1,0 +1,15 @@
+@node Datetime
+@chapter Datetime
+
+A general purpose datetime library, library, with focus on date
+manipulation in ways sensible for humans. So that a date-time plus one
+day always keep the time of day.  For example, 26 mars 2022 10:00 plus
+1 day would give 27 mars 2022 10:00, even though 25 hours have passed
+due to summer time starting (in Sweden).
+
+
+@include datetime/datetime.texi
+@include datetime/timezone.texi
+@include datetime/zic.texi
+@include datetime/timespec.texi
+@include datetime/srfi-19.texi

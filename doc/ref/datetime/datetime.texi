@@ -1,15 +1,14 @@
-@node Datetime
+@node Datetime Core
 @section Datetime
 
-My datetime library, with focus on date manipulation in ways sensible
-for humans. So that a date-time plus one day always keep the time of
-day.
-For example, 26 mars 2022 10:00 plus 1 day would give 27 mars 2022
-10:00, even though 25 hours have passed due to summer time starting
-(in Sweden).
+These are the core components of the library. Note that (almost all)
+of these procedures are time-zone un-aware. See the next chapter for
+time-zone aware operations.
 
-Note that while some of these procedures mentions timezones, almost
-nothing is actually done with it.
+Worth noting that the core data-types (@code{datetime}, @code{date},
+and @code{time}) are overloaded to both represent absolute date/times,
+but also differences. Despite that, time objects can't be negative,
+for that see @ref{Timespec}.
 
 @subsection Constants
 
@@ -132,12 +131,18 @@ Is @var{x} a datetime object?
 @end defun
 
 @defun datetime [#:date] [#:time] [#:tz] [#:year=0] [#:month=0] [#:day=0] [#:hour=0] [#:minute=0] [#:second=0]
+@defunx datetime dt tz
 Creates a new <datetime>. If @var{date} or @var{time} is given, those
 are used. Otherwise, a date object is created from @var{year},
 @var{month} and @var{day}, and time is respectively created from
 @var{hour}, @var{minute} and @var{second}.
 
 @var{tz} is an optional string specifying the timezone.
+
+The second constructor form (@code{(datetime dt tz)}) is functionally
+identical to the @code{tz} accessor. Its primary purpose is for
+attaching a timezone marker to a datetime literal,
+@code{(datetime #2025-12-15T11:19:20 "Europe/Stockholm")}.
 @end defun
 
 @defun datetime-date dt [d]
@@ -181,17 +186,17 @@ This module registers reader extensions on @code{#0}, @code{#1}, and
 @subsection Procedures
 
 @defun datetime->unix-time datetime
-Converts @var{datetime} to an integer representing its unix time.
+Converts @var{datetime} to an integer representing its unix time. If
+timezone is set, then the systems zoneinfo database will be used.
 @end defun
 
 @defun unix-time->datetime n
 Converts a given unix timestamp to a datetime object.
-Currently forces the timezone to be UTC.
+Returned datetime will be in UTC.
 @end defun
 
 @defun current-datetime
-Return a datetime object of the current date and time.
-Currently always returns it in UTC.
+Return a datetime object of the current date and time, in UTC.
 @end defun
 
 @defun current-date
@@ -261,6 +266,10 @@ to the last day of the month.
 @defun start-of-year date
 Returns a <date> object equal to date, but with the day and month
 component set to 1.
+@end defun
+
+@defun end-of-year date
+Returns the date of the last day of the year in which @var{date} lies.
 @end defun
 
 @defun date-stream date-increment start-day
@@ -409,6 +418,7 @@ The amount of days in the given interval, including both endpoints.
 
 
 @defun year-day date
+@cindex julian day
 Day from start of the year, so 1 feb would be day 32.
 Also known as Julian day.
 @end defun
@@ -692,18 +702,4 @@ Parses (the well known subset) of ISO-compatible dates.
 
 @defun parse-freeform-date str
 Currently an alias for parse-iso-datetime, but should preferably be extended.
-@end defun
-
-@subsection Converting to SRFI-19 date objects
-
-The module @code{(datetime srfi-19)} provides procedures for
-converting to SRFI-19 date objects.
-
-@defun datetime->srfi-19-date dt
-@end defun
-
-@defun date->srfi-19-date d
-@end defun
-
-@defun time->srfi-19-date t
 @end defun

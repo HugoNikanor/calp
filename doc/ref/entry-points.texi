@@ -42,5 +42,6 @@ Format text, completely ignoring calendars.
 @end deftp
 
 @deftp {Entry Point} update-zoneinfo
+@anchor{update-zoneinfo}
 Downloads zoneinfo files and places them in the correct location.
 @end deftp

@@ -1,0 +1,127 @@
+@node Timezone Aware Operations
+@section Timezone Aware Operations
+
+This is the extension to the general datetime library which actually
+cares about timezones. For anything here to work, a timezone database
+needs to be loaded into the parameter @code{zoneinfo}. Your
+distribution of this library should have come with the
+@url{https://www.iana.org/time-zones,IANA time-zone database} in a
+pre-compiled form, in the module
+@code{(datetime timezone vendored-tzdb)}.
+
+For information about applying alternative timezones, see
+the section for the @ref{Timezone Compiler}. For updating the vendored
+file, refer to the entry point @ref{update-zoneinfo}.
+
+@deftp {parameter} zoneinfo
+Parameter holding the current timezone database.
+@end deftp
+
+@subsection Operating on Zoned Datetimes
+
+@c TODO non-existant dates (2025-03-30 02:30 Europe/Stockholm, doesn't
+@c exist, due to summer time change.
+
+@c TODO dates appearing multiple times, such as when going from summer to
+@c standard time.
+
+Many of these procedures talk about ``identifiers''. These are strings
+identifying a specific timezone. Valid values are ``UTC'', a UTC
+offset on (a fairly liberal) form of ``UTC+<offset>'', or a name of a
+zone in the loaded zoneinfo database, such as
+``Europe/Stockholm''. These are the also the values stored in the
+@code{tz} component of datetime objects.
+
+When UTC times are mentioned, it explicitly means a datetime object
+with ``UTC'' as its @code{tz} component.
+
+@defun utc->zone dt identifier
+Converts a UTC time into a different timezone, and returns three
+values:
+@itemize @bullet
+@item The instance, as a datetime object matched to the target zone
+@item The UTC offset that the returned datetime now is in.
+The original time can be retrieved by doing something like
+@code{(datetime-timespec-add (tz $1 "UTC") (timespec-negate $2))}.
+@item The ``pretty'' name of the identified timezone.
+For example, for Europe/Stockholm this (as of the time of writing)
+alternates between CET (Central European Time) and CEST (Central
+European Summer Time).
+@end itemize
+
+If the datetime has @emph{any} tz component except ``UTC'' then the
+procedure will fail with a type error.
+
+@example
+(utc->zone #2020-01-01T00:00:00Z "Europe/Stockholm")
+$1 ⇒ (datetime #2020-01-01T01:00:00 "Europe/Stockholm")
+$2 ⇒ (timespec #01:00:00)
+$3 ⇒ "CET"
+@end example
+@end defun
+
+@defun zone->utc dt
+Converts a zoned datetime into UTC. The source objects tz component
+can be set to any string present in the timezone database, or an UTC
+offset as described above.
+
+It returns 3 values:
+@itemize @bullet
+@item The datetime moved to UTC
+@item The UTC offset that the datetime initially was in, as a timespec
+object
+@item The pretty name of the source zone.
+@end itemize
+
+Worth noting that the auxiliary information from @code{utc->zone}
+refers to the target time, while @code{zone->utc} refers to the source
+time. This is since the ``other'' time is in both cases UTC, which is
+assumed well known, and since the other information is already fetched
+when querying the zoneinfo database to figure out how to move the date.
+@end defun
+
+@defun zone->zone dt identifier
+Converts a timezoned datetime to another timezone.
+
+Equivalent to calling @code{zone->utc} followed by @code{utc->zone},
+discarding any auxiliary return values.
+@end defun
+
+@defun query-timezone dt
+Query timezone database for only the auxiliary data. A datetime object
+is required, since a timezones change over time.
+@end defun
+
+@defun datetime+/zoneinfo dt diff
+@defunx datetime-/zoneinfo dt diff
+Like their ``regular'' variants, but aware of local timezone rules.
+
+For example, when moving from standard to summer time, moving forward
+one hour may move your clock two:
+@example
+(datetime+/zoneinfo
+        (datetime date: #2025-03-30
+                  time: #01:00
+                  tz: "Europe/Stockholm")
+        (datetime hour: 1))
+⇒ (datetime #2025-03-30T03:00:00 "Europe/Stockholm")
+@end example
+
+Note that the ``regular'' datetime arithmetic procedures are only well
+defined for zoneless, and UTC zoned, datetimes. E.g. doing
+@code{(datetime+ dt-in-europe-stockholm anything)} results in an
+``invalid'' datetime object.
+@end defun
+
+@defun datetime-difference/zoneinfo end start
+Returns the difference in time between two zoned timestamps.
+Note that @var{end} must still be greater than (or equal to)
+@var{start}.
+
+@example
+(datetime-difference/zoneinfo
+    (datetime #2025-12-15T11:30 "Europe/Stockholm")
+    (datetime #2025-12-15T05:30 "America/New_York"))
+⇒ (datetime)
+@end example
+@end defun
