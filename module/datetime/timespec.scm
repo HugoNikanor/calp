@@ -23,7 +23,6 @@
            timespec-sign timespec-sign*
            timespec-type timespec-type*
 
-           timespec-zero
            timespec+
            timespec-negate
            datetime-timespec-add
@@ -77,9 +76,6 @@
             (else
              ;; Unknown type, emit this as an error
              "!"))))
-
-(define (timespec-zero)
-  (timespec (time) '+ #f))
 
 (define (timespec+ . timespecs)
   #;

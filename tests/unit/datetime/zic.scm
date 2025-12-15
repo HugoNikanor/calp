@@ -65,7 +65,7 @@ Link    Europe/Zurich  Europe/Vaduz
                      zone-name: "America/Menominee"
                      zone-entries: (list (zone-entry
                                         stdoff: (timespec (time hour: 05 minute: 00 second: 00) '- #f)
-                                        rule: (timespec-type (timespec-zero) 'standard)
+                                        rule: (timespec (time) '+ 'standard)
                                         format: "EST"
                                         until: (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00))
                                        (zone-entry
@@ -85,7 +85,7 @@ Link    Europe/Zurich  Europe/Vaduz
                      zone-name: "America/Menominee"
                      zone-entries: (list (zone-entry
                                           stdoff: (timespec (time hour: 05 minute: 00 second: 00) '- #f)
-                                          rule: (timespec-type (timespec-zero) 'standard)
+                                          rule: (timespec (time) '+ 'standard)
                                           format: "EST"
                                           until: (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00))
                                          (zone-entry
@@ -148,12 +148,12 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                      zone-name: "Europe/Zurich"
                      zone-entries: (list (zone-entry
                                         stdoff: (timespec (time hour: 00 minute: 34 second: 08) '+ #f)
-                                        rule: (timespec-type (timespec-zero) 'standard)
+                                        rule: (timespec (time) '+ 'standard)
                                         format: "LMT"
                                         until: (datetime year: 1853 month: 07 day: 16 hour: 00 minute: 00 second: 00))
                                        (zone-entry
                                         stdoff: (timespec (time hour: 00 minute: 29 second: 45) '+ #f) ; NOTE that the .50 is discarded
-                                        rule: (timespec-type (timespec-zero) 'standard)
+                                        rule: (timespec (time) '+ 'standard)
                                         format: "BMT"
                                         until: (datetime year: 1894 month: 06 day: 01 hour: 00 minute: 00 second: 00))
                                        (zone-entry
@@ -287,8 +287,10 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
 
 (test-group "zone-format"
 
-            (test-equal "Zone format with argument" "CEST" (zone-format "CE%sT" "S" (timespec-zero)))
-            (test-equal "Zone format with empty"    "CET"  (zone-format "CE%sT" ""  (timespec-zero)))
+            (test-equal "Zone format with argument"
+              "CEST" (zone-format "CE%sT" "S" (timespec (time))))
+            (test-equal "Zone format with empty"
+              "CET"  (zone-format "CE%sT" ""  (timespec (time))))
 
             ;; TODO zone-format %z is not yet implemented, and therefore untested
 
@@ -296,7 +298,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
             (test-equal "Invalid format specifier"
               '(misc-error "zone-format" ; "Invalid format char ~s in ~s at position ~a" (#\S "%S" 1) #f
                            )
-              (catch 'misc-error (lambda () (zone-format "%S" "A" (timespec-zero)))
+              (catch 'misc-error (lambda () (zone-format "%S" "A" (timespec (time))))
                 (lambda (err fmt . rest)
                   (list err fmt)))))
 
@@ -462,8 +464,8 @@ Zone Etc/GMT 0 - GMT
             (zone-link name: "G_M_T" target: "Greenwich")
             (zone-link name: "Greenwich" target: "Etc/GMT")
             (cons "Etc/GMT"
-                  (zone-entry stdoff: (timespec-zero)
-                              rule: (timespec-type (timespec-zero) 'standard)
+                  (zone-entry stdoff: (timespec (time))
+                              rule: (timespec (time) '+ 'standard)
                               format: "GMT"
                               until: #f)))
       ((@@ (vcomponent zic) resolve-link) intermediary root-link))))

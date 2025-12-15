@@ -4,19 +4,17 @@
   :use-module (datetime)
   :use-module (datetime timespec))
 
-;; (test-equal "The empty string parses to the empty timespec"
-;;   (timespec-zero) (parse-time-spec ""))
-
 (test-group "timespec+"
   (test-equal "Zero operands gives 0"
-    (timespec-zero) (timespec+))
+    (timespec (time)) (timespec+))
 
   (let ((ts (timespec (time hour: 10 minute: 20 second: 30) '- 'utc)))
     (test-equal "Single operand gives that operand"
       ts (timespec+ ts)))
 
   (test-equal "0 + 0 = 0"
-    (timespec-zero) (timespec+ (timespec-zero) (timespec-zero)))
+    (timespec (time))
+    (timespec+ (timespec (time)) (timespec (time))))
 
   (test-group
       "+ -"
@@ -33,7 +31,7 @@
                     (timespec (time hour: 11 minute: 00 second: 00) '- 'wall)))
 
     (test-equal "x + -x = 0"
-      (timespec-type (timespec-zero) 'wall)
+      (timespec-type (timespec (time)) 'wall)
       (timespec+ (timespec (time hour: 10 minute: 20 second: 30) '+ 'wall)
                  (timespec (time hour: 10 minute: 20 second: 30) '- 'wall))))
 
@@ -49,7 +47,7 @@
                  (timespec (time hour: 11 minute: 00 second: 00) '+ 'wall)))
 
     (test-equal "-x + x = 0"
-      (timespec-type (timespec-zero) 'wall)
+      (timespec-type (timespec (time)) 'wall)
       (timespec+ (timespec (time hour: 10 minute: 20 second: 30) '- 'wall)
                  (timespec (time hour: 10 minute: 20 second: 30) '+ 'wall))))
 
