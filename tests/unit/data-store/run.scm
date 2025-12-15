@@ -8,7 +8,6 @@
   :use-module (vcomponent data-stores common)
   :use-module (vcomponent media-type)
   :use-module (vcomponent type version)
-  :use-module ((web uri) :select (uri-path))
   )
 
 ;;; Tests of all data stores
@@ -52,12 +51,11 @@
 (define testdir (mkdtemp "/tmp/calp-store-XXXXXX"))
 
 (define uris
- (list
-  (format #f "store:file?path=~a&media=text/calendar"
-          (path-append testdir "path-store.ics"))
-  (format #f "store:vdir?path=~a&media=text/calendar"
-          (path-append testdir "vdir-store"))
-  ))
+  (list
+   (build-uri 'store host: "file" path: (path-append testdir "path-store.ics")
+              query: "media=text/calendar")
+   (build-uri 'store host: "vdir" path: (path-append testdir "vdir-store")
+              query: "media=text/calendar")))
 
 ;;; Explicitly load the module, since the feature test won't work otherwise
 (use-modules (vcomponent data-stores sqlite))
@@ -65,47 +63,46 @@
   (set! uris
     (append uris
             (list
-             (format #f "store:sqlite?path=~a"
-                     (path-append testdir "sqlite-store.db"))
-             ))))
+             (build-uri 'store host: "sqlite"
+                        path: (path-append testdir "sqlite-store.db"))))))
 
 (for uri in uris
 
-     (test-group uri
-       (let ((store (-> uri string->uri store-uri->store)))
+     (test-group (uri->string uri)
+       (let ((store (store-uri->store uri)))
          (for-each (lambda (entry)
                      (put-event! store (list-ref entry 0) (list-ref entry 2)))
                    entries)
          (flush! store))
        ;; We close and re-open the store, to ensure we read from storage
        ;; instead of internal caches.
-       (let ((store (-> uri string->uri store-uri->store)))
+       (let ((store (store-uri->store uri)))
          (for (href source-filename reference-entry) in entries
               (test-equal href
                 ;; The file data store can't store properties in the VCALENDAR envolope,
                 ;; And instead generates its own minimal one on output. This causes all
                 ;; these diffs.
-                (cond ((and (string=? "file" (uri-path (store-uri store)))
+                (cond ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "rfc-provided/ex1.ics"))
                        `((diff PRODID
                                (,(vline value: "-//Example Inc.//Example Calendar//EN"))
                                (,(vline value: "-//hugo//calp 0.6.1//EN")))))
 
-                      ((and (string=? "file" (uri-path (store-uri store)))
+                      ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "rfc-provided/ex2.ics"))
                        `((diff PRODID
                                (,(vline value: "-//Example Corp.//Example Client//EN"))
                                (,(vline value: "-//hugo//calp 0.6.1//EN")))
                          (absent a CALSCALE)))
 
-                      ((and (string=? "file" (uri-path (store-uri store)))
+                      ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "hand-written/target.ics"))
                        `((diff PRODID
                                (,(vline value: "-//CALP-TEST//x.y"))
                                (,(vline value: "-//hugo//calp 0.6.1//EN")))
                          (absent b REQUEST-STATUS)))
 
-                      ((and (string=? "file" (uri-path (store-uri store)))
+                      ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "hand-written/types.ics"))
                        `((absent b GEO)
                          (absent b REQUEST-STATUS)
@@ -119,13 +116,13 @@
                          (absent b X-UNKNOWN) (absent b X-URI) (absent b X-UTC-OFFSET)
                          (absent a CALSCALE) (absent a PRODID)))
 
-                      ((and (string=? "file" (uri-path (store-uri store)))
+                      ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "hand-written/unknown-value-type.ics"))
                        `((absent a CALSCALE)
                          (absent a PRODID)))
 
 
-                      ((and (string=? "file" (uri-path (store-uri store)))
+                      ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "hand-written/x-integer.ics"))
                        `((absent a CALSCALE)
                          (absent a PRODID)))

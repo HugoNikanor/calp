@@ -210,20 +210,16 @@
                "URI using different scheme than `store:': ~s"
                (list (uri->string uri)) #f))
   (let* (
-         ;; If uri is given as `store://<format>?<args>`, then format
-         ;; ends up in the host field, with path being the empty
-         ;; string. However `store:<format>?<args>` places format in
-         ;; the path, with the host being `#f`.
-         (store-name (string->symbol (or (uri-host uri)
-                                         (uri-path uri))))
+         (store-name (string->symbol (uri-host uri)))
          (constructor
           (module-ref (resolve-interface
                        `(vcomponent data-stores ,store-name))
                       'create-instance)))
 
-    (apply constructor (parse-query (uri-query uri)
-                                    decode-plus-to-space?: #f))))
+    (apply constructor
+           path: (uri-path uri)
+           (parse-query (uri-query uri)
+                        decode-plus-to-space?: #f))))
 
 
-;;; TODO document
 (define-generic store-uri)

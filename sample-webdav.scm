@@ -28,13 +28,13 @@
                     content-type: "text/plain"
                     content: ,(string->utf8 "This is the calendar home\n")
                     (("sqlite"
-                      (calendar-collection "store:sqlite?path=/tmp/calendar.db"))
+                      (calendar-collection "store://sqlite/tmp/calendar.db"))
                      ("calendar.ics"
-                      (calendar-collection "store:file?path=/tmp/calendar.ics&media=text/calendar"))
+                      (calendar-collection "store://file/tmp/calendar.ics?media=text/calendar"))
                      ("vdir"
-                      (calendar-collection "store:vdir?path=/tmp/Calendar.vdir&media=text/calendar"))
+                      (calendar-collection "store://vdir/tmp/Calendar.vdir?media=text/calendar"))
                      ;; ("calendar.xcs"
-                     ;;  (calendar-collection "store:file?path=/tmp/calendar.xcs&media=application/calendar+xml"))
+                     ;;  (calendar-collection "store://file/tmp/calendar.xcs?media=application/calendar+xml"))
                      ;; ("calendar.json"
-                     ;;  (calendar-collection "store:file?path=/tmp/calendar.json&media=application/calendar+json"))
+                     ;;  (calendar-collection "store://file/tmp/calendar.json?media=application/calendar+json"))
                      ))))))))))))

@@ -138,13 +138,11 @@
 
 (define-method (store-uri (store <file-data-store>))
   (build-uri 'store
-             path: "file"
+             host: "file"
+             path: (path store)
              query: (encode-query-parameters
-                     `((path . ,(path store))
-                       ;; Note that media type is required to create a
-                       ;; store, but technically optional for media
-                       ;; types (and media types can report invalid
-                       ;; values also). This is just a best effort.
+                     `(
+                       ;; See corresponding comment for vdir
                        ,@(cond ((media-type (data-format store))
                                 => (lambda (t) `((media . ,t))))
                                (else '()))))))

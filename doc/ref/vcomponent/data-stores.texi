@@ -34,18 +34,36 @@ below mentioned methods.
 @defun store-uri->store uri
 Given an URI object, attempt to construct the store it refers to.
 This is mostly useful for command line usage.
-@c TODO link to alternative to construct store from sexp.
 
-Store URIs are on the format @code{store:<format>?<args>}, where
-@var{<format>} refers to a data store implementation, and lookup up as
-@code{(resolve-interface `(vcomponent data-stores ,@var{format}))},
-and args is parsed into a keyword list, which the procedure
-@code{create-instance} from the afformentioned module is applied to.
+Store URIs hase the scheme @code{store}, with the store implementation
+embedded in the host component, the ``special'' parameter @var{path}
+in the @code{path} component, and other parameters query encoded in
+the URIs query.
 
-See each stores documentation for applicable parameters. Note that a
-stores path must be stored in a parameter instead of the URI path
-component, since path isn't applicable to all stores.
+The procedure @code{create-instance} is looked up in the module
+@code{(vcomponent data-stores @var{host})}, which will be applied to
+the query parameters as a list of alternating keywords and values.
+The path component will always be included as @code{#:path @var{path}}.
+
+The decision to ``require'' a path component is since most stores
+actually have one, it makes for much cleaner URIs, and it only
+slightly inconveniences stores which don't have the concept of a path.
 @end defun
+
+@defun create-instance #:path path [other keyword arguments ...]
+Procedure with must me implemented by each data store. This is the
+primary procedure for creating instances of each store, and is what is
+used by @code{store-uri->store}. The @var{path} parameter must be
+accepted, since it's an inherent part of an URI, it may however be
+ignored if the concept of a path doesn't apply to the store.
+
+See each individual stores documentation for applicable arguments.
+@end defun
+
+@deftp {GOOPS method} store-uri
+Return a URI object which can be passed to @code{store-uri->store} to
+establish a new connection to the store.
+@end deftp
 
 @subsection Writing Data
 

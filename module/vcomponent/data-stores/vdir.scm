@@ -217,13 +217,15 @@
 
 (define-method (store-uri (store <vdir-data-store>))
   (build-uri 'store
-             path: "vdir"
+             host: "vdir"
+             path: (path store)
              query: (encode-query-parameters
-                     `((path . ,(path store))
-                       ;; Note that media type is required to create a
-                       ;; store, but technically optional for media
-                       ;; types (and media types can report invalid
-                       ;; values also). This is just a best effort.
+                     `(
+                       ;; Note that a media type query parameter is
+                       ;; required to create a store, but the
+                       ;; media-type field of a data format is
+                       ;; optional, and may be a different value than
+                       ;; expected. This is just a best effort.
                        ,@(cond ((media-type (data-format store))
                                 => (lambda (t) `((media . ,t))))
                                (else '()))

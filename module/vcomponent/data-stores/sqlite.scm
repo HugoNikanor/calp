@@ -47,16 +47,25 @@
   (typecheck (path self) string?)
   (set! (database self) (sqlite-open (path self)))
 
-  (init-db (database self)))
+  (init-db (database self))
+
+  (let ((stmt (sqlite-prepare (database self) "SELECT component, href FROM href")))
+    (begin1
+     (sqlite-map
+      (lambda (v) (hash-set! (href-by-id self)
+                        (-> (vector-ref v 0)
+                            number->string string->symbol)
+                        (vector-ref v 1)))
+      stmt)
+     (sqlite-finalize stmt))))
 
 (define* (create-instance key: path)
   (make <sqlite-data-store> path: path))
 
 (define-method (store-uri (store <sqlite-data-store>))
   (build-uri 'store
-             path: "sqlite"
-             query: (encode-query-parameters
-                     `((path . ,(path store))))))
+             host: "sqlite"
+             path: (path store)))
 
 (define (init-db db)
   (sqlite-exec db "
