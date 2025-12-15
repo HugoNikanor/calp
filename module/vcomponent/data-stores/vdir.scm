@@ -112,6 +112,14 @@
 
 
 
+;;; Temporary callback called for each file upon loading,
+;;; intended to show a progress bar to the user
+;;; TODO allow this to be user configurable
+(define* (loading-callback key: idx total file)
+  ;; (format (current-error-port) "~a/~a: ~a~%"
+  ;;         idx total file)
+  'noop
+  )
 
 (define-method (initialize (self <vdir-data-store>) args)
   (next-method)
@@ -136,17 +144,19 @@
         (throw err proc fmt args data))))
 
   (define entry-by-filename (make-hash-table))
-  (for-each (lambda (filename)
-              ;; TODO if parsing fails, log an error, and continue with the rest of the elements.
-              ;; This includes both broken files, but also files containing non-compliant components, such as
-              ;; - file with no VEVENT
-              ;; - file with multiple VEVENTs with different UIDs
-              ;; - Missing UID
-              ;; - ...
-              (hash-set! entry-by-filename (basename filename)
-                         (call-with-input-file filename
-                           (parser (data-format self)))))
-            (glob (glob-pattern self)))
+  (define filenames (glob (glob-pattern self)))
+  (define file-count (length filenames))
+  (for (i filename) in (enumerate filenames)
+       ;; TODO if parsing fails, log an error, and continue with the rest of the elements.
+       ;; This includes both broken files, but also files containing non-compliant components, such as
+       ;; - file with no VEVENT
+       ;; - file with multiple VEVENTs with different UIDs
+       ;; - Missing UID
+       ;; - ...
+       (loading-callback idx: i total: file-count file: filename)
+       (hash-set! entry-by-filename (basename filename)
+                  (call-with-input-file filename
+                    (parser (data-format self)))))
 
   ;; (format (current-error-port)
   ;;         "filename-by-href: ~s~%entry-by-filename: ~s~%"
