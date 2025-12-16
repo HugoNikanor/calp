@@ -16,6 +16,7 @@
   :use-module ((calp util exceptions) :select ())
 
   :use-module (ice-9 getopt-long)
+  :use-module (ice-9 format)
 
   :use-module (statprof)
   :use-module (calp repl)
@@ -83,9 +84,8 @@ unix or TCP socket.<br/>
 
 
 (define (module-help)
-  (xml->sxml
-   (string-append
-    "<group><br/>
+  (string-append
+   "<group><br/>
 <center><b>" "Calp" "</b></center>
 <br/><br/>
 " (G_ "Usage: <b>calp</b> [ <i>flags</i> ] <i>mode</i> [ <i>mode flags</i> ]") "<br/>
@@ -106,7 +106,7 @@ unix or TCP socket.<br/>
     ;; Header for list of available flags.
     ;; Actual list is auto generated elsewhere.
     "<center><b>" (G_ "Flags") "</b></center>
-<br/></group>")))
+<br/></group>"))
 
 (define (ornull a b)
   (if (null? a)
@@ -133,8 +133,25 @@ unix or TCP socket.<br/>
   ;; help printing moved below some other stuff to allow
   ;; print-configuration-and-return to show bound values.
   (awhen (option-ref opts 'help #f)
-         (display (sxml->ansi-text (module-help))
-                  (current-output-port))
+         (let ((help (module-help)))
+          (catch 'parser-error
+            (lambda ()
+              (display (sxml->ansi-text
+                        (xml->sxml help))
+                       (current-output-port)))
+            (lambda (_ port . parts)
+              (define idx (seek port 0 SEEK_CUR))
+              (with-output-to-port (current-error-port)
+                (lambda ()
+                  (format #t "Invalid XML encountered:~{ ~a~}~%" parts)
+                  (format #t "<!-- BEGIN XML -->~%")
+                  (display (substring help 0 idx))
+                  (format #t "\x1b[41m~a\x1b[m"
+                          (string-ref help idx))
+                  (display (substring help (1+ idx)))
+                  (format #t "~%<!-- END XML -->~%")))
+              ;; TODO error code
+              (throw 'return))))
          (print-arg-help options)
          (throw 'return))
 
