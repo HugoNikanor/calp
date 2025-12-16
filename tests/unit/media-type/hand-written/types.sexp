@@ -21,11 +21,7 @@
  #:x-recur (recur-rule
             #:freq 'MONTHLY
             #:interval 1
-            #:byday (list (cons #f mon)
-                          (cons #f tue)
-                          (cons #f wed)
-                          (cons #f thu)
-                          (cons #f fri))
+            #:byday (list mon tue wed thu fri)
             #:bysetpos (list -1)
             #:wkst 1)
  #:x-text "This is some text"

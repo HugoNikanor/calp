@@ -87,13 +87,30 @@
        byday* bymonthday byyearday byweekno bymonth bysetpos
        wkst))))
 
+(define (dayspec? x)
+  (expand-validator x (pair-of (or false? integer?)
+                               (memv weekdays))))
+
+(define day-symbols #(sun mon tue wed thu fri sat))
+
+(define (serialize-dayspec x)
+  (if (not (car x))
+      (vector-ref day-symbols (cdr x))
+      `(cons ,(car x)
+             ,(vector-ref day-symbols (cdr x)))))
+
 (define (serialize-recur-rule record)
-  `(recur-rule
-    ,@(concatenate
-       (record->list/filtered
-        (lambda (key value)
-          (and value (list (symbol->keyword key) (serialize value))))
-        record))))
+  (with-serializers
+   ((dayspec? serialize-dayspec))
+   `(recur-rule
+     ,@(concatenate
+        (record->list/filtered
+         (lambda (key value)
+           (and value (list (symbol->keyword key)
+                            (case key
+                              ((wkst) (vector-ref day-symbols value))
+                              (else (serialize value))))))
+         record)))))
 
 ;;; Both interval and wkst are optional by the standard.
 ;;; We however default those to 1 and monday in the constructor
