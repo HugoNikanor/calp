@@ -23,10 +23,15 @@
   :use-module (hnh util type)
   :use-module (hnh util lens)
   :use-module (srfi srfi-71)
-  :use-module ((vcomponent type recurrence)
-               :select (byday recur-rule bymonthday))
+  ;; :use-module ((vcomponent type recurrence)
+  ;;              :select (byday recur-rule bymonthday))
+  :use-module (vcomponent type recurrence)
   :use-module (calp translation)
   :export (read-zoneinfo
+           zone-format
+           execute-day-spec
+           intermediary->zoneinfo
+           limit-intermediary
 
            zi-rule zi-rule?
            rule-name rule-from rule-to rule-in
@@ -40,24 +45,21 @@
            link-name link-target
 
            zoneinfo?
+           ;; TODO rewrite these to return non-mutable references,
+           ;; probably by running hash-map->list internally
            zoneinfo-zones zoneinfo-rules
+
            get-zone get-rule
 
            rule->dtstart
            rule->rrule
 
-           zone-format
-
-           execute-day-spec
 
            parsed-zic-intermediary
            parsed-zic-intermediary?
-           intermediary-rules intermediary-rules*
-           intermediary-zones intermediary-zones*
-           intermediary-links intermediary-links*
-           intermediary->zoneinfo
-
-           limit-intermediary
+           ;; intermediary-rules intermediary-rules*
+           ;; intermediary-zones intermediary-zones*
+           ;; intermediary-links intermediary-links*
            ))
 
 
@@ -464,7 +466,7 @@
 
 
 ;; The first time this rule was/will be applied
-;;; TODO move this to another module
+;;; TODO move this to another module, maybe (vcomponent datetime timezone)
 (define (rule->dtstart rule)
   ;; NOTE 'minimum and 'maximum represent the begining and end of time.
   ;; since I don't have a way to represent those ideas I just set a very
