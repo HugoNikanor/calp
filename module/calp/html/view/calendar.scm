@@ -372,12 +372,12 @@ window.default_calendar='~a';"
 
     ,@(let* (
              (flat-events
-              ;; A simple filter-sorted-stream on event-overlaps? here fails.
+              ;; A simple filter-sorted-stream on instance-overlaps? here fails.
               ;; See tests/annoying-events.scm
               (stream->list
                (stream-filter
                 (lambda (ev)
-                  ((@ (vcomponent datetime) event-overlaps?)
+                  ((@ (vcomponent datetime) instance-overlaps?)
                    ev pre-start
                    (date+ post-end (date day: 1))))
                 (stream-take-while (lambda (ev) (date<

@@ -3,9 +3,9 @@
   :use-module (srfi srfi-1)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
-               :select (event-length
+               :select (instance-length
                         overlapping?
-                        event-length/clamped))
+                        instance-length/clamped))
   :use-module (hnh util tree)
   :use-module (datetime)
   :use-module (calp html config)
@@ -54,8 +54,8 @@
 
 
 (define (lay-out-long-events start end events)
-  (fix-event-widths! events event-length-key: event-length
-                     event-length-comperator: date/-time>)
+  (fix-event-widths! events event-length-key: instance-length
+                     event-length-comperator: date-time>)
   (map (lambda (e) (create-top-block start end e))
        events))
 
@@ -82,7 +82,7 @@
   (define width*
     (* 100
        (/ (datetime->decimal-hour
-           (as-datetime (event-length/clamped start-date end-date ev))
+           (instance-length/clamped start-date end-date ev)
            start-date)
           total-length)))
 

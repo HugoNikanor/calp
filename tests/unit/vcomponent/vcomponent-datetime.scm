@@ -58,54 +58,50 @@
              dtend:   (datetime year: 2020 month: apr day: 1 hour: 13))))
 
   (test-assert "Without dtend"
-   (overlapping?
-    (vevent summary: "A"
-            dtstart: (date year: 2020 month: apr day: 1))
-    (vevent summary: "B"
-            dtstart: (datetime year: 2020 month: apr day: 1 hour: 10)))))
+    (overlapping?
+     (vevent summary: "A"
+             dtstart: (date year: 2020 month: apr day: 1))
+     (vevent summary: "B"
+             dtstart: (datetime year: 2020 month: apr day: 1 hour: 10)))))
 
-(test-group "event-contains?"
-  (let* ((dt (datetime year: 2020 month: jan day: 1
-                       hour: 10))
-         (ev (vevent dtstart: dt
-                     dtend: (datetime+ dt (datetime hour: 5)))))
-    (test-assert (event-contains? ev dt))
-    (test-assert (not (event-contains? ev (set dt (lens-compose date* day*) 10))))))
+(test-group "instance-zero-length?"
+  ;; TODO tests with DURATION
+  (test-assert (not (instance-zero-length? (vevent dtstart: (date)))))
+  (test-assert (instance-zero-length? (vevent dtstart: (datetime))))
+  (test-assert (instance-zero-length? (vevent dtstart: (datetime)
+                                              dtend: (datetime)))))
 
-(test-group "event-zero-length?"
-  (test-assert (not (event-zero-length? (vevent dtstart: (date)))))
-  (test-assert (event-zero-length? (vevent dtstart: (datetime))))
-  (test-assert (not (event-zero-length? (vevent dtstart: (datetime)
-                                               dtend: (datetime))))))
-
-(test-group "event-length"
+(test-group "instance-length"
   (test-equal "Datetime, with DTEND"
     (datetime day: 2 hour: 17)
-    (event-length
+    (instance-length
      (vevent
       dtstart: (datetime year: 2020 month: 3 day: 29 hour: 17)
       dtend:   (datetime year: 2020 month: 4 day:  1 hour: 10))))
 
   (test-equal "Datetime, without DTEND"
     (datetime)
-    (event-length
+    (instance-length
      (vevent
       dtstart: (datetime year: 2020 month: 3 day: 29 hour: 17))))
 
   (test-equal "Date, with DTEND"
-    (date day: 3)
-    (event-length
+    (datetime day: 3)
+    (instance-length
      (vevent
       dtstart: (date year: 2020 month: 3 day: 29)
       dtend:   (date year: 2020 month: 4 day:  1))))
 
   (test-equal "Date, without DTEND"
-    (date day: 1)
-    (event-length
+    (datetime day: 1)
+    (instance-length
      (vevent
-      dtstart: (date year: 2020 month: 3 day: 29)))))
+      dtstart: (date year: 2020 month: 3 day: 29))))
 
-(test-group "event-length/clamped"
+  ;; TODO durations
+  )
+
+(test-group "instance-length/clamped"
  (let ((ev
         (vevent
          dtstart: (datetime year: 2020 month: 3 day: 29 hour: 17)
@@ -116,7 +112,7 @@
 
    (test-equal "Correct clamping"
      (datetime hour: 7) ; 2020-03-29T17:00 - 2020-03-30T00:00
-     (event-length/clamped
+     (instance-length/clamped
       (date year: 2020 month: 3 day: 23) ; a time way before the start of the event
       (date year: 2020 month: 3 day: 29) ; a time slightly after the end of the event
       ev))
@@ -129,7 +125,7 @@
 
    (test-equal "Correct clamping UTC"
      (datetime hour: 7)
-     (event-length/clamped
+     (instance-length/clamped
       (date year: 2020 month: 3 day: 23)
       (date year: 2020 month: 3 day: 29)
       ev)))
@@ -137,7 +133,7 @@
  (let ((ev (vevent dtstart: (datetime year: 2020 month: 3 day: 1))))
    (test-equal
        (datetime)
-     (event-length/clamped
+     (instance-length/clamped
       (date year: 2020 month: 3 day: 1)
       (date year: 2020 month: 3 day: 2)
       ev
@@ -152,45 +148,45 @@
  )
 
 (let ((d (date year: 2020 month: jan day: 10)))
-  (test-group "event-length/day"
+  (test-group "instance-length/day"
 
     ;; TODO shouldn't a check for the correct date be done?
     (test-equal
         (time hour: 24)
-      (event-length/day
+      (instance-length/day
        d
        (vevent dtstart: (date))))
 
     (test-equal
         (time)
-      (event-length/day
+      (instance-length/day
        d
        (vevent dtstart: (datetime))))
 
     (test-equal "Within day"
       (time hour: 10)
-      (event-length/day
+      (instance-length/day
        d
        (vevent dtstart: (datetime date: d hour: 10)
                dtend: (datetime date: d hour: 20))))
 
     (test-equal "Ends tommorrow"
       (time hour: 14)
-      (event-length/day
+      (instance-length/day
        d
        (vevent dtstart: (datetime date: d hour: 10)
                dtend: (datetime date: (date+ d (date day: 1)) hour: 20))))
 
     (test-equal "Started yesterday"
       (time hour: 10)
-      (event-length/day
+      (instance-length/day
        d
        (vevent dtstart: (datetime date: (date- d (date day: 1)) hour: 10)
                dtend: (datetime date: d hour: 10))))
 
     (test-equal "Starts before date, ends after date"
       (time hour: 24)
-      (event-length/day
+      (instance-length/day
        d
        (vevent dtstart: (datetime date: (date- d (date day: 1)) hour: 10)
                dtend:   (datetime date: (date+ d (date day: 1)) hour: 10))))
@@ -198,35 +194,20 @@
     ;; TODO Test invalid cases
     ))
 
-(test-group "long-event?"
+(test-group "long-instance?"
   (test-assert "DTSTART being date is always a long event"
-    (long-event? (vevent dtstart: (date))))
+    (long-instance? (vevent dtstart: (date))))
   (test-assert "datetime DTSTART without DTEND is always short"
-    (not (long-event? (vevent dtstart: (datetime)))))
+    (not (long-instance? (vevent dtstart: (datetime)))))
   (test-assert "Event longer than 24h"
     (not
-     (long-event? (vevent dtstart: (datetime year: 2020 month: 1 day: 1 hour: 10)
+     (long-instance? (vevent dtstart: (datetime year: 2020 month: 1 day: 1 hour: 10)
                           dtend:   (datetime year: 2020 month: 1 day: 1 hour: 20)))))
   (test-assert "Event shorter than 24h"
-    (long-event? (vevent dtstart: (datetime year: 2020 month: 1 day: 1
+    (long-instance? (vevent dtstart: (datetime year: 2020 month: 1 day: 1
                                             hour: 1)
                          dtend:   (datetime year: 2020 month: 1 day: 2
                                             hour: 1 minute: 1)))))
-
-(test-group "really-long-event?"
-  (test-assert (not (really-long-event?
-                     (vevent dtstart: (date year: 2020 month: jan day: 1)
-                             dtend:   (date year: 2020 month: jan day: 2)))))
-  (test-assert (really-long-event?
-                (vevent dtstart: (date year: 2020 month: jan day: 1)
-                        dtend:   (date year: 2020 month: jan day: 3))))
-  (test-assert (not (really-long-event?
-                     (vevent dtstart: (datetime year: 2020 month: jan day: 1)
-                             dtend:   (datetime year: 2020 month: jan day: 2)))))
-  (test-assert (really-long-event?
-                (vevent dtstart: (datetime year: 2020 month: jan day: 1)
-                        dtend:   (datetime year: 2020 month: jan day: 2 second: 1))))
-  )
 
 (test-group "events-between"
   (let ((start (date year: 2020 month: jan day: 1))

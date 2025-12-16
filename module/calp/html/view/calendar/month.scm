@@ -10,7 +10,7 @@
   :use-module (vcomponent)
   :use-module (ice-9 match)
   :use-module ((vcomponent datetime)
-               :select (really-long-event?
+               :select (instance-length
                         events-between))
   :use-module ((calp html vcomponent)
                :select (make-block output-uid))
@@ -26,8 +26,8 @@
                                 allow-other-keys:)
 
   (define-values (long-events short-events)
-    ;; TODO should be really-long-event? or event-spanning-midnight
-    (partition really-long-event? (stream->list (events-between pre-start post-end events))))
+    (partition (lambda (ev) (datetime< (datetime day: 1) (instance-length ev)))
+               (stream->list (events-between pre-start post-end events))))
 
   (define short-event-groups
     (get-groups-between (group-stream (list->stream short-events))

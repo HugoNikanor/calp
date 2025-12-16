@@ -3,6 +3,7 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (datetime)
+  :use-module ((hnh util) :select (->))
   :use-module (vcomponent type duration))
 
 ;;; Tests extracted from RFC5545 through the following script
@@ -65,6 +66,13 @@
   'calendar-parse-error
   (string->duration "-P7WH"))
 
+(test-group "duration->datetime"
+  (let ((sign dt (-> "P2W" string->duration duration->datetime)))
+    (test-equal (datetime day: 14) dt))
+
+  (let ((sign dt (-> "PT1H2S" string->duration duration->datetime)))
+    (test-equal (datetime hour: 1 second: 2) dt))
+)
 
 
 '((vcomponent type duration))

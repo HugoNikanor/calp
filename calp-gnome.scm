@@ -21,9 +21,9 @@
 
  (define evs (stream->list (events-between (current-date) (date+ (current-date) (date day: 1)) events)))
 
- (define-values (longevs shortevs) (partition long-event? evs))
+ (define-values (longevs shortevs) (partition long-instance? evs))
 
- (fix-event-widths! shortevs event-length-key: (lambda (e) (event-length/day (current-date) e)))
+ (fix-event-widths! shortevs event-length-key: (lambda (e) (instance-length/day (current-date) e)))
 
  
 
@@ -42,7 +42,7 @@
           (define yalign (/ (time->decimal-hour (as-time (prop ev 'DTSTART))) 24))
           (define xscale (exact->inexact (/ (width ev) (- 1 (x-pos ev)))))
           (define yscale (exact->inexact (/ (- 1 yalign)
-                                            (/ (datetime->decimal-hour (event-length ev)) 24))))
+                                            (/ (datetime->decimal-hour (instance-length ev)) 24))))
           (define align (gtk-alignment-new xalign yalign xscale yscale))
           ;; (define event-container (make <gtk-layout>))
 

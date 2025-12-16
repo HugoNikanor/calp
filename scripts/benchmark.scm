@@ -20,7 +20,7 @@
 (define end #2020-07-01)
 
 (define (run-filter)
-  (stream->list (filter-sorted-stream (lambda (e) (event-overlaps? e start end))
+  (stream->list (filter-sorted-stream (lambda (e) (instance-overlaps? e start end))
                                       all-events)))
 
 (define (run-grouped)

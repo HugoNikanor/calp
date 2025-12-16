@@ -4,35 +4,44 @@
   :use-module (datetime)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
+  :use-module (ice-9 curried-definitions)
+  :use-module (hnh util type)
   :export (group-stream
            get-groups-between
            group->event-list))
 
 ;; TODO templetize this
 (define-stream (group-stream in-stream)
-  (define (ein? day) (lambda (e) (event-contains? e day)))
+  ;; Does any part of the instance overlap the given day
+  (define ((instance-contains? day) instance)
+    (typecheck day date?)
+    (typecheck instance vevent?)
+    (instance-overlaps? instance
+                        (datetime date: day)
+                        (datetime+ (datetime date: day)
+                                   (datetime day: 1))))
 
   (if (stream-null? in-stream)
       stream-null
       (let loop ((days (day-stream (as-date (prop1 (stream-car in-stream) 'DTSTART))))
                  (stream in-stream))
         (let ((day (stream-car days))
-              (tomorow (stream-car (stream-cdr days))))
+              (tomorrow (stream-car (stream-cdr days))))
 
-          (let ((head (stream-take-while (ein? day) stream))
+          (let ((head (stream-take-while (instance-contains? day) stream))
                 (tail
                  ;; This is a filter, instead of a stream-span together with head,
                  ;; since events can span multiple days.
                  ;; This starts with taking everything which end after the beginning
                  ;; of tommorow, and finishes with the rest when it finds the first
-                 ;; object which begins tomorow (after midnight, exclusize).
+                 ;; object which begins tomorrow (after midnight, exclusize).
                  (filter-sorted-stream*
-                  (lambda (e) (date/-time<? tomorow
+                  (lambda (e) (date/-time<? tomorrow
                                        (or (prop1 e 'DTEND)
                                            (if (date? (prop1 e 'DTSTART))
                                                (date+ (prop1 e 'DTSTART) (date day: 1))
                                                (prop1 e 'DTSTART)))))
-                  (lambda (e) (date/-time<=? tomorow (prop1 e 'DTSTART)))
+                  (lambda (e) (date/-time<=? tomorrow (prop1 e 'DTSTART)))
                   stream)))
 
 

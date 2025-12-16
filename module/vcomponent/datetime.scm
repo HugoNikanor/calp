@@ -1,3 +1,4 @@
+;;; TODO document this module
 (define-module (vcomponent datetime)
   :use-module (srfi srfi-1)
   :use-module ((srfi srfi-41) :select (stream-filter))
@@ -5,6 +6,7 @@
   :use-module (vcomponent)
   :use-module (vcomponent create)
   :use-module (vcomponent type recurrence)
+  :use-module (vcomponent type duration)
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (datetime zic)
@@ -16,87 +18,81 @@
   :use-module (ice-9 curried-definitions)
   :use-module (ice-9 match)
 
-  :export (#;parse-datetime
-           event-overlaps?
+  :export (
+           instance-overlaps?
            overlapping?
-           event-contains?
-           event-zero-length?
+           instance-zero-length?
 
-           event-length
-           event-length/clamped
-           event-length/day
+           instance-length
+           instance-length/clamped
+           instance-length/day
 
-           long-event?
-           really-long-event?
+           long-instance?
 
            events-between
 
            zoneinfo->vtimezone
            ))
 
-;;; date time pointer
-#;
-(define (parse-datetime dtime)
-  "Parse the given date[time] string into a date object."
-  (string->date
-   dtime (case (string-length dtime)
-           ((8)  "~Y~m~d")              ; All day
-           ((15) "~Y~m~dT~H~M~S")       ; "local" or TZID-param
-           ((16) "~Y~m~dT~H~M~S~z"))))  ; UTC-time
 
-(define (event-overlaps? event begin end)
-  "Check if the event overlaps the timespan.
-Event must have the DTSTART and DTEND protperty set."
+;;; NOTE all these procedures assume well well formed vevent instances.
+;;; This means that DTSTART MUST be present, and that DTEND and
+;;; DURATION isn't explicitly checked for type, but instead assumed to
+;;; match DTSTART (and so on).
+
+(define (instance-overlaps? event begin end)
+  "Check if the event overlaps the timespan."
   (typecheck event vevent?)
-  (timespan-overlaps? (prop1 event 'DTSTART)
-                      (cond ((prop1 event 'DURATION) => (lambda (dur)
-                                                          ;; TODO something like `start + duration`
-                                                          (throw 'DURATION-NOT-IMPLEMENTED)))
-                            ((prop1 event 'DTEND) => identity)
-                            (else (prop1 event 'DTSTART)))
-                      begin end))
+  (timespan-overlaps? (as-datetime (prop1 event 'DTSTART))
+                      (instance-end event)
+                      (as-datetime begin) (as-datetime end)))
 
 ;;; Check if two instances of events overlap
 (define (overlapping? event-a event-b)
   (typecheck event-a vevent?)
   (typecheck event-b vevent?)
-  ;; TODO DURATION
-  (timespan-overlaps? (prop1 event-a 'DTSTART)
-                      (or (prop1 event-a 'DTEND)
-                          (if (date? (prop1 event-a 'DTSTART))
-                              (date+ (prop1 event-a 'DTSTART) (date day: 1))
-                              (prop1 event-a 'DTSTART)))
-                      (prop1 event-b 'DTSTART)
-                      (or (prop1 event-b 'DTEND)
-                          (if (date? (prop1 event-b 'DTSTART))
-                              (date+ (prop1 event-b 'DTSTART) (date day: 1))
-                              (prop1 event-b 'DTSTART)))))
+  (timespan-overlaps? (as-datetime (prop1 event-a 'DTSTART))
+                      (instance-end event-a)
+                      (as-datetime (prop1 event-b 'DTSTART))
+                      (instance-end event-b)))
 
-(define (event-contains? ev date/-time)
-  "Does event overlap the date that contains time."
+(define (instance-zero-length? ev)
   (typecheck ev vevent?)
-  (typecheck date/-time (or date? datetime?))
-  (let* ((start (as-date date/-time))
-         (end (date+ start (date day: 1))))
-    (event-overlaps? ev start end)))
+  (define start (prop1 ev 'DTSTART))
+  (or (and=> (prop1 ev 'DURATION)
+             (lambda (dur) (datetime= (datetime) ((unval duration->datetime 1) dur))))
+      (and (datetime? start)
+           (or (and (not (prop1 ev 'DTEND))
+                    (not (prop1 ev 'DURATION)))
+               (and=> (prop1 ev 'DTEND)
+                      (lambda (end) (datetime= start end)))))
+      (and (date? start)
+           (and=> (prop1 ev 'DTEND)
+                  (lambda (end) (date= start end))))))
 
-(define (event-zero-length? ev)
-  (typecheck ev vevent?)
-  (and (datetime? (prop1 ev 'DTSTART))
-       (not (prop1 ev 'DTEND))
-       (not (prop1 ev 'DURATION))))
+(define (instance-end e)
+  (cond ((prop1 e 'DURATION)
+         => (lambda (d)
+              (datetime+ (as-datetime (prop1 e 'DTSTART))
+                         ((unval duration->datetime 1) d))))
+        ((prop1 e 'DTEND) => as-datetime)
+        (else
+         (datetime+ (as-datetime (prop1 e 'DTSTART))
+                    (instance-length e)))))
 
-;; Returns length of the event @var{e}, as a time-duration object.
-(define (event-length e)
-  (if (not (prop1 e 'DTEND))
-      (if (date? (prop1 e 'DTSTART))
-          (date day: 1)
-          (datetime))
-      ((if (date? (prop1 e 'DTSTART))
-           date-difference
-           datetime-difference)
-       (prop1 e 'DTEND)
-       (prop1 e 'DTSTART))))
+(define (instance-length e)
+  (let ((s (prop1 e 'DTSTART)))
+   (cond ((prop1 e 'DURATION) => (unval duration->datetime 1))
+         ((prop1 e 'DTEND)
+          => (lambda (d)
+               (datetime-difference (as-datetime d)
+                                    (as-datetime s))))
+         (else
+          (cond ((date? s)    (datetime day: 1))
+                ((datetime? s) (datetime))
+                (else (scm-error 'misc-error "instance-length"
+                                 "Non date or datetime object found in DTSTART: ~s"
+                                 (list s) #f)))))))
 
 ;;
 ;; |-----|      extent of event
@@ -104,32 +100,26 @@ Event must have the DTSTART and DTEND protperty set."
 ;;              defined through @var{start-date} and @var{end-date}
 ;;     |X|      part of event within that time (X)
 ;; 
-;; Returns the length of the interval (X).
-(define (event-length/clamped start-date end-date e)
-  (typecheck start-date (or date? datetime?))
-  (typecheck end-date (or date? datetime?))
+;; Returns the length of the interval `X`, as a datetime object
+(define (instance-length/clamped start-date end-date e)
+  (typecheck start-date date?)
+  (typecheck end-date   date?)
   (typecheck e vevent?)
-  (let ((end (or (prop1 e 'DTEND)
-                 (if (date? (prop1 e 'DTSTART))
-                     (date+ (prop1 e 'DTSTART) (date day: 1))
-                     (prop1 e 'DTSTART)))))
-    (if (date? (prop1 e 'DTSTART))
-        (date-difference (date-min (date+ end-date (date day: 1))
-                                   end)
-                         (date-max start-date
-                                   (prop1 e 'DTSTART)))
-        (datetime-difference (datetime-min (datetime date: (date+ end-date (date day: 1)))
-                                           end)
-                             (datetime-max (datetime date: start-date)
-                                           (prop1 e 'DTSTART))))))
+
+  (datetime-difference
+   (datetime-min (instance-end e)
+                 (datetime date: (date+ end-date (date day: 1))))
+   (datetime-max (as-datetime (prop1 e 'DTSTART))
+                 (datetime date: start-date))))
 
 ;; Returns the length of the part of @var{e} which is within the day
 ;; starting at the time @var{start-of-day}.
-;; currently the secund argument is a date, but should possibly be changed
+;; currently the second argument is a date, but should possibly be changed
 ;; to a datetime to allow for more explicit TZ handling?
-(define (event-length/day date e)
-  (typecheck date (or date? datetime?))
+(define (instance-length/day date e)
+  (typecheck date date?)
   (typecheck e vevent?)
+
   (if (not (prop1 e 'DTEND))
       (if (date? (prop1 e 'DTSTART))
           (time hour: 24)
@@ -156,32 +146,21 @@ Event must have the DTSTART and DTEND protperty set."
 ;; or if the total length of the event is greater than 24h.
 ;; For practical purposes, an event being long means that it shouldn't be rendered as a part
 ;; of a regular day.
-(define (long-event? ev)
-  (if (date? (prop1 ev 'DTSTART))
-      #t
-      (cond ((prop1 ev 'DTEND)
-             => (lambda (e)
-                  (datetime<= (datetime day: 1)
-                              (datetime-difference
-                               e (prop1 ev 'DTSTART))) ))
-            ((prop1 ev 'DURATION)
-             ;; TODO actually write
-             #t)
-            (else #f))))
-
-(define (really-long-event? ev)
-  (let ((start (prop1 ev 'DTSTART))
-        (end (prop1 ev 'DTEND)))
-    (and end (if (date? start)
-                 (date< (date+ start (date day: 1)) end)
-                 (datetime< (datetime day: 1)
-                            (datetime-difference end start))))))
-
+(define (long-instance? ev)
+  (or (date? (prop1 ev 'DTSTART))
+      (datetime<= (datetime day: 1)
+                  (instance-length ev))))
 
 ;; date, date, [sorted-stream events] → [sorted-stream events]
+;; DEPRECATED this is only useful when all events are in a single
+;; stream, which they haven't been since the introduction of data
+;; stores. See
+;; (@ (vcomponent type recurrence) expand-and-interleave-recurrences)
+;; instead
 (define (events-between start-date end-date events)
   (define (overlaps e)
     (timespan-overlaps? start-date (date+ end-date (date day: 1))
+                        ;; TODO DURATION
                         (prop1 e 'DTSTART) (or (prop1 e 'DTEND)
                                                (prop1 e 'DTSTART))))
 

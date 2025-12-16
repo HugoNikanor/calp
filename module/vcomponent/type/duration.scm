@@ -15,6 +15,8 @@
            string->duration
            duration->string
 
+           duration->datetime
+
            duration-week duration-week?
            duration-datetime duration-datetime?
            duration-sign
@@ -158,3 +160,16 @@
                               (list time: (apply time rem))
                               (cons* (car rem) (cadr rem)
                                      (loop (cddr rem)))))))))))
+
+
+
+(define (duration->datetime duration)
+  (typecheck duration duration?)
+  (values (duration-sign duration)
+          (cond ((duration-week? duration)
+                 (datetime day: (* 7 (duration-week-count duration))))
+                ((duration-datetime? duration)
+                 (datetime day: (or (duration-day duration) 0)
+                           time: (duration-time duration)))
+                (else (unreachable "duration->datetime" "Bad duration type: ~s"
+                                   (list duration))))))

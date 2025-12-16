@@ -11,9 +11,9 @@
   :use-module (calp html util)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
-               :select (long-event?
-                        event-length/day
-                        event-zero-length?
+               :select (long-instance?
+                        instance-length/day
+                        instance-zero-length?
                         events-between))
   :use-module ((calp html vcomponent)
                :select (make-block output-uid) )
@@ -28,7 +28,7 @@
 
 
 (define* (render-calendar key: calendars events start-date end-date allow-other-keys:)
-  (let* ((long-events short-events (partition long-event? (stream->list (events-between start-date end-date events))))
+  (let* ((long-events short-events (partition long-instance? (stream->list (events-between start-date end-date events))))
          (range (date-range start-date end-date)))
     `((script ,(lambda () (format #t "window.VIEW='week';")))
       (div (@ (class "calendar"))
@@ -128,14 +128,14 @@
          (short-events (stream->list events))
          #;
          (zero-length-events short-events
-                             (partition event-zero-length? (stream->list events))))
+                             (partition instance-zero-length? (stream->list events))))
 
     (fix-event-widths!
      short-events
      event-length-key: (lambda (e)
-                         (if (event-zero-length? e)
+                         (if (instance-zero-length? e)
                              (time hour: 1)
-                             (event-length/day day-date e))))
+                             (instance-length/day day-date e))))
 
     ;; TODO instead of one div per day, consider setting
     ;; column: 7 <width>
@@ -165,7 +165,7 @@
                      (time->decimal-hour
                       (as-time (prop ev 'DTSTART))))
                   0))
-  (define height (* 100/24 (time->decimal-hour (event-length/day date ev))))
+  (define height (* 100/24 (time->decimal-hour (instance-length/day date ev))))
 
 
   (define style
@@ -181,7 +181,7 @@
 
   (make-block
    ev `((class
-          ,(when (event-zero-length? ev)
+          ,(when (instance-zero-length? ev)
              " zero-length")
           ,(when (date<? (as-date (prop ev 'DTSTART)) date)
              " continued")

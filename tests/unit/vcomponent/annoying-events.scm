@@ -10,7 +10,7 @@
              stream->list
              stream-filter
              stream-take-while))
-  :use-module ((vcomponent datetime) :select (event-overlaps?))
+  :use-module ((vcomponent datetime) :select (instance-overlaps?))
   :use-module ((datetime) :select (date date+ date<))
   :use-module ((hnh util) :select (set!))
   :use-module (vcomponent create)
@@ -51,7 +51,7 @@
   (map (extract1 'SUMMARY)
        (stream->list
          (filter-sorted-stream
-           (lambda (ev) (event-overlaps? ev start (date+ start (date day: 8))))
+           (lambda (ev) (instance-overlaps? ev start (date+ start (date day: 8))))
            ev-set))))
 
 (test-equal "correct handling of non-contigious"
@@ -59,7 +59,7 @@
   (map (extract1 'SUMMARY)
        (stream->list
          (stream-filter
-           (lambda (ev) (event-overlaps? ev start end))
+           (lambda (ev) (instance-overlaps? ev start end))
            (stream-take-while
              (lambda (ev) (date< (prop1 ev 'DTSTART) end))
              ev-set)))))
