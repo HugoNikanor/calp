@@ -15,8 +15,11 @@
   :use-module (datetime timespec)
   :use-module ((vcomponent) :select (vcomponent-diff extract1 prop1))
   :use-module (vcomponent datetime)
+  :use-module (vcomponent datetime timezone)
   :use-module ((vcomponent type recurrence) :select (recur-rule))
   :use-module ((vcomponent create) :select (vevent vtimezone daylight standard)))
+
+;;; TODO RFC 5545 Specifies that an event lies in the range [start, end). Write explicit tests for this.
 
 
 (test-group "overlapping?"
@@ -303,4 +306,5 @@ Link    Europe/Zurich  Europe/Vaduz
 
 
 
-'((vcomponent datetime))
+'((vcomponent datetime)
+  (vcomponent datetime timezone))
