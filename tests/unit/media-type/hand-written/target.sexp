@@ -15,7 +15,7 @@
                             (with-parameters
                              #:language "sv"
                              "Beskrivning av händelsen"))
-        #:dtstart (datetime #:date #2023-05-01 #:time #00:00:00 #:tz #f)
+        #:dtstart #2023-05-01T00:00:00
         #:location "Room 5"
         #:priority 5
         #:status "CANCELLED"

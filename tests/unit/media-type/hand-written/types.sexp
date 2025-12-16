@@ -11,13 +11,13 @@
                    (with-parameters #:x-expected "false" #f))
  #:x-cal-address (string->uri "mailto:hugo@example.com")
  #:x-date #2025-01-02
- #:x-date-time (datetime #:date #2025-01-02 #:time #03:04:05 #:tz "Europe/Stockholm")
+ #:x-date-time (datetime #2025-01-02T03:04:05 "Europe/Stockholm")
  #:x-duration (duration #:sign '- #:day 5 #:time #07:00:00)
  #:x-float 3.141592653589793
  #:x-integer 1729
  #:x-period (period
              #:start #2025-01-02T03:04:05
-             #:end (duration #:sign '+ #:day 1 #:time #f))
+             #:end (duration #:sign '+ #:day 1))
  #:x-recur (recur-rule
             #:freq 'MONTHLY
             #:interval 1
