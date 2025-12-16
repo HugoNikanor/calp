@@ -17,9 +17,10 @@
 ;;; - retrieve stored entry
 ;;; - check for equality
 
-;;; - overwrite existing entry
+;;; - TODO overwrite existing entry
+;;; - TODO delete entry
 
-;;; - delete entry
+
 (define generate-href
   (let ((counter 0))
     (lambda ()
@@ -74,6 +75,8 @@
                      (put-event! store (list-ref entry 0) (list-ref entry 2)))
                    entries)
          (flush! store))
+       ;; TODO maybe explicitly close the store? Even if it SHOULD get garbage collected shortly
+
        ;; We close and re-open the store, to ensure we read from storage
        ;; instead of internal caches.
        (let ((store (store-uri->store uri)))

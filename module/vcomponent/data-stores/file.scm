@@ -193,14 +193,18 @@
          (hash-set! (%tz-by-tzid self) tzid
                     component)))
 
-  (when (hash-ref (%event-by-uid self) #f)
-    (warning "One or more components with no UID in ~s, ignoring" (path self))
-    ;; We remove invalid entries, since they can't be referenced, and
-    ;; it makes the rest of the code cleaner.
-    (hash-remove! (%event-by-uid self) #f))
+  (awhen (hash-ref (%event-by-uid self) #f)
+         (warning (G_ "~a component~[:;s~] with no UID in ~s, ignoring")
+                  (length it) (length it)
+                  (path self))
+         ;; We remove invalid entries, since they can't be referenced, and
+         ;; it makes the rest of the code cleaner.
+         (hash-remove! (%event-by-uid self) #f))
 
-  (when (hash-ref (%tz-by-tzid self) #f)
-    (warning "One or more timezones without TZID in ~s" (path self)))
+  (awhen (hash-ref (%tz-by-tzid self) #f)
+    (warning (G_ "~a timezone~[:;s~] without TZID in ~s")
+             (length it) (length it)
+             (path self)))
 
   (for-each (lambda (name)
               (awhen (string-match (format #f "^~a.(.*)$"

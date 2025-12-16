@@ -2,6 +2,8 @@
   :use-module (hnh util)
   :use-module (hnh util lens)
   :use-module (hnh util table)
+  :use-module (hnh util type)
+  :use-module (hnh util optional)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
                :select (events-between))
@@ -55,7 +57,7 @@
 ;; (script "const VIEW='??';"), where ?? is replaced by the name of the view.
 (define* (html-generate
           key:
-          (intervaltype 'all)    ; 'week | 'month | 'all
+          (intervaltype 'all)
           calendars  ; All calendars to work on, probably (get-calendars global-event-object)
           events     ; All events which can be worked on, probably (get-event-set global-event-object)
           start-date             ; First date in interval to show
@@ -68,6 +70,16 @@
           ;; which needs a bit on each side.
           (pre-start start-date)
           (post-end end-date))
+  (typecheck intervaltype (memv '(week month all)))
+  ;; TODO calendars
+  ;; TODO events
+  (typecheck start-date date?)
+  (typecheck end-date date?)
+  ;; TODO render-calendar
+  (typecheck next-start procedure?)
+  (typecheck prev-start procedure?)
+  (typecheck pre-start date?)
+  (typecheck post-end date?)
 
   ;; NOTE maybe don't do this again for every month
   (define evs (get-groups-between (group-stream events)
@@ -302,10 +314,12 @@ window.default_calendar='~a';"
                            (lambda (ev)
                              (fmt-single-event
                               ev `((id ,(html-id ev))
-                                   (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown"))))))
+                                   (data-calendar
+                                    ,(base64encode (or (prop (parent ev) 'NAME)
+                                                       "unknown"))))))
                            (stream-take-while
                             (compose (cut date/-time<? <> start-date)
-                                     (extract 'DTSTART))
+                                     (extract1 'DTSTART))
                             (cdr (stream-car evs))))))
               ,@(stream->list (stream-map fmt-day evs))))
 

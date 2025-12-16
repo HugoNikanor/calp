@@ -35,7 +35,6 @@
 
 ;; DSL for specifying type predicates
 ;; Basically a procedure body, but the variable to test is implicit.
-;;; TODO rename to expand-validator
 (define-syntax expand-validator
   (syntax-rules (and or not)
     ((_ v (and clauses ...))  (and (expand-validator v clauses) ...))

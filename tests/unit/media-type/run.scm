@@ -65,7 +65,8 @@
 
   ;; Check that the serialization suceeded
   (test-equal (format #f "Serialize ~s" test-name)
-    (formatter target) (formatter serialized-component))
+    (formatter target)
+    (formatter serialized-component))
 
   ;; If a parser is given, check that re-parsing the serialized component
   ;; returns the original component.

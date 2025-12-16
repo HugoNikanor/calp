@@ -24,5 +24,12 @@
 (define* (icalendar->vcomponent port key: (encoding "UTF-8"))
   (-> (get-bytevector-all port)
       (bytevector->unfolded-lines encoding: encoding filename: (port-filename port))
+
+
+      ;; TODO look at optimizing the following, tested with a 12000 line file
+
+      ;; 3.221425s real time, 12.446809s run time.  11.764367s spent in GC.
       parse-content-lines
+
+      ;; 13.591375s real time, 67.736568s run time.  63.251476s spent in GC.
       assemble-vcomponent-tree))

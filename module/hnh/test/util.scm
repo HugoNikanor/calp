@@ -27,7 +27,9 @@
 (define (escaped sequence string)
   (format #f "\x1b[~am~a\x1b[m" sequence string))
 
-;; Terminal output formatting. Doesn NOT compose
+;; Terminal output formatting. Does NOT compose, e.g.
+;; (green (string-append "Hello" (red "World") "!"))
+;; Will give an uncoloured exclamation mark
 (define (green s)  (escaped 32 s))
 (define (red s)    (escaped 31 s))
 (define (yellow s) (escaped 33 s))

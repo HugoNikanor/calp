@@ -144,7 +144,7 @@
 (define-generic set-store-calendar-timezone!)
 (define-generic remove-store-calendar-timezone!)
 
-;;; list-entries/shallow :: store -> href
+;;; list-entries/shallow :: store -> (list-of href)
 (define-generic list-entries/shallow)
 (define-method (list-entries/shallow (store <calendar-data-store>))
   (map car (list-entries store)))

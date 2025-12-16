@@ -129,6 +129,15 @@ types are built using this. For example, here is the definition of
 @end example
 
 @defmac expand-validator variable type-clause
+Syntax form which expands into an expression validating @var{variable}
+according to all type clauses provided. Primarily used when
+implementing new compound types (for example, @code{pair-of} above),
+but can also be used to construct a type predicate inline.
+
+@example
+(define (exact-integer? x)
+  (expand-validator x (and integer? exact?)))
+@end example
 @end defmac
 
 @subsection Named Types
