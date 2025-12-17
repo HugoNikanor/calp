@@ -700,6 +700,6 @@ Parses dates per RFC5545.
 Parses (the well known subset) of ISO-compatible dates.
 @end defun
 
-@defun parse-freeform-date str
+@defun parse-freeform-datetime str
 Currently an alias for parse-iso-datetime, but should preferably be extended.
 @end defun

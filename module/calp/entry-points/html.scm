@@ -129,7 +129,7 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt opt-spec)))
-  (define start (cond [(option-ref opts 'from #f) => parse-freeform-date]
+  (define start (cond [(option-ref opts 'from #f) => parse-freeform-datetime]
                       [else (start-of-month (current-date))]))
   (define count (string->number (option-ref opts 'count "12")))
 

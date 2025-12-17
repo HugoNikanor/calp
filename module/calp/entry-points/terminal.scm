@@ -25,7 +25,7 @@
     (print-arg-help options)
     (throw 'return))
 
-  (let ((date (or (and=> (option-ref opts 'date #f) parse-freeform-date)
+  (let ((date (or (and=> (option-ref opts 'date #f) parse-freeform-datetime)
                   (current-date))))
     (with-vulgar
      (lambda () (main-loop date)))))

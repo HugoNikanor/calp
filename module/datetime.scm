@@ -127,7 +127,7 @@
            parse-iso-time
            parse-iso-datetime
 
-           parse-freeform-date
+           parse-freeform-datetime
 
            date= date=?
            time= time=?
@@ -963,8 +963,7 @@ Returns -1 on failure"
 (define (parse-iso-datetime str)
   (string->datetime str))
 
-(define (parse-freeform-date str)
-  ;; TODO as-date?
+(define (parse-freeform-datetime str)
   (parse-iso-datetime str))
 
 
