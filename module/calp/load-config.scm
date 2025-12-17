@@ -25,8 +25,8 @@
 
   (eval-in-sandbox
    `(begin ,@forms)
-   time-limit: 10
-   allocation-limit: #e10e9
+   time-limit: 30
+   allocation-limit: #e10e12
    bindings: (cons* (all-bindings-in '(guile))
                     all-pure-and-impure-bindings)))
 

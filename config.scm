@@ -5,6 +5,10 @@
 (use-modules (calp config-base)
              (sxml simple)
              (sxml xpath)
+             ;; TODO loading glob is slow (~0.3s). This is really bad
+             ;; since we load this file on every program startup (and
+             ;; in a way which disables the compiler)
+             (glob)
              )
 
 ;;; SYSTEMD_EXEC_PID was added in v248 (2021-03-30)
@@ -15,6 +19,40 @@
   )
 
 ;; ((@ (vcomponent config) calendar-files) (glob "~/.local/var/cal/*"))
+((@ (vcomponent config) data-stores)
+ (list
+
+  (cons "TDDE18"
+        ((@ (vcomponent data-stores file) create-instance)
+         path: (car (glob "~/sample-cals/*TDDE18*.ics"))
+         media: "text/calendar"))
+
+  (cons "Maskin"
+        ((@ (vcomponent data-stores file) create-instance)
+         path: (car (glob "~/sample-cals/M1.json"))
+         media: "application/calendar+json"))
+
+  (cons "odd-fellow"
+        ((@ (vcomponent data-stores file) create-instance)
+         path: (car (glob "~/sample-cals/odd-fellow.ics"))
+         media: "text/calendar"))
+
+  (cons "VG"
+        ((@ (vcomponent data-stores vdir) create-instance)
+         path: (car (glob "~/sample-cals/Västgöta Nation"))
+         media: "text/calendar"))
+
+  (cons "Calendar"
+        ((@ (vcomponent data-stores sqlite) create-instance)
+         path: (car (glob "~/sample-cals/cal.db"))))
+
+  ;; ;; NOTE This one is REALLY slow to start
+  ;; (cons "Calendar"
+  ;;       ((@ (vcomponent data-stores vdir) create-instance)
+  ;;        path: "/home/hugo/.local/var/cal/Calendar"
+  ;;        media: "text/calendar"))
+
+ ))
 
 (define my-courses
   '((TSEA82 . "Datorteknik")
