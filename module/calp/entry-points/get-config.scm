@@ -1,18 +1,22 @@
 (define-module (calp entry-points get-config)
   :use-module (hnh util)
   :use-module (hnh util object)
+  :use-module (hnh util type)
+  :use-module (hnh util serialize)
+  :use-module ((hnh util io)
+               :select (read-all ensure-newline))
   :use-module (ice-9 ftw)
   :use-module (ice-9 match)
   :use-module (ice-9 format)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-88)
-  :use-module (hnh util type)
-
 
   :use-module (hnh module-introspection all-modules)
   :use-module (hnh module-introspection)
-  :use-module ((hnh util io)
-               :select (read-all ensure-newline))
+
+  :use-module ((web uri) :select (uri->string))
+  :use-module ((vcomponent data-stores common)
+               :select (calendar-data-store? store-uri))
 
   :use-module ((calp translation)
                :select (G_ translate))
@@ -65,20 +69,35 @@
   (format #t ";;; Found configurable options in the program~%")
   (format #t ";;;~%")
 
-  (for (module-name . configuration-options) in (group-by module configuration-items)
-       (newline)
-       (format #t "[~{~a~^ ~}]~%" module-name)
-       (for config in configuration-options
-            (awhen (description config)
-                   (format #t ";; ~a~%" it))
-            (define real-value
-              ((module-ref (resolve-interface module-name)
-                           (name config))))
+  (with-serializers
+   ((calendar-data-store? (compose uri->string store-uri))
+    (boolean? (lambda (b) (if b 'true 'false))))
+   (for (module-name . configuration-options) in (group-by module configuration-items)
+        (newline)
+        (format #t "[~{~a~^ ~}]~%" module-name)
+        (for config in configuration-options
+             (awhen (description config)
+                    (format #t ";; ~a~%" it))
+             (define real-value
+               ((module-ref (resolve-interface module-name)
+                            (name config))))
 
-            (cond ((equal? (default config) real-value)
-                   (format #t "~a = ~s~%" (name config) (default config)))
-                  (else
-                   (format #t ";~a = ~s~%" (name config) (default config))
-                   (format #t "~a = ~s~%" (name config) real-value)))))
+             (cond ((equal? (default config) real-value)
+                    (format #t "~a = ~s~%"
+                            (name config)
+                            (serialize (default config))))
+                   (else
+                    (format #t ";~a = ~s~%" (name config) (default config))
+                    (cond ((expand-validator real-value (list-of pair?))
+                           (for-each (lambda (pair)
+                                       (format #t "~a[~a] = ~s~%"
+                                               (name config)
+                                               (car pair)
+                                               (serialize (cdr pair))))
+                                     real-value)
+                           )
+                          (else
+                           (format #t "~a = ~s~%" (name config)
+                                   (serialize real-value)))))))))
 
   (newline))
