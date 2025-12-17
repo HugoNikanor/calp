@@ -78,7 +78,7 @@
               (define used-count (length used-symbols))
               (define total-count (length (module-map list mod)))
 
-              (format #t "~a/~a  ~a~%    used ~s~%  unused ~s~%"
+              (format #t "~a/~a  ~a~%    used ~s~%  unused ~s~%~%"
                       used-count total-count (module-name mod)
                       used-symbols
                       (lset-difference eq? all-symbols used-symbols)))
