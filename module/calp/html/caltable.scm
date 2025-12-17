@@ -75,29 +75,34 @@
 
         ;; actual days
 
-        ,@(map (td (lambda (date)
-                     `((class "prev")
-                       (href ,(->link
-                               ;; (prev-start date)
-                               (iterate
-                                prev-start
-                                (lambda (d) (date<= d date (next-start d)))
-                                start-date))
-                             "#" ,(date-link date)))))
-               (date-range pre-start (date- start-date (date day: 1))))
+        ;; Visible days from the previous month
+        ,@(unless (date= pre-start start-date)
+            (map (td (lambda (date)
+                       `((class "prev")
+                         (href ,(->link
+                                 ;; (prev-start date)
+                                 (iterate
+                                  prev-start
+                                  (lambda (d) (date<= d date (next-start d)))
+                                  start-date))
+                               "#" ,(date-link date)))))
+                 (date-range pre-start (date- start-date (date day: 1)))))
 
 
+        ;; This months days
         ,@(map (td (lambda (date) `((href "#" ,(date-link date)))))
                (date-range start-date end-date))
 
 
-        ,@(map (td (lambda (date)
-                     `((class "next")
-                       (href ,(->link
-                               ;; (next-start date)
-                               (iterate
-                                next-start
-                                (lambda (d) (and (date<= d date)
-                                            (date< date (next-start d))))
-                                start-date)) "#" ,(date-link date)))))
-               (date-range (date+ end-date (date day: 1)) post-end))))
+        ;; Visible days of the next month
+        ,@(unless (date= end-date post-end)
+            (map (td (lambda (date)
+                       `((class "next")
+                         (href ,(->link
+                                 ;; (next-start date)
+                                 (iterate
+                                  next-start
+                                  (lambda (d) (and (date<= d date)
+                                              (date< date (next-start d))))
+                                  start-date)) "#" ,(date-link date)))))
+                 (date-range (date+ end-date (date day: 1)) post-end)))))
