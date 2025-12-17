@@ -1,6 +1,5 @@
 (define-module (sxml namespaced)
   :use-module (sxml ssax)
-  :use-module (sxml util)
   :use-module (ice-9 match)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
@@ -304,6 +303,23 @@
 ;; Takes a tree of namespaced-sxml, and optionally an assoc list from namespace symbols, to prefered prefix.
 ;; Returns a sxml tree, with xmlns:<prefix>=namespace attributes
 (define* (namespaced-sxml->sxml tree optional: (namespace-prefixes '()))
+
+  (define (modify-root-element tree modifier)
+    (match tree
+      (('*TOP* rest ...)
+       (let ((init last (init+last rest)))
+         `(*TOP* ,@init ,(modifier last))))
+      (root (modifier root))))
+
+  (define (add-attributes element added-attributes)
+    (match element
+      ((el ('@ . attributes) . children)
+       `(,el (@ ,@attributes ,@added-attributes)
+             ,@children))
+      ((el . children)
+       `(,el (@ ,@added-attributes)
+             ,@children))))
+
   (let ((tree ns ((namespaced-sxml->sxml* tree) namespace-prefixes)))
     (modify-root-element
      tree
