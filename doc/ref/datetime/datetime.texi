@@ -281,16 +281,6 @@ Returns an @ref{(guile)SRFI-43} stream of <date> objects, starting at
 Returns a stream of each day from @var{start-day}.
 @end defun
 
-@defun month-stream start-day
-Returns a stream of each months from @var{start-day}.
-Day component stays the same.
-@end defun
-
-@defun week-stream start-day
-Returns a stream of each week from @var{start-day}
-(increments of 7 days).
-@end defun
-
 @defun time-min a b
 @defunx time-max a b
 @defunx date-min a b

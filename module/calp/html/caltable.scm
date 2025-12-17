@@ -71,9 +71,7 @@
         ,@(map (lambda (v) `(div (@ (class "row-head")) ,v))
                ;; TODO translate this
                (map week-number
-                    (stream->list
-                     (stream-take-while (lambda (s) (date<= s post-end))
-                                        (week-stream pre-start)))))
+                    (date-range pre-start post-end 7)))
 
         ;; actual days
 

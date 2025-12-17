@@ -114,17 +114,15 @@
 ;; week-day, date → (list date)
 ;; TODO remane procdure, and clarify documentation
 (define (all-wday-in-month wday month-date)
-  (stream->list
-   (stream-take-while
-    (lambda (d) (= (month d) (month month-date)))
-    (week-stream (find-first-week-day wday month-date)))))
+  (date-range (find-first-week-day wday month-date)
+              (end-of-month month-date)
+              7))
 
 
 (define (all-wday-in-year wday year-date)
-  (stream->list
-   (stream-take-while
-    (lambda (d) (= (year d) (year year-date)))
-    (week-stream (find-first-week-day wday year-date)))))
+  (date-range (find-first-week-day wday year-date)
+              (end-of-year year-date)
+              7))
 
 
 

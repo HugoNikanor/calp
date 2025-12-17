@@ -74,8 +74,6 @@
 
            date-stream
            day-stream
-           month-stream
-           week-stream
 
            time-min
            time-max
@@ -385,12 +383,6 @@
 (define (day-stream start-day)
   (date-stream (date day: 1) start-day))
 
-(define (month-stream start-day)
-  (date-stream (date month: 1) start-day))
-
-(define (week-stream start-day)
-  (date-stream (date day: 7) start-day))
-
 (define (time-min a b)
   (if (time<? a b) a b))
 
@@ -583,15 +575,17 @@
           (iota (modulo (- (* 7 5) month-len month-start) 7) 1)))))
 
 
-;; The amount of days in the given interval, both end pointts inclusive
+;; The amount of days in the given interval, both end points inclusive
 (define (days-in-interval start-date end-date)
   (unless (date<= start-date end-date)
     (scm-error 'misc-error "days-in-interval"
                "End date must be greater (or equal) to start date: ~s, ~s"
                (list start-date end-date)
                #f))
+  ;; Equivalent to (length (date-range start-date end-date)), but hopefully
+  ;; more performant (not tested)
   (let ((diff (date-difference (date+ end-date (date day: 1)) start-date)))
-    (->> (month-stream start-date)
+    (->> (date-stream (date month: 1) start-date)
          (stream-take (+ (month diff)
                          (* 12 (year diff))))
          (stream-map days-in-month)

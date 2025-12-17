@@ -464,21 +464,7 @@
           (date year: 2020 month: 01 day: 05))
     (stream->list 5 (day-stream (date year: 2020 month: 01 day: 01))))
 
-  (test-equal "Month stream"
-    (list (date year: 2020 month: 01 day: 01)
-          (date year: 2020 month: 02 day: 01)
-          (date year: 2020 month: 03 day: 01)
-          (date year: 2020 month: 04 day: 01)
-          (date year: 2020 month: 05 day: 01))
-    (stream->list 5 (month-stream (date year: 2020 month: 01 day: 01))))
-
-  (test-equal "Week stream"
-    (list (date year: 2020 month: 01 day: 01)
-          (date year: 2020 month: 01 day: 08)
-          (date year: 2020 month: 01 day: 15)
-          (date year: 2020 month: 01 day: 22)
-          (date year: 2020 month: 01 day: 29))
-    (stream->list 5 (week-stream (date year: 2020 month: 01 day: 01)))))
+)
 
 ;; See time< tests for more context
 (test-group "Min/max"
