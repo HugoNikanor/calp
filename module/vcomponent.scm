@@ -30,6 +30,7 @@
            extract1
 
            param*
+           param
 
            add-child
 
@@ -159,6 +160,13 @@
 
 (define (param* key)
   (lens-compose vline-parameters* (table-focus key)))
+
+(define param
+  (case-lambda
+    ((vline key)
+     (unjust (get vline (param* key)) #f))
+    ((vline key value)
+     (set vline (param* key) (just value)))))
 
 (define (vcalendar? x) (and (vcomponent? x) (eq? 'VCALENDAR (type x))))
 (define (vevent?    x) (and (vcomponent? x) (eq? 'VEVENT    (type x))))

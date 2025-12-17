@@ -63,8 +63,18 @@ Curried version of @code{prop1}.
 @end defun
 
 @defun prop% component key
-Returns either a list of vlines, or @code{#f}.
+Returns either a list of vlines, or @code{#f}. This is also the
+recommended procedure to check for the existence of a property.
 @end defun
+
+@defun param vline key [value]
+Accessor for param. Getter return @code{#f} on missing keys.
+@end defun
+
+@deftp {Lens} param* key
+Focus the posibility of a parameter in a vline. Takes and return
+Optionals.
+@end deftp
 
 @defun add-child parent child
 Returns a new component, which is @var{parent} with @var{child} added
