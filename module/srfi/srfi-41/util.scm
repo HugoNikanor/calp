@@ -4,6 +4,7 @@
   :use-module (srfi srfi-71)
   :use-module ((ice-9 sandbox) :select (call-with-time-limit))
   :use-module ((hnh util) :select (find-extreme))
+  :use-module (hnh util type)
   :export (stream-car+cdr
            eager-stream-cons
            interleave-streams
@@ -24,7 +25,13 @@
            stream-uniq
            stream-univ
            stream-unique
+
+           stream-of
            ))
+
+(define-syntax-rule (stream-of x _)
+  ;; TODO figure out better way to "look inside" stream without forcing it
+  (stream? x))
 
 (define (stream-car+cdr stream)
   (values (stream-car stream)
