@@ -46,7 +46,7 @@
            (cons* week-start e
                   (filter (match-lambda ((_ _ ev) (instance-overlaps? ev week-start (date+ e (date day: 1)))))
                           long-events)))
-         (date-range pre-start post-end (date day: 7))))
+         (date-range pre-start post-end 7)))
 
   (typecheck long-event-groups (list-of (pair-of* date? date? (list-of (tuple-of string? string? vevent?)))))
   ;; The grid-template-rows below depends on this being true

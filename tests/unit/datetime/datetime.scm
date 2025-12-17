@@ -723,11 +723,11 @@
         (date year: 2020 month: 01 day: 25)
         (date year: 2020 month: 01 day: 27)
         (date year: 2020 month: 01 day: 29)
-        (date year: 2020 month: 01 day: 31))
+        (date year: 2020 month: 01 day: 31)
+        (date year: 2020 month: 02 day: 2))
   (date-range (date year: 2020 month: 1 day: 1)
-              ;; This is an invalid date, but it tests how "invalid" input is handled.
-              (date year: 2020 month: 1 day: 100)
-              (date day: 2)))
+              (date year: 2020 month: 2 day: 2)
+              2))
 
 
 

@@ -444,9 +444,9 @@ Convert a positive integer denoting a number of seconds, to its
 corresponding time value.
 @end defun
 
-@defun date-range start end [increment=(date day: 1)]
-Returns a list of all dates from start to end.
-Both inclusive
+@defun date-range start end [increment=1]
+Returns a list of all dates from @var{start} to @var{end}, in steps of
+@var{increment} days. Both inclusive
 @end defun
 
 @defun locale-month
