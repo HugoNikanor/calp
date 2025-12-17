@@ -42,6 +42,8 @@
   )
 
 ;;; TODO inotify on the file, in case another program modifies it
+;;; Any change requires reloading the entire file
+;;; And then ensuring that we have an href for each entry
 
 (define-config xattr-prefix "user.calp"
   pre: (ensure string?))
@@ -252,12 +254,19 @@
                  ;; ics extension not needed, but looks good
                  (href-xattr (string-append uid ".ics"))
                  (string->utf8 uid)))
-              unreferenced-uids)))
+              unreferenced-uids)
+    ;; TODO don't do this if store is stdin or stdout
+    (execute-queued-xattr! self)
+
+    ;; TODO TODO update href-uid-map
+    ;; TODO TODO update event-by-uid
+    ))
 
 
 (define-method (list-entries (this <file-data-store>))
   (define int (force (internals this)))
   (for (uid . event) in (hash-map->list cons (%event-by-uid int))
+       ;; TODO this isn't how hrefs work!
        (cons (format #f "~a.ics" uid)
              (wrap-components (%root-object int) (%tz-by-tzid int)
                               event))))
@@ -403,6 +412,7 @@
                               (or (assoc-ref groups 'VTODO) '())
                               (or (assoc-ref groups 'VFREEBUSY) '())))
                      'UID))
+  ;; TODO TODO we never update the href-uid-map
   (hash-set! (%event-by-uid int) uid
              (or (assoc-ref groups 'VEVENT)
                  (assoc-ref groups 'VTODO)
