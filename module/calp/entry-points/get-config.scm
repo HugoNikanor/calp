@@ -109,6 +109,22 @@
 
   (newline))
 
+(define (output-as-scheme configurations)
+  (format #t ";;;~%")
+  (format #t ";;; Found configurable options in the program~%")
+  (format #t ";;;~%")
+
+  (with-serializers
+   ((calendar-data-store? (lambda (x) `(store-uri->store ,(uri->string (store-uri x)))))
+    (procedure? (lambda (x) (or (procedure-source x) x))))
+   (for-each (lambda (config)
+               (define real-value
+                 ((module-ref (resolve-interface (module config))
+                              (name config))))
+               (format #t "~y" `((@ ,(module config) ,(name config))
+                                 ,(serialize real-value))))
+             configurations)))
+
 (define (main args)
   (define options (getopt-long args (getopt-opt opt-spec)))
 
@@ -116,7 +132,8 @@
     (find-configurations (all-files-and-modules-under-directory "module")))
 
   (define formats
-    `((ini . ,output-as-ini)))
+    `((ini . ,output-as-ini)
+      (scheme . ,output-as-scheme)))
 
   (let ((fmt (string->symbol (option-ref options 'format "ini"))))
     (cond ((assoc-ref formats fmt)
