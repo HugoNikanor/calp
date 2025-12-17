@@ -12,10 +12,12 @@
                :select (read-all ensure-newline))
 
   :use-module ((calp translation)
-               :select (translate))
+               :select (G_ translate))
 
-  :export (main))
+  :export (%summary main))
 
+(define %summary
+  (G_ "Gathers configurable items from the source code."))
 
 (define (main args)
   (format #t ";;;~%")
