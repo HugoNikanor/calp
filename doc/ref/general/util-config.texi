@@ -65,6 +65,15 @@ if @var{value} satisfies @var{predicate}, and if so returns @var{value}.
 @end example
 @end defun
 
+@defmac with-source proc
+Ensures that a procedure gets it source captured. Recommended to be
+used when a procedure is set as a configuration value, to allow
+printing it later.
+
+Note that the procedure body is embedded as is, meaning that module
+resolution is left as an exercise to the reader.
+@end defmac
+
 @subsection Entry Point
 
 @deftp {Entry Point} get-config

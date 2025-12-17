@@ -9,7 +9,7 @@
   :use-module (srfi srfi-1)
   :use-module (ice-9 curried-definitions) ; for ensure
   :use-module (calp translation)
-  :export (define-config ensure))
+  :export (define-config ensure with-source))
 
 (define (fix-keywords args)
   (map (lambda (arg)
@@ -64,3 +64,8 @@
 (define ((ensure predicate) value)
   (if (predicate value)
       value #f))
+
+(define-syntax-rule (with-source p)
+  (let ((p* p))
+    (set-procedure-property! p* 'source (quote p))
+    p*))

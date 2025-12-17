@@ -66,11 +66,12 @@
   (or (assoc-ref alist key) default key))
 
 ((@ (calp html filter) summary-filter)
- (lambda (ev str)
-   (regexp-substitute/global
-    #f "T[A-Z]{3}[0-9]{2}" str
-    'pre (lambda (m) (aref my-courses (string->symbol (match:substring m))))
-    'post)))
+ (with-source
+  (lambda (ev str)
+    (regexp-substitute/global
+     #f "T[A-Z]{3}[0-9]{2}" str
+     'pre (lambda (m) (aref my-courses (string->symbol (match:substring m))))
+     'post))))
 
 (define (parse-html str)
   (catch 'misc-error
@@ -127,12 +128,13 @@
   (make-regexp "</?\\w+( +\\w+(=[\"']?\\w+[\"']?)?)* */?>"))
 
 ((@ (calp html filter) description-filter)
- (lambda (ev str)
-   (cond [(prop1 ev 'X-MICROSOFT-SKYPETEAMSMEETINGURL)
-          (parse-teams-description str)]
-         [(regexp-exec html-rx str)
+ (with-source
+  (lambda (ev str)
+    (cond [(prop1 ev 'X-MICROSOFT-SKYPETEAMSMEETINGURL)
+           (parse-teams-description str)]
+          [(regexp-exec html-rx str)
            (parse-html str)]
-         [else (parse-links str)])))
+          [else (parse-links str)]))))
 
 ((@ (datetime) week-start) mon)
 ((@ (vcomponent config) default-calendar) "Calendar")
