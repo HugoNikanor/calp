@@ -970,6 +970,11 @@ date/-time> date/-time>? date/-time>= date/-time>=?
 ;; TODO
 datetime+ datetime-
 
+;;; TODO document this behaviour
+(test-equal "(datetime+ x 0) causes overflow handling"
+  (datetime year: 2020 month: 3 day: 1)
+  (datetime+ (datetime year: 2020 month: 2 day: 30) (datetime)))
+
 (test-group "Date difference"
   (test-assert "The differente between a date and itself is zero"
     (date-zero? (date-difference (date year: 2022 month: 02 day: 02) (date year: 2022 month: 02 day: 02))))

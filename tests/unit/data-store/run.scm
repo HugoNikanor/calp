@@ -20,6 +20,11 @@
 ;;; - TODO overwrite existing entry
 ;;; - TODO delete entry
 
+;;; - TODO check how they manage an external part modifying them
+;;;   + new entries added, but without hrefs set
+;;;   + entries deleted
+;;;   + entries changed
+;;;   + invalid data added
 
 (define generate-href
   (let ((counter 0))

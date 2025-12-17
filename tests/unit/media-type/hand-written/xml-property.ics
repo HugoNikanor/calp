@@ -1,0 +1,10 @@
+BEGIN:CONTAINER
+XML:<kml xmlns="http://www.opengis.net/kml/2.2">\n
+   <Document>\n
+     <name>KML Sample</name>\n
+     <open>1</open>\n
+     <description>An incomplete example of a KML docum
+ ent - used as an example!</description>\n
+   </Document>\n
+ </kml>
+END:CONTAINER

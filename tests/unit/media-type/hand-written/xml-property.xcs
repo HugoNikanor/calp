@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xcal:icalendar xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0">
+ <xcal:container>
+  <xcal:properties>
+   <kml xmlns="http://www.opengis.net/kml/2.2">
+    <Document>
+     <name>KML Sample</name>
+     <open>1</open>
+     <description>An incomplete example of a KML document - used as an example!</description>
+    </Document>
+   </kml>
+  </xcal:properties>
+ </xcal:container>
+</xcal:icalendar>

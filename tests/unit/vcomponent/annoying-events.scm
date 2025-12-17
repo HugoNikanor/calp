@@ -21,20 +21,25 @@
 
 (define end (date+ start (date day: 8)))
 
+;;; [--Event A-------------------------------]
+;;;           [Event B]
+;;;                          [Event C]
+;;;                      [--Target Timespan--]
+
 (define ev-set
   (stream
-    (vevent                              ; should be part of the result
-      summary: "A"
-      dtstart: (date year: 2021 month: 10 day: 01)
-      dtend: (date year: 2021 month: 12 day: 01))
-    (vevent                              ; should NOT be part of the result
-      summary: "B"
-      dtstart: (date year: 2021 month: 10 day: 10)
-      dtend: (date year: 2021 month: 10 day: 11))
-    (vevent                              ; should also be part of the result
-      summary: "C"
-      dtstart: (date year: 2021 month: 11 day: 02)
-      dtend: (date year: 2021 month: 11 day: 03))))
+   (vevent                              ; should be part of the result
+    summary: "A"
+    dtstart: (date year: 2021 month: 10 day: 01)
+    dtend: (date year: 2021 month: 12 day: 01))
+   (vevent                          ; should NOT be part of the result
+    summary: "B"
+    dtstart: (date year: 2021 month: 10 day: 10)
+    dtend: (date year: 2021 month: 10 day: 11))
+   (vevent                         ; should also be part of the result
+    summary: "C"
+    dtstart: (date year: 2021 month: 11 day: 02)
+    dtend: (date year: 2021 month: 11 day: 03))))
 
 ;; (if (and (date< (prop ev 'DTSTART) start-date)
 ;;          (date<= (prop ev 'DTEND) end-date))
