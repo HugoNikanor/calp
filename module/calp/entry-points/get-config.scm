@@ -40,7 +40,7 @@
       (newline)
       (format #t "[~{~a~^ ~}]~%" module-name)
       (for-each (match-lambda
-                  (('define-config name default kvs ...)
+                  (('define-config name default-value kvs ...)
                    (cond ((memv description: kvs)
                           => (match-lambda
                                ((description: (_ desc) rest ...)
@@ -48,8 +48,18 @@
                                         (gettext desc "calp")))
                                ((description: desc rest ...)
                                 (format #t ";; ~a~%" desc)))))
-                   (format #t "~a = ~s~%"
-                           name default)))
+                   (define real-value
+                     ((module-ref (resolve-interface module-name)
+                                  name)))
+                   ;; TODO define-config should include a new field
+                   ;; #:value-pretty-print (or similar)
+                   ;; which takes the actual value, and displays it
+                   ;; in a way suitable for output here
+                   (cond ((equal? default-value real-value)
+                          (format #t "~a = ~s~%" name default-value))
+                         (else
+                          (format #t ";; ~a = ~s~%" name default-value)
+                          (format #t "~a = ~s~%" name real-value)))))
                 configurations)))
 
   (newline))
