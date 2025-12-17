@@ -21,6 +21,8 @@
   :use-module (hnh util type)
   :use-module (hnh util named-type)
   :use-module (hnh util uuid)
+  :use-module (hnh util color)
+  :use-module (hnh util color parse)
   :use-module (web uri)
   :use-module ((web query) :select (encode-query-parameters))
   :use-module (datetime)
@@ -302,7 +304,8 @@ CREATE TABLE IF NOT EXISTS metadata
   (remove-metadata! (database store) "description"))
 
 (define-method (store-color (this <sqlite-data-store>))
-  (get-metadata (database this) "color"))
+  (and=> (get-metadata (database this) "color")
+         parse-color))
 
 (define-method (set-store-color! (this <sqlite-data-store>) name)
   (set-metadata! (database this) "color" name))

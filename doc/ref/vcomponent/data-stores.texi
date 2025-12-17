@@ -140,7 +140,15 @@ indicating that the store has no value for that resource.
 @deftp  {GOOPS method} store-color store
 @deftpx {GOOPS method} set-store-color! store color
 @deftpx {GOOPS method} remove-store-color! store
-Display color for the calendar, represented as a string.
+Optional color of the data store (or rather, color of a calendar).
+
+TODO each backend basically has weird requirements for what is
+accepted. Each store MUST return either #f or a color object.
+@c TODO link color
+And during storage should convert the color object to the closest
+match representable by its internal format.
+
+
 
 This color, per RFC 7986, §5.9, should satisfy the rules for a CSS3
 color, per §4.3 of W3C.REC-css3-color-20110607@footnote{
@@ -154,6 +162,13 @@ REC-css3-color-20110607, June 2011,
 
 Currently, no WebDAV property is registered for this data.
 @c TODO webdav property?
+
+@c ;; TODO check color specification for all known implementations:
+@c ;; - vdir: `#\d{6}`
+@c ;; - caldav: no color system defined
+@c ;; - old apple calendar standard: I fail to find any form of documentation online, but it seems to be `#\d{6}`
+@c ;; - new iCalendar standard: CSS3 color rules
+
 @end deftp
 
 @deftp  {GOOPS method} store-displayname store

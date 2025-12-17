@@ -29,6 +29,8 @@
   :use-module (hnh util type)
   :use-module (hnh util uuid)
   :use-module (hnh util io)
+  :use-module (hnh util color)
+  :use-module (hnh util color parse)
   :use-module (calp util config)
   :use-module (xattr)
   :use-module (ice-9 regex)
@@ -261,22 +263,36 @@
                               event))))
 
 (define-method (store-color (this <file-data-store>))
+  ;; TODO catch on invalid colour?
   (let ((root (%root-object (force (internals this)))))
-    (or (prop1 root 'COLOR)
-        (prop1 root 'X-APPLE-CALENDAR-COLOR))))
+    (cond ((prop1 root 'COLOR) => parse-color)
+          ((prop1 root 'X-APPLE-CALENDAR-COLOR)
+           => parse-hex-rgb)
+          (else #f))))
 
-;;; TODO
-;;; If COLOR exists, simply update that
-;;; If X-APPLE-CALENDAR-COLOR exists:
-;;;     update it
-;;;     add COLOR property
-;;; Otherwise
-;;;     add COLOR property
-;; (define-method (set-color! (this <file-data-store>) value)
-;;   (let ((root (ensure-root! this)))
-;;     )
-;;   )
+;; (define-method (set-store-color! (this <file-data-store>) color)
+;;   ;; If COLOR exists, simply update that
+;;   ;; If X-APPLE-CALENDAR-COLOR exists:
+;;   ;;     update it
+;;   ;;     add COLOR property?
+;;   ;; Otherwise
+;;   ;;     add COLOR property
+;;   (typecheck color color?)
+;;   (set! (%root-object (force (internals this)))
+;;     (let ((root (%root-object (force (internals this)))))
+;;       (set root (let loop ((opts '(COLOR X-APPLE-CALENDAR-COLOR)))
+;;                   (cond ((null? opts) (prop* 'COLOR))
+;;                         ((prop% root (car opts)) (prop* (car opts)))
+;;                         (else (loop (cdr opts)))))
+;;            (list (just (vline value: (-> color ->rgb rgb->hex))))))))
 
+(define-method (remove-store-color! (this <file-data-store>))
+  (set! (%root-object (force (internals this)))
+    (-> (%root-object (force (internals this)))
+        (modify (prop* 'COLOR) (const (nothing)))
+        (modify (prop* 'X-APPLE-CALENDAR-COLOR) (const (nothing))))))
+
+;;; TODO language property on displayname
 (define-method (store-displayname (this <file-data-store>))
   (let ((root (%root-object (force (internals this)))))
     (or (prop1 root 'NAME)

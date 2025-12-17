@@ -13,6 +13,8 @@
   :use-module (hnh util path)
   :use-module (hnh util io)
   :use-module (hnh util bimap)
+  :use-module (hnh util color)
+  :use-module (hnh util color parse)
   :use-module (calp util config)
   :use-module (ice-9 ftw)
   :use-module (ice-9 rdelim)

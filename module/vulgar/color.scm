@@ -3,6 +3,9 @@
 
 (define-public STR-RESET "\x1b[m")
 
+;;; TODO
+;;; 1. operate on color objects
+;;; 2. remove "base" case
 (define (color-escape n)
   (cond ((not n) "")
         ((char=? #\# (string-ref n 0))
