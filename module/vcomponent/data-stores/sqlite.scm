@@ -11,6 +11,7 @@
   :use-module (vcomponent type version)
   :use-module (vcomponent type request-status)
   :use-module (srfi srfi-1)
+  :use-module (srfi srfi-43)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (hnh util)
@@ -18,6 +19,7 @@
   :use-module (hnh util optional)
   :use-module (hnh util table)
   :use-module (hnh util type)
+  :use-module (hnh util named-type)
   :use-module (hnh util uuid)
   :use-module (web uri)
   :use-module ((web query) :select (encode-query-parameters))
@@ -27,6 +29,8 @@
   :export (create-instance)
   )
 
+;;; Find "dangling" components. E.g. root components with no href
+;; sqlite> select * from component full outer join href on component.id = href.component where component.parent is null and href is null;
 
 (catch 'misc-error
   (lambda ()
@@ -34,11 +38,103 @@
     (provide 'data-store-sqlite))
   (lambda args 'no-op))
 
+
+
+;; Iteration 1 of a macro for binding scheme variables from columns in an sqlite statement.
+;; This version returns simply binds each column name to its index in the query, leaving the
+;; user to do all the "heavy" lifting. This solves the problem with changing column indices,
+;; but becomes overly verbose.
+;; @example
+;; (define stmt (sqlite-prepare db "SELECT 1 AS a, 2 AS b, 3 AS c"))
+;; (define record (sqlite-step stmt))
+;; (with-sqlite-columns
+;;  stmt (a b c)
+;;  (list (vector-ref record a)
+;;        (vector-ref record b)
+;;        (vector-ref record c)))
+;; @end example
+;; (define-syntax-rule (with-sqlite-columns stmt (column ...) body ...)
+;;   (let ((column-names (sqlite-column-names stmt)))
+;;     (let ((column (vector-index
+;;                    (lambda (s) (string= s (symbol->string (quote column))))
+;;                    column-names)) ...)
+;;       body ...)))
+
+
+;; Second iteration of a macro for binding SQLite procedures into scheme values.
+;; This version combines the column name resolution with an anaphoric let statement.
+;; This allows for convenient usage.
+;; Reason record is taken separately from stmt is for cases where
+;; another method of retrieving the records are prefered. Note however
+;; that the record MUST have come from the statement provided.
+;; @example
+;; (with-sqlite-columns
+;;  stmt (sqlite-step stmt)
+;;  ((a (number->string it))
+;;   (b (number->boolean it)))
+;;  (list a b))
+;; @end example
+(define-syntax (with-sqlite-columns stx)
+  (syntax-case stx ()
+    ((_ stmt record ((column definition) ...) body ...)
+     (with-syntax ((it (datum->syntax stx 'it)))
+       #`(let ((column-names (sqlite-column-names stmt)))
+           (let #,(map (lambda (stx)
+                         (syntax-case stx ()
+                           ((c d)
+                            #`(c ((lambda (it) d)
+                                  (vector-ref record
+                                              (vector-index
+                                               (lambda (s) (string=
+                                                       s #,(-> #'c syntax->datum symbol->string)))
+                                               column-names)))))))
+                       #'((column definition) ...))
+             body ...))))))
+
+(define (call-with-sqlite-transaction db proc)
+  (let ((id (uuid)))
+    (catch #t
+      (lambda ()
+        (sqlite-exec db (format #f "SAVEPOINT '~a'" id))
+        (begin1
+         (proc db)
+         (sqlite-exec db (format #f "RELEASE SAVEPOINT '~a'" id))) )
+      (lambda args
+        (sqlite-exec db (format #f "ROLLBACK TRANSACTION TO SAVEPOINT '~a'" id))
+        (sqlite-exec db (format #f "RELEASE SAVEPOINT '~a'" id))
+        (apply throw args)))))
+
+
+
+
+(define* (delimited->table str key: (rs #\rs) (us #\us))
+  (typecheck str string?)
+  (if (string-null? str)
+      (table)
+      (fold (lambda (line t)
+              (let ((pair (string-split line us)))
+                (table-put t (string->symbol (car pair))
+                           (string-join (cdr pair) (string us)))))
+            (table)
+            (string-split str rs))))
+
+(define (unordered-superset-of lst target)
+  (lset<= equal? target lst))
+
+
+(define (vector-car v)
+  (vector-ref v 0))
+
+
+
+
 (define-class <sqlite-data-store> (<calendar-data-store>)
   (path getter: path
         init-keyword: path:
         init-value: #f)
   (db accessor: database)
+  (href-by-id getter: href-by-id
+              init-form: (make-hash-table))
   )
 
 
@@ -166,22 +262,6 @@ CREATE TABLE IF NOT EXISTS metadata
 ;; (define-method (get-all (this <sqlite-data-store>))
 ;;   (throw 'not-implemented))
 
-(define (vector-car v)
-  (vector-ref v 0))
-
-(define (call-with-sqlite-transaction db proc)
-  (let ((id (uuid)))
-    (catch #t
-      (lambda ()
-        (sqlite-exec db (format #f "SAVEPOINT '~a'" id))
-        (begin1
-         (proc db)
-         (sqlite-exec db (format #f "RELEASE SAVEPOINT '~a'" id))) )
-      (lambda args
-        (sqlite-exec db (format #f "ROLLBACK TRANSACTION TO SAVEPOINT '~a'" id))
-        (sqlite-exec db (format #f "RELEASE SAVEPOINT '~a'" id))
-        (apply throw args)))))
-
 (define (get-metadata db key)
   (let ((stmt (sqlite-prepare db "SELECT value FROM metadata WHERE key = :key")))
     (sqlite-bind-arguments stmt key: key)
@@ -236,7 +316,7 @@ CREATE TABLE IF NOT EXISTS metadata
    (lambda (db)
     (cond ((get-metadata db "calendar-timezone")
            => (lambda (id)
-                (assoc-ref (get-entries db "c.root = :id" id: id) #f)))
+                (assoc-ref (get-entries/helper store "c.root = :id" id: id) #f)))
           (else #f)))))
 
 ;; (define-method (write-all! (this <sqlite-data-store>) component)
@@ -244,10 +324,7 @@ CREATE TABLE IF NOT EXISTS metadata
 ;;    (database this)
 ;;    (lambda (db) (write-component! db component))))
 
-;;; TODO this is the only put-event! which actually uses href currently,
-;;; Ensure all uses href
-(define-method (put-event! (this <sqlite-data-store>) href component
-                           )
+(define-method (put-event! (this <sqlite-data-store>) href component)
   ;; TODO where is component UID conflicts handled?
   ;; TODO check if the given HREF refers to a component with a different UID (RFC 4791 §5.3.2.1.)
   (call-with-sqlite-transaction
@@ -259,7 +336,10 @@ CREATE TABLE IF NOT EXISTS metadata
        (sqlite-prepare db "INSERT OR REPLACE INTO href (href, component) VALUES (:href, :component)"))
      (sqlite-bind-arguments stmt href: href component: component-id)
      (sqlite-step stmt)
-     (sqlite-finalize stmt))))
+     (sqlite-finalize stmt)
+     (hash-set! (href-by-id this)
+                (-> component-id number->string string->symbol)
+                href))))
 
 (define (duration->sqlite-time-offset dur)
   (define ± (duration-sign dur))
@@ -361,13 +441,21 @@ CREATE TABLE IF NOT EXISTS metadata
 
 
 (define-method (remove-by-href! (store <sqlite-data-store>) href)
-  (define stmt
-    (sqlite-prepare
-     (database store)
-     "DELETE FROM component WHERE id IN (SELECT id FROM component_trace WHERE href = :href"))
-  (sqlite-bind-arguments stmt href: href)
-  (sqlite-step stmt)
-  (sqlite-finalize stmt))
+  (call-with-sqlite-transaction
+   (database store)
+   (lambda (db)
+     (let ((stmt (sqlite-prepare
+                  db "DELETE FROM href WHERE href = :href RETURNING id")))
+       ;; TODO clean up dangling components, something like
+       ;; SELECT id FROM component_trace WHERE root = :id
+       ;; DELETE FROM property WHERE component IN (...)
+       ;; DELETE FROM component WHERE id IN (...)
+       (sqlite-bind-arguments stmt href: href)
+       (sqlite-step stmt)
+       (hash-remove! (href-by-id store) (-> (sqlite-step stmt)
+                                            vector-car number->string string->symbol))
+       (sqlite-finalize stmt)
+       ))))
 
 (define* (write-component! db component optional: parent)
   (call-with-sqlite-transaction
@@ -485,136 +573,165 @@ VALUES (?, ?, ?)
   (table-get (parsers) type))
 
 (define-method (get-by-href (this <sqlite-data-store>) href)
-  (cdar
-   (get-entries (database this)
-                "href = :href"
-                href: href)))
+  (let ((matches (get-entries/helper this "href = :href" href: href)))
+    (if (null? matches)
+        #f
+        (cdar matches))))
 
+;;; returns (list-of (pair-of href vcalendar))
 (define-method (list-entries (this <sqlite-data-store>))
   ;; Only doing a single SQL lookup (instead of running get-entries
   ;; for each href) takes the runtime on a store with ~2000 elements
   ;; from 80s down to 5s, most of which is spent in the garbage collector.
-  (get-entries (database this) "true"))
+  (get-entries/helper this "true"))
 
-;;; TODO bad things happen on no-match
-(define (get-entries db filter . filter-args)
- ;; We group parameters, since propreties may be really large, while
- ;; component data is tiny. As it's currently written, parameters
- ;; can't contain record or unit separator characters anywhere.
- (define stmt (sqlite-prepare db (format #f "
+
+
+
+
+;;; Returns 2 values:
+;;; - a table specifying component children, with parents ids as keys, and lists of child ids as values
+;;; - a table of components, with component ids as keys, and actuall components as values
+(define (retrieve-components-and-ids stmt)
+  ;; (typecheck stmt stmt?) ; stmt? isn't exported from (sqlite3)
+  (typecheck (vector->list (sqlite-column-names stmt))
+             (unordered-superset-of '("component-type" "component-id" "parent-id"
+                                      "property-name" "property-type" "property-value"
+                                      "parameters*")))
+
+  (define root-symbol (gensym "root"))
+
+  (let ((ids components
+             (car+cdr
+              (sqlite-fold
+               (lambda (record state)
+                 (with-sqlite-columns
+                  stmt record
+                  ((component-type (string->symbol it))
+                   (component-id   (-> it number->string string->symbol))
+                   (parent-id      (cond ((number? it)
+                                          (-> it number->string string->symbol))
+                                         (else root-symbol)))
+                   (property-name  (string->symbol it))
+                   (property-type  (string->symbol it))
+                   (property-value it)
+                   (parameters* (delimited->table (or it ""))))
+
+                  (define active-parser
+                    (or (get-parser property-type)
+                        (lambda (_ v)
+                          (unknown
+                           ;; As long as we never put in anything except
+                           ;; strings, we will never get anything other back
+                           v
+                           (and (not (eq? 'UNKNOWN property-type))
+                                (symbol->string property-type))))))
+
+                  (-> state
+                      ;; - For component referenced by ID, set property
+                      ;;   and parameters by property-name
+                      (modify
+                       (lens-compose cdr* (table-focus component-id))
+                       (lambda (m-component)
+                         (just
+                          (modify
+                           ;; Create component if needed
+                           (unjust m-component (vcomponent type: component-type))
+                           ;; Attach the current property
+
+                           ;; Note that the value returned from the
+                           ;; database might be @code{#f}. This ONLY
+                           ;; happens for components with no properties.
+                           ;; Actual boolean values are stored as integers.
+                           (prop* property-name)
+                           (lambda (m-prop)
+                             (cond (property-value
+                                    (call-with-values
+                                        (lambda () (active-parser parameters* property-value))
+                                      (lambda* (value optional: (parameters parameters*))
+                                        (just (cons (vline params: parameters value: value)
+                                                    (unjust m-prop '()))))))
+                                   (else m-prop)))))))
+                      (modify (lens-compose car* (table-focus parent-id))
+                              (lambda (m) (just (lset-adjoin eq? (unjust m '()) component-id)))))))
+               (cons (table (named-type (list-of symbol?)))
+                     (table (named-type vcomponent?)))
+               stmt))))
+    (values root-symbol ids components)))
+
+(define (build-component-trees root-symbol id-table component-table)
+  (typecheck root-symbol symbol?)
+  (typecheck id-table (table-of (list-of symbol?)))           ; (table-of (list-of symbol?))
+  (typecheck component-table (table-of vcomponent?))    ; (table-of vcomponent?)
+
+  (cond ((table-get id-table root-symbol)
+         => (lambda (ids)
+              (map (lambda (root-id)
+                     (cons root-id
+                           (let recurse ((id root-id))
+                             (-> (table-get component-table id)
+                                 (vcomponent-children
+                                  (map recurse (or (table-get id-table id) '())))))))
+                   ids)))
+        (else '())))
+
+;;; DEPRECATED
+;;; It's query method is overly limited, AND it doesn't even work properly.
+;;; Setting filter to "pr.value like '%blot%'" fails, even if properties matching that exists.
+;;; Either way, returns a list of matching entries,
+;;; meaning an empty list on no match
+(define (get-entries/helper store filter . filter-args)
+  ;; We group parameters, since propreties may be really large, while
+  ;; component data is tiny. As it's currently written, parameters
+  ;; can't contain record or unit separator characters anywhere.
+
+  (apply get-entries store (format #f "
 SELECT
-  c.type
-, c.parent
-, p.property
-, p.component
-, p.type
-, p.value
-, group_concat(parameter.parameter || char(0x1F) || parameter.value, char(0x1E))
--- , href.href
+  c.type      AS [component-type]
+, c.parent    AS [parent-id]
+, c.id        AS [component-id]
+, pr.property AS [property-name]
+, pr.type     AS [property-type]
+, pr.value    AS [property-value]
+, group_concat(pa.parameter || char(0x1F) || pa.value, char(0x1E))
+    AS [parameters*]
+-- start special
 FROM component_trace c
--- TODO this fails for components with 0 properties
-RIGHT JOIN property p ON c.id = p.component
-FULL OUTER JOIN parameter ON parameter.property = p.id
+-- end special
+FULL OUTER JOIN property  pr ON c.id = pr.component
+FULL OUTER JOIN parameter pa ON pr.id = pa.property
+-- start special
 LEFT JOIN href ON href.component = root
 WHERE ~a
-GROUP by p.id" filter)))
+-- end special
+GROUP BY pr.id" filter)
+         filter-args))
 
- (apply sqlite-bind-arguments stmt filter-args)
+;;; returns (list-of (pair-of href vcalendar))
+(define-method (get-entries (store <sqlite-data-store>)
+                            (query <string>)
+                            . args)
 
- (define-values (ids components)
-   (car+cdr
-    (sqlite-fold
-     (lambda (record state)
-       (let ((component-type      (string->symbol (vector-ref record 0)))
-             (parent-id           (string->symbol (format #f "~a" (vector-ref record 1))))
-             (property-name       (string->symbol (vector-ref record 2)))
-             (component-id        (-> (vector-ref record 3) number->string string->symbol))
-             (property-type       (string->symbol (vector-ref record 4)))
-             (property-value      (vector-ref record 5))
-             (property-parameters (vector-ref record 6)))
-
-         (define parameters*
-           (aif property-parameters
-                (alist->table
-                 (map (lambda (record)
-                        (let ((pair (string-split record #\us)))
-                          (cons (string->symbol (car pair))
-                                (string-join (cdr pair) (string #\us)))))
-                      (string-split it #\rs)))
-                (table)))
-
-         (define-values (value parameters)
-           (call-with-values
-               (lambda ()
-                 ((or (get-parser property-type)
-                      (lambda (_ v)
-                        (unknown
-                         ;; As long as we never put in anything except
-                         ;; strings, we will never get anything other back
-                         v
-                         (and (not (eq? 'UNKNOWN property-type))
-                              (symbol->string property-type))
-                         )))
-                  parameters*
-                  property-value))
-             (lambda* (v optional: (p parameters*))
-               (values v p))))
-
-         (-> state
-             ;; - For component referenced by ID, set property
-             ;;   and parameters by property-name
-             (modify
-              (lens-compose cdr* (table-focus component-id))
-              (lambda (m-component)
-                (just
-                 (modify (unjust m-component (vcomponent type: component-type))
-                         (prop* property-name)
-                         (lambda (m-prop)
-                           (just
-                            (cons (vline params: parameters value: value)
-                                  (unjust m-prop '()))))))))
-             (modify (lens-compose car* (table-focus parent-id))
-                     (lambda (m) (just (lset-adjoin eq? (unjust m '()) component-id)))))))
-     (cons (table) (table))
-     stmt)))
-
- (sqlite-finalize stmt)
-
- ;; TODO possibly cache this list
- (define href-by-id (make-hash-table))
- (let ((stmt (sqlite-prepare db "SELECT component, href FROM href")))
-   (sqlite-map (lambda (v) (hash-set! href-by-id (string->symbol (format #f "~a" (vector-ref v 0)))
-                                 (vector-ref v 1)))
-               stmt))
-
- ;; TODO TODO we actually only fetch components which have at least one property.
- ;; That means that the following (semantically invalid) iCalendar
- ;; stream crashes, since there is no #f key.
- ;;   BEGIN:VCALENDAR
- ;;     BEGIN:VEVENT
- ;;       UID:2134566
- ;;     END:VEVENT
- ;;   END:VCALENDAR
- (for id in (table-get ids (string->symbol "#f"))
-      (cons (hash-ref href-by-id id)
-            (let recurse ((id id))
-              (vcomponent-children (table-get components id)
-                                   (map recurse (or (table-get ids id) '()))))
-            )))
-
+  (define stmt (sqlite-prepare (database store) query))
+  (apply sqlite-bind-arguments stmt args)
+  (let ((root-id ids components (retrieve-components-and-ids stmt)))
+    (begin1
+     (for (id . component) in (build-component-trees root-id ids components)
+          (cons (hash-ref (href-by-id store) id)
+                component))
+     (sqlite-finalize stmt))))
 
 (define-method (list-entries/shallow (store <sqlite-data-store>))
-  (let ((stmt (sqlite-prepare (database store) "SELECT href FROM href")))
-    (begin1 (sqlite-map (lambda (v) (cons (vector-ref v 0) 'x))
-                        stmt)
-            (sqlite-finalize stmt))))
+  (hash-map->list (lambda (_ href) href)
+                  (href-by-id store)))
 
 (define-method (entry-count (store <sqlite-data-store>))
-  (let ((stmt (sqlite-prepare (database store) "SELECT count(1) FROM href")))
-    (begin1 (vector-car (sqlite-step stmt))
-            (sqlite-finalize stmt))))
+  (hash-count (const #t) (href-by-id store)))
 
 (define-method (flush! (this <sqlite-data-store>))
   ;; TODO possible commit any pending transactions here
+  ;; This could also help with performance, as long as we don't commit in add-entry.
+  ;; That would however require us to have a "master" transaction running at all times
+  ;; (since add-entry creates it's own (sub) transaction)
   'noop)
 
