@@ -41,6 +41,8 @@
            store-uri->store
 
            store-uri
+
+           entries-in-interval
            ))
 
 ;;; TODO TODO TODO
@@ -223,3 +225,18 @@
 
 
 (define-generic store-uri)
+
+;;; TODO merge with general search code
+
+;; Return a *sorted* and *expanded* stream of <href, vcalendar?> pairs, for all entries
+;; overlapping the interval. This means that a recurring entry will
+;; be present multiple time, with each component wrapped in its own (but
+;; identical) vcalendar envelope.
+(define-generic entries-in-interval)
+(define-method (entries-in-interval
+                (store <calendar-data-store>)
+                start end)
+  (format (current-error-port)
+          "Entries-in-interval not implemented for ~s~%"
+          store)
+  '())

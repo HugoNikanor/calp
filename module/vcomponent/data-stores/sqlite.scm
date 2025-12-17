@@ -735,3 +735,109 @@ GROUP BY pr.id" filter)
   ;; (since add-entry creates it's own (sub) transaction)
   'noop)
 
+;;; returns (stream-of (pair-of href object))
+(define-method (entries-in-interval (store <sqlite-data-store>)
+                                    start end)
+  (typecheck start datetime?)
+  (typecheck end   datetime?)
+
+  ;; TODO log level debug
+  (format (current-error-port) "<DEBUG> entries-in-interval ~s, ~s - ~s~%"
+          (uri->string (store-uri store)) start end)
+
+;;; TODO duration
+;;; TODO entries with only start
+
+   ;; NOTE we sort in Guile instead of SQLite, since all the grouping
+   ;; makes it hard to access the start time.
+  (define regular-events
+    (filter (negate (compose recurring? cdr))
+            (get-entries store "
+-- start special
+WITH base_components (id) AS
+    (
+    -- Instances where DTSTART is in interval
+    SELECT DISTINCT component FROM property
+        WHERE property = 'DTSTART'
+        AND value BETWEEN :start AND :end
+    UNION
+    -- Instances where DTEND is in interval
+    SELECT DISTINCT component FROM property
+        WHERE property = 'DTEND'
+        AND value BETWEEN :start AND :end
+    -- TODO DURATION
+    )
+   , root_components (id) AS
+     -- TODO does this join actually do anything?
+     (SELECT t.root FROM base_components c
+        -- LEFT JOIN property p ON p.component = c.id
+        INNER JOIN component_trace t ON c.id = t.id
+        WHERE t.type = 'VEVENT'
+        --   AND p.property = 'DTSTART'
+        -- ORDER BY p.value
+)
+-- end special
+SELECT
+  c.type      AS [component-type]
+, c.parent    AS [parent-id]
+, c.id        AS [component-id]
+, pr.property AS [property-name]
+, pr.type     AS [property-type]
+, pr.value    AS [property-value]
+, group_concat(pa.parameter || char(0x1F) || pa.value, char(0x1E))
+   AS [parameters*]
+-- start special
+ FROM root_components
+INNER JOIN component_trace c ON root_components.id = c.root
+-- end special
+FULL OUTER JOIN property  pr ON c.id = pr.component
+FULL OUTER JOIN parameter pa ON pr.id = pa.property
+-- TODO why is this needed? How do we manage to join property lines without component
+WHERE [component-id] IS NOT NULL
+GROUP BY pr.id
+-- ORDER BY pr.value"
+                         start: (datetime->string start)
+                         end: (datetime->string end))))
+
+
+  ;; TODO this can match components without href.
+  ;; This happens when a href entry is removed, but the underlying
+  ;; component is kept.
+  (define recurring-events
+    (get-entries store "
+WITH base_components (id) AS (
+    SELECT distinct t.root
+    FROM property p
+    INNER JOIN component_trace t ON p.component = t.id
+    WHERE (p.property = 'RDATE' OR p.property = 'RRULE') AND t.type = 'VEVENT'
+)
+-- end special
+SELECT
+  c.type      AS [component-type]
+, c.parent    AS [parent-id]
+, c.id        AS [component-id]
+, pr.property AS [property-name]
+, pr.type     AS [property-type]
+, pr.value    AS [property-value]
+, group_concat(pa.parameter || char(0x1F) || pa.value, char(0x1E))
+   AS [parameters*]
+ FROM base_components
+INNER JOIN component_trace c ON base_components.id = c.root
+FULL OUTER JOIN property  pr ON c.id = pr.component
+FULL OUTER JOIN parameter pa ON pr.id = pa.property
+-- TODO why is this needed? How do we manage to join property lines without component
+WHERE [component-id] IS NOT NULL
+GROUP BY pr.id"))
+
+  (define result
+   ((expand-and-interleave-recurrences start end)
+    recurring-events regular-events))
+
+  ;; TODO log level debug
+  (format (current-error-port) "<DEBUG> Entries gotten ~s~%"
+          (uri->string (store-uri store)))
+
+  result)
+
+
+

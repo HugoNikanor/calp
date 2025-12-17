@@ -1,10 +1,13 @@
 (define-module (vcomponent data-stores vdir)
   :use-module (oop goops)
+  :use-module (vcomponent)
   :use-module (vcomponent data-stores common)
+  :use-module (vcomponent media-type)
+  :use-module (vcomponent datetime)
+  :use-module (vcomponent type recurrence)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
-  :use-module (vcomponent)
   :use-module (hnh util)
   :use-module (hnh util type)
   :use-module (hnh util path)
@@ -15,8 +18,7 @@
   :use-module (ice-9 rdelim)
   :use-module ((ice-9 regex) :select (string-match))
   :use-module (glob)
-  :use-module (vcomponent media-type)
-  :use-module ((web uri) :select (build-uri))
+  :use-module ((web uri) :select (build-uri uri->string))
   :use-module ((web query) :select (encode-query-parameters))
   :export (create-instance)
   )
@@ -349,10 +351,31 @@
 
 ;;;
 (define-method (store-color (store <vdir-data-store>))
-  (get-metadata (path store) "color"))
+  (and=> (get-metadata (path store) "color") parse-hex-rgb))
 
 (define-method (set-store-color! (store <vdir-data-store>) color)
-  (set-metadata! (path store) "color" color))
+  (typecheck color color?)
+  (set-metadata! (path store) "color"
+                 (-> color ->rgb rgb->hex)))
 
 (define-method (remove-strore-color! (store <vdir-data-store>))
   (remove-metadata! (path store) "color"))
+
+
+(define-method (entries-in-interval (store <vdir-data-store>)
+                                    start end)
+  ;; TODO log level debug
+  (format (current-error-port) "<DEBUG> entries-in-interval ~s, ~s - ~s~%"
+          (uri->string (store-uri store)) start end)
+  (define result
+    (call-with-values
+        (lambda ()
+          (partition
+           (compose recurring? cdr)
+           (hash-map->list cons (event-by-href store))))
+      (expand-and-interleave-recurrences start end)))
+  ;; TODO log level debug
+  (format (current-error-port) "<DEBUG> Entries gotten ~s~%"
+          (uri->string (store-uri store)))
+  result)
+

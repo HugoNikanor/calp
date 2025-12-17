@@ -16,8 +16,9 @@
   :use-module ((srfi srfi-88) :select ())
   :use-module (vcomponent)
   :use-module (vcomponent data-stores common)
-  :use-module (vcomponent type version)
   :use-module (vcomponent media-type)
+  :use-module (vcomponent type version)
+  :use-module (vcomponent type recurrence)
   :use-module ((vcomponent create) :select (vcalendar))
   :use-module (hnh util)
   :use-module (hnh util bimap)
@@ -32,7 +33,7 @@
   :use-module (xattr)
   :use-module (ice-9 regex)
   :use-module ((scheme base) :select (string->utf8 utf8->string))
-  :use-module ((web uri) :select (build-uri))
+  :use-module ((web uri) :select (build-uri uri->string))
   :use-module ((web query) :select (encode-query-parameters))
   :use-module (calp translation)
   :export (create-instance)
@@ -442,3 +443,27 @@
          ;; TODO atomic output? (currently that doesn't preserve xattrs)
          (call-with-output-file (path this) run)
          (execute-queued-xattr! (force (internals this))))))
+
+
+
+(define-method (entries-in-interval (store <file-data-store>)
+                                    start end)
+  ;; TODO log level debug
+  (format (current-error-port) "<DEBUG> entries-in-interval ~s, ~s - ~s~%"
+          (uri->string (store-uri store)) start end)
+  (define int (force (internals store)))
+  (define result
+   (call-with-values
+       (lambda ()
+         (partition
+          (compose recurring? cdr)
+          (hash-map->list
+           (lambda (uid e)
+             (cons (get-right (href-uid-map int) uid)
+                   (vcalendar e)))
+           (%event-by-uid int))))
+     (expand-and-interleave-recurrences start end)))
+  ;; TODO log level debug
+  (format (current-error-port) "<DEBUG> Entries gotten ~s~%"
+          (uri->string (store-uri store)))
+  result)

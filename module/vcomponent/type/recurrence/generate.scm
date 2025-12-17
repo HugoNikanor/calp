@@ -1,5 +1,6 @@
 (define-module (vcomponent type recurrence generate)
   :use-module (vcomponent)
+  :use-module (vcomponent datetime)
   :use-module (vcomponent type recurrence internal)
   :use-module (hnh util)
   :use-module (hnh util type)
@@ -17,6 +18,7 @@
   :use-module (ice-9 curried-definitions)
   :export (find-base-instance
            generate-recurrence-set
+           expand-and-interleave-recurrences
            ))
 
 ;;; TODO move this to the "Commentary" section
@@ -388,18 +390,18 @@
   (define-values (base rest) (find-base-instance component))
   ;; Make note of all exceptions.
   (define recurrence-id-exceptions
-   (fold (lambda (component rec-id-table)
-           (cond ((prop% component 'RECURRENCE-ID)
-                  => (lambda (rid)
-                       ;; TODO parameter RANGE=THISANDFUTURE
-                       (table-put rec-id-table
-                                  (-> rid car vline-value
-                                      as-datetime datetime->string
-                                      string->symbol)
-                                  component)))
-                 (else rec-id-table)))
-         (table)
-         rest))
+    (fold (lambda (component rec-id-table)
+            (cond ((prop% component 'RECURRENCE-ID)
+                   => (lambda (rid)
+                        ;; TODO parameter RANGE=THISANDFUTURE
+                        (table-put rec-id-table
+                                   (-> rid car vline-value
+                                       as-datetime datetime->string
+                                       string->symbol)
+                                   component)))
+                  (else rec-id-table)))
+          (table)
+          rest))
 
   ;; Duration of event, when the base has a DTEND value.
   ;; DURATION values are ignored, since those are carried through automatically.
@@ -434,6 +436,63 @@
       (list->stream (sort* (map (compose as-datetime vline-value) (or (prop% base 'RDATE) '()))
                            datetime<))
       ;; (if rrule exists, run rrule-instances)
-      (rrule-instances
-       (as-datetime (prop1 base 'DTSTART))
-       (prop1 base 'RRULE)))))))
+      (cond ((prop1 base 'RRULE)
+             => (lambda (rrule)
+                  (rrule-instances
+                   (as-datetime (prop1 base 'DTSTART))
+                   rrule)))
+            (else (stream))))))))
+
+
+;; Takes a time interval in @var{start} and @var{end}, and the
+;; complete set of recurring and non-recurring events in a calendar set.
+;; 
+;; The set of regular events MUST be a list of vcalendar objects,
+;; each containing a single vevent object. These objects will be sorted.
+;; 
+;; The set of recurring events must be a list of vcalendar objects,
+;; each containing a single recurring event.
+;;
+;; Returns a stream of pairs, each containing the href of the entry
+;; (so may not be unique), and the vcalendar instance, but with only a
+;; single (expanded) instance. These events are sorted by their start date.
+(define ((expand-and-interleave-recurrences start end) recurring regular)
+  (typecheck start datetime?)
+  (typecheck end datetime?)
+  (typecheck recurring (list-of (pair-of string? vcalendar?)))
+  (typecheck regular (list-of (pair-of string? vcalendar?)))
+
+  (define (event-start c)
+    (as-datetime (prop1 (car (vcomponent-children c)) 'DTSTART)))
+
+  ;; filter-sorted-stream fails if the first element of the set is after our time
+  (stream-filter
+   (lambda (p)
+     (let ((ev (car (vcomponent-children (cdr p)))))
+       ;; (format (current-error-port) "~a ~a~%" (prop1 ev 'DTSTART) (prop1 ev 'SUMMARY))
+       (instance-overlaps? ev start end)))
+   (stream-take-while
+    (lambda (p)
+      (let ((st (as-datetime (prop1 (car (vcomponent-children (cdr p))) 'DTSTART))))
+        ;; (format (current-error-port) "st = ~s, end = ~s~%" st end)
+        (datetime< st end)))
+    (interleave-streams
+     (lambda (a b) (datetime<? (event-start (cdr a)) (event-start (cdr b))))
+     (cons
+      (list->stream
+       (sort*
+        (filter (lambda (pair)
+                  (instance-overlaps?
+                   (find vevent? (vcomponent-children (cdr pair)))
+                   start end))
+                regular)
+        datetime< (compose event-start cdr)))
+      (map (lambda (e)
+             (let ((href cal (car+cdr e)))
+               (stream-map
+                (lambda (instance)
+                  (cons href
+                        (-> cal (vcomponent-children (list instance)))))
+                (generate-recurrence-set (cdr e)))))
+           recurring))
+     ))))
