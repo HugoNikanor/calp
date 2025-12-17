@@ -197,20 +197,6 @@
     ;; TODO Test invalid cases
     ))
 
-(test-group "long-instance?"
-  (test-assert "DTSTART being date is always a long event"
-    (long-instance? (vevent dtstart: (date))))
-  (test-assert "datetime DTSTART without DTEND is always short"
-    (not (long-instance? (vevent dtstart: (datetime)))))
-  (test-assert "Event longer than 24h"
-    (not
-     (long-instance? (vevent dtstart: (datetime year: 2020 month: 1 day: 1 hour: 10)
-                          dtend:   (datetime year: 2020 month: 1 day: 1 hour: 20)))))
-  (test-assert "Event shorter than 24h"
-    (long-instance? (vevent dtstart: (datetime year: 2020 month: 1 day: 1
-                                            hour: 1)
-                         dtend:   (datetime year: 2020 month: 1 day: 2
-                                            hour: 1 minute: 1)))))
 
 (test-group "events-between"
   (let ((start (date year: 2020 month: jan day: 1))

@@ -1,30 +1,25 @@
-;;; DEPRECATED
-;;; This modules contains usefull things, but they are all in the wrong place!!!
 (define-module (vcomponent datetime output)
   :use-module (hnh util)
   :use-module (datetime)
   :use-module (vcomponent)
   :use-module (text util)
   :use-module (calp translation)
-  :use-module ((hnh util exceptions) :select (warning))
-  :use-module (hnh util lens)
-  :use-module (hnh util optional)
-  :export (format-recurrence-rule
-           format-summary
-           format-description
-           fmt-time-span
-           ))
+  :use-module (hnh util type)
+  :export (format-recurrence-rule))
 
-;; ev → sxml
+;; ev → (list-of string)
 ;; TODO move this to some form of general text output module
-;; TODO translation
+;; TODO check how this shows up in the gettext output.
+;;      will a translater be able to understand it without the source code?
 (define (format-recurrence-rule ev)
+  (typecheck ev vevent?)
   ;; [FRR]
   ;; Part of the sentance "Repeated [every two weeks], except on ~a, ~a & ~a"
   ;; See everything tagged [FRR]
   `(,(G_ "Repeated ")
-    ,((@ (vcomponent type recurrence display) format-recurrence-rule) (prop1 ev 'RRULE))
-    ,@(awhen (unjust (get ev (prop* 'EXDATE)) #f)
+    ,((@ (vcomponent type recurrence display) format-recurrence-rule)
+      (prop1 ev 'RRULE))
+    ,@(awhen (prop% ev 'EXDATE)
              (list
               ;; See [FRR]
               (G_ ", except on ")
@@ -46,45 +41,3 @@
                     (map vline-value it)))))
     "."))
 
-;;; TODO this is in the completely wrong place
-(define (format-summary ev str)
-  ((@ (calp html filter) summary-filter) ev str))
-
-;; NOTE this should have information about context (html/term/...)
-;;; TODO this is in the completely wrong place
-(define (format-description ev str)
-  (catch #t (lambda () ((@ (calp html filter) description-filter)
-                   ev str))
-    (lambda (err . args)
-      ;; Warning message for failure to format description.
-      ;; First argument is name of warning/error,
-      ;; second is error arguments
-      (warning (G_ "~a on formatting description, ~s") err args)
-      str)))
-
-;; Takes an event, and returns a pretty string for the time interval
-;; the event occupies.
-(define (fmt-time-span ev)
-  (cond [(prop1 ev 'DTSTART) date?
-         => (lambda (s)
-              (cond [(prop1 ev 'DTEND)
-                     => (lambda (e)
-                          ;; start = end, only return one value
-                          (if (date= e (date+ s (date day: 1)))
-                              (G_ "~Y-~m-~d")
-                              (values (G_ "~Y-~m-~d")
-                                      (G_ "~Y-~m-~d"))))]
-                    ;; no end value, just return start
-                    [else (date->string s)]))]
-        [else ; guaranteed datetime
-         (let ((s (prop1 ev 'DTSTART))
-               (e (prop1 ev 'DTEND)))
-           (if e
-               (let ((fmt-str (if (date= (datetime-date s) (datetime-date e))
-                                  (G_ "~H:~M")
-                                  ;; Note the non-breaking space
-                                  (G_ "~Y-~m-~d ~H:~M"))))
-
-                 (values fmt-str fmt-str))
-               ;; Note the non-breaking space
-               (G_ "~Y-~m-~d ~H:~M")))]))

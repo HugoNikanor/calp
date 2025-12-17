@@ -102,11 +102,6 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
 (define (common target-directory count start-date chunk-length
                 render-calendar . extra-args)
 
-  ;; TODO get calendars from stores
-  (define calendars '())
-  ;; TODO get all events from store
-  (define events (stream))
-
   ((@ (calp util time) report-time!) "html start")
 
   (create-files target-directory)
@@ -118,8 +113,7 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
      (with-output-to-file fname
        (lambda () (sxml->xml (re-root-static
                          (apply html-generate
-                                calendars: calendars
-                                events: events
+                                calendars: ((@ (vcomponent config) data-stores))
                                 next-start: (lambda (d) (date+ d chunk-length))
                                 prev-start: (lambda (d) (date- d chunk-length))
                                 start-date: start-date

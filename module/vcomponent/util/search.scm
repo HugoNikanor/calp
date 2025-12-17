@@ -22,6 +22,9 @@
 ;; for keeping track of the number of available pages, and if we have found the
 ;; "final" element.
 
+;;; TODO TODO this old search system is completely broken since the
+;;; rewrite of the component systems.
+
 ;;; Code:
 
 (define-module (vcomponent util search)
@@ -84,7 +87,8 @@
         (make-sandbox-module
          `(
            ;; TODO look over this import
-           ((vcomponent) prop1 param children type parent)
+           ((vcomponent) prop1 param vcomponent-children type #; parent
+            )
            ((ice-9 regex) string-match)
            ,@(bindings-for '(datetime))
            ,@all-pure-bindings)

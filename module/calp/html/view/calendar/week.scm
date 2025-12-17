@@ -1,35 +1,53 @@
 (define-module (calp html view calendar week)
   :use-module (hnh util)
+  :use-module (hnh util type)
+  :use-module (hnh util lens)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
-  :use-module (rnrs records syntactic)
   :use-module (datetime)
   :use-module (calp html view calendar shared)
-  :use-module (calp html config)
   :use-module (calp html util)
   :use-module (vcomponent)
+  :use-module ((vcomponent data-stores common) :select (calendar-data-store?))
   :use-module ((vcomponent datetime)
-               :select (long-instance?
+               :select (instance-overlaps?
                         instance-length/day
                         instance-zero-length?
-                        events-between))
+                        instance-length))
   :use-module ((calp html vcomponent)
-               :select (make-block output-uid) )
-  ;; :use-module ((calp html components)
-  ;;              :select ())
+               :select (make-block) )
   :use-module (calp translation)
-  :use-module ((vcomponent util group)
-               :select (group-stream get-groups-between))
   :use-module (ice-9 format)
+  :use-module (ice-9 match)
+  :use-module ((vcomponent data-stores query)
+               :select (entries-between))
   :export (render-calendar)
   )
 
+(define-syntax-rule (with-object-on-backtrace object expr ...)
+  (catch #t (lambda () expr ...)
+    (lambda args
+      (format (current-error-port) "object: ~s~%" object)
+      (apply throw args))))
 
-(define* (render-calendar key: calendars events start-date end-date allow-other-keys:)
-  (let* ((long-events short-events (partition long-instance? (stream->list (events-between start-date end-date events))))
-         (range (date-range start-date end-date)))
+(define* (render-calendar key: stores start-date end-date allow-other-keys:)
+  (typecheck stores (list-of (pair-of string? calendar-data-store?)))
+  (typecheck start-date date?)
+  (typecheck end-date date?)
+
+  (define entries
+    (map (lambda (t) (modify t (ref 2) (compose car vcomponent-children)))
+         (stream->list (apply entries-between start-date end-date stores))))
+
+  (define-values (long-events short-events)
+    (partition (match-lambda ((_ _ ev) (or (date? (prop1 ev 'DTSTART))
+                                           (datetime< (datetime day: 1)
+                                                      (instance-length ev)))))
+               entries))
+
+  (let* ((range (date-range start-date end-date)))
     `((script ,(lambda () (format #t "window.VIEW='week';")))
       (div (@ (class "calendar"))
            (div (@ (class "days"))
@@ -37,6 +55,8 @@
                 (div (@ (class "week-indicator"))
                      (span (@ (style "font-size: 50%"))
                            ,(G_ "v."))
+                     ;; Split week-number into a span for each decimal,
+                     ;; This allows vertial layouts
                      ,@(->> (week-number start-date)
                             number->string string->list
                             (map (lambda (c) `(span ,(string c))))))
@@ -54,28 +74,27 @@
                                      ;; TODO translation here?
                                      ,(string-titlecase (date->string day-date "~a")))))
                        range)
-                ,@(stream->list
-                   (stream-map
-                    lay-out-day
-                    (get-groups-between (group-stream (list->stream short-events))
-                                        start-date end-date)))
+                ,@(lay-out-days short-events start-date end-date)
 
-                ,@(for event in (stream->list
-                                 (events-between start-date end-date events))
+                ;; TODO This is a very stupid set to create the
+                ;; popup-elements which would be needed once
+                ;; javascript kicks in. REMOVE once javascript part is
+                ;; rewritten.
+                ,@(for _ in entries
                        `(popup-element
                          (@ (class "vevent")
-                            (data-uid ,(output-uid event)))))))
+                            (data-uid "TODO" ; ,(output-uid event)
+                                      ))))))
 
 
       ;; This template is here, instead of in (calp html calendar) since it only
       ;; applies to this specific view. (calp html calendar month) is assumed to
       ;; have its own variant of it.
       (template (@ (id "vevent-block"))
-                ,(block-template)
-                )
+                ,(block-template))
 
 
-)))
+      )))
 
 
 ;; "physical" block
@@ -120,50 +139,60 @@
                               ,time ":00")))
                 (iota 12 0 2)))))
 
-;; Lay out complete day (graphical)
-;; (date . (events)) -> sxml
-(define (lay-out-day day)
-  (let* ((day-date events (car+cdr day))
-         (time-obj (datetime date: day-date))
-         (short-events (stream->list events))
-         #;
-         (zero-length-events short-events
-                             (partition instance-zero-length? (stream->list events))))
+(define (lay-out-days events start end)
+  (typecheck events (list-of (tuple-of string? string? vevent?)))
+  (typecheck start date?)
+  (typecheck end date?)
 
-    (fix-event-widths!
-     short-events
-     event-length-key: (lambda (e)
-                         (if (instance-zero-length? e)
-                             (time hour: 1)
-                             (instance-length/day day-date e))))
+  ;; NOTE This is supposed to only run on one day at a time, but apparently
+  ;; it works just as well with multiple days. Might be a time bit slower
+  (fix-event-widths!
+   (map caddr events)
+   event-length-key: (lambda (e)
+                       (if (instance-zero-length? e)
+                           (time hour: 1)
+                           (instance-length/day start e))))
 
-    ;; TODO instead of one div per day, consider setting
-    ;; column: 7 <width>
-    ;; This should allow the divs to wrap over to the next day
-    `(div (@ (class "events event-container") (id ,(date-link day-date))
-             (data-start ,(date->string day-date))
-             (data-end ,(date->string (date+ day-date (date day: 1))) ))
-          ,@(map (lambda (time)
-                   `(div (@ (class "clock clock-" ,time))))
-                 (iota 12 0 2))
-          #;
-          (div (@ (class "zero-width-events")) ; ;
-          ,(map make-block zero-length-events))
-          ,@(map (lambda (e) (create-block day-date e)) short-events))))
 
+  ;; For each day, generate
+  (map (lambda (start)
+         (define end (date+ start (date day: 1)))
+        `(div (@ (class "events event-container")
+                 (id ,(date-link start))
+                 (data-start ,(date->string start))
+                 (data-end ,(date->string end)))
+              ,@(map (lambda (time) `(div (@ (class "clock clock-" ,time))))
+                     (iota 12 0 2))
+              #;
+              (div (@ (class "zero-width-events")) ; ; ; ;
+              ,(map make-block zero-length-events))
+              ,@(map (lambda (e) (with-object-on-backtrace
+                             e (create-block start e)))
+                     (filter (match-lambda ((_ _  ev)
+                                            (instance-overlaps? ev start end)))
+                             events))))
+       (stream->list (days-in-interval start end)
+                     (day-stream start)))
+
+  )
 
 
 ;; Format single event for graphical display
 ;; This is extremely simmilar to create-top-block, which currently recides in ./shared
-(define (create-block date ev)
-  ;; (define time (date->time-utc day))
+;; TODO fix naming conventions for all these *-block methods.
+;; We can't have make-block AND create-block
+(define (create-block date entry)
+  (typecheck date date?)
+  (typecheck entry (tuple-of string? string? vevent?))
+
+  (define ev (list-ref entry 2))
 
   (define left  (* 100 (x-pos ev)))
   (define width* (* 100 (width ev)))
-  (define top (if (date= date (as-date (prop ev 'DTSTART)))
+  (define top (if (date= date (as-date (prop1 ev 'DTSTART)))
                   (* 100/24
                      (time->decimal-hour
-                      (as-time (prop ev 'DTSTART))))
+                      (as-time (prop1 ev 'DTSTART))))
                   0))
   (define height (* 100/24 (time->decimal-hour (instance-length/day date ev))))
 
@@ -172,7 +201,7 @@
     ;; The calc's here is to enable an "edit-mode".
     ;; Setting --editmode ≈ 0.8 gives some whitespace to the right
     ;; of the events, alowing draging there for creating new events.
-    (if (edit-mode)
+    (if ((@ (calp html config) edit-mode))
         (format #f "left:calc(var(--editmode)*~,3f%);width:calc(var(--editmode)*~,3f%);top:~,3f%;height:~,3f%;"
 
                 left width* top height)
@@ -180,11 +209,14 @@
                 left width* top height)))
 
   (make-block
-   ev `((class
-          ,(when (instance-zero-length? ev)
-             " zero-length")
-          ,(when (date<? (as-date (prop ev 'DTSTART)) date)
-             " continued")
-          ,(when (and (prop ev 'DTEND) (date<? date (as-date (prop ev 'DTEND))))
-             " continuing"))
-        (style ,style))))
+   (list-ref entry 0)
+   (list-ref entry 1)
+   (list-ref entry 2)
+   `((class
+       ,(when (instance-zero-length? ev)
+          " zero-length")
+       ,(when (date<? (as-date (prop1 ev 'DTSTART)) date)
+          " continued")
+       ,(when (and (prop% ev 'DTEND) (date<? date (as-date (prop1 ev 'DTEND))))
+          " continuing"))
+     (style ,style))))

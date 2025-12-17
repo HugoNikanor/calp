@@ -2,7 +2,7 @@
 (define-module (vcomponent datetime)
   :use-module (srfi srfi-1)
   :use-module ((srfi srfi-41) :select (stream-filter))
-  :use-module ((srfi srfi-41 util) :select (get-stream-interval))
+  :use-module ((srfi srfi-41 util) :select (get-stream-interval stream-of))
   :use-module (vcomponent)
   :use-module (vcomponent create)
   :use-module (vcomponent type duration)
@@ -25,8 +25,6 @@
            instance-length
            instance-length/clamped
            instance-length/day
-
-           long-instance?
 
            events-between
 
@@ -140,15 +138,6 @@
 ;; 2h för dag 1
 ;; 3h för dag 2
 
-;; An event is considered long if it's DTSTART (and thereby DTEND) lacks a time component,
-;; or if the total length of the event is greater than 24h.
-;; For practical purposes, an event being long means that it shouldn't be rendered as a part
-;; of a regular day.
-(define (long-instance? ev)
-  (or (date? (prop1 ev 'DTSTART))
-      (datetime<= (datetime day: 1)
-                  (instance-length ev))))
-
 ;; date, date, [sorted-stream events] → [sorted-stream events]
 ;; DEPRECATED this is only useful when all events are in a single
 ;; stream, which they haven't been since the introduction of data
@@ -156,6 +145,7 @@
 ;; (@ (vcomponent type recurrence) expand-and-interleave-recurrences)
 ;; instead
 (define (events-between start-date end-date events)
+  (typecheck events (stream-of vevent?))
   (define (overlaps e)
     (timespan-overlaps? start-date (date+ end-date (date day: 1))
                         ;; TODO DURATION

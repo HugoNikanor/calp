@@ -1,3 +1,8 @@
+;;; DEPRECATED
+;;; These are overly complicated procedures.
+;;; While they usually do what one may want, they come with so many
+;;; caveats that and special cases that it's easier to write the
+;;; corresponding code inline
 (define-module (vcomponent util group)
   :use-module (vcomponent)
   :use-module (vcomponent datetime)
@@ -35,6 +40,7 @@
                  ;; This starts with taking everything which end after the beginning
                  ;; of tommorow, and finishes with the rest when it finds the first
                  ;; object which begins tomorrow (after midnight, exclusize).
+                 ;; TODO is this correct, see tests/annoying-events.scm
                  (filter-sorted-stream*
                   (lambda (e) (date/-time<? tomorrow
                                        (or (prop1 e 'DTEND)

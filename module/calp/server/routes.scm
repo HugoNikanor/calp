@@ -149,10 +149,11 @@
   (set-request-start-log!
    handler
    (lambda* (key: method host port path (query "") allow-other-keys:)
-    (display (format #f "[~a] ~a ~a:~a~a?~a~%"
-                     (datetime->string (current-datetime))
-                     method host port path query)
-             (current-error-port))))
+     (display (format #f "[~a] ~a ~a:~a~a?~a~%"
+                      (datetime->string (current-datetime))
+                      ;; TODO the value we get for port is host a second time
+                      method host port path query)
+              (current-error-port))))
 
   (add-route!
    handler
@@ -171,6 +172,7 @@
           `((content-type image/svg+xml))
           (call-with-input-file "static/calendar.svg" read-string)))))
 
+  ;; CAPUT
   (add-route!
    handler
    (make-route
@@ -200,9 +202,7 @@
                    (with-output-to-string
                      (lambda ()
                        ((sxml->output html)
-                        ;; TODO TODO re-introduce calendar entries
-                        (html-generate calendars: '() ;;  (get-calendars global-event-object)
-                                       events: (stream) ;; (get-event-set global-event-object)
+                        (html-generate calendars: ((@ (vcomponent config) data-stores))
                                        start-date: start-date
                                        end-date: (date+ start-date (date day: 6))
                                        next-start: (lambda (d) (date+ d (date day: 7)))
@@ -219,12 +219,9 @@
                    (with-output-to-string
                      (lambda ()
                        ((sxml->output html)
-                        ;; TODO TODO re-introduce calendar entries
-                        (html-generate calendars: '() ;;  (get-calendars global-event-object)
-                                       events: (stream) ;; (get-event-set global-event-object)
+                        (html-generate calendars: ((@ (vcomponent config) data-stores))
                                        start-date: start-date
-                                       end-date: (date- (date+ start-date (date month: 1))
-                                                        (date day: 1))
+                                       end-date: (end-of-month start-date)
                                        next-start: (lambda (d) (date+ d (date month: 1)))
                                        prev-start: (lambda (d) (date- d (date month: 1)))
                                        render-calendar: (@ (calp html view calendar month)
@@ -258,6 +255,7 @@
                   headers: `((location . ,location)))))))
 
 
+  ;; TODO BROKEN, see (vcomponent util search)
   (add-route!
    handler
    (make-route
@@ -277,6 +275,7 @@
                                   (prop event 'SUMMARY)))))
                          ))))))))
 
+  ;; TODO BROKEN, see (vcomponent util search)
   (add-route!
    handler
    (make-route
@@ -284,7 +283,7 @@
          (define search-term
            (if (and q (not (string-null? q)))
                (if onlyfuture
-                   `(and (date/-time<=? ,(current-datetime) (prop event 'DTSTART))
+                   `(and (date/-time<=? ,(current-datetime) (prop1 event 'DTSTART))
                          ,(and=> q prepare-string))
                    (and=> q prepare-string))
                ;; NOTE This causes the paginator buttons to search for literally two quote marks,
@@ -380,29 +379,6 @@
            (lambda (err proc fmt fmt-args data)
              (return (build-response code: 404)
                      (format #f "~?" fmt fmt-args)))))))
-
-  ;; This is almost the same as /static/, but with the difference that
-  ;; we produce these images during runtime
-  (add-route!
-   handler
-   (make-route
-    (GET "/tmpfiles/:*{.*}.:ext" (* ext)
-         ;; Actually parsing /etc/mime.types would be better.
-         (define mime
-           (case (string->symbol (string-downcase ext))
-             [(png) "png"]
-             [(jpg jpeg) "jpeg"]
-             [(gif) "gif"]
-             [else ext]))
-
-         (return
-          `((content-type ,(string->symbol (string-append "image/" mime))))
-          ;; TODO handle tmp directory globaly
-          (call-with-input-file (path-append (xdg-runtime-dir)
-                                             "calp-data" "images"
-                                             (string-append * "." ext))
-            get-bytevector-all)))))
-
 
 
   (add-route!

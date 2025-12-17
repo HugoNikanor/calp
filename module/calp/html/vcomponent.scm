@@ -4,6 +4,8 @@
   ;; system-dependant, while URL-paths aren't.
   :use-module ((hnh util path) :select (path-append))
   :use-module ((hnh util exceptions) :select (warning))
+  :use-module (hnh util type)
+  :use-module (hnh util color)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module ((rnrs io ports) :select (put-bytevector))
@@ -11,20 +13,22 @@
   :use-module (datetime)
   :use-module ((text util) :select (add-enumeration-punctuation))
   :use-module ((web query) :select (encode-query-parameters))
+  :use-module ((web uri) :select (uri? uri->string))
   :use-module ((calp html util) :select (html-id calculate-fg-color))
   :use-module ((calp html config) :select (edit-mode debug))
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
   :use-module ((vcomponent type recurrence) :select (recurring?))
   :use-module ((vcomponent datetime output)
-               :select (fmt-time-span
+               :select (
                         format-recurrence-rule
                                       ))
+  :use-module (vcomponent data-stores common)
   :use-module (calp util config)
   :use-module ((base64) :select (base64encode))
   :use-module (ice-9 format)
   :use-module (calp translation)
-  :use-module (calp html filter)
+  :use-module ((scheme base) :select (bytevector?))
   :export (format-summary
            format-description
            compact-event-list
@@ -40,21 +44,27 @@
            ))
 
 
-;;; TODO TODO TODO this still uses the old vcomponent system
-
+;; Encodes string as a series of xml entities.
+;; Recommended when sending complex unicode characters over to bad
+;; clients.
 (define (xml-entities s)
   (lambda ()
     (for-each display
               (map (lambda (c) (format #f "&#x~x;" (char->integer c)))
                    (string->list s)))))
 
+;; Format the event summary
 (define (format-summary ev str)
-  ((summary-filter) ev str))
+  (typecheck ev vevent?)
+  (typecheck str string?)
+  (((@ (calp html filter) summary-filter)) ev str))
 
 ;; NOTE this should have information about context (html/term/...)
 ;; And then be moved somewhere else.
 (define (format-description ev str)
-  (catch* (lambda () ((description-filter) ev str))
+  (typecheck ev vevent?)
+  (typecheck str string?)
+  (catch* (lambda () (((@ (calp html filter) description-filter)) ev str))
           (configuration-error
            (lambda (key subr msg args data)
              (format (current-error-port)
@@ -64,41 +74,48 @@
              (warning (G_ "~a on formatting description, ~s") err args)
              str))))
 
-;; TODO replace with propper mimetype parser
-(define (mimetype-extension mimetype)
-  ((@ (ice-9 match) match) mimetype
-    ('() "unknown")
-    ('("image" "png") "png")
-    ('("image" "jpg") "jpg")
-    ('("image" "jpeg") "jpg")
-    ('("image" "gif") "gif")
-    ))
+;; Takes a vline containing an inline image.
+;; NOTE that a check that FMTTYPE is set to "image/*" MUST be done
+;; beforehand by the caller.
+(define (attach-inline-image attach)
+  (typecheck attach vline?)
+  `(img (@ (class "attach")
+           ;; Should be set in the CSS, but better safe than sorry in
+           ;; case of large images.
+           (style "max-width: 100%")
+           (src ,(format #f "data:~a;base64,~a"
+                         (param attach 'FMTTYPE)
+                         (base64encode (vline-value attach)))))))
 
 ;; used by search view
 (define (compact-event-list list)
+  (typecheck list (list-of vevent?))
 
-  (define calendars
-   (delete-duplicates!
-    (filter (lambda (x) (eq? 'VCALENDAR (type x)))
-            (map parent list))
-    eq?))
+  ;; (define calendars
+  ;;  (delete-duplicates!
+  ;;   (filter (lambda (x) (eq? 'VCALENDAR (type x)))
+  ;;           (map parent list))
+  ;;   eq?))
+
+  ;; TODO
+  (define calendars '())
 
   (define (summary event)
     `(summary (div (@ (class "summary-line "))
                    (span (@ (class "square")
                             (data-calendar
                              ,(base64encode
-                               (or (prop (parent event)
-                                         'NAME)
+                               (or #; (prop (parent event) 'NAME)
                                    "unknown")))))
-                   (time ,(let ((dt (prop event 'DTSTART)))
+                   (time ,(let ((dt (prop1 event 'DTSTART)))
                             (if (datetime? dt)
                                 (datetime->string dt (G_ "~Y-~m-~d ~H:~M"))
                                 (date->string dt (G_ "~Y-~m-~d") ))))
-                   (a (@ (href ,(date->string (as-date (prop event 'DTSTART)) "/week/~Y-~m-~d.html")))
+                   (a (@ (href ,(date->string (as-date (prop1 event 'DTSTART)) "/week/~Y-~m-~d.html")))
                       ;; Button for viewing calendar, accompanied by a calendar icon
+                      ;; TODO fragment focusing that specific event
                       ,(G_ "View") " 📅")
-                   (span ,(prop event 'SUMMARY)))))
+                   (span ,(prop1 event 'SUMMARY)))))
   (cons
    `(style ,(lambda () (calendar-styles calendars #t)))
    (for event in list
@@ -106,6 +123,73 @@
           ,(summary event)
           ;; TODO better format
           ,(fmt-single-event event)))))
+
+
+
+
+;; TODO localize this?
+(define (format-event-time-span ev)
+  (typecheck ev vevent?)
+
+  ;; Takes an event, and returns a pretty string for the time interval
+  ;; the event occupies.
+  (define (fmt-time-span ev)
+    (typecheck ev vevent?)
+    (cond [(prop1 ev 'DTSTART) date?
+           => (lambda (s)
+                ;; TODO duration
+                (cond [(prop1 ev 'DTEND)
+                       => (lambda (e)
+                            ;; start = end, only return one value
+                            (if (date= e (date+ s (date day: 1)))
+                                (G_ "~Y-~m-~d")
+                                (values (G_ "~Y-~m-~d")
+                                        (G_ "~Y-~m-~d"))))]
+                      ;; no end value, just return start
+                      [else (date->string s)]))]
+          [else ; guaranteed datetime
+           (let ((s (prop1 ev 'DTSTART))
+                 (e (prop1 ev 'DTEND)))
+             ;; TODO duration
+             (if e
+                 (let ((fmt-str (if (date= (datetime-date s) (datetime-date e))
+                                    (G_ "~H:~M")
+                                    ;; Note the non-breaking space
+                                    (G_ "~Y-~m-~d ~H:~M"))))
+
+                   (values fmt-str fmt-str))
+                 ;; Note the non-breaking space
+                 (G_ "~Y-~m-~d ~H:~M")))]))
+
+  (call-with-values (lambda () (fmt-time-span ev))
+    (case-lambda [(start)
+                  `(div (time (@ (class "dtstart")
+                                 (data-property "dtstart")
+                                 (data-fmt ,(string-append "~L" start))
+                                 (datetime ,(datetime->string
+                                             (as-datetime (prop1 ev 'DTSTART))
+                                             "~1T~3")))
+                              ,(datetime->string
+                                (as-datetime (prop1 ev 'DTSTART))
+                                start)))]
+                 [(start end)
+                  `(div (time (@ (class "dtstart")
+                                 (data-property "dtstart")
+                                 (data-fmt ,(string-append "~L" start))
+                                 (datetime ,(datetime->string
+                                             (as-datetime (prop1 ev 'DTSTART))
+                                             "~1T~3")))
+                              ,(datetime->string (as-datetime (prop1 ev 'DTSTART))
+                                                 start))
+                        " — "
+                        (time (@ (class "dtend")
+                                 (data-property "dtend")
+                                 (data-fmt ,(string-append "~L" end))
+                                 (datetime ,(datetime->string
+                                             (as-datetime (prop1 ev 'DTSTART))
+                                             "~1T~3")))
+                              ,(datetime->string (as-datetime (prop1 ev 'DTEND))
+                                                 end)))])))
 
 ;; Format event as text.
 ;; Used in
@@ -118,107 +202,74 @@
 (define* (fmt-single-event ev
                            optional: (attributes '())
                            key: (fmt-header list))
-  ;; (format (current-error-port) "fmt-single-event: ~a~%" (prop ev 'X-HNH-FILENAME))
+  (typecheck ev vevent?)
+  ;; Sholud be (list-of (pair-of symbol? any-type?))
+  ;; but sxml accepts almost anything
+  (typecheck attributes (list-of (pair-of symbol? any-type)))
+  (typecheck fmt-header procedure?)
+
   `(vevent-description
     (@ ,@(assq-merge
           attributes
           `(
-            (class ,(when (and (prop ev 'PARTSTAT)
-                               (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+            (class ,(when (and (prop1 ev 'PARTSTAT)
+                               (eq? 'TENTATIVE (prop1 ev 'PARTSTAT)))
                       " tentative "))
             (data-uid ,(output-uid ev)))))
     (div (@ (class "vevent eventtext summary-tab"))
          (h3 ,(fmt-header
-               (when (prop ev 'RRULE)
+               (when (prop% ev 'RRULE)
                  `(span (@ (class "repeating")) "↺"))
                `(span (@ (class "summary")
                          (data-property "summary"))
-                      ,(prop ev 'SUMMARY))))
+                      ,(prop1 ev 'SUMMARY))))
          (div
-          ;; TODO localize this?
-          ,(call-with-values (lambda () (fmt-time-span ev))
-             (case-lambda [(start)
-                           `(div (time (@ (class "dtstart")
-                                          (data-property "dtstart")
-                                          (data-fmt ,(string-append "~L" start))
-                                          (datetime ,(datetime->string
-                                                      (as-datetime (prop ev 'DTSTART))
-                                                      "~1T~3")))
-                                       ,(datetime->string
-                                         (as-datetime (prop ev 'DTSTART))
-                                         start)))]
-                          [(start end)
-                           `(div (time (@ (class "dtstart")
-                                          (data-property "dtstart")
-                                          (data-fmt ,(string-append "~L" start))
-                                          (datetime ,(datetime->string
-                                                      (as-datetime (prop ev 'DTSTART))
-                                                      "~1T~3")))
-                                       ,(datetime->string (as-datetime (prop ev 'DTSTART))
-                                                          start))
-                                 " — "
-                                 (time (@ (class "dtend")
-                                          (data-property "dtend")
-                                          (data-fmt ,(string-append "~L" end))
-                                          (datetime ,(datetime->string
-                                                      (as-datetime (prop ev 'DTSTART))
-                                                      "~1T~3")))
-                                       ,(datetime->string (as-datetime (prop ev 'DTEND))
-                                                          end)))]))
+          ,(format-event-time-span ev)
 
           (div (@ (class "fields"))
-               ,(when (and=> (prop ev 'LOCATION) (negate string-null?))
+               ,(awhen (prop% ev 'LOCATION)
                   `(div (b ,(G_ "Location: "))
+                        ;; TODO support for multiple locations?
+                        ;; Doesn't seem to be allowed by the standard, but it should work
+                        ;; anyways.
                         (div (@ (class "location") (data-property "location"))
+                             ;; TODO altrep
                              ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                          (prop ev 'LOCATION)))))
-               ,(awhen (prop ev 'DESCRIPTION)
+                                          (vline-value (car it))))))
+
+               ,(awhen (prop% ev 'DESCRIPTION)
                        `(div (@ (class "description")
                                 (data-property "description"))
-                             ,(format-description ev it)))
+                             ;; TODO altrep
+                             ;; TODO language
+                             ,(format-description ev (vline-value (car it)))))
 
-               ,@(awhen (prop* ev 'ATTACH)
+               ,@(awhen (prop% ev 'ATTACH)
                         ;; attach satisfies @code{vline?}
                         (for attach in it
-                             (case (and=> (param attach 'VALUE) (compose string->symbol car))
-                               ((BINARY)
-                                ;; TODO guess datatype if FMTTYPE is missing
-                                (let ((fmt-type (and=> (param attach 'FMTTYPE)
-                                                       (lambda (p) (string-split (car p) #\/)))))
-                                  ;; TODO other file formats
-                                  (cond ((and fmt-type
-                                              (not (null? fmt-type))
-                                              (string=? "image" (car fmt-type)))
-                                         (let* ((chk (-> (vline-value attach)
-                                                         sha256
-                                                         checksum->string))
-                                                (dname (path-append (xdg-runtime-dir)
-                                                                    "calp-data" "images"))
-                                                (filename (-> dname
-                                                              (path-append chk)
-                                                              (string-append "." (mimetype-extension fmt-type)))))
-                                           (unless (file-exists? filename)
-                                             ;; TODO handle tmp directory globaly
-                                             (mkdir (dirname dname))
-                                             (mkdir dname)
-                                             (call-with-output-file filename
-                                               (lambda (port) (put-bytevector port (vline-value attach)))))
-                                           (let ((link (path-append "/tmpfiles" (string-append chk "." (mimetype-extension fmt-type)))))
-                                             `(a (@ (href ,link))
-                                                 (img (@ (class "attach")
-                                                         (src ,link)))))))
-                                        (else `(pre "As of yet unsupported file format" ,fmt-type)))))
-                               ((URI)
-                                (let ((fmt-type (and=> (param attach 'FMTTYPE)
-                                                       (lambda (p) (string-split (car p) #\/)))))
-                                  (cond ((and fmt-type
-                                              (not (null? fmt-type))
-                                              (string=? "image" (car fmt-type)))
-                                         `(img (@ (class "attach")
-                                                  (src ,(vline-value attach)))))
-                                        (else `(a (@ (class "attach")
-                                                     (href ,(vline-value attach)))
-                                                  ,(vline-value attach))))))
+                             (define v (vline-value attach))
+                             (cond
+                              ((bytevector? v)
+                               ;; TODO guess datatype if FMTTYPE is missing
+                               (let ((fmt-type (and=> (param attach 'FMTTYPE)
+                                                      (lambda (p) (string-split p #\/)))))
+                                 ;; TODO other file formats
+                                 (cond ((and fmt-type
+                                             (not (null? fmt-type))
+                                             (string=? "image" (car fmt-type)))
+                                        (attach-inline-image attach))
+                                       (else `(pre "As of yet unsupported file format" ,fmt-type)))))
+                              ((uri? v)
+                               (let ((fmt-type (and=> (param attach 'FMTTYPE)
+                                                      (lambda (p) (string-split p #\/)))))
+                                 (cond ((and fmt-type
+                                             (not (null? fmt-type))
+                                             (string=? "image" (car fmt-type)))
+                                        `(img (@ (class "attach")
+                                                 (src ,(uri->string v)))))
+                                       (else `(a (@ (class "attach")
+                                                    (href ,(uri->string v)))
+                                                 ,(uri->string v))))))
 
                                ;; Neither BINARY nor URI
                                (else (scm-error 'misc-error "fmt-single-event"
@@ -226,7 +277,8 @@
                                                 (list (and=> (param attach 'VALUE) car))
                                                 #f)))))
 
-               ,(awhen (prop ev 'CATEGORIES)
+               ,(awhen (prop% ev 'CATEGORIES)
+                       ;; TODO language
                        `(div (@ (class "categories"))
                              ,@(map (lambda (c)
                                       `(a (@ (class "category")
@@ -237,18 +289,18 @@
                                                 `((q . ,(format #f "~s"
                                                                 `(member
                                                                   ,(->string c)
-                                                                  (or (prop event 'CATEGORIES)
+                                                                  (or (map vline-value (prop% event 'CATEGORIES))
                                                                       '()))))))))
-                                          ,c))
+                                          ,(vline-value c)))
                                     it)))
 
-               ,(awhen (prop ev 'RRULE)
-                       `(div (@ (class "rrule"))
-                             ,@(format-recurrence-rule ev)))
+               ,(when (prop1 ev 'RRULE)
+                  `(div (@ (class "rrule"))
+                        ,@(format-recurrence-rule ev)))
 
-               ,(when (prop ev 'LAST-MODIFIED)
+               ,(awhen (prop1 ev 'LAST-MODIFIED)
                   `(div (@ (class "last-modified")) ,(G_ "Last modified") " "
-                        ,(datetime->string (prop ev 'LAST-MODIFIED)
+                        ,(datetime->string it
                                            ;; Last modified datetime
                                            (G_ "~1 ~H:~M")))))
 
@@ -257,48 +309,50 @@
 
 
 ;; Single event in side bar (text objects)
-(define (fmt-day day)
-  (let ((date (car day))
-        (events (cdr day)))
-    `(section (@ (class "text-day"))
-              (header (h2 ,(let ((s (date->string date (G_ "~Y-~m-~d"))))
-                             `(a (@ (href "#" ,s)
-                                    (class "hidelink")) ,s))))
-              ,@(stream->list
-                 (stream-map
-                  (lambda (ev)
-                    (fmt-single-event
-                      ev `((id ,(html-id ev) "-side")
-                           (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown"))))
-                      fmt-header:
-                      (lambda body
-                        `(a (@ (href "#" ,(html-id ev) "-block" #; (date-link (as-date (prop ev 'DTSTART)))
-                                     )
-                               (class "hidelink"))
-                            ,@body))))
-                  (stream-filter
-                   (lambda (ev)
-                     ;; If start was an earlier day
-                     ;; This removes all descriptions from
-                     ;; events for previous days,
-                     ;; solving duplicates.
-                     (date/-time<=? date (prop ev 'DTSTART)))
-                   events))))))
+(define (fmt-day header entries)
+  (typecheck header string?)
+  (typecheck entries (list-of (tuple-of string? string? vevent?)))
+  `(section (@ (class "text-day"))
+            (header (h2 (a (@ (href "#" ,header)
+                              (class "hidelink"))
+                           ,header)))
+            ,@(for entry in entries
+               (define store-id (list-ref entry 0))
+               (define ev (list-ref entry 2))
+               (fmt-single-event
+                ev `((id ,(html-id ev) "-side")
+                     (data-calendar ,(base64encode store-id)))
+                fmt-header:
+                (lambda body
+                  `(a (@ (href "#" ,(html-id ev) "-block" #; (date-link (as-date (prop ev 'DTSTART)))
+                               )
+                         (class "hidelink"))
+                      ,@body))))))
 
 
-;; Specific styles for each calendar.
+
+;; Generate a series of top level CSS blocks, setting --color and
+;; --complement on any event matching `data-calendar="${base64(calname)}"`.
 (define* (calendar-styles calendars optional: (port #f))
+  (typecheck calendars (list-of (pair-of string? calendar-data-store?)))
+  ;; Specific styles for each calendar.
   (format port "~:{ [data-calendar=\"~a\"] { --color: ~a; --complement: ~a }~%~}"
           (map (lambda (c)
-                 (let ((name (base64encode (prop c 'NAME)))
-                       (bg-color (prop c 'COLOR))
-                       (fg-color (and=> (prop c 'COLOR)
+                 (let ((name (base64encode (car c)))
+                       (bg-color (and=> (store-color (cdr c)) rgb->hex))
+                       (fg-color (and=> (store-color (cdr c))
                                         calculate-fg-color)))
                    (list name (or bg-color 'white) (or fg-color 'black))))
                calendars)))
 
 ;; "Physical" block in calendar view
-(define* (make-block ev optional: (extra-attributes '()))
+(define* (make-block calendar-id href ev optional: (extra-attributes '()))
+  (typecheck calendar-id string?)
+  (typecheck href string?)
+  (typecheck ev vevent?)
+  ;; Should technically be (list-of (pair-of symbol? string?))
+  ;; But relaxed since sxml-simple allows basically anything
+  (typecheck extra-attributes (list-of (pair-of symbol? any-type)))
 
   ;; surrounding <a /> element which allows something to happen when an element
   ;; is clicked with JS turned off. Our JS disables this, and handles clicks itself.
@@ -307,15 +361,15 @@
        (vevent-block (@ ,@(assq-merge
                            extra-attributes
                            `((id ,(html-id ev) "-block")
-                             (data-calendar ,(base64encode (or (prop (parent ev) 'NAME) "unknown")))
+                             (data-calendar ,(base64encode calendar-id))
                              (data-uid ,(output-uid ev))
 
                              (class "vevent event"
-                               ,(when (and (prop ev 'PARTSTAT)
-                                           (eq? 'TENTATIVE (prop ev 'PARTSTAT)))
+                               ,(when (and (prop% ev 'PARTSTAT)
+                                           (eq? 'TENTATIVE (prop1 ev 'PARTSTAT)))
                                   " tentative")
-                               ,(when (and (prop ev 'TRANSP)
-                                           (eq? 'TRANSPARENT (prop ev 'TRANSP)))
+                               ,(when (and (prop% ev 'TRANSP)
+                                           (eq? 'TRANSPARENT (prop1 ev 'TRANSP)))
                                   " transparent")
                                ))))
                      ;; Inner div to prevent overflow. Previously "overflow: none"
@@ -324,58 +378,35 @@
                      ;; TODO the above comment is no longer valid. Popups are now stored
                      ;; separately from the block.
                      (div (@ (class "event-body"))
-                          ,(when (prop ev 'RRULE)
+                          ,(when (prop% ev 'RRULE)
                              `(span (@ (class "repeating")) "↺"))
                           (span (@ (class "summary")
                                    (data-property "summary"))
-                                ,(format-summary  ev (prop ev 'SUMMARY)))
-                          ,(when (prop ev 'LOCATION)
+                                ,(format-summary ev (prop1 ev 'SUMMARY)))
+                          ,(when (prop% ev 'LOCATION)
                              `(span (@ (class "location")
                                        (data-property "location"))
                                     ,(string-map (lambda (c) (if (char=? c #\,) #\newline c))
-                                                 (prop ev 'LOCATION))))
+                                                 (prop1 ev 'LOCATION))))
                           ;; Document symbol when we have text
-                          ,(when (and=> (prop ev 'DESCRIPTION) (negate string-null?))
+                          ;; TODO this gets completely misplaced in
+                          ;; month view, due to the components being so much smaller.
+                          ,(when (prop% ev 'DESCRIPTION)
                              `(span (@ (class "description"))
                                     "🗎")))))))
-
-
-;; TODO possibly unused?
-(define (repeat-info event)
-  `(div (@ (class "eventtext"))
-        (h2 ,(G_ "Recurrences"))
-        (table (@ (class "recur-components"))
-               ,@(filter identity
-                  (record->list
-                   (lambda (key value)
-                     (and value
-                      `(tr (@ (class ,key)) (th ,key)
-                           (td
-                            ;; TODO Should these date string be translated?
-                            ,(case key
-                               ((wkst) (week-day-name value))
-                               ((until) (if (date? value)
-                                            (date->string value)
-                                            (datetime->string value)))
-                               ((byday) (add-enumeration-punctuation
-                                         (map (lambda (pair)
-                                                (string-append
-                                                 (if (car pair)
-                                                     (format #f "~a " (car pair))
-                                                     "")
-                                                 (week-day-name (cdr pair))))
-                                              value)))
-                               (else (->string value)))))))
-                   (prop event 'RRULE))))))
 
 
 ;; Return a unique identifier for a specific instance of an event.
 ;; Allows us to reference each instance of a repeating event separately
 ;; from any other
+;; DEPRECATED, either instead switch to (uid or href) + recurrence-id,
+;; as a tuple.
 (define (output-uid event)
+  (prop1 event 'UID)
+  #;
   (string-concatenate
    (cons
-    (prop event 'UID)
+    (prop1 event 'UID)
     (when (recurring? event)
       ;; TODO this will break if a UID already looks like this...
       ;; Just using a pre-generated unique string would solve it,
@@ -387,8 +418,8 @@
             (datetime->string
              (as-datetime (or
                            ;; TODO What happens if the parameter RANGE=THISANDFUTURE is set?
-                           (prop event 'RECURRENCE-ID)
-                           (prop event 'DTSTART)))
+                           (prop1 event 'RECURRENCE-ID)
+                           (prop1 event 'DTSTART)))
              "~Y-~m-~dT~H:~M:~S"))))))
 
 
@@ -411,6 +442,7 @@
 
 ;; edit tab of popup
 (define (edit-template calendars)
+  (typecheck calendars (list-of (pair-of string? calendar-data-store?)))
   `(template
     (@ (id "vevent-edit"))
     (div (@ (class " eventtext edit-tab "))
@@ -418,13 +450,14 @@
                (select (@ (class "calendar-selection"))
                  ;; NOTE flytta "muffarna" utanför
                  (option ,(G_ "- Choose a Calendar -"))
-                 ,@(let ((dflt ((@ (vcomponent) default-calendar))))
+                 ,@(let ((dflt ((@ (vcomponent config) default-calendar))))
                      (map (lambda (calendar)
-                            (define name (prop calendar 'NAME))
+                            (define name (car calendar))
                             `(option (@ (value ,(base64encode name))
                                         ,@(when (string=? name dflt)
                                             '((selected))))
-                                     ,name))
+                                     ,(or (store-displayname (cdr calendar))
+                                          (car calendar))))
                           calendars)))
                (input (@ (type "text")
                          (placeholder ,(G_ "Summary"))
@@ -506,35 +539,34 @@
                     "↺")
               (span (@ (class "summary")
                        (data-property "summary")))))
-         ;; TODO should't the time tags contain something?
+         ;; Tags are populated with sample data.
+         ;; This data WILL be replaced or removed by JavaScript.
          (div (div (time (@ (class "dtstart")
                             (data-property "dtstart")
                             (data-fmt "~L~H:~M")
-                            (datetime ; "2021-09-29T19:56:46"
-                             ))
-                                        ; "19:56"
-                         )
+                            (datetime "PLACEHOLDER"))
+                         "02:00")
                    "&nbsp;—&nbsp;"
                    (time (@ (class "dtend")
                             (data-property "dtend")
                             (data-fmt "~L~H:~M")
-                            (datetime ; "2021-09-29T19:56:46"
-                             ))
-                                        ; "20:56"
-                         ))
+                            (datetime "PLACEHOLDER"))
+                         "23:00"))
+
               (div (@ (class "fields"))
                    (div (b ,(G_ "Location: "))
                         (div (@ (class "location")
                                 (data-property "location"))
-                                        ; "Alsättersgatan 13"
-                             ))
+                             "Alsättersgatan 13"))
                    (div (@ (class "description")
                            (data-property "description"))
-                                        ; "With a description"
-                        )
+                        "With a description")
 
                    (div (@ (class "categories")
                            (data-property "categories")))
+
+                   ;; TODO attachments
+
                    ;; (div (@ (class "categories"))
                    ;;      (a (@ (class "category")
                    ;;            (href "/search/?"

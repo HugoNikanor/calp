@@ -1,12 +1,13 @@
 (define-module (calp html view calendar shared)
   :use-module (hnh util)
+  :use-module (hnh util tree)
+  :use-module (hnh util type)
   :use-module (srfi srfi-1)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
                :select (instance-length
                         overlapping?
                         instance-length/clamped))
-  :use-module (hnh util tree)
   :use-module (datetime)
   :use-module (calp html config)
   :use-module ((calp html vcomponent)
@@ -20,24 +21,20 @@
            ))
 
 
-
 (define-public x-pos (make-object-property))
 (define-public width (make-object-property))
-
 
 ;; Takes a list of vcomponents, sets their widths and x-positions to optimally
 ;; fill out the space, without any overlaps.
 (define* (fix-event-widths! lst key: event-length-key (event-length-comperator date/-time>?))
+  (typecheck lst (list-of vevent?))
+  (typecheck event-length-key procedure?)
+  (typecheck event-length-comperator procedure?)
   ;; The tree construction is greedy. This means
   ;; that if  a smaller  event preceeds a longer
   ;; event it would capture  the longer event to
   ;; only find  events which  also overlaps  the
   ;; smaller event.
-
-  (unless event-length-key
-    (scm-error 'wrong-type-arg "fix-event-widths!"
-               (G_ "event-length-key is required")
-               #f #f))
 
   ;; @var{x} is how for left in the container we are.
   (let inner ((x 0)
@@ -54,8 +51,12 @@
 
 
 (define (lay-out-long-events start end events)
-  (fix-event-widths! events event-length-key: instance-length
-                     event-length-comperator: date-time>)
+  (typecheck start date?)
+  (typecheck end date?)
+  (typecheck events (list-of (tuple-of string? string? vevent?)))
+  (fix-event-widths! (map caddr events)
+                     event-length-key: instance-length
+                     event-length-comperator: datetime>)
   (map (lambda (e) (create-top-block start end e))
        events))
 
@@ -63,7 +64,12 @@
 ;; get hours.  This means that a day is always assumed to be 24h, even when that's
 ;; wrong. This might lead to some weirdness when the timezon switches (DST), but it
 ;; makes everything else behave MUCH better.
-(define (create-top-block start-date end-date ev)
+(define (create-top-block start-date end-date entry)
+  (typecheck start-date date?)
+  (typecheck end-date date?)
+  (typecheck entry (tuple-of string? string? vevent?))
+
+  (define ev (list-ref entry 2))
 
   (define total-length
     (* 24 (days-in-interval start-date end-date)))
@@ -74,7 +80,7 @@
     (* 100
        (let* ((dt (datetime date: start-date))
               (diff (datetime-difference
-                     (datetime-max dt (as-datetime (prop ev 'DTSTART)))
+                     (datetime-max dt (as-datetime (prop1 ev 'DTSTART)))
                      dt)))
          (/ (datetime->decimal-hour diff start-date) total-length))))
 
@@ -94,10 +100,13 @@
                 top height left width*)))
 
   (make-block
-   ev `((class
-          ,(when (date/-time< (prop ev 'DTSTART) start-date)
-             " continued")
-          ,(when (and (prop ev 'DTEND)
-                      (date/-time< (date+ end-date (date day: 1)) (prop ev 'DTEND)))
-             " continuing"))
-        (style ,style))))
+   (list-ref entry 0)
+   (list-ref entry 1)
+   (list-ref entry 2)
+   `((class
+       ,(when (date/-time< (prop1 ev 'DTSTART) start-date)
+          " continued")
+       ,(when (and (prop% ev 'DTEND)
+                   (date/-time< (date+ end-date (date day: 1)) (prop1 ev 'DTEND)))
+          " continuing"))
+     (style ,style))))
