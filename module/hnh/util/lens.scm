@@ -29,6 +29,8 @@
   (cons (car lst)
         (f (cdr lst))))
 
+;;; TODO rename this to list-focus
+;;; Possibly reuse the `ref` name for a generic focuser
 (define (((ref idx) list) f)
   (let loop ((idx idx) (rem list))
     (if (zero? idx)

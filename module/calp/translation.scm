@@ -16,6 +16,8 @@
   (string-map (match-lambda
                 (#\newline #\space)
                 (c c))
+              ;; TODO can this be extended to take a locale reference?
+              ;; That would allow its usage over HTTP
               (gettext string "calp")))
 
 ;; Mark string for translation, and also make it discoverable for gettext

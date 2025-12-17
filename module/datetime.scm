@@ -688,6 +688,11 @@
 ;; both inclusive
 ;; date, date → [list date]
 (define* (date-range start end optional: (increment (date day: 1)))
+  ;; TODO rewrite this to something like, obviously changing increment to an integer
+  ;; Remember to divide days in interval by increment
+  ;; (stream->list (days-in-interval start end)
+  ;;               (date-stream (day day: increment) start))
+
   (stream->list
    (stream-take-while (lambda (d) (date<= d end))
                       (date-stream increment start))))

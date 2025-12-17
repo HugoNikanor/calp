@@ -12,7 +12,7 @@
   :export (format)
   :re-export (parsers serializers))
 
-(define (envolope body)
+(define (envelope body)
   (xml-document
    pi: (list (pi-element 'xml "version=\"1.0\" encoding=\"utf-8\"")
              ; (pi-element 'xml-stylesheet "type=\"text/xsl\" href=\"xcal.xsl\"")
@@ -21,12 +21,12 @@
 
 (define* (vcomponent->xml component port
                           key:
-                          (envolope? #t)
+                          (envelope? #t)
                           (namespaces `((,xcal . xcal)))
                           )
   (namespaced-sxml->xml
-   (if envolope?
-       (envolope (vcomponent->sxcal component))
+   (if envelope?
+       (envelope (vcomponent->sxcal component))
        (vcomponent->sxcal component))
    port: port
    namespaces: namespaces))
