@@ -43,6 +43,9 @@ body {
         flex-direction: column;
 
         .event:target {
+            /* TODO at least in month view, this glow gets clipped by
+               the day borders, meaning that it's really hard to see
+               in some contexts. */
             box-shadow:
                  1em  1em 0.5em gold,
                 -1em -1em 0.5em gold,
