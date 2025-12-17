@@ -340,33 +340,6 @@ Check if the interval @var{s1-begin} to @var{s1-end} overlaps with the
 interval @var{s2-begin} to @var{s2-end}.
 @end defun
 
-@defun find-first-week-day week-day date
-Returns the first instance of the given week-day after @var{date}.
-
-@example
-(find-first-week-day mon #2020-04-01)
-⇒ #2020-04-06
-(find-first-week-day mon #2020-04-10)
-⇒ #2020-04-13
-(find-first-week-day mon #2020-04-30)
-⇒ #2020-05-04
-@end example
-@end defun
-
-@defun all-wday-in-month week-day month-date
-Returns instances of the given week-day in month between
-month-date and end of month.
-@example
-(all-wday-in-month mon #2020-06-01)
-⇒ (#2020-06-01 #2020-06-08 #2020-06-15 #2020-06-22 #2020-06-29)
-(all-wday-in-month mon #2020-06-10)
-⇒ (#2020-06-15 #2020-06-22 #2020-06-29)
-@end example
-@end defun
-
-@defun all-wday-in-year week-day year-date
-Returns a list of all instances of @var{week-day} in @var{year-date}.
-@end defun
 
 @defun in-date-range? start-date end-date → date → boolean
 Returns a predicate procedure, which checks if a given date is between

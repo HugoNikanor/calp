@@ -89,6 +89,47 @@
 
 
 
+;; Returns the first instance of the given week-day after @var{d}.
+;; @example
+;; (find-first-week-day mon #2020-04-01)
+;; => #2020-04-06
+;; (find-first-week-day mon #2020-04-10)
+;; => #2020-04-13
+;; (find-first-week-day mon #2020-04-30)
+;; => #2020-05-04
+;; @end example
+(define (find-first-week-day wday d)
+  (let* ((start-day (week-day d))
+         (diff (- wday start-day)))
+    (date+ d (date day: (modulo diff 7)))))
+
+;; returns instances of the given week-day in month between
+;; month-date and end of month.
+;; @example
+;; (all-wday-in-month mon #2020-06-01)
+;; => (#2020-06-01 #2020-06-08 #2020-06-15 #2020-06-22 #2020-06-29)
+;; (all-wday-in-month mon #2020-06-10)
+;; => (#2020-06-15 #2020-06-22 #2020-06-29)
+;; @end example
+;; week-day, date → (list date)
+;; TODO remane procdure, and clarify documentation
+(define (all-wday-in-month wday month-date)
+  (stream->list
+   (stream-take-while
+    (lambda (d) (= (month d) (month month-date)))
+    (week-stream (find-first-week-day wday month-date)))))
+
+
+(define (all-wday-in-year wday year-date)
+  (stream->list
+   (stream-take-while
+    (lambda (d) (= (year d) (year year-date)))
+    (week-stream (find-first-week-day wday year-date)))))
+
+
+
+
+
 (define ((limiter-positive-int dt-accessor) rrule-accessor rrule dt-list)
   (filter (lambda (dt) (memv (dt-accessor dt)
                      (or (rrule-accessor rrule) '())))
