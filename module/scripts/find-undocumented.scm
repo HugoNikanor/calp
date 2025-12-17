@@ -59,7 +59,7 @@
         (string-concatenate
          (intersperse
           "[ \t]*"
-          (for (idx symbol) in (enumerate form)
+          (for (idx . symbol) in (enumerate form)
                (cond ((string? symbol)  (command symbol))
                      ((eq? '_ symbol)   parameter)
                      ((eq? '... symbol) rest)

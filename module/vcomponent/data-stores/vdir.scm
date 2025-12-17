@@ -150,7 +150,7 @@
   (define entry-by-filename (make-hash-table))
   (define filenames (glob (glob-pattern self)))
   (define file-count (length filenames))
-  (for (i filename) in (enumerate filenames)
+  (for (i . filename) in (enumerate filenames)
        ;; TODO if parsing fails, log an error, and continue with the rest of the elements.
        ;; This includes both broken files, but also files containing non-compliant components, such as
        ;; - file with no VEVENT

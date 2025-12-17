@@ -242,7 +242,9 @@
 
 (test-group "enumerate"
  (test-equal "Enumerate"
-   '((0 #\H) (1 #\e) (2 #\l) (3 #\l) (4 #\o) (5 #\,) (6 #\space) (7 #\W) (8 #\o) (9 #\r) (10 #\l) (11 #\d) (12 #\!))
+   '((0 . #\H) (1 . #\e) (2 . #\l) (3 . #\l) (4 . #\o)
+     (5 . #\,) (6 . #\space) (7 . #\W) (8 . #\o) (9 . #\r)
+     (10 . #\l) (11 . #\d) (12 . #\!))
    (enumerate (string->list "Hello, World!"))))
 
 

@@ -319,10 +319,8 @@
 (define (as-symb s)
   (if (string? s) (string->symbol s) s))
 
-;;; TODO why doesn't this return pairs?
 (define (enumerate lst)
-  (zip (iota (length lst))
-       lst))
+  (map cons (iota (length lst)) lst))
 
 (define* (unval proc optional: (n 0))
   (lambda args

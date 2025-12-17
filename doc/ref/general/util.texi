@@ -153,8 +153,8 @@ Returns @code{(string->symbol s)} if @var{s} is a string, @var{s} otherwise.
 @end defun
 
 @defun enumerate lst
-Returns a list of lists, where the @var{car} is the index in the list,
-and the @var{cadr} is the corresponding element of the original list
+Returns a list of pairs, where the @var{car} is the index in the list,
+and the @var{cdr} is the corresponding element of the original list
 @end defun
 
 

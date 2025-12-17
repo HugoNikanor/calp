@@ -54,12 +54,12 @@
 (test-equal
     "!e!l!,!W!r!d"
   (list->string
-   (map cadr
+   (map cdr
         (set (enumerate (string->list "Hello, World"))
              (compose-lens
               (focus-matching (compose even? car))
               cdr*)
-             '(#\!)))))
+             #\!))))
 
 
 (test-group "Identity lens"

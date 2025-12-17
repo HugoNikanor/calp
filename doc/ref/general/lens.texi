@@ -76,7 +76,7 @@ specialization for lists.
 (modify (enumerate (string->list "Hello"))
         (lens-compose each car*)
         (λ (x) (* x 10)))
-⇒ ((0 #\H) (10 #\e) (20 #\l) (30 #\l) (40 #\o))
+⇒ ((0 . #\H) (10 . #\e) (20 . #\l) (30 . #\l) (40 . #\o))
 @end example
 
 @example
