@@ -3,11 +3,13 @@
   :use-module (hnh util object)
   :use-module (hnh util type)
   :use-module (hnh util serialize)
+  :use-module (hnh util options)
   :use-module ((hnh util io)
                :select (read-all ensure-newline))
   :use-module (ice-9 ftw)
   :use-module (ice-9 match)
   :use-module (ice-9 format)
+  :use-module (ice-9 getopt-long)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-88)
 
@@ -25,6 +27,14 @@
 
 (define %summary
   (G_ "Gathers configurable items from the source code."))
+
+(define opt-spec
+  `((help (single-char #\h)
+          (description ,(G_ "Print this help.")))
+    (format (single-char #\f)
+            (value #t)
+            (description
+             ,(G_ "Format to output found configuration and documentation in.")))))
 
 (define-type (configuration)
   (module type: (list-of symbol?))
@@ -61,10 +71,7 @@
 ;; - Texinfo
 ;; - actual configuration files
 
-(define (main args)
-  (define configuration-items
-    (find-configurations (all-files-and-modules-under-directory "module")))
-
+(define (output-as-ini configurations)
   (format #t ";;;~%")
   (format #t ";;; Found configurable options in the program~%")
   (format #t ";;;~%")
@@ -72,7 +79,7 @@
   (with-serializers
    ((calendar-data-store? (compose uri->string store-uri))
     (boolean? (lambda (b) (if b 'true 'false))))
-   (for (module-name . configuration-options) in (group-by module configuration-items)
+   (for (module-name . configuration-options) in (group-by module configurations)
         (newline)
         (format #t "[~{~a~^ ~}]~%" module-name)
         (for config in configuration-options
@@ -101,3 +108,19 @@
                                    (serialize real-value)))))))))
 
   (newline))
+
+(define (main args)
+  (define options (getopt-long args (getopt-opt opt-spec)))
+
+  (define configuration-items
+    (find-configurations (all-files-and-modules-under-directory "module")))
+
+  (define formats
+    `((ini . ,output-as-ini)))
+
+  (let ((fmt (string->symbol (option-ref options 'format "ini"))))
+    (cond ((assoc-ref formats fmt)
+           => (lambda (proc) (proc configuration-items)))
+          (else
+           (format (current-error-port)
+                   "Unknown output format: ~s~%" fmt)))))
