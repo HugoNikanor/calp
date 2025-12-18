@@ -15,6 +15,7 @@
   :use-module (hnh util)
   :use-module (hnh util env)
   :use-module (datetime)
+  :use-module (datetime timezone)
   :use-module ((ice-9 regex) :select (string-match match:substring))
   :export (<resource>
            resource?
@@ -321,7 +322,7 @@
               (propstat
                200
                (list ((xml webdav 'getlastmodified)
-                      (datetime->http-date dt))))))
+                      (datetime->http-date (zone->utc dt)))))))
         (else (propstat 404 (list ((xml webdav 'getlastmodified)))))))
 
 (define (remove-lockdiscovery! _) (throw 'protected-property))

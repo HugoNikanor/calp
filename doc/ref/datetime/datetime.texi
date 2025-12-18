@@ -572,10 +572,10 @@ on date or time objects.
 
 @defun datetime->http-string dt
 Formats datetime as wanted by some web standards.
-It should convert the datetime to UTC, but currently instead simply
-ignores the timezone.
+Requires that the input date is in the UTC timezone, and while throw a
+type error otherwise. See @code{zone->utc}.
 
-https://httpwg.org/specs/rfc9110.html#http.date
+@url{https://httpwg.org/specs/rfc9110.html#http.date}
 @end defun
 
 

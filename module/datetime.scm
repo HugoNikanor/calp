@@ -240,10 +240,11 @@
 
 
 (define (datetime->http-date dt)
+  (typecheck dt datetime?)
+  (typecheck (tz dt) (equal? "UTC"))
   (with-locale1
    LC_TIME "C"
    (lambda ()
-     ;; TODO move dt to UTC
      (datetime->string dt "~a, ~d ~b ~Y ~H:~M:~S GMT"))))
 
 (define (date-zero? date)
