@@ -515,6 +515,7 @@
 
 
 
+;;; DEPRECATED only used by (vcomponent util group), which is itself deprecated
 (define ((in-date-range? start-date end-date) date)
   (date<= start-date date end-date))
 
@@ -930,7 +931,7 @@ Returns -1 on failure"
 
 ;;; Everything below really messy
 
-;;; EQUIALENCE
+;;; EQUVIALENCE
 
 (define (date= . args)
   (reduce (lambda (a b)
