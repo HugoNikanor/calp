@@ -19,7 +19,6 @@
   :use-module ((sxml simple) :select (sxml->xml xml->sxml))
   :use-module ((sxml html)   :select (sxml->html))
   :use-module (sxml xpath)
-  :use-module (sxml namespace)
 
   :use-module ((rnrs io ports) :select (get-bytevector-all))
   :use-module ((xdg basedir) :prefix xdg-)
