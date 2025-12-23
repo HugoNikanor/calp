@@ -11,7 +11,7 @@
   :use-module (datetime)
   :use-module ((hnh util) :select (->> sort*))
   :use-module (hnh util lens)
-  :use-module ((datetime zic) :select (intermediary->zoneinfo read-zoneinfo))
+  :use-module ((datetime zoneinfo) :select (intermediary->zoneinfo read-zoneinfo))
   :use-module (datetime timespec)
   :use-module ((vcomponent) :select (vcomponent-diff extract1 prop1))
   :use-module (vcomponent datetime)

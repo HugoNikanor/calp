@@ -4,7 +4,10 @@
   :use-module (srfi srfi-88)
   :use-module (datetime)
   :use-module (datetime timespec)
-  :use-module (datetime zic)
+  :use-module (datetime zoneinfo)
+  :use-module (datetime zoneinfo types)
+  :use-module (datetime zoneinfo intermediary)
+  :use-module (datetime zoneinfo zic)
   :use-module ((vcomponent type recurrence)
                :select (recur-rule)))
 
@@ -28,7 +31,8 @@ Zone    Europe/Zurich  0:34:08     -      LMT     1853 Jul 16
 Link    Europe/Zurich  Europe/Vaduz
 ")
 
-(define parse-zic-file (@@ (datetime zic) parse-zic-file))
+(define parse-zic-file
+  (@@ (datetime zoneinfo zic) parse-zic-file))
 
 ;; Some of the tests are slightly altered to score better on the coverage
 (test-group "From zic(8)"
@@ -47,7 +51,7 @@ Link    Europe/Zurich  Europe/Vaduz
 
             ;; Technically not from zic(8), since that example has an until field
             (test-equal "Basic Zone"
-              (list ((@@ (datetime zic) zone)
+              (list ((@@ (datetime zoneinfo zic) zone)
                      zone-name: "Asia/Amman"
                      zone-entries: (list (zone-entry
                                           stdoff: (timespec (time hour: 02 minute: 00 second: 00) '+ #f)
@@ -61,7 +65,7 @@ Link    Europe/Zurich  Europe/Vaduz
 
             ;; Modified from the following example
             (test-equal "Basic Zone with continuation"
-              (list ((@@ (datetime zic) zone)
+              (list ((@@ (datetime zoneinfo zic) zone)
                      zone-name: "America/Menominee"
                      zone-entries: (list (zone-entry
                                         stdoff: (timespec (time hour: 05 minute: 00 second: 00) '- #f)
@@ -81,7 +85,7 @@ Link    Europe/Zurich  Europe/Vaduz
 
 
             (test-equal "Rules and Zone"
-              (list ((@@ (datetime zic) zone)
+              (list ((@@ (datetime zoneinfo zic) zone)
                      zone-name: "America/Menominee"
                      zone-entries: (list (zone-entry
                                           stdoff: (timespec (time hour: 05 minute: 00 second: 00) '- #f)
@@ -144,7 +148,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
               (list (zone-link
                      name: "Europe/Vaduz"
                      target: "Europe/Zurich")
-                    ((@@ (datetime zic) zone)
+                    ((@@ (datetime zoneinfo zic) zone)
                      zone-name: "Europe/Zurich"
                      zone-entries: (list (zone-entry
                                         stdoff: (timespec (time hour: 00 minute: 34 second: 08) '+ #f)
@@ -241,49 +245,6 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
               (call-with-input-string big-sample
                 parse-zic-file)))
 
-(test-group "rule->dtstart"
-            (test-equal "last sunday"
-              (datetime year: 1967 month: 04 day: 30 hour: 02 minute: 00 second: 00)
-              (rule->dtstart
-               (zi-rule
-                rule-name: 'US
-                rule-from: 1967
-                rule-to: 1973
-                rule-in: 4
-                rule-on: '(last 0)
-                rule-at: (timespec (time hour: 02 minute: 00 second: 00) '+ 'wall)
-                rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'daylight)
-                rule-letters: "D")))
-
-            (test-equal "sunday >= 1"
-              (datetime year: 1977 month: 04 day: 03 hour: 01 minute: 00 second: 00 tz: "UTC")
-              (rule->dtstart
-               (zi-rule
-                rule-name: 'EU
-                rule-from: 1977
-                rule-to: 1980
-                rule-in: 4
-                rule-on: `(> ,sun 1)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'wall)
-                rule-letters: "S")))
-
-            ;; Max and min uses dummy dates, which is slightly wrong
-            ;; but shouldn't cause any real problems
-
-            (test-equal "Minimum time"
-              (datetime year: 0000 month: 10 day: 30 hour: 01 minute: 00 second: 00 tz: "UTC")
-              (rule->dtstart
-               (zi-rule
-                rule-name: 'EU
-                rule-from: 0
-                rule-to: 2000
-                rule-in: 10
-                rule-on: '(last 0)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
-                rule-letters: "")))
-)
 
 (test-group "zone-format"
 
@@ -335,120 +296,6 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                (get-rule zoneinfo 'Swiss))))
 
 
-(test-group "rule->rrule"
-            (test-equal "Basic example, and to = maximum"
-              (recur-rule
-               freq: 'YEARLY interval: 1 wkst: mon
-               byday: (list (cons -1 sun))
-               bymonth: (list oct))
-              (rule->rrule
-               (zi-rule
-                rule-name: 'EU
-                rule-from: 1996
-                rule-to: 'maximum
-                rule-in: 10
-                rule-on: '(last 0)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
-                rule-letters: "")
-               ))
-
-            (test-equal "with to = only"
-              #f
-              (rule->rrule
-               (zi-rule
-                rule-name: 'EU
-                rule-from: 1996
-                rule-to: 'only
-                rule-in: 10
-                rule-on: '(last 2)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
-                rule-letters: "")))
-
-            (test-equal "with definitive to year"
-              (recur-rule
-               freq: 'YEARLY interval: 1 wkst: mon
-               byday: (list (cons -1 tue))
-               bymonth: (list oct)
-               until: (datetime year: 2000 month: 01 day: 01 hour: 00 minute: 00 second: 00))
-              (rule->rrule
-               (zi-rule
-                rule-name: 'EU
-                rule-from: 1996
-                rule-to: 2000
-                rule-in: 10
-                rule-on: '(last 2)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
-                rule-letters: "")))
-
-            (test-equal "on being a month day"
-              (recur-rule
-               freq: 'YEARLY interval: 1 wkst: mon
-               bymonthday: (list 2)
-               bymonth: (list oct))
-              (rule->rrule
-               (zi-rule
-                rule-name: 'EU
-                rule-from: 1996
-                rule-to: 'maximum
-                rule-in: 10
-                rule-on: 2
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
-                rule-letters: "")))
-
-            (test-equal "on being first day after date"
-              (recur-rule
-               freq: 'YEARLY interval: 1 wkst: mon
-               byday: (list (cons 1 mon))
-               bymonth: (list oct))
-              (rule->rrule
-               (zi-rule
-                rule-name: 'EU
-                rule-from: 1996
-                rule-to: 'maximum
-                rule-in: 10
-                rule-on: `(> ,mon 2)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
-                rule-letters: "")))
-
-            #;
-            (test-equal "Crash on counting backwards from date"
-              '(misc-error "rule->rrule" "Counting backward for RRULES unsupported" #f #f)
-              (catch 'misc-error
-                (lambda ()
-                 (rule->rrule
-                  (zi-rule
-                   rule-name: 'EU
-                   rule-from: 1996
-                   rule-to: 'maximum
-                   rule-in: 10
-                   rule-on: `(< ,mon 2)
-                   rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                   rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
-                   rule-letters: "")))
-                list))
-
-            #;
-            (test-equal "Crash on to = minimum"
-              '(misc-error "rule->rrule" "Check your input" #f #f)
-              (catch 'misc-error
-                (lambda ()
-                  (rule->rrule
-                   (zi-rule
-                    rule-name: 'EU
-                    rule-from: 1996
-                    rule-to: 'minimum
-                    rule-in: 10
-                    rule-on: `(< ,mon 2)
-                    rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                    rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
-                    rule-letters: "")))
-                list))
-            )
 
 (lambda ()
   (define intermediary
@@ -471,4 +318,8 @@ Zone Etc/GMT 0 - GMT
                               until: #f)))
       ((@@ (vcomponent zic) resolve-link) intermediary root-link))))
 
-'((datetime zic))
+'((datetime zoneinfo)
+  (datetime zoneinfo types)
+  (datetime zoneinfo intermediary)
+  (datetime zoneinfo zic)
+  )

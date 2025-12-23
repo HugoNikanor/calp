@@ -1,7 +1,7 @@
 (define-module (test timespec)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
-  :use-module (datetime)
+  :use-module (datetime core)
   :use-module (datetime timespec))
 
 (test-group "timespec+"

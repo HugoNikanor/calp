@@ -1,4 +1,8 @@
 (define-module (datetime)
+  ;; To resolve colision with cadr-second from srfi-1
+  :replace (second)
+  :export (second)
+
   :use-module (datetime core)
   :use-module (datetime timezone)
   :use-module (datetime timespec)
@@ -12,7 +16,7 @@
 
               time
               time?
-              hour minute second
+              hour minute ; second
               hour* minute* second*
 
               datetime
@@ -167,3 +171,7 @@
 
               )
   )
+
+;; Appranently :replace alongside :re-export is forbidden.
+;; This hack fixes it
+(define second (@ (datetime core) second))
