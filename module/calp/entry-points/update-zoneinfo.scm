@@ -2,7 +2,7 @@
 (define-module (calp entry-points update-zoneinfo)
   :export (%summary main)
   :use-module (datetime)
-  :use-module (datetime zic)
+  :use-module (datetime zoneinfo)
   :use-module (srfi srfi-1)
   :use-module (hnh util)
   :use-module (hnh util path)
@@ -174,9 +174,9 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
    ;; #:keyword syntax used, since they tend to serialize the same, and
    ;; define-module is weird with keywords
    `(define-module ,output-module
-      #:use-module ((datetime) #:select (datetime date time))
+      #:use-module ((datetime core) #:select (datetime date time))
       #:use-module ((datetime timespec) #:select (timespec))
-      #:use-module ((datetime zic)
+      #:use-module ((datetime zoneinfo)
                     #:select (parsed-zic-intermediary
                               intermediary->zoneinfo
                               zone-entry zi-rule zone-link

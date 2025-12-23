@@ -5,6 +5,7 @@
   :use-module (calp util time)
   :use-module (hnh util options)
   :use-module (datetime)
+  :use-module (datetime io)
   :use-module (ice-9 getopt-long)
   :use-module ((ice-9 regex) :select (string-match regexp-substitute))
   :use-module (ice-9 format)

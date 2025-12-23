@@ -10,12 +10,13 @@
   :use-module (hnh util object)
   :use-module (hnh util serialize)
   :use-module (hnh util lens)
-  :use-module (datetime)
+  :use-module (datetime core)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (calp translation)
   :use-module (ice-9 regex)
+  :use-module (ice-9 format)
   :export (timespec
            timespec?
            timespec->string
@@ -62,7 +63,9 @@
   ;; u, g, z - Universal time, all three are synonyms due to historical reasons
   (timespec-type type: (or false? (memv '(standard daylight wall utc)))))
 
-(define* (timespec->string timespec optional: (precision 'h))
+(define* (timespec->string timespec
+                           optional: (precision 'h)
+                           key: (delimiter ":"))
   (typecheck timespec timespec?)
   (typecheck precision (memv '(h m s)))
 
@@ -70,13 +73,13 @@
     (lambda ()
       (define t (timespec-time timespec))
       (display (timespec-sign timespec))
-      (display (time->string t "~H"))
+      (format #t "~2'0d" (hour t))
       (when (or (memv precision '(m s))
                 (not (= 0 (minute t) (second t))))
-        (display (time->string t ":~M"))
+        (format #t "~a~2'0d" delimiter (minute t))
         (when (or (memv precision '(s))
                   (not (= 0 (second t))))
-          (display (time->string t ":~S"))))
+          (format #t "~a~2'0d" delimiter (second t))))
       ;; Print milis here once we store them
       (display
        (case (timespec-type timespec)

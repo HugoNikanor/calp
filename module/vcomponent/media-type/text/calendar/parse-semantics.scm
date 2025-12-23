@@ -15,6 +15,7 @@
   :use-module (hnh util table)
   :use-module (hnh util lens)
   :use-module (datetime)
+  :use-module (datetime io)
   :use-module (datetime timespec)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)

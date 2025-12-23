@@ -1,5 +1,5 @@
 (define-module (datetime srfi-19)
-  :use-module ((datetime) :prefix #{dt:}#)
+  :use-module ((datetime core) :prefix #{dt:}#)
   :use-module ((srfi srfi-19) :prefix #{19:}#)
   :export (datetime->srfi-19-date
            date->srfi-19-date

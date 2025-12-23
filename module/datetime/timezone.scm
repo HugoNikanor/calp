@@ -5,8 +5,9 @@
   :use-module (srfi srfi-71)
   :use-module (ice-9 match)
   :use-module (ice-9 regex)
-  :use-module (datetime)
-  :use-module ((datetime zic)
+  :use-module (datetime core)
+  :use-module (datetime timespec)
+  :use-module ((datetime zoneinfo)
                :select (
                         zi-rule?
                         rule-from
@@ -29,7 +30,6 @@
                         execute-day-spec
                         zone-format
                                 ))
-  :use-module (datetime timespec)
   :use-module (hnh util)
   :use-module (hnh util type)
   :use-module (hnh util lens)

@@ -13,7 +13,8 @@
   :use-module (vcomponent type recurrence)
   :use-module (datetime)
   :use-module (datetime timespec)
-  :use-module (datetime zic)
+  :use-module (datetime zoneinfo)
+  :use-module (vcomponent type recurrence zic)
   :export (zoneinfo->vtimezone))
 
 

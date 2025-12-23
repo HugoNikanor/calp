@@ -15,7 +15,7 @@
   :use-module (srfi srfi-71)
   :use-module (calp translation)
   :use-module (datetime)
-  :use-module (datetime zic)
+  :use-module (datetime zoneinfo)
   :use-module (datetime timespec)
   :use-module (datetime timezone)
   :use-module (datetime localtime)
