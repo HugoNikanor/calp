@@ -1,12 +1,11 @@
 (define-module (datetime)
-  ;; To resolve colision with cadr-second from srfi-1
-  :replace (second)
-  :export (second)
 
   :use-module (datetime core)
   :use-module (datetime timezone)
   :use-module (datetime timespec)
   :use-module (datetime io)
+  ;; To resolve colision with cadr-second from srfi-1
+  :re-export-and-replace (second)
   :re-export (
               ;; Core
               date
@@ -59,6 +58,7 @@
               datetime-min
               datetime-max
 
+              week-start
               week-day
               week-1-start
               week-number
@@ -169,9 +169,4 @@
 
               locale-month locale-month-short
 
-              )
-  )
-
-;; Appranently :replace alongside :re-export is forbidden.
-;; This hack fixes it
-(define second (@ (datetime core) second))
+              ))

@@ -646,12 +646,6 @@ or date component.
 @end defun
 
 
-@defun string->date/-time string
-Parses string as an ISO-8601 string. Checks for the existence of
-@code{T}, @code{:}, or @code{-} to determine if it's a datetime, time
-or date.
-@end defun
-
 @defun parse-ics-date str
 @defunx parse-ics-time str
 Parses dates per RFC5545.

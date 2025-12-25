@@ -175,21 +175,18 @@
 
 (define (datetime-constructor-constructor constructor validator)
   (let ((date% date)
-        (time% time)
-        (tz% tz))
-   (lambda* (key: date time tz
-                  (year 0) (month 0) (day 0)
-                  (hour 0) (minute 0) (second 0)
-                  rest: rest)
-     (if (and (not (or date time tz))
-              (= 0 year month day hour minute second)
-              (= 2 (length rest))
-              (not (any keyword? rest)))
-         (apply tz% rest)
-         (let ((date (or date (date% year: year month: month day: day)))
-               (time (or time (time% hour: hour minute: minute second: second))))
-           (validator date time tz)
-           (constructor date time tz))))))
+        (time% time))
+    (case-lambda*
+     ((key: date time tz
+            (year 0) (month 0) (day 0)
+            (hour 0) (minute 0) (second 0)
+            rest: rest)
+      (let ((date (or date (date% year: year month: month day: day)))
+            (time (or time (time% hour: hour minute: minute second: second))))
+        (validator date time tz)
+        (constructor date time tz)))
+     ((dt zone)
+      (tz dt zone)))))
 
 (define (datetime-serializer dt)
   ;; record->list NOT used, since we look at parts of the fields
@@ -221,7 +218,6 @@
   (datetime-date type: date? lens: date*)
   (datetime-time type: time? lens: time*)
   (tz type: (or false? string?)))
-
 
 
 (define (date-zero? date)
