@@ -136,6 +136,10 @@
            (parse-html str)]
           [else (parse-links str)]))))
 
+;;; TODO this is just a parameter currently.
+;;; Define it as a configuration value in something
+;;; like (calp config) to expose it by `calp get-config`.
 ((@ (datetime) week-start) mon)
+
 ((@ (vcomponent config) default-calendar) "Calendar")
 ;; (set-config! 'path-prefix (car (glob "~/.local")))

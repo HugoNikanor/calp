@@ -30,8 +30,6 @@
   :use-module (ice-9 format)
   :use-module (ice-9 curried-definitions)
 
-  :use-module (calp util config)
-
   :export (date
            date?
            year month day
@@ -154,10 +152,14 @@
 
 ;;; Configuration
 
-;; (define-public week-start (make-parameter sun))
-(define-config week-start sun
-  description: "First day of week"
-  pre: (ensure (lambda (x) (<= sun x sat))))
+(define-public week-start
+  (make-parameter
+   sun
+   (lambda (val)
+     (unless (and (exact-integer? val)
+                  (<= sun val sat))
+       (error "Invalid week start" val))
+     val)))
 
 
 
