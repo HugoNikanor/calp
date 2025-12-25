@@ -47,7 +47,7 @@
      (description ,(G_ "Format to output result in, see datetime->string for format.")))))
 
 (define (print-help)
-  (format #t "This is some help~%"))
+  (format #t "Usage: calp tz {dump,list,convert}~%"))
 
 (define (main args)
 
