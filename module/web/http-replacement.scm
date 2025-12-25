@@ -17,7 +17,7 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA
 
-;; Copyright (C) 2023 Hugo Hörnquist.
+;; Copyright (C) 2023, 2025 Hugo Hörnquist.
 
 ;;; Commentary:
 ;;;
@@ -29,9 +29,15 @@
 ;;; made for not-too-divergent texts (like a quality of .2 which should
 ;;; be 0.2, etc).
 ;;;
+;;; Commentary on how this differs from upstream:
+;;; 
+;;; This adds the ability to dynamically add new HTTP methods through
+;;; `declare-method!'. It's placed in (web http-replacement) to be
+;;; able to co-exist with the regular (web http) module.
+;;;
 ;;; Code:
 
-(define-module (web http)
+(define-module (web http-replacement)
   #:use-module ((srfi srfi-1) #:select (append-map! map! find))
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-19)

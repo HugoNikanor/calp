@@ -130,7 +130,7 @@
   (typecheck media string?)
 
   (define-values (media-type media-parameters)
-    (car+cdr ((@ (web http) parse-header) 'content-type media)))
+    (car+cdr ((@ (web http-replacement) parse-header) 'content-type media)))
 
   (define media-module
     (map string->symbol (string-split (symbol->string media-type) #\/)))
