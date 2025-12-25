@@ -166,14 +166,14 @@ unix or TCP socket.<br/>
                                             (getpid)))]
         [repl => repl-start])
 
-  (let* ((ropt (ornull (option-ref opts '() '())
-                       '("terminal")))
-         (name (string->symbol (car ropt))))
+  (let* ((remaining-options (ornull (option-ref opts '() '())
+                                    '("terminal")))
+         (name (string->symbol (car remaining-options))))
 
     (cond ((memv name entry-points)
             ((module-ref (resolve-interface `(calp entry-points ,name))
                          'main)
-             ropt))
+             remaining-options))
           (else (format (current-error-port)
                         (G_ "Unsupported mode of operation: ~a~%")
                         name)
