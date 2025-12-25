@@ -1,6 +1,6 @@
 ;; -*- geiser-scheme-implementation: guile -*-
 (define-module (calp main)
-  :use-module ((hnh util) :select (awhen))
+  :use-module ((hnh util) :select (awhen catch*))
   :use-module ((hnh util path) :select (path-append file-hidden?))
 
   :use-module (srfi srfi-1)
@@ -96,7 +96,22 @@ unix or TCP socket.<br/>
 
     (string-concatenate
      (map (lambda (entry-point)
-            (define module (resolve-interface `(calp entry-points ,entry-point)))
+            (define module
+              (catch* (lambda () (resolve-interface `(calp entry-points ,entry-point)))
+                      (misc-error
+                       (lambda (_ proc fmt args data)
+                         (let ((mod (make-module)))
+                           (module-define!
+                            mod '%summary
+                            (format #f "<i>ERROR: ~?</i>" fmt args))
+                           mod)))
+                      (#t (lambda args
+                            (let ((mod (make-module)))
+                              (module-define!
+                               mod '%summary
+                               (format #f "<i>ERROR: ~s</i>"
+                                       args))
+                              mod)))))
             (format #f "<p><b>~a</b> ~a</p>"
                     entry-point
                     (module-ref module '%summary "")))
