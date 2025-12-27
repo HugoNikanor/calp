@@ -304,21 +304,9 @@
                             (->
                              (with-output-to-string
                                (lambda ()
-                                 (define width
-                                   (cond
-                                    ((getenv "CALP_PRETTY_WIDTH")
-                                     => string->number)
-                                    (else
-                                     (call-with-values
-                                         (lambda () ((@ (vulgar info) get-terminal-size)))
-                                       (lambda (_ w) w)))))
                                  (display "#.")
                                  ((@ (ice-9 pretty-print) pretty-print)
                                   (serialize o)
-                                  width: (if (zero? width)
-                                             ;; -2 to compensate for
-                                             ;; the initial indent from the #.
-                                             80 (- width 2))
                                   )))
                              (string-drop-right 1)
                              (display p)))))))))))
