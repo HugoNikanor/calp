@@ -26,10 +26,10 @@ GO_UNIT_TESTS = $(SCM_UNIT_TESTS:%.scm=obj-$(GUILE_VERSION)/%.go)
 TEST_FILES = $(shell find tests/unit/util/ -type f -name \*.scm)
 
 GUILE_ENV = GUILE_LOAD_PATH=$(PWD)/module:$(PWD)/tests/unit \
-	GUILE_LOAD_COMPILED_PATH=$(PWD)/obj-$(GUILE_VERSION)/module:$(PWD)/obj-$(GUILE_VERSION)/obj-3.0.9/tests/util \
+	GUILE_LOAD_COMPILED_PATH=$(PWD)/obj-$(GUILE_VERSION)/module \
 	GUILE_AUTO_COMPILE=0
 
-GUILE_C_FLAGS = -Lmodule -Ltests/util \
+GUILE_C_FLAGS = -Lmodule \
 				-Wshadowed-toplevel -Wunbound-variable \
 				-Wmacro-use-before-definition -Warity-mismatch \
 				-Wduplicate-case-datum -Wbad-case-datum
