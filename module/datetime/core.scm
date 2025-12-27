@@ -178,17 +178,14 @@
 (define (datetime-constructor-constructor constructor validator)
   (let ((date% date)
         (time% time))
-    (case-lambda*
-     ((key: date time tz
-            (year 0) (month 0) (day 0)
-            (hour 0) (minute 0) (second 0)
-            rest: rest)
+    (lambda* (key: date time tz
+                   (year 0) (month 0) (day 0)
+                   (hour 0) (minute 0) (second 0)
+                   rest: rest)
       (let ((date (or date (date% year: year month: month day: day)))
             (time (or time (time% hour: hour minute: minute second: second))))
         (validator date time tz)
-        (constructor date time tz)))
-     ((dt zone)
-      (tz dt zone)))))
+        (constructor date time tz)))))
 
 (define (datetime-serializer dt)
   ;; record->list NOT used, since we look at parts of the fields
@@ -213,7 +210,7 @@
                                ((string=? "UTC" (tz r))
                                 (format p "#~aZ" (datetime->string/simple r)))
                                (else
-                                (format p "#.(datetime #~a ~s)"
+                                (format p "#.(tz #~a ~s)"
                                         (datetime->string/simple r)
                                         (tz r))))))
 

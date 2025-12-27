@@ -13,7 +13,7 @@
   (make-parameter
    `(
      ((datetime)
-      date time datetime
+      date time datetime tz
       mon tue wed thu fri sat sun
       )
      ((datetime timespec) timespec)

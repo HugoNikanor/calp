@@ -131,18 +131,12 @@ Is @var{x} a datetime object?
 @end defun
 
 @defun datetime [#:date] [#:time] [#:tz] [#:year=0] [#:month=0] [#:day=0] [#:hour=0] [#:minute=0] [#:second=0]
-@defunx datetime dt tz
 Creates a new <datetime>. If @var{date} or @var{time} is given, those
 are used. Otherwise, a date object is created from @var{year},
 @var{month} and @var{day}, and time is respectively created from
 @var{hour}, @var{minute} and @var{second}.
 
 @var{tz} is an optional string specifying the timezone.
-
-The second constructor form (@code{(datetime dt tz)}) is functionally
-identical to the @code{tz} accessor. Its primary purpose is for
-attaching a timezone marker to a datetime literal,
-@code{(datetime #2025-12-15T11:19:20 "Europe/Stockholm")}.
 @end defun
 
 @defun datetime-date dt [d]

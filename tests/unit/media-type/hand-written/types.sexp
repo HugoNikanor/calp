@@ -11,7 +11,7 @@
                    (with-parameters #:x-expected "false" #f))
  #:x-cal-address (string->uri "mailto:hugo@example.com")
  #:x-date #2025-01-02
- #:x-date-time (datetime #2025-01-02T03:04:05 "Europe/Stockholm")
+ #:x-date-time (tz #2025-01-02T03:04:05 "Europe/Stockholm")
  #:x-duration (duration #:sign '- #:day 5 #:time #07:00:00)
  #:x-float 3.141592653589793
  #:x-integer 1729
