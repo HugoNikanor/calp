@@ -33,8 +33,13 @@
     (module-name (value module)
      (description ,(G_ "Name of the generated module, as per <code>define-module</code>.
 Given as a space-delimeted list of symbols, and defaults to <code>datetime timezone vendored-tzdb</code>.")))
+
     (tzdb-name (value name)
      (description ,(G_ "Symbol which the module will export the database through. Defaults to <code>zoneinfo-database</code>")))
+
+    (intermediary-name
+     (value name)
+     (description ,(G_ "Symbol whith the module will export the intermediary form of the timezone database. Defaults to <code>zoneinfo-intermediary</code>")))
 
     (include-default-warning
      (description ,(G_ "Include a warning block, instructing the user to override the file")))
@@ -139,6 +144,8 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
                                    (string-split (option-ref opts 'module-name
                                                              "datetime timezone vendored-tzdb")
                                                  #\space))
+               intermediary-name:
+               (string->symbol (option-ref opts 'intermediary-name "zoneinfo-intermediary"))
                tzdb-name: (string->symbol (option-ref opts 'tzdb-name "zoneinfo-database"))
                filename: tar
                checksum: checksum
@@ -150,7 +157,8 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
               (with-output-to-file filename run)))
         (else (run))))
 
-(define* (emit-code intermediary key: output-module tzdb-name filename checksum limiters
+(define* (emit-code intermediary key: output-module intermediary-name
+                    tzdb-name filename checksum limiters
                     include-default-warning)
   ;; These strings are NOT translated, since we want the output to be
   ;; bytewise identical, to not invalidate the compiler cache.
@@ -181,7 +189,7 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
                               intermediary->zoneinfo
                               zone-entry zi-rule zone-link
                               ))
-      #:export (,tzdb-name)))
+      #:export (,intermediary-name ,tzdb-name)))
 
   (newline)
 
@@ -200,4 +208,9 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
     (newline))
 
   (pretty-print
-   `(define ,tzdb-name (intermediary->zoneinfo ,(serialize intermediary)))))
+   `(define ,intermediary-name ,(serialize intermediary)))
+
+  (newline)
+
+  (pretty-print
+   `(define ,tzdb-name (intermediary->zoneinfo ,intermediary-name))))
