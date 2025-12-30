@@ -32,7 +32,9 @@
 
 (define %description (G_ "Query the zoneinfo database."))
 
-(define opt-spec '())
+(define opt-spec
+  `((help (single-char #\h)
+          (description ,(G_ "Print this help.")))))
 
 (define convert-opt-spec
   `((from (value #t) (single-char #\f)
@@ -47,7 +49,11 @@
      (description ,(G_ "Format to output result in, see datetime->string for format.")))))
 
 (define (print-help)
-  (format #t "Usage: calp tz {dump,list,convert}~%"))
+  (format #t "Usage:~%")
+  ;; TODO run this through the markup system
+  (format #t "  calp tz [options] dump {--zone z | --rule r} ...~%")
+  (format #t "  calp tz [options] list zone-limiters ...~%")
+  (format #t "  calp tz [options] convert [convert-options ...]~%"))
 
 (define (main args)
 
@@ -56,6 +62,27 @@
 
   ;; 0.1-0.2s
   ;; (define intermediary ((@ (calp timezone) get-zoneinfo)))
+  (when (option-ref opts 'help #f)
+    (print-help)
+    (newline)
+    ;; TODO why doesn't the markup system include <h> tags?
+    (format #t "Common tz flags~%")
+    (format #t "===============~%")
+    (print-arg-help opt-spec)
+    (format #t "dump flags~%")
+    (format #t "----------~%")
+    (print-arg-help
+     ;; Options hard-coded here, since we don't use the option system in the actual code
+     ;; (since getopt-long doesn't support repeating options)
+     `((zone (value #t) (description ,(G_ "Zone to include in the dump, repeatable.")))
+       (rule (value #t) (description ,(G_ "Rule to include in the dump, repeatable.")))))
+    (format #t "list flags~%")
+    (format #t "----------~%")
+    (format #t "convert flags~%")
+    (format #t "-------------~%")
+    (print-arg-help convert-opt-spec)
+    (throw 'return))
+
   (define intermediary
    (apply read-zoneinfo ((@ (glob) glob) "~/.cache/calp/tzdata/{africa,antarctica,asia,australasia,europe,northamerica,southamerica,etcetera,factory,backward}")))
   (define zoneinfo (intermediary->zoneinfo intermediary))
