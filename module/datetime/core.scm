@@ -28,6 +28,7 @@
   :use-module (hnh util lens)
 
   :use-module (ice-9 format)
+  :use-module (ice-9 regex)
   :use-module (ice-9 curried-definitions)
 
   :export (date
@@ -1079,3 +1080,55 @@
   (string-append (date->string/simple (datetime-date datetime))
                  "T"
                  (time->string/simple (datetime-time datetime))))
+
+(define time-pat "([0-9]{2}):([0-9]{2})(:([0-9]{2}))?")
+(define date-pat "([0-9]{4,})-([0-9]{2})-([0-9]{2})")
+(define time-rx (make-regexp (format #f "^~a$" time-pat)))
+(define date-rx (make-regexp (format #f "^~a$" date-pat)))
+(define datetime-rx (make-regexp (format #f "^~aT~a(Z)?$" date-pat time-pat)))
+
+;; Parse @var{string} as either a date, time, or date-time.
+;; String MUST be on iso-8601 format.
+(define (string->date/-time string)
+  (cond ((regexp-exec datetime-rx string)
+         => (lambda (m)
+              (datetime
+               year:   (string->number (match:substring m 1))
+               month:  (string->number (match:substring m 2))
+               day:    (string->number (match:substring m 3))
+               hour:   (string->number (match:substring m 4))
+               minute: (string->number (match:substring m 5))
+               second: (cond ((match:substring m 7) => string->number)
+                             (else 0))
+               tz: (and (match:substring m 8) "UTC"))))
+
+        ((regexp-exec date-rx string)
+         => (lambda (m)
+              (date
+               year:   (string->number (match:substring m 1))
+               month:  (string->number (match:substring m 2))
+               day:    (string->number (match:substring m 3)))))
+
+        ((regexp-exec time-rx string)
+         => (lambda (m)
+              (time
+               hour:   (string->number (match:substring m 1))
+               minute: (string->number (match:substring m 2))
+               second: (cond ((match:substring m 4) => string->number)
+                             (else 0)))))
+        (else
+         (scm-error 'misc-error "string->date/-time"
+                    "String doesn't look like a date, time or datetime: ~s"
+                    (list string) (list string)))))
+
+
+(define (date-reader chr port)
+  (unread-char chr port)
+  (-> (read port)
+      symbol->string
+      string->date/-time
+      serialize))
+
+(read-hash-extend #\0 date-reader)
+(read-hash-extend #\1 date-reader)
+(read-hash-extend #\2 date-reader)

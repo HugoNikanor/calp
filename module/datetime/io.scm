@@ -316,30 +316,3 @@ Returns -1 on failure"
    LC_TIME "C"
    (lambda ()
      (datetime->string dt "~a, ~d ~b ~Y ~H:~M:~S GMT"))))
-
-
-
-;; Parse @var{string} as either a date, time, or date-time.
-;; String MUST be on iso-8601 format.
-(define (string->date/-time string)
-  (define (contains symb)
-    (lambda (string) (string-contains string symb)))
-
-  (cond [string (contains "T") => string->datetime]
-        [string (contains ":") => string->time]
-        [string (contains "-") => string->date]
-        [else (scm-error 'misc-error "string->date/-time"
-                         "String doesn't look like a date, time or datetime: ~s"
-                         (list string) (list string))]))
-
-
-(define (date-reader chr port)
-  (unread-char chr port)
-  (-> (read port)
-      symbol->string
-      string->date/-time
-      serialize))
-
-(read-hash-extend #\0 date-reader)
-(read-hash-extend #\1 date-reader)
-(read-hash-extend #\2 date-reader)
