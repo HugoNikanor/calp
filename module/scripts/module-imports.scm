@@ -83,4 +83,12 @@
                       used-symbols
                       (lset-difference eq? all-symbols used-symbols)))
             modules)
+
+  (display (make-string 60 #\─)) (newline)
+  (format
+   #t (string-append
+       "Note that the used lists may be wrong, since this only~%"
+       "only check for the existance of the symbol in the source,~%"
+       "completely ignoring context.~%"))
+
   (newline))
