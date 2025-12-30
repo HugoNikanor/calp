@@ -34,7 +34,10 @@
 
 (define opt-spec
   `((help (single-char #\h)
-          (description ,(G_ "Print this help.")))))
+          (description ,(G_ "Print this help.")))
+    (tzdb-source
+     (value #t)
+     (description ,(G_ "Where to get timezone data from. Valid values currently are `cache' and `vendored'.")))))
 
 (define convert-opt-spec
   `((from (value #t) (single-char #\f)
@@ -60,8 +63,6 @@
   (define opts (getopt-long args (getopt-opt opt-spec)
                             stop-at-first-non-option: #t))
 
-  ;; 0.1-0.2s
-  ;; (define intermediary ((@ (calp timezone) get-zoneinfo)))
   (when (option-ref opts 'help #f)
     (print-help)
     (newline)
@@ -84,10 +85,35 @@
     (throw 'return))
 
   (define intermediary
-   (apply read-zoneinfo ((@ (glob) glob) "~/.cache/calp/tzdata/{africa,antarctica,asia,australasia,europe,northamerica,southamerica,etcetera,factory,backward}")))
+    (case (string->symbol (option-ref opts 'tzdb-source "vendored"))
+      ((cache)
+       (apply read-zoneinfo
+              ((@ (glob) glob)
+               (format #f "~~/.cache/calp/tzdata/{~a}"
+                       (string-join '("africa" "antarctica" "asia"
+                                      "australasia" "europe" "northamerica"
+                                      "southamerica" "etcetera"
+                                      "factory" "backward")
+                                    ",")))))
+
+      ((vendored)
+       (@ (datetime timezone vendored-tzdb) zoneinfo-intermediary))
+
+      (else
+       ;; TODO allow custom cached version
+       => (lambda (it) (scm-error 'misc-error "entry-point tz"
+                             "Invalid intermediary source: ~s"
+                             (list it) #f)))))
+
+  ;; ----------------------------------------
+
+  ;; Parse intermediary into real zoneinfo.
+  ;; The vendored comes with this pre-bundled, but this avoid implicit
+  ;; dependencies, and allows the same control flow irregardless of
+  ;; where we get the intermediary from.
   (define zoneinfo (intermediary->zoneinfo intermediary))
-  ;; 0.05s, but takes forever to compile
-  ;; (define zoneinfo (@ (datetime timezone vendored-tzdb) zoneinfo-database))
+
+  ;; install the relevant zoneinfo
   ((@ (datetime timezone) zoneinfo) zoneinfo)
 
   (define trailers (option-ref opts '() '()))
@@ -187,6 +213,18 @@
   (let loop ((args (cdr args)))
     (cond ((null? args) 'x)
           ((string=? "--zone" (car args))
+           ;; TODO also check if intermediary if this is a real zone,
+           ;; or an aliased one. The above example indicates that Stockholm
+           ;; has used Soviet timezone rules, since we are actually looking
+           ;; at Europe/Berlin
+
+           ;; $ ./calp tz  dump --zone Europe/Stockholm
+           ;; förskjutning: +00:53:28, regel: +00s, namn: LMT, t.o.m.: 1893-04-01T00:00:00
+           ;; förskjutning: +01, regel: C-Eur, namn: CE%sT, t.o.m.: 1945-05-24T02:00:00
+           ;; förskjutning: +01, regel: SovietZone, namn: CE%sT, t.o.m.: 1946-01-01T00:00:00
+           ;; förskjutning: +01, regel: Germany, namn: CE%sT, t.o.m.: 1980-01-01T00:00:00
+           ;; förskjutning: +01, regel: EU, namn: CE%sT, t.o.m.: #f
+
            (dump-zone (get-zone zoneinfo (cadr args)))
            (loop (cddr args)))
           ((string=? "--rule" (car args))
