@@ -13,8 +13,7 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
 ;;; Commentary:
 ;;; Code:
 
-(use-modules (glob)
-             (system vm coverage)
+(use-modules (system vm coverage)
              (srfi srfi-1)
              (srfi srfi-18)
              (srfi srfi-64)
@@ -32,7 +31,8 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
              (hnh test testrunner)
              (hnh test util)
              ((hnh util io) :select (displayln))
-             (hnh module-introspection all-modules)
+             ((hnh module-introspection all-modules)
+              :select (all-files-under-directory))
              (crypto)
              (ice-9 popen)
              (ice-9 rdelim)
@@ -336,11 +336,11 @@ Flags:
                     (cons (cadr options)
                           (loop (cddr options))))
                    ((string=? "--suite" (car options))
-                    (append (glob (path-append (cadr options) "*.scm"))
+                    (append (all-files-under-directory (cadr options) ".scm")
                             (loop (cddr options))))
                    (else (loop (cdr options)))))))
       (if (null? selected)
-          (glob "tests/unit/**/*.scm")
+          (all-files-under-directory "tests/unit" ".scm")
           selected)))
 
 

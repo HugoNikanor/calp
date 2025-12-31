@@ -104,7 +104,7 @@ THREADS = $(shell echo $$(( $(shell ./cpucount) / 2 )))
 
 # TODO (current-processor-count)
 $(COV_FILE): cpucount unit-test-deps
-	./testrunner.scm --threads $(THREADS)  --coverage $@ --coverage-supplement tests/unit/coverage-supplement.scm
+	./testrunner.scm --threads $(THREADS)  --coverage $@ --coverage-supplement tests/unit/coverage-supplement.sexp
 
 test: cpucount unit-test-deps
 	./testrunner.scm --threads $(THREADS)
