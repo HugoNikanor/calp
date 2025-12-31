@@ -40,8 +40,7 @@
 
 (define (serialize-tree t)
   `(-> (table ,@(if (tree-type t) (list (serialize (tree-type t))) '()))
-       ,@(map (lambda (p) `(table-put ,(serialize (car p)) ,(serialize (cdr p))))
-              (tree->list t))))
+       ,@(tree->list t (lambda (k v) `(table-put ,(serialize k) ,(serialize v))))))
 
 (define-type (tree-node
               serializer: serialize-tree
@@ -189,12 +188,12 @@
         (tree->list b)))
 
 ;; in-order traversal
-(define (tree->list tree)
+(define* (tree->list tree optional: (proc cons))
   (if (tree-terminal? tree)
       '()
-      (append (tree->list (left tree))
-              (list (cons (key tree) (value tree)))
-              (tree->list (right tree)))))
+      (append (tree->list (left tree) proc)
+              (list (proc (key tree) (value tree)))
+              (tree->list (right tree) proc))))
 
 ;; undefined order, probably pre-order
 (define (tree-map f tree)
