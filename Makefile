@@ -25,8 +25,8 @@ GO_UNIT_TESTS = $(SCM_UNIT_TESTS:%.scm=obj-$(GUILE_VERSION)/%.go)
 
 TEST_FILES = $(shell find tests/unit/util/ -type f -name \*.scm)
 
-GUILE_ENV = GUILE_LOAD_PATH=$(PWD)/module:$(PWD)/tests/unit \
-	GUILE_LOAD_COMPILED_PATH=$(PWD)/obj-$(GUILE_VERSION)/module \
+GUILE_ENV = GUILE_LOAD_PATH=$(CURDIR)/module:$(CURDIR)/tests/unit \
+	GUILE_LOAD_COMPILED_PATH=$(CURDIR)/obj-$(GUILE_VERSION)/module \
 	GUILE_AUTO_COMPILE=0
 
 GUILE_C_FLAGS = -Lmodule \
@@ -46,7 +46,7 @@ LOCALIZATIONS = $(PO_FILES:po/%.po=localization/%/LC_MESSAGES/calp.mo)
 # Limit test to these files
 LIMIT_FILES=$(LIMIT:%=--only %)
 # Skip these files when testing
-SKIP=--skip $(PWD)/tests/test/web-server.scm
+SKIP=--skip $(CURDIR)/tests/test/web-server.scm
 
 all: calp $(GO_FILES) static $(LOCALIZATIONS)
 	$(MAKE) -C doc/ref
