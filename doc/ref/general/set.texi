@@ -1,0 +1,55 @@
+@node Set
+@section Set
+
+A specilization over tables, for storing ``arbitrary'' values without
+any extra data attached. Big difference is that the ``keys'' need not
+be symbols, but rather anything whose @code{write}-representation is
+sufficiently unique can be used.
+
+@defun data-set
+Constructs a new empty set. @code{data-} prefix added to not conflict
+with the @code{set} operation from the lens library.
+@end defun
+
+@defun set? x
+Is the given object a set?
+@end defun
+
+@defun set-empty? set
+Is the given set empty?
+@end defun
+
+@defun list->set lst
+Create a new set from the elements of list.
+Identical elements will only be added once.
+@end defun
+
+@defun set->list set
+Convert the set to a list. Order of values is undefined.
+@end defun
+
+@defun set-add set item ...
+Add a number of new items to the set.
+@end defun
+
+@defun set-pop set [value=(nothing)]
+Remove an element from the set, returning the removed element, and the
+set without that element, or nothing and the set unchanged if the set
+is empty, or the given key isn't present in the set.
+
+If @code{(nothing)} is passed as @var{value}, then an arbitrary value
+is popped from the set. However, if @code{(just @var{a-value})} is
+passed, then that exact value is searched for.
+@end defun
+
+@defun set-union sets ...
+Get the union of the sets.
+@end defun
+
+@defun set-intersection sets ...
+Get the intersection of the sets.
+@end defun
+
+@defun set-difference a b
+Get @code{a \ b}.
+@end defun

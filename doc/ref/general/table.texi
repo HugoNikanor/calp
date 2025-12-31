@@ -97,6 +97,13 @@ Returns 2 values:
 @end itemize
 @end defun
 
+@defun table-any table
+Like table pop, but returns an arbitrary value. Useful if the tree
+needs to be destructured in some way where the actual contents doesn't matter.
+
+Returns either just a value, or nothing.
+@end defun
+
 @defun table-filter-map f table
 Apply @var{f} to each key and value in the table. @var{f} must must
 return an optional value, where just the value means to keep the node,

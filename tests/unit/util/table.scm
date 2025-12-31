@@ -113,6 +113,8 @@
    (test-equal (just 1) (table-preview t 'a))
    (test-equal (nothing) (table-preview t 'b))))
 
+;;; TODO table-any
+
 (test-equal "table-filter-map"
   '()
   (table-diff

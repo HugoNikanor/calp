@@ -26,6 +26,7 @@
            (tree-put . table-put)
            (tree-remove . table-remove)
            (tree-pop . table-pop)
+           (tree-any . table-any)
            (tree->list . table->list)
            (tree? . table?)
            (tree-terminal? . table-empty?)
@@ -185,6 +186,12 @@
                      (nothing)))))
       (values result resulting-tree))))
 
+;;; Return an arbitrary value from the table, alongside the tree without that value
+;;; tree-any :: tree -> (optional x), tree
+(define (tree-any tree)
+  (if (tree-terminal? tree)
+      (values (nothing) tree)
+      (tree-pop tree (key tree))))
 
 (define (tree-put tree k v)
   (set tree (tree-focus k) (just v)))
