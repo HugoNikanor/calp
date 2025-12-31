@@ -35,6 +35,10 @@ Retrive value form table, returns @var{default} if key isn't in the
 table.
 @end defun
 
+@defun table-preview tree k
+Return an optional with the value under @var{k}.
+@end defun
+
 @defun table-put table key value
 Insert new value into table, overwriting anything previously stored
 under that key. Returns a new table with the values set.
@@ -91,4 +95,26 @@ Returns 2 values:
 @item the focused value, as an optional
 @item the table without the specified key
 @end itemize
+@end defun
+
+@defun table-filter-map f table
+Apply @var{f} to each key and value in the table. @var{f} must must
+return an optional value, where just the value means to keep the node,
+while nothing means to remove the node.
+@end defun
+
+@defun table-union tables ...
+Returns a new table whose keys are the union of all the keys in all
+the given tables. If a key is present in multiple tables, then the
+last one ``wins''.
+@end defun
+
+@defun table-intersection tables ...
+Return a new table where the keys are the intersection of the keys of
+all the given tables. If a key is present in multiple tables, then the
+first encountered one wins.
+@end defun
+
+@defun table-difference a b
+Returns a new table of all the keys present in @var{a} but not in @var{b}.
 @end defun

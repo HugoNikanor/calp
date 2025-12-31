@@ -3,6 +3,7 @@
   :use-module (srfi srfi-88)
   :use-module ((hnh util) :select (->))
   :use-module (hnh util table)
+  :use-module (hnh util optional)
   :use-module (hnh util named-type))
 
 (test-assert "Empty tables are empty" (null? (table->list (table))))
@@ -107,5 +108,46 @@
     (table-diff (alist->table '((k1 . 1) (k2 . "x")))
                 (alist->table '((k3 . 3) (k2 . "y"))))))
 
+(test-group "table-preview"
+  (let ((t (alist->table '((a . 1)))))
+   (test-equal (just 1) (table-preview t 'a))
+   (test-equal (nothing) (table-preview t 'b))))
+
+(test-equal "table-filter-map"
+  '()
+  (table-diff
+   (alist->table '((k2 . k2)))
+   (table-filter-map
+    (lambda (k v) (if (even? v) (just k) (nothing)))
+    (alist->table '((k1 . 1) (k2 . 2))))))
+
+(test-group "table-union"
+  (test-equal
+      '()
+    (table-diff
+     (alist->table '((a . 1)
+                     (b . 3)
+                     (c . 4)))
+     (table-union
+      (alist->table '((a . 1) (b . 2)))
+      (alist->table '((b . 3) (c . 4)))))))
+
+(test-group "table-intersection"
+  (test-equal
+      '()
+    (table-diff
+     (alist->table '((b . 2)))
+     (table-intersection
+      (alist->table '((a . 1) (b . 2)))
+      (alist->table '((b . 3) (c . 4)))))))
+
+(test-group "table-difference"
+  (test-equal
+      '()
+    (table-diff
+     (alist->table '((a . 1)))
+     (table-difference
+      (alist->table '((a . 1) (b . 2)))
+      (alist->table '((b . 3) (c . 4)))))))
 
 '((hnh util table))

@@ -9,17 +9,20 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
+  :use-module (hnh util)
   :use-module (hnh util lens)
   :use-module (hnh util object)
   :use-module (hnh util optional)
   :use-module (hnh util serialize)
   :use-module (hnh util type)
   :use-module (hnh util named-type)
+  :use-module (hnh util destructure)
   :use-module (ice-9 curried-definitions)
   :export ((make-tree . table)
            (tree-type . table-type)
            (tree-of . table-of)
            (tree-get . table-get)
+           (tree-preview . table-preview)
            (tree-put . table-put)
            (tree-remove . table-remove)
            (tree-pop . table-pop)
@@ -30,6 +33,10 @@
            (tree-equal? . table-equal?)
            (tree-diff . table-diff)
            (serialize-tree . serialize-table)
+           (tree-filter-map . table-filter-map)
+           (tree-union . table-union)
+           (tree-intersection . table-intersection)
+           (tree-difference . table-difference)
            (alist->tree . alist->table)))
 
 (define (symbol<? . args)
@@ -155,12 +162,13 @@
                         (cons (list 'diff (caar as) (cdar as) (from-just v))
                               (loop (cdr as) rest))))))))))
 
-(define (tree-put tree k v)
-  (set tree (tree-focus k) (just v)))
 
 ;;; TODO rename to `tree-ref`?
 (define* (tree-get tree k optional: default)
   (unjust (get tree (tree-focus k)) default))
+
+(define (tree-preview tree k)
+  (get tree (tree-focus k)))
 
 (define (tree-remove tree k)
   (set tree (tree-focus k) (nothing)))
@@ -176,6 +184,11 @@
                      (set! result m)
                      (nothing)))))
       (values result resulting-tree))))
+
+
+(define (tree-put tree k v)
+  (set tree (tree-focus k) (just v)))
+
 
 ;;; Merge two trees.
 ;;; Note that this discards type information
@@ -196,21 +209,19 @@
               (tree->list (right tree) proc))))
 
 ;; undefined order, probably pre-order
-(define (tree-map f tree)
-  (if (tree-terminal? tree)
-      '()
-      (tree-node key:   (key tree)
-                 value: (f (key tree) (value tree))
-                 left:  (tree-map f (left tree))
-                 right: (tree-map f (right tree)))))
-
-;; pre-order
-(define (tree-fold f init tree)
-  (if (tree-terminal? tree)
-      init
-      (let ((a (f (key tree) (value tree) init)))
-        (let ((b (tree-fold f a (left tree))))
-          (tree-fold f b (right tree))))))
+(define (tree-filter-map f tree)
+  (let recurse ((tree tree))
+    (if (tree-terminal? tree)
+        tree
+        (destructure (f (key tree) (value tree))
+          ((just v)
+           (-> tree
+               (set value* v)
+               (modify left*  recurse)
+               (modify right* recurse)))
+          ((nothing)
+           (merge-trees (recurse (left tree))
+                        (recurse (right tree))))))))
 
 (define (alist->tree alist)
   (fold (lambda (kv tree) (tree-put tree (car kv) (cdr kv)))
@@ -218,6 +229,35 @@
         alist))
 
 
+
+;; right-biased
+;; reversed operand order, since reduce calls (proc elem prev)
+(define (tree-union% b a)
+  (fold (lambda (pair tree)
+          (tree-put tree (car pair) (cdr pair)))
+        a
+        (tree->list b)))
+
+(define (tree-union . as)
+  (typecheck as (list-of tree?))
+  (reduce tree-union% (make-tree) as))
+
+;; left-biased
+(define (tree-intersection% a b)
+  (tree-filter-map
+   (lambda (k _) (tree-preview b k))
+   a))
+
+(define (tree-intersection . as)
+  (typecheck as (list-of tree?))
+  (reduce tree-intersection% (make-tree) as))
+
+(define (tree-difference a b)
+  (fold (swap tree-remove)
+        a (tree->list b (lambda (k _) k))))
+
+
+
 
 (define (make-indent depth) (make-string (* 2 depth) #\space))
 
