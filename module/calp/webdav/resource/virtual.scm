@@ -124,9 +124,7 @@
         (else (propstat 404 (list xml-el)))))
 
 (define-method (dead-properties (resource <virtual-resource>))
-  (map cdr
-       (table->list
-        (dead-properties% resource))))
+  (table->list (dead-properties% resource) (lambda (_ b) b)))
 
 (define-method (set-dead-property!! (resource <virtual-resource>) value)
   (typecheck value xml-element?)

@@ -138,9 +138,11 @@
                             (lambda () (value->scm-json in-params value))
                           (lambda* (serialized optional: (out-params in-params))
                             (vector (-> key symbol->string string-downcase)
-                                    (map (lambda (p) (modify p car* (compose string-downcase
-                                                                        symbol->string)))
-                                         (table->list out-params))
+                                    (table->list
+                                     out-params
+                                     (lambda (k v)
+                                       (cons (string-downcase (symbol->string k))
+                                             v)))
                                     (cond ((apparent-type value)
                                            => (compose string-downcase symbol->string))
                                           ((and (unknown? value)

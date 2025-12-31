@@ -255,9 +255,7 @@
        (cond ((table-empty? (xml-element-attributes el))
               `(,tag ,@children))
              (else
-              `(,tag (@ ,@(map (lambda (p) (call-with-values (lambda () (car+cdr p)) list))
-                               (table->list
-                                (xml-element-attributes el))))
+              `(,tag (@ ,@(table->list (xml-element-attributes el) list))
                      ,@children))))))
 
 (define (sxml->xml-element el namespaces)

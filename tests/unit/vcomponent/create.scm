@@ -42,7 +42,7 @@
 (test-group "Component with properties, but no children"
  (let ((ev (create-vcomponent 'TEST
                        prop: "value")))
-   (test-equal '(PROP) (map car (table->list (vcomponent-properties ev))))
+   (test-equal '(PROP) (table->list (vcomponent-properties ev) (lambda (a _) a)))
    (test-equal "value" (get ev (prop* 'PROP) just* car* vline-value*))))
 
 (test-group "Component with children, but no properties"
@@ -59,7 +59,7 @@
          (ev (create-vcomponent 'TEST
                          prop: "VALUE"
                          (list child))))
-    (test-equal '(PROP) (map car (table->list (vcomponent-properties ev))))
+    (test-equal '(PROP) (table->list (vcomponent-properties ev) (lambda (a _) a)))
     (test-equal "VALUE" (get ev (prop* 'PROP) just* car* vline-value*))
     (test-equal 1 (length (vcomponent-children ev)))
     ; (test-eq child (car (vcomponent-children ev)))
@@ -82,7 +82,7 @@
 (test-group "Component with no children, where last elements value is a list"
   (let ((ev (create-vcomponent 'TEST prop: (list 1 2 3))))
     (test-equal '() (vcomponent-children ev))
-    (test-equal '(PROP) (map car (table->list (vcomponent-properties ev))))
+    (test-equal '(PROP) (table->list (vcomponent-properties ev) (lambda (a _) a)))
     (test-equal (just (list (vline value: 1)
                             (vline value: 2)
                             (vline value: 3)))

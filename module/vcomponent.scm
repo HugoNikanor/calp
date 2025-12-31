@@ -68,10 +68,11 @@
         (serialize (vline-value vline))
         `(with-parameters
           ,@(concatenate
-             (map (lambda (pair)
-                    (list (symbol->keyword (downcase-symbol (car pair)))
-                          (serialize (cdr pair))))
-                  (table->list (vline-parameters vline))))
+             (table->list
+              (vline-parameters vline)
+              (lambda (key value)
+                (list (symbol->keyword (downcase-symbol key))
+                      (serialize value)))))
           ,(serialize (vline-value vline)))))
 
   `(,@(if (memv (downcase-symbol (type c))
@@ -80,13 +81,13 @@
           `(create-vcomponent ',(type c)))
 
     ,@(concatenate
-       (map (lambda (p)
-              (define-values (key lines) (car+cdr p))
-              `(,(symbol->keyword (downcase-symbol key))
-                ,(if (null? (cdr lines))
-                     (serialize-vline* (car lines))
-                     `(list ,@(map serialize-vline* lines)))))
-            (table->list (vcomponent-properties c))))
+       (table->list
+        (vcomponent-properties c)
+        (lambda (key lines)
+          `(,(symbol->keyword (downcase-symbol key))
+            ,(if (null? (cdr lines))
+                 (serialize-vline* (car lines))
+                 `(list ,@(map serialize-vline* lines)))))))
 
     ,@(if (null? (vcomponent-children c))
           '()

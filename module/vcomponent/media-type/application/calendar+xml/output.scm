@@ -198,13 +198,11 @@
 ;; (table-of string?) -> #<xml parameters>
 (define (parameters-tag parameters)
   (apply (xml xcal 'parameters)
-         (map (lambda (pair)
-                (define-values (tag value) (car+cdr pair))
-
-                ((xml xcal (downcase-symbol tag))
-                 ;; TODO parameter types!!!! (rfc6321 3.5.)
-                 ((xml xcal 'text) value)))
-              (table->list parameters))))
+         (table->list parameters
+                      (lambda (tag value)
+                        ((xml xcal (downcase-symbol tag))
+                         ;; TODO parameter types!!!! (rfc6321 3.5.)
+                         ((xml xcal 'text) value))))))
 
 (define (vcomponent->sxcal component)
   (typecheck component vcomponent?)

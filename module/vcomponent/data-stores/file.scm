@@ -317,7 +317,9 @@
 
 
 (define (component-vlines component)
-  (->> component vcomponent-properties table->list (map cdr) concatenate))
+  (-> component vcomponent-properties
+      (table->list (lambda (_ v) v))
+      concatenate))
 
 (define (referenced-timezones component)
   (filter-map (lambda (vline)

@@ -38,17 +38,18 @@
   (with-output-to-port port
     (lambda ()
       (format #t "BEGIN:~a\r\n" (type component))
-      (map vline*->string (table->list (vcomponent-properties component)))
+      (table->list (vcomponent-properties component) vline*->string)
       (map vcomponent->icalendar (vcomponent-children component))
       (format #t "END:~a\r\n" (type component)))))
 
 
-(define (vline*->string pair)
-  (typecheck pair (pair-of symbol? (list-of vline?)))
+(define (vline*->string key vlines)
+  (typecheck key symbol?)
+  (typecheck vlines (list-of vline?))
   ;; TODO if multi-valued-property, `(group-by (table-equal? (vline-parameters)))`
   ;; This can't work with the current implementation, since vline->string doesn't handle lists.
-  (for vline in (cdr pair)
-       (display (icalendar-linewrap (vline->string (car pair) vline)))
+  (for vline in vlines
+       (display (icalendar-linewrap (vline->string key vline)))
        (display "\r\n")))
 
 
@@ -211,19 +212,19 @@
         (else
          (call-with-values (lambda () (ics-serialize (vline-parameters vline) v))
            (lambda* (serialized optional: (params (vline-parameters vline)))
-             (map (lambda (pair)
-                    (format #t ";~a=~a" (car pair) (quote-parameter-value (cdr pair))))
-                  (table->list
-                   ;; TODO I think I do `modify` here, to handle cases where an unknown type is passed through the system.
-                   ;; TODO ensure I actually handle unknown types correctly at the parse point, and rewrite this comment to match
-                   (modify params
-                           (table-focus 'VALUE)
-                           (lambda (specified)
-                             (let ((apparent (apparent-type v)))
-                               (if (eq? apparent (or (default-type key) 'TEXT))
-                                   (nothing)
-                                   (cond (apparent => (compose just symbol->string))
-                                         (else specified))))))))
+             (table->list
+              ;; TODO I think I do `modify` here, to handle cases where an unknown type is passed through the system.
+              ;; TODO ensure I actually handle unknown types correctly at the parse point, and rewrite this comment to match
+              (modify params
+                      (table-focus 'VALUE)
+                      (lambda (specified)
+                        (let ((apparent (apparent-type v)))
+                          (if (eq? apparent (or (default-type key) 'TEXT))
+                              (nothing)
+                              (cond (apparent => (compose just symbol->string))
+                                    (else specified))))))
+              (lambda (key value)
+                (format #t ";~a=~a" key (quote-parameter-value value))))
 
              (format #t ":~a" serialized)
              )))))))
