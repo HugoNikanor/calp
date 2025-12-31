@@ -428,6 +428,10 @@ status of each file's tests.
                                     coverage-exemptions)))))
 
 
+          (format (current-error-port)
+                  "~a uncovered files~%~a covered files~%"
+                  (length uncovered-files) (length merged-coverages))
+
           (unless (null? merged-coverages)
             (with-output-to-file coverage
               (lambda ()
