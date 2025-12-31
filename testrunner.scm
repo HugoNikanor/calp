@@ -19,10 +19,12 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
              (srfi srfi-64)
              (srfi srfi-71)
              ((rnrs io ports) :select (get-bytevector-all get-u8))
+             (calp translation)
              ((hnh util) :select (-> ->> for group-by))
              (hnh util path)
              (hnh util type)
              (hnh util object)
+             (hnh util options)
              (hnh util coverage)
              (hnh util atomic)
              (hnh util atomic-stack)
@@ -246,53 +248,39 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
 
 
 (define option-spec
-  '((help (single-char #\h))
-    (verbose (single-char #\v))
-    (suite (value #t))
-    (file (value #t))
-    (list (single-char #\l))
-    (nice (value #t))
-    (threads (value #t))
-    (coverage (value optional))
+  `((help (single-char #\h) (description ,(G_ "Prints this help.")))
+    (verbose (single-char #\v)
+             (description ,(G_ "
+Enables verbose output. This can also be done by setting the
+environment variable VERBOSE.")))
+    (suite (value #t)
+           (description (*TOP*
+                         ,(G_ "
+Limit execution to a single test suite. Should be given as a
+directory, and that directory should contain a number of test
+files. See files in tests/unit for available suites.
+Can be given multiple times, and alongside --file")
+                         (br) (br)
+                         ,(G_ "Example: tests/unit/general"))))
+    (file (value #t)
+          (description ,(G_ "
+Only runs tests from the given file.
+Can be given multiple times, and used alongside --suite
+")))
+    (list (single-char #\l)
+          (description
+           ,(G_ "Don't run test, but list all files which would have been ran.")))
+    (nice (value #t)
+          (description ,(G_ "How much do incrument the nice value")))
+    (threads (value #t)
+             (description ,(G_ "How many threads to spawn for running tests.")))
+    (coverage (value output-filename)
+              (description ,(G_ "
+Generate code coverage data, this causes the tests to be quite
+a bit slower.
+")))
     (coverage-supplement (value #t))
     ))
-
-(define help "
-run-unit-tests [flags ...]
-
-Run calp's unit tests. While running, Ctrl-C prints the current
-status of each file's tests.
-
-Flags:
---help|-h
-  print this help
---verbose|-v
-  Enables verbose output. This can also be done by setting the
-  environment variable VERBOSE.
---suite path
-  Limit execution to a single test suite. Should be given as a
-  directory, and that directory should contain a number of test
-  files. See files in tests/unit for available suites.
-  Can be given multiple times, and alongside --file
-
-  Example: tests/unit/general
---file filename
-  Only runs tests from the given file.
-  Can be given multiple times, and used alongside --suite
---list|-l
-  Don't run test, but list all files which would have been ran.
---nice increment
-  How much do incrument the nice value
---threads count
-  How many threads to spawn for running tests.
---coverage [output-filename]
-  Generate code coverage data, this causes the tests to be quite
-  a bit slower.
---coverage-supplement supplement-file
-
-")
-
-
 
 (define (read-coverage-info port)
   (map (lambda (entry)
@@ -317,10 +305,16 @@ Flags:
 
 
 (define (main args)
-  (define options (getopt-long args option-spec))
+  (define options (getopt-long args (getopt-opt option-spec)))
 
   (when (option-ref options 'help #f)
-    (display help)
+    (format #t (G_ "~a [flags ...]~%") (car (command-line)))
+    (display (G_ "
+Run calp's unit tests. While running, Ctrl-C prints the current
+status of each file's tests.
+"))
+    (newline)
+    (print-arg-help option-spec (current-output-port))
     (exit 0))
 
   (when (option-ref options 'verbose (getenv "VERBOSE"))
