@@ -1,0 +1,312 @@
+@node Destructure
+@section Destructure
+@cindex match
+
+Guile comes with a competent pattern matching system in the form of
+@code{(ice-9 match)}. It however has the problem that it's locked to
+the patterns provided by upstream, meaning that only data structures
+and usage patterns assumed by the library creators are supported. In
+true Lisp fashion, that just wont do. Therefore, here is an
+alternative pattern matching system built to be extensible!
+
+The name @code{destructure} is choosen instead of overloading the
+@code{match} ``keyword'', to avoid confusion in codebases using both.
+
+@defmac destructure expr (pattern body) ...
+The actual pattern matcher syntax.
+
+Each pattern is one of three forms:
+@itemize @bullet
+@item An identifier,
+that is, a lone symbol. This symbol will be bound to the value present
+at that point, unless the symbol is @code{_}, in which case no binding
+is created. If the same identifier is present multiple times in a
+pattern, then they are all individually bound, and thent checked for
+equivalency (per @code{equal?}), and the pattern only match if they
+all are. Note that the ellipsis symbol @code{'...} is a valid
+identifier in most cases. It however @emph{should not} be used, since
+many matchers want to use it to indicate a sequence of arbitrary
+length.
+See @ref{Ellipsised Matchers} below.
+
+@item A self-quoting literal.
+These are treated as exact matches, meaning that the pattern will only
+match if the value in the structure is equal (per @code{equal?}) with
+the value in the pattern.
+
+These includes @code{#t}, @code{#f}, any string, numeric, or character
+literal, vector literals (@code{#(a b c)}), and probably some other forms.
+Note that @code{'x} is @emph{not} included, since that expands as
+@code{(quote x)} (e.g. it's a compound form), see below for quote matcher.
+
+Vector literals are hard coded, since they (as far as I can tell) are
+not syntactic sugar over another form, but actually their own syntax.
+
+@item A compound form
+Any compound form represented as a list. This is where the extensible
+part comes into play. A given form @code{(exp args ...)} is passed to
+@code{get-expander}, which in turn looks up the expander in
+@code{match-expanders}, and applies it to the complete expression.
+
+For example, to match a list of three elements, and capture them all,
+one would give the pattern @code{(list x y z)}. It's up to each
+registered expander (in this example @code{list} is the expander)
+exactly how their arguments are treated. However, it's expected that
+they recursively expand on each argument, binding inner identifiers
+and so on. See below.
+@end itemize
+
+See the test suites for more examples.
+
+@end defmac
+
+@defmac destructure-lambda
+@defmacx destructure-lambda*
+Convenience wrappers around lambda and destructure. Defined as follows:
+
+@lisp
+(define-syntax-rule (destructure-lambda clause ...)
+  (lambda (arg) (destructure arg clause ...)))
+
+(define-syntax-rule (destructure-lambda* clause ...)
+  (lambda args (destructure args clause ...)))
+@end lisp
+@end defmac
+
+@subsection Built in Matchers
+
+@deftp {Matcher} @ name inner
+Identical to the matcher @var{inner}, but also captures the entire
+inner object in the field @var{name}.
+@end deftp
+
+@deftp {Matcher} 'sexp
+@deftpx {Matcher} (quote sexp)
+Matches an expression literally matching the value, and binds nothing.
+@end deftp
+
+@c @deftp {Matcher} `sexp
+@c @deftpx {Matcher} (quasiquote sexp)
+@c Literally matches any quoted parts, and returns to regular rules for
+@c @code{destructurize} once an unquote or unquote splicing is
+@c encountered.
+
+@c @c TODO examples
+@c @end deftp
+
+@deftp {Matcher} and matcher predicates ...
+Executes and binds as @var{matcher}, and then runs all predicates with
+the values bound by @var{matcher} bound inside an @code{and} expression.
+@end deftp
+
+@deftp {Matcher} cons a d
+Matches an exact pair.
+@end deftp
+
+@deftp {Matcher} cons* xs ...
+Matches an exact sequence of pairs, where the final element need not
+be a list.
+@end deftp
+
+@deftp {Matcher} list args ...
+An ellipsised matcher for lists. See below for implementation details.
+
+However, the actuall pattern can contain any number of un-ellipsised
+patterns, both before and after the ellipsised pattern, alongside up
+to one ellipsised pattern. The un-ellipsised patterns are recursively
+expanded upon, and each match an item at that exact location in the
+sequence. The ellipsised pattern match a sub-sequence of arbitrary
+length (including 0), where each element must match the given pattern.
+
+The following examples matches a list where the first element is
+anything (and binds @var{a}), then follows a sequence of pairs, and
+finally the number 10.
+@example
+(destructure l
+  ((list a (cons x y) ... 10) 'body))
+@end example
+
+Note that each ellipsised leaf idefintier (@var{x} and @var{y}) in
+this case are each bound to a list of their matching values. This
+means that @var{x} would be bound to the car of each pair in this example.
+
+If the same identifier appears multiple times in a pattern, for
+example like
+@example
+(destructure l
+  ((list (cons x x) ...) 'body))
+@end example
+then ALL pairs must be equivalent, since the equivalence test is done
+at the very end. If you instead want to match all pairs where they are
+internally equal, do something like
+
+@example
+(destructure l
+  ((list (and (cons x y) (equal? x y)) ...) 'body))
+@end example
+@end deftp
+
+@deftp {Matcher} vector args ...
+An ellipsised matcher for vectors.
+
+See the list matcher above for accepted forms.
+@end deftp
+
+@subsection Ellipsised Matchers
+@anchor{Ellipsised Matchers}
+
+Ellipsised matchers are matchers which matches sequences of arbitrary
+length. For example, the pattern @code{(list a b ... c)} would match a
+list of at least length 2, where @code{a} would be bound to the first
+element of the list, @code{c} to the last, and @code{b} to every
+element between those.
+
+Like all combound matchers, these matchers may be created in any way
+one may see fit. However, the procedure
+@code{common-sequence-destructurer} is provided for this express purpose.
+
+@defun common-sequence-destructurer args #:container-predicate pred #:container-length len #:container-every every #:container-slice slice #:container-ref-front ref-front #:container-ref-back ref-back #:container-map map
+
+Returns values suitable as the final form of @code{define-matcher}. For
+details on how this later expands, see the documentation of the
+@code{list} matcher above.
+
+The @var{args} element is the pattern arguments to the expander. The
+remaining arguments each takes a syntax fragment, which should expand
+to as follows:
+@itemize @bullet
+@item @var{container-predicate} x:
+A procedure which checks the type of the container. This should
+generally not check the types of the arguments, since the expander
+already handles that.
+
+@item @var{container-length} container:
+A procedure which returns the length of the container.
+
+@item @var{container-every} pred container:
+A procedure which takes a predicate, and returns true if all elements
+in the sequence satisfy the predicate. This will be used to check if
+all the ellipsised fields satisfy the given pattern, but will not
+touch the before and after parts.
+
+@item @var{container-slice} container start end:
+Procedure which returns the slice [start, end) of the sequence. Both
+start and end are guaranteed within the sequence, as per
+container-length. The returned slice may share structure with the
+initial sequence.
+
+@item @var{container-ref-front} sequence idx:
+Get an item from the sequence by index.
+
+@item @var{container-ref-back} sequence idx:
+Get an item from the the back of the sequence by index. The last value
+has index 0.
+
+@item @var{container-map} f sequence:
+Maps the procedure over every element in the sequence. Used to extract
+all values from the ellipsised pattern.
+@end itemize
+
+For example, the implementation for lists is:
+
+@lisp
+(define-matcher (list args ...)
+  (common-sequence-destructurer
+   #'(args ...)
+   container-predicate: #'list?
+   container-length: #'length
+   container-every: #'every
+   container-slice: #'list-slice
+   container-ref-front: #'list-ref
+   container-ref-back: #'list-ref-back
+   container-map: #'map))
+@end lisp
+@end defun
+
+@subsection Defining new Matchers
+
+@c TODO details about how matchers are expanded:
+@c      this includes how predicates are `and`ed,
+@c      values and captures are zipped, and normalized
+
+@c Note that built in matchers can be overwritten
+
+@defmac define-matcher pattern body ...
+Primary way to define a new pattern which may be matched.
+
+As an example, here is the pattern matcher for @code{just} values.
+@example
+(define-matcher (just x)
+  (define-values (inner-predicates inner-values inner-captures)
+    (get-expander #'x))
+
+  (values
+   (lambda (expr)
+     (cons #`(just? #,expr)
+           (inner-predicates #`(from-just #,expr))))
+   (lambda (expr) (inner-values #`(from-just #,expr)))
+   inner-captures))
+@end example
+
+The literal pattern @code{(just x)}, where @code{just} is the literal
+symbol, everything after that in the form (e.g. @code{x} in this case)
+are type parameters, is used to declare what may and may not be
+matched by this pattern. Each pattern @emph{must} return three values:
+@itemize @bullet
+@item Predicates:
+A procedure taking the value currently being matched, and returns a
+list of syntax objects representing forms which each narrow in on the
+object being matched. In the above example, we add @code{#'(just? #,expr)},
+which ensures that the currently operated on object is a @code{just}
+expression. That is then followed by expanding the inner over
+@code{#`(from-just #,expr)}. Since we just guaranteed that @code{expr}
+was a @code{just} object, we can without fear unwrap it. The recursive
+step to @code{inner-predicates} is to allow arbitrary nesting of match
+patterns.
+
+@item Values:
+A procedure taking the value currently being matched, and must return
+a form containing a list of syntax forms, which each evaluate to the
+value of one of the fields that the pattern captures.
+
+@item Captures:
+A list of names of the fields captured. @emph{Must} line up exactly
+with the values list.
+@end itemize
+
+To clarify the above example: @code{(just x)} specifies the static
+part, showing what can be matched. @code{x} here specifies any value,
+but which will be bound to the field @code{x} for the extent of the body.
+Meanwhile, @code{expr}, which is the value to the procedures, is the
+syntax object of the value currently being matched, and picked apart
+for its values.
+
+Note that while the preferred way to declare matchers is through the
+@code{define-matcher} form, other methods may be employed. The
+@code{define-matcher} form simply expands as follows:
+
+@lisp
+(define-syntax (define-matcher stx)
+  (syntax-case stx ()
+    ((_ (name args ...) declarations ...)
+     #`(hash-set! match-expanders (quote name)
+                  (lambda (stx)
+                    (syntax-case stx (name)
+                      ((name args ...) (let () declarations ...))
+                      (_ #f)))))))
+@end lisp
+@end defmac
+
+@defvar match-expanders
+Hash table where all defined matchers are stored. Care must be taken
+if modifying it manually.
+@end defvar
+
+@defun get-expander #'(key vals ...)
+@defunx get-expander #'stx
+Retrieve the syntax procedure to expand a given form. Simply
+references @code{key} or @code{stx} as a symbol (depending on
+invocation form). Should not be used in general client code, but often
+needs to be used when constructing new matchers.
+@c TODO clarify why and how
+@end defun

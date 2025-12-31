@@ -469,9 +469,18 @@
     '(a b a)
     (uniq '(a a b b a))))
 
-(test-group "vector-last"
+(test-group "vector-references"
+  (test-equal "vector-ref-back"
+    2 (vector-ref-back #(0 1 2 3) 1))
   (test-equal "vector-last"
     1 (vector-last #(0 2 3 1))))
+
+(test-equal "list-ref-back"
+  2 (list-ref-back '(0 1 2 3) 1))
+
+(test-equal "list-slice"
+  '(1 2 3)
+  (list-slice '(a b 1 2 3 c d e) 2 5))
 
 (test-group "->string"
   (test-equal "5" (->string 5))

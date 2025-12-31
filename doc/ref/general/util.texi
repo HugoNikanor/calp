@@ -183,6 +183,21 @@ Like @var{map}, but also works for improper lists.
 @end defun
 
 
+@defun list-slice lst first last
+Returns a sublist from @var{lst} from @var{first} inclusive to
+@var{last} exclusive.
+@code{(list-slice lst 0 (length lst))} returns the whole list.
+
+The returned list @emph{may} share cells with the original list.
+@end defun
+
+@defun list-ref-back lst i
+Reference list elements from the back, with the last most being at
+index 0. Semantically equivalent to
+@code{(list-ref (reverse @var{lst}) @var{i})}.
+@end defun
+
+
 @defun assq-merge a b
 Merges two association lists, comparing with eq.
 The cdrs in all pairs in both lists should be lists,
@@ -321,6 +336,11 @@ A predicate list is an assoc-like list, but instead have predicates in
 the car cell of each pair. This procedure finds the first pair whose
 predicate is true when applied to @var{v}, and returns the cdr of that
 cell.
+@end defun
+
+@defun vector-ref-back v i
+Reference elements from the back of the vector, starting at index 0
+for the very last element.
 @end defun
 
 @defun vector-last v

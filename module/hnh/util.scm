@@ -28,6 +28,8 @@
            flatten
            let-lazy
            map/dotted
+           list-slice
+           list-ref-back
 
            assq-merge
            kvlist->assq
@@ -62,6 +64,7 @@
 
            predicate-list-get
 
+           vector-ref-back
            vector-last
 
            ->string
@@ -115,6 +118,25 @@
      (with-syntax ((it (datum->syntax stx 'it)))
        #'(let ((it condition))
            (when it body ...)))]))
+
+
+
+(define-syntax ->
+  (syntax-rules ()
+    [(-> obj) obj]
+    [(-> obj (func args ...) rest ...)
+     (-> (func obj args ...) rest ...)]
+    [(-> obj func rest ...)
+     (-> (func obj) rest ...)]))
+
+(define-syntax ->>
+  (syntax-rules ()
+    ((->> obj)
+     obj)
+    ((->> obj (func args ...) rest ...)
+     (->> (func args ... obj) rest ...))
+    ((->> obj func rest ...)
+     (->> (func obj) rest ...))))
 
 
 
@@ -347,6 +369,13 @@
          (cons (proc (car dotted-list))
                (map/dotted proc (cdr dotted-list))))))
 
+(define (list-slice lst start end)
+  (-> lst
+      (drop start)
+      (take (- end start))))
+
+(define (list-ref-back lst i) (list-ref (reverse lst) i))
+
 (define (assq-merge a b)
   (fold (lambda (entry alist)
           (let* ((k v (car+cdr entry))
@@ -463,22 +492,6 @@
 
 
 
-(define-syntax ->
-  (syntax-rules ()
-    [(-> obj) obj]
-    [(-> obj (func args ...) rest ...)
-     (-> (func obj args ...) rest ...)]
-    [(-> obj func rest ...)
-     (-> (func obj) rest ...)]))
-
-(define-syntax ->>
-  (syntax-rules ()
-    ((->> obj)
-     obj)
-    ((->> obj (func args ...) rest ...)
-     (->> (func args ... obj) rest ...))
-    ((->> obj func rest ...)
-     (->> (func obj) rest ...))))
 
 (define (downcase-symbol symb)
   (-> symb
@@ -554,8 +567,9 @@
 
 
 
-(define (vector-last v)
-  (vector-ref v (1- (vector-length v))))
+(define (vector-ref-back v i) (vector-ref v (- (vector-length v) 1 i)))
+
+(define (vector-last v) (vector-ref-back v 0))
 
 (define (->string any)
   (with-output-to-string (lambda () (display any))))
