@@ -28,3 +28,10 @@ Lens which focuses the value of @code{just} fields.
 Return the value of the optional @var{opt}, or @var{dflt} if there is
 nothing there.
 @end defun
+
+@subsection Destructuring Patterns
+@deftp {Matcher} just x
+@end deftp
+
+@deftp {Matcher} nothing
+@end deftp

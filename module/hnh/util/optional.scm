@@ -3,6 +3,7 @@
   :use-module (hnh util object)
   :use-module (hnh util serialize)
   :use-module (hnh util type)
+  :use-module (hnh util destructure)
   :use-module (ice-9 curried-definitions)
   :export (optional?
            just just? just*
@@ -15,6 +16,22 @@
   from-just)
 
 (define-type (nothing))
+
+(define-matcher (just x)
+  (define-values (inner-predicates inner-values inner-captures)
+    (get-expander #'x))
+
+  (values
+   (lambda (expr)
+     (cons #`(just? #,expr)
+           (inner-predicates #`(from-just #,expr))))
+   (lambda (expr) (inner-values #`(from-just #,expr)))
+   inner-captures))
+
+(define-matcher (nothing)
+  (values (lambda (expr) #`((nothing? #,expr)))
+          (const #'())
+          #'()))
 
 (define (optional? x)
   (or (just? x)
