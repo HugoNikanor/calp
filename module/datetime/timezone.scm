@@ -402,7 +402,7 @@
                 ((unval utc->zone)
                  (datetime± utc-dt dt-difference)
                  zone))))
-        (else (datetime- dt dt-difference))))
+        (else (datetime± dt dt-difference))))
 
 (define (datetime+/zoneinfo dt dt-difference)
   (datetime±/zoneinfo datetime+ dt dt-difference))
