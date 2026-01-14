@@ -11,7 +11,7 @@
   :use-module (sxml simple)
 
   :use-module ((calp server routes) :select (make-make-routes))
-  :use-module ((calp server socket) :select (setup-socket))
+  :use-module (hnh util randport)
   :use-module ((web server) :select (run-server))
 
   :export (%summary main))
@@ -33,36 +33,24 @@ and <i>[::]</i> for IPv6</group>"))))
     (six (description ,(G_ "Use IPv6.")))
     (four (description ,(G_ "Use IPv4.")))
     (sigusr (description ,(G_ "Reload events on SIGUSR1")))
+    (randport (description ,(G_ "Start server on a random port, using --port as minimum.")))
     (help (single-char #\h)
           (description ,(G_ "Print this help.")))))
 
 
-(define-config port 8080
-  description: (G_ "Port to which the web server should bind."))
+(define-config port "8080"
+  description: (G_ "Port to which the web server should bind.")
+  ;; TODO converter?
+  ;; TODO ensure string (or exact integer with  converter)
+  )
 
 (define (main args)
 
   (define opts (getopt-long args (getopt-opt options)))
-  (define addr (option-ref opts 'addr #f))
-  (define port% (cond ((option-ref opts 'port #f) => string->number)
-                     (else (port))))
-  (define family
-    (cond [(option-ref opts 'six  #f) AF_INET6]
-          [(option-ref opts 'four #f) AF_INET]
-          [(and addr (string-contains addr ":")) AF_INET6]
-          [(and addr (string-contains addr ".")) AF_INET]
-          [else AF_INET6]))
 
   (when (option-ref opts 'help #f)
     (print-arg-help options)
     (throw 'return))
-
-  ;; update address if it was left blank. A bit clumsy since
-  ;; @var{addr} & @var{family} depend on each other.
-  ;; placed after load-calendars to keep Guile 2.2 compability.
-  (unless addr
-    (set! addr (if (eqv? family AF_INET6)
-                   "::" "0.0.0.0")))
 
   (when (option-ref opts 'sigusr #f)
     (format (current-error-port) (G_ "Listening for SIGUSR1~%"))
@@ -77,27 +65,60 @@ and <i>[::]</i> for IPv6</group>"))))
     )
 
 
+  (define addrinfos
+    (getaddrinfo (option-ref opts 'addr "localhost")
+                 (option-ref opts 'port (port))
+                 (logior AI_PASSIVE AI_CANONNAME)
+                 (cond ((option-ref opts 'six #f) AF_INET6)
+                       ((option-ref opts 'four #f) AF_INET)
+                       (else AF_UNSPEC))
+                 SOCK_STREAM))
+
+  (when (null? addrinfos)
+    (format (current-error-port) (G_ "No available addresses for given configuration~%"))
+    ;; TODO error code
+    (throw 'return))
+
+  ;; TODO bind on all found addresses instead of only first found
+  (define addrinfo (car addrinfos))
+
+  (define-values (addr sock)
+    (catch 'system-error
+      (lambda ()
+        (if (option-ref opts 'randport #f)
+            (randport2 addrinfo)
+            (let ((sock (socket (addrinfo:fam addrinfo)
+                                (addrinfo:socktype addrinfo)
+                                0)))
+              (bind sock (addrinfo:addr addrinfo))
+              (values (addrinfo:addr addrinfo) sock))))
+
+      ;; probably address already in use
+      (lambda (err proc fmt args errno)
+        (format (current-error-port) "~a: ~?, when binding ~s~%"
+                proc fmt args
+                addrinfo)
+        ;; TODO error code
+        (throw 'return))))
 
   ;; Arguments are
   ;; IP-address which we bind to
   ;; Port which we listen to
   ;; PID of this process
   ;; PWD of this process
-  (format #t (G_ "Starting server on ~a:~a~%I'm ~a, runing from ~a~%")
-          addr port%
+  (format #t (G_ "Starting server on http://~a:~a~%I'm ~a, runing from ~a~%")
+          (cond ((addrinfo:canonname addrinfo)
+                 => (lambda (can)
+                      ;; Literal IPv6 addresses may appear in the canonical name field...
+                      (if (string-contains can ":")
+                          (format #f "[~a]" can)
+                          can)))
+                ((eqv? AF_INET6 (sockaddr:fam addr))
+                 (format #f "[~a]" (inet-ntop AF_INET6 addr)))
+                (else (inet-ntop (sockaddr:fam addr) (sockaddr:addr addr))))
+          (sockaddr:port addr)
           (getpid) (getcwd))
 
-  (catch 'system-error
-    (lambda ()
-      (run-server (make-make-routes)
-                  'http
-                  `(socket:
-                    ,(setup-socket
-                      family: family
-                      port: port%
-                      host: addr))))
-
-    ;; probably address already in use
-    (lambda (err proc fmt args errno)
-      (format (current-error-port) "~a: ~?~%"
-              proc fmt args))))
+  (run-server (make-make-routes)
+              'http
+              (list socket: sock)))

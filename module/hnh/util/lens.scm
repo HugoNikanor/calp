@@ -17,7 +17,9 @@
 
            each
 
-           ref car* cdr*
+           ref
+           vector-ref*
+           car* cdr*
            ))
 
 
@@ -40,6 +42,15 @@
               (loop (1- idx)
                     (cdr rem))))))
 
+;;; TODO test
+;;; TODO document
+(define (((vector-ref* idx) vector) f)
+  (let ((copy (vector-copy vector)))
+    (vector-set! copy idx (f (vector-ref vector idx)))
+    copy))
+
+;;; TODO lens for focusing alists?
+
 (define (((focus-matching predicate) list) f)
   (map (lambda (x)
          (if (predicate x)
@@ -52,6 +63,7 @@
 
 
 ;;; Lens l i :: l i → (i → i) → l i
+
 
 ;;; modify :: (l i, Lens l i, (i → i)) → l i
 (define (modify container lens f)
