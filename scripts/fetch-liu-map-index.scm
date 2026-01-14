@@ -31,7 +31,7 @@
      (@ (web client) http-get))
    (lambda _
      (use-modules (ice-9 popen)
-                  (web http-replacement))
+                  (web http))
 
      (lambda (url . _)
        (let ((pipe (open-pipe* OPEN_READ "curl" "--include" "--http1.1" url)))

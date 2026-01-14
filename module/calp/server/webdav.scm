@@ -11,9 +11,8 @@
   :use-module (web response)
   :use-module (web uri)
   :use-module (web server)
-  :use-module ((web http-replacement)
-               :select (declare-method!
-                        declare-header!))
+  :use-module ((web http) :select (declare-method!
+                                   declare-header!))
   :use-module (web http status-codes)
   :use-module (datetime)
   :use-module (sxml match)
