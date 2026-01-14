@@ -48,8 +48,10 @@ LIMIT_FILES=$(LIMIT:%=--only %)
 # Skip these files when testing
 SKIP=--skip $(CURDIR)/tests/test/web-server.scm
 
-all: calp $(GO_FILES) static $(LOCALIZATIONS)
+most: calp $(GO_FILES)
 	$(MAKE) -C doc/ref
+
+all: most static $(LOCALIZATIONS)
 
 calp: calp.c
 	$(CC) -ggdb $(CFLAGS) -DBUILD_ENV $(LDFLAGS) -o $@ $< $(LDLIBS)

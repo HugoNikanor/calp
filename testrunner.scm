@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # -*- mode: scheme; geiser-scheme-implementation: guile -*-
 
-make --silent calp
-make --silent unit-test-deps
+make -j --silent unit-test-deps
 
 root=$(dirname "$(realpath "$0")")
 eval "$(env __PRINT_ENVIRONMENT=1 "${root}/calp")"
