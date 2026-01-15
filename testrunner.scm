@@ -28,6 +28,7 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
              (hnh util atomic)
              (hnh util atomic-stack)
              (hnh util atomic-queue)
+             (hnh util destructure)
              (hnh test testrunner)
              (hnh test util)
              ((hnh util io) :select (displayln))
@@ -280,6 +281,10 @@ Generate code coverage data, this causes the tests to be quite
 a bit slower.
 ")))
     (coverage-supplement (value #t))
+    (skip (value #t)
+          ;; TODO what exactly is format.
+          ;; e.g. how does the test-skip procedure work?
+          (description ,(G_ "Test to skip. Can be given multiple times.")))
     ))
 
 (define (read-coverage-info port)
@@ -395,6 +400,17 @@ status of each file's tests.
       (format #t "Gathered the following tests:~%~y~%" test-files)
       (begin
         (test-begin "Universe")
+
+        (let loop ((args args))
+          (destructure args
+            ('() 'done)
+            ((cons* "--skip" skip rest)
+             (test-skip skip)
+             (loop rest))
+            ((cons _ rest)
+             (loop rest))))
+
+
         (let ((results (thread-join!
                         (make-work-pool
                          (prepare-jobs test-files error-queue coverage?: coverage)
