@@ -34,6 +34,7 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
              ((hnh module-introspection all-modules)
               :select (all-files-under-directory))
              (crypto)
+             (datetime)
              (ice-9 rdelim)
              (ice-9 getopt-long)
              (ice-9 control)
@@ -432,7 +433,7 @@ status of each file's tests.
                   (length uncovered-files) (length merged-coverages))
 
           (unless (null? merged-coverages)
-            (with-output-to-file coverage
+            (with-output-to-file (datetime->string (current-datetime) coverage)
               (lambda ()
                 (display "TN:") (newline)
                 (for-each output-coverage merged-coverages)
