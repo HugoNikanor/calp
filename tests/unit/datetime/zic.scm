@@ -71,7 +71,7 @@ Link    Europe/Zurich  Europe/Vaduz
                                         stdoff: (timespec (time hour: 05 minute: 00 second: 00) '- #f)
                                         rule: (timespec (time) '+ 'standard)
                                         format: "EST"
-                                        until: (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00))
+                                        until: (cons 'wall (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00)))
                                        (zone-entry
                                         stdoff: (timespec (time hour: 06 minute: 00 second: 00) '- #f)
                                         rule: 'US
@@ -91,7 +91,7 @@ Link    Europe/Zurich  Europe/Vaduz
                                           stdoff: (timespec (time hour: 05 minute: 00 second: 00) '- #f)
                                           rule: (timespec (time) '+ 'standard)
                                           format: "EST"
-                                          until: (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00))
+                                          until: (cons 'wall (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00)))
                                          (zone-entry
                                           stdoff: (timespec (time hour: 06 minute: 00 second: 00) '- #f)
                                           rule: 'US
@@ -154,17 +154,17 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                                         stdoff: (timespec (time hour: 00 minute: 34 second: 08) '+ #f)
                                         rule: (timespec (time) '+ 'standard)
                                         format: "LMT"
-                                        until: (datetime year: 1853 month: 07 day: 16 hour: 00 minute: 00 second: 00))
+                                        until: (cons 'wall (datetime year: 1853 month: 07 day: 16 hour: 00 minute: 00 second: 00)))
                                        (zone-entry
                                         stdoff: (timespec (time hour: 00 minute: 29 second: 45) '+ #f) ; NOTE that the .50 is discarded
                                         rule: (timespec (time) '+ 'standard)
                                         format: "BMT"
-                                        until: (datetime year: 1894 month: 06 day: 01 hour: 00 minute: 00 second: 00))
+                                        until: (cons 'wall (datetime year: 1894 month: 06 day: 01 hour: 00 minute: 00 second: 00)))
                                        (zone-entry
                                         stdoff: (timespec (time hour: 01 minute: 00 second: 00) '+ #f)
                                         rule: 'Swiss
                                         format: "CE%sT"
-                                        until: (datetime year: 1981 month: 01 day: 01 hour: 00 minute: 00 second: 00))
+                                        until: (cons 'wall (datetime year: 1981 month: 01 day: 01 hour: 00 minute: 00 second: 00)))
                                        (zone-entry
                                         stdoff: (timespec (time hour: 01 minute: 00 second: 00) '+ #f)
                                         rule: 'EU
