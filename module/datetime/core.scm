@@ -50,6 +50,9 @@
            date-zero?
            time-zero?
 
+           utc-datetime?
+           unzoned-datetime?
+
            datetime->unix-time
            unix-time->datetime
 
@@ -225,6 +228,14 @@
 
 (define (time-zero? time)
   (= 0 (hour time) (minute time) (second time)))
+
+(define (utc-datetime? x)
+  (and (datetime? x)
+       (equal? "UTC" (tz x))))
+
+(define (unzoned-datetime? x)
+  (and (datetime? x)
+       (not (tz x))))
 
 
 

@@ -25,7 +25,8 @@
   (typecheck zone-entry zone-entry?)
 
   (aif (zone-entry-until zone-entry)
-       (datetime<? start-dt it)
+       ;; TODO check which "type" of time until is
+       (datetime<? start-dt (cdr it))
        #t))
 
 ;;; Creates a predicate, which tests if a given zoneinfo rule
@@ -49,7 +50,7 @@
   (typecheck start-dt datetime?)
   (typecheck end-year (or integer? false?))
 
-  (define last-until (datetime date: (date month: 1 day: 1)))
+  (define last-until (cons 'utc (datetime date: (date month: 1 day: 1))))
   (define last-offset (timespec (time)))
 
   (fold (lambda (zone-entry vtimezone)
@@ -62,7 +63,10 @@
                               ;; TODO shouldn't this alternate between
                               ;; `daylight` and `standard`
                               (daylight
-                               dtstart: last-until
+                               ;; TODO:
+                               ;; 1. this MUST be in UTC
+                               ;; 2. transpose from whatever type last-until is in
+                               dtstart: (cdr last-until)
                                tzoffsetfrom: last-offset
                                tzoffsetto: new-timespec
                                tzname: (zone-entry-format zone-entry))))

@@ -27,6 +27,9 @@
               date-zero?
               time-zero?
 
+              utc-datetime?
+              unzoned-datetime?
+
               datetime->unix-time
               unix-time->datetime
 

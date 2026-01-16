@@ -140,7 +140,12 @@
                               ((timespec? r) (timespec->string r))
                               (else "-")))
                       (zone-entry-format entry)
-                      (and=> (zone-entry-until entry) datetime->string)))
+                      (cond ((zone-entry-until entry)
+                             => (lambda (u)
+                                  (format #f "~a~a"
+                                          (datetime->string (cdr u))
+                                          (car u))))
+                            (else "#f"))))
             zone-entries))
 
 (define (dump-rule rule-entries)

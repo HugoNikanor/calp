@@ -3,7 +3,6 @@
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-71)
-  :use-module (ice-9 match)
   :use-module (ice-9 regex)
   :use-module (datetime core)
   :use-module (datetime timespec)
@@ -62,49 +61,33 @@
       zoneinfo-database)))
 
 
-;;; TODO document me
+
+;;; Returns the datetime a given rule would take effect the given year.
+;;; No check is done that the rule actually applies for the given year,
+;;; (e.g. a rule only relevant between 1990 and 1999 can be applied to
+;;; the year 2015).
+
+
 (define (rule->datetime year rule)
   (typecheck year exact-integer?)
   (typecheck rule zi-rule?)
 
+  ;; TODO type of time
+  ;; Timespec allows 'utc, 'daylight, 'wall, and 'utc
+  ;; it semes that rule-on doesn't allow 'daylight for those
   (datetime-timespec-add
    (datetime date: (execute-day-spec (date year: year month: (rule-in rule))
                                      (rule-on rule)))
    (rule-at rule)))
 
-;;; TODO document me
-(define (generate-backwards year rule)
-  (typecheck year exact-integer?)
-  (typecheck rule zi-rule?)
-
-  (case (rule-to rule)
-    ((only)
-     (if (= year (rule-from rule))
-         (stream (cons (rule->datetime year rule)
-                       rule))
-         stream-null))
-    ((maximum)
-     (cond ((< (rule-from rule) year) (stream-cons
-                                       (cons (rule->datetime year rule)
-                                             rule)
-                                       (generate-backwards (1- year) rule)))
-           ((= (rule-from rule) year) (stream (cons (rule->datetime year rule)
-                                                    rule)))
-           (else stream-null)))
-    (else
-     (cond ((= (rule-from rule) year) (stream (cons (rule->datetime year rule)
-                                                    rule)))
-           ((<= (rule-from rule) year (rule-to rule))
-            (stream-cons (cons (rule->datetime year rule)
-                               rule)
-                         (generate-backwards (1- year) rule)))
-           (else stream-null)))))
 
 
 
 
-
+;;; Find relevent timezone rule instances for the date dt
 (define (find-relevant-rule-instances dt rules)
+  (typecheck dt datetime?)
+  (typecheck rules (list-of zi-rule?))
   ;; TODO if changeover happens at midnight between two years,
   ;; this may be incorrect.
   (define y (year (datetime-date dt)))
@@ -115,6 +98,147 @@
               (else (<= (rule-from rule) y (rule-to rule)))))
           rules))
 
+;; For all rules which MAY be of interest to the given datetime,
+;; expand those, and return a STREAM of all changeover dates together
+;; with the rule, from youngest to oldest.
+;; For example, Given 2026-01-03, and the US rules, then the following
+;; two rules would be found as "relevant":
+;;      Rule	US	2007	max	-	Mar	Sun>=8	2:00	1:00	D
+;;      Rule	US	2007	max	-	Nov	Sun>=1	2:00	0	S
+;; The returned STREAM would then start with (2026-11-01T02:00, S),
+;; (2026-03-08T02:00, D), (2025-11-02T02:00, S), (2025-03-09T02:00, D), ...
+;; (Where `S' denotes the "standard" rule, and `D' the "daylight savings" rule).
+;; 
+;; Note that the datetimes returned are zoneless, and MUST be
+;; interpreted through the rule, making them UTC, WALL, or STANDARD
+;; times.
+(define (find-changeovers dt rules)
+
+  ;; For a given year and zoneinfo rule,
+  ;; return a list of all instances of that rule between the given date
+  ;; and the first instance of the rule, in reverse chronological order
+  ;; (e.g. newest first).
+  ;; If no such instances exists, then the empty list is returned.
+  ;; Each element in the stream consists of a pair consisting of:
+  ;; - a datetime without zoneinfo, which MUST be interpreted
+  ;;   according to `(timespec-type (rule-at rule)), which denotes when
+  ;;   this rule takes effect that year.
+  ;; - the rule which takes effect.
+  (define (generate-backwards year rule)
+    (typecheck year exact-integer?)
+    (typecheck rule zi-rule?)
+
+    (if (<= (rule-from rule) year (case (rule-to rule)
+                                   ((only) (rule-from rule))
+                                   ;; float inf works for integers to
+                                   ((maximum) (inf))
+                                   (else (rule-to rule))))
+        (map (lambda (y) (cons (rule->datetime y rule) rule))
+             (iota (1+ (- year (rule-from rule))) year -1))
+        '()))
+
+  ;; TODO Implement an `interleave-lists`, and use that instead of streams
+  ;; Streams where initially used here since a rule can technically
+  ;; expand to a ridicolous amount of items, if given a date far enough in
+  ;; the future.
+  (interleave-streams
+   (lambda (a b)
+     ;; TODO This assumes that no two changes happened very
+     ;; close to each other, using different time tracking
+     ;; systems (wall, utc,standard). That is PROBABLY a safe
+     ;; assumption.
+     (datetime>= (car a) (car b)))
+   (map list->stream
+        (map (lambda (rule) (generate-backwards (year (datetime-date dt)) rule))
+             (find-relevant-rule-instances
+              dt rules)))))
+
+
+(define (get-other x)
+  (if (= 1 (hour (timespec-time x)))
+      (set x (lens-compose timespec-time* hour*) 0)
+      (set x (lens-compose timespec-time* hour*) 1)))
+
+;; Find the revelent zoneinfo rule for the given datetime.
+;; The datetime can be in either UTC or a known timezone
+;;
+;; Find first rule instance which is is the PAST.
+;; This is guaranteed to work, since no two rules will ever overlap,
+;; and they have already been expanded. See example in
+;; documentation for find-changeovers.
+(define (find-exact-changeover dt zone changeovers)
+  (let loop ((rules (stream->list changeovers)))
+
+    (define rule-matches?
+      (cond ((null? rules)
+             (scm-error 'misc-error #f
+                        "No rule was relevant. Try previous zone entry"
+                        '() #f))
+            (else
+             (let ((changeover-dt rule (car+cdr (car rules))))
+               (case (timespec-type (rule-at rule))
+
+                 ((utc)
+                  (datetime<=
+                   (tz changeover-dt "UTC")
+                   (if (utc-datetime? dt)
+                       dt
+                       ;; This is zone->utc/simple
+                       (datetime-timespec-add
+                        (tz dt "UTC")
+                        (timespec-negate
+                         (timespec+ (zone-entry-stdoff zone)
+                                    ;; NOTE removing this line seems to make
+                                    ;; NO difference. Find the cases where it does
+                                    (rule-save rule)))))))
+
+                 ((wall)
+                  (if (utc-datetime? dt)
+                      (datetime<=
+                       (datetime-timespec-add
+                        (tz changeover-dt "UTC")
+                        (timespec-negate
+                         ;; TODO (cdr rules) may fail. In that case we
+                         ;; need to check the previous zone entry.
+                         (timespec+ (zone-entry-stdoff zone)
+                                    (rule-save (cdadr rules)))))
+                       dt)
+
+                      ;; Both are in wall time, strip
+                      ;; the information to appease datetime<=
+                      (datetime<= changeover-dt (tz dt #f))))
+
+                 ((standard)
+                  ;; Same reasoning as for wall, except we ignore the
+                  ;; offset added by the savings rule.
+                  (if (utc-datetime? dt)
+                      (datetime<=
+                       (datetime-timespec-add
+                        (tz changeover-dt "UTC")
+                        (timespec-negate (zone-entry-stdoff zone)))
+                       dt)
+                      (datetime<= changeover-dt (tz dt #f))))
+
+                 (else (scm-error 'misc-error #f
+                                  "Unexpected timespec type in rule-at: ~s"
+                                  (list (timespec-type (rule-at rule)))
+                                  #f)))))))
+
+    (if rule-matches?
+        (cdar rules)
+        (loop (cdr rules)))))
+
+
+;;; Get the abreviation of a zone, with regards to a specific rule.
+;;; - entry-format is the format field of a zone rule, meaning that it
+;;;   should either contain a single fixed string, a string containing
+;;;   optianal `%s' and `%z' placeholders, or a pair of the
+;;;   afformentioned strings split by a solidus character.
+;;; - rule is the relevent rule to format for
+;;; - offset is the timezone offset used if the %z format specifier is used.
+;;;   (TODO doesn't this depend both on the base offset and the rule?)
+;;;   TODO write tests for it
+;;; TODO write tests for this
 (define (run-zone-format entry-format rule offset)
   (zone-format
    (cond ((string-contains entry-format "/")
@@ -129,7 +253,6 @@
    (rule-letters rule)
    offset))
 
-
 ;; Find relevant rule for converting given UTC time to desired timezone
 ;; What can be relevant to return?
 ;; Input:
@@ -142,26 +265,33 @@
 ;; - name of the zone
 ;; - UTC offset
 (define (utc->zone/name dt zone-name)
-  (typecheck dt datetime?)
+  (typecheck dt utc-datetime?)
   (typecheck zone-name string?)
 
   (define zone-entry
     (find (lambda (zone)
-            (cond ((not (zone-entry-until zone)) zone)
-                  ;; TODO UNTIL is only *usually* in wall time
-                  ((datetime< dt (datetime-timespec-add
-                                  (zone-entry-until zone)
-                                  (timespec-negate
-                                   ;; timespec+
-                                   (zone-entry-stdoff zone)
-                                   ;; TODO this is USUALLY a symbol
-                                   ;; referencing a zone, not a literal offset!
-                                   ; (zone-entry-rule zone)
-                                   )))
-                   zone)
-                  (else #f)))
+            (let ((until (zone-entry-until zone)))
+             (cond ((not until) zone)
+                   ((datetime<
+                     dt
+                     (case (car until)
+                       ((utc) (tz (cdr until) "UTC"))
+                       ((wall)
+                        ;; TODO
+                        ;; (get-rule (zoneinfo) (zone-entry-rule zone))
+                        (tz (cdr until) "UTC"))
+                       ((standard)
+                        (-> (cdr until)
+                            (datetime-timespec-add
+                             (timespec-negate (zone-entry-stdoff zone)))
+                            (tz "UTC")))
+                       (else (scm-error 'misc-error "utc->zone/name"
+                                        "Bad value for zone-entry-until: ~s"
+                                        (list (car (zone-entry-until zone)))
+                                        (list zone)))))
+                    zone)
+                   (else #f))))
           (get-zone (zoneinfo) zone-name)))
-
 
   (cond ((not zone-entry)
          (scm-error 'misc-error "utc->zone"
@@ -171,67 +301,23 @@
         ((timespec? (zone-entry-rule zone-entry))
          (let ((offset (timespec+ (zone-entry-rule zone-entry)
                                   (zone-entry-stdoff zone-entry))))
-           (values (-> (datetime-timespec-add dt offset)
+           (values (-> dt
+                       (datetime-timespec-add offset)
                        (tz zone-name))
                    offset
                    (zone-entry-format zone-entry))))
 
         (else ; symbolic rule name
-         (define y (year (datetime-date dt)))
          (define changeovers
-           (interleave-streams
-            (lambda (a b) (datetime>= (car a) (car b)))
-            (map (lambda (rule) (generate-backwards y rule))
-                 (find-relevant-rule-instances
-                  dt (get-rule (zoneinfo) (zone-entry-rule zone-entry))))))
+           (find-changeovers
+            dt (get-rule (zoneinfo) (zone-entry-rule zone-entry))))
 
-         ;; Past changeovers is a stream of pairs, where each value is:
-         ;; a datetime of "unspecified" format, meaning that it may be in UTC, or may be in local time. How it should be interpreted depends on the rule in the cdr.
-         ;; This could in theory cause an issue if way to many changes happens at once, but that *shouldn't* happen
-
-
-         ;; Find the first changeover in the past relative dt
-         (define rule
-           (cdar
-            (stream-find
-             (lambda (p)
-               (match p
-                 (((tm . rule) . (_ . rule-prev))
-                  (case (timespec-type (rule-at rule))
-                    ((utc) ; tm is in utc format, we can compare directly
-                     (datetime>= dt tm))
-                    ((wall)
-                     ;; tm is in wall time, convert to utc and compare
-                     ;; This requires looking at the previous rule to figure out local time
-                     ;; TODO is this correct, or might we overflow back to being invalid?
-                     ;; UTC time + offset ⇒ local time
-                     (datetime>=
-                      (datetime-timespec-add
-                       dt
-                       (timespec+ (zone-entry-stdoff zone-entry)
-                                  (rule-save rule-prev)))
-                      tm))
-                    ((standard)
-                     ;; time is in standard offset with regards to stdoff of the zone
-                     ;; Convert time to utc, and compare.
-                     (datetime>=
-                      (datetime-timespec-add dt (zone-entry-stdoff zone-entry))
-                      tm))
-                    (else (scm-error 'misc-error "utc->zone"
-                                     "Unexpected timespec type in rule-at: ~s"
-                                     (list (timespec-type (rule-at rule)))
-                                     #f))))))
-             (stream-map
-              cons
-              changeovers
-              (stream-append (stream-cdr changeovers)
-                             ;; TODO here we need to fall back to previous zone entries
-                             ;; (which might contain rules themselves)
-                             (stream (cons #f #f)))))))
+         (define rule (find-exact-changeover dt zone-entry changeovers))
 
          (let ((offset (timespec+ (zone-entry-stdoff zone-entry)
                                   (rule-save rule))))
-           (values (-> (datetime-timespec-add dt offset)
+           (values (-> dt
+                       (datetime-timespec-add offset)
                        (tz zone-name))
                    offset
                    (run-zone-format (zone-entry-format zone-entry)
@@ -243,82 +329,59 @@
 ;; The returned offset is still in the "regular" direction, meaning that
 ;; (returned dt) + (returned offset) == input dt
 (define (zone->utc/name dt)
-  (define zone
+  (typecheck dt datetime?)
+  (typecheck (tz dt) (not false?))
+
+  (define zone-entry
     (find (lambda (zone)
-            (cond ((not (zone-entry-until zone)) zone)
-                  ;; TODO UNTIL is only *usually* in wall time
-                  ((datetime<= dt (zone-entry-until zone)) zone)
-                  (else #f)))
+            (let ((until (zone-entry-until zone)))
+             (cond ((not until) zone)
+                   ((datetime<=
+                     (tz dt #f)
+                     (case (car until)
+                       ((utc)
+                        ;; TODO
+                        (cdr until))
+                       ((wall) (cdr until))
+                       ((standard)
+                        ;; TODO
+                        (cdr until))
+                       (else (scm-error 'misc-error "zone->utc/name"
+                                        "Bad value for zone-entry-until: ~s"
+                                        (list (car (zone-entry-until zone)))
+                                        (list zone)))))
+                    zone)
+                   (else #f))))
           (get-zone (zoneinfo) (tz dt))))
 
-  (cond ((not zone)
-         (scm-error 'misc-error "utc->zone"
+  (cond ((not zone-entry)
+         (scm-error 'misc-error "zone->utc"
                     "Failed finding any relevant offset"
                     '() #f))
 
-        ((timespec? (zone-entry-rule zone))
-         (let ((offset (timespec+ (zone-entry-rule zone)
-                                  (zone-entry-stdoff zone))))
+        ((timespec? (zone-entry-rule zone-entry))
+         (let ((offset (timespec+ (zone-entry-rule zone-entry)
+                                  (zone-entry-stdoff zone-entry))))
            (values (-> dt
                        (datetime-timespec-add (timespec-negate offset))
                        (tz "UTC"))
                    offset
-                   (zone-entry-format zone))))
+                   (zone-entry-format zone-entry))))
 
-        (else
-         ;; Identical with flipflop
-         (define y (year (datetime-date dt)))
+        (else ; symbolic rule name
          (define changeovers
-           (interleave-streams
-            (lambda (a b) (datetime>= (car a) (car b)))
-            (map (lambda (rule) (generate-backwards y rule))
-                 (find-relevant-rule-instances
-                  dt (get-rule (zoneinfo) (zone-entry-rule zone))))))
+           (find-changeovers
+            dt (get-rule (zoneinfo) (zone-entry-rule zone-entry))))
 
+         (define rule (find-exact-changeover dt zone-entry changeovers))
 
-         ;; Find the first changeover in the past relative dt
-         (define rule
-           (cdar
-            (stream-find
-             (lambda (p)
-               (match p
-                 (((tm . rule) . (_ . rule-prev))
-                  (case (timespec-type (rule-at rule))
-                    ((utc)
-                     (datetime>= (datetime-timespec-add
-                                 dt (timespec-negate
-                                     (timespec+ (zone-entry-stdoff zone)
-                                                (rule-save rule-prev))))
-                                tm))
-                    ((wall)
-                     ;; Changeover is in wall time, we cane compare directly
-                     (datetime>= dt tm))
-                    ((standard)
-                     ;; Changeover is in local time, without any daylight savings.
-                     (datetime>= (datetime-timespec-add
-                                 dt (timespec-negate
-                                     (timespec+ (zone-entry-stdoff zone)
-                                                (rule-save rule-prev))))
-                                tm))
-                    (else (scm-error 'misc-error "utc->zone"
-                                     "Unexpected timespec type in rule-at: ~s"
-                                     (list (timespec-type (rule-at rule)))
-                                     #f))))))
-             (stream-map
-              cons
-              changeovers
-              (stream-append (stream-cdr changeovers)
-                             ;; TODO here we need to fall back to previous zone entries
-                             ;; (which might contain rules themselves)
-                             (stream (cons #f #f)))))))
-
-         (let ((offset (timespec+ (zone-entry-stdoff zone)
+         (let ((offset (timespec+ (zone-entry-stdoff zone-entry)
                                   (rule-save rule))))
            (values (-> dt
                        (datetime-timespec-add (timespec-negate offset))
                        (tz "UTC"))
                    offset
-                   (run-zone-format (zone-entry-format zone)
+                   (run-zone-format (zone-entry-format zone-entry)
                                     rule offset))))))
 
 
@@ -330,6 +393,7 @@
 (define utc-offset-rx
   (make-regexp "^(UTC)?([+-])(([0-9]{1,2}):([0-9]{2})|[0-9]+)$"))
 
+;;; TODO rename to utc-indicator->timespec (or similar)
 (define (parse-utc-offset s)
   (and=> (regexp-exec utc-offset-rx  s)
          (lambda (m)
@@ -423,25 +487,3 @@
                     '() #f))))
 
 ;;; TODO comperators (datetime<, ...)
-
-;;; TODO extend output format to include zoneinfo
-;; (define (showoff)
-;;   (define start-time (-> #2025-03-30T01:59:55
-;;                          (tz "Europe/Stockholm")))
-;;   (let loop ((dt start-time)
-;;              (i 0))
-;;     (if (> i 10)
-;;         'done
-;;         (begin
-;;           (format #t "~a~%" (datetime->string dt))
-;;           (loop (datetime+ dt (datetime second: 1))
-;;                 (1+ i)))))
-;;   (newline)
-;;   (let loop ((dt start-time)
-;;              (i 0))
-;;     (if (> i 10)
-;;         'done
-;;         (begin
-;;           (format #t "~a~%" (datetime->string dt))
-;;           (loop (datetime+/zoneinfo dt (datetime second: 1))
-;;                 (1+ i))))) )

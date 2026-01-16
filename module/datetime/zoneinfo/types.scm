@@ -60,7 +60,9 @@
   (zone-entry-stdoff keyword: stdoff type: timespec?)
   (zone-entry-rule   keyword: rule   type: (or symbol? timespec?))
   (zone-entry-format keyword: format type: string?)
-  (zone-entry-until  keyword: until  type: (or false? datetime?)))
+  (zone-entry-until  keyword: until
+                     type: (or false? (pair-of (memv '(utc standard wall))
+                                               unzoned-datetime?))))
 
 
 

@@ -42,6 +42,13 @@
 
 
 
+;;; TODO write tests for this, zic(8) gives the following:
+;; 5        the fifth of the month
+;; lastSun  the last Sunday in the month
+;; lastMon  the last Monday in the month
+;; Sun>=8   first Sunday on or after the eighth
+;; Sun<=25  last Sunday on or before the 25th
+
 (define (execute-day-spec base-date day-spec)
   (match day-spec
     ((? number? on) (day base-date on))
@@ -129,13 +136,16 @@
     ;; I believe tm can't be negative (since that would be written as
     ;; a positive value the previous day). However, it can be in any of wall,
     ;; utc, or standard time (defaulting to wall)
+    ;; HOWEVER, UNTIL follows the same rules as AT from Rule records,
+    ;; which CAN be negative
     ;; We DON'T store that in the TZ component of the datetime object,
     ;; since that is reserved for timezone names
     ;; (even though utc could be coded as UTC, and wall as #f, that
     ;; leaves standard time).
     ;; Instead, we should return a new type, datetime-spec
-    (datetime date: (execute-day-spec base-date (parse-day-spec day))
-              time: (timespec-time timespec))))
+    (cons (or (timespec-type timespec) 'wall)
+          (datetime date: (execute-day-spec base-date (parse-day-spec day))
+                    time: (timespec-time timespec)))))
 
 
 (define (parse-zone stdoff rule format . until)
