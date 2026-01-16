@@ -6,6 +6,7 @@
   :use-module (ice-9 pretty-print)
   :use-module (ice-9 format)
   :use-module (ice-9 curried-definitions)
+  :use-module (ice-9 exceptions)
   :export (verbose? construct-test-runner
                     test-runner-test-name/description))
 
@@ -40,16 +41,25 @@
 (define (test-runner-describe-error runner depth)
   (cond ((test-result-ref runner 'actual-error)
          => (lambda (err)
-              (if (and (list? err)
-                       (= 5 (length err)))
-                  (let ((err (list-ref err 0))
-                        (proc (list-ref err 1))
-                        (fmt (list-ref err 2))
-                        (args (list-ref err 3)))
-                    (format #t "~a~a in ~a: ~?~%"
-                            (make-indent (1+ depth))
-                            err proc fmt args))
-                  (format #t "~aError: ~s~%" (make-indent (1+ depth)) err))))
+              (cond ((and (list? err)
+                          (= 5 (length err)))
+                     (let ((err (list-ref err 0))
+                           (proc (list-ref err 1))
+                           (fmt (list-ref err 2))
+                           (args (list-ref err 3)))
+                       (format #t "~a~a in ~a: ~?~%"
+                               (make-indent (1+ depth))
+                               err proc fmt args)))
+                    ((exception? err)
+                     (format #t "~a~a in ~a: ~?~%"
+                             (make-indent (1+ depth))
+                             (exception-kind err)
+                             (exception-origin err)
+                             (exception-message err)
+                             (exception-irritants err)))
+                    (else
+                     (format #t "~aError: ~s~%"
+                             (make-indent (1+ depth)) err)))))
         (else
          (let ((unknown-expected (gensym))
                (unknown-actual (gensym)))
