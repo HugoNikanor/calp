@@ -424,17 +424,12 @@
 
 
 (define (week-day-select args)
+  (define weekdays #(SU MO TU WE TH FR SA))
   `(select (@ ,@args)
      (option "-")
-     ,@(map (lambda (x) `(option (@ (value ,(car x))) ,(cadr x)))
-            ;; TODO translate
-            '((MO "Monday")
-              (TU "Tuesday")
-              (WE "Wednesday")
-              (TH "Thursday")
-              (FR "Friday")
-              (SA "Saturday")
-              (SU "Sunday")))))
+     ,@(map (lambda (w) `(option (@ (value ,(vector-ref weekdays w)))
+                            ,(week-day-name w)))
+            (weekday-list))))
 
 
 ;;; Templates
