@@ -8,6 +8,7 @@
   :use-module (srfi srfi-88)
   :use-module (datetime)
   :use-module (calp html view calendar shared)
+  :use-module ((calp html util) :select (html-file-extension))
   :use-module (ice-9 match)
   :use-module (vcomponent)
   :use-module ((vcomponent data-stores common) :select (calendar-data-store?))
@@ -138,7 +139,7 @@
                   (class "cal-cell cal-cell-time"))
                (a (@ (class "hidelink")
                      (href "/week/" ,(date->string day-date "~Y-~m-~d")
-                           ".html#" ,(date->string day-date "~Y-~m-~d")))
+                           "." ,(html-file-extension) "#" ,(date->string day-date "~Y-~m-~d")))
                 (time (@ (class "date-info "
                            ,(if (or (date< day-date start-date)
                                     (date< end-date day-date))

@@ -17,6 +17,7 @@
                :renamer (lambda _ 'render-calendar-wide))
   :use-module ((calp html view calendar month)
                :select (render-calendar-table))
+  :use-module ((calp html util) :select (html-file-extension))
 
   :use-module ((sxml simple) :select (sxml->xml xml->sxml))
   :use-module ((sxml transformations) :select (href-transformer))
@@ -145,13 +146,12 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
     (throw 'return)
     )
 
-  ;; TODO a number of links are wrong, since they point to .html files,
-  ;; while we save the documents as .xml.
+  (html-file-extension "xml")
 
   (case style
 
     [(small)
-     (let ((fname (path-append target-directory (date->string start "small-~1.xml"))))
+     (let ((fname (path-append target-directory (string-append (date->string start "small-~1.") (html-file-extension)))))
        (with-output-to-file fname
          (lambda ()
            (sxml->xml

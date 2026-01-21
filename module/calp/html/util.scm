@@ -4,8 +4,16 @@
   :use-module (hnh util color)
   :use-module (calp translation)
   :use-module (vcomponent)
-  :export (date-link html-id calculate-fg-color))
+  :export (html-file-extension
+           date-link
+           html-id
+           calculate-fg-color))
 
+;; File extension to use for HTML file.
+;; Mainly used where an xml extension is needed, when deploying to
+;; systems which don't allow us control over the mime-type mappings.
+(define-once html-file-extension
+  (make-parameter "html"))
 
 (define (date-link date)
   ((@ (datetime) date->string) date "~Y-~m-~d"))

@@ -14,7 +14,7 @@
   :use-module ((text util) :select (add-enumeration-punctuation))
   :use-module ((web query) :select (encode-query-parameters))
   :use-module ((web uri) :select (uri? uri->string))
-  :use-module ((calp html util) :select (html-id calculate-fg-color))
+  :use-module ((calp html util) :select (html-file-extension html-id calculate-fg-color))
   :use-module ((calp html config) :select (edit-mode debug))
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
@@ -111,7 +111,12 @@
                             (if (datetime? dt)
                                 (datetime->string dt (G_ "~Y-~m-~d ~H:~M"))
                                 (date->string dt (G_ "~Y-~m-~d") ))))
-                   (a (@ (href ,(date->string (as-date (prop1 event 'DTSTART)) "/week/~Y-~m-~d.html")))
+                   (a (@ (href ,(string-append
+                                 (datetime->string
+                                  (if (datetime? dt)
+                                      dt (datetime date: dt))
+                                  "/week/~Y-~m-~d.")
+                                 (html-file-extension))))
                       ;; Button for viewing calendar, accompanied by a calendar icon
                       ;; TODO fragment focusing that specific event
                       ,(G_ "View") " 📅")

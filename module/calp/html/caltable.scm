@@ -35,7 +35,8 @@
 (define* (cal-table key: start-date end-date next-start prev-start)
 
   (define (->link date)
-    (date->string date "~Y-~m-~d.html"))
+    (string-append (date->string date "~Y-~m-~d.")
+                   (html-file-extension)))
 
   ;; (<date> → sxml-attributes) → <date> → sxml
   ;; TODO rename this since tables aren't used any more.

@@ -6,6 +6,7 @@
   :use-module ((vcomponent datetime)
                :select (instance-overlaps?))
   :use-module (datetime)
+  :use-module ((calp html util) :select (html-file-extension))
   :use-module (calp html components)
   :use-module ((calp html vcomponent)
                :select (calendar-styles fmt-day))
@@ -79,7 +80,7 @@
   (typecheck post-end date?)
 
   (define (nav-link display date)
-    `(a (@ (href ,(date->string date "~Y-~m-~d") ".html")
+    `(a (@ (href ,(date->string date "~Y-~m-~d.") ,(html-file-extension))
            (class "nav hidelink"))
         (div (@ (class "nav"))
              ,display)))
@@ -180,16 +181,19 @@ window.default_calendar='~a';"
          ;; Small calendar and navigation
          (nav (@ (class "calnav") (style "grid-area: nav"))
               (div (@ (class "change-view"))
-                   ,(btn href: (date->string
-                                ;; TODO this seems wrongly designed
-                                (if (= 1 (day start-date))
-                                    (start-of-week start-date)
-                                    start-date)
-                                "/week/~1.html")
+                   ,(btn href: (string-append
+                                (date->string
+                                 ;; TODO this seems wrongly designed
+                                 (if (= 1 (day start-date))
+                                     (start-of-week start-date)
+                                     start-date)
+                                 "/week/~1.")
+                                (html-file-extension))
                          ;; Button to view week
                          (G_ "Week"))
 
-                   ,(btn href: (date->string (day start-date 1) "/month/~1.html")
+                   ,(btn href: (string-append (date->string (day start-date 1) "/month/~1.")
+                                              (html-file-extension))
                          ;; button to view month
                          (G_ "Month"))
 
