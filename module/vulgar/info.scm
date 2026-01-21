@@ -9,9 +9,9 @@
  (let ((rpipe wpipe (car+cdr (pipe))))
    (if (= 0 (system (format #f "stty size > /proc/~s/fd/~s"
                         (getpid) (port->fdes wpipe))))
-       (let* ((w (read rpipe))
-              (h (read rpipe)))
+       (let* ((h (read rpipe))
+              (w (read rpipe)))
          (close rpipe)
          (close wpipe)
-         (values w h))
+         (values h w))
        (values 0 0))))
