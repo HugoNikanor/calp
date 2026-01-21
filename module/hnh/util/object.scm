@@ -6,7 +6,16 @@
   :use-module (hnh util type)
   :use-module (hnh util serialize)
   :export (define-type
+            pprint-width
             record->list record->list/filtered))
+
+
+
+
+;;; Width used when writing objects created by this module.
+;;; 79 set as default, since that's what pretty-print defaults to also
+(define-once pprint-width
+  (make-parameter 79))
 
 
 
@@ -307,7 +316,7 @@
                                  (display "#.")
                                  ((@ (ice-9 pretty-print) pretty-print)
                                   (serialize o)
-                                  )))
+                                  width: (pprint-width))))
                              (string-drop-right 1)
                              (display p)))))))))))
 
