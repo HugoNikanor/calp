@@ -72,9 +72,26 @@
 
            (RECUR RRULE)
 
-           (CAL-ADDRESS ORGANIZER ATTENDEE)))))
+           (CAL-ADDRESS ORGANIZER ATTENDEE)
 
-;;; Get defalut type for the given field name
+           ;; RFC 7986 (New Properties for iCalendar)
+           ;; The RFC also registers a couple more fields, which
+           ;; explicitly lacks default type. DO NOT add them to this table.
+           (TEXT NAME COLOR)
+
+           ;; Common extensions:
+           ;; [MS_OXICIAL]: 2.1.3 Processing rules (https://learn.microsoft.com/en-us/openspecs/exchange_server_protocols/ms-oxcical/74d3bf60-f30d-4fca-84d3-cfd04da8e627), read 2025-12-02
+           ;; NOTE that the "standard" has more registered properties
+           ;; than these. This is just the most commonly used subset
+           (DATE-TIME X-CALEND X-CALSTART
+                      X-CLIPEND X-CLIPSTART)
+           (CAL-ADDRESS X-OWNER)
+           (DURATION X-PUBLISHED-TTL)
+           (TEXT X-WR-CALDESC X-WR-CALNAME
+                 X-ALT-DESC)
+           ))))
+
+;;; Get default type for the given field name
 (define (default-type key)
   (table-get (default-types) key))
 
