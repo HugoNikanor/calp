@@ -29,7 +29,7 @@
   `((help (single-char #\h) (description ,(G_ "Print this help.")))
     (output (single-char #\o)
             (value filename)
-            (description ,(G_ "File to write the generated code to.")))
+            (description ,(G_ "File to write the generated code to. Defaults to stdout.")))
     (module-name (value module)
      (description ,(G_ "Name of the generated module, as per <code>define-module</code>.
 Given as a space-delimeted list of symbols, and defaults to <code>datetime timezone vendored-tzdb</code>.")))
@@ -69,6 +69,28 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
       binary: #t))
   (sha256 bytes))
 
+(define (get-zone-names makefile-path)
+  (define make-rule (symbol->string (gensym "print-tzdata")))
+
+  (define port (open-file makefile-path "re+"))
+  ;; (flock port LOCK_EX)
+  (seek port 0 SEEK_END)
+
+  (define len (seek port 0 SEEK_CUR))
+  (dynamic-wind
+    (lambda () 'noop)
+    (lambda ()
+      (format port ".PHONY: ~a\n" make-rule)
+      (format port "~a:\n" make-rule)
+      (display "\t@echo $(TDATA_TO_CHECK)\n" port)
+      (force-output port)
+      (define pipe (open-pipe* OPEN_READ "make" "--quiet" "-C" (dirname makefile-path) make-rule))
+      (begin1 (string-split (read-line pipe) #\space)
+              (close-port pipe)))
+    (lambda ()
+      (truncate-file port len)
+      (close-port port))))
+
 (define (main args)
   (define opts (getopt-long args (getopt-opt opt-spec)))
 
@@ -80,7 +102,6 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
   (define cache-dir (path-append (xdg-cache-home) "calp"))
   (define tzdata-dir "tzdata")
   (define tar "tzdata-latest.tar.gz")
-  (define make-rule (symbol->string (gensym "print-tzdata")))
 
   ;; TODO use a non-throwing mkdir -p
   (catch #t (lambda ()  (mkdir cache-dir)) list)
@@ -96,25 +117,7 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
                 (mkdir tzdata-dir)
                 (system "tar xf \"$tar_file\" -C \"$tzdata_dir\"")))))
 
-  (define port (open-file (path-append cache-dir tzdata-dir "Makefile") "re+"))
-  ;; (flock port LOCK_EX)
-  (seek port 0 SEEK_END)
-
-  (define len (seek port 0 SEEK_CUR))
-  (define zone-names
-    (dynamic-wind
-      (lambda () 'noop)
-      (lambda ()
-        (format port ".PHONY: ~a\n" make-rule)
-        (format port "~a:\n" make-rule)
-        (display "\t@echo $(TDATA_TO_CHECK)\n" port)
-        (force-output port)
-        (define pipe (open-pipe* OPEN_READ "make" "--quiet" "-C" (path-append cache-dir tzdata-dir) make-rule))
-        (begin1 (string-split (read-line pipe) #\space)
-                (close-port pipe)))
-      (lambda ()
-        (truncate-file port len)
-        (close-port port))))
+  (define zone-names (get-zone-names (path-append cache-dir tzdata-dir "Makefile")))
 
   (define checksum (checksum->string (checksum-file (path-append cache-dir tar))))
 
@@ -208,9 +211,8 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
     (newline))
 
   (pretty-print
-   `(define ,intermediary-name ,(serialize intermediary)))
-
-  (newline)
+   `(define ,intermediary-name ,(serialize intermediary))
+   width: 250)
 
   (pretty-print
    `(define ,tzdb-name (intermediary->zoneinfo ,intermediary-name))))
