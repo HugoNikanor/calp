@@ -60,9 +60,17 @@ ignored if the concept of a path doesn't apply to the store.
 See each individual stores documentation for applicable arguments.
 @end defun
 
-@deftp {GOOPS method} store-uri
+@deftp {GOOPS method} store-uri store
 Return a URI object which can be passed to @code{store-uri->store} to
 establish a new connection to the store.
+@end deftp
+
+@deftp {GOOPS method} close-store! store
+Analogous to closing a file. Default implementation is a no-op.
+
+Note that you probably want to @code{flush!} the store before closing it.
+
+TODO shouldn't close-store! force a flush?
 @end deftp
 
 @subsection Writing Data

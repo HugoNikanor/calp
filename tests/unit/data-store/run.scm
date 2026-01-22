@@ -79,8 +79,11 @@
          (for-each (lambda (entry)
                      (put-event! store (list-ref entry 0) (list-ref entry 2)))
                    entries)
-         (flush! store))
-       ;; TODO maybe explicitly close the store? Even if it SHOULD get garbage collected shortly
+         (format (current-error-port) "Flushing entries~%")
+         (flush! store)
+         (close-store! store))
+
+       (format (current-error-port) "Setup done~%")
 
        ;; We close and re-open the store, to ensure we read from storage
        ;; instead of internal caches.

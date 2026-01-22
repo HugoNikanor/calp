@@ -32,6 +32,7 @@
 
            put-event!
            flush!
+           close-store!
 
            store-color set-store-color! remove-store-color!
            store-displayname set-store-displayname! remove-store-displayname!
@@ -222,6 +223,10 @@
            path: (uri-path uri)
            (parse-query (uri-query uri)
                         decode-plus-to-space?: #f))))
+
+(define-generic close-store!)
+(define-method (close-store! _)
+  (format (current-error-port) "Closing <top>~%"))
 
 
 (define-generic store-uri)

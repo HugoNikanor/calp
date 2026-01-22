@@ -738,6 +738,9 @@ GROUP BY pr.id" filter)
   ;; (since add-entry creates it's own (sub) transaction)
   'noop)
 
+(define-method (close-store! (this <sqlite-data-store>))
+  (sqlite-close (database this)))
+
 ;;; returns (stream-of (pair-of href object))
 (define-method (entries-in-interval (store <sqlite-data-store>)
                                     start end)
