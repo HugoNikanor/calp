@@ -13,6 +13,7 @@
   :use-module ((calp server routes) :select (make-make-routes))
   :use-module (hnh util randport)
   :use-module ((web server) :select (run-server))
+  :use-module ((web uri) :select (uri->string build-uri))
 
   :export (%summary main))
 
@@ -101,23 +102,19 @@ and <i>[::]</i> for IPv6</group>"))))
         ;; TODO error code
         (throw 'return))))
 
+  (format #t (G_ "Starting server on ~a~%")
+          (uri->string
+           (build-uri
+            'http
+            host: (or (addrinfo:canonname addrinfo)
+                      (inet-ntop (sockaddr:fam addr) (sockaddr:addr addr)))
+            port: (sockaddr:port addr))))
+
   ;; Arguments are
-  ;; IP-address which we bind to
-  ;; Port which we listen to
   ;; PID of this process
   ;; PWD of this process
-  (format #t (G_ "Starting server on http://~a:~a~%I'm ~a, runing from ~a~%")
-          (cond ((addrinfo:canonname addrinfo)
-                 => (lambda (can)
-                      ;; Literal IPv6 addresses may appear in the canonical name field...
-                      (if (string-contains can ":")
-                          (format #f "[~a]" can)
-                          can)))
-                ((eqv? AF_INET6 (sockaddr:fam addr))
-                 (format #f "[~a]" (inet-ntop AF_INET6 addr)))
-                (else (inet-ntop (sockaddr:fam addr) (sockaddr:addr addr))))
-          (sockaddr:port addr)
-          (getpid) (getcwd))
+  (format #t (G_ "I'm ~a, runing from ~a~%")
+   (getpid) (getcwd))
 
   (run-server (make-make-routes)
               'http
