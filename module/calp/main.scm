@@ -1,6 +1,6 @@
 ;; -*- geiser-scheme-implementation: guile -*-
 (define-module (calp main)
-  :use-module ((hnh util) :select (awhen catch*))
+  :use-module ((hnh util) :select (awhen catch* group-by))
   :use-module ((hnh util path) :select (path-append file-hidden?))
 
   :use-module (srfi srfi-1)
@@ -83,44 +83,68 @@ unix or TCP socket.<br/>
          '(calp entry-points)))))
 
 
+;;; TODO make this user extensible
+(define category-titles
+  `(
+    ;; Commands which work in with the configured calp setup.
+    ;; This includes anything which touches any of the databases.
+    (application . ,(G_ "Calp Application Commands"))
+    ;; Commands which work on static calendar files
+    (static . ,(G_ "Static Calendar Commands"))
+    ;; Miscellaneous commands not fit anywhere else.
+    ;; All commands default to this if no category is given.
+    (misc . ,(G_ "Miscellaneous Commands"))))
+
+
 (define (module-help)
   (string-append
    "<group><br/>
 <center><b>" "Calp" "</b></center>
-<br/><br/>
-" (G_ "Usage: <b>calp</b> [ <i>flags</i> ] <i>mode</i> [ <i>mode flags</i> ]") "<br/>
-<hr/>"
-;; Header for following list of modes of operation
-    "<center><b>" (G_ "Modes") "</b></center>
 <br/><br/>"
+(G_ "Usage: <b>calp</b> [ <i>flags</i> ] <i>mode</i> [ <i>mode flags</i> ]")
+"<br/>"
+"<hr/>"
+"<br/>"
 
-    (string-concatenate
-     (map (lambda (entry-point)
-            (define module
-              (catch* (lambda () (resolve-interface `(calp entry-points ,entry-point)))
-                      (misc-error
-                       (lambda (_ proc fmt args data)
-                         (let ((mod (make-module)))
-                           (module-define!
-                            mod '%summary
-                            (format #f "<i>ERROR: ~?</i>" fmt args))
-                           mod)))
-                      (#t (lambda args
-                            (let ((mod (make-module)))
-                              (module-define!
-                               mod '%summary
-                               (format #f "<i>ERROR: ~s</i>"
-                                       args))
-                              mod)))))
-            (format #f "<p><b>~a</b> ~a</p>"
-                    entry-point
-                    (module-ref module '%summary "")))
-          entry-points))
+(let ((groups
+       (group-by car
+                 (map (lambda (entry-point)
+                        (define module
+                          (catch* (lambda () (resolve-interface `(calp entry-points ,entry-point)))
+                                  (misc-error
+                                   (lambda (_ proc fmt args data)
+                                     (let ((mod (make-module)))
+                                       (module-define!
+                                        mod '%summary
+                                        (format #f "<i>ERROR: ~?</i>" fmt args))
+                                       mod)))
+                                  (#t (lambda args
+                                        (let ((mod (make-module)))
+                                          (module-define!
+                                           mod '%summary
+                                           (format #f "<i>ERROR: ~s</i>"
+                                                   args))
+                                          mod)))))
+                        (cons (module-ref module '%category 'misc)
+                              (format #f "<p><b>~a</b> ~a</p>"
+                                      entry-point
+                                      (module-ref module '%summary ""))))
+                      entry-points))))
 
-    "<hr/><br/>"
-    ;; Header for list of available flags.
-    ;; Actual list is auto generated elsewhere.
-    "<center><b>" (G_ "Flags") "</b></center>
+  (string-concatenate
+   (map (lambda (group)
+          (string-append
+           "<center><b>" (or (assoc-ref category-titles (car group))
+                             ;; Non-declared command group
+                             (format #f (G_ "~a commands") (car group)))
+           "</b></center><br/>"
+           (string-concatenate (map cdr (cdr group)))))
+        groups)))
+
+"<hr/><br/>"
+;; Header for list of available flags.
+;; Actual list is auto generated elsewhere.
+"<center><b>" (G_ "Flags") "</b></center>
 <br/></group>"))
 
 (define (ornull a b)

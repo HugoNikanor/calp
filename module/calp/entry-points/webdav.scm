@@ -17,6 +17,7 @@
   :use-module ((calp webdav builder) :select (build-webdav-resource-tree))
   :export (%summary main))
 
+(define-public %category 'application)
 
 (define %summary
   (G_ "--config <i>file</i>, starts the sample webdav server"))

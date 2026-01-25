@@ -27,6 +27,8 @@
   :export (main %summary)
   )
 
+(define-public %category 'application)
+
 (define %summary
   (G_ "reads calendar files from disk, and writes them to static HTML files."))
 

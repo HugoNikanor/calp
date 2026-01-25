@@ -28,6 +28,8 @@
 (define %summary
   (G_ "Gathers configurable items from the source code."))
 
+(define-public %category 'application)
+
 (define opt-spec
   `((help (single-char #\h)
           (description ,(G_ "Print this help.")))

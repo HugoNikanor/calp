@@ -9,6 +9,8 @@
   :use-module (calp translation)
   )
 
+(define-public %category 'application)
+
 (define %summary
   (G_ "loads the calendars, and starts an interactive terminal interface."))
 

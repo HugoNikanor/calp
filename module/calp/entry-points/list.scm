@@ -27,6 +27,9 @@
                :select (entries-between))
   :export (main %summary))
 
+
+(define-public %category 'application)
+
 (define %summary "List entries in a given set of calendar stores")
 
 (define opt-spec

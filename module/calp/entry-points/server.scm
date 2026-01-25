@@ -17,6 +17,8 @@
 
   :export (%summary main))
 
+(define-public %category 'application)
+
 (define %summary
   (G_ "starts an HTTP server which dynamically loads and
 displays events. The endpoints <i>/month/{date}.html</i> &amp; <i>/week/{date}.html</i> runs

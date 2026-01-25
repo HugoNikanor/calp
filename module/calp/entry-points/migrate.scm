@@ -12,6 +12,7 @@
   :use-module (web uri)
   )
 
+(define-public %category 'application)
 
 ;;; Format of the configuration file
 ;;; --------------------------------
