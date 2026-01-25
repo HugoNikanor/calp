@@ -287,6 +287,17 @@ port directly after OBJ, like (pretty-print OBJ PORT)."
     (let loop ((l l))
       (match l
         (() (put-string port ")"))
+        ((kw x . tail)
+         (cond ((keyword? kw)
+                (indent item-indent)
+                (pr kw pp-item)
+                (put-string port " ")
+                (pr x pp-item)
+                (loop tail))
+               (else
+                (indent item-indent)
+                (pr kw pp-item)
+                (loop (cons x tail)))))
         ((head . tail)
          (indent item-indent)
          (pr head pp-item)
