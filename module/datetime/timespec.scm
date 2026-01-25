@@ -28,6 +28,8 @@
            timespec-negate
            datetime-timespec-add
            parse-time-spec
+
+           timespec->integer integer->timespec
            ))
 
 
@@ -177,3 +179,15 @@
         (else (scm-error 'misc-error "parse-time-spec"
                          "String not parsable as a timespec: ~s"
                          (list string) #f))))
+
+
+
+(define (timespec->integer ts)
+  (* (if (eq? '+ (timespec-sign ts))
+         1 -1)
+     (time->seconds (timespec-time ts))))
+
+(define (integer->timespec i)
+  (timespec (seconds->time (abs i))
+            (if (positive? i)
+                '+ '-)))

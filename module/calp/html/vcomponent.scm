@@ -5,6 +5,7 @@
   :use-module ((hnh util path) :select (path-append))
   :use-module ((hnh util exceptions) :select (warning))
   :use-module (hnh util type)
+  :use-module (hnh util table)
   :use-module (hnh util color)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
@@ -19,6 +20,7 @@
   :use-module ((crypto) :select (sha256 checksum->string))
   :use-module ((xdg basedir) :prefix xdg-)
   :use-module ((vcomponent type recurrence) :select (recurring?))
+  :use-module ((vcomponent type duration) :select (duration->string))
   :use-module ((vcomponent datetime output)
                :select (
                         format-recurrence-rule
@@ -29,10 +31,10 @@
   :use-module (ice-9 format)
   :use-module (calp translation)
   :use-module ((scheme base) :select (bytevector?))
+  :use-module ((hnh util lens) :select (modify))
   :export (format-summary
            format-description
            compact-event-list
-           fmt-single-event
            fmt-day
            calendar-styles
            make-block
@@ -88,8 +90,8 @@
                          (base64encode (vline-value attach)))))))
 
 ;; used by search view
-(define (compact-event-list list)
-  (typecheck list (list-of vevent?))
+(define (compact-event-list target-tz list)
+  (typecheck list (list-of (tuple-of string? string? vevent?)))
 
   ;; (define calendars
   ;;  (delete-duplicates!
@@ -123,78 +125,110 @@
                    (span ,(prop1 event 'SUMMARY)))))
   (cons
    `(style ,(lambda () (calendar-styles calendars #t)))
-   (for event in list
+   (for (_ href event) in list
         `(details
           ,(summary event)
           ;; TODO better format
-          ,(fmt-single-event event)))))
+          ;; including ensuring that a full datetime is written out for each event
+          ,(fmt-single-event target-tz href event)))))
 
 
 
 
-;; TODO localize this?
-(define (format-event-time-span ev)
+;; Format used when displaying stand and end times of events to the user
+(define date-fmt (G_ "~Y-~m-~d"))
+
+;; Format used when displaying stand and end times of events to the user.
+;; Note the non-breaking space
+(define datetime-fmt (G_ "~Y-~m-~d ~H:~M"))
+
+;; Format used when displaying datetime timespans contained within in one (local) date.
+;; Date information will be presented to the user through the context.
+(define time-fmt (G_ "~H:~M"))
+
+(define (duration->human-string d)
+  ;; TODO
+  (duration->string d))
+
+;; Takes an event, and returns a pretty string for the time interval
+;; the event occupies.
+(define (format-event-time-span target-tz ev)
+  ;; NOTE an earlier version of this procedure included the following properties on the <time /> elements:
+  ;; - class (matching the vcomponent property name)
+  ;; - data-property
+  ;; - data-fmt
+  (typecheck target-tz string?)
   (typecheck ev vevent?)
+  (define instance-start (prop1 ev 'DTSTART))
+  `(div
+    ,@(cond [(date? instance-start)
+             (cons
+              `(time (@ (datetime ,(date->string instance-start "~1")))
+                     ,(date->string instance-start date-fmt))
+              (cond [(prop1 ev 'DTEND)
+                     (lambda (e) (not (date= e (date+ instance-start (date day: 1)))))
+                     => (lambda (e)
+                          `(
+                            ;; Timespan indicator
+                            ,(G_ " — ")
+                            (time (@ (datetime ,(date->string e "~1")))
+                                  ,(date->string e date-fmt))))]
 
-  ;; Takes an event, and returns a pretty string for the time interval
-  ;; the event occupies.
-  (define (fmt-time-span ev)
-    (typecheck ev vevent?)
-    (cond [(prop1 ev 'DTSTART) date?
-           => (lambda (s)
-                ;; TODO duration
-                (cond [(prop1 ev 'DTEND)
-                       => (lambda (e)
-                            ;; start = end, only return one value
-                            (if (date= e (date+ s (date day: 1)))
-                                (G_ "~Y-~m-~d")
-                                (values (G_ "~Y-~m-~d")
-                                        (G_ "~Y-~m-~d"))))]
-                      ;; no end value, just return start
-                      [else (date->string s)]))]
-          [else ; guaranteed datetime
-           (let ((s (prop1 ev 'DTSTART))
-                 (e (prop1 ev 'DTEND)))
-             ;; TODO duration
-             (if e
-                 (let ((fmt-str (if (date= (datetime-date s) (datetime-date e))
-                                    (G_ "~H:~M")
-                                    ;; Note the non-breaking space
-                                    (G_ "~Y-~m-~d ~H:~M"))))
+                    [(prop1 ev 'DURATION)
+                     => (lambda (d)
+                          ;; NOTE this is technically incorrect, since our durations may
+                          ;; be negative, but HTML has no prefixes
+                          `((time (@ (datetime ,(duration->string d)))
+                                  ,(duration->human-string d))))]
 
-                   (values fmt-str fmt-str))
-                 ;; Note the non-breaking space
-                 (G_ "~Y-~m-~d ~H:~M")))]))
+                    [else '()]))]
 
-  (call-with-values (lambda () (fmt-time-span ev))
-    (case-lambda [(start)
-                  `(div (time (@ (class "dtstart")
-                                 (data-property "dtstart")
-                                 (data-fmt ,(string-append "~L" start))
-                                 (datetime ,(datetime->string
-                                             (as-datetime (prop1 ev 'DTSTART))
-                                             "~1T~3")))
-                              ,(datetime->string
-                                (as-datetime (prop1 ev 'DTSTART))
-                                start)))]
-                 [(start end)
-                  `(div (time (@ (class "dtstart")
-                                 (data-property "dtstart")
-                                 (data-fmt ,(string-append "~L" start))
-                                 (datetime ,(datetime->string
-                                             (as-datetime (prop1 ev 'DTSTART))
-                                             "~1T~3")))
-                              ,(datetime->string (as-datetime (prop1 ev 'DTSTART))
-                                                 start))
-                        " — "
-                        (time (@ (class "dtend")
-                                 (data-property "dtend")
-                                 (data-fmt ,(string-append "~L" end))
-                                 (datetime ,(datetime->string
-                                             (as-datetime (prop1 ev 'DTSTART))
-                                             "~1T~3")))
-                              ,(datetime->string (as-datetime (prop1 ev 'DTEND))
-                                                 end)))])))
+            [else                         ; guaranteed datetime
+
+             #|
+             <!-- Assuming source is America/New_York, and user is Europe/Stockholm --> ; ;
+             <time datetime="2026-01-18T23:06:09-05:00">2026-01-19 05:05</time> ; ;
+                                        ; ; ; ;
+             <!-- Assuming source in "local", and user is Europe/Stockholm --> ; ;
+             <time datetime="2026-01-18T10:02:03">2026-01-18 10:02</time> ; ;
+                                        ; ; ; ;
+             if to_local(start).date == to_local(end).date then ; ;
+             only print time component    ; ;
+             else                         ; ;
+             print everything             ; ;
+             end                          ; ;
+             |#
+
+             (define zoned-start (modify instance-start tz* (lambda (tz) (or tz target-tz))))
+             (define local-start (zone->zone zoned-start target-tz))
+
+             (cond
+              ((prop1 ev 'DTEND)
+               => (lambda (instance-end)
+                    (define local-end (zone->zone (modify instance-end tz* (lambda (tz) (or tz target-tz))) target-tz))
+                    (define format-string
+                      (if (date= (datetime-date local-start)
+                                 (datetime-date local-end))
+                          time-fmt datetime-fmt))
+
+                    `((time (@ (datetime ,(datetime->string instance-start "~1T~3~z")))
+                            ,(datetime->string local-start format-string))
+                      ;; Timespan indicator
+                      ,(G_ " — ")
+                      (time (@ (datetime ,(datetime->string instance-end "~1T~3~z")))
+                            ,(datetime->string local-end format-string)))))
+
+              ((prop1 ev 'DURATION)
+               => (lambda (d)
+                    ;; NOTE this is technically incorrect, since our durations may
+                    ;; be negative, but HTML has no prefixes
+                    `((time (@ (datetime ,(datetime->string instance-start "~1T~3~z")))
+                            ,(datetime->string datetime-fmt))
+                      (time (@ (datetime ,(duration->string d)))
+                            ,(duration->human-string d))) ))
+              (else `((time (@ (datetime ,(datetime->string instance-start "~1T~3~z")))
+                            ,(datetime->string datetime-fmt)))))])))
+
 
 ;; Format event as text.
 ;; Used in
@@ -204,9 +238,11 @@
 ;; Note that the <vevent-description/> tag is bound as a JS custem element, which
 ;; will re-render all this, through description-template. This also means that
 ;; the procedures output is intended to be static, and to NOT be changed by JavaScript.
-(define* (fmt-single-event ev
+(define* (fmt-single-event target-tz href ev
                            optional: (attributes '())
+                           ;; TODO document better
                            key: (fmt-header list))
+  (typecheck target-tz string?)
   (typecheck ev vevent?)
   ;; Sholud be (list-of (pair-of symbol? any-type?))
   ;; but sxml accepts almost anything
@@ -229,7 +265,7 @@
                          (data-property "summary"))
                       ,(prop1 ev 'SUMMARY))))
          (div
-          ,(format-event-time-span ev)
+          ,(format-event-time-span target-tz ev)
 
           (div (@ (class "fields"))
                ,(awhen (prop% ev 'LOCATION)
@@ -300,21 +336,36 @@
                                     it)))
 
                ,(when (prop1 ev 'RRULE)
+                  ;; TODO time based rules will look weird if expanded
+                  ;; in another timezone.
+                  ;; For example, BYHOUR=10 generated in UTC-06 would
+                  ;; show up at 16:00 if display is set to UTC+1.
+                  ;; Attach a note to the user about this
                   `(div (@ (class "rrule"))
                         ,@(format-recurrence-rule ev)))
 
                ,(awhen (prop1 ev 'LAST-MODIFIED)
                   `(div (@ (class "last-modified")) ,(G_ "Last modified") " "
-                        ,(datetime->string it
-                                           ;; Last modified datetime
-                                           (G_ "~1 ~H:~M")))))
+                        ,(datetime->string
+                          it
+                          ;; Last modified datetime, will always be in UTC
+                          (G_ "~1 ~H:~M:S~z")))))
 
-          ))))
+
+          (details (summary "Raw Data")
+                   (dl
+                    (dt "Href") (dd ,href)
+                    ,@(concatenate
+                       (table->list
+                        (vcomponent-properties ev)
+                        (lambda (key value)
+                          `((dt ,key)
+                            (dd ,(format #f "~s" value))))))))))))
 
 
 
 ;; Single event in side bar (text objects)
-(define (fmt-day header entries)
+(define (fmt-day target-tz header entries)
   (typecheck header string?)
   (typecheck entries (list-of (tuple-of string? string? vevent?)))
   `(section (@ (class "text-day"))
@@ -325,6 +376,8 @@
                (define store-id (list-ref entry 0))
                (define ev (list-ref entry 2))
                (fmt-single-event
+                target-tz
+                (list-ref entry 1)
                 ev `((id ,(html-id ev) "-side")
                      (data-calendar ,(base64encode store-id)))
                 fmt-header:

@@ -240,7 +240,8 @@
 (define-generic entries-in-interval)
 (define-method (entries-in-interval
                 (store <calendar-data-store>)
-                start end)
+                reference-zone start end)
+  ;; Start and end must satisfiy utc-datetime? in all instances
   (format (current-error-port)
           "Entries-in-interval not implemented for ~s~%"
           store)

@@ -15,6 +15,7 @@
 (define-once html-file-extension
   (make-parameter "html"))
 
+;; Generate a fragment for a given date
 (define (date-link date)
   ((@ (datetime) date->string) date "~Y-~m-~d"))
 

@@ -25,6 +25,7 @@
 (test-group "overlapping?"
   (test-assert "date, datetime"
     (overlapping?
+     "UTC"
      (vevent summary: "A"
              dtstart: (date year: 2020 month: jan day: 1)
              dtend:   (date year: 2022 month: dec day: 31))
@@ -34,6 +35,7 @@
 
   (test-assert "date, date"
     (overlapping?
+     "UTC"
      (vevent summary: "A"
              dtstart: (date year: 2020 month: jan day: 1)
              dtend:   (date year: 2020 month: jan day: 20))
@@ -44,6 +46,7 @@
   (test-assert "datetime, date"
     (not
      (overlapping?
+      "UTC"
       (vevent summary: "A"
               dtstart: (datetime year: 2020 month: apr day: 1 hour: 10)
               dtend:   (datetime year: 2020 month: apr day: 1 hour: 12))
@@ -53,6 +56,7 @@
 
   (test-assert "datetime, datetime"
     (overlapping?
+     "UTC"
      (vevent summary: "A"
              dtstart: (datetime year: 2020 month: apr day: 1 hour: 10)
              dtend:   (datetime year: 2020 month: apr day: 1 hour: 12))
@@ -62,17 +66,24 @@
 
   (test-assert "Without dtend"
     (overlapping?
+     "UTC"
      (vevent summary: "A"
              dtstart: (date year: 2020 month: apr day: 1))
      (vevent summary: "B"
              dtstart: (datetime year: 2020 month: apr day: 1 hour: 10)))))
 
 (test-group "instance-zero-length?"
-  ;; TODO tests with DURATION
   (test-assert (not (instance-zero-length? (vevent dtstart: (date)))))
+  (test-assert (instance-zero-length?
+                (vevent dtstart: (datetime year: 1 month: 2 day: 3)
+                        duration: ((@ (vcomponent type duration) string->duration) "PT0H"))))
   (test-assert (instance-zero-length? (vevent dtstart: (datetime))))
-  (test-assert (instance-zero-length? (vevent dtstart: (datetime)
-                                              dtend: (datetime)))))
+  (test-assert
+      (let ((now (datetime year: 1 month: 2 day: 3)))
+        (instance-zero-length? (vevent dtstart: now dtend: now))))
+  ;; TODO tests with start and end in different timezones
+  ;; TODO tests with non-zero length events
+  )
 
 (test-group "instance-length"
   (test-equal "Datetime, with DTEND"
@@ -107,8 +118,8 @@
 (test-group "instance-length/clamped"
  (let ((ev
         (vevent
-         dtstart: (datetime year: 2020 month: 3 day: 29 hour: 17)
-         dtend:   (datetime year: 2020 month: 4 day:  1 hour: 10))))
+         dtstart: (datetime year: 2020 month: 3 day: 29 hour: 17 tz: "UTC")
+         dtend:   (datetime year: 2020 month: 4 day:  1 hour: 10 tz: "UTC"))))
 
    ;; |-----------------| test interval
    ;;                 |----------| event interval
@@ -116,29 +127,26 @@
    (test-equal "Correct clamping"
      (datetime hour: 7) ; 2020-03-29T17:00 - 2020-03-30T00:00
      (instance-length/clamped
-      (date year: 2020 month: 3 day: 23) ; a time way before the start of the event
-      (date year: 2020 month: 3 day: 29) ; a time slightly after the end of the event
+      (datetime year: 2020 month: 3 day: 23 tz: "UTC") ; a time way before the start of the event
+      (datetime year: 2020 month: 3 day: (1+ 29) tz: "UTC") ; a time slightly after the end of the event
+      "UTC"
       ev))
-
-   ;; TODO why is this object created?
-   (define utc-ev
-     (vevent
-      dtstart: (datetime year: 2020 month: 3 day: 29 hour: 15 tz: "UTC")
-      dtend:   (datetime year: 2020 month: 4 day:  1 hour:  8 tz: "UTC")))
 
    (test-equal "Correct clamping UTC"
      (datetime hour: 7)
      (instance-length/clamped
-      (date year: 2020 month: 3 day: 23)
-      (date year: 2020 month: 3 day: 29)
+      (datetime year: 2020 month: 3 day: 23 tz: "UTC")
+      (datetime year: 2020 month: 3 day: (1+ 29) tz: "UTC")
+      "UTC"
       ev)))
 
  (let ((ev (vevent dtstart: (datetime year: 2020 month: 3 day: 1))))
    (test-equal
        (datetime)
      (instance-length/clamped
-      (date year: 2020 month: 3 day: 1)
-      (date year: 2020 month: 3 day: 2)
+      (datetime year: 2020 month: 3 day: 1 tz: "UTC")
+      (datetime year: 2020 month: 3 day: 2 tz: "UTC")
+      "UTC"
       ev
       ))
    )
@@ -149,85 +157,6 @@
  ;; TODO test where both dtstart and dtend are date's
 
  )
-
-(let ((d (date year: 2020 month: jan day: 10)))
-  (test-group "instance-length/day"
-
-    ;; TODO shouldn't a check for the correct date be done?
-    (test-equal
-        (time hour: 24)
-      (instance-length/day
-       d
-       (vevent dtstart: (date))))
-
-    (test-equal
-        (time)
-      (instance-length/day
-       d
-       (vevent dtstart: (datetime))))
-
-    (test-equal "Within day"
-      (time hour: 10)
-      (instance-length/day
-       d
-       (vevent dtstart: (datetime date: d hour: 10)
-               dtend: (datetime date: d hour: 20))))
-
-    (test-equal "Ends tommorrow"
-      (time hour: 14)
-      (instance-length/day
-       d
-       (vevent dtstart: (datetime date: d hour: 10)
-               dtend: (datetime date: (date+ d (date day: 1)) hour: 20))))
-
-    (test-equal "Started yesterday"
-      (time hour: 10)
-      (instance-length/day
-       d
-       (vevent dtstart: (datetime date: (date- d (date day: 1)) hour: 10)
-               dtend: (datetime date: d hour: 10))))
-
-    (test-equal "Starts before date, ends after date"
-      (time hour: 24)
-      (instance-length/day
-       d
-       (vevent dtstart: (datetime date: (date- d (date day: 1)) hour: 10)
-               dtend:   (datetime date: (date+ d (date day: 1)) hour: 10))))
-
-    ;; TODO Test invalid cases
-    ))
-
-
-(test-group "events-between"
-  (let ((start (date year: 2020 month: jan day: 1))
-        (end   (date year: 2022 month: jan day: 1)))
-    (let ((expected
-           (list (vevent dtstart: (date year: 2020 month: jan day: 1))
-                 (vevent dtstart: (date year: 2021 month: dec day: 31))
-                 (vevent dtstart: (date year: 2022 month: jan day: 1))))
-          (actual
-           (->> (sort*
-                 (list (vevent dtstart: (date year: 2019 month: jan))
-                       (vevent dtstart: (date year: 2019 month: dec day: 31))
-                       (vevent dtstart: (date year: 2020 month: jan day: 1))
-                       (vevent dtstart: (date year: 2021 month: dec day: 31))
-                       (vevent dtstart: (date year: 2022 month: jan day: 1)))
-                 date< (extract1 'DTSTART))
-                list->stream
-                (events-between start end)
-                stream->list
-                )))
-      (test-equal (length expected) (length actual))
-      (for-each
-       (lambda (name a b)
-         (test-equal name
-           (prop1 a 'DTSTART)
-           (prop1 b 'DTSTART)
-           ))
-       (map number->string (iota 10))
-       expected
-       actual)))
-  )
 
 
 (test-group "zoneinfo->vtimezone"

@@ -195,7 +195,7 @@
   (add-route!
    handler
    (make-route
-    (GET "/week/:start-date.html" (start-date html)
+    (GET "/week/:start-date.html" (start-date html tz)
          (let ((start-date (start-of-week (parse-iso-date start-date))))
            (return `((content-type ,(content-type html)))
                    (with-output-to-string
@@ -207,7 +207,10 @@
                                        next-start: (lambda (d) (date+ d (date day: 7)))
                                        prev-start: (lambda (d) (date- d (date day: 7)))
                                        render-calendar: (@ (calp html view calendar week) render-calendar)
-                                       intervaltype: 'week)))))))))
+                                       intervaltype: 'week
+                                       ;; TODO make default timezone configurable
+                                       ;; Preferably through a cookie
+                                       target-timezone: (or tz "UTC"))))))))))
 
   (add-route!
    handler
@@ -225,8 +228,6 @@
                                        prev-start: (lambda (d) (date- d (date month: 1)))
                                        render-calendar: (@ (calp html view calendar month)
                                                            render-calendar-table)
-                                       pre-start: (start-of-week start-date)
-                                       post-end: (end-of-week (end-of-month start-date))
                                        intervaltype: 'month
                                        )))))))))
 
@@ -282,7 +283,7 @@
          (define search-term
            (if (and q (not (string-null? q)))
                (if onlyfuture
-                   `(and (date/-time<=? ,(current-datetime) (prop1 event 'DTSTART))
+                   `(and (datetime<=? ,(current-datetime) (instance-start-datetime event))
                          ,(and=> q prepare-string))
                    (and=> q prepare-string))
                ;; NOTE This causes the paginator buttons to search for literally two quote marks,

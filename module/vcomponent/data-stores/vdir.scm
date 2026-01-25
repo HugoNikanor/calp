@@ -5,6 +5,7 @@
   :use-module (vcomponent media-type)
   :use-module (vcomponent datetime)
   :use-module (vcomponent type recurrence)
+  :use-module (datetime)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -365,8 +366,10 @@
 
 
 (define-method (entries-in-interval (store <vdir-data-store>)
-                                    start end)
+                                    reference-zone start end)
   ;; TODO log level debug
+  (typecheck start zoned-datetime?)
+  (typecheck end   zoned-datetime?)
   (format (current-error-port) "<DEBUG> entries-in-interval ~s, ~s - ~s~%"
           (uri->string (store-uri store)) start end)
   (define result
@@ -375,7 +378,7 @@
           (partition
            (compose recurring? cdr)
            (hash-map->list cons (event-by-href store))))
-      (expand-and-interleave-recurrences start end)))
+      (expand-and-interleave-recurrences reference-zone start end)))
   ;; TODO log level debug
   (format (current-error-port) "<DEBUG> Entries gotten ~s~%"
           (uri->string (store-uri store)))

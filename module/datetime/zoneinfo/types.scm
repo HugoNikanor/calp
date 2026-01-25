@@ -73,8 +73,10 @@
 ;; Exported here, for use within the (datetime zoneinfo) namespace,
 ;; but not re-exported by (datetime zoneinfo).
 (define-type (zoneinfo)
-  (zoneinfo-rules type: hash-table? keyword: rules)             ; (map symbol? (list <rule>)
-  (zoneinfo-zones type: hash-table? keyword: zones)             ; (map string? (list <zone-entry>))
+  ;; (map symbol? (list <rule>)
+  (zoneinfo-rules type: hash-table? keyword: rules)
+  ;; (map string? (list <zone-entry>))
+  (zoneinfo-zones type: hash-table? keyword: zones)
   )
 
 
@@ -84,12 +86,14 @@
 ;; (get-zone zoneinfo "Europe/Stockholm")
 ;; @end example
 (define (get-zone zoneinfo name)
+  (typecheck name string?)
   (or (hash-ref (zoneinfo-zones zoneinfo) name)
-      (scm-error 'misc-error "get-zone" "No zone ~a" (list name) #f)))
+      (scm-error 'misc-error "get-zone" "No zone `~a'" (list name) #f)))
 
 ;; @example
 ;; (get-rule zoneinfo 'EU)
 ;; @end example
 (define (get-rule zoneinfo name)
+  (typecheck name symbol?)
   (or (hashq-ref (zoneinfo-rules zoneinfo) name)
-      (scm-error 'misc-error "get-rule" "No rule ~a" (list name) #f)))
+      (scm-error 'misc-error "get-rule" "No rule ~s" (list name) #f)))

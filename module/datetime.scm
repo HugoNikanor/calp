@@ -28,6 +28,7 @@
               time-zero?
 
               utc-datetime?
+              zoned-datetime?
               unzoned-datetime?
 
               datetime->unix-time
@@ -35,11 +36,6 @@
 
               current-datetime
               current-date
-
-              get-datetime
-              as-date
-              as-time
-              as-datetime
 
               leap-year?
               days-in-month
@@ -68,7 +64,6 @@
               date-starting-week
 
               timespan-overlaps?
-              in-date-range?
 
               weekday-list
               start-of-week
@@ -95,8 +90,6 @@
               time> time>? time>= time>=?
               datetime< datetime<? datetime<= datetime<=?
               datetime> datetime>? datetime>= datetime>=?
-              date/-time< date/-time<? date/-time<= date/-time<=?
-              date/-time> date/-time>? date/-time>= date/-time>=?
 
               date+ date-
               time+ time-
@@ -136,6 +129,11 @@
               datetime-/zoneinfo
               datetime-difference/zoneinfo
 
+              datetime=/zoneinfo
+              datetime</zoneinfo
+              datetime>/zoneinfo
+              datetime<=/zoneinfo
+              datetime>=/zoneinfo
 
               ;; Timespec
               timespec

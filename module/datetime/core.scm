@@ -51,6 +51,7 @@
            time-zero?
 
            utc-datetime?
+           zoned-datetime?
            unzoned-datetime?
 
            datetime->unix-time
@@ -58,11 +59,6 @@
 
            current-datetime
            current-date
-
-           get-datetime
-           as-date
-           as-time
-           as-datetime
 
            leap-year?
            days-in-month
@@ -90,7 +86,6 @@
            date-starting-week
 
            timespan-overlaps?
-           in-date-range?
 
            weekday-list
            start-of-week
@@ -117,8 +112,6 @@
            time> time>? time>= time>=?
            datetime< datetime<? datetime<= datetime<=?
            datetime> datetime>? datetime>= datetime>=?
-           date/-time< date/-time<? date/-time<= date/-time<=?
-           date/-time> date/-time>? date/-time>= date/-time>=?
 
            date+ date-
            time+ time-
@@ -233,6 +226,11 @@
   (and (datetime? x)
        (equal? "UTC" (tz x))))
 
+(define (zoned-datetime? x)
+  (and (datetime? x)
+       ;; "UTC" is also a zone
+       (string? (tz x))))
+
 (define (unzoned-datetime? x)
   (and (datetime? x)
        (not (tz x))))
@@ -287,36 +285,6 @@
 (define (current-date)
   (datetime-date (current-datetime)))
 
-
-
-
-(define (as-date date/-time)
-  (cond [date/-time datetime? => datetime-date]
-        [(date? date/-time) date/-time]
-        [(time? date/-time) (date)]
-        [else (scm-error 'wrong-type-arg
-                     "as-date"
-                     "Object not a date, time, or datetime object ~a"
-                     (list date/-time)
-                     #f)]))
-
-(define (as-time date/-time)
-  (cond [date/-time datetime? => datetime-time]
-        [(date? date/-time) (time)]
-        [(time? date/-time) date/-time]
-        [else (scm-error 'wrong-type-arg "as-time"
-                     "Object not a date, time, or datetime object ~a"
-                     (list date/-time)
-                     #f)]))
-
-(define (as-datetime dt)
-  (cond [(datetime? dt) dt]
-        [(date? dt) (datetime date: dt time: (time))]
-        [(time? dt) (datetime time: dt date: (date))]
-        [else (scm-error 'wrong-type-arg "as-datetime"
-                     "Object not a date, time, or datetime object ~a"
-                     (list dt)
-                     #f)]))
 
 
 
@@ -470,28 +438,32 @@
 ;; E is covered by both case A and B.
 (define (timespan-overlaps? s1-begin s1-end s2-begin s2-end)
   "Return whetever or not two timespans overlap."
+  ;; TODO why do we require unzoned or UTC? Wouldn't it be enough that all four datetimes are in the same zone?
+  (typecheck s1-begin (or utc-datetime? unzoned-datetime?))
+  (typecheck s1-end   (or utc-datetime? unzoned-datetime?))
+  (typecheck s2-begin (or utc-datetime? unzoned-datetime?))
+  (typecheck s2-end   (or utc-datetime? unzoned-datetime?))
+  (unless (equal? (tz s1-begin) (tz s1-end) (tz s2-begin) (tz s2-end))
+    (scm-error 'wrong-type-arg "timespan-overlaps?"
+               "All datetimes must be UTC or zoneless. Got: [~s, ~s), [~s, ~s)"
+               (list s1-begin s1-end s2-begin s2-end) #f))
   (or
    ;; A
-   (and (date/-time<? s2-begin s1-end)
-        (date/-time<? s1-begin s2-end))
+   (and (datetime< s2-begin s1-end)
+        (datetime< s1-begin s2-end))
 
    ;; B
-   (and (date/-time<? s1-begin s2-end)
-        (date/-time<? s2-begin s1-end))
+   (and (datetime< s1-begin s2-end)
+        (datetime< s2-begin s1-end))
 
    ;; C
-   (and (date/-time<=? s1-begin s2-begin)
-        (date/-time<? s2-end s1-end))
+   (and (datetime<= s1-begin s2-begin)
+        (datetime< s2-end s1-end))
 
    ;; D
-   (and (date/-time<=? s2-begin s1-begin)
-        (date/-time<? s1-end s2-end))))
+   (and (datetime<= s2-begin s1-begin)
+        (datetime< s1-end s2-end))))
 
-
-
-;;; DEPRECATED only used by (vcomponent util group), which is itself deprecated
-(define ((in-date-range? start-date end-date) date)
-  (date<= start-date date end-date))
 
 ;; Returns a list of the seven week days, with @var{week-start}
 ;; as the beginning of the week.
@@ -583,6 +555,8 @@
                      (/ (second time) 3600))))
 
 (define* (datetime->decimal-hour dt optional: start-date)
+  (typecheck dt datetime?)
+  (typecheck start-date (or false? date?))
 
   (let ((date-diff
          (cond [start-date
@@ -645,6 +619,12 @@
           #t args))
 
 (define (datetime= . args)
+  (unless (apply equal? (map tz args))
+    (scm-error
+     'wrong-type-arg "datetime="
+     "Datetime equivalence only defined for matching timezones. Got: ~s"
+     (list args) #f))
+
   (reduce (lambda (a b)
             (and b
                  (date= (datetime-date a) (datetime-date b))
@@ -708,6 +688,12 @@
 (define datetime<
   (fold-comparator
    (lambda (a b)
+     (typecheck a (or utc-datetime? unzoned-datetime?) "datetime<")
+     (typecheck b (or utc-datetime? unzoned-datetime?) "datetime<")
+     (unless (equal? (tz a) (tz b))
+       (scm-error 'wrong-type-arg "datetime<"
+                  "All datetimes must be UTC or zoneless. Got: ~s & ~s"
+                  (list a b) #f))
      (if (date= (datetime-date a) (datetime-date b))
          (time< (datetime-time a) (datetime-time b))
          (date< (datetime-date a) (datetime-date b))))))
@@ -715,13 +701,10 @@
 (define datetime<=
   (fold-comparator
    (lambda (a b)
-     (if (date= (datetime-date a) (datetime-date b))
-         (time<= (datetime-time a) (datetime-time b))
-         (date<= (datetime-date a) (datetime-date b))))))
+     (or (datetime= a b)
+         (datetime< a b)))))
 
-(define date/-time<
-  (fold-comparator
-   (lambda (a b) (datetime< (as-datetime a) (as-datetime b)))))
+
 
 (define date<?        date<)
 
@@ -752,18 +735,6 @@
 
 (define datetime>=    (swap datetime<=))
 (define datetime>=?   (swap datetime<=))
-
-(define date/-time<?  date/-time<)
-
-(define date/-time>   (swap date/-time<))
-(define date/-time>?  (swap date/-time<))
-
-(define date/-time<=  (negate  date/-time>))
-(define date/-time<=? (negate  date/-time>))
-
-(define date/-time>=  (negate  date/-time<))
-(define date/-time>=? (negate  date/-time<))
-
 
 
 
@@ -983,22 +954,30 @@
 
 
 (define (datetime+ base change)
-  (let ((time* overflow (time+ (datetime-time base) (datetime-time change))))
+  ;; Note that this is timezone unaware (by design)
+  ;; This means that change is added to date completely ignoring timezones.
+  ;; This means that +1 day and +24 hours are identical here
+  (typecheck (tz change) false?)
+  (let ((new-time overflow (time+ (datetime-time base) (datetime-time change))))
     (-> base
         (modify date*
                 (lambda (d) (date+ d
                               (datetime-date change)
                               (date day: overflow))))
-        (datetime-time time*))))
+        (set time* new-time))))
 
 (define (datetime- base change)
-  (let ((time* underflow (time- (datetime-time base) (datetime-time change))))
+  ;; Note that this is timezone unaware (by design)
+  ;; This means that change is added to date completely ignoring timezones.
+  ;; This means that +1 day and +24 hours are identical here
+  (typecheck (tz change) false?)
+  (let ((new-time underflow (time- (datetime-time base) (datetime-time change))))
     (-> base
         (modify date*
                 (lambda (d) (date- d
                               (datetime-date change)
                               (date day: underflow))))
-        (datetime-time time*))))
+        (set time* new-time))))
 
 ;;; the *-difference procedures takes two actual datetimes.
 ;;; date- instead takes a date and a delta (but NOT an actual date).
@@ -1066,6 +1045,13 @@
 
 ;; NOTE, this is only properly defined when end is greater than start.
 (define (datetime-difference end start)
+  (unless (or (equal? #f (tz start) (tz end))
+              (equal? "UTC" (tz start) (tz end)))
+    (scm-error
+     'wrong-type-arg "datetime-difference"
+     "Datetime difference only defined for UTC or zoneless datetimes. Got start: ~s, end: ~s"
+     (list start end) #f))
+
   (let ((fixed-time overflow (time- (datetime-time end)
                                     (datetime-time start))))
     (datetime date: (date-difference (date- (datetime-date end)

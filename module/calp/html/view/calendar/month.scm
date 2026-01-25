@@ -21,20 +21,47 @@
   :export (render-calendar-table)
   )
 
+;;     februari 2026
+;; må ti on to fr lö sö
+;;                    1
+;;  2  3  4  5  6  7  8
+;;  9 10 11 12 13 14 15
+;; 16 17 18 19 20 21 22
+;; 23 24 25 26 27 28
+
+;; Main body is a CSS grid with 7 columns, one for each week day.
+;; The first row is the weekday names, then for each week 3 CSS rows
+;; are used to create one "dispalyed" row. These are
+;; - the date indicator
+;; - the space for multi-day events
+;; - the area for in-day events
+
 ;; (stream event-group) -> sxml
 (define* (render-calendar-table key: stores
-                                start-date end-date
-                                pre-start post-end
+                                start-date
+                                ;; end-date
+                                ;; pre-start
+                                ;; post-end
+                                target-timezone
                                 allow-other-keys:)
   (typecheck stores (list-of (pair-of string? calendar-data-store?)))
   (typecheck start-date date?)
-  (typecheck end-date date?)
-  (typecheck pre-start date?)
-  (typecheck post-end date?)
+  ;; (typecheck end-date date?)
+  ;; (typecheck pre-start date?)
+  ;; (typecheck post-end date?)
+  (typecheck target-timezone string?)
+
+  (define month-start (start-of-month start-date))
+  (define month-end (end-of-month start-date))
+  (define cal-start (start-of-week month-start))
+  (define cal-end (end-of-week month-end))
+
+  (define start-dt (datetime date: cal-start tz: target-timezone))
+  (define end-dt (datetime date: (date+ cal-end (date day: 1)) tz: target-timezone))
 
   (define entries
     (map (lambda (t) (modify t (ref 2) (compose car vcomponent-children)))
-         (stream->list (apply entries-between start-date end-date stores))))
+         (stream->list (apply entries-between target-timezone start-dt end-dt stores))))
 
 
   (define-values (long-events short-events)
@@ -43,15 +70,18 @@
 
   (define long-event-groups
     (map (lambda (week-start)
-           (define e (date+ week-start (date day: 6)))
-           (cons* week-start e
-                  (filter (match-lambda ((_ _ ev) (instance-overlaps? ev week-start (date+ e (date day: 1)))))
-                          long-events)))
-         (date-range pre-start post-end 7)))
+           (define s (datetime date: week-start tz: target-timezone))
+           (define e (datetime date: (date+ week-start (date day: 8)) tz: target-timezone))
+           (list week-start (date+ week-start (date day: 7))
+                 (filter (match-lambda ((_ _ ev) (instance-overlaps? target-timezone ev s e)))
+                         long-events)))
+         (date-range cal-start cal-end 7)))
 
-  (typecheck long-event-groups (list-of (pair-of* date? date? (list-of (tuple-of string? string? vevent?)))))
+  ;; (typecheck long-event-groups d
+  ;;            (list-of (pair-of* date? date?
+  ;;                               (list-of (tuple-of string? string? vevent?)))))
+
   ;; The grid-template-rows below depends on this being true
-  (typecheck (length long-event-groups) (= (/ (days-in-interval pre-start post-end) 7)))
 
   `((script ,(lambda () (format #t "window.VIEW='month';")))
     (header (@ (class "table-head"))
@@ -66,39 +96,49 @@
               ,(string-concatenate
                 (map (lambda (long-group)
                        (format #f " [time] 15pt [long] ~amm [short] 1fr"
-                               (min 10 (* 4 (length (cddr long-group))))))
+                               (min 10 (* 4 (length (list-ref long-group 2))))))
                      long-event-groups))))
          ,@(map (lambda (d) `(div (@ (class "thead")) ,(string-titlecase (week-day-name d))))
                 (weekday-list))
-         ,@(map (match-lambda*
-                  (((s e events ...) i)
-                   `(div (@ (class "cal-cell longevents event-container")
-                            (style "grid-area: long " ,i ";"
-                                   "grid-column: 1 / span 7;")
-                            (data-start ,(date->string s))
-                            (data-end ,(date->string (date+ e (date day: 1)))))
-                         ,@(lay-out-long-events
-                            s e events))))
-                long-event-groups
-                (iota (length long-event-groups) 1))
 
-         ,@(caltable-time-cells start-date end-date
-                                pre-start post-end)
+         ,@(caltable-time-cells start-date)
 
-         ,@(stream->list
-            (stream-map (lambda (start week-offset)
-                          (define end (date+ start (date day: 1)))
-                          `(div (@ (style "grid-area:short " ,week-offset)
-                                   (class "cal-cell cal-cell-short event-container")
-                                   (data-start ,(date->string start))
-                                   (data-end ,(date->string end)))
-                                (div (@ (style "overflow-y:auto;"))
-                                     ,@(map make-small-block
-                                            (filter (match-lambda ((_ _ ev) (instance-overlaps? ev start end)))
-                                                    short-events)))))
-                        (stream-take (days-in-interval pre-start post-end)
-                                     (date-stream (date day: 1) pre-start))
-                        (repeating-naturals 1 7))))
+         ,@(map (lambda (week group)
+                  (define-values (group-start group-end group-members)
+                    (apply values group))
+                  `(div (@ (class "cal-cell longevents event-container")
+                           (style ,(format #f "grid-area: long ~a;" week)
+                             "grid-column: 1 / span 7;"))
+                        ,@(lay-out-long-events
+                           target-timezone group-start group-end
+                           group-members)))
+             ;; 10 is a number larger than the amount of weeks
+             (iota 10 1)
+             long-event-groups)
+
+         ,@(map (lambda (week day)
+                  `(div (@ (style ,(format #f "grid-area: short ~a" (1+ week)))
+                           (class "cal-cell cal-cell-short event-container")
+                           ;; data-start, data-end
+                           )
+                        (div (@ (style "overflow-y: auto"))
+                             ,@(map make-small-block
+                                    (filter (match-lambda
+                                              ((_ _ ev)
+                                               (instance-overlaps?
+                                                target-timezone ev
+                                                (datetime date: day tz: target-timezone)
+                                                (datetime date: (date+ day (date day: 1))
+                                                          tz: target-timezone))))
+                                            short-events)))))
+                (map (lambda (x) (floor-quotient x 7))
+                     ;; 50 is a number larger than the amount of days in any month
+                     (iota 50))
+                (date-range cal-start cal-end)))
+
+
+    
+
 
     ;; TODO This is a very stupid set to create the popup-elements
     ;; which would be needed once javascript kicks in. REMOVE once
@@ -132,8 +172,12 @@
   (typecheck tuple (tuple-of string? string? vevent?))
   (apply make-block tuple))
 
-(define (caltable-time-cells start-date end-date
-                             pre-start post-end)
+;; Generate grid cells containing date indicators
+(define (caltable-time-cells target-month)
+  (define start-date (start-of-month target-month))
+  (define end-date   (end-of-month target-month))
+  (define pre-start  (start-of-week start-date))
+  (define post-end   (end-of-week end-date))
   (map (lambda (day-date i)
          `(div (@ (style "grid-area:time " ,i)
                   (class "cal-cell cal-cell-time"))

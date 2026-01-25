@@ -60,6 +60,10 @@ is the same as week, but gives a full month.</group>"))))
      (description ,(xml->sxml (G_ "<group>Creates a standalone document instead of an HTML fragment
 for embedding in a larger page. Currently only applies to the <i>small</i> style</group>"))))
 
+    (tz
+     (value #t)
+     (description ,(G_ "Timezone to use as \"local time\" for generated files.")))
+
     (help (single-char #\h) (description ,(G_ "Print this help.")))))
 
 
@@ -101,7 +105,8 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
           (regexp-substitute #f it 'pre "static" 'post)
           str))))
 
-(define (common target-directory count start-date chunk-length
+(define (common target-timezone
+                target-directory count start-date chunk-length
                 render-calendar . extra-args)
 
   ((@ (calp util time) report-time!) "html start")
@@ -122,6 +127,7 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
                                 end-date: (date- (date+ start-date chunk-length)
                                                  (date day: 1))
                                 render-calendar: render-calendar
+                                target-timezone: target-timezone
                                 extra-args))))))
    (stream-take count (date-stream chunk-length start-date))
    ))
@@ -131,7 +137,10 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt opt-spec)))
-  (define start (cond [(option-ref opts 'from #f) => parse-freeform-datetime]
+  (define start (cond [(option-ref opts 'from #f) => string->date]
+                      ;; TODO default depends on style
+                      ;; - month start for month
+                      ;; - week start for week
                       [else (start-of-month (current-date))]))
   (define count (string->number (option-ref opts 'count "12")))
 
@@ -145,6 +154,13 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
     (print-arg-help opt-spec)
     (throw 'return)
     )
+
+  (define target-timezone
+    (or (option-ref opts 'tz #f)
+        (getenv "TZ")
+        ((@ (datetime localtime) get-localtime))))
+
+  (format (current-error-port) "start: ~s~%" start)
 
   (html-file-extension "xml")
 
@@ -160,19 +176,19 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
               start standalone))))))]
 
     [(wide)
-     (common target-directory count start (date month: 1) render-calendar-wide)]
+     (common target-timezone target-directory count start (date month: 1) render-calendar-wide)]
 
     [(week)
-     (common target-directory count (start-of-week start)
+     (common target-timezone target-directory count (start-of-week start)
              (date day: 7)
              render-calendar-wide)]
-    [(table)
 
-     (common target-directory
+    [(table)
+     (common target-timezone
+             target-directory
              count (start-of-month start) (date month: 1)
-             render-calendar-table
-             pre-start: (start-of-week start)
-             post-end: (end-of-week (end-of-month start)))]
+             render-calendar-table)]
+
     [else
      (scm-error 'misc-error "html-main" (G_ "Unknown html style: ~a") (list style) #f)])
 

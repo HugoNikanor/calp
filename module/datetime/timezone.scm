@@ -28,7 +28,7 @@
 
                         execute-day-spec
                         zone-format
-                                ))
+                        ))
   :use-module (hnh util)
   :use-module (hnh util type)
   :use-module (hnh util lens)
@@ -41,8 +41,24 @@
            datetime+/zoneinfo
            datetime-/zoneinfo
            datetime-difference/zoneinfo
+
+           datetime=/zoneinfo
+           datetime</zoneinfo
+           datetime>/zoneinfo
+           datetime<=/zoneinfo
+           datetime>=/zoneinfo
            ))
 
+
+
+;;; TODO big caching!
+;;; For each timezone, we can pre-computer the relevant timezone for any wall or UTC time.
+;;; This should be done lazily, since there are MANY timezones.
+;;; This means that once we have computed the stdoff for one datetime,
+;;; all future ones become "free" (use a binary search tree or something
+;;; to quickly find the relevant rule).
+;;; Note that this cache MUST be invalidated if the zoneinfo database is replaced.
+;;; Storing this cache in the zoneinfo object seems like a good place.
 
 
 ;;; TODO instances where we move from one advanced zone rule to
@@ -172,8 +188,8 @@
     (define rule-matches?
       (cond ((null? rules)
              (scm-error 'misc-error #f
-                        "No rule was relevant. Try previous zone entry"
-                        '() #f))
+                        "Found no relevant changeover for ~s in zone entry ~s"
+                        (list dt zone) #f))
             (else
              (let ((changeover-dt rule (car+cdr (car rules))))
                (case (timespec-type (rule-at rule))
@@ -417,7 +433,8 @@
 
 
 (define (utc->zone dt identifier)
-  (typecheck (tz dt) (and string? (string= "UTC")))
+  (typecheck dt utc-datetime?)
+  (typecheck identifier string?)
   (cond ((parse-utc-offset identifier)
          => (lambda (offset)
               (define name (string-append "UTC" (timespec->string offset)))
@@ -428,7 +445,7 @@
         (else (utc->zone/name dt identifier))))
 
 (define (zone->utc dt)
-  (typecheck (tz dt) string?)
+  (typecheck dt zoned-datetime?)
   (cond ((parse-utc-offset (tz dt))
          => (lambda (offset)
               (values (-> (datetime-timespec-add dt (timespec-negate offset))
@@ -441,6 +458,7 @@
   (typecheck (tz dt) string?)
   (let ((utc-dt ((unval zone->utc) dt)))
     ((unval utc->zone) utc-dt identifier)))
+
 
 ;;; Retrieve UTC offset, and pretty name from a given timezone
 (define (query-timezone dt)
@@ -483,7 +501,12 @@
          (datetime-difference end start))
         (else
          (scm-error 'misc-error "datetime-difference/zoneinfo"
-                    "Can't compare datetimes where only one has a timezone"
-                    '() #f))))
+                    "Can't compare datetimes where only one has a timezone, got start: ~s, end: ~s"
+                    (list start end) #f))))
 
-;;; TODO comperators (datetime<, ...)
+
+(define (datetime=/zoneinfo  . args) (apply datetime=  (map (unval zone->utc) args)))
+(define (datetime</zoneinfo  . args) (apply datetime<  (map (unval zone->utc) args)))
+(define (datetime>/zoneinfo  . args) (apply datetime>  (map (unval zone->utc) args)))
+(define (datetime<=/zoneinfo . args) (apply datetime<= (map (unval zone->utc) args)))
+(define (datetime>=/zoneinfo . args) (apply datetime>= (map (unval zone->utc) args)))

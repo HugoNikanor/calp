@@ -4,7 +4,8 @@
   :use-module (hnh util type)
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
-               :select (instance-overlaps?))
+               :select (instance-start-datetime
+                        instance-overlaps?))
   :use-module (datetime)
   :use-module ((calp html util) :select (html-file-extension))
   :use-module (calp html components)
@@ -43,57 +44,83 @@
 (define repo-url (make-parameter "https://git.hornquist.se/calp"))
 
 
-;; TODO document what @var{render-calendar} is supposed to take and return.
-;; Can at least note that @var{render-calendar} is strongly encouraged to include
-;; (script "const VIEW='??';"), where ?? is replaced by the name of the view.
+;; Generates a complete HTML calendar page as an SXML document
+;; (including *TOP* and *PI* nodes).
+;;
+;; Arguments:
+;; - intervaltype:
+;;   Type of interval this page represents
+;;   one of week, month, or all
+;;   Only used to construct some queries.
+;;   TODO remove this parameter, and get it from context, or at least
+;;        pair it with the render-calendar procedure
+;; - calendars:
+;;   list of named data stores, which will be queried to get the event set
+;; - start-date, end-date, next-start, prev-start
+;;   Interval we which should be rendered.
+;;   This is given as 4 dates, since it sometimes makes sencse to include "extra"
+;;   entries before or after the interval.
+;;   Consider Jaruary 2026, with weeks starting on mondays:
+;;            januari 2026
+;;        må ti on to fr lö sö
+;;                  1  2  3  4
+;;         5  6  7  8  9 10 11
+;;        12 13 14 15 16 17 18
+;;        19 20 21 22 23 24 25
+;;        26 27 28 29 30 31
+;;   start and end date would obviously be 1 and 31 january, while
+;;   pre-start would be 2025-12-29 and post-end 2026-02-01, since
+;;   these are still there.
+;;   Event list will be generated from [pre-start, post-end],
+;;   and all four will be passed to `render-calendar` for it to use at it sees fit.
+;;   Must satisfy pre-start <= start-date < end-date <= post-end
+;; - next-start, prev-start
+;;   procedures which maps dates to dates. Used to get the next or
+;;   previous page start, and will be called with the current start date
+;;   value.
+;; - render-calendar:
+;;   Callback to render the graphical part of the calendar.
+;;   Will be called with the following keyword arguments:
+;;   - stores, forwarded from `calendars`
+;;   - start-date
+;;   - end-date (inclusive)
+;;   - next-start
+;;   - prev-start
+;;   - target-timezone
+;; Implementations are free to use any of these fields they see fit
+;;   return: list of html elemnts, coded as sexp objects.
+;; TODO end-date, next-start, and prev-start should all follow from intervaltype
+;; TODO instead of having intervaltype separate, create a compound type, changing the
+;; signature of html-generate to
+;; - calendars: (list-of store)
+;; - start-date: date? (interpreted by the renderer)
+;; - target-timezone: string?
+;; - renderer: (tuple (end-date (procedure () (date)))
+;;                    ...)
 (define* (html-generate
           key:
           (intervaltype 'all)
-          calendars  ; All data-stores to work on (name is historical and subject to change)
-          start-date             ; First date in interval to show
-          end-date               ; Last  date in interval to show
-          render-calendar        ; (bunch of kv args) → (list sxml)
-          next-start             ; date → date
-          prev-start             ; date → date
-          ;; The pre and post dates are if we want to show some dates just
-          ;; outside our actuall interval. Primarily for whole month views,
-          ;; which needs a bit on each side.
-          (pre-start start-date)
-          (post-end end-date))
+          calendars ; All data-stores to work on (name is historical and subject to change)
+          start-date                ; First date in interval to show
+          end-date                  ; Last  date in interval to show
+          render-calendar           ; (bunch of kv args) → (list sxml)
+          next-start                ; date → date
+          prev-start                ; date → date
+          (target-timezone "UTC"))
   (typecheck intervaltype (memv '(week month all)))
   (typecheck calendars (list-of (pair-of string? calendar-data-store?)))
   (typecheck start-date date?)
   (typecheck end-date date?)
-  ;; Procedure which takes the keyword arguments
-  ;; - stores :: (list-of (pair-of string? calendar-data-store?))
-  ;; - start-date :: date?
-  ;; - end-date :: date?
-  ;; - pre-end :: date?
-  ;; - post-end :: date?
-  ;; - next-start :: (procedure-of date? date?)
-  ;; - prev-start :: (procedure-of date? date?)
-  ;; Implementations are free to use any of these fields they see fit
   (typecheck render-calendar procedure?)
   (typecheck next-start procedure?)
   (typecheck prev-start procedure?)
-  (typecheck pre-start date?)
-  (typecheck post-end date?)
+  (typecheck target-timezone string?)
 
   (define (nav-link display date)
     `(a (@ (href ,(date->string date "~Y-~m-~d.") ,(html-file-extension))
            (class "nav hidelink"))
         (div (@ (class "nav"))
              ,display)))
-
-  (unless (procedure? next-start)
-    (scm-error 'misc-error "html-generate"
-               (G_ "~s needs to be a procedure, got ~s")
-               (list 'next-start next-start) #f))
-
-  (unless (procedure? prev-start)
-    (scm-error 'misc-error "html-generate"
-               (G_ "~s needs to be a procedure, got ~s")
-               (list 'prev-start prev-start) #f))
 
   (xhtml-doc
    (@ (lang sv))
@@ -107,8 +134,6 @@
              (content ,(format #f (G_ "Calendar for the dates between ~a and ~a")
                                (date->string start-date (G_ "~Y-~m-~d"))
                                (date->string end-date   (G_ "~Y-~m-~d"))))))
-    ;; NOTE this is only for the time actually part of this calendar.
-    ;; overflowing times from pre-start and post-end is currently ignored here.
     (meta (@ (name start-time)
              (content ,(date->string start-date "~s"))))
     (meta (@ (name end-time)
@@ -154,10 +179,9 @@ window.default_calendar='~a';"
           ,@(render-calendar stores: calendars
                              start-date: start-date
                              end-date: end-date
-                             pre-start: pre-start
-                             post-end: post-end
                              next-start: next-start
                              prev-start: prev-start
+                             target-timezone: target-timezone
                              )
 
           ,(btn onclick: "addNewEvent()"
@@ -173,8 +197,9 @@ window.default_calendar='~a';"
          (footer
           (@ (style "grid-area: footer"))
           (span ,(G_ "Page generated ")
-                ,(date->string (current-date) (G_ "~Y-~m-~d")))
+                ,(datetime->string (current-datetime) (G_ "~Y-~m-~d ~H:~M:~S~Z")))
           (span ,(G_ "Current time ") (current-time (@ (interval 1))))
+          (span ,(format #f (G_ "TZ: ~a") target-timezone))
           (span (a (@ (href ,(repo-url)))
                    ,(G_ "Source Code"))))
 
@@ -264,6 +289,17 @@ window.default_calendar='~a';"
                  `(details (@ (class "sliders"))
                            (summary ,(G_ "Option sliders"))
 
+                           (form
+                            (label (@ (for "default-tz")) ,(G_ "Default Timezone"))
+                            (select (@ (id "default-tz")
+                                       (name "tz"))
+                              ;; TODO generate this list from the loaded zoneinfo database
+                              (option "UTC")
+                              (option "Europe/Stockholm")
+                              (option "America/New_York"))
+
+                            (input (@ (type "submit"))))
+
                            ,@(when ((@ (calp html config) edit-mode))
                                `((label ,(G_ "Event blankspace"))
                                  ,(slider-input
@@ -291,11 +327,12 @@ window.default_calendar='~a';"
                                 `(li (@ (data-calendar ,(base64encode (car calendar))))
                                      (a (@ (href "/search?"
                                                  ,((@ (web query) encode-query-parameters)
-                                                   `((q . (and (date/-time<=?
+                                                   `((q . (and (datetime<=?
                                                                 ,(current-datetime)
-                                                                (prop1 event 'DTSTART))
+                                                                (instance-start-datetime event))
                                                                ;; TODO
                                                                ;; this is broken, since we can't access the parent of an event
+                                                               #;
                                                                (string=? ,(car calendar)
                                                                          (or (prop (parent event) 'NAME) ""))))))))
                                         ,(or (store-displayname (cdr calendar))
@@ -305,32 +342,63 @@ window.default_calendar='~a';"
          ;; List of event in sidebar.
          ;; Used for no-script intrecation, and as a Ctrl-F friendly
          ;; search (since it includes description and the like)
-         ;; TODO this must be of sufficient hight for the UI to not break.
-         ;; This means that having an empty calendar triggers a bug.
+         ;; TODO this must be of sufficient height for the UI to not break.
+         ;;      This means that having an empty calendar triggers a bug.
+
          (div (@ (class "eventlist")
                  (style "grid-area: events"))
 
               ,@(let ()
-                  (define events (map (lambda (ev) (modify ev (ref 2) (compose car vcomponent-children)))
-                                      (stream->list (apply entries-between pre-start post-end calendars))))
+                  (define events
+                    (map (lambda (ev) (modify ev (ref 2) (compose car vcomponent-children)))
+                         (stream->list (apply entries-between
+                                              target-timezone
+                                              ;; NOTE previously, the overflows where configurable.
+                                              ;; However, only very specific values makes sence for
+                                              ;; specific configurations.
+                                              ;; start/end-of-week is choosen, since it does
+                                              ;; what we want for month views, and is effectively
+                                              ;; a no-op for week views
+                                              (datetime date: (start-of-week start-date)
+                                                        tz: target-timezone)
+                                              (datetime date: (date+ (end-of-week end-date) (date day: 1))
+                                                        tz: target-timezone)
+                                              calendars))))
                   (cons
                    ;; Events which started before our start point,
                    ;; but "spill" into our time span.
-                   (fmt-day (G_ "Earlier")
-                            (filter (match-lambda ((_ _ ev) (date/-time<? (prop1 ev 'DTSTART) (datetime date: pre-start))))
-                                    events))
+                   (fmt-day
+                    target-timezone
+                    (G_ "Earlier")
+                    (filter (match-lambda
+                              ((_ _ ev) (datetime</zoneinfo
+                                         (instance-start-datetime target-timezone ev)
+                                         (datetime date: (start-of-week start-date)
+                                                   tz: target-timezone))))
+                            events))
                    (map (lambda (start)
                           (fmt-day
+                           target-timezone
                            (date->string start (G_ "~Y-~m-~d"))
-                           (filter (match-lambda ((_ _ ev)
-                                                  (and (instance-overlaps? ev start (date+ start (date day: 1)))
-                                                       ;; If start was an earlier day
-                                                       ;; This removes all descriptions from
-                                                       ;; events for previous days,
-                                                       ;; solving duplicates.
-                                                       (date/-time<=? start (prop1 ev 'DTSTART)))))
+                           (filter (match-lambda
+                                     ((_ _ ev)
+                                      (and (instance-overlaps?
+                                            target-timezone
+                                            ev
+                                            (datetime date: start tz: target-timezone)
+                                            (datetime date: (date+ start (date day: 1))
+                                                      tz: target-timezone))
+                                           ;; If start was an earlier day
+                                           ;; This removes all descriptions from
+                                           ;; events for previous days,
+                                           ;; solving duplicates.
+                                           ;; TODO this also filters out long events starting that day.
+                                           (datetime</zoneinfo
+                                            (datetime date: start tz: target-timezone)
+                                            (instance-start-datetime target-timezone ev)))))
                                    events)))
-                        (date-range pre-start post-end))))))
+                        (date-range (start-of-week start-date)
+                                    (end-of-week end-date)))))))
 
     ;; Templates used by our custom components
     ,((@ (calp html vcomponent) edit-template) calendars)

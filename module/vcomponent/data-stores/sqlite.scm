@@ -28,6 +28,7 @@
   :use-module (datetime)
   :use-module (datetime timespec)
   :use-module (sxml namespaced)
+  :use-module (ice-9 format)
   :export (create-instance)
   )
 
@@ -528,8 +529,6 @@ VALUES (?, ?, ?)
 
      (cons 'DATE (lambda (_ v) (string->date v)))
 
-     ;; TODO datetime is always stored as is,
-     ;; with datetime stored in a paremeter.
      (cons 'DATE-TIME (lambda (params v)
                         (values (tz (string->datetime v "~Y-~m-~d ~H:~M:~S")
                                     (table-get params 'TZID))
@@ -662,10 +661,13 @@ VALUES (?, ?, ?)
                stmt))))
     (values root-symbol ids components)))
 
+
+
+;;; TODO document
 (define (build-component-trees root-symbol id-table component-table)
   (typecheck root-symbol symbol?)
-  (typecheck id-table (table-of (list-of symbol?)))           ; (table-of (list-of symbol?))
-  (typecheck component-table (table-of vcomponent?))    ; (table-of vcomponent?)
+  (typecheck id-table (table-of (list-of symbol?)))
+  (typecheck component-table (table-of vcomponent?))
 
   (cond ((table-get id-table root-symbol)
          => (lambda (ids)
@@ -743,9 +745,12 @@ GROUP BY pr.id" filter)
 
 ;;; returns (stream-of (pair-of href object))
 (define-method (entries-in-interval (store <sqlite-data-store>)
-                                    start end)
-  (typecheck start datetime?)
-  (typecheck end   datetime?)
+                                    reference-zone start end)
+  (typecheck start zoned-datetime?)
+  (typecheck end   zoned-datetime?)
+
+  ;; TODO TODO make search timezone aware, probablyby storing all datetimes
+  ;; both in their "true" form, and in their normalized (UTC) form.
 
   ;; TODO log level debug
   (format (current-error-port) "<DEBUG> entries-in-interval ~s, ~s - ~s~%"
@@ -754,8 +759,8 @@ GROUP BY pr.id" filter)
 ;;; TODO duration
 ;;; TODO entries with only start
 
-   ;; NOTE we sort in Guile instead of SQLite, since all the grouping
-   ;; makes it hard to access the start time.
+  ;; NOTE we sort in Guile instead of SQLite, since all the grouping
+  ;; makes it hard to access the start time.
   (define regular-events
     (filter (negate (compose recurring? cdr))
             (get-entries store "
@@ -836,8 +841,8 @@ WHERE [component-id] IS NOT NULL
 GROUP BY pr.id"))
 
   (define result
-   ((expand-and-interleave-recurrences start end)
-    recurring-events regular-events))
+    ((expand-and-interleave-recurrences reference-zone start end)
+     recurring-events regular-events))
 
   ;; TODO log level debug
   (format (current-error-port) "<DEBUG> Entries gotten ~s~%"

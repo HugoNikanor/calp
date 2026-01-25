@@ -9,8 +9,11 @@
   :use-module ((calp html vcomponent)
                :select (compact-event-list))
   :use-module (calp translation)
+  :use-module (hnh util type)
   :export (search-result-page)
   )
+
+;;; TODO this search page is rather after the updates which made the HTML code timezone aware.
 
 ;; Display the result of a search term, but doesn't do any searching
 ;; on its own.
@@ -22,8 +25,17 @@
 ;; @var{search-result} : The list of matched events
 ;; @var{page} : Which page we are on
 ;; @var{paginator} : A paginator object
+
+;;; TODO search result is of undefined type if errors is set.
+;;; Pass them in same parameter
 (define (search-result-page
          errors has-query? search-term search-result page paginator)
+  (typecheck errors (or false? string?))
+  (typecheck has-query? any-type)            ; Technically boolean
+  (typecheck search-term (or list? string?)) ; sexp
+  (typecheck search-result (or any-type (list-of vevent?)))
+  (typecheck page exact-integer?)
+  (typecheck paginator paginator?)
   (xhtml-doc
    (@ (lang sv))
    (head (title ,(G_ "Search results"))
@@ -47,7 +59,11 @@
             (div (@ (class "error"))
                  (pre ,errors)))
           `((h2 ,(format #f (G_ "Result (page ~a)") page))
-            (ul ,@(compact-event-list search-result))
+            (ul ,@(compact-event-list
+                   ;; TODO timezone
+                   "Europe/Stockholm"
+                   "TODO href when searching"
+                   search-result))
             (div (@ (class "paginator"))
                  ,@(paginator->list
                     paginator

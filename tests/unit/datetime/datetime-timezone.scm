@@ -72,7 +72,6 @@ Rule	C-Eur	1944	1945	-	Apr	Mon>=1	 2:00s	1:00	S
 # Whitman gives 1944 Oct 7; go with Shanks & Pottenger.
 Rule	C-Eur	1944	only	-	Oct	 2	 2:00s	0	-
 
-
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
 Rule	EU	1977	1980	-	Apr	Sun>=1	 1:00u	1:00	S
 Rule	EU	1977	only	-	Sep	lastSun	 1:00u	0	-
@@ -366,8 +365,6 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
   )
 
 ;; zone->zone
-;; any->zone
-;; ->utc
 
 ;; query-timezone
 ;; datetime+/zoneinfo

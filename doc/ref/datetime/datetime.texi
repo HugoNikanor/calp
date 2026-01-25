@@ -198,22 +198,6 @@ Get the date component from a call to @code{current-datetime}.
 @end defun
 
 
-@defun as-date date/-time
-@defunx as-time date/-time
-Both procedures takes a <date>, <time>, or <datetime>, and return
-respectively a <date> or <time> object.
-
-@code{as-date}, when given a time will return a zeroed date object.
-Vice versa for @code{as-time}.
-@end defun
-
-@defun as-datetime date/-time
-Takes a <date>, <time>, or <datetime>, and returns a <datetime> object
-with the same data, with the (possibly) missing date or time set to
-all zeroes.
-@end defun
-
-
 @defun date-zero? date
 @defunx time-zero? time
 Checks if all components are zero.
@@ -324,11 +308,6 @@ Check if the interval @var{s1-begin} to @var{s1-end} overlaps with the
 interval @var{s2-begin} to @var{s2-end}.
 @end defun
 
-
-@defun in-date-range? start-date end-date → date → boolean
-Returns a predicate procedure, which checks if a given date is between
-@var{start-date} and @var{end-date}.
-@end defun
 
 @defun weekday-list [week-start=(week-start)]
 Returns a list of the seven week days, with @var{week-start}
@@ -451,18 +430,6 @@ Checks if all time arguments satisfy the predicate.
 @defunx datetime>=? args ...
 Check if all datetime arguments satisfy the predicate.
 The timezone field is ignored.
-@end defun
-
-@defun date/-time< a b
-@defunx date/-time<? a b
-@defunx date/-time> a b
-@defunx date/-time>? a b
-@defunx date/-time<= a b
-@defunx date/-time<=? a b
-@defunx date/-time>= a b
-@defunx date/-time>=? a b
-Equivalent to the @code{datetime*} versions, but wraps its arguments
-in @code{as-datetime}.
 @end defun
 
 @subsection Arithmetic

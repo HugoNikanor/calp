@@ -11,15 +11,15 @@
              stream-filter
              stream-take-while))
   :use-module ((vcomponent datetime) :select (instance-overlaps?))
-  :use-module ((datetime) :select (date date+ date<))
+  :use-module (datetime)
   :use-module ((hnh util) :select (set!))
   :use-module (vcomponent create)
   :use-module (vcomponent))
 
 
-(define start (date year: 2021 month: 11 day: 01))
+(define start (datetime year: 2021 month: 11 day: 01 tz: "UTC"))
 
-(define end (date+ start (date day: 8)))
+(define end (datetime+ start (datetime day: 8)))
 
 ;;; [--Event A-------------------------------]
 ;;;           [Event B]
@@ -56,7 +56,7 @@
   (map (extract1 'SUMMARY)
        (stream->list
          (filter-sorted-stream
-           (lambda (ev) (instance-overlaps? ev start (date+ start (date day: 8))))
+           (lambda (ev) (instance-overlaps? "UTC" ev start end))
            ev-set))))
 
 (test-equal "correct handling of non-contigious"
@@ -64,9 +64,9 @@
   (map (extract1 'SUMMARY)
        (stream->list
          (stream-filter
-           (lambda (ev) (instance-overlaps? ev start end))
+           (lambda (ev) (instance-overlaps? "UTC" ev start end))
            (stream-take-while
-             (lambda (ev) (date< (prop1 ev 'DTSTART) end))
+             (lambda (ev) (date< (prop1 ev 'DTSTART) (datetime-date end)))
              ev-set)))))
 
 

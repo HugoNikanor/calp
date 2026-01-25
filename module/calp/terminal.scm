@@ -14,7 +14,6 @@
   :use-module (vcomponent)
   :use-module (vcomponent datetime)
   :use-module (vcomponent util search)
-  :use-module (vcomponent util group)
 
   :use-module (text util)
   :use-module ((text calendar) :select (cal-3))
@@ -107,7 +106,10 @@
 
 (define-method (initialize (this <day-view>) args)
   (next-method)
-  (set! (groups this) (group-stream (get-event-set this))))
+  ; (set! (groups this) (group-stream (get-event-set this)))
+  ;; TODO
+  (set! (groups this) (stream))
+  )
 
 (define-method (output (this <day-view>))
 
@@ -115,10 +117,13 @@
     (aif (cached-events this)
          it
          (set/r! (cached-events this)
-                 (group->event-list (stream-car (get-groups-between
-                                                 (groups this)
-                                                 (current-page this)
-                                                 (current-page this)))))))
+                 ;; TODO
+                 (list)
+                 ;; (group->event-list (stream-car (get-groups-between
+                 ;;                                 (groups this)
+                 ;;                                 (current-page this)
+                 ;;                                 (current-page this))))
+                 )))
 
   (cls)
 
@@ -310,10 +315,11 @@
 
   (case char
     ((#\newline) `(push ,(day-view (get-event-set this)
-                                   (as-date (prop (list-ref (get-page (slot-ref this 'search-result)
-                                                                      (current-page this))
-                                                           (active-element this))
-                                                 'DTSTART)))))
+                                   #;as-date
+                                   (prop (list-ref (get-page (slot-ref this 'search-result)
+                                                             (current-page this))
+                                                   (active-element this))
+                                         'DTSTART))))
     ((#\h left) (set! (current-page this) = ((lambda (old) (max 0 (1- old))))))
     ((#\l right)
      (format #t "~% ~a~%" (G_ "loading..."))

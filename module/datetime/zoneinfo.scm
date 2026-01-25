@@ -44,7 +44,12 @@
 
 ;; special case of `format` which works with %s and %z
 ;; TODO rename to something like zone-printf
-;; TODO why is utc-offset required?
+;; - `fmt-string' is per zic(8)'s Zone
+;;   Being a format string optionally containing the placeholders
+;;   - `%s', to be filled with the LETTERS field from the active rule
+;;   - `%z', to be filled with the UTC offset for the given rule
+;; - `arg' is what will be spliced on `%s`
+;; - `utc-offset' is used when an `%z` is encountered
 (define (zone-format fmt-string arg utc-offset)
   (typecheck fmt-string string?)
   (typecheck arg string?)

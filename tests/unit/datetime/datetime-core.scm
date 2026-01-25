@@ -183,38 +183,6 @@
   (date? (current-date)))
 
 
-(test-group "as-date"
-  (test-equal (date year: 1 month: 2 day: 3)
-              (as-date (datetime year: 1 month: 2 day: 3
-                                  hour: 4 minute: 5 second: 6)))
-  (test-equal (date year: 1 month: 2 day: 3)
-              (as-date (date year: 1 month: 2 day: 3)))
-  (test-equal (date) (as-date (time hour: 1 minute: 2 second: 3)))
-  (test-error 'wrong-type-arg
-              (as-date 'something-else)))
-
-(test-group "as-time"
-  (test-equal (time hour: 4 minute: 5 second: 6)
-              (as-time (datetime year: 1 month: 2 day: 3
-                                  hour: 4 minute: 5 second: 6)))
-  (test-equal (time hour: 1 minute: 2 second: 3)
-              (as-time (time hour: 1 minute: 2 second: 3)))
-  (test-equal (time) (as-time (date year: 1 month: 2 day: 3)))
-  (test-error 'wrong-type-arg
-              (as-time 'something-else)))
-
-(test-group "as-datetime"
-  (test-equal (datetime year: 1 month: 2 day: 3
-                        hour: 4 minute: 5 second: 6)
-              (as-datetime (datetime year: 1 month: 2 day: 3
-                                     hour: 4 minute: 5 second: 6)))
-  (test-equal (datetime year: 1 month: 2 day: 3)
-              (as-datetime (date year: 1 month: 2 day: 3)))
-  (test-equal (datetime hour: 1 minute: 2 second: 3)
-              (as-datetime (time hour: 1 minute: 2 second: 3)))
-  (test-error 'wrong-type-arg
-              (as-datetime 'something-else)))
-
 
 (test-group "Leap years"
   (test-assert "Most years are't leap years" (not (leap-year? 1999)))
@@ -304,36 +272,28 @@
   ;;     |  | : |  |     : |  ||  | : |  ||  | : |  ||  | :     |s2|
   ;;     |  | : |  |     : |  |     :     |  | :          :     |  |
   (test-assert "[A] End of S1 overlaps start of S2"
-    (timespan-overlaps? (time hour: 10) (time hour: 12)
-                        (time hour: 11) (time hour: 13)))
+    (timespan-overlaps? (datetime hour: 10) (datetime hour: 12)
+                        (datetime hour: 11) (datetime hour: 13)))
   (test-assert "[B] Start of S1 overlaps end of S2"
-    (timespan-overlaps? (time hour: 11) (time hour: 13)
-                        (time hour: 10) (time hour: 12)))
+    (timespan-overlaps? (datetime hour: 11) (datetime hour: 13)
+                        (datetime hour: 10) (datetime hour: 12)))
   (test-assert "[C] S1 complete encompasses S2"
-    (timespan-overlaps? (time hour: 10) (time hour: 13)
-                        (time hour: 11) (time hour: 12)))
+    (timespan-overlaps? (datetime hour: 10) (datetime hour: 13)
+                        (datetime hour: 11) (datetime hour: 12)))
   (test-assert "[D] S2 complete encompasses S1"
-    (timespan-overlaps? (time hour: 11) (time hour: 12)
-                        (time hour: 10) (time hour: 13)))
+    (timespan-overlaps? (datetime hour: 11) (datetime hour: 12)
+                        (datetime hour: 10) (datetime hour: 13)))
   (test-assert "[E] S1 is equal to S2"
-    (timespan-overlaps? (time hour: 11) (time hour: 12)
-                        (time hour: 11) (time hour: 12)))
+    (timespan-overlaps? (datetime hour: 11) (datetime hour: 12)
+                        (datetime hour: 11) (datetime hour: 12)))
   (test-assert "[F] S1 dosesn't overlap S2"
     (not
-     (timespan-overlaps? (time hour: 10) (time hour: 11)
-                         (time hour: 12) (time hour: 13))))
+     (timespan-overlaps? (datetime hour: 10) (datetime hour: 11)
+                         (datetime hour: 12) (datetime hour: 13))))
   (test-assert "If the events only share an instant they don't overlap"
     (not
-     (timespan-overlaps? (time hour: 10) (time hour: 12)
-                         (time hour: 12) (time hour: 14)))))
-
-(test-group "in-date-range?"
-  (let ((f (in-date-range? (date year: 2020 month: 1 day: 1)
-                           (date year: 2021 month: 1 day: 1))))
-    (test-assert "Midle of interval" (f (date year: 2020 month: 5)))
-    (test-assert "Left edge" (f (date year: 2020 month: 1 day: 1)))
-    (test-assert "Right edge" (f (date year: 2021 month: 1 day: 1)))
-    (test-assert "Outside" (not (f (date year: 2019 month: 1 day: 1))))))
+     (timespan-overlaps? (datetime hour: 10) (datetime hour: 12)
+                         (datetime hour: 12) (datetime hour: 14)))))
 
 (test-equal "weekday-list" (list wed thu fri sat sun mon tue) (weekday-list wed))
 (test-equal "start of week" (date year: 2022 month: 06 day: 20) (start-of-week (date year: 2022 month: 06 day: 23) mon))
@@ -431,8 +391,8 @@
     (test-assert "Two dissimmalar datetimes aren't equal"
       (not (datetime= (datetime hour: 1) (datetime hour: 2))))
 
-    ;; NOTE timezone interactions are non-existant
-    (test-assert "Two datetimes are equal, regardless of timezone"
+    (test-error "Can't compare datetimes of differing timezones"
+      'wrong-type-arg
       (datetime= (datetime) (datetime tz: "Something Else")))
 
     (test-assert "Three equal datetimes are equal"
@@ -494,10 +454,6 @@
 date<=
 time<=
 datetime<=
-
-;; TODO
-date/-time< date/-time<? date/-time<= date/-time<=?
-date/-time> date/-time>? date/-time>= date/-time>=?
 
 (test-group "Arithmetic"
   (test-group "Date"

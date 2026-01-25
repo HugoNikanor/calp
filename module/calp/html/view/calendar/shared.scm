@@ -6,6 +6,7 @@
   :use-module (vcomponent)
   :use-module ((vcomponent datetime)
                :select (instance-length
+                        instance-start-datetime
                         overlapping?
                         instance-length/clamped))
   :use-module (datetime)
@@ -17,7 +18,6 @@
 
   :export (fix-event-widths!
            lay-out-long-events
-           create-top-block
            ))
 
 
@@ -26,10 +26,12 @@
 
 ;; Takes a list of vcomponents, sets their widths and x-positions to optimally
 ;; fill out the space, without any overlaps.
-(define* (fix-event-widths! lst key: event-length-key (event-length-comperator date/-time>?))
+;; TODO event-length-key is ALWAYS called with instance-length/clamped.
+;; Possibly just take the clamping intervals instead
+(define* (fix-event-widths! reference-zone lst key: event-length-key)
+  (typecheck reference-zone string?)
   (typecheck lst (list-of vevent?))
   (typecheck event-length-key procedure?)
-  (typecheck event-length-comperator procedure?)
   ;; The tree construction is greedy. This means
   ;; that if  a smaller  event preceeds a longer
   ;; event it would capture  the longer event to
@@ -38,9 +40,8 @@
 
   ;; @var{x} is how for left in the container we are.
   (let inner ((x 0)
-              (tree (make-tree overlapping?
-                               (sort* lst event-length-comperator event-length-key
-                                      ))))
+              (tree (make-tree (lambda (a b) (overlapping? reference-zone a b))
+                               (sort* lst datetime> event-length-key))))
     (unless (null? tree)
       (let ((w (/ (- 1 x)
                   (+ 1 (length-of-longst-branch (left-subtree tree))))))
@@ -50,47 +51,63 @@
         (inner x (right-subtree tree))))))
 
 
-(define (lay-out-long-events start end events)
+(define (lay-out-long-events reference-zone start end events)
   (typecheck start date?)
-  (typecheck end date?)
+  (typecheck end   date?)
   (typecheck events (list-of (tuple-of string? string? vevent?)))
-  (fix-event-widths! (map caddr events)
-                     event-length-key: instance-length
-                     event-length-comperator: datetime>)
-  (map (lambda (e) (create-top-block start end e))
+  (fix-event-widths! reference-zone (map caddr events)
+                     event-length-key: (lambda (e) (instance-length/clamped
+                                               (datetime date: start
+                                                         tz: reference-zone)
+                                               (datetime date: (date+ end (date day: 1))
+                                                         tz: reference-zone)
+                                               reference-zone
+                                               e)))
+  (map (lambda (e) (create-top-block reference-zone start end e))
        events))
 
 ;; date{,time}-difference works in days, and days are simply multiplied by 24 to
 ;; get hours.  This means that a day is always assumed to be 24h, even when that's
 ;; wrong. This might lead to some weirdness when the timezon switches (DST), but it
 ;; makes everything else behave MUCH better.
-(define (create-top-block start-date end-date entry)
+(define (create-top-block reference-zone start-date end-date entry)
+  (typecheck reference-zone string?)
   (typecheck start-date date?)
-  (typecheck end-date date?)
+  (typecheck end-date   date?)
   (typecheck entry (tuple-of string? string? vevent?))
 
   (define ev (list-ref entry 2))
 
+  ;; TODO shouldn't this depend on the timezone?
   (define total-length
     (* 24 (days-in-interval start-date end-date)))
+
+  (define event-continued?
+    (not
+     (datetime</zoneinfo (datetime date: start-date tz: reference-zone)
+                         (instance-start-datetime reference-zone ev))))
 
   (define top (* 100 (x-pos ev)))
   (define height (* 100 (width ev)))
   (define left ; start time
-    (* 100
-       (let* ((dt (datetime date: start-date))
-              (diff (datetime-difference
-                     (datetime-max dt (as-datetime (prop1 ev 'DTSTART)))
-                     dt)))
-         (/ (datetime->decimal-hour diff start-date) total-length))))
+    (if event-continued?
+        0
+        (* (/ 100 total-length)
+         (datetime->decimal-hour
+          (datetime-difference/zoneinfo
+           (instance-start-datetime reference-zone ev)
+           (datetime date: start-date tz: reference-zone))))))
 
   ;; Set length of event, which makes end time
   (define width*
-    (* 100
-       (/ (datetime->decimal-hour
-           (instance-length/clamped start-date end-date ev)
-           start-date)
-          total-length)))
+    (* (/ 100 total-length)
+       (datetime->decimal-hour
+          (instance-length/clamped (datetime date: start-date
+                                             tz: reference-zone)
+                                   (datetime date: (date+ end-date (date day: 1))
+                                             tz: reference-zone)
+                                   reference-zone
+                                   ev))))
 
   (define style
     (if (edit-mode)
@@ -104,9 +121,12 @@
    (list-ref entry 1)
    (list-ref entry 2)
    `((class
-       ,(when (date/-time< (prop1 ev 'DTSTART) start-date)
+       ,(when event-continued?
           " continued")
-       ,(when (and (prop% ev 'DTEND)
-                   (date/-time< (date+ end-date (date day: 1)) (prop1 ev 'DTEND)))
+       ,(when (datetime</zoneinfo
+               (datetime date: (date+ end-date (date day: 1)) tz: reference-zone)
+               (datetime+ (instance-start-datetime reference-zone ev)
+                          (instance-length ev)))
           " continuing"))
-     (style ,style))))
+     (style ,style)))
+  )

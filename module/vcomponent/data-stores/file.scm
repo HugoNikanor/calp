@@ -38,6 +38,7 @@
   :use-module ((web uri) :select (build-uri uri->string))
   :use-module ((web query) :select (encode-query-parameters))
   :use-module (calp translation)
+  :use-module (datetime)
   :export (create-instance)
   )
 
@@ -475,7 +476,9 @@
 
 
 (define-method (entries-in-interval (store <file-data-store>)
-                                    start end)
+                                    reference-zone start end)
+  (typecheck start zoned-datetime?)
+  (typecheck end   zoned-datetime?)
   ;; TODO log level debug
   (format (current-error-port) "<DEBUG> entries-in-interval ~s, ~s - ~s~%"
           (uri->string (store-uri store)) start end)
@@ -490,7 +493,7 @@
              (cons (get-right (href-uid-map int) uid)
                    (vcalendar e)))
            (%event-by-uid int))))
-     (expand-and-interleave-recurrences start end)))
+     (expand-and-interleave-recurrences reference-zone start end)))
   ;; TODO log level debug
   (format (current-error-port) "<DEBUG> Entries gotten ~s~%"
           (uri->string (store-uri store)))

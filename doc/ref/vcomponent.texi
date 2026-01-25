@@ -64,6 +64,3 @@ Property values are mapped to corresponding scheme types, see TODO
 
 @include vcomponent/media-types.texi
 @include vcomponent/data-stores.texi
-
-@c @c TODO what even is this? When is it used?
-@c @include vcomponent/group.texi

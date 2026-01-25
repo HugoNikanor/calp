@@ -48,6 +48,7 @@
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-1)
   :use-module (vcomponent)
+  :use-module (vcomponent datetime)
   :use-module (datetime)
   :use-module (hnh util)
   :use-module (ice-9 regex)
@@ -63,11 +64,11 @@
 (define (get-worked-hours summary-search month year)
 
   (define instances
-   (group-by (compose day as-date (extract 'DTSTART))
+   (group-by (compose day datetime-date instance-start-datetime)
              (stream->list
               ((@ (vcomponent util search) execute-query)
                (lambda (e)
-                 (define d (as-datetime (prop e 'DTSTART)))
+                 (define d (instance-start-datetime e))
                  (define s (date year: year month: month day: 1))
 
                  (and (string=? summary-search (prop e 'SUMMARY))
@@ -90,7 +91,7 @@
                             (apply +
                                    (map (lambda (e)
                                           (time->decimal-hour
-                                           (as-time
+                                           (datetime-time
                                             (datetime-difference (prop e 'DTEND)
                                                                  (prop e 'DTSTART)))))
                                         (cdr group))))))

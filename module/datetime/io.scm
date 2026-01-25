@@ -91,12 +91,8 @@
                                  ((string=? "UTC" (tz datetime))
                                   "Z")  ; special case
                                  (else
-                                  ""    ;TODO
-                                  #;
-                                  (let ((offset name ((@ (datetime timezone) query-timezone) ;
-                                  datetime))) ;
-                                  ((@ (datetime timespec) timespec->string) ;
-                                  offset))))))
+                                  (let ((offset _ (query-timezone datetime)))
+                                    (timespec->string offset 'm))))))
                    ;; date(1) has the following
                    ;; %z ⇒ -0400 (numeric offset)
                    ;; %:z ⇒ -04:00 (numeric offset, colons)

@@ -22,11 +22,9 @@
            overlapping?
            instance-zero-length?
 
+           instance-start-datetime
            instance-length
            instance-length/clamped
-           instance-length/day
-
-           events-between
 
            ))
 
@@ -36,59 +34,93 @@
 ;;; DURATION isn't explicitly checked for type, but instead assumed to
 ;;; match DTSTART (and so on).
 
-(define (instance-overlaps? event begin end)
+
+
+;;; Returns the start datetime of an instance, as a zoned datetime object.
+;;; If the start already was in a timezone, than that timezone is kept, otherwise
+;;; the reference-zone is used.
+(define (instance-start-datetime reference-zone instance)
+  (typecheck reference-zone string?)
+  (typecheck instance vevent?)
+
+  (let ((s (prop1 instance 'DTSTART)))
+    (cond ((date? s) (datetime date: s tz: reference-zone))
+          ((unzoned-datetime? s) (tz s reference-zone))
+          (else                         ; guaranteed zoned datetime
+           s))))
+
+
+;; Returns the length of the event, as an unzoned datetime object.
+;; This IS timezone aware, meaning that start and end can be in any timezones
+;; (standard mentions flights, which preferably have departure and
+;; arrival time in the time of the Airport, while the duration becomes
+;; the total flight duration. For example, consider the flight:
+;; Departure: 10:45 Stockholm
+;; Arrival: 13:35 New York
+;; (datetime-difference/zoneinfo (tz #2026-01-16T13:35 "America/New_York")
+;;                               (tz #2026-01-16T10:45 "Europe/Stockholm"))
+;; ⇒ #0000-00-00T08:50:00
+;; (and NOT 2:50 as an zone-unaware thing would work)).
+;;
+;; TODO Exact value when a timezone changes (usually due to DST changeover) is currently UNDEFINED.
+(define (instance-length e)
+  (let ((s (prop1 e 'DTSTART)))
+    (cond ((prop1 e 'DURATION) => (unval duration->datetime 1))
+          ((prop1 e 'DTEND)
+           => (lambda (end)
+                (cond ((date? s) (datetime date: (date-difference end s)))
+                      ((unzoned-datetime? s)
+                       (datetime-difference end s))
+                      ((zoned-datetime? s)
+                       (datetime-difference/zoneinfo end s))
+                      (else (scm-error 'misc-error "instance-length"
+                                       "Start of event of unknown type: ~s"
+                                       (list s) #f)))))
+          (else
+           (cond ((date? s)     (datetime day: 1))
+                 ((datetime? s) (datetime))
+                 (else (scm-error 'misc-error "instance-length"
+                                  "Non date or datetime object found in DTSTART: ~s"
+                                  (list s) #f)))))))
+
+
+
+(define (instance-overlaps? reference-zone event start end)
   "Check if the event overlaps the timespan."
   (typecheck event vevent?)
-  (timespan-overlaps? (as-datetime (prop1 event 'DTSTART))
-                      (instance-end event)
-                      (as-datetime begin) (as-datetime end)))
+
+  (typecheck start zoned-datetime?)
+  (typecheck end   zoned-datetime?)
+
+  (define st (instance-start-datetime reference-zone event))
+  (define et (datetime+ st (instance-length event)))
+
+  (timespan-overlaps? ((unval zone->utc) st)
+                      ((unval zone->utc) et)
+                      ((unval zone->utc) start)
+                      ((unval zone->utc) end)))
+
 
 ;;; Check if two instances of events overlap
-(define (overlapping? event-a event-b)
+;;; Reference zone is used to resolve dates and datetimes in "local" time.
+(define (overlapping? reference-zone event-a event-b)
+  (typecheck reference-zone string?)
   (typecheck event-a vevent?)
   (typecheck event-b vevent?)
-  (timespan-overlaps? (as-datetime (prop1 event-a 'DTSTART))
-                      (instance-end event-a)
-                      (as-datetime (prop1 event-b 'DTSTART))
-                      (instance-end event-b)))
+
+  (define start-a ((unval zone->utc) (instance-start-datetime reference-zone event-a)))
+  (define start-b ((unval zone->utc) (instance-start-datetime reference-zone event-b)))
+
+  ;; NOTE this inherits the timezone considerations from instance-length
+  (define end-a (datetime+ start-a (instance-length event-a)))
+  (define end-b (datetime+ start-b (instance-length event-b)))
+
+  (timespan-overlaps? start-a end-a
+                      start-b end-b))
 
 (define (instance-zero-length? ev)
   (typecheck ev vevent?)
-  (define start (prop1 ev 'DTSTART))
-  (or (and=> (prop1 ev 'DURATION)
-             (lambda (dur) (datetime= (datetime) ((unval duration->datetime 1) dur))))
-      (and (datetime? start)
-           (or (and (not (prop1 ev 'DTEND))
-                    (not (prop1 ev 'DURATION)))
-               (and=> (prop1 ev 'DTEND)
-                      (lambda (end) (datetime= start end)))))
-      (and (date? start)
-           (and=> (prop1 ev 'DTEND)
-                  (lambda (end) (date= start end))))))
-
-(define (instance-end e)
-  (cond ((prop1 e 'DURATION)
-         => (lambda (d)
-              (datetime+ (as-datetime (prop1 e 'DTSTART))
-                         ((unval duration->datetime 1) d))))
-        ((prop1 e 'DTEND) => as-datetime)
-        (else
-         (datetime+ (as-datetime (prop1 e 'DTSTART))
-                    (instance-length e)))))
-
-(define (instance-length e)
-  (let ((s (prop1 e 'DTSTART)))
-   (cond ((prop1 e 'DURATION) => (unval duration->datetime 1))
-         ((prop1 e 'DTEND)
-          => (lambda (d)
-               (datetime-difference (as-datetime d)
-                                    (as-datetime s))))
-         (else
-          (cond ((date? s)    (datetime day: 1))
-                ((datetime? s) (datetime))
-                (else (scm-error 'misc-error "instance-length"
-                                 "Non date or datetime object found in DTSTART: ~s"
-                                 (list s) #f)))))))
+  (datetime= (datetime) (instance-length ev)))
 
 ;;
 ;; |-----|      extent of event
@@ -97,64 +129,26 @@
 ;;     |X|      part of event within that time (X)
 ;; 
 ;; Returns the length of the interval `X`, as a datetime object
-(define (instance-length/clamped start-date end-date e)
-  (typecheck start-date date?)
-  (typecheck end-date   date?)
+(define (instance-length/clamped start-dt end-dt reference-tz e)
+  (typecheck start-dt zoned-datetime?)
+  (typecheck end-dt   zoned-datetime?)
   (typecheck e vevent?)
 
-  (datetime-difference
-   (datetime-min (instance-end e)
-                 (datetime date: (date+ end-date (date day: 1))))
-   (datetime-max (as-datetime (prop1 e 'DTSTART))
-                 (datetime date: start-date))))
+  ;; TODO rewrite this into a timespan-overlap procedure, which takes
+  ;; two timespans and returns the overlap between the two
+  ;; This MUST be suitable to send to datetime-difference to get the length of the timespan.
 
-;; Returns the length of the part of @var{e} which is within the day
-;; starting at the time @var{start-of-day}.
-;; currently the second argument is a date, but should possibly be changed
-;; to a datetime to allow for more explicit TZ handling?
-(define (instance-length/day date e)
-  (typecheck date date?)
-  (typecheck e vevent?)
+  (define st (instance-start-datetime reference-tz e))
 
-  (if (not (prop1 e 'DTEND))
-      (if (date? (prop1 e 'DTSTART))
-          (time hour: 24)
-          (time))
-      (let ((start (prop1 e 'DTSTART))
-            (end (prop1 e 'DTEND)))
-        (cond [(date= date (as-date start) (as-date end))
-               (time- (as-time end) (as-time start))]
-              ;; Starts today, end in future day
-              [(date= date (as-date start))
-               (time- (time hour: 24) (as-time start))]
-              ;; Ends today, start earlier day
-              [(date= date (as-date end))
-               (as-time end)]
-              ;; start earlier date, end later date
-              [else (time hour: 24)]))))
+  (define st-utc ((unval zone->utc) st))
+  (define et-utc ((unval zone->utc) (datetime+ st (instance-length e))))
+  (define start-dt-utc ((unval zone->utc) end-dt))
+  (define end-dt-utc   ((unval zone->utc) start-dt))
 
+  (if (timespan-overlaps? start-dt-utc end-dt-utc
+                          st-utc et-utc)
+      (datetime-difference
+       (datetime-min start-dt-utc et-utc)
+       (datetime-max end-dt-utc   st-utc))
+      (datetime)))
 
-;; 22:00 - 03:00
-;; 2h för dag 1
-;; 3h för dag 2
-
-;; date, date, [sorted-stream events] → [sorted-stream events]
-;; DEPRECATED this is only useful when all events are in a single
-;; stream, which they haven't been since the introduction of data
-;; stores. See
-;; (@ (vcomponent type recurrence) expand-and-interleave-recurrences)
-;; instead
-(define (events-between start-date end-date events)
-  (typecheck events (stream-of vevent?))
-  (define (overlaps e)
-    (timespan-overlaps? start-date (date+ end-date (date day: 1))
-                        ;; TODO DURATION
-                        (prop1 e 'DTSTART) (or (prop1 e 'DTEND)
-                                               (prop1 e 'DTSTART))))
-
-  (stream-filter
-   overlaps
-   (get-stream-interval
-    overlaps
-    (lambda (e) (not (date< end-date (as-date (prop1 e 'DTSTART)))))
-    events)))

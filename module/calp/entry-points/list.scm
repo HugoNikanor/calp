@@ -27,12 +27,16 @@
                :select (entries-between))
   :export (main %summary))
 
+(define %summary "List entries in a given set of calendar stores")
+
 (define opt-spec
   `((help (single-char #\h)
           (description ,(G_ "Print this help.")))
     (href (single-char #\h)
           (value href)
-          (description ,(G_ "Explicit entry to list")))))
+          (description ,(G_ "Explicit entry to list")))
+    (tz (value #t)
+        (description ,(G_ "Timezone to resolve local datetimes in.")))))
 
 (define (format-time-interval start end)
   (typecheck start (or date? datetime?))
@@ -69,6 +73,11 @@
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt opt-spec)))
+
+  (define zone
+    (or (option-ref opts 'tz #f)
+        (getenv "TZ")
+        ((@ (datetime localtime) get-localtime))))
 
   (format #t "== ~a ==~%"
           (G_ "Configured Stores"))
@@ -125,19 +134,20 @@
          (define-values (start end)
           (match (option-ref opts '() '())
             ((start end)
-             (values (as-datetime (parse-iso-date start))
-                     (as-datetime (parse-iso-date end))))
+             (values (datetime date: (parse-iso-date start) tz: zone)
+                     (datetime date: (parse-iso-date end)   tz: zone)))
             ((start) (let ((s (parse-iso-date start))
                            (n (current-date)))
                        (if (date< s n)
-                           (values (as-datetime s) (as-datetime n))
-                           (values (as-datetime n) (as-datetime s)))))
+                           (values (datetime date: s tz: zone) (datetime date: n tz: zone))
+                           (values (datetime date: n tz: zone) (datetime date: s tz: zone)))))
             (() (let ((n (current-date)))
-                  (values (datetime date: n)
-                          (datetime date: (date+ n (date day: 1))))))))
+                  (values (datetime date: n tz: zone)
+                          (datetime date: (date+ n (date day: 1)) tz: zone))))))
 
          (format #t "~a - ~a~%"
-                 start end)
+                 (datetime->string start "~Y-~m-~d ~H:~M~z")
+                 (datetime->string end   "~Y-~m-~d ~H:~M~z"))
 
          (newline)
 
@@ -145,7 +155,7 @@
 
          (stream-for-each
           (print-entry ((@ (vcomponent config) data-stores)))
-          (apply entries-between start end
+          (apply entries-between zone start end
                  ((@ (vcomponent config) data-stores))))
 
          (define t2 (transform-time-of-day (gettimeofday)))
