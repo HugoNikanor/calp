@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 
 	char *bin_path = realpath(argv[0], NULL);
 	if (bin_path == NULL) {
-		fprintf(stderr, "%s\n", strerror(errno));
+		fprintf(stderr, "Failed finding own binary: %s\n", strerror(errno));
 		return 1;
 	}
 	char *here = dirname(bin_path);
