@@ -210,9 +210,20 @@ unix or TCP socket.<br/>
          (name (string->symbol (car remaining-options))))
 
     (cond ((memv name entry-points)
-            ((module-ref (resolve-interface `(calp entry-points ,name))
-                         'main)
-             remaining-options))
+           (dynamic-wind
+             (lambda ()
+               ;; Save current terminal name
+               (format #t "\x1b[22t")
+               ;; Set terminal name
+               (format #t "\x1b]0;calp ~a\a" name)
+               )
+             (lambda ()
+               ((module-ref (resolve-interface `(calp entry-points ,name))
+                            'main)
+                remaining-options))
+             (lambda ()
+               ;; Restore previous terminal name
+               (format #t "\x1b[23t"))))
           (else (format (current-error-port)
                         (G_ "Unsupported mode of operation: ~a~%")
                         name)
