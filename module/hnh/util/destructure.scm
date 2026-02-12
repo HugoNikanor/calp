@@ -55,14 +55,14 @@
          (cond
           #,@(for case in #'(cases ...)
                   (syntax-case case ()
-                    ((pattern body ...)
+                    ((pattern body1 body ...)
                      (let ()
                       (define-values (predicates emitted-values captures)
                         (get-expander #'pattern))
                       (with-bindings (predicates #'v)
                                      (emitted-values #'v)
                                      captures
-                                     #'(body ...))))))
+                                     #'(body1 body ...))))))
 
           ;; Run time error
           (else (scm-error 'match-error "destructure" "no match for ~s"
