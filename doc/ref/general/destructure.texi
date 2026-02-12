@@ -292,9 +292,13 @@ Note that while the preferred way to declare matchers is through the
      #`(hash-set! match-expanders (quote name)
                   (lambda (stx)
                     (syntax-case stx (name)
-                      ((name args ...) (let () declarations ...))
-                      (_ #f)))))))
+                      ((name args ...) (let () declarations ...))))))))
 @end lisp
+
+Note that @var{name} in the literals list isn't necessary, but
+prefered as an extra safeguard if bugs appear elsewhere. An
+empty @code{let} is used in favour of a @code{begin} in the body to
+allow @code{define}s in the user code.
 @end defmac
 
 @defvar match-expanders

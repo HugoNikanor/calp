@@ -27,8 +27,7 @@
      #`(hash-set! match-expanders (quote name)
                   (lambda (stx)
                     (syntax-case stx (name)
-                      ((name args ...) (let () declarations ...))
-                      (_ #f)))))))
+                      ((name args ...) (let () declarations ...))))))))
 
 (define (get-expander stx)
   (syntax-case stx ()
@@ -178,8 +177,7 @@
                ((cons* x)
                 (get-expander #'x))
                ((cons* x xs ...)
-                (get-expander #'(cons x (cons* xs ...))))
-               (_ #f))))
+                (get-expander #'(cons x (cons* xs ...)))))))
 
 
 
