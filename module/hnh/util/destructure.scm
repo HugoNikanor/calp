@@ -196,6 +196,11 @@
 ;; > (find-ellipsis #'(a b ... c)) => (values #'(a) #'b #'(c))
 ;; > (find-ellipsis #'(b ...))     => (values '() #'b '())
 ;; > (find-ellipsis #'(a ... b))   => (values '() #'a #'(b))
+;; (note that the above examples might require use of replaced
+;; ellipsis (through `find-ellipsis`)).
+;;
+;; The form `(... x)` "works", in that it's parsed as `(a x)`
+;; (e.g. `...` is treated as a variable).
 (define (find-ellipsis lst)
   ;; Destructure is NOT used in the implementation.
   ;; Partly to avoid dependency loops, and party because
