@@ -8,9 +8,3 @@
 (define-public caldav (string->symbol "urn:ietf:params:xml:ns:caldav"))
 (define-public xcal   (string->symbol "urn:ietf:params:xml:ns:icalendar-2.0"))
 (define-public calp-namespace (string->symbol "http://hugo.hornquist.se/namespaces/calp"))
-
-;;; TODO is this used?
-(define-public namespaces
-  `((d . ,webdav)
-    (c . ,caldav)
-    (x . ,xcal)))
