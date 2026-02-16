@@ -60,15 +60,15 @@
   (define t1 (transform-time-of-day (gettimeofday)))
 
   (stream-for-each
+   ;; TODO what even is this currying?
    (print-entry ((@ (vcomponent config) data-stores)))
    (apply entries-between zone start end
+          ;; TODO limit store set
           ((@ (vcomponent config) data-stores))))
 
   (define t2 (transform-time-of-day (gettimeofday)))
 
-  (format #t "Δt₁ = ~as~%" (/ (- t2 t1) (µs 1.0)))
-  
-  )
+  (format #t "Δt₁ = ~as~%" (/ (- t2 t1) (µs 1.0))))
 
 (define (print-entry store-alist)
   (match-lambda

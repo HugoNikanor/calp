@@ -20,9 +20,9 @@
   (define opts (getopt-long args (getopt-opt opt-spec)
                             stop-at-first-non-option: #t))
 
-  (awhen (option-ref opts 'help #f)
-         (format #t "TODO help goes here~%")
-         (throw 'return))
+  (when (option-ref opts 'help #f)
+    (format #t "TODO help goes here~%")
+    (throw 'return))
 
   (let* ((remaining-options* (option-ref opts '() '()))
          (remaining-options

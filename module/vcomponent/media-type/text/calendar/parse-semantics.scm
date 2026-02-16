@@ -497,6 +497,8 @@
 
             (("END" _)
              ;; TODO check that the correct object was closed
+             ;; Currently, a malformed stack can lead to
+             ;; very cryptic errors `(car '())`
              (loop (cdr lst)
                    (cons (add-child (cadr stack) (car stack))
                          (cddr stack))))

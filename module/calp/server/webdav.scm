@@ -150,17 +150,17 @@
                               root: ((xml webdav 'propfind)
                                      ((xml webdav 'allprop))))))))
 
-              (values (build-response
-                       code: 207
-                       reason-phrase: (http-status-phrase 207)
-                       headers: '((content-type . (application/xml))))
-                      (apply
-                       (xml webdav 'multistatus)
-                       (for (href . resource) in requested-resources
-                            (apply (xml webdav 'response)
-                                   ((xml webdav 'href) (href->string href))
-                                   (map propstat->namespaced-sxml
-                                        (exec-propfind property-request resource))))))))
+              (values
+               (build-response code: 207
+                               reason-phrase: (http-status-phrase 207)
+                               headers: '((content-type . (application/xml))))
+               (apply
+                (xml webdav 'multistatus)
+                (for (href . resource) in requested-resources
+                     (apply (xml webdav 'response)
+                            ((xml webdav 'href) (href->string href))
+                            (map propstat->namespaced-sxml
+                                 (exec-propfind property-request resource))))))))
 
         (else (values (build-response code: 404)
                       "Failed finding child"))))
@@ -480,7 +480,7 @@
                                  code: 500
                                  headers: '((content-type . (text/plain)))))
                           (errmsg (if proc
-                                      (format #f "Error in ~a: ~?~%" proc fmt args)
+                                      (format #f "~a error in ~a: ~?~%" err proc fmt args)
                                       (format #f "~?~%" fmt args))))
                       (log-table-add! 'msg errmsg)
                       (values head errmsg)))

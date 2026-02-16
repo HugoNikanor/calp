@@ -21,6 +21,7 @@
 (define (parse-content-lines lst)
   (map parse-content-line lst))
 
+;;; TODO this fails with bad error messages on empty input
 (define* (icalendar->vcomponent port key: (encoding "UTF-8"))
   (-> (get-bytevector-all port)
       (bytevector->unfolded-lines encoding: encoding filename: (port-filename port))

@@ -12,13 +12,16 @@
            from-unknown from-unknown*
            unknown-type unknown-type*))
 
-(define-type (unknown constructor: (lambda (constructor typecheck)
-                                     (lambda* (value optional: type)
-                                       (typecheck value type)
-                                       (constructor value type)))
-                      serializer: (lambda (o) `(unknown ,(serialize (from-unknown o))
-                                                   ,@(when (unknown-type o)
-                                                       (list
-                                                        (serialize (unknown-type o)))))))
+(define-type
+  (unknown constructor:
+           (lambda (constructor typecheck)
+             (lambda* (value optional: type)
+               (typecheck value type)
+               (constructor value type)))
+           serializer:
+           (lambda (o) `(unknown ,(serialize (from-unknown o))
+                            ,@(when (unknown-type o)
+                                (list
+                                 (serialize (unknown-type o)))))))
   (from-unknown type: string?)
   (unknown-type type: (or string? false?)))

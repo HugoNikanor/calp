@@ -19,6 +19,8 @@
 
 (define-public %category 'application)
 
+;;; TODO eventually merge this entry-point into the server entry point
+
 (define %summary
   (G_ "--config <i>file</i>, starts the sample webdav server"))
 

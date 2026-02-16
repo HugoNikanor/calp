@@ -156,10 +156,10 @@
          ;; extra needed since we support "virtual" content on GET for
          ;; collections.
          (throw 'http 405))
-   ((bytevector? data)
-    (call-with-output-file (path self)
-      (lambda (port) (put-bytevector port data)))
-    #f)
+        ((bytevector? data)
+         (call-with-output-file (path self)
+           (lambda (port) (put-bytevector port data)))
+         #f)
         ((string? data)
          (call-with-output-file (path self)
            (lambda (port) (put-string port data)))

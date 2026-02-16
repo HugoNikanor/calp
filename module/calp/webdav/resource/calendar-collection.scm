@@ -172,7 +172,7 @@
   (propstat 200
             (list
              ((xml caldav 'supported-calendar-component-set)
-              ;; TODO this depends on component.
+              ;; TODO this depends on store
               ;; query supported component set per store
               ((xml caldav 'comp `((name . "VEVENT"))))))))
 

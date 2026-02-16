@@ -12,14 +12,18 @@
   :export (duration
            duration?
 
+           duration-sign
+
            string->duration
            duration->string
 
            duration->datetime
 
+           ;; NOTE Should the -week and -datetime stuff actually be
+           ;; exported? They require extra care, since the *apparent*
+           ;; duration type is a union of these two.
            duration-week duration-week?
            duration-datetime duration-datetime?
-           duration-sign
 
            duration-week-count duration-week-count*
            duration-day        duration-day*

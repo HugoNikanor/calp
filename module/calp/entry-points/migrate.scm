@@ -105,7 +105,7 @@
   (define entries (list-entries in-store))
   (define entry-count (length entries))
   (for (idx . (href . entry)) in (enumerate entries)
-       (format (current-error-port) "Migrating ~a/~a ~s~%" idx entry-count href)
+       (format (current-error-port) "Migrating ~a/~a ~s~%" (1+ idx) entry-count href)
        (put-event! out-store href entry))
 
   (flush! out-store)
