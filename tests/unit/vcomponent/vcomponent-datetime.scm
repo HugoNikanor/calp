@@ -72,18 +72,6 @@
      (vevent summary: "B"
              dtstart: (datetime year: 2020 month: apr day: 1 hour: 10)))))
 
-(test-group "instance-zero-length?"
-  (test-assert (not (instance-zero-length? (vevent dtstart: (date)))))
-  (test-assert (instance-zero-length?
-                (vevent dtstart: (datetime year: 1 month: 2 day: 3)
-                        duration: ((@ (vcomponent type duration) string->duration) "PT0H"))))
-  (test-assert (instance-zero-length? (vevent dtstart: (datetime))))
-  (test-assert
-      (let ((now (datetime year: 1 month: 2 day: 3)))
-        (instance-zero-length? (vevent dtstart: now dtend: now))))
-  ;; TODO tests with start and end in different timezones
-  ;; TODO tests with non-zero length events
-  )
 
 (test-group "instance-length"
   (test-equal "Datetime, with DTEND"

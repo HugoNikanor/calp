@@ -20,7 +20,6 @@
   :export (
            instance-overlaps?
            overlapping?
-           instance-zero-length?
 
            instance-start-datetime
            instance-length
@@ -117,10 +116,6 @@
 
   (timespan-overlaps? start-a end-a
                       start-b end-b))
-
-(define (instance-zero-length? ev)
-  (typecheck ev vevent?)
-  (datetime= (datetime) (instance-length ev)))
 
 ;;
 ;; |-----|      extent of event

@@ -13,7 +13,6 @@
   :use-module ((vcomponent data-stores common) :select (calendar-data-store?))
   :use-module ((vcomponent datetime)
                :select (instance-overlaps?
-                        instance-zero-length?
                         instance-length
                         instance-length/clamped
                         instance-start-datetime
@@ -261,7 +260,9 @@
    (list-ref entry 1)
    (list-ref entry 2)
    `((class
-       ,(when (instance-zero-length? ev) " zero-length")
+       ,(when (datetime= (datetime)
+                         (instance-length ev))
+          " zero-length")
        ,(when event-continued? " continued")
        ,(when (datetime</zoneinfo
                (datetime date: (date+ day (date day: 1)) tz: reference-zone)
