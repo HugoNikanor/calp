@@ -65,7 +65,6 @@ END:VCALENDAR
         <D:getetag>"fffff-abcd3"</D:getetag>
         <C:calendar-data>BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Example Corp.//CalDAV Client//EN
 BEGIN:VTIMEZONE
 LAST-MODIFIED:20040110T032845Z
 TZID:US/Eastern

@@ -11,27 +11,28 @@ Content-Length: 0
     <D:propstat>
       <D:prop>
         <D:getetag>"fffff-abcd2"</D:getetag>
-        <C:calendar-data>BEGIN:VCALENDAR
+                   <C:calendar-data>BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Example Corp.//CalDAV Client//EN
 BEGIN:VEVENT
 DTSTAMP:20060206T001121Z
-DTSTART:20060103T170000
+DTSTART:20060103T170000Z
 DURATION:PT1H
-RECURRENCE-ID:20060103T170000
+RECURRENCE-ID:20060103T170000Z
 SUMMARY:Event #2
 UID:00959BC664CA650E933C892C@example.com
 END:VEVENT
 BEGIN:VEVENT
 DTSTAMP:20060206T001121Z
-DTSTART:20060104T190000
+DTSTART:20060104T190000Z
 DURATION:PT1H
-RECURRENCE-ID:20060104T170000
+RECURRENCE-ID:20060104T170000Z
 SUMMARY:Event #2 bis
 UID:00959BC664CA650E933C892C@example.com
 END:VEVENT
 END:VCALENDAR
 </C:calendar-data>
+
       </D:prop>
       <D:status>HTTP/1.1 200 OK</D:status>
     </D:propstat>
@@ -41,14 +42,14 @@ END:VCALENDAR
     <D:propstat>
       <D:prop>
         <D:getetag>"fffff-abcd3"</D:getetag>
-        <C:calendar-data>BEGIN:VCALENDAR
+                   <C:calendar-data>BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Example Corp.//CalDAV Client//EN
 BEGIN:VEVENT
 ATTENDEE;PARTSTAT=ACCEPTED;ROLE=CHAIR:mailto:cyrus@example.com
 ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:lisa@example.com
 DTSTAMP:20060206T001220Z
-DTSTART:20060104T150000
+DTSTART:20060104T150000Z
 DURATION:PT1H
 LAST-MODIFIED:20060206T001330Z
 ORGANIZER:mailto:cyrus@example.com
@@ -60,6 +61,7 @@ X-ABC-GUID:E1CX5Dr-0007ym-Hz@example.com
 END:VEVENT
 END:VCALENDAR
 </C:calendar-data>
+
       </D:prop>
       <D:status>HTTP/1.1 200 OK</D:status>
     </D:propstat>

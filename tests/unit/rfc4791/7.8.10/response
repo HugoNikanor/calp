@@ -4,7 +4,8 @@ Content-Type: application/xml; charset="utf-8"
 Content-Length: 0
 
 <?xml version="1.0" encoding="utf-8" ?>
-<D:error>
+<D:error xmlns:D="DAV:"
+         xmlns:C="urn:ietf:params:xml:ns:caldav" >
   <C:supported-filter>
     <C:prop-filter name="X-ABC-GUID"/>
   </C:supported-filter>
