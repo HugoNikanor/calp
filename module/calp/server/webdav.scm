@@ -29,6 +29,7 @@
   :use-module (calp webdav propfind)
   :use-module (calp webdav proppatch)
   :use-module (calp webdav util)
+  :use-module ((rnrs base) :select (assert) :version (6))
   :export (
            run-propfind
            run-proppatch
@@ -99,8 +100,7 @@
 
 (declare-header! "Overwrite"
   (lambda (str)
-    ;; TODO assert isn't a thing
-    ;; (assert (= 1 (string-length str)))
+    (assert (= 1 (string-length str)))
     (case (string-ref str 0)
       ((#\F) #f)
       ((#\T) #t)
