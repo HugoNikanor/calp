@@ -22,9 +22,9 @@
 ;;; TODO RFC 5545 Specifies that an event lies in the range [start, end). Write explicit tests for this.
 
 
-(test-group "overlapping?"
+(test-group "instances-overlap?"
   (test-assert "date, datetime"
-    (overlapping?
+    (instances-overlap?
      "UTC"
      (vevent summary: "A"
              dtstart: (date year: 2020 month: jan day: 1)
@@ -34,7 +34,7 @@
              dtend:   (datetime year: 2020 month: apr day: 1 hour: 12))))
 
   (test-assert "date, date"
-    (overlapping?
+    (instances-overlap?
      "UTC"
      (vevent summary: "A"
              dtstart: (date year: 2020 month: jan day: 1)
@@ -45,7 +45,7 @@
 
   (test-assert "datetime, date"
     (not
-     (overlapping?
+     (instances-overlap?
       "UTC"
       (vevent summary: "A"
               dtstart: (datetime year: 2020 month: apr day: 1 hour: 10)
@@ -55,7 +55,7 @@
               dtend:   (date year: 2020 month: feb day: 10)))))
 
   (test-assert "datetime, datetime"
-    (overlapping?
+    (instances-overlap?
      "UTC"
      (vevent summary: "A"
              dtstart: (datetime year: 2020 month: apr day: 1 hour: 10)
@@ -65,7 +65,7 @@
              dtend:   (datetime year: 2020 month: apr day: 1 hour: 13))))
 
   (test-assert "Without dtend"
-    (overlapping?
+    (instances-overlap?
      "UTC"
      (vevent summary: "A"
              dtstart: (date year: 2020 month: apr day: 1))

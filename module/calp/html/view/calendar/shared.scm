@@ -7,7 +7,7 @@
   :use-module ((vcomponent datetime)
                :select (instance-length
                         instance-start-datetime
-                        overlapping?
+                        instances-overlap?
                         instance-length/clamped))
   :use-module (datetime)
   :use-module (calp html config)
@@ -40,7 +40,7 @@
 
   ;; @var{x} is how for left in the container we are.
   (let inner ((x 0)
-              (tree (make-tree (lambda (a b) (overlapping? reference-zone a b))
+              (tree (make-tree (lambda (a b) (instances-overlap? reference-zone a b))
                                (sort* lst datetime> event-length-key))))
     (unless (null? tree)
       (let ((w (/ (- 1 x)

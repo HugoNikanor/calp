@@ -19,7 +19,7 @@
 
   :export (
            instance-overlaps?
-           overlapping?
+           instances-overlap?
 
            instance-start-datetime
            instance-length
@@ -102,7 +102,7 @@
 
 ;;; Check if two instances of events overlap
 ;;; Reference zone is used to resolve dates and datetimes in "local" time.
-(define (overlapping? reference-zone event-a event-b)
+(define (instances-overlap? reference-zone event-a event-b)
   (typecheck reference-zone string?)
   (typecheck event-a vevent?)
   (typecheck event-b vevent?)
