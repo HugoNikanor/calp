@@ -77,93 +77,6 @@ middle of the tree.
 @end example
 @end defun
 
-@subsection Resource Content
-
-@deftp {GOOPS method} content resource
-Retrieve the content of a given resource.
-Each implementation @emph{must} implement this for non-collection
-resources, and @emph{may} implement it for collection resources, with
-any content they want.
-
-A default implementation exists, which return http errors with code
-403 for collections, and 500 for non-collections.
-
-See also §9.4 of RFC 4918.
-@end deftp
-
-@deftp {GOOPS method} set-content! resource content [headers='()]
-Get and set the content of a given resource. @var{content}s type can
-be anything that the given resource type accepts.
-
-If it returns without error, it @emph{must} either return @code{#f},
-or a string which is the etag for the newly set content. This tag
-@emph{must} include quotation marks (meaning that it @emph{must} match
-the regex @code{(W/)?"[^"]*"}), @emph{should not} be changed if the
-content set is identical to the content already present, and should be
-strong if possible.
-
-The third option is the headers of the HTTP request used to set this
-content. It should be used to interpret the data, for example a
-calendar resource would only accept calendar content. If the given
-content is in any way unacceptable, an http exception should be thrown.
-
-A default implementation exists, which simply throws an http error
-with code 405. Custom implementantion may want to allow content on
-non-collection resources, but may still fail (with http 405) on
-collections.
-@end deftp
-
-@subsection Resource Data
-These methods provide general data about the resource, and are used as
-the basis for their corresponding properties, and for HTTP GET requests.
-Each method may return @code{#f} if no suitable value can be given for
-the resource, in which case the property will be omitted from both GET
-and PROPFIND requests. For general information about accessing
-properties, see @ref{Accessing Properties}.
-
-Unless otherwise noted, the default implementation for all of these
-simply returns @code{#f}.
-
-@deftp {GOOPS method} creation-date resource
-Must return a @code{datetime} object.
-@end deftp
-
-@deftp {GOOPS method} content-language resource
-Should return a string containing a language tag, as defined in §8.5.1
-in RFC 9110 (HTTP Semantics).
-@end deftp
-
-@deftp {GOOPS method} content-length resource
-An exact integer specifying the byte length of the content.
-
-If the resource has content, and the content returned is a bytevector,
-then the default implementation returns the result of
-@code{bytevector-length}, or @code{#f} otherwise.
-@end deftp
-
-@deftp {GOOPS method} content-type resource
-Should return a string containing a media type according to §8.3.1 of
-RFC 9110. For example @code{application/octet-stream}.
-@end deftp
-
-@deftp {GOOPS method} display-name resource
-Retrieve a human readable name of the resource.
-@end deftp
-
-@deftp {GOOPS method} etag resource
-Return the etag for the content of this resource. If a string is
-returned, then it @emph{must} contain a valid etag, including
-quotation marks.
-
-@c Wouldn't etag objects be a good idea?
-@c (define-type (etag) (tag type: string?) (weak? type: boolean? default: #f)
-@c (define (etag->string et) (format #f "~a\"~a\"" (if (weak? et) @c "W/" "") (tag et)))
-@end deftp
-
-@deftp {GOOPS method} last-modified resource
-Must return a @code{datetime} object.
-@end deftp
-
 @subsection Creating Resources
 
 These methods create new resources as direct children of the provided
@@ -362,3 +275,6 @@ proper context exist. Even implementations not intending to support
 mounting are encouraged to implement an override containing better
 error messages.
 @end deftp
+
+@include webdav/resource/data.texi
+@include webdav/resource/content.texi

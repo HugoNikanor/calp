@@ -1,0 +1,36 @@
+@node WebDAV Resoruce Content
+@subsection Resource Content
+
+@deftp {GOOPS method} content resource
+Retrieve the content of a given resource.
+Each implementation @emph{must} implement this for non-collection
+resources, and @emph{may} implement it for collection resources, with
+any content they want.
+
+A default implementation exists, which return http errors with code
+403 for collections, and 500 for non-collections.
+
+See also §9.4 of RFC 4918.
+@end deftp
+
+@deftp {GOOPS method} set-content! resource content [headers='()]
+Get and set the content of a given resource. @var{content}s type can
+be anything that the given resource type accepts.
+
+If it returns without error, it @emph{must} either return @code{#f},
+or a string which is the etag for the newly set content. This tag
+@emph{must} include quotation marks (meaning that it @emph{must} match
+the regex @code{(W/)?"[^"]*"}), @emph{should not} be changed if the
+content set is identical to the content already present, and should be
+strong if possible.
+
+The third option is the headers of the HTTP request used to set this
+content. It should be used to interpret the data, for example a
+calendar resource would only accept calendar content. If the given
+content is in any way unacceptable, an http exception should be thrown.
+
+A default implementation exists, which simply throws an http error
+with code 405. Custom implementantion may want to allow content on
+non-collection resources, but may still fail (with http 405) on
+collections.
+@end deftp
