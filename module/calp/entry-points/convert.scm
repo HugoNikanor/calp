@@ -44,17 +44,6 @@
       xml->sxml sxml->ansi-text
       display))
 
-(define (parse-media-type type subtype)
-  (module-ref
-   (resolve-interface
-    `(vcomponent media-type
-                 ,(string->symbol type)
-                 ,(string->symbol
-                   (regexp-substitute/global
-                    #f "[.]" subtype
-                    'pre "-" 'post))))
-   'format))
-
 (define (main args)
   (define opts (getopt-long args (getopt-opt options)))
 
@@ -68,11 +57,9 @@
   (define intype (option-ref opts 'from "text/calendar"))
   (define outtype (option-ref opts 'to "text/calendar"))
 
-  (define input-format
-    (apply parse-media-type (string-split intype #\/)))
+  (define input-format (resolve-media-type intype))
 
-  (define output-format
-    (apply parse-media-type (string-split outtype #\/)))
+  (define output-format (resolve-media-type outtype))
 
   ;; TODO handle - as substitude for stdin and stdout
   (let ((component

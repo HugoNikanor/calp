@@ -130,16 +130,9 @@
   (typecheck path string?)
   (typecheck media string?)
 
-  (define-values (media-type media-parameters)
-    (car+cdr ((@ (web http) parse-header) 'content-type media)))
-
-  (define media-module
-    (map string->symbol (string-split (symbol->string media-type) #\/)))
-
   (make <file-data-store>
     path: path
-    media: (module-ref (resolve-interface `(vcomponent media-type ,@media-module))
-                       'format)))
+    media: (resolve-media-type media)))
 
 
 (define-method (store-uri (store <file-data-store>))
