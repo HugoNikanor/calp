@@ -42,6 +42,8 @@
            run-report
 
            webdav-handler
+
+           current-log-port
            ))
 
 
@@ -110,6 +112,11 @@
 
 ;;; TODO
 ;; (declare-header! "Timeout")
+
+
+
+;;; TODO integrate this into a true log system
+(define current-log-port (make-parameter (current-error-port)))
 
 
 
@@ -391,10 +398,10 @@
 
 
 (define ((webdav-handler root-resource) request request-body)
-  (format (current-error-port) "> ~a ~a~%> Headers:~%"
+  (format (current-log-port) "> ~a ~a~%> Headers:~%"
           (request-method request) (uri->string (request-uri request)))
   (for (header . value) in (request-headers request)
-       (format (current-error-port) ">     ~a: ~s~%" header value))
+       (format (current-log-port) ">     ~a: ~s~%" header value))
 
   (define href (-> request request-uri uri-path
                    (uri-decode decode-plus-to-space?: #f)
@@ -488,7 +495,7 @@
    'response-code   (response-code response)
    'response-phrase (response-reason-phrase response))
 
-  (emit-log! (current-error-port))
+  (emit-log! (current-log-port))
 
   ;; TODO
   ;; if no content type in response headers, insert one:
