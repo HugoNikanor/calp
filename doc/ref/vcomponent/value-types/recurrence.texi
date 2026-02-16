@@ -1,0 +1,52 @@
+@node Recurrence iCalendar Type
+@subsubsection Recurrence iCalendar Type
+
+@defun recur-rule
+@end defun
+
+@defun recur-rule? x
+@end defun
+
+@defun until
+@defunx recur-count
+@defunx interval
+@defunx bysecond
+@defunx byminute
+@defunx byhour
+@defunx byday
+@defunx bymonthday
+@defunx byyearday
+@defunx byweekno
+@defunx bymonth
+@defunx bysetpos
+@defunx wkst
+@end defun
+
+@deftp {Lens} until*
+@deftpx {Lens} recur-count*
+@deftpx {Lens} interval*
+@deftpx {Lens} bysecond*
+@deftpx {Lens} byminute*
+@deftpx {Lens} byhour*
+@deftpx {Lens} byday*
+@deftpx {Lens} bymonthday*
+@deftpx {Lens} byyearday*
+@deftpx {Lens} byweekno*
+@deftpx {Lens} bymonth*
+@deftpx {Lens} bysetpos*
+@deftpx {Lens} wkst*
+@end deftp
+
+@defun generate-recurrence-set
+@end defun
+
+@defun expand-and-interleave-recurrences
+@end defun
+
+@defun recurring? vcalendar
+Is the given vcalendar object recurring? The given object @emph{must}
+be a vcalendar object containing one logical event.
+The event is considered repeating if it has more than one vevent
+component, or if any of the events has an RRULE or RDATE property.
+@end defun
+

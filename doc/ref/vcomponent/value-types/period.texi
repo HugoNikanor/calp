@@ -1,0 +1,17 @@
+@node Period iCalendar Type
+@subsubsection Period iCalendar Type
+
+@defun period [#:start] [#:end]
+@end defun
+
+@defun period-start p [start]
+@defunx period-end p [end]
+@end defun
+
+@deftp {Lens} period-start*
+@deftpx {Lens} period-end*
+@end deftp
+
+@defun period->utc-datetimes
+TODO
+@end defun

@@ -1,0 +1,18 @@
+@node Version iCalendar Type
+@subsubsection Version iCalendar Type
+
+@defun vcalendar-version [#:min=#f] [#:max]
+A @code{vcalendar-} prefixes are added to not collide with the
+built-in @code{version} command.
+@end defun
+
+@defun version-min version [min]
+@defunx version-max version [max]
+@end defun
+
+@deftp {Lens} version-min*
+@deftpx {Lens} version-max*
+@end deftp
+
+@defun vcalendar-version->string v
+@end defun

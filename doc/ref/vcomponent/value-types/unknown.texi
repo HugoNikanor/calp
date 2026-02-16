@@ -1,0 +1,27 @@
+@node Unknown iCalendar Type
+@subsubsection Unknown iCalendar Type
+
+Guile type used to wrap iCalendar fields of unknown type. It's both
+used for non-supported fields without a VALUE attribute, and when an
+unknown VALUE attribute is provided (xCal and jCal encode value type
+in a dedicated field, and is used instead of the VALUE attribute there).
+
+@defun unknown value [type]
+Type @var{type} parameter should contain the literal typename as
+provided in the source stream, in all upper-case.
+
+jCal introduces the VALUE type ``UNKNOWN''. That value @emph{must not}
+be placed in this slot, since it would leak out, probably ending up in
+the VALUE attribute in a produced iCalendar stream.
+@end defun
+
+@defun unknown? x
+@end defun
+
+@defun from-unknown unknown
+@defunx unknown-type unknown
+@end defun
+
+@deftp {Lens} from-unknown*
+@deftpx {Lens} unknown-type*
+@end deftp

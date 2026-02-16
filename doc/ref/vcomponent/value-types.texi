@@ -91,3 +91,12 @@ TODO
 @deftp {iCalendar type} VERSION
 TODO
 @end deftp
+
+@include vcomponent/value-types/duration.texi
+@include vcomponent/value-types/geo.texi
+@include vcomponent/value-types/period.texi
+@include vcomponent/value-types/recurrence.texi
+@include vcomponent/value-types/request-status.texi
+@include vcomponent/value-types/version.texi
+
+@include vcomponent/value-types/unknown.texi

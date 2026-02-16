@@ -1,0 +1,18 @@
+@node Request Status iCalendar Type
+@subsubsection Request Status iCalendar Type
+
+@defun request-status [#:statcode] [#:statdesc] [#:extdata=#f]
+@end defun
+
+@defun request-status? x
+@end defun
+
+@defun statcode rs [code]
+@defunx statdesc rs [desc]
+@defunx extdata rs [data]
+@end defun
+
+@deftp {Lens} statcode*
+@deftpx {Lens} statdesc*
+@deftpx {Lens} extdata*
+@end deftp

@@ -1,0 +1,26 @@
+@node Duration iCalendar Type
+@subsubsection Duration iCalendar Type
+
+@defun duration [#:sign='+] [#:week] [#:day] [#:time]
+@end defun
+
+@defun duration? x
+@end defun
+
+@defun duration-sign dur
+@end defun
+
+@defun string->duration str
+@defunx duration->string dur
+@end defun
+
+@defun duration->datetime dur
+Returns two values. The direction of the duration (the symbol @code{+}
+or @code{-}), alongside with an unzoned datetime matching the length.
+
+The weird return type is since datetimes can only be positive.
+@end defun
+
+There also exists a number of exported procedures for directly
+accessing the individual fields. However, these should be used with
+care since duration is the union of two different types.

@@ -1,0 +1,16 @@
+@node Geo iCalendar Type
+@subsubsection Geo iCalendar Type
+
+@defun geo [#:x] [#:y]
+@end defun
+
+@defun geo? x
+@end defun
+
+@defun geo-latitude g [y]
+@defunx geo-longitude g [x]
+@end defun
+
+@deftp {Lens} geo-latitude*
+@deftpx {Lens} geo-longitude*
+@end deftp
