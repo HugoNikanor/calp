@@ -314,7 +314,7 @@
                              (with-output-to-string
                                (lambda ()
                                  (display "#.")
-                                 ((@ (ice-9 pretty-print) pretty-print)
+                                 ((@ (hnh util pprint) pretty-print)
                                   (serialize o)
                                   width: (pprint-width))))
                              (string-drop-right 1)
