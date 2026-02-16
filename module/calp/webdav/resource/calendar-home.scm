@@ -25,7 +25,7 @@
 
 (define-method (collection? (_ <calendar-home-resource>)) #t)
 
-(define-method (content-length (_ <calendar-home-resource>))
+(define-method (content-length (_r <calendar-home-resource>) _)
   0)
 
 ;;; Radicale has Allow: MKCALENDAR and DAV: calendar-access on *all* resources.

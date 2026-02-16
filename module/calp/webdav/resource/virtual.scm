@@ -101,7 +101,7 @@
   #f)
 
 
-(define-method (content-type (self <virtual-resource>))
+(define-method (content-type (self <virtual-resource>) _)
   (content-type* self))
 
 (define-method (set-displayname! (self <virtual-resource>) value)
@@ -110,7 +110,7 @@
 
 (define-method (set-isvirtual! (self <virtual-resource>) _) (throw 'protected-property))
 (define-method (remove-isvirtual! (_ <virtual-resource>)) (throw 'protected-property))
-(define-method (isvirtual (self <virtual-resource>))
+(define-method (isvirtual (self <virtual-resource>) _)
   (propstat 200 (list ((xml virtual-ns 'isvirtual) "true"))))
 
 

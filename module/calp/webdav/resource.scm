@@ -100,6 +100,8 @@
 (define-generic children)
 (define-generic collection?)
 
+(define-method (content (resource <resource>))
+  (content resource '()))
 (define-method (content (resource <resource>) headers)
   (if (collection? resource)
       (throw 'http 403)
@@ -155,7 +157,8 @@
   (typecheck xml-el xml-element?)
 
   (cond ((lookup-live-property resource xml-el)
-         => (lambda (prop) ((property-getter prop) resource)))
+         ;; TODO properly update documentation that property-getters now MUST accept the property xml element
+         => (lambda (prop) ((property-getter prop) resource xml-el)))
         (else (propstat 404 (list xml-el)))))
 
 ;; Return a promise which performs the set operation.
@@ -213,7 +216,7 @@
          propstat-200? => identity)
         (else (get-live-property resource xml-tag))))
 
-(define-method (resource-class (c <resource>))
+(define-method (resource-class (c <resource>) _)
   (propstat 200 (list ((xml calp-namespace 'resource-class)
                        (let ((name (symbol->string (class-name (class-of c)))))
                         (cond ((string-match "<([^>]*)>" name)
@@ -246,7 +249,7 @@
 
 (define-method (creation-date (_ <resource>)) #f)
 
-(define-method (creationdate (self <resource>))
+(define-method (creationdate (self <resource>) _)
   (cond ((creation-date self)
          => (lambda (cd)
               (propstat
@@ -259,7 +262,7 @@
 
 (define-method (display-name (_ <resource>)) #f)
 
-(define-method (displayname (self <resource>))
+(define-method (displayname (self <resource>) _)
   (cond ((display-name self)
          => (lambda (name) (propstat 200 (list ((xml webdav 'displayname)
                                            name)))))
@@ -272,7 +275,7 @@
 
 (define-method (set-getcontentlanguage! (_ <resource>) v) (throw 'protected-property))
 (define-method (remove-getcontentlanguage! (_ <resource>)) (throw 'protected-property))
-(define-method (getcontentlanguage (self <resource>))
+(define-method (getcontentlanguage (self <resource>) _)
   (cond ((content-language self)
          => (lambda (lang) (propstat 200 (list ((xml webdav 'getcontentlanguage) lang)))))
         (else (propstat 404 (list ((xml webdav 'getcontentlanguage)))))))
@@ -280,7 +283,7 @@
 
 (define-method (remove-getcontentlength! (self <resource>)) (throw 'protected-property))
 (define-method (set-getcontentlength! (self <resource>) _) (throw 'protected-property))
-(define-method (getcontentlength (self <resource>))
+(define-method (getcontentlength (self <resource>) _)
   (propstat 200
             (list
              ((xml webdav 'getcontentlength)
@@ -292,8 +295,8 @@
 
 (define-method (remove-getcontenttype! (self <resource>)) (throw 'protected-property))
 (define-method (set-getcontenttype! (self <resource>) _) (throw 'protected-property))
-(define-method (getcontenttype (self <resource>))
-  (cond ((content-type self)
+(define-method (getcontenttype (self <resource>) _)
+  (cond ((content-type self '())
          => (lambda (type)
               (propstat 200 (list ((xml webdav 'getcontenttype) type)))))
         (else
@@ -304,7 +307,7 @@
 
 (define (remove-getetag! _) (throw 'protected-property))
 (define (set-getetag! r _) (throw 'protected-property))
-(define-method (getetag (self <resource>))
+(define-method (getetag (self <resource>) _)
   (cond ((etag self)
          => (lambda (tag)
               (propstat 200 (list ((xml webdav 'getetag) tag)))))
@@ -316,7 +319,7 @@
 
 (define-method (remove-getlastmodified! (self <resource>) _) (throw 'protected-property))
 (define-method (set-getlastmodified! (self <resource>) _) (throw 'protected-property))
-(define-method (getlastmodified (self <resource>))
+(define-method (getlastmodified (self <resource>) _)
   (cond ((last-modified self)
          => (lambda (dt)
               (propstat
@@ -327,13 +330,13 @@
 
 (define (remove-lockdiscovery! _) (throw 'protected-property))
 (define (set-lockdiscovery! r _) (throw 'protected-property))
-(define-method (lockdiscovery (self <resource>))
+(define-method (lockdiscovery (self <resource>) _)
   (propstat #; 200 404 (list ((xml webdav 'lockdiscovery)))))
 
 
 (define-method (remove-resourcetype! (self <resource>)) (throw 'protected-property))
 (define-method (set-resourcetype! (self <resource>) _) (throw 'protected-property))
-(define-method (resourcetype (self <resource>))
+(define-method (resourcetype (self <resource>) _)
   (propstat 200 (list (apply (xml webdav 'resourcetype)
                              (when (collection? self)
                                (list ((xml webdav 'collection))))))))
@@ -341,7 +344,7 @@
 
 (define (remove-supportedlock! _) (throw 'protected-property))
 (define (set-supportedlock! r _) (throw 'protected-property))
-(define-method (supportedlock (self <resource>))
+(define-method (supportedlock (self <resource>) _)
   (propstat 200 (list ((xml webdav 'supportedlock)))))
 
 ;; Dirty macro to quickly generate  live property definitions

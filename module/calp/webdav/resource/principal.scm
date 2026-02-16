@@ -40,7 +40,7 @@
 ;;   '())
 
 ;;; Place where MKCALENDAR is supported
-(define-method (calendar-home-set (_ <principal-resource>))
+(define-method (calendar-home-set (_r <principal-resource>) _)
   (propstat
    200
    (list

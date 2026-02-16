@@ -135,7 +135,7 @@
 
 ;;; TODO color property?
 
-(define-method (calendar-description (resource <calendar-collection-resource>))
+(define-method (calendar-description (resource <calendar-collection-resource>) _)
   ;; NOTE xml:lang MUST be preserved
   (cond ((store-description (data-store resource))
          => (lambda (desc)
@@ -151,7 +151,7 @@
   (remove-store-description! (data-store resource)))
 
 ;;; TODO these should support a content-type parameter on the XML object, to allow xCal usage
-(define-method (calendar-timezone (resource <calendar-collection-resource>))
+(define-method (calendar-timezone (resource <calendar-collection-resource>) _)
   (cond ((store-calendar-timezone (data-store resource))
          => (lambda (tz)
               (propstat
@@ -168,7 +168,7 @@
 (define-method (remove-calendar-timezone! (resource <calendar-collection-resource>))
   (throw 'http 501))
 
-(define-method (supported-calendar-component-set (_ <calendar-collection-resource>))
+(define-method (supported-calendar-component-set (_r <calendar-collection-resource>) _)
   (propstat 200
             (list
              ((xml caldav 'supported-calendar-component-set)
@@ -195,6 +195,7 @@
                            "application/calendar+xml"
                            "application/calendar+json"
                            ))))))
+
 (define-method (set-supported-calendar-data! (r <calendar-collection-resource>) _)
   (throw 'protected-property))
 (define-method (remove-supported-calendar-data! (_ <calendar-collection-resource>))

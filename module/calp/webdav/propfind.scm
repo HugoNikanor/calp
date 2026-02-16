@@ -46,7 +46,15 @@
 (define (propfind-most-live-properties resource)
   (typecheck resource resource?)
   (filter (lambda (p) (!= 404 (propstat-status-code p)))
-          (map (lambda (p) ((property-getter (cdr p)) resource))
+          (map (lambda (p) ((property-getter (cdr p))
+                       ;; All live property getters gets the original XML tag
+                       ;; passed to them, in case any extension want to make
+                       ;; use of its inner content or attributes. In this case
+                       ;; we lack an original xml-tag, but we also know that
+                       ;; none of the live properties shown in an <allprop />
+                       ;; uses that data, meaning that we can pass a dummp object
+                       ;; instead. Numbers at end is for easier grep:ing.
+                       resource 'dummy-object-do-not-use-1469))
                webdav-properties)))
 
 ;; Returns a list of <propstat> objects.
