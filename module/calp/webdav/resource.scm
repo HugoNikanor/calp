@@ -291,7 +291,7 @@
                (content-length self))))))
 
 
-(define-method (content-type (_ <resource>)) #f)
+(define-method (content-type (_ <resource>) headers) #f)
 
 (define-method (remove-getcontenttype! (self <resource>)) (throw 'protected-property))
 (define-method (set-getcontenttype! (self <resource>) _) (throw 'protected-property))

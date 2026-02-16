@@ -28,9 +28,16 @@ then the default implementation returns the result of
 @code{bytevector-length}, or @code{#f} otherwise.
 @end deftp
 
-@deftp {GOOPS method} content-type resource
+@deftp {GOOPS method} content-type resource headers
 Should return a string containing a media type according to §8.3.1 of
 RFC 9110. For example @code{application/octet-stream}.
+
+When used as a property, then @var{headers} will be an empty list, and
+the return value must be the default content type if no attempt at
+content type negotiation is done. However, when called as part of a
+GET/HEAD request, then @var{headers} will be the an association list
+of the request headers, and the returned value @emph{must} be the
+result from the content type negotiation.
 @end deftp
 
 @deftp {GOOPS method} display-name resource

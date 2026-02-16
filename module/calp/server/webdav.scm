@@ -223,7 +223,7 @@
                (call-with-values (lambda () (content resource (request-headers request)))
                  (case-lambda ((rendered)
                                (values rendered
-                                       (and=> (content-type resource)
+                                       (and=> (content-type resource (request-headers request))
                                               (compose list string->symbol))))
                               ((rendered ct) (values rendered (list (string->symbol ct)))))))
 
