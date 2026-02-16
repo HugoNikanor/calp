@@ -44,5 +44,6 @@
         (filter pred? (map binding-ref (frame-bindings (stack-ref stk i)))))))
 
 
-(define (unreachable procedure fmt args)
+(define* (unreachable
+          procedure optional: (fmt "") (args '()))
   (scm-error 'unreachable procedure fmt args #f))

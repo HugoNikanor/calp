@@ -38,7 +38,7 @@ signal SIGINT, which kills the program.
 @end defun
 
 
-@defun unreachable procedure fmt args
+@defun unreachable procedure [fmt="" [args='()]]
 Marks that a code path should be unreachable. Throws an exception
 which should never be caught (an @code{(exit -1)} would also have
 worked, but would make debugging harder).
