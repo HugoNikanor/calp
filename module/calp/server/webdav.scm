@@ -47,15 +47,15 @@
 
 
 
-(declare-method! "PROPFIND" 'PROPFIND)
-(declare-method! "PROPPATCH" 'PROPPATCH)
-(declare-method! "MKCOL" 'MKCOL)
-(declare-method! "COPY" 'COPY)
-(declare-method! "MOVE" 'MOVE)
-(declare-method! "LOCK" 'LOCK)
-(declare-method! "UNLOCK" 'UNLOCK)
-(declare-method! "REPORT" 'REPORT)
-(declare-method! "MKCALENDAR" 'REPORT)
+(declare-method! 'PROPFIND)
+(declare-method! 'PROPPATCH)
+(declare-method! 'MKCOL)
+(declare-method! 'COPY)
+(declare-method! 'MOVE)
+(declare-method! 'LOCK)
+(declare-method! 'UNLOCK)
+(declare-method! 'REPORT)
+(declare-method! 'MKCALENDAR)
 
 
 

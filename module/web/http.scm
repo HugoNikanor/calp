@@ -1109,8 +1109,10 @@ pair. For example, ‘HTTP/1.1’ parses as the pair of integers,
 
 (define *declared-methods* '())
 
-(define (declare-method! str symb)
-  (set! *declared-methods* (acons str symb *declared-methods*)))
+(define (declare-method! symb)
+  (set! *declared-methods*
+    (acons (symbol->string symb) symb
+           *declared-methods*)))
 
 ;; Request-URI = "*" | absoluteURI | abs_path | authority
 ;;
@@ -1126,15 +1128,15 @@ symbol, like ‘GET’."
              *declared-methods*)
        (bad-request "Invalid method: ~a" (substring str start end)))))
 
-(declare-method! "GET" 'GET)
-(declare-method! "HEAD" 'HEAD)
-(declare-method! "POST" 'POST)
-(declare-method! "PUT" 'PUT)
-(declare-method! "DELETE" 'DELETE)
-(declare-method! "OPTIONS" 'OPTIONS)
-(declare-method! "TRACE" 'TRACE)
-(declare-method! "CONNECT" 'CONNECT)
-(declare-method! "PATCH" 'PATCH)
+(declare-method! 'GET)
+(declare-method! 'HEAD)
+(declare-method! 'POST)
+(declare-method! 'PUT)
+(declare-method! 'DELETE)
+(declare-method! 'OPTIONS)
+(declare-method! 'TRACE)
+(declare-method! 'CONNECT)
+(declare-method! 'PATCH)
 
 (define* (parse-request-uri str #:optional (start 0) (end (string-length str)))
   "Parse a URI from an HTTP request line.  Note that URIs in requests do
