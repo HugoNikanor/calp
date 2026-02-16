@@ -438,7 +438,7 @@
 
                ;; ((REPORT))
 
-               (else (build-response code: 400) "")))
+               (else (values (build-response code: 400) ""))))
 
          (case-lambda
            ((head)      (values head ""))
@@ -448,7 +448,7 @@
       (lambda* (_ error-code optional: (body "") content-type)
         (values (build-response code: error-code
                                 headers: (if content-type
-                                           `((content-type . content-type))
+                                           `((content-type . ,content-type))
                                            '()))
                 body)))
 
