@@ -42,11 +42,7 @@
   (typecheck reference-zone string?)
   (typecheck instance vevent?)
 
-  (let ((s (prop1 instance 'DTSTART)))
-    (cond ((date? s) (datetime date: s tz: reference-zone))
-          ((unzoned-datetime? s) (tz s reference-zone))
-          (else                         ; guaranteed zoned datetime
-           s))))
+  (ensure-zoned-datetime reference-zone (prop1 instance 'DTSTART)))
 
 
 ;; Returns the length of the event, as an unzoned datetime object.

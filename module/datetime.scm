@@ -135,6 +135,8 @@
               datetime<=/zoneinfo
               datetime>=/zoneinfo
 
+              ensure-zoned-datetime
+
               ;; Timespec
               timespec
               timespec?

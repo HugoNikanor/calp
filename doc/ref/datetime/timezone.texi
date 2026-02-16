@@ -125,3 +125,10 @@ Note that @var{end} must still be greater than (or equal to)
 ⇒ (datetime)
 @end example
 @end defun
+
+@defun ensure-zoned-datetime reference-zone dt
+Takes a time zone (at time of written only string references are
+supported), alongside a plain date value or a datetime with our
+without a timezone. Returns a datetime with either the already present
+timezone, or the reference-zone.
+@end defun

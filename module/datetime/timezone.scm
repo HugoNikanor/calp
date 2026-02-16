@@ -47,6 +47,8 @@
            datetime>/zoneinfo
            datetime<=/zoneinfo
            datetime>=/zoneinfo
+
+           ensure-zoned-datetime
            ))
 
 
@@ -510,3 +512,12 @@
 (define (datetime>/zoneinfo  . args) (apply datetime>  (map (unval zone->utc) args)))
 (define (datetime<=/zoneinfo . args) (apply datetime<= (map (unval zone->utc) args)))
 (define (datetime>=/zoneinfo . args) (apply datetime>= (map (unval zone->utc) args)))
+
+(define (ensure-zoned-datetime reference-zone s)
+  (cond ((date? s) (datetime date: s tz: reference-zone))
+        ((unzoned-datetime? s) (tz s reference-zone))
+        ;; guaranteed zoned datetime
+        ((datetime? s) s)
+        (else (scm-error 'type-error "ensure-zoned-datetime"
+                         "Expected date or datetime, got: ~s"
+                         (list s) #f))))
