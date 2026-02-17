@@ -38,6 +38,8 @@
            table-union
            table-intersection
            table-difference
+           table-venn-partition
+           group-by/table
            alist->table))
 
 (define (symbol<? . args)
@@ -141,28 +143,33 @@
                    (comperator (from-just v) (cdar as))
                    (loop (cdr as) rest)))))))
 
-;;; Returns a list of diff-objects, where diff objects on the form
-;;; '(absent ,table ,key) ; where table is the symbol 'a or 'b
-;;; '(diff ,key ,a-value ,b-value)
-(define* (table-diff a b optional: (comperator equal?))
+
+(define* (table-diff
+          a b key:
+          (compare equal?)
+          (report (lambda (key left right)
+                    (list key
+                          (destructure left
+                            ((just x) (serialize x))
+                            ((nothing) '_))
+                          (destructure right
+                            ((just x) (serialize x))
+                            ((nothing) '_))))))
   (if (and (table-terminal? a) (table-terminal? b))
       '()
       (let loop ((as (table->list a))
                  (b b))
-        (cond ((and (null? as) (table-terminal? b)) '())
-              ((null? as)
-               (map (lambda (p) `(absent a ,(car p)))
-                    (table->list b)))
-              (else
-               (let ((v rest (table-pop b (caar as))))
-                 (cond ((nothing? v)
-                        (cons `(absent b ,(caar as))
-                              (loop (cdr as) rest)))
-                       ((comperator (from-just v) (cdar as))
-                        (loop (cdr as) rest))
-                       (else
-                        (cons (list 'diff (caar as) (cdar as) (from-just v))
-                              (loop (cdr as) rest))))))))))
+        (destructure as
+          ((and '() (table-terminal? b)) '())
+          ('() (table->list b (lambda (k v) (report k (nothing) (just v)))))
+          ((cons (cons k av) as)
+           (let ((mv rest (table-pop b k)))
+             (append
+              (destructure mv
+                ((nothing) (list (report k (just av) (nothing))))
+                ((and (just bv) (compare bv av)) '())
+                ((just bv) (list (report k (just av) (just bv)))))
+              (loop as rest))))))))
 
 
 ;;; TODO rename to `table-ref`?
@@ -263,6 +270,26 @@
 (define (table-difference a b)
   (fold (swap table-remove)
         a (table->list b (lambda (k _) k))))
+
+;;; TODO test
+;;; TODO add to documentation
+(define (table-venn-partition a b)
+  (let ((intersection (table-intersection a b)))
+    (values (table-difference a intersection)
+            (table-filter-map (lambda (k _)
+                                (just (cons (table-get a k)
+                                            (table-get b k))))
+                              intersection)
+            (table-difference b intersection))))
+
+;;; TODO test
+;;; TODO add to documentation
+(define (group-by/table proc lst)
+  (fold (lambda (item table)
+          (modify table (table-focus (proc item))
+                  (lambda (mlst) (just (cons item (unjust mlst '()))))))
+        (table)
+        lst))
 
 
 

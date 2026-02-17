@@ -102,9 +102,9 @@
      (alist->table '((b . 2) (a . 1)))))
 
   (test-equal "Various diffs"
-    '((absent b k1)
-      (diff k2 "x" "y")
-      (absent a k3))
+    '((k1 1 _)
+      (k2 "x" "y")
+      (k3 _ 3))
     (table-diff (alist->table '((k1 . 1) (k2 . "x")))
                 (alist->table '((k3 . 3) (k2 . "y"))))))
 

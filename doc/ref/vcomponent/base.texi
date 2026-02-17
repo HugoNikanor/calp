@@ -90,7 +90,7 @@ if their parameter sets are @code{table-equal?}.
 Checks if the diff between @var{a} and @var{b} is null.
 @end defun
 
-@defun vcomponent-diff a b
+@defun vcomponent-diff a b [#:table-report]
 Attempts to calculate a diff between the two vcomponents.
 Diffs the type of the components by literal value, the properties of
 both through a table-diff, where each property is seen as an unordered
@@ -100,6 +100,42 @@ This is applied recursively. However, no total ordering exist for
 vcomponents, so all children are instead sorted by ``best
 effort''. The exact calculation of the ``sorting key'' is currently an
 implementation detail.
+
+The returned value if a list of ``diff directives'', each containing
+the path to where the diff was found, followed by an ``operation'',
+followed by operation specific data.
+
+The operations are
+@itemize
+@item @code{*child-list-length-diff* @var{count-left} @var{count-right}}
+Both components have at least one child of the type, but their counts
+are different. Note that this status might be removed later once a
+better diff algorithm is implemented.
+
+@item @code{*left-only* @var{count}}
+The last type in the path only exists in the child set of the left
+element. Comes with the number of children of that type.
+
+@item @code{*properties* ,(table-report ...)}
+A property in the components differ. Uses the parameter
+@var{table-report}, or the format specified by @ref{table-diff}
+otherwise.
+
+@item @code{*right-only*}
+See @code{*left-only*}
+
+@item @code{*type* @var{left-type} @var{right-type}}
+The types of the components differ. Note that this will only ever
+appear if the top-level components differs, since children are
+grouped by type, and instead uses @code{*right-only*} and @code{*left-only*}.
+@end itemize
+
+While paths are made of of @var{type} and @code{(@var{type} @var{index})}
+objects. The free-floating type symbols specify the complete set of
+all children of that type, while the indexed ones specify a specific
+child of that type. Note that component childrens aren't ordered,
+meaning that the index is only to differentiate between entries in the
+same run.
 @end defun
 
 @defun  vcalendar? x

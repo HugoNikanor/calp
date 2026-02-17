@@ -11,6 +11,7 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (ice-9 curried-definitions)
+  :use-module (datetime)
   :export (vline
            vline?
            vline-parameters vline-parameters*
@@ -108,34 +109,78 @@
 (define (vcomponent-equal? a b)
   (equal? '() (vcomponent-diff a b)))
 
-(define (sort-vcomponents-by-best-effort lst)
-  (sort lst
-        (lambda (a b)
-          (cond ((eq? (type a) (type b))
-                 (< (length (table->list (vcomponent-properties a)))
-                    (length (table->list (vcomponent-properties b))))
-                 ;; TODO further tests, maybe including
-                 ;; - names of properties
-                 ;; - values of properties (if all same name)
-                 ;; - number of children
-                 ;; - this function recursed on the children
-                 )
-                (else
-                 (string< (symbol->string (type a))
-                          (symbol->string (type b))))))))
+;;; NOTE this is borrowed from (vcomponent datetime).
+;;; It's needed here for sort-vcomponent-by-best-effort, but can't be
+;;; imported since that would result in a dependency loop.
+;;; The final solution should probably be to merge vcomponent-datetime
+;;; into this module.
+(define (instance-start-datetime reference-zone instance)
+  (typecheck reference-zone string?)
+  (typecheck instance vevent?)
 
-(define (vcomponent-diff a b)
+  (let ((s (prop1 instance 'DTSTART)))
+    (cond ((date? s) (datetime date: s tz: reference-zone))
+          ((unzoned-datetime? s) (tz s reference-zone))
+          (else                         ; guaranteed zoned datetime
+           s))))
+
+
+(define (sort-vcomponents-by-best-effort lst)
+  (cond ((null? lst) '())
+        ((not (apply eq? (map type lst)))
+         (scm-error 'misc-error "sort-vcomponents-by-best-effort"
+                    "Can only sort vcomponents of identical type, got ~s"
+                    (list (map type lst)) #f))
+        (else (case (type (car lst))
+                ((VEVENT) (sort* lst datetime<
+                                 (lambda (x) (zone->utc
+                                         ;; Hard coding UTC here is valid,
+                                         ;; since we only care about about a
+                                         ;; ordering which doesn't change, which
+                                         ;; any (non-changing) timezone provides.
+                                         (instance-start-datetime "UTC" x)))))
+                ;; TODO there are actually ways to sort other components
+                (else lst)))
+        ))
+
+(define* (vcomponent-diff a b key: table-report)
   (append
    (if (eqv? (type a) (type b))
        '()
-       `((diff type ,(type a) ,(type b))))
-   (table-diff
-    (vcomponent-properties a)
-    (vcomponent-properties b)
-    (lambda (ax bx) (lset= vline-equal? ax bx)))
-   (append-map vcomponent-diff
-               (sort-vcomponents-by-best-effort (vcomponent-children a))
-               (sort-vcomponents-by-best-effort (vcomponent-children b)))))
+       `((*type* ,(type a) ,(type b))))
+   (append
+    (map (lambda (diff) (cons '*properties* diff))
+         (apply table-diff
+                (vcomponent-properties a)
+                (vcomponent-properties b)
+                compare: (lambda (ax bx) (lset= vline-equal? ax bx))
+                (if table-report
+                    `(report: ,table-report)
+                    '())))
+
+    (let ((l c r
+             (table-venn-partition
+              (group-by/table type (vcomponent-children a))
+              (group-by/table type (vcomponent-children b)))))
+      (append
+       (table->list l (lambda (_ v) (list (type (car v)) '*left-only*  (length v))))
+       (table->list r (lambda (_ v) (list (type (car v)) '*right-only* (length v))))
+       (concatenate
+        (table->list
+         c (lambda (type p)
+             (cond ((= (length (car p)) (length (cdr p)))
+                    (append-map
+                     (lambda (a b i)
+                       (map (lambda (diff) (cons `(,type ,i) diff))
+                            (vcomponent-diff a b)))
+                     (sort-vcomponents-by-best-effort (car p))
+                     (sort-vcomponents-by-best-effort (cdr p))
+                     (iota (length (car p)))))
+                   (else
+                    `(,type
+                      *child-list-length-diff*
+                      ,(length (car p))
+                      ,(length (cdr p)))))))))))))
 
 ;;; Lenses
 ;;; - focus non-existant member of collection?

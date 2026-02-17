@@ -86,9 +86,10 @@
                   ;; Changing the .sexp file to contain an `unknown`
                   ;; value would give the same problem in the other
                   ;; direction, and error on all other types.
-                  `((diff X-TEXT
-                          (,(vline value: "This is some text"))
-                          (,(vline value: (unknown "This is some text"))))))
+                  `((*properties*
+                     X-TEXT
+                     (list (vline value: "This is some text"))
+                     (list (vline value: (unknown "This is some text"))))))
                  (else '()))
                 (vcomponent-diff
                  reference-object

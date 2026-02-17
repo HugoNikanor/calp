@@ -2,6 +2,8 @@
   :use-module (srfi srfi-64)
   :use-module (hnh util)
   :use-module (hnh util path)
+  :use-module (hnh util destructure)
+  :use-module (hnh util optional)
   :use-module (web uri)
   :use-module (datetime)
   :use-module ((vcomponent) :select (vcomponent-diff vline))
@@ -95,53 +97,72 @@
                 ;; these diffs.
                 (cond ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "rfc-provided/ex1.ics"))
-                       `((diff PRODID
-                               (,(vline value: "-//Example Inc.//Example Calendar//EN"))
-                               (,(vline value: "-//hugo//calp 0.6.1//EN")))))
+                       `((*properties*
+                          PRODID
+                          (,(vline value: "-//Example Inc.//Example Calendar//EN"))
+                          (,(vline value: "-//hugo//calp 0.6.1//EN")))))
 
                       ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "rfc-provided/ex2.ics"))
-                       `((diff PRODID
-                               (,(vline value: "-//Example Corp.//Example Client//EN"))
-                               (,(vline value: "-//hugo//calp 0.6.1//EN")))
-                         (absent a CALSCALE)))
+                       `((*properties*
+                          PRODID
+                          (,(vline value: "-//Example Corp.//Example Client//EN"))
+                          (,(vline value: "-//hugo//calp 0.6.1//EN")))
+                         (*properties* CALSCALE _ b)))
 
                       ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "hand-written/target.ics"))
-                       `((diff PRODID
-                               (,(vline value: "-//CALP-TEST//x.y"))
-                               (,(vline value: "-//hugo//calp 0.6.1//EN")))
-                         (absent b REQUEST-STATUS)))
+                       `((*properties*
+                          PRODID
+                          (,(vline value: "-//CALP-TEST//x.y"))
+                          (,(vline value: "-//hugo//calp 0.6.1//EN")))
+                         (*properties* REQUEST-STATUS a _)))
 
                       ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "hand-written/types.ics"))
-                       `((absent b GEO)
-                         (absent b REQUEST-STATUS)
-                         (diff VERSION
-                               (,(vline value: (vcalendar-version min: "2.0" max: "3.0")))
-                               (,(vline value: (vcalendar-version max: "2.0"))))
-                         (absent b X-BINARY) (absent b X-BOOLEAN) (absent b X-CAL-ADDRESS)
-                         (absent b X-DATE) (absent b X-DATE-TIME) (absent b X-DURATION)
-                         (absent b X-FLOAT) (absent b X-INTEGER) (absent b X-PERIOD)
-                         (absent b X-RECUR) (absent b X-TEXT) (absent b X-TIME)
-                         (absent b X-UNKNOWN) (absent b X-URI) (absent b X-UTC-OFFSET)
-                         (absent a CALSCALE) (absent a PRODID)))
+                       `((*properties* GEO a _)
+                         (*properties* REQUEST-STATUS a _)
+                         (*properties*
+                          VERSION
+                          (,(vline value: (vcalendar-version min: "2.0" max: "3.0")))
+                          (,(vline value: (vcalendar-version max: "2.0"))))
+                         (*properties* X-BINARY a _)
+                         (*properties* X-BOOLEAN a _)
+                         (*properties* X-CAL-ADDRESS a _)
+                         (*properties* X-DATE a _)
+                         (*properties* X-DATE-TIME a _)
+                         (*properties* X-DURATION a _)
+                         (*properties* X-FLOAT a _)
+                         (*properties* X-INTEGER a _)
+                         (*properties* X-PERIOD a _)
+                         (*properties* X-RECUR a _)
+                         (*properties* X-TEXT a _)
+                         (*properties* X-TIME a _)
+                         (*properties* X-UNKNOWN a _)
+                         (*properties* X-URI a _)
+                         (*properties* X-UTC-OFFSET a _)
+                         (*properties* CALSCALE _ b)
+                         (*properties* PRODID _ b)))
 
                       ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "hand-written/unknown-value-type.ics"))
-                       `((absent a CALSCALE)
-                         (absent a PRODID)))
+                       `((*properties* CALSCALE _ b)
+                         (*properties* PRODID _ b)))
 
 
                       ((and (string=? "file" (uri-host (store-uri store)))
                             (string=? source-filename "hand-written/x-integer.ics"))
-                       `((absent a CALSCALE)
-                         (absent a PRODID)))
+                       `((*properties* CALSCALE _ b)
+                         (*properties* PRODID _ b)))
 
                       (else '()))
                 (vcomponent-diff
                  reference-entry
-                 (get-by-href store href))))
+                 (get-by-href store href)
+                 table-report: (destructure-lambda*
+                                ((list key (just a) (just b)) `(,key ,a ,b))
+                                ((list key (nothing) _) `(,key _ b))
+                                ((list key _ (nothing)) `(,key a _))))))
          )))
 
 

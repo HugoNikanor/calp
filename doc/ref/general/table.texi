@@ -72,21 +72,32 @@ Checks if @var{a} and @var{b} have the same key set, and that for each
 key the element in @var{a} and @var{b} are equal, in regards to @var{comperator}.
 @end defun
 
-@defun table-diff a b [comperator=equal?]
+@defun table-diff a b [#:compare=equal?] [#:report=built-in-report]
+@anchor{table-diff}
 Checks what's different between the two tables. It returns a list of
-forms, where each form is one of the following:
+forms, where each form is the result of calling the @var{report}
+procedure on the key, which has type
+@code{symbol, (optional (table-type a)), (optional (table-type b)) -> any}.
+In the cases that the value is equal in both tables, or absent from
+both tables, the @var{report} procedure will not be called.
 
+The default report procedure returns the following variants:
 @itemize @bullet{}
-@item @code{`(absent a ,key)}
-@var{key} is only present in the second table given.
-@item @code{`(absent b ,key)}
-@var{key} is only present in the first table given.
-@item @code{`(diff ,key ,a-val ,b-val)}
-@var{key} is present in both tables, and in the first table has the
-value @var{a-val}, and @var{b-val} in the second.
+@item @code{`(,key _ ,(serialize b)}
+@item @code{`(,key ,(serialize a) _)}
+@item @code{`(,key ,(serialize a) ,(serialize b))}
 @end itemize
 
 The order each diff form is returned is unspecified.
+
+@var{compare} must be a procedure taking two values, the one from the
+left and right table in the case of a key conflict, and which must
+return a boolean (equivalent) stating if the values are equal. Note
+that weak equality (for example, sets containing the same elements in
+different orders, or strings being case insensitively equal) are very
+valid equivalance procedures here.
+
+Not to be confuseod with @ref{table-difference}.
 @end defun
 
 @defun table-pop table key
@@ -123,5 +134,8 @@ first encountered one wins.
 @end defun
 
 @defun table-difference a b
+@anchor{table-difference}
 Returns a new table of all the keys present in @var{a} but not in @var{b}.
+
+Not to be confused with @ref{table-diff}.
 @end defun
