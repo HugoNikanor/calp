@@ -71,12 +71,7 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
 
 
 
-(define print
-  (let ((lock (make-mutex)))
-    (lambda (string)
-      (with-mutex lock
-        (display string)))))
-
+(define print display)
 (define (println x) (print (format #f "~a~%" x)))
 
 (define (module->source-file module-name)
@@ -131,10 +126,6 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
      (string-join (map test-runner-test-description (stack->list runners))
                   "\n"))))
 
-(define-type (job)
-  (jobname type: string?)
-  (job-thunk type: thunk?))
-
 (define* (maybe-with-code-coverage thunk key: (coverage? #f))
   (if coverage?
       (with-code-coverage thunk)
@@ -168,82 +159,41 @@ exec "$GUILE" --debug --no-auto-compile -e main -s "$0" "$@"
 
 (define* (prepare-jobs test-files error-queue key: (coverage? #f))
   (for entry in test-files
-       (job
-        jobname: (basename entry)
-        job-thunk:
-        (lambda ()
-          (parameterize ((current-filename (basename entry)))
-            (test-begin entry)
-            (push! (test-runner-get) runners)
-            (define-values (coverage module-names)
-              (catch #t
-                (lambda ()
-                  (maybe-with-code-coverage
-                   (lambda () (load entry))
-                   coverage?: coverage?))
-                (lambda args
-                  (enqueue! (format-test-runner-crash-message args)
-                            error-queue)
-                  (values #f '()))
-                (lambda _
-                  ;; TODO make backtrace configurable
-                  ;; TODO backtrace should be placed AFTER the error
-                  (enqueue! (with-output-to-string (lambda () (backtrace))) error-queue)
-                  )))
-            (catch 'wrong-type-arg
-              (lambda () (typecheck module-names (list-of (list-of symbol?))))
-              (lambda (_ __ fmt args ___)
-                (enqueue! (red (format #f "File doesn't end with a module list: ~s" entry))
-                          error-queue)))
-            (define tested-files (map module->source-file module-names))
-            (test-end)
-            (if coverage
-                (let ((lcov-data
-                       (call-with-output-string
-                         (lambda (port) (coverage-data->lcov coverage port)))))
-                  (filter (lambda (coverage)
-                            (member (filename coverage)
-                                    tested-files))
-                          (parse-coverage lcov-data)))
-                '()))))))
-
-
-(define* (make-work-pool jobs key: (thread-count 1))
-  (define job-pool (atomic-stack))
-  (define results (atomic-stack))
-  (for-each (lambda (job) (push! job job-pool)) jobs)
-
-  (define (pool-worker)
-    (call/ec
-     (lambda (return)
-       (while #t
-         (let ((job (pop! job-pool)))
-           (unless job (return #f))
+       (parameterize ((current-filename (basename entry)))
+         (test-begin entry)
+         (push! (test-runner-get) runners)
+         (define-values (coverage module-names)
            (catch #t
-             (lambda () (push! ((job-thunk job)) results))
+             (lambda ()
+               (maybe-with-code-coverage
+                (lambda () (load entry))
+                coverage?: coverage?))
              (lambda args
-               ;; TODO indicate FATAL ERROR
-               (println (format #f "Job [~a] failed: ~s"
-                                (jobname job)
-                                ;; TODO better error formatting
-                                args)))))))))
+               (enqueue! (format-test-runner-crash-message args)
+                         error-queue)
+               (values #f '()))
+             (lambda _
+               ;; TODO make backtrace configurable
+               ;; TODO backtrace should be placed AFTER the error
+               (enqueue! (with-output-to-string (lambda () (backtrace))) error-queue)
+               )))
+         (catch 'wrong-type-arg
+           (lambda () (typecheck module-names (list-of (list-of symbol?))))
+           (lambda (_ __ fmt args ___)
+             (enqueue! (red (format #f "File doesn't end with a module list: ~s" entry))
+                       error-queue)))
+         (define tested-files (map module->source-file module-names))
+         (test-end)
+         (if coverage
+             (let ((lcov-data
+                    (call-with-output-string
+                      (lambda (port) (coverage-data->lcov coverage port)))))
+               (filter (lambda (coverage)
+                         (member (filename coverage)
+                                 tested-files))
+                       (parse-coverage lcov-data)))
+             '()))))
 
-  (define threads (map (lambda (i) (make-thread pool-worker (format #f "Worker ~a" i)))
-                       (iota thread-count)))
-
-  (for-each thread-start! threads)
-
-  (begin-thread (for-each thread-join! threads)
-                results))
-
-
-;;; Checks if the given argument is truthy.
-;;; Raises 'wrong-number-of-args otherwise.
-(define-syntax-rule (assert-arg name)
-  (unless name
-    (scm-error 'wrong-number-of-args "run-tests"
-               "Missing required argument ~a"
-               '(name) #f)))
 
 
 
@@ -273,8 +223,6 @@ Can be given multiple times, and used alongside --suite
            ,(G_ "Don't run test, but list all files which would have been ran.")))
     (nice (value #t)
           (description ,(G_ "How much do incrument the nice value")))
-    (threads (value #t)
-             (description ,(G_ "How many threads to spawn for running tests.")))
     (coverage (value output-filename)
               (description ,(G_ "
 Generate code coverage data, this causes the tests to be quite
@@ -411,16 +359,11 @@ status of each file's tests.
              (loop rest))))
 
 
-        (let ((results (thread-join!
-                        (make-work-pool
-                         (prepare-jobs test-files error-queue coverage?: coverage)
-                         thread-count: (string->number
-                                        (option-ref options 'threads "1"))))))
-
+        (let ((results (prepare-jobs test-files error-queue coverage?: coverage)))
           (test-end "Universe")
 
           (define expected-files (concatenate (cons (map cdr extra-coverage)
-                                                    (stack->list results))))
+                                                    results)))
 
           (define uncovered-files
             (lset-difference! string=?
