@@ -119,6 +119,7 @@ for embedding in a larger page. Currently only applies to the <i>small</i> style
    (lambda (start-date)
      (define fname (path-append target-directory (date->string start-date "~1.xml")))
      (format (current-error-port) (G_ "Writing to [~a]~%") fname)
+     ;; TODO atomic output
      (with-output-to-file fname
        (lambda () (sxml->xml (re-root-static
                          (apply html-generate

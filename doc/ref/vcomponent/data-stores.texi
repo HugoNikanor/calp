@@ -91,7 +91,9 @@ Note that this doesn't guarantee a writing to the disk, see
 
 @deftp {GOOPS method} remove-by-href! store href
 Remove an entry from a store by its href. If href isn't present in the
-store, this operation should do nothing.
+store, then this operation @emph{must} be a noop.
+
+TODO flushing?
 @end deftp
 
 @c TODO `remove-by-uid`?
@@ -140,10 +142,12 @@ implementations.
 Each getter provides a default implementation which returns @code{#f},
 indicating that the store has no value for that resource.
 
+@c TODO link relevant WebDAV propreties elsewhere in the documentation
+@c TODO and explain how these interact with the WebDAV property system.
+
 @c TODO shouldn't set-*! and remove-*! have default implementations,
 @c which throws `not-implemented`/`protected`?
 
-@c TODO link relevant WebDAV propreties elsewhere in the documentation
 
 @deftp  {GOOPS method} store-color store
 @deftpx {GOOPS method} set-store-color! store color

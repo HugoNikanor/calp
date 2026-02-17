@@ -34,6 +34,7 @@
 (define-method (children (_ <calendar-object-resource>)) '())
 
 (define-method (set-content! (resource <calendar-object-resource>) content headers)
+  ;; TODO
   ;; check headers for content type
   ;; - text/calendar
   ;; - application/calendar+xml

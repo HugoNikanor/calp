@@ -25,6 +25,8 @@
 
   :export (%summary main))
 
+;;; TODO rename this to simply `config`
+
 (define %summary
   (G_ "Gathers configurable items from the source code."))
 

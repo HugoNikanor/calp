@@ -1,5 +1,8 @@
 ;;; Commentary:
 ;;; Principal resources per RFC 3744, specialised for unix accounts.
+;;; It however conflates 2 ideas:
+;;; - the base user principal
+;;; - the users home directory
 ;;; Code:
 
 (define-module (calp webdav resource principal)

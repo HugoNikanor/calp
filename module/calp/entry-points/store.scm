@@ -9,6 +9,9 @@
 
 (define-public %category 'application)
 
+;;; TODO this is a multi-dispatch entry point.
+;;; Do like in (calp main) and automatically locate entry points and their documentations
+
 (define %summary
   "")
 

@@ -33,7 +33,7 @@ Protected by default.
 
 @include webdav/resource-types/virtual.texi
 @include webdav/resource-types/file.texi
-@include webdav/resource-types/calendar-collection.texi
 @include webdav/resource-types/calendar-home.texi
+@include webdav/resource-types/calendar-collection.texi
 @include webdav/resource-types/calendar-object.texi
 @include webdav/resource-types/principal.texi

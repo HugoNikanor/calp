@@ -1,3 +1,9 @@
+;;; Commentary:
+;;; A "Calendar Home" is a directory in which the user is allowed
+;;; to create new calendars through the MKCALENDAR method.
+;;; This might eventually stop being a dedicated resource type, and
+;;; instead simply become a composable attribute onto other stores.
+;;; Code:
 (define-module (calp webdav resource calendar-home)
   :use-module (calp webdav resource)
   :use-module (calp webdav resource virtual)

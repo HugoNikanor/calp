@@ -213,6 +213,17 @@
 
   (datetime-date type: date? lens: date*)
   (datetime-time type: time? lens: time*)
+  ;; TODO extend this type, to be one of
+  ;; - false?: "local time", or a datetime offset
+  ;; - string?: a reference to the installed zoneinfo database
+  ;; - (eq? 'UTC): UTC time, instead of the current where the string
+  ;;               "UTC" gets special treatment.
+  ;; - timespec?: exact UTC offset, instead of the current overloading
+  ;;              of strings on the form "UTC+\d*"
+  ;; - some representation of timezones from calendar streams:
+  ;;   iCalendar streams carry along their own zoneinfo, which
+  ;;   completely ignore any other database. These rules MUST be copied
+  ;;   into each relevant datetime object.
   (tz type: (or false? string?)))
 
 
@@ -447,6 +458,11 @@
     (scm-error 'wrong-type-arg "timespan-overlaps?"
                "All datetimes must be UTC or zoneless. Got: [~s, ~s), [~s, ~s)"
                (list s1-begin s1-end s2-begin s2-end) #f))
+
+  ;; TODO isn't this overly complicated?
+  ;; Can't we just check if s1-begin is in [s2-begin, s2-end) or
+  ;; s1-end is in [s2-begin, s2-end)?
+
   (or
    ;; A
    (and (datetime< s2-begin s1-end)

@@ -1,3 +1,7 @@
+;;; Commentary:
+;;; A "Calendar Collection" resource is simply a calendar.
+;;; All calendaring reports are supported, and all direct non-collection resources should be calendar objects.
+;;; Code:
 (define-module (calp webdav resource calendar-collection)
   :use-module (calp webdav resource)
   :use-module (calp webdav resource calendar-object)
@@ -12,12 +16,7 @@
   :use-module ((vcomponent media-type) :select (serializer))
   :export (<calendar-collection-resource>
            calendar-collection-resource?
-           make-resource
-
-           ;; calendar-home-set
-           ;; set-calendar-home-set!
-           ;; remove-calendar-home-set!
-           ))
+           make-resource))
 
 (define-class <calendar-collection-resource> (<resource>)
   (data-store init-keyword: data-store:
@@ -31,8 +30,9 @@
 (define-method (collection? (_ <calendar-collection-resource>)) #t)
 
 (define-method (content (resource <calendar-collection-resource>) _)
-  (format #f "I'm a calendar collection!~%My internal store is ~s~%"
-          (data-store resource)))
+  (format #f "I'm a calendar collection!~%My internal store is ~s~%It has ~a entries~%"
+          (data-store resource)
+          (entry-count (data-store resource))))
 
 (define-method (children (resource <calendar-collection-resource>))
   (map (lambda (href)
@@ -60,11 +60,10 @@
 
 (define-method (on-child-removed (resource <calendar-collection-resource>)
                                  (child <resource>))
-  'TODO
+  ;; TODO
+  ;; (remove-by-href!)
   (throw 'http 501)
 )
-
-;;; Dead properties could be stored in XML properties on the calendar object
 
 (define-method (dead-properties (_ <calendar-collection-resource>))
   '())
@@ -107,6 +106,7 @@
                               set-supported-calendar-data!
                               remove-supported-calendar-data!))
 
+    ;; TODO
     ;; These are omitted, since we don't need to set any limits.
     ;; However, once live-properties can indicate the absence of a
     ;; registered property, add them with corresponding methods, which
@@ -116,6 +116,7 @@
     ;; - CALDAV:max-date-time
     ;; - CALDAV:max-instances
     ;; - CALDAV:max-attendees-per-instance
+
 
     (cons ((xml caldav 'supported-collation-set))
           (make-live-property supported-collation-set
@@ -217,6 +218,7 @@
   (throw 'protected-property))
 (define-method (remove-supported-collation-set! (_ <calendar-collection-resource>))
   (throw 'protected-property))
+
 
 
 
