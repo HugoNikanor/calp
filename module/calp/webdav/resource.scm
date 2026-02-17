@@ -414,10 +414,9 @@
 
 (define-method (create-resource-copy!
                 (source <resource>) (destination <resource>) name)
-  (let ((resource (create-resource! destination name)))
-    ;; TODO headers when getting source!
-    ;; TODO headers when setting resource?
-    (set-content! resource (content source '()) '())
+  ;; TODO headers when getting source!
+  ;; TODO headers when setting resource?
+  (let ((resource (create-resource! destination name '() (content source '()))))
     (for-each (lambda (prop) (set-property! resource prop))
               (dead-properties source))))
 
@@ -476,7 +475,8 @@
   (cond ((find (lambda (p) (string=? name (car p)))
                (children resource))
          => cdr)
-        (create? (create-resource! resource name))
+        ;; TODO remove create? flag
+        (create? (create-resource! resource name '() ""))
         (else #f)))
 
 

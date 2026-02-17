@@ -318,9 +318,15 @@
             ((= ENOENT (car data)) (throw 'http 409))
             (else (throw 'http 500))))))
 
-(define-method (create-resource! (resource <file-resource>) name)
+(define-method (create-resource! (resource <file-resource>) name _headers body)
   (let ((p (path-append (path resource) name)))
     (let ((fp (open p (logior O_RDWR O_CREAT O_EXCL))))
+      (cond ((bytevector? body) (put-bytevector fp body))
+            ((string? body)     (put-string fp body))
+            ;; TODO more info about bad request
+            ;; TODO file shouldn't persist if the requset was bad
+            (else (throw 'http 400)))
+      ;; TODO more metadata should be set from headers here
       (close fp))
     (make <file-resource> parent: resource path: p)))
 

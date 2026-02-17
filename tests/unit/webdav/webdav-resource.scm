@@ -102,7 +102,7 @@
   (let* ((root (make <virtual-resource>))
          (a (create-collection! root "a"))
          (b (create-collection! a "b"))
-         (c (create-resource! b "c")))
+         (c (create-resource! b "c" '() #f)))
     (test-eq "Lookup root"
       root (lookup-resource root '()))
     (test-eq "Lookup direct child"

@@ -253,27 +253,22 @@
 
 (define (run-put root-resource href request request-body)
 
-  ;; Helper procedure, since the code is shared between the creation
-  ;; and update path.
-  (define (update-resource! resource)
-    (define etag (set-content! resource request-body (request-headers request)))
-    (cond ((request-content-language request)
-           (negate null?)
-           => (lambda (content-language)
-                (set-property! resource
-                               ((xml webdav 'getcontentlanguage) (car content-language))))))
-
-    (cond ((request-content-type request)
-           => (lambda (content-type)
-                (set-property! resource ((xml webdav 'getcontenttype)
-                                         (content-type->string content-type))))))
-    etag)
 
   ;; TODO handle If, If-Match, and similar headers
 
   (cond ((lookup-resource root-resource href)
          => (lambda (resource)
-              (define etag (update-resource! resource))
+              (define etag (set-content! resource request-body (request-headers request)))
+              (cond ((request-content-language request)
+                     (negate null?)
+                     => (lambda (content-language)
+                          (set-property! resource
+                                         ((xml webdav 'getcontentlanguage) (car content-language))))))
+
+              (cond ((request-content-type request)
+                     => (lambda (content-type)
+                          (set-property! resource ((xml webdav 'getcontenttype)
+                                                   (content-type->string content-type))))))
               (build-response
                code: 204
                headers: `(,@(if etag `((etag ,etag)) '())))))
@@ -282,11 +277,13 @@
         ;; resource would have matched that beforehand.
         ((lookup-resource root-resource (drop-right href 1))
          => (lambda (parent)
-              (let ((resource (create-resource! parent (last href))))
-                (define etag (update-resource! resource))
+              (let ((resource (create-resource! parent (last href)
+                                                (request-headers request)
+                                                request-body)))
                 (build-response
                  code: 201
-                 headers: `(,@(if etag `((etag ,etag)) '()))))))
+                 headers: (let ((etag* (etag resource)))
+                            `(,@(if etag* `((etag ,etag*)) '())))))))
 
         ;; No parent collection, fail per [WEBDAV] 9.7.1.
         (else (values (build-response

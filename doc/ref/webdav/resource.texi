@@ -100,15 +100,21 @@ supported. For most implementation, this means simply starting with
 @code{(when body (throw 'http 415))}.
 @end deftp
 
-@deftp {GOOPS method} create-resource! resource name
+@deftp {GOOPS method} create-resource! resource name headers content
 Creates a new non-collection resource, and returns the resource object.
 
 If a resource with @var{name} already exists in the child set of
-@var{resource}, and error @emph{must} be thrown.
+@var{resource}, an error @emph{must} be thrown.
+
+@var{content} should be a string or a bytevector, but may be anything if
+headers support it.
 @end deftp
 
 @defun make-resource [#:parent=#f] args ...
-@c TODO this isn't how make-resource works, there is no parent field
+@c TODO should parent really be a field?
+@c It should DEFINITELY be removed in favour of explicitly mounting stuff
+@c However, the #:parent keyword on the actuall class should be kept
+@c since that's heavily used when creating children to self
 All resource implementations @emph{should} implement a procedure for
 creating resources of that type explicitly, without having a parent.
 

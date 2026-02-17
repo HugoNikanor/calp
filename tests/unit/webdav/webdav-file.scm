@@ -33,8 +33,9 @@
 (test-group "File resource with content"
   (let ((fname "file.txt")
         (s "Hello, World!\n"))
-    (define file-resource (create-resource! root-resource fname))
-    (set-content! file-resource (string->utf8 s))
+    (define file-resource
+      (create-resource! root-resource fname
+                        '() (string->utf8 s)))
     (let ((p (path-append test-root fname)))
       (test-eqv "File correctly added"
         'regular (-> p stat stat:type))

@@ -76,8 +76,14 @@
   ;; Calendar collections are allowed to contain other collections, as long as they aren't calendar collections. It's however easier to just ban all collections under calendar collections.
   (throw 'http 403 "Calendar collections may not contain sub-collections."))
 
-(define-method (create-resource! (resource <calendar-collection-resource>) name)
-  'TODO
+(define-method (create-resource! (resource <calendar-collection-resource>)
+                                 name headers body)
+  ;; TODO this is where we create new entries in the calendar
+  ;; @var{body} MUST be a valid calendar component
+  ;; 1. parse it according to the content-type header
+  ;; 2. validate that it's semantically correct
+  ;; 3. insert it into the store, checking if it already exists
+  ;; (note much of this code should be shared with <calendar-object-resource>s set-content!
   (throw 'http 501))
 
 

@@ -37,8 +37,8 @@
 (define prop-ns (string->symbol "http://ns.example.com/properties"))
 
 (define root-resource (make <virtual-resource> collection?: #t))
-(set-content! (create-resource! root-resource "a") (string->utf8 "Contents of A"))
-(set-content! (create-resource! root-resource "b") (string->utf8 "Contents of B"))
+(create-resource! root-resource "a" '() (string->utf8 "Contents of A"))
+(create-resource! root-resource "b" '() (string->utf8 "Contents of B"))
 
 ;; (define (xml->sxml* port)
 ;;   (xml->sxml port namespaces: `((d . ,(symbol->string webdav))
@@ -321,11 +321,10 @@
 ;;; Run COPY
 (test-group "run-copy"
   (let* ((root-resource (make <virtual-resource> collection?: #t))
-         (a (create-resource! root-resource "a")))
-    (set-content! a (string->utf8 "Content of A"))
+         (a (create-resource! root-resource "a" '() (string->utf8 "Content of A"))))
     (set-property! a ((xml prop-ns 'test) "prop-value"))
     ;; Extra child added to ensure deep copy works
-    (set-content! (create-resource! a "d") (string->utf8 "Content of d"))
+    (create-resource! a "d" '()  (string->utf8 "Content of d"))
 
     (test-group "cp /a /c"
       (let ((response _ (run-op (run-copy root-resource '("a")
@@ -396,7 +395,7 @@
 ;;; Run MOVE
 (test-group "run-move"
   (let ((root-resource (make <virtual-resource> collection?: #t)))
-    (set-content! (create-resource! root-resource "a") (string->utf8 "Content of A"))
+    (create-resource! root-resource "a" '()  (string->utf8 "Content of A"))
     (let ((a (lookup-resource root-resource '("a"))))
       (set-property! a ((xml prop-ns 'test) "prop-value")))
 

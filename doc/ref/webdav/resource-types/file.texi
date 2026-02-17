@@ -117,10 +117,10 @@ Runs Guile's built in @code{delete-file} or @code{rmdir} recursively.
 Executes @code{mkdir}. @var{body} @emph{must} be @code{#f}.
 @end deftp
 
-@deftp {GOOPS method} create-resource! <file-resource> name
-Open the new file with flags @code{O_RDWR | O_CREAT | O_EXCL}, and
-immediately closes it. This ensures that we actually create a new
-file.
+@deftp {GOOPS method} create-resource! <file-resource> name headers content
+Open the new file with flags @code{O_RDWR | O_CREAT | O_EXCL}, writes
+the content, and thereafter closes it.
+This ensures that a file was created, and properly written.
 @end deftp
 
 @deftp {GOOPS method} mount-resource! <resource> <file-resource> name

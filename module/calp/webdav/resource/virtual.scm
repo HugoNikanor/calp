@@ -211,9 +211,16 @@
 
   child)
 
-(define-method (create-resource! (resource <virtual-resource>) name)
+(define-method (create-resource! (resource <virtual-resource>) name headers body)
   (set! (collection*? resource) #t)
-  (define child (make <virtual-resource> parent: resource))
+  (define child (make <virtual-resource>
+                  parent: resource
+                  content: (cond ((bytevector? body) body)
+                                 ;; TODO encoding
+                                 ((string? body) (string->utf8 body))
+                                 ;; TODO warn on invalid body?
+                                 (else #vu8()))
+                  content-type: (assoc-ref headers 'content-type)))
   (set! (child-table resource)
     (table-put (child-table resource) (string->symbol name)
                child))
