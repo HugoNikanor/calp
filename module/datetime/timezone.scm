@@ -347,8 +347,7 @@
 ;; The returned offset is still in the "regular" direction, meaning that
 ;; (returned dt) + (returned offset) == input dt
 (define (zone->utc/name dt)
-  (typecheck dt datetime?)
-  (typecheck (tz dt) (not false?))
+  (typecheck dt zoned-datetime?)
 
   (define zone-entry
     (find (lambda (zone)
