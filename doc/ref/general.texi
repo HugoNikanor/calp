@@ -6,6 +6,7 @@ of these can be useful in any project.
 
 @include general/srfi-41.texi
 @include general/util.texi
+@include general/environment.texi
 @include general/destructure.texi
 @include general/uuid.texi
 @include general/io.texi

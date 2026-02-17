@@ -6,6 +6,7 @@ procedures and forms are replaced, but all in compatible ways.
 
 Provided by the module @code{(hnh util)}.
 
+@subsection Macros
 @defmac define-syntax [stx]
 Extends the default syntax from the default
 @lisp
@@ -17,13 +18,11 @@ To also allow
 @end lisp
 @end defmac
 
-
 @defmac when pred body ...
 @defmacx unless pred body ...
 Extends @var{when} and @var{unless} to return @code{'()} on the
 false-case (instead of being undefined).
 @end defmac
-
 
 @defmac aif condition consequent alternate
 @defmacx awhen condition consequent ...
@@ -31,7 +30,6 @@ Equivalent to the standard @var{if} and @var{when}@footnote{Actually
 our extra specialized @var{when}}, but binds the return of
 @var{condition} in the variable @var{it}.
 @end defmac
-
 
 @defmac for key in collection body ...
 @defmacx for (key ...) in collection body ...
@@ -57,19 +55,16 @@ Abandon the current iteration of the loop. If an argument is given,
 it's used as the result in the resulting list, otherwise @code{#f} is
 used.
 @end defun
-
 @end defmac
-
 
 @defmac print-and-return expr
 Prints @var{expr}, and then returns it.
 Only evaluates @var{expr} once.
+
+@c Guile provides @code{peek} and @code{pk}, which basically does the
+@c same, but as procedures.
+@c We are however better, since we also print the source expression
 @end defmac
-
-
-@defun swap f
-@math{swap (λ (x y) body ...) ⇔ λ (y x) body ...}
-@end defun
 
 @defmac set! key value ...
 @defmacx set! key = proc ...
@@ -94,6 +89,41 @@ Equivalent to
 @end lisp
 @end defmac
 
+@defmac let-lazy forms body ...
+Syntactically equivalent to a regular @var{let}, but wraps each variable
+in @var{forms} in @var{delay}, while it finds each instance of that
+variable in body and wraps in in @var{force}.
+@end defmac
+
+@defmac -> item forms ...
+@defmacx ->> item forms ...
+Applies each form onto item, from left to right.
+A form can either by a symbol, which is the applied directly, or a
+list, in which case @var{->} inserts item as the second argument
+(after the operand), and @var{->>} inserts it last.
+@end defmac
+
+@defmac catch* thunk (symbol proc) ...
+Macro allowing multiple exception types to be caught. Each (symbol
+proc) pair expands to a regular @code{catch}, with the leftmost being
+innermost.
+
+@var{Symbol} can also be on the form @code{(pre-unwind @var{symbol})},
+then @code{with-throw-handler} is used instead of @code{catch}.
+@end defmac
+
+
+@defmac begin1 forms ...
+Port of Common Lisp's @code{begin1} form. Like @code{begin} runs each
+form in its body in order, but returns the first result instead of the
+last.
+@end defmac
+
+@subsection Procedures
+
+@defun swap f
+@math{swap (λ (x y) body ...) ⇔ λ (y x) body ...}
+@end defun
 
 @defun sort* items comperator [get=identity]
 @defunx sort*! items comperator [get=identity]
@@ -102,7 +132,6 @@ calling @var{comperator} on them.
 
 @var{sort*!} may modify the input list.
 @end defun
-
 
 @defun find-extreme items [<=<] [access=identity]
 Returns 2 values, the most extreme value, as compared by @var{<} after
@@ -141,12 +170,10 @@ n > (length lst).
 Same as @var{take-to}, but for strings
 @end defun
 
-
 @defun string-first
 @defunx string-last
 Returns the first and last character of a string respectivly
 @end defun
-
 
 @defun as-symb s
 Returns @code{(string->symbol s)} if @var{s} is a string, @var{s} otherwise.
@@ -157,7 +184,6 @@ Returns a list of pairs, where the @var{car} is the index in the list,
 and the @var{cdr} is the corresponding element of the original list
 @end defun
 
-
 @defun unval proc [n=0]
 Takes a procedure returning multiple values, and returns a procedure
 which takes the same arguments as the original procedure, but only
@@ -165,23 +191,13 @@ returns one of the return values. Which value to return can be sent as
 an additional parameter.
 @end defun
 
-
 @defun flatten lst
 Takes an arbitrarily nested list, and flattens it to a depth 1 list
 @end defun
 
-
-@defmac let-lazy forms body ...
-Syntactically equivalent to a regular @var{let}, but wraps each variable
-in @var{forms} in @var{delay}, while it finds each instance of that
-variable in body and wraps in in @var{force}.
-@end defmac
-
-
 @defun map/dotted proc dotted-list
 Like @var{map}, but also works for improper lists.
 @end defun
-
 
 @defun list-slice lst first last
 Returns a sublist from @var{lst} from @var{first} inclusive to
@@ -196,7 +212,6 @@ Reference list elements from the back, with the last most being at
 index 0. Semantically equivalent to
 @code{(list-ref (reverse @var{lst}) @var{i})}.
 @end defun
-
 
 @defun assq-merge a b
 Merges two association lists, comparing with eq.
@@ -244,7 +259,6 @@ Split a list into sub-lists on @var{element}
 @end lisp
 @end defun
 
-
 @defun span-upto count predicate list
 Simar to span from srfi-1, but never takes more than
 @var{count} items. Can however still take less.
@@ -274,20 +288,11 @@ Non-strings are converted to strings, and also appended.
 Inserts @var{item} between each element in @var{list}.
 @end defun
 
-
 @defun insert-ordered item collection [<]
 Inserts @var{item} into @var{collection}, such that collection
 remainins sorted if it was sorted beforehand.
 @end defun
 
-
-@defmac -> item forms ...
-@defmacx ->> item forms ...
-Applies each form onto item, from left to right.
-A form can either by a symbol, which is the applied directly, or a
-list, in which case @var{->} inserts item as the second argument
-(after the operand), and @var{->>} inserts it last.
-@end defmac
 
 @defun upcase-symbol
 @defunx downcase-symbol
@@ -299,7 +304,6 @@ Converts a symbol to upper or lower case.
 Splits @var{list} into sub-lists of size @var{chunk-size}.
 Requires that @math{chunk-size|(length list)}
 @end defun
-
 
 @defun iterate proc until base
 Repeatedly applies @var{proc} to @var{base}, until @var{until} is
@@ -318,7 +322,6 @@ list, and returns all values returned from all procedure calls.
 ⇒ -2
 @end example
 @end defun
-
 
 @defun assoc-ref-all alist key
 @defunx assq-ref-all alist key
@@ -351,36 +354,6 @@ Returns the last element of @var{v}.
 Converts @var{any} to a string, as per @var{display}.
 @end defun
 
-
-@defmac let-env bindings body ...
-Similar to @var{let}, but sets environment variables for the code in
-body. Restores the old values once we leave.
-
-A variable can also be removed from the environment, by setting its
-value to @code{#f}.
-@end defmac
-
-@defmac with-working-directory directory thunk
-Run @var{thunk} with the working directory set to @var{directory}.
-
-Note that this probably isn't thread safe. See source for more
-inforamtion.
-@end defmac
-
-@defmac with-locale1 category locale thunk
-Run @var{thunk} with the locale @var{category} temporarily set to
-@var{locale}.
-@end defmac
-
-@defmac catch* thunk (symbol proc) ...
-Macro allowing multiple exception types to be caught. Each (symbol
-proc) pair expands to a regular @code{catch}, with the leftmost being
-innermost.
-
-@var{Symbol} can also be on the form @code{(pre-unwind @var{symbol})},
-then @code{with-throw-handler} is used instead of @code{catch}.
-@end defmac
-
 @defun uniq lst
 @defunx univ lst
 @defunx unique lst
@@ -393,8 +366,3 @@ similar to the POSIX command uniq(1). The three variants uses
 procedure returning if the elements are equal.
 @end defun
 
-@defmac begin1 forms ...
-Port of Common Lisp's @code{begin1} form. Like @code{begin} runs each
-form in its body in order, but returns the first result instead of the
-last.
-@end defmac
