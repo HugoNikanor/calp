@@ -341,7 +341,6 @@
                    (run-zone-format (zone-entry-format zone-entry)
                                     rule offset))))))
 
-
 ;; See utc->zone
 ;; Difference here is that `dt` is wall time in the specified zone
 ;; The returned offset is still in the "regular" direction, meaning that
@@ -352,23 +351,23 @@
   (define zone-entry
     (find (lambda (zone)
             (let ((until (zone-entry-until zone)))
-             (cond ((not until) zone)
-                   ((datetime<=
-                     (tz dt #f)
-                     (case (car until)
-                       ((utc)
-                        ;; TODO
-                        (cdr until))
-                       ((wall) (cdr until))
-                       ((standard)
-                        ;; TODO
-                        (cdr until))
-                       (else (scm-error 'misc-error "zone->utc/name"
-                                        "Bad value for zone-entry-until: ~s"
-                                        (list (car (zone-entry-until zone)))
-                                        (list zone)))))
-                    zone)
-                   (else #f))))
+              (cond ((not until) zone)
+                    ((datetime<=
+                      (tz dt #f)
+                      (case (car until)
+                        ((utc)
+                         ;; TODO
+                         (cdr until))
+                        ((wall) (cdr until))
+                        ((standard)
+                         ;; TODO
+                         (cdr until))
+                        (else (scm-error 'misc-error "zone->utc/name"
+                                         "Bad value for zone-entry-until: ~s"
+                                         (list (car (zone-entry-until zone)))
+                                         (list zone)))))
+                     zone)
+                    (else #f))))
           (get-zone (zoneinfo) (tz dt))))
 
   (cond ((not zone-entry)
@@ -379,13 +378,14 @@
         ((timespec? (zone-entry-rule zone-entry))
          (let ((offset (timespec+ (zone-entry-rule zone-entry)
                                   (zone-entry-stdoff zone-entry))))
+           ;; TODO cache here
            (values (-> dt
                        (datetime-timespec-add (timespec-negate offset))
                        (tz "UTC"))
                    offset
                    (zone-entry-format zone-entry))))
 
-        (else ; symbolic rule name
+        (else                    ; symbolic rule name
          (define changeovers
            (find-changeovers
             dt (get-rule (zoneinfo) (zone-entry-rule zone-entry))))
@@ -394,6 +394,7 @@
 
          (let ((offset (timespec+ (zone-entry-stdoff zone-entry)
                                   (rule-save rule))))
+           ;; TODO cache here
            (values (-> dt
                        (datetime-timespec-add (timespec-negate offset))
                        (tz "UTC"))
@@ -432,7 +433,6 @@
             (string->symbol (match:substring m 2))
             #f))))
 
-
 (define (utc->zone dt identifier)
   (typecheck dt utc-datetime?)
   (typecheck identifier string?)
@@ -445,15 +445,27 @@
                       name)))
         (else (utc->zone/name dt identifier))))
 
+
+
+(define offset-cache (make-hash-table))
+
 (define (zone->utc dt)
   (typecheck dt zoned-datetime?)
-  (cond ((parse-utc-offset (tz dt))
+  (cond ((equal? "UTC" (tz dt))
+         (values dt (timespec (time)) "UTC"))
+        ((hash-ref offset-cache dt)
+         => unvector)
+        ((parse-utc-offset (tz dt))
          => (lambda (offset)
               (values (-> (datetime-timespec-add dt (timespec-negate offset))
                           (tz "UTC"))
                       offset
                       (string-append "UTC" (timespec->string offset)))))
-        (else (zone->utc/name dt))))
+        (else
+         (let ((a b c (zone->utc/name dt)))
+           (hash-set! offset-cache dt
+                      (vector a b c))
+           (values a b c)))))
 
 (define (zone->zone dt identifier)
   (typecheck (tz dt) string?)
