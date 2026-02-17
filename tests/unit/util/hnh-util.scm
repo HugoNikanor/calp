@@ -7,10 +7,8 @@
   :use-module (srfi srfi-88)
   :use-module (srfi srfi-1)
   :use-module (hnh util)
+  :use-module (hnh util exceptions)
   )
-
-(define (unreachable)
-  (throw 'unreachable))
 
 
 ;;; Changed core bindings
@@ -64,10 +62,10 @@
 (test-group "aif"
   (aif (+ 1 2)
        (test-eqv 3 it)
-       (unreachable))
+       (unreachable "aif"))
 
   (aif #f
-       (unreachable)
+       (unreachable "aif")
        (test-assert #t)))
 
 (test-group "awhen"
@@ -332,7 +330,7 @@
 
   (test-equal "Null case"
     '()
-    (group-by (lambda _ (unreachable)) '())))
+    (group-by (lambda _ (unreachable "group-by")) '())))
 
 (test-group "split-by"
   '((0 1) (3 4) (5 6))
