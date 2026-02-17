@@ -196,7 +196,8 @@
                      (modify seed
                              (find* xml-element*?)
                              (lambda (parent)
-                               (add-child (pi-element pi-tag body)
+                               (add-child (pi-element
+                                           pi-tag (string-trim-both body))
                                           parent)))))))))
 
 
