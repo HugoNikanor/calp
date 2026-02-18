@@ -49,6 +49,7 @@
            ;; caldav-filter
 
            put-event!
+           remove-by-href!
            flush!
            close-store!
 
