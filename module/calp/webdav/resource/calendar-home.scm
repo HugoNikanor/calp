@@ -31,8 +31,38 @@
 
 (define-method (collection? (_ <calendar-home-resource>)) #t)
 
-(define-method (content-length (_r <calendar-home-resource>) _)
-  0)
+(define (with-output-to-bytevector codec thunk)
+  (define-values (port get-bytevector)
+    ((@ (rnrs io ports) open-bytevector-output-port)))
+  (set-port-encoding! port codec)
+  (with-output-to-port port thunk)
+  (begin1
+   (get-bytevector)
+   (close-port port)))
+
+(define-method (content-type (_ <calendar-home-resource>))
+  "text/html; charset=UTF-8")
+
+(define-method (content (resource <calendar-home-resource>) _)
+  (with-output-to-bytevector
+   "UTF-8"
+   (lambda ()
+     (display "<!DOCTYPE html>") (newline)
+     ((@ (sxml html) sxml->html)
+      `(html (@ (lang "en"))
+             (head
+              (title "Calendar list"))
+             (body
+              (h1 "Calendar list")
+              (ul
+               ,@(for (name . child) in (children resource)
+                      `(li (a (@ (href ,name))
+                              ,(or (display-name child) name)
+                              " "
+                              (code ,(class-name (class-of child)))
+                              ;; ,(if (calendar-collection-resource? child)
+                              ;;      (display-name child))
+                              ))))))))))
 
 ;;; Radicale has Allow: MKCALENDAR and DAV: calendar-access on *all* resources.
 
