@@ -57,20 +57,23 @@
                  id start end (map car stores))
 
          (define result
-           (interleave-streams
-            (match-lambda*
-              (((_ _ a) (_ _ b))
+           (stream-map
+            (lambda (pair)
+              (let ((record (cdr pair)))
+                (list (car pair) (vector-ref record 2) (vector-ref record 3))))
+            (interleave-streams
+             (lambda (a b)
                ;; (format (current-error-port) "a: ~s, b: ~s~%" a b)
-               (datetime</zoneinfo
-                (instance-start-datetime reference-zone (car (vcomponent-children a)))
-                (instance-start-datetime reference-zone (car (vcomponent-children b))))))
-            ;; stream of (tuple-of store-id href vcalendar)
-            (map (lambda (store-pair)
-                   (stream-map
-                    (lambda (p) (list (car store-pair) (car p) (cdr p)))
-                    (entries-in-interval (cdr store-pair)
-                                         reference-zone start end)))
-                 stores)))
+               (datetime<
+                (vector-ref (cdr a) 0)
+                (vector-ref (cdr b) 0)))
+             ;; stream of (tuple-of store-id href vcalendar)
+             (map (lambda (store-pair)
+                    (stream-map
+                     (lambda (record) (cons (car store-pair) record))
+                     (entries-in-interval (cdr store-pair)
+                                          reference-zone start end)))
+                  stores))))
 
          ;; TODO log level debug
          (format (current-error-port) "<DEBUG> [~a] finished: ~s~%"

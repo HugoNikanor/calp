@@ -16,6 +16,7 @@
   :use-module (srfi srfi-41 util)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
+  :use-module (srfi srfi-197)
   :use-module (ice-9 curried-definitions)
   :export (find-base-instance
            generate-recurrence-set
@@ -44,7 +45,8 @@
                     (prop1 component 'RDATE)))
               (vcomponent-children event))
         (find-extreme
-         (vcomponent-children event)
+         (filter (lambda (ev) (eq? 'VEVENT (type ev)))
+                 (vcomponent-children event))
          datetime</zoneinfo
          instance-start-datetime)))
 
@@ -433,108 +435,122 @@
         (else limited-expanded)))
 
 
+;;; Returns a stream of vevent instances, where each vevent is one recurrence
+;;; instance of the given event.
+;;; DTSTART is updated, and DTEND where applicable.
+;;; EXDATE and RDATES are handled
 (define (generate-recurrence-set component)
   (typecheck component vcalendar?)
-  ;; TODO
-  ;; - SEQUENCE
+  ((@ (ice-9 control) call/ec)
+   (lambda (return)
+     ;; TODO
+     ;; - SEQUENCE
 
-  ;; NOTE recurrence sets are generated in a timezone-unaware world
+     ;; TODO TODO recurrence sets are generated in a timezone-unaware world
 
-  ;; find base event
-  (define-values (base rest) (find-base-instance component))
+     ;; find base event
+     (define-values (base rest) (find-base-instance component))
 
-  ;; Make note of all exceptions.
-  (define recurrence-id-exceptions
-    (fold (lambda (component rec-id-table)
-            (cond ((prop% component 'RECURRENCE-ID)
-                   => (lambda (rid)
-                        ;; TODO parameter RANGE=THISANDFUTURE
-                        (table-put rec-id-table
-                                   (let ((v (vline-value (car rid))))
-                                     (->
-                                      ;; TODO this should be timezone aware
-                                      (if (date? v)
-                                          (datetime date: v)
-                                          (tz v #f))
-                                      datetime->string string->symbol))
-                                   component)))
-                  (else rec-id-table)))
-          (table)
-          rest))
+     ;; (return (stream base))
 
-  ;; Duration of event, when the base has a DTEND value.
-  ;; DURATION values are ignored, since those are carried through automatically.
+     ;; Make note of all exceptions.
+     (define recurrence-id-exceptions
+       (fold (lambda (component rec-id-table)
+               (cond ((prop% component 'RECURRENCE-ID)
+                      => (lambda (rid)
+                           ;; TODO parameter RANGE=THISANDFUTURE
+                           (table-put rec-id-table
+                                      (let ((v (vline-value (car rid))))
+                                        (->
+                                         ;; TODO this should be timezone aware
+                                         (if (date? v)
+                                             (datetime date: v)
+                                             (tz v #f))
+                                         datetime->string string->symbol))
+                                      component)))
+                     (else rec-id-table)))
+             (table)
+             rest))
 
-  ;; TODO exactly what should happen when we pass a timezone border?
-  (define duration (instance-length base))
+     ;; Duration of event, when the base has a DTEND value.
+     ;; DURATION values are ignored, since those are carried through automatically.
 
-  (stream-map
-   (lambda (dt)
-     (or (table-get recurrence-id-exceptions (-> dt datetime->string string->symbol))
-         (-> base
-             (set (prop* 'DTSTART)
-                  (just (list (vline value: (if (datetime? (prop1 base 'DTSTART))
-                                                (tz dt (tz (prop1 base 'DTSTART)))
-                                                (datetime-date dt))))))
-             ;; TODO special cases where RDATE:s are given as periods, see below
-             (set (prop* 'DTEND)
-                  (if (prop% base 'DTEND)
-                      (just (list (vline value:
-                                         (let ((end (datetime+ dt duration)))
-                                           (if (datetime? (prop1 base 'DTSTART))
-                                               (tz end (tz (prop1 base 'DTEND)))
-                                               (datetime-date end))))))
-                      (nothing))))))
+     ;; TODO exactly what should happen when we pass a timezone border?
+     (define duration (instance-length base))
 
-   ;; If EXDATE exists, omit those entries
-   (stream-remove
-    (lambda (dt) (member dt
-                    (cond ((prop% base 'EXDATE)
-                           => (lambda (exs)
-                                (map (lambda (d)
-                                       ;; TODO this should be zone aware
-                                       (if (date? d)
-                                           (datetime date: d)
-                                           (tz d #f)))
-                                     (map vline-value exs))))
-                          (else '()))))
-    (interleave-streams
-     datetime<;/zoneinfo
-     (list
-      ;; if rdate exists, sort these and put them into a stream
-      ;; NOTE that rdates may be datetime?, date?, or period?
-      ;; TODO this may introduce duplicates, remove those
-      ;; TODO if given as a period, then instance end-time/duration
-      ;; should be replaced by the periods duration or end
-      (list->stream (sort*
-                     (cond ((prop% base 'RDATE)
-                            => (lambda (rdates)
-                                 (map (lambda (vline)
-                                        ;; TODO this discards timezone information
-                                        ;; This is probably incorreoct
-                                        (let ((rdate (vline-value vline)))
-                                         (cond ((date? rdate) (datetime date: rdate))
-                                               ((datetime? rdate) (tz rdate #f))
-                                               ((period? rdate) (tz (period-start rdate) #f))
-                                               (else (scm-error
-                                                      'misc-error "generate-recurrence-set"
-                                                      "Unexpected RDATE value: ~s"
-                                                      (list rdate) #f)))))
-                                      rdates)))
-                           (else '()))
-                     datetime<))
-      ;; (if rrule exists, run rrule-instances)
-      (cond ((prop1 base 'RRULE)
-             => (lambda (rrule)
-                  (rrule-instances
-                   (let ((s (prop1 base 'DTSTART)))
-                     (cond ((date? s) (datetime date: s))
-                           ((datetime? s) (tz s #f))
-                           (else (scm-error 'misc-error "generate-recurrence-set"
-                                            "Invalid type for dtstart: ~s"
-                                            (list s) #f))))
-                   rrule)))
-            (else (stream))))))))
+     (stream-map
+      (lambda (dt)
+        (or (table-get recurrence-id-exceptions (-> dt datetime->string string->symbol))
+            (-> base
+                ;; For CalDAV, calendar reports with expanded recurrence sets
+                ;; MUST have RECURRENCE-ID for all components (except the "root"
+                ;; component). Adding them unconditionally seems like a fair idea,
+                ;; since it's super cheap, and may be useful anyways.
+                ;; TODO timezones?
+                (set (prop* 'RECURRENCE-ID) (just (list (vline value: dt))))
+                (set (prop* 'DTSTART)
+                     (just (list (vline value: (if (datetime? (prop1 base 'DTSTART))
+                                                   (tz dt (tz (prop1 base 'DTSTART)))
+                                                   (datetime-date dt))))))
+                ;; TODO special cases where RDATE:s are given as periods, see below
+                (set (prop* 'DTEND)
+                     (if (prop% base 'DTEND)
+                         (just (list (vline value:
+                                            (let ((end (datetime+ dt duration)))
+                                              (if (datetime? (prop1 base 'DTSTART))
+                                                  (tz end (tz (prop1 base 'DTEND)))
+                                                  (datetime-date end))))))
+                         (nothing))))))
+
+      ;; If EXDATE exists, omit those entries
+      (stream-remove
+       (lambda (dt) (member dt
+                       (cond ((prop% base 'EXDATE)
+                              => (lambda (exs)
+                                   (map (lambda (d)
+                                          ;; TODO this should be zone aware
+                                          (if (date? d)
+                                              (datetime date: d)
+                                              (tz d #f)))
+                                        (map vline-value exs))))
+                             (else '()))))
+       (interleave-streams
+        datetime<                       ;/zoneinfo
+        (list
+         ;; if rdate exists, sort these and put them into a stream
+         ;; NOTE that rdates may be datetime?, date?, or period?
+         ;; TODO this may introduce duplicates, remove those
+         ;; TODO if given as a period, then instance end-time/duration
+         ;; should be replaced by the periods duration or end
+         (list->stream (sort*
+                        (cond ((prop% base 'RDATE)
+                               => (lambda (rdates)
+                                    (map (lambda (vline)
+                                           ;; TODO this discards timezone information
+                                           ;; This is probably incorreoct
+                                           (let ((rdate (vline-value vline)))
+                                             (cond ((date? rdate) (datetime date: rdate))
+                                                   ((datetime? rdate) (tz rdate #f))
+                                                   ((period? rdate) (tz (period-start rdate) #f))
+                                                   (else (scm-error
+                                                          'misc-error "generate-recurrence-set"
+                                                          "Unexpected RDATE value: ~s"
+                                                          (list rdate) #f)))))
+                                         rdates)))
+                              (else '()))
+                        datetime<))
+         ;; (if rrule exists, run rrule-instances)
+         (cond ((prop1 base 'RRULE)
+                => (lambda (rrule)
+                     (rrule-instances
+                      (let ((s (prop1 base 'DTSTART)))
+                        (cond ((date? s) (datetime date: s))
+                              ((datetime? s) (tz s #f))
+                              (else (scm-error 'misc-error "generate-recurrence-set"
+                                               "Invalid type for dtstart: ~s"
+                                               (list s) #f))))
+                      rrule)))
+               (else (stream))))))))))
 
 
 ;; Takes a time interval in @var{start} and @var{end}, and the
@@ -562,39 +578,138 @@
 
   
 
-  ;; filter-sorted-stream fails if the first element of the set is after our time
-  (stream-filter
-   (lambda (p)
-     (let ((ev (car (vcomponent-children (cdr p)))))
-       (instance-overlaps? reference-zone ev start end)))
-   (stream-take-while
-    (lambda (p)
-      (datetime</zoneinfo
-       (instance-start-datetime reference-zone (car (vcomponent-children (cdr p))))
-       end))
-    (interleave-streams
-     (lambda (a b) (datetime</zoneinfo (instance-start-datetime reference-zone (car (vcomponent-children (cdr a))))
-                                  (instance-start-datetime reference-zone (car (vcomponent-children (cdr b))))))
-     (cons
-      ;; Regulars
-      (list->stream
-       (sort*
-        (filter (lambda (pair)
-                  (instance-overlaps?
-                   reference-zone
-                   (find vevent? (vcomponent-children (cdr pair)))
-                   start end))
-                regular)
-        datetime</zoneinfo (lambda (x) (instance-start-datetime
-                                   reference-zone
-                                   (car (vcomponent-children (cdr x)))))))
-      ;; Recurrings
-      (map (lambda (e)
-             (let ((href cal (car+cdr e)))
-               (stream-map
-                (lambda (instance)
-                  (cons href
-                        (-> cal (vcomponent-children (list instance)))))
-                (generate-recurrence-set (cdr e)))))
-           recurring))
-     ))))
+  (define utc-start ((unval zone->utc) start))
+  (define utc-end   ((unval zone->utc) end))
+
+  ;; (define fake-start (tz start #f))
+  ;; (define fake-end   (tz end   #f))
+
+
+  (define non-recurring-instances
+   (chain regular
+          (map (lambda (pair)
+                 (define-values (href cal) (car+cdr pair))
+                 (define instance (car (vcomponent-children cal)))
+                 (define local-start (instance-start-datetime reference-zone instance))
+                 (define utc-start ((unval zone->utc) local-start))
+                 (define utc-end ((unval zone->utc)
+                                  (datetime+/zoneinfo local-start (instance-length instance))))
+                 (vector utc-start utc-end href cal))
+               _)
+          (filter (lambda (record)
+                    (timespan-overlaps? utc-start utc-end
+                                        (vector-ref record 0)
+                                        (vector-ref record 1)))
+                  _)
+          (sort* _ datetime< (lambda (record) (vector-ref record 0)))
+          (list->stream _)))
+
+  (define recurring-instances
+    (for (href . cal) in recurring
+         (stream-map
+          (lambda (instance)
+            ;; (define local-start (instance-start-datetime reference-zone instance))
+            ;; (define utc-start ((unval zone->utc) local-start))
+            ;; (define utc-end ((unval zone->utc)
+            ;;                  (datetime+/zoneinfo local-start (instance-length instance))))
+            (define fake-start (ensure-zoned-datetime "UTC" (prop1 instance 'DTSTART)))
+            (define fake-end (datetime+ fake-start (instance-length instance)))
+            (vector
+             ;; utc-start utc-end
+             fake-start fake-end
+             href
+             (-> cal (vcomponent-children (list instance)))))
+          (generate-recurrence-set cal))))
+
+  
+;; 
+
+;;   (stream-filter
+;;    (lambda (p)
+;;      (let ((ev (car (vcomponent-children (cdr p)))))
+;;        ;; TODO
+;;        ;; (instance-overlaps? reference-zone ev start end)
+;;        (timespan-overlaps? fake-start fake-end
+;;                            (ensure-zoned-datetime "UTC" (prop1 ev 'DTSTART))
+;;                            (ensure-zoned-datetime "UTC" (prop1 ev 'DTEND)))
+;;        ))
+;;    (stream-take-while
+;;     (lambda (p)
+;;       ;; (datetime</zoneinfo
+;;       ;;  (instance-start-datetime reference-zone (car (vcomponent-children (cdr p))))
+;;       ;;  end)
+;;       (datetime<
+;;        (ensure-zoned-datetime "UTC" (prop1 (car (vcomponent-children (cdr p))) 'DTSTART))
+;;        fake-end)
+;;       )
+;;     (interleave-streams
+;;      ;; (lambda (a b) (datetime</zoneinfo (instance-start-datetime reference-zone (car (vcomponent-children (cdr a))))
+;;      ;;                              (instance-start-datetime reference-zone (car (vcomponent-children (cdr b))))))
+;;      ;; TODO TODO
+;;      ;; This is a temporary measure to speed up stuff
+;;      (lambda (a b) (datetime< (ensure-zoned-datetime "UTC" (prop1 (car (vcomponent-children (cdr a))) 'DTSTART))
+;;                          (ensure-zoned-datetime "UTC" (prop1 (car (vcomponent-children (cdr b))) 'DTSTART))))
+;;      (cons
+;;       non-recurring-instances
+;;       recurring-instances))))
+
+  
+
+
+  
+
+  (case 2
+   ((1)
+    ;; - interleave all recurrences
+    ;; - filter
+    ;; - filter more
+    ;; - normalize to old return format
+    (chain
+     (cons non-recurring-instances recurring-instances)
+
+     (interleave-streams
+      (lambda (a b) (datetime< (vector-ref a 0) (vector-ref b 0)))
+      _)
+
+     (stream-take-while
+      (lambda (p) (datetime< (vector-ref p 0) utc-end))
+      _)
+
+     ;; filter-sorted-stream fails if the first element of the set is after our time
+     (stream-filter
+      (lambda (p) (timespan-overlaps? utc-start utc-end (vector-ref p 0) (vector-ref p 1)))
+      _)
+
+
+     ))
+   ((2)
+    (chain
+     ;; - filter
+     ;; - filter more
+     ;; - interleave recurrences
+     ;; - normalize to old return format
+     (cons non-recurring-instances recurring-instances)
+     (map (lambda (strm)
+            (->> strm
+                 (stream-take-while
+                  (lambda (p) (datetime< (vector-ref p 0) utc-end)))
+                 (stream-filter
+                  (lambda (p) (timespan-overlaps? utc-start utc-end (vector-ref p 0) (vector-ref p 1))))
+                 ))
+          _)
+
+
+     (interleave-streams
+      (lambda (a b) (datetime< (vector-ref a 0) (vector-ref b 0)))
+      _)
+
+     ;; (list->stream _)
+     ;; (stream-concat _)
+
+     ;; (stream-map
+     ;;  (lambda (record) (cons (vector-ref record 2) (vector-ref record 3)))
+     ;;  _)
+
+     )
+    )
+   ))

@@ -1,9 +1,11 @@
 ;;; TODO document this module
 (define-module (vcomponent datetime)
   :use-module (srfi srfi-1)
-  :use-module ((srfi srfi-41) :select (stream-filter))
+  :use-module ((srfi srfi-41) :select (stream-filter stream-null? stream-take-while))
   :use-module ((srfi srfi-41 util) :select (get-stream-interval stream-of))
   :use-module (vcomponent)
+  :use-module (vcomponent media-type)
+  :use-module (vcomponent type recurrence)
   :use-module (vcomponent create)
   :use-module (vcomponent type duration)
   :use-module (datetime)
@@ -16,8 +18,10 @@
   :use-module (hnh util exceptions)
   :use-module (ice-9 curried-definitions)
   :use-module (ice-9 match)
+  :use-module ((rnrs base) :select (assert) :version (6))
 
   :export (
+           event-overlaps?
            instance-overlaps?
            instances-overlap?
 
@@ -32,6 +36,10 @@
 ;;; This means that DTSTART MUST be present, and that DTEND and
 ;;; DURATION isn't explicitly checked for type, but instead assumed to
 ;;; match DTSTART (and so on).
+
+;;; NOTE many procedures here references instances.
+;;; That means a specific VEVENT insntance, which MAY be part of a
+;;; recurrence set.
 
 
 
@@ -79,6 +87,35 @@
                                   (list s) #f)))))))
 
 
+
+;; Does any instance of the calendar event overlaps the timespan?
+(define (event-overlaps? reference-zone event start end)
+  (typecheck event vcalendar?)
+  (assert (every (lambda (x) (or (vevent? x)
+                            (vtimezone? x)))
+                 (vcomponent-children event)))
+  (typecheck start zoned-datetime?)
+  (typecheck end zoned-datetime?)
+
+  (define utc-start ((unval zone->utc) start))
+  (define utc-end   ((unval zone->utc) end))
+
+  (cond ((recurring? event)
+         (not
+          (->> (generate-recurrence-set event)
+               (stream-take-while
+                (lambda (instance) (datetime</zoneinfo
+                               (instance-start-datetime reference-zone instance)
+                               utc-end)))
+               (stream-filter
+                (lambda (instance) (instance-overlaps? reference-zone instance utc-start utc-end)))
+               stream-null?)))
+
+        (else ; non-recurring
+         (instance-overlaps? reference-zone
+                             (find (lambda (x) (eq? 'VEVENT (type x)))
+                                   (vcomponent-children event))
+                             start end))))
 
 (define (instance-overlaps? reference-zone event start end)
   "Check if the event overlaps the timespan."

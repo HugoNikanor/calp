@@ -26,6 +26,7 @@
            string->date
            parse-ics-date
            parse-ics-time
+           parse-ics-datetime
            parse-iso-date
            parse-iso-time
            parse-iso-datetime
@@ -292,6 +293,9 @@ Returns -1 on failure"
 
 (define (parse-ics-time str)
   (string->time str "~H~M~S"))
+
+(define (parse-ics-datetime str)
+  (string->datetime str "~Y~m~dT~H~M~S~Z"))
 
 (define (parse-iso-date str)
   (string->date str))

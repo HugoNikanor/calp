@@ -162,6 +162,7 @@
               string->date
               parse-ics-date
               parse-ics-time
+              parse-ics-datetime
               parse-iso-date
               parse-iso-time
               parse-iso-datetime

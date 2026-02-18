@@ -72,6 +72,9 @@
            resourcetype       set-resourcetype!       remove-resourcetype!
            supportedlock      set-supportedlock!      remove-supportedlock!
 
+           ;; Other resource helpers
+           resource-supported-report-set
+
            ;; List of those properties
            webdav-properties
 
@@ -79,6 +82,7 @@
            lookup-resource
            all-resources-under
 
+           execute-report
            ))
 
 (define-class <resource> ()
@@ -114,9 +118,11 @@
 
 (define-method (content-length (self <resource>))
   ;; TODO headers to content!
+  ;; TODO allow caching the content.
+  ;; Possibly by creating some form of server internal session cookie for each request,
+  ;; which a generated content can be cached in.
   (cond ((content self '())
-         (lambda (x . _) (bytevector? x)) =>
-         (lambda (x . _) (bytevector-length x)))
+         (lambda (x . _) (bytevector? x)) => (lambda (x . _) (bytevector-length x)))
         (else #f)))
 
 
@@ -227,6 +233,42 @@
 (define-method (remove-resource-class! (_ <resource>))
   (throw 'protected-property))
 
+;;; TODO document this.
+;;; - It should return a list of pairs of xml elements, and goops method, each matching a supported report.
+;;; - Each implementation SHOULD add their own items to (next-method)
+;;; - it IS used in supported-report-set
+;;; - supoprted-report-set removes duplicates
+;;; - base implementation is the empty list
+;;; - order is insignificant
+;;; TODO when de-duping this set, a check should be made that all duplicate identifiers
+;;; all refer to the same method. Theseo issues of duplication is also present for live-properties,
+;;; so update that documentation also.
+(define-method (resource-supported-report-set (_ <resource>))
+  '())
+
+;;; TODO document this property
+;;; It originates from RFC 3253 §3.1
+;;; Note resource-supported-report-set helper method in the documentation
+(define-method (supported-report-set (resource <resource>) _)
+  (propstat 200 (list
+                 (apply
+                  (xml webdav 'supported-report-set)
+                  (map (lambda (supported-report)
+                         ((xml webdav 'supported-report)
+                          ((xml webdav 'report)
+                           supported-report)))
+                       ;; TODO remove duplicates
+                       ;; This may happen when a long inheritance chain is in effect
+                       (map car
+                            (resource-supported-report-set resource)))))))
+
+
+(define-method (set-supported-report-set! (r <resource>) _)
+  (throw 'protected-property))
+(define-method (remove-supported-report-set! (r <resource>) _)
+  (throw 'protected-property))
+
+
 ;; Return an alist from xml-element objects without children,
 ;; to generic procedures returning that value.
 ;; SHOULD be extended by children, which append their result to this result
@@ -241,7 +283,11 @@
                         (cdr pair)))
         webdav-properties)
    (list (cons ((xml calp-namespace 'resource-class))
-               (make-live-property resource-class set-resource-class! remove-resource-class!)))
+               (make-live-property resource-class set-resource-class! remove-resource-class!))
+         (cons ((xml webdav 'supported-report-set))
+               (make-live-property supported-report-set
+                                   set-supported-report-set!
+                                   remove-supported-report-set!)))
    ))
 
 
@@ -380,7 +426,10 @@
 ;;;     (and=> (lookup-resource root path create?: #t)
 ;;;            (lambda (resource) (set! (content resource) payload)))
 
-(define-generic remove-self!)
+(define-method (remove-self! (resource <resource>))
+  (when (parent resource)
+    (on-child-removed (parent resource) resource)))
+
 (define-generic create-collection!)
 (define-method (create-collection! resource name)
   (create-collection! resource name '() #f))
@@ -484,3 +533,8 @@
 
 (define-method (mount-resource! (resource <resource>) (parent <resource>) name)
   (throw 'http "Can't mount that resource in that location"))
+
+
+
+(define-method (execute-report (store <resource>) body headers)
+  #f)

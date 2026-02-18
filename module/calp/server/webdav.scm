@@ -377,9 +377,67 @@
 
 
 
-;; (define (run-report href request request-body))
+;;; NOTE each report MUST return as these methods do, meaning two values:
+;;; 1. The response object as per build-response
+;;; 2. The response body, in a number of different formats
+(define (run-report root-resource href request request-body)
+  (define resource (lookup-resource root-resource href))
+  (unless resource (throw 'http 404))
+  (case (and=> (request-content-type request) car)
+    ;; Requests content-type can be both both application/xml and
+    ;; text/xml, server MUST accept both (RFC 4918 8.2)
+    ((application/xml text/xml)
 
-
+     (define body
+       (xml-document-root
+        (cond ((string? request-body) (xml->namespaced-sxml request-body))
+              ((bytevector? request-body)
+               (-> request-body
+                   ;; TODO check Content-Type charset
+                   (bytevector->string (make-transcoder (utf-8-codec)))
+                   xml->namespaced-sxml))
+              (else (values (build-response code: 415)
+                            "Unsupported coding of the body")))))
+
+     (cond
+      ((find (lambda (supported-report)
+               (and (eq? (xml-element-tagname (car supported-report))
+                         (xml-element-tagname body))
+                    (eq? (xml-element-namespace (car supported-report))
+                         (xml-element-namespace body))))
+             (resource-supported-report-set resource))
+       => (lambda (supported-report)
+            ((cdr supported-report) resource body request)))
+      (else (throw 'http 415
+                   (with-output-to-string
+                     (lambda ()
+                      ((@ (sxml html) sxml->html)
+                       `(html
+                         (head (title "415: Unknown REPORT type"))
+                         (body
+                          (h1 "Unknown REPORT type")
+                          (p
+                           "Report of type "
+                           (code ,(format #f "<~a:~a />"
+                                          (xml-element-namespace body)
+                                          (xml-element-tagname body)))
+                           " not supported for the resource at "
+                           (code "/" ,(string-join href "/")) ".")
+                          ,@(if (null? (resource-supported-report-set resource))
+                                '((p "No reports are supported here"))
+                                `((p "Supported reports are:")
+                                  (ul ,@(map
+                                         (lambda (report)
+                                           `(li (code ,(format
+                                                        #f "<~a:~a />"
+                                                        (xml-element-namespace (car report))
+                                                        (xml-element-tagname (car report))))))
+                                         (resource-supported-report-set resource))))))))))
+                   '(text/html (charset . "UTF-8"))))))
+
+    (else
+     (values (build-response code: 415)
+             "Non-xml report bodies not supported"))))
 
 
 
@@ -433,7 +491,7 @@
                ((COPY) (run-copy root-resource href request))
                ((MOVE) (run-move root-resource href request))
 
-               ;; ((REPORT))
+               ((REPORT) (run-report root-resource href request request-body))
 
                (else (values (build-response code: 400) ""))))
 

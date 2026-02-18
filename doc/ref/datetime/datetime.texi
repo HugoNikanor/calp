@@ -609,6 +609,7 @@ or date component.
 
 @defun parse-ics-date str
 @defunx parse-ics-time str
+@defunx parse-ics-datetime str
 Parses dates per RFC5545.
 @end defun
 

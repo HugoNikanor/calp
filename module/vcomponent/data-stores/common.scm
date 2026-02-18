@@ -6,18 +6,36 @@
 ;;; TODO move this module to (vcomponent data-stores)
 
 (define-module (vcomponent data-stores common)
+  :use-module (srfi srfi-1)
+  :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
   :use-module (oop goops)
   :use-module (hnh util)
   :use-module (hnh util type)
   :use-module (hnh util optional)
   :use-module (hnh util lens)
-  :use-module (srfi srfi-1)
+  :use-module (hnh util table)
   :use-module (vcomponent)
+  :use-module (vcomponent datetime)
+  :use-module (vcomponent type unknown)
+  :use-module (vcomponent media-type)
   :use-module (sxml namespaced)
-  :use-module ((calp namespaces) :select (caldav))
+  :use-module ((calp namespaces) :select (caldav webdav))
   :use-module (sxml namespaced util)
   :use-module (web uri)
+  :use-module (web http status-codes)
+  :use-module ((web response) :select (build-response))
   :use-module ((web query) :select (parse-query))
+  :use-module ((rnrs base) :select (assert) :version (6))
+  :use-module (datetime)
+  :use-module (ice-9 match)
+  :use-module ((vcomponent data-stores report-canonical)
+               :select (execute-comp-filter))
+  :use-module ((calp webdav property) :select (propstat->namespaced-sxml))
+  :use-module ((calp webdav propfind) :select (exec-propfind))
+  :use-module ((oop goops) :select (make))
+  :use-module ((calp webdav resource virtual-calendar-object)
+               :select (<virtual-calendar-object-resource>))
   :export (
            <calendar-data-store>
            calendar-data-store?
@@ -43,7 +61,15 @@
 
            store-uri
 
+           execute-expand-property-report
+           execute-calendar-query-report
+           execute-calendar-multiget-report
+           execute-free-busy-query-report
+
            entries-in-interval
+           entries-by-summary
+
+           ;; extract-time-range
            ))
 
 ;;; TODO TODO TODO
@@ -77,6 +103,7 @@
 ;;; recurrence date occurs.
 ;;; The returned VCALENDAR SHOULD contain VTIMEZONE for each stated timezone.
 ;;; get-by-uid :: <store>, uid → vcalendar | #f
+;;; DEPRECATED, use the true search instead
 (define-generic get-by-uid)
 
 (define-method (get-by-uid (store <calendar-data-store>) uid)
@@ -107,6 +134,8 @@
 ;;; 
 ;;; put-event! :: <store>, href, vcalendar → undefined
 (define-generic put-event!)
+
+
 
 ;;; CalDAV (and in some extent vdir) works on hrefs to identify
 ;;; entries instead of UIDs. They both make it very clear that the
@@ -147,6 +176,16 @@
 (define-generic set-store-calendar-timezone!)
 (define-generic remove-store-calendar-timezone!)
 
+;;; TODO CAL:supported-calendar-component-set
+;;; TODO CAL:supported-calendar-data
+;;; TODO CAL:max-resource-size
+;;; TODO CAL:min-date-time
+;;; TODO CAL:max-date-time
+;;; TODO CAL:max-instances
+;;; TODO CAL:max-attendees-per-instance
+
+
+
 ;;; list-entries/shallow :: store -> (list-of href)
 (define-generic list-entries/shallow)
 (define-method (list-entries/shallow (store <calendar-data-store>))
@@ -165,47 +204,29 @@
 (define-generic remove-by-href!)
 
 ;;; Write out all pending changes to disk.
-;;; This method MUST be renamed to something sensible
+;;; TODO This method MUST be renamed to something sensible
+;;; like store-flush!
 ;;; flush! :: store -> ()
 (define-generic flush!)
 
-;;; caldav-filter :: store -> filter-xml -> (list-of vcalendar)
-;;; TODO
-;; (define-generic caldav-filter)
+
 
-(define (octet-string-contains haystack needle)
-  'TODO
-  )
-
-(define collations
-  (make-parameter
-   `(;("i;ascii-casemap" . ,ascii-casemap)
-     ;("i;octet" . ,octet)
-     ;("i;unicode-casemap" . ,unicode-casemap)
-     )
-   ))
-
-(define (run-text-match text-match value)
-  (typecheck text-match xml-element?)
-  ;; TODO this doesn't work, since we already converted the source
-  ;; strings into abstract data types. We need to un-parse them maybe
-  (typecheck value string?)
-  (define collation (or (attribute text-match 'collation) "i;ascii-casemap"))
-  (define negate (cond ((attribute text-match 'negate-condition)
-                        => (lambda (n) (string=? n "yes")))
-                       (else #f)))
-
-  (xml-text-content text-match)
-
-  )
-
-(define-method (caldav-filter (store <calendar-data-store>) query)
-  (typecheck query xml-element?)
-  (filter (lambda (ev) (run-caldav-filter ev query))
-          (list-entries store)))
+;; MUST return an assoc list denoting which collation modes the store supports.
+;; Keys are collation identifying strings in accordance to [IANA].
+;; Values should be procedures of type `(haystack: string?, needle: string) -> boolean?`
+;; but MAY instead throw errors for all values iff the store implements its completely
+;; own search framework.
+;; Note that the RFC 4791 (CalDAV) REQUIRES that "i;ascii-casemap" and "i;octet" be present.
+;; [IANA]: https://www.iana.org/assignments/collation/collation.xhtml
+(define-method (supported-collations (_ <calendar-data-store>))
+  `(("i;ascii-casemap" . ,(@ (hnh util ascii) string-ascii-contains-ci))
+    ("i;octet" . ,string-contains)
+    ("i;unicode-casemap" . ,string-contains-ci)
+    ))
 
 
 
+;;; TODO rename to something like "open-store" or "open-store-by-uri"
 (define (store-uri->store uri)
   (typecheck uri uri?)
   (unless (eq? 'store (uri-scheme uri))
@@ -226,17 +247,198 @@
 
 (define-generic close-store!)
 (define-method (close-store! _)
-  (format (current-error-port) "Closing <top>~%"))
+  ;; (format (current-error-port) "Closing <top>~%")
+  )
 
 
 (define-generic store-uri)
 
-;;; TODO merge with general search code
+
+;;; Code for calendar-query.
+
+;;; TODO add these to the documentation.
+;;; They are the dispatch procedures for the corresponding WebDAV (and
+;;; friends) REPORTs, dispatched by store type. Also see the run-*-report
+;;; procedures which are specialized by WebDAV resource type (and which
+;;; probably simply dispatch to these).
+(define-generic execute-expand-property-report)
+(define-generic execute-calendar-query-report)
+(define-generic execute-calendar-multiget-report)
+(define-generic execute-free-busy-query-report)
+
+
+
+;; This works exactly like a propfind, except that the "fake" property
+;; <C:calendar-data>...</> is also available.
+
+;;; TODO rename this since it can take multiple different tags
+(define (calendar-query->propfind calendar-query)
+  (assert (or (tag-matches? calendar-query 'calendar-query caldav)
+              (tag-matches? calendar-query 'calendar-multiget caldav)))
+
+  ((xml webdav 'propfind)
+   (or (find (lambda (el) (or (tag-matches? el 'allprop webdav)
+                         (tag-matches? el 'propname webdav)
+                         (tag-matches? el 'prop webdav)))
+             (xml-element-children calendar-query))
+       ((xml webdav 'allprop)))))
+
+
+;;; TODO this throws 'report-pre-condition in a number of places
+;;; This MUST be caught somewhere.
+;;; But first it must be documented
+(define-method (execute-calendar-query-report
+                (store <calendar-data-store>)
+                calendar-query)
+  (assert (tag-matches? calendar-query 'calendar-query caldav))
+
+  (define timezone
+    (cond ((find (lambda (ch) (tag-matches? ch 'timezone caldav))
+                 (xml-element-children calendar-query))
+           => (lambda (timezone)
+                ;; Note that content-type here is a calp extension
+                (call-with-input-string (xml-text-content timezone)
+                  (parser
+                   (resolve-media-type
+                    (or (attribute timezone 'content-type)
+                        "text/calendar"))))))
+          (else #f)))
+
+  ;; TODO validate that timezone is a vtimezone component (if present)
+
+  ;; This handles the <C:filter/> part of the query
+  ;; Matching entries is a list of href, vcalendar pairs.
+  (define matching-entries
+    (cond ((find (lambda (ch) (tag-matches? ch 'filter caldav))
+                 (xml-element-children calendar-query))
+           => (lambda (filter-el)
+                ;; <C:filter /> MUST contains exactly one <C:comp-filter /> element.
+                (cond ((find (lambda (ch) (tag-matches? ch 'comp-filter caldav))
+                             (xml-element-children filter-el))
+                       => (lambda (comp-filter)
+                            (filter
+                             (lambda (pair) (execute-comp-filter
+                                        ;; TODO give actual timezone object
+                                        ;; US/Eastern currently hard-coded, in order
+                                        ;; to work with RFC provided tests
+                                        "US/Eastern"
+                                        comp-filter store (cdr pair) '()))
+                             (list-entries store))))
+                      (else
+                       ;; TODO better error
+                       (scm-error 'misc-error "execute-calendar-query-report"
+                                  "Malformed query, no C:comp-filter element"
+                                  '() #f)))
+                ))
+          (else
+            ;; TODO better error
+           (scm-error 'misc-error "execute-calendar-query-report"
+                      "Malformed query, no C:filter element"
+                      '() #f)
+           )))
+
+  (define propfind (calendar-query->propfind calendar-query))
+
+  ;; (format (current-error-port) "Matching entries: ~s~%" matching-entries)
+  ;; (format (current-error-port) "Query: ~s~%" calendar-query)
+
+  (values
+   (build-response code: 207
+                   reason-phrase: (http-status-phrase 207)
+                   headers: '((content-type . (application/xml))))
+   (apply (xml webdav 'multistatus)
+          (for entry in matching-entries
+               ;; (format (current-error-port) "Entry: ~s~%" entry)
+               (apply (xml webdav 'response)
+                      ((xml webdav 'href) (car entry))
+                      (map propstat->namespaced-sxml
+                           (exec-propfind
+                            propfind
+                            (make <virtual-calendar-object-resource>
+                              component: (cdr entry)))))))))
+
+
+
+
+;;; NOTE: this procedure appears in mulitple places in the code base.
+;;; It is NOT moved to a module, since it's a band-aid. All overly-specified hrefs
+;;; MUST be validated before used (e.g. that all the "upper" components also point here),
+;;; which this procedure plainly ignored
+(define (uri-path-last href)
+  (last (string-split (uri-path href) #\/)))
+
+
+(define-method (execute-calendar-multiget-report
+                (store <calendar-data-store>)
+                calendar-multiget)
+  (assert (tag-matches? calendar-multiget 'calendar-multiget caldav))
+
+  ;; (format (current-error-port) "~s~%" calendar-multiget)
+
+  (define hrefs
+    (filter (lambda (el) (tag-matches? el 'href webdav))
+            (xml-element-children calendar-multiget)))
+
+  (define propfind (calendar-query->propfind calendar-multiget))
+
+  (values (build-response
+           code: 207
+           reason-phrase: (http-status-phrase 207)
+           headers: '((content-type . (application/xml))))
+          (apply
+           (xml webdav 'multistatus)
+           (for href in hrefs
+                ;; TODO only checking the last component is an ugly
+                ;; hack. We MUST check that all parent components also match,
+                ;; and that the domain matches when present
+                (define href-str (last (string-split (xml-text-content href) #\/)))
+                (cond ((get-by-href store href-str)
+                       => (lambda (event)
+                            (apply (xml webdav 'response)
+                                   ;; TODO re-code the href?
+                                   href
+                                   ((xml webdav 'status) (http-status-line 200))
+                                   (map propstat->namespaced-sxml
+                                        (exec-propfind
+                                         propfind
+                                         (make <virtual-calendar-object-resource> component: event))))))
+
+                      (else
+                       ((xml webdav 'response)
+                        ;; TODO re-code the href?
+                        href
+                        ((xml webdav 'status)
+                         (http-status-line 404)))))))))
+
+
+
+
+
+
+;;; TODO merge all following query procedures with general search code
 
 ;; Return a *sorted* and *expanded* stream of <href, vcalendar?> pairs, for all entries
 ;; overlapping the interval. This means that a recurring entry will
 ;; be present multiple time, with each component wrapped in its own (but
 ;; identical) vcalendar envelope.
+#|xml
+<calendar-query xmlns="urn:ietf:params:xml:ns:caldav"
+                xmlns:D="DAV:">
+  <D:prop>
+    <calendar-data>
+      <expand start="&START;" end="&END;" />
+    </calendar-data>
+  </D:prop>
+  <filter>
+    <comp-filter name="VCALENDAR">
+      <comp-filter name="VEVENT">
+        <time-range start="&START;" end="&END;" />
+      </comp-filter>
+    </comp-filter>
+  </filter>
+</calendar-query>
+|#
+;;; DEPRECATED
 (define-generic entries-in-interval)
 (define-method (entries-in-interval
                 (store <calendar-data-store>)
@@ -246,3 +448,31 @@
           "Entries-in-interval not implemented for ~s~%"
           store)
   '())
+
+
+#|xml
+<calendar-query xmlns="urn:ietf:params:xml:ns:caldav">
+  <filter>
+    <comp-filter name="VCALENDAR">
+      <comp-filter name="VEVENT">
+        <prop-filter name="SUMMARY">
+          <text-match collation="i;ascii-casemap">&QUERY;</text-match>
+        </prop-filter>
+      </comp-filter>
+    </comp-filter>
+  </filter>
+</calendar-query>
+|#
+;;; DEPRECATED
+(define-generic entries-by-summary)
+(define-method (entries-by-summary
+                (store <calendar-data-store>)
+                substring)
+  (filter (lambda (entry)
+            (define-values (href calendar) (car+cdr entry))
+            (any (lambda (instance)
+                   (and (vevent? instance)
+                        (string-contains-ci (prop1 instance 'SUMMARY)
+                                            substring)))
+                 (vcomponent-children calendar)))
+          (list-entries store)))

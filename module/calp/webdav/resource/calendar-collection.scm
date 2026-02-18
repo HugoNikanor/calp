@@ -233,3 +233,43 @@
                        ((xml webdav 'collection))
                        ((xml caldav 'calendar))))))
 
+
+
+
+
+(define-method (run-expand-property-report
+                (resource <calendar-collection-resource>)
+                body request)
+  ;; TODO
+  (throw 'http 501))
+
+
+(define-method (run-free-busy-query-report
+                (resource <calendar-collection-resource>)
+                body request)
+  ;; TODO
+  (throw 'http 501))
+
+;;; RFC 4791 §7.8
+(define-method (run-calendar-query-report
+                (resource <calendar-collection-resource>)
+                body request)
+  ;; TODO catch expected errors (see execute-calendar-query-report), and propagate them apropriately.
+  (execute-calendar-query-report (data-store resource) body))
+
+
+(define-method (run-calendar-multiget-report
+                (resource <calendar-collection-resource>)
+                body request)
+  (execute-calendar-multiget-report (data-store resource) body))
+
+
+
+;;; TODO also implement this for calendar-object. All reports MUST be supported
+(define-method (resource-supported-report-set (_ <calendar-collection-resource>))
+  (list
+   (cons ((xml webdav 'expand-property))   run-expand-property-report)
+   (cons ((xml caldav 'calendar-query))    run-calendar-query-report)
+   (cons ((xml caldav 'calendar-multiget)) run-calendar-multiget-report)
+   (cons ((xml caldav 'free-busy-query))   run-free-busy-query-report))
+  )
