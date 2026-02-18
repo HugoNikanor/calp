@@ -1,5 +1,6 @@
 (define-module (tests data-store run)
   :use-module (srfi srfi-64)
+  :use-module (ice-9 regex)
   :use-module (hnh util)
   :use-module (hnh util path)
   :use-module (hnh util destructure)
@@ -28,12 +29,6 @@
 ;;;   + entries changed
 ;;;   + invalid data added
 
-(define generate-href
-  (let ((counter 0))
-    (lambda ()
-      (set! counter (1+ counter))
-      (format #f "href-~a.ics" counter))))
-
 (define entries
   (for file in (list
                 "hand-written/target.ics"
@@ -45,7 +40,9 @@
                 ;; "hand-written/monetary.ics"
                 )
 
-       (list (generate-href)
+       (list (regexp-substitute/global
+              #f "/" file
+              'pre "-" 'post)
              file
              (call-with-input-file
                  (path-append
@@ -81,11 +78,8 @@
          (for-each (lambda (entry)
                      (put-event! store (list-ref entry 0) (list-ref entry 2)))
                    entries)
-         (format (current-error-port) "Flushing entries~%")
          (flush! store)
          (close-store! store))
-
-       (format (current-error-port) "Setup done~%")
 
        ;; We close and re-open the store, to ensure we read from storage
        ;; instead of internal caches.
