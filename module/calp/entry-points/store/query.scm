@@ -1,4 +1,5 @@
 (define-module (calp entry-points store query)
+  :use-module (srfi srfi-1)
   :use-module (srfi srfi-41)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -25,20 +26,61 @@
 (define opt-spec
   `((tz (value #t)
         (description ,(G_ "Timezone to resolve local datetimes in.")))
+    (help (single-char #\h)
+          (description ,(G_ "Print this help.")))
     ))
 
+(define (print-help)
+ (format (current-error-port) "Usage: calp store query [method] [args] ...
+
+Available methods are:
+
+summary 'summary-string'
+  find entry by its summary field. Case independent substring search.
+
+interval [start [end]]
+
+  "))
 
 (define (main args)
   (define opts (getopt-long args (getopt-opt opt-spec)))
 
-  (define zone
-    (or (option-ref opts 'tz #f)
-        (getenv "TZ")
-        ((@ (datetime localtime) get-localtime))))
+ (define zone
+   (or (option-ref opts 'tz #f)
+       (getenv "TZ")
+       ((@ (datetime localtime) get-localtime))))
 
-  (format #t "== ~a ==~%" (G_ "Entries in Interval"))
+ (when (option-ref opts 'help #f)
+   (print-help))
+
+ (define query (option-ref opts '() '()))
+ (if (null? query)
+     (print-help)
+     ;; TODO this is a makeshift query dispatcher and query system.
+     ;; Change it to be in line with the CalDAV calendar-query report,
+     ;; with the command line being split into 2:
+     ;; - CalDAV report body queries
+     ;; - command line flag queries, clearly mapping to (a subset) of the full query bodies
+     (case (string->symbol (car query))
+       ((interval) (expanded-time-interval-query zone (cdr query)))
+       ((summary) (query-by-summary zone (cdr query)))
+       (else (format (current-error-port) "Unknown query type: ~s~%" (car query)))))
+)
+
+(define (query-by-summary zone args)
+  ;; for-each
+  ;; ;; TODO what even is this currying?
+  ;; (print-entry ((@ (vcomponent config) data-stores)))
+  (format #t "entries: ~s~%"
+   (append-map
+    (lambda (store-pair) (entries-by-summary (cdr store-pair) (car args)))
+    ;; TODO limit store set
+    ((@ (vcomponent config) data-stores)))))
+
+(define (expanded-time-interval-query zone args)
+
   (define-values (start end)
-    (match (option-ref opts '() '())
+    (match args
       ((start end)
        (values (datetime date: (parse-iso-date start) tz: zone)
                (datetime date: (parse-iso-date end)   tz: zone)))
@@ -50,6 +92,8 @@
       (() (let ((n (current-date)))
             (values (datetime date: n tz: zone)
                     (datetime date: (date+ n (date day: 1)) tz: zone))))))
+
+  (format #t "== ~a ==~%" (G_ "Entries in Interval"))
 
   (format #t "~a - ~a~%"
           (datetime->string start "~Y-~m-~d ~H:~M~z")

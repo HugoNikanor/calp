@@ -4,6 +4,7 @@
   :use-module (srfi srfi-88)
   :use-module (calp translation)
   :use-module (ice-9 getopt-long)
+  :use-module (ice-9 match)
   :use-module (hnh util)
   :use-module (hnh util io)
   :use-module (hnh util options)
@@ -14,8 +15,7 @@
   :export (main %summary))
 
 (define-public %summary
-  (G_ "Retrieve entry by href."))
-
+  (G_ "Retrieve entries by href."))
 
 (define opt-spec
   `((media (value media-type)
@@ -31,44 +31,33 @@
     (module-ref (resolve-interface `(vcomponent media-type ,@media-module))
                 'format))
 
-  ;; NOTE this retrieves a single entry, and prints all
-  ;; the recurrence instances for it. If the entry isn't
-  ;; found, or isn't recurring, then the behaviour is
-  ;; undefined.
-  (for-each
-   (lambda (href)
-     ;; TODO make header configurable
-     (format #t "== ~a ==~%" href)
-     ;; TODO handle hrefs without '/'
-     (let ((store-name local-href (apply values (string-split href #\/)))) ;
-       (cond
-        ((assoc-ref                             ;
-          ((@ (vcomponent config) data-stores)) ;
-          store-name)
-         => (lambda (store)
-              (cond ((get-by-href store local-href)
-                     => (lambda (ev)
-                          ;; TODO make base instance or recursion set configurable
-                          ;; TODO allow max date for recursion set
-                          ((serializer media-type)
-                           ev (current-output-port))
-                          (ensure-newline)
-                          #;
-                          (stream-for-each ; ; ;
-                          (lambda (instance) ; ; ;
-                          (format #t "~a - ~a: ~a~%" ; ; ;
-                          (prop1 instance 'DTSTART) ; ; ;
-                          (prop1 instance 'DTEND) ; ; ;
-                          (prop1 instance 'SUMMARY))) ; ; ;
-                          (generate-recurrence-set ev))))
-                    ;; TODO proper error (no such entry)
-                    (else
-                     (format (current-error-port) "No such entry~%")
-                     (throw 'return)))))
-        ;; TODO proper error (no such store)
-        (else
-         (format (current-error-port) "No such store~%")
-         (throw 'return)))))
-   (option-ref opts '() '()))
- 
-  )
+  (for href in (option-ref opts '() '())
+       ;; TODO make header configurable
+       ;; (format #t "== ~a ==~%" href)
+       (match (string-split href #\/)
+         ((store-name local-href)
+          (cond
+           ((assoc-ref
+             ((@ (vcomponent config) data-stores))
+             store-name)
+            => (lambda (store)
+                 (cond ((get-by-href store local-href)
+                        => (lambda (ev)
+                             ((serializer media-type)
+                              ev (current-output-port))
+                             (ensure-newline)))
+                       (else
+                        (format (current-error-port) "No such entry: ~a~%"
+                                local-href)
+                        ;; TODO Error code
+                        (throw 'return)))))
+           (else
+            (format (current-error-port) "No such store: ~a~%"
+                    store-name)
+            ;; TODO error code
+            (throw 'return))))
+         (other (format (current-error-port)
+                        "Error: All references MUST be on form \"<store>/<href>\". Got ~s~%"
+                        other)
+                ;; TODO error code
+                (throw 'return)))))
