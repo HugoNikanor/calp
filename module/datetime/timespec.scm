@@ -1,6 +1,8 @@
 ;;; Commentary:
 ;; Datatype for holding timechanges and time offesets.
 ;; Used both for timespecs from the TZ-database, and for UTC-OFFSET from RFC5545.
+;;
+;; TODO rewrite this to be a duration and a "type" of time tuple instead, updating usage where applicable
 ;;; Code:
 
 (define-module (datetime timespec)
@@ -11,6 +13,7 @@
   :use-module (hnh util serialize)
   :use-module (hnh util lens)
   :use-module (datetime core)
+  :use-module (datetime arithmetic)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)

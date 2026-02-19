@@ -4,7 +4,9 @@
 ;;; With sha256 checksum:
 ;;; 4aa79e4effee53fc4029ffe5f6ebe97937282ebcdf386d5d2da91ce84142f957
 ;;; Limited to the explicitly mentioned zones:
+;;; - Europe/Stockholm
 ;;; - UTC
+;;; - America/New_York
 ;;; Code:
 
 (define-module
@@ -20,33 +22,82 @@
  #:export
  (zoneinfo-intermediary zoneinfo-database))
 
-(with-output-to-port
- (current-error-port)
- (lambda ()
-   (display "************************************************************\n")
-   (display "WARNING! (datetime) is compiled with only a very basic\n")
-   (display "timezone database. Generate a new one by running:\n")
-   (display "calp update-zoneinfo \\\n")
-   (display "    -o $LOAD_PATH/datetime/timezone/vendored-tzdb.scm \\\n")
-   (display "    [limeted zone set (defaults to all zones)]\n")
-   (display "************************************************************\n")))
-
 (define zoneinfo-intermediary
   (parsed-zic-intermediary
    #:rules
-   (list)
+   (list (list 'EU
+               (zi-rule #:rule-name 'EU #:rule-from 1977 #:rule-to 1980 #:rule-in 4 #:rule-on (list '> 0 1) #:rule-at (timespec #01:00:00 '+ 'utc) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'EU #:rule-from 1977 #:rule-to 'only #:rule-in 9 #:rule-on (list 'last 0) #:rule-at (timespec #01:00:00 '+ 'utc) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'EU #:rule-from 1978 #:rule-to 'only #:rule-in 10 #:rule-on 1 #:rule-at (timespec #01:00:00 '+ 'utc) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'EU #:rule-from 1979 #:rule-to 1995 #:rule-in 9 #:rule-on (list 'last 0) #:rule-at (timespec #01:00:00 '+ 'utc) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'EU #:rule-from 1981 #:rule-to 'maximum #:rule-in 3 #:rule-on (list 'last 0) #:rule-at (timespec #01:00:00 '+ 'utc) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'EU #:rule-from 1996 #:rule-to 'maximum #:rule-in 10 #:rule-on (list 'last 0) #:rule-at (timespec #01:00:00 '+ 'utc) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters ""))
+         (list 'SovietZone
+               (zi-rule #:rule-name 'SovietZone #:rule-from 1945 #:rule-to 'only #:rule-in 5 #:rule-on 24 #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #02:00:00 '+ 'daylight) #:rule-letters "M")
+               (zi-rule #:rule-name 'SovietZone #:rule-from 1945 #:rule-to 'only #:rule-in 9 #:rule-on 24 #:rule-at (timespec #03:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'SovietZone #:rule-from 1945 #:rule-to 'only #:rule-in 11 #:rule-on 18 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters ""))
+         (list 'NYC
+               (zi-rule #:rule-name 'NYC #:rule-from 1920 #:rule-to 'only #:rule-in 3 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "D")
+               (zi-rule #:rule-name 'NYC #:rule-from 1920 #:rule-to 'only #:rule-in 10 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "S")
+               (zi-rule #:rule-name 'NYC #:rule-from 1921 #:rule-to 1966 #:rule-in 4 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "D")
+               (zi-rule #:rule-name 'NYC #:rule-from 1921 #:rule-to 1954 #:rule-in 9 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "S")
+               (zi-rule #:rule-name 'NYC #:rule-from 1955 #:rule-to 1966 #:rule-in 10 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "S"))
+         (list 'C-Eur
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1916 #:rule-to 'only #:rule-in 4 #:rule-on 30 #:rule-at (timespec #23:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1916 #:rule-to 'only #:rule-in 10 #:rule-on 1 #:rule-at (timespec #01:00:00 '+ 'wall) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1917 #:rule-to 1918 #:rule-in 4 #:rule-on (list '> 1 15) #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1917 #:rule-to 1918 #:rule-in 9 #:rule-on (list '> 1 15) #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1940 #:rule-to 'only #:rule-in 4 #:rule-on 1 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1942 #:rule-to 'only #:rule-in 11 #:rule-on 2 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1943 #:rule-to 'only #:rule-in 3 #:rule-on 29 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1943 #:rule-to 'only #:rule-in 10 #:rule-on 4 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1944 #:rule-to 1945 #:rule-in 4 #:rule-on (list '> 1 1) #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1944 #:rule-to 'only #:rule-in 10 #:rule-on 2 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1945 #:rule-to 'only #:rule-in 9 #:rule-on 16 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1977 #:rule-to 1980 #:rule-in 4 #:rule-on (list '> 0 1) #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1977 #:rule-to 'only #:rule-in 9 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1978 #:rule-to 'only #:rule-in 10 #:rule-on 1 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1979 #:rule-to 1995 #:rule-in 9 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1981 #:rule-to 'maximum #:rule-in 3 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'C-Eur #:rule-from 1996 #:rule-to 'maximum #:rule-in 10 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters ""))
+         (list 'Germany
+               (zi-rule #:rule-name 'Germany #:rule-from 1946 #:rule-to 'only #:rule-in 4 #:rule-on 14 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'Germany #:rule-from 1946 #:rule-to 'only #:rule-in 10 #:rule-on 7 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'Germany #:rule-from 1947 #:rule-to 1949 #:rule-in 10 #:rule-on (list '> 0 1) #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "")
+               (zi-rule #:rule-name 'Germany #:rule-from 1947 #:rule-to 'only #:rule-in 4 #:rule-on 6 #:rule-at (timespec #03:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'Germany #:rule-from 1947 #:rule-to 'only #:rule-in 5 #:rule-on 11 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #02:00:00 '+ 'daylight) #:rule-letters "M")
+               (zi-rule #:rule-name 'Germany #:rule-from 1947 #:rule-to 'only #:rule-in 6 #:rule-on 29 #:rule-at (timespec #03:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'Germany #:rule-from 1948 #:rule-to 'only #:rule-in 4 #:rule-on 18 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S")
+               (zi-rule #:rule-name 'Germany #:rule-from 1949 #:rule-to 'only #:rule-in 4 #:rule-on 10 #:rule-at (timespec #02:00:00 '+ 'standard) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "S"))
+         (list 'US
+               (zi-rule #:rule-name 'US #:rule-from 1918 #:rule-to 1919 #:rule-in 3 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "D")
+               (zi-rule #:rule-name 'US #:rule-from 1918 #:rule-to 1919 #:rule-in 10 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "S")
+               (zi-rule #:rule-name 'US #:rule-from 1942 #:rule-to 'only #:rule-in 2 #:rule-on 9 #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "W")
+               (zi-rule #:rule-name 'US #:rule-from 1945 #:rule-to 'only #:rule-in 8 #:rule-on 14 #:rule-at (timespec #23:00:00 '+ 'utc) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "P")
+               (zi-rule #:rule-name 'US #:rule-from 1945 #:rule-to 'only #:rule-in 9 #:rule-on 30 #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "S")
+               (zi-rule #:rule-name 'US #:rule-from 1967 #:rule-to 2006 #:rule-in 10 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "S")
+               (zi-rule #:rule-name 'US #:rule-from 1967 #:rule-to 1973 #:rule-in 4 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "D")
+               (zi-rule #:rule-name 'US #:rule-from 1974 #:rule-to 'only #:rule-in 1 #:rule-on 6 #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "D")
+               (zi-rule #:rule-name 'US #:rule-from 1975 #:rule-to 'only #:rule-in 2 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "D")
+               (zi-rule #:rule-name 'US #:rule-from 1976 #:rule-to 1986 #:rule-in 4 #:rule-on (list 'last 0) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "D")
+               (zi-rule #:rule-name 'US #:rule-from 1987 #:rule-to 2006 #:rule-in 4 #:rule-on (list '> 0 1) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "D")
+               (zi-rule #:rule-name 'US #:rule-from 2007 #:rule-to 'maximum #:rule-in 3 #:rule-on (list '> 0 8) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #01:00:00 '+ 'daylight) #:rule-letters "D")
+               (zi-rule #:rule-name 'US #:rule-from 2007 #:rule-to 'maximum #:rule-in 11 #:rule-on (list '> 0 1) #:rule-at (timespec #02:00:00 '+ 'wall) #:rule-save (timespec #00:00:00 '+ 'standard) #:rule-letters "S")))
    #:zones
-   (list (list "Etc/UTC"
-               (zone-entry
-                #:stdoff
-                (timespec #00:00:00)
-                #:rule
-                (timespec #00:00:00 '+ 'standard)
-                #:format
-                "UTC"
-                #:until
-                #f)))
+   (list (list "America/New_York"
+               (zone-entry #:stdoff (timespec #04:56:02 '-) #:rule (timespec #00:00:00 '+ 'standard) #:format "LMT" #:until (cons 'utc (datetime #:year 1883 #:month 11 #:day 18 #:hour 17)))
+               (zone-entry #:stdoff (timespec #05:00:00 '-) #:rule 'US #:format "E%sT" #:until (cons 'wall (datetime #:year 1920 #:month 1 #:day 1)))
+               (zone-entry #:stdoff (timespec #05:00:00 '-) #:rule 'NYC #:format "E%sT" #:until (cons 'wall (datetime #:year 1942 #:month 1 #:day 1)))
+               (zone-entry #:stdoff (timespec #05:00:00 '-) #:rule 'US #:format "E%sT" #:until (cons 'wall (datetime #:year 1946 #:month 1 #:day 1)))
+               (zone-entry #:stdoff (timespec #05:00:00 '-) #:rule 'NYC #:format "E%sT" #:until (cons 'wall (datetime #:year 1967 #:month 1 #:day 1)))
+               (zone-entry #:stdoff (timespec #05:00:00 '-) #:rule 'US #:format "E%sT" #:until #f))
+         (list "Europe/Berlin"
+               (zone-entry #:stdoff (timespec #00:53:28) #:rule (timespec #00:00:00 '+ 'standard) #:format "LMT" #:until (cons 'wall (datetime #:year 1893 #:month 4 #:day 1)))
+               (zone-entry #:stdoff (timespec #01:00:00) #:rule 'C-Eur #:format "CE%sT" #:until (cons 'wall (datetime #:year 1945 #:month 5 #:day 24 #:hour 2)))
+               (zone-entry #:stdoff (timespec #01:00:00) #:rule 'SovietZone #:format "CE%sT" #:until (cons 'wall (datetime #:year 1946 #:month 1 #:day 1)))
+               (zone-entry #:stdoff (timespec #01:00:00) #:rule 'Germany #:format "CE%sT" #:until (cons 'wall (datetime #:year 1980 #:month 1 #:day 1)))
+               (zone-entry #:stdoff (timespec #01:00:00) #:rule 'EU #:format "CE%sT" #:until #f))
+         (list "Etc/UTC" (zone-entry #:stdoff (timespec #00:00:00) #:rule (timespec #00:00:00 '+ 'standard) #:format "UTC" #:until #f)))
    #:links
-   (list (zone-link #:name "UTC" #:target "Etc/UTC"))))
-
+   (list (zone-link #:name "Europe/Stockholm" #:target "Europe/Berlin") (zone-link #:name "UTC" #:target "Etc/UTC"))))
 (define zoneinfo-database (intermediary->zoneinfo zoneinfo-intermediary))

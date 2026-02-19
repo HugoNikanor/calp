@@ -1,9 +1,11 @@
 (define-module (datetime)
 
   :use-module (datetime core)
+  :use-module (datetime arithmetic)
   :use-module (datetime timezone)
   :use-module (datetime timespec)
   :use-module (datetime io)
+  :use-module (datetime extra)
   ;; To resolve colision with cadr-second from srfi-1
   :re-export-and-replace (second)
   :re-export (
@@ -44,11 +46,6 @@
 
               start-of-month
               end-of-month
-              start-of-year
-              end-of-year
-
-              date-stream
-              day-stream
 
               time-min
               time-max
@@ -69,8 +66,6 @@
               start-of-week
               end-of-week
               month-days
-              days-in-interval
-              year-day
 
               time->decimal-hour
               datetime->decimal-hour
@@ -91,11 +86,6 @@
               datetime< datetime<? datetime<= datetime<=?
               datetime> datetime>? datetime>= datetime>=?
 
-              date+ date-
-              time+ time-
-              datetime+ datetime-
-              date-difference
-              datetime-difference
 
               jan january
               feb february
@@ -118,6 +108,13 @@
               fri friday
               sat saturday
 
+              ;; Arithmetic
+              date+ date-
+              time+ time-
+              datetime+ datetime-
+              date-difference
+              datetime-difference
+
               ;; Timezone
               zoneinfo
               utc->zone
@@ -136,6 +133,16 @@
               datetime>=/zoneinfo
 
               ensure-zoned-datetime
+
+              ;; Extra
+              start-of-year
+              end-of-year
+
+              date-stream
+              day-stream
+
+              days-in-interval
+              year-day
 
               ;; Timespec
               timespec

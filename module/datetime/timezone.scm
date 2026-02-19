@@ -5,6 +5,7 @@
   :use-module (srfi srfi-71)
   :use-module (ice-9 regex)
   :use-module (datetime core)
+  :use-module (datetime arithmetic)
   :use-module (datetime timespec)
   :use-module ((datetime zoneinfo)
                :select (

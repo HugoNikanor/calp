@@ -20,6 +20,7 @@
   :use-module (hnh util lens)
   :use-module (hnh util exceptions)
   :use-module (datetime core)
+  :use-module (datetime arithmetic)
   :use-module (datetime timespec)
   :use-module (datetime zoneinfo types)
   :use-module (datetime zoneinfo intermediary)
