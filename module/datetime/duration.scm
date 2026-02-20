@@ -2,6 +2,7 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (ice-9 curried-definitions)
+  :use-module (ice-9 regex)
   :use-module (hnh util type)
   :use-module (hnh util object)
   :use-module (hnh util lens)
@@ -17,29 +18,38 @@
            duration-minute*
            duration-second*
 
-           ;; duration+
-           ;; duration-
+           duration-week*
+           duration-time*
 
            string->duration
-           duration->string
-
-           ))
+           duration->string))
 
 ;;; Further expansion:
 ;;; - the "biggest" component is allowed fractions, meaning that D0.5Y
 ;;    (or D0,5Y) is a valid duration
 
+
+;;; duration± does NOT exist. Operations on pure time, pure week, and
+;;; pure date work as expected, but as soon as months or years are
+;;; involved no sensible operation exists.
+
+;;; Time durations are implemented as date-time durations with all
+;;; date components set to 0.
+
+;;; Times are stored internally as seconds, but ALWAYS displayed
+;;; normalized to hour, minute, second tuples.
+
 #|
-dur-value  = (["+"] / "-") "P" (dur-date / dur-time / dur-week) ; ;
-                                        ; ;
-dur-date   = dur-day [dur-time]         ; ;
-dur-time   = "T" (dur-hour / dur-minute / dur-second) ; ;
-dur-week   = 1*DIGIT "W"                ; ;
-dur-hour   = 1*DIGIT "H" [dur-minute]   ; ;
-dur-minute = 1*DIGIT "M" [dur-second]   ; ;
-dur-second = 1*DIGIT "S"                ; ;
-dur-day    = 1*DIGIT "D"                ; ;
-                                        ; ;
+dur-value  = (["+"] / "-") "P" (dur-date / dur-time / dur-week) ; ; ; ;
+                                        ; ; ; ;
+dur-date   = dur-day [dur-time]         ; ; ; ;
+dur-time   = "T" (dur-hour / dur-minute / dur-second) ; ; ; ;
+dur-week   = 1*DIGIT "W"                ; ; ; ;
+dur-hour   = 1*DIGIT "H" [dur-minute]   ; ; ; ;
+dur-minute = 1*DIGIT "M" [dur-second]   ; ; ; ;
+dur-second = 1*DIGIT "S"                ; ; ; ;
+dur-day    = 1*DIGIT "D"                ; ; ; ;
+                                        ; ; ; ;
 |#                                      ;
 
 ;;; duration := date-duration | week-duration | time-duration
@@ -60,13 +70,17 @@ dur-day    = 1*DIGIT "D"                ; ;
 ;;; S := [0, 59] ; FUCK leap-seconds
 ;;; datetime := date / time [/ timezone]
 
+
 
-;;; duration± does NOT exist. Operations on pure time, pure week, and
-;;; pure date work as expected, but as soon as months or years are
-;;; involved no sensible operation exists.
+(define (((focus-quotitient d) n) f)
+  (let ((v r (floor/ n d)))
+    (+ (* d (f v)) r)))
 
-;;; ----------------------------------------
+(define (((focus-remainder d) n) f)
+  (let ((v r (floor/ n d)))
+    (+ (* d v) (f r))))
 
+
 
 (define-type (duration-week
               serializer: (lambda (r) `(string->duration ,(duration-week->string r))))
@@ -76,7 +90,7 @@ dur-day    = 1*DIGIT "D"                ; ;
 (define (duration-week->string dur)
   (format #f "P~aW" (duration-week-week dur)))
 
-;;; ----------------------------------------
+
 
 (define (duration-date->string dur)
   ;; Both P0D and PT0S are acceptable "zeroes" here
@@ -106,155 +120,154 @@ dur-day    = 1*DIGIT "D"                ; ;
 (define-type (duration-date
               serialier:
               (lambda (r) `(string->duration ,(duration-date->string r))))
-  (duration-date-year   keyword: year  default: 0 type: (and exact-integer? (not negative?)))
-  (duration-date-month  keyword: month default: 0 type: (and exact-integer? (not negative?)))
-  (duration-date-day    keyword: day   default: 0 type: (and exact-integer? (not negative?)))
-  (duration-date-time   keyword: time  default: 0 type: (and exact-integer? (not negative?))))
+  (duration-date-year   keyword: year default: 0
+                        type: (and exact-integer? (not negative?)))
+  (duration-date-month  keyword: month default: 0
+                        type: (and exact-integer? (not negative?)))
+  (duration-date-day    keyword: day  default: 0
+                        type: (and exact-integer? (not negative?)))
+  (duration-date-time   keyword: time default: 0
+                        type: (and exact-integer? (not negative?))))
 
-;;; ----------------------------------------
+
+
+(define (duration-component? x)
+  (or (duration-date? x)
+      (duration-week? x)))
+
+
+
 
 (define (duration->string dur)
+  (typecheck dur duration?)
   (string-append
    (case (duration-sign dur)
      ((+) "") ((-) "-"))
    (let ((d (duration-value dur)))
-    (cond ((duration-date? d) (duration-date->string d))
-          ;; ((duration-time? d) (duration-time->string d))
-          ((duration-week? d) (duration-week->string d))
-          (else (unreachable "duration-type serializer"))))))
+     (cond ((duration-date? d) (duration-date->string d))
+           ((duration-week? d) (duration-week->string d))
+           (else (unreachable "duration-type serializer"))))))
 
-(define-type (duration-full
-              serializer:
-              (lambda (r) `(string->duration ,(duration->string r))))
+(define-type
+  (duration
+   serializer:
+   (lambda (r) `(string->duration ,(duration->string r)))
+   constructor:
+   (lambda (constructor typecheck)
+     (lambda* (key: (sign '+)
+                    year month day
+                    hour minute second
+                    week)
+       (define value
+         (cond ((and week (or year month day hour minute second))
+                (scm-error 'type-error "duration"
+                           "#:week can't be mixed with other keys"
+                           '() #f))
+               (week (duration-week week: week))
+               ((not (or year month day))
+                (duration-date time: (+ (* 3600 (or hour   0))
+                                        (*   60 (or minute 0))
+                                        (or second 0))))
+               (else
+                (duration-date year:  (or year  0)
+                               month: (or month 0)
+                               day:   (or day   0)
+                               time: (+ (* 3600 (or hour   0))
+                                        (*   60 (or minute 0))
+                                        (or second 0))))))
+       (typecheck sign value)
+       (constructor sign value))))
   (duration-sign type: (memv '(+ -))
                  keyword: sign)
   (duration-value type: (or duration-week? duration-date?)
                   keyword: value))
 
+
 
+(define ((project-as-date dur) f)
+  (f (cond ((duration-date? dur) dur)
+           ((duration-week? dur)
+            (duration-date day: (* 7 (duration-week-week dur))))
+           (else (scm-error 'type-error "project-as-date"
+                            "Can't project ~s as a duration-date"
+                            (list dur) (list f))))))
 
-(define (duration-week->duration-date dur)
-  (duration-date day: (* 7 (duration-week-week dur))))
+(define duration-year*
+  (lens-compose duration-value*
+                project-as-date
+                duration-date-year*))
 
-(define (duration-ensure-date dur)
-  (let ((d (duration-value dur)))
-   (cond ((duration-date? d) d)
-         ((duration-week? d) (duration-week->duration-date d))
-         ;; ((duration-time? dur) (duration-time->duration-date dur))
-         (else (scm-error 'type-error "duration-ensure-date"
-                          "Non duration given: ~s"
-                          (list dur) #f)))))
+(define duration-month*
+  (lens-compose duration-value*
+                project-as-date
+                duration-date-month*))
 
-;;; For these, we promote to a proper type, then apply the inner transformation
-(define ((duration-year* dur) f)
-  (modify (duration-ensure-date dur)
-          duration-date-year* f))
+(define duration-day*
+  (lens-compose duration-value*
+                project-as-date
+                duration-date-day*))
 
-(define ((duration-month* dur) f)
-  (modify (duration-ensure-date dur)
-          duration-date-month* f))
+(define duration-time*
+  (lens-compose duration-value*
+                project-as-date
+                duration-date-time*))
 
-(define ((duration-day* dur) f)
-  (modify (duration-ensure-date dur)
-          duration-date-day* f))
+(define duration-hour*
+  (lens-compose duration-time*
+                (focus-quotitient 3600)))
 
+(define duration-minute*
+  (lens-compose duration-time*
+                (focus-remainder 3600)
+                (focus-quotitient 60)))
 
-(define (duration-time* dur)
-  (cond ((duration-date? dur) duration-date-time*)
-        ;; ((duration-time? dur) identity-lens)
-        ((duration-week? dur)
-         (lens-compose duration-date-time*
-                       (lambda (dur) 'TODO)))))
+(define duration-second*
+  (lens-compose duration-time*
+                (focus-remainder 3600)
+                (focus-remainder 60)))
 
+;;; NOTE: This ONLY works if the duration was created as a week duration.
+;;; An empty duration DOES NOT work, but could be made to work
+(define duration-week*
+  (lens-compose duration-value*
+                duration-week-week*))
 
-(define ((duration-hour* dur) f)
-  (modify dur duration-time*
-          (lambda (t)
-            (let ((h r (floor/ t 3600)))
-              (+ (* 3600 (f h)) r)))))
-
-(define ((duration-minute* dur) f)
-  (modify dur duration-time*
-          (lambda (t)
-            (let* ((h r (floor/ t 3600))
-                   (m s (floor/ r 60)))
-              (+ (* 3600 h) (* 60 (f m)) s)))))
-
-(define ((duration-second* dur) f)
-  (modify dur duration-time*
-          (lambda (t)
-            (let* ((h r (floor/ t 3600))
-                   (m s (floor/ r 60)))
-              (+ (* 3600 h) (* 60 m) (f s))))))
-
-;; (define ((duration-minute* dt) f)
-;;   (modify dur (duration-get-time-focus%* dur duration-time-minute*) f))
-;; (define ((duration-secord* dt) f)
-;;   (modify dur (duration-get-time-focus%* dur duration-time-second*) f))
-
-
-(define* (duration key:
-                   (sign '+)
-                   year month day
-                   hour minute second
-                   week)
-  (duration-full
-   sign: sign
-   value: (cond ((and week (or year month day hour minute second))
-                 (scm-error 'type-error "duration"
-                            "#:week can't be mixed with other keys"
-                            '() #f))
-                (week (duration-week week: week))
-                ((not (or year month day))
-                 (duration-date time: (+ (* 3600 (or hour   0))
-                                         (*   60 (or minute 0))
-                                         (or second 0))))
-                (else
-                 (duration-date year:  (or year  0)
-                                month: (or month 0)
-                                day:   (or day   0)
-                                time: (+ (* 3600 (or hour   0))
-                                         (*   60 (or minute 0))
-                                         (or second 0)))))))
-
-(define (duration-component? x)
-  (or (duration-date? x)
-      ;; (duration-time? x)
-      (duration-week? x)))
-
-(define duration? duration-full?)
-
-;; (define (duration+ xs ...) ...)
-;; (define (duration- xs ...) ...)
 
 (define period-date-time-rx
   (make-regexp
-   "^P([0-9]+Y)?([0-9]+M)?([0-9]+D)?(T([0-9]+H)?([0-9]+M)?([0-9]+S)?)?$"))
+   "^([+-])?P([0-9]+Y)?([0-9]+M)?([0-9]+D)?(T([0-9]+H)?([0-9]+M)?([0-9]+S)?)?$"))
 (define period-week-rx
-  (make-regexp "^P([0-9]+)W$"))
-(define (string->duration str)
-  (define (extract m i)
-    (cond ((match:substring m i)
-           => (lambda (s)
-                (string->number (string-drop-right s 1))))
-          (else 0)))
+  (make-regexp "^([+-])?P([0-9]+)W$"))
 
+(define (string->duration str)
   (cond ((string=? str "P")
          (scm-error 'misc-error "string->duration"
                     "String not parsable as duration: ~s"
                     (list str) #f))
         ((regexp-exec period-date-time-rx str)
          => (lambda (m)
+              (define (extract i)
+                (cond ((match:substring m i)
+                       => (lambda (s)
+                            (string->number (string-drop-right s 1))))
+                      (else 0)))
               (duration
-               year:  (extract m 1)
-               month: (extract m 2)
-               day:   (extract m 3)
-               hour:   (extract m 5)
-               minute: (extract m 6)
-               second: (extract m 7))))
+               sign: (cond ((match:substring m 1)
+                            => (lambda (s) (if (string=? s "-") '- '+)))
+                           (else '+))
+               year:  (extract 2)
+               month: (extract 3)
+               day:   (extract 4)
+               hour:   (extract 6)
+               minute: (extract 7)
+               second: (extract 8))))
         ((regexp-exec period-week-rx str)
          => (lambda (m)
-              (duration week: (string->number (match:substring m 1)))))
+              (duration
+               sign: (cond ((match:substring m 1)
+                            => (lambda (s) (if (string=? s "-") '- '+)))
+                           (else '+))
+               week: (string->number (match:substring m 1)))))
         (else
          (scm-error 'misc-error "string->duration"
                     "String not parsable as duration: ~s"
