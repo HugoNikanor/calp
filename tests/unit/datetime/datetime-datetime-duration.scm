@@ -1,0 +1,6 @@
+(define-module (test datetime-datetime-duration)
+  :use-module (srfi srfi-64)
+  :use-module (srfi srfi-71)
+  :use-module (srfi srfi-88)
+  :use-module (datetime core)
+  :use-module (datetime duration))
