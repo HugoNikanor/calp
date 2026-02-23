@@ -11,15 +11,19 @@
            duration
            duration?
 
-           duration-year*
-           duration-month*
-           duration-day*
-           duration-hour*
-           duration-minute*
-           duration-second*
+           duration-year   duration-year*
+           duration-month  duration-month*
+           duration-day    duration-day*
+           duration-hour   duration-hour*
+           duration-minute duration-minute*
+           duration-second duration-second*
 
            duration-week*
            duration-time*
+
+           duration-negate
+           duration-negative?
+           duration-positive?
 
            string->duration
            duration->string))
@@ -38,37 +42,6 @@
 
 ;;; Times are stored internally as seconds, but ALWAYS displayed
 ;;; normalized to hour, minute, second tuples.
-
-#|
-dur-value  = (["+"] / "-") "P" (dur-date / dur-time / dur-week) ; ; ; ;
-                                        ; ; ; ;
-dur-date   = dur-day [dur-time]         ; ; ; ;
-dur-time   = "T" (dur-hour / dur-minute / dur-second) ; ; ; ;
-dur-week   = 1*DIGIT "W"                ; ; ; ;
-dur-hour   = 1*DIGIT "H" [dur-minute]   ; ; ; ;
-dur-minute = 1*DIGIT "M" [dur-second]   ; ; ; ;
-dur-second = 1*DIGIT "S"                ; ; ; ;
-dur-day    = 1*DIGIT "D"                ; ; ; ;
-                                        ; ; ; ;
-|#                                      ;
-
-;;; duration := date-duration | week-duration | time-duration
-;;; date± :: date, date-duration | week-duration -> date
-;;; time± :: time, time-duration -> time
-;;; datetime± :: datetime, duration -> datetime
-
-;;; date := Y / m / d
-;;; Y := integer
-;;; m := [1, 12]
-;;; d := [1, 31] if m in [jan, mar, may, jul, aug, okt, dec]
-;;;      [1, 30] if m in [apr, jun, sep, nov]
-;;;      28 if m == 2 and not leap year
-;;;      29 if m == 2 and leap year
-;;; time := H / M / S
-;;; H := [0, 23]
-;;; M := [0, 59]
-;;; S := [0, 59] ; FUCK leap-seconds
-;;; datetime := date / time [/ timezone]
 
 
 
@@ -138,15 +111,6 @@ dur-day    = 1*DIGIT "D"                ; ; ; ;
 
 
 
-(define (duration->string dur)
-  (typecheck dur duration?)
-  (string-append
-   (case (duration-sign dur)
-     ((+) "") ((-) "-"))
-   (let ((d (duration-value dur)))
-     (cond ((duration-date? d) (duration-date->string d))
-           ((duration-week? d) (duration-week->string d))
-           (else (unreachable "duration-type serializer"))))))
 
 (define-type
   (duration
@@ -164,10 +128,10 @@ dur-day    = 1*DIGIT "D"                ; ; ; ;
                            "#:week can't be mixed with other keys"
                            '() #f))
                (week (duration-week week: week))
-               ((not (or year month day))
-                (duration-date time: (+ (* 3600 (or hour   0))
-                                        (*   60 (or minute 0))
-                                        (or second 0))))
+               ;; ((not (or year month day))
+               ;;  (duration-date time: (+ (* 3600 (or hour   0))
+               ;;                          (*   60 (or minute 0))
+               ;;                          (or second 0))))
                (else
                 (duration-date year:  (or year  0)
                                month: (or month 0)
@@ -177,20 +141,44 @@ dur-day    = 1*DIGIT "D"                ; ; ; ;
                                         (or second 0))))))
        (typecheck sign value)
        (constructor sign value))))
-  (duration-sign type: (memv '(+ -))
-                 keyword: sign)
-  (duration-value type: (or duration-week? duration-date?)
-                  keyword: value))
+  (duration-sign type: (memv '(+ -)))
+  (duration-value type: (or duration-week? duration-date?)))
+
+
+(define (duration->string dur)
+  (typecheck dur duration?)
+  (string-append
+   (case (duration-sign dur)
+     ((+) "") ((-) "-"))
+   (let ((d (duration-value dur)))
+     (cond ((duration-date? d) (duration-date->string d))
+           ((duration-week? d) (duration-week->string d))
+           (else (unreachable "duration-type serializer"))))))
 
 
 
+
+(define (duration-negate duration)
+  (modify duration duration-sign*
+          (lambda (s) (case s ((+) '-) ((-) '+)))))
+
+(define (duration-negative? duration)
+  (eq? '- (duration-sign duration)))
+
+(define (duration-positive? duration)
+  (eq? '+ (duration-sign duration)))
+
+
+(define (ensure-date-duration dur)
+  (cond ((duration-date? dur) dur)
+        ((duration-week? dur)
+         (duration-date day: (* 7 (duration-week-week dur))))
+        (else (scm-error 'type-error "ensure-date-duration"
+                         "Can't cast ~s to a duration-date"
+                         (list dur) #f))))
+
 (define ((project-as-date dur) f)
-  (f (cond ((duration-date? dur) dur)
-           ((duration-week? dur)
-            (duration-date day: (* 7 (duration-week-week dur))))
-           (else (scm-error 'type-error "project-as-date"
-                            "Can't project ~s as a duration-date"
-                            (list dur) (list f))))))
+  (f (ensure-date-duration dur)))
 
 (define duration-year*
   (lens-compose duration-value*
@@ -233,6 +221,14 @@ dur-day    = 1*DIGIT "D"                ; ; ; ;
                 duration-week-week*))
 
 
+(define (duration-year   d) (get d duration-year*))
+(define (duration-month  d) (get d duration-month*))
+(define (duration-day    d) (get d duration-day*))
+(define (duration-hour   d) (get d duration-hour*))
+(define (duration-minute d) (get d duration-minute*))
+(define (duration-second d) (get d duration-second*))
+
+
 (define period-date-time-rx
   (make-regexp
    "^([+-])?P([0-9]+Y)?([0-9]+M)?([0-9]+D)?(T([0-9]+H)?([0-9]+M)?([0-9]+S)?)?$"))
@@ -267,7 +263,7 @@ dur-day    = 1*DIGIT "D"                ; ; ; ;
                sign: (cond ((match:substring m 1)
                             => (lambda (s) (if (string=? s "-") '- '+)))
                            (else '+))
-               week: (string->number (match:substring m 1)))))
+               week: (string->number (match:substring m 2)))))
         (else
          (scm-error 'misc-error "string->duration"
                     "String not parsable as duration: ~s"

@@ -552,7 +552,12 @@ datetime+ datetime-
   (test-error "Negative days are invalid" 'misc-error
               (date-difference (date) (date day: -1)))
   (test-equal "Negative years ARE valid"
-    (date year: 1) (date-difference (date) (date year: -1))))
+    (date year: 1) (date-difference (date) (date year: -1)))
+
+  ;; TODO, the following returns (date month: 2 day: 3), which is
+  ;; clearly not right
+  (date-difference #2026-05-01 #2026-02-28)
+  )
 
 ;; TODO
 datetime-difference

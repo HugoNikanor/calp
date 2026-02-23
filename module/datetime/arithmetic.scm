@@ -248,6 +248,7 @@
   ;; This means that change is added to date completely ignoring timezones.
   ;; This means that +1 day and +24 hours are identical here
   (typecheck (tz change) false?)
+  ;; !!!
   (let ((new-time underflow (time- (datetime-time base) (datetime-time change))))
     (-> base
         (modify date*
@@ -329,6 +330,7 @@
      "Datetime difference only defined for UTC or zoneless datetimes. Got start: ~s, end: ~s"
      (list start end) #f))
 
+  ;; !!!
   (let ((fixed-time overflow (time- (datetime-time end)
                                     (datetime-time start))))
     (datetime date: (date-difference (date- (datetime-date end)

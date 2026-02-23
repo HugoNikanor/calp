@@ -9,7 +9,6 @@
 ;;; For each of
 ;;; - duration-week
 ;;; - duration-date
-;;; - duration-time
 ;;; Test the following lenses
 ;;; - duration-year*
 ;;; - duration-month*
