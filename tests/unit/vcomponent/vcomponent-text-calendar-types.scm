@@ -50,12 +50,12 @@
 
   (test-group "DURATION"
     (test-error "Malformed duration"
-      'calendar-parse-error
+      'misc-error
       ((get-parser 'DURATION)
        (table)
        "7W"))
     (test-error "Garbage at end of duration"
-      'calendar-parse-error
+      'misc-error
       ((get-parser 'DURATION)
        (table)
        "P7Wextra")))

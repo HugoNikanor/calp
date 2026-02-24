@@ -364,13 +364,6 @@ Also known as Julian day.
 Convert @var{time} to a decimal value, so 10:30 would become 10.5.
 @end defun
 
-@defun datetime->decimal-hour dt [start-date]
-Similar to @code{time->decimal-hour}, but also looks at the date component.
-
-@var{start-date} is required if either the month of year component of
-@var{dt} is non-zero (since months and years have a variable number of hours).
-@end defun
-
 @defun time->seconds time
 Convert a time value to an integer number of seconds.
 @end defun

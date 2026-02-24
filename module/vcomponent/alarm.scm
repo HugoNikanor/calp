@@ -11,16 +11,6 @@
 
 ;;; ACTION:{AUDIO,DISPLAY,EMAIL,other}
 
-(define (datetime-duration-add datetime duration)
-  ;; (typecheck datetime datetime?)
-  ;; (typecheck duration duration?)
-
-  (let ((sign amplitude (duration->datetime duration)))
-    ((case sign
-       ((+) datetime+/zoneinfo)
-       ((-) datetime-/zoneinfo))
-     datetime amplitude)))
-
 ;;; Get all triggers of an alarm in reference to a given instance of
 ;;; an event.
 ;;; Timezone is the users configured timezone.
@@ -40,7 +30,7 @@
                  ((duration? trigger)
                   (case (string->symbol (or (param trigger-vline 'RELATED) "START"))
                     ((START)
-                     (datetime-duration-add
+                     (datetime+/zoneinfo
                       (prop1 event 'DTSTART)
                       trigger))
 
@@ -50,14 +40,14 @@
                      (cond ((or (prop1 event 'DTEND)
                                 (prop1 event 'DUE))
                             => (lambda (end)
-                                 (datetime-duration-add
+                                 (datetime+
                                   (ensure-zoned-datetime timezone end)
                                   trigger)))
                            ((prop1 event 'DURATION)
                             => (lambda (dur)
                                  (-> (ensure-zoned-datetime timezone (prop1 event 'DTSTART))
-                                     (datetime-duration-add dur)
-                                     (datetime-duration-add trigger))))
+                                     (datetime+/zoneinfo dur)
+                                     (datetime+/zoneinfo trigger))))
                            (else (scm-error
                                   'type-error "alarm-triggers"
                                   "Encountered ~a with neither DTEND/DUE or DURATION, with alarm relative end: ~s"

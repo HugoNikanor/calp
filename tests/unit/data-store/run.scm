@@ -29,6 +29,17 @@
 ;;;   + entries changed
 ;;;   + invalid data added
 
+
+;;; TODO TODO
+;;; This currently goes on the built-in timezone database.
+;;; This means that many of the tests may fail due to a bad
+;;; database being installed.
+
+;;; For the time being, we should install a database with the needed zones,
+;;; but in the future instead install an empty one ensuring that all
+;;; timezone data is read from the calendar files.
+
+
 (define entries
   (for file in (list
                 "hand-written/target.ics"

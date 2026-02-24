@@ -230,12 +230,12 @@
     (if event-continued?
         0
         (* 100/24
-           (datetime->decimal-hour
+           (duration->decimal-hour
             (datetime-difference/zoneinfo
              (instance-start-datetime reference-zone ev)
              (datetime date: day tz: reference-zone))))))
 
-  (define height (* 100/24 (datetime->decimal-hour
+  (define height (* 100/24 (duration->decimal-hour
                             (instance-length/clamped
                              (datetime date: day tz: reference-zone)
                              (datetime date: (date+ day (date day: 1))

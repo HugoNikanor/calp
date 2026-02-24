@@ -5,6 +5,7 @@
   :use-module (datetime timezone)
   :use-module (datetime timespec)
   :use-module (datetime io)
+  :use-module (datetime duration)
   :use-module (datetime extra)
   ;; To resolve colision with cadr-second from srfi-1
   :re-export-and-replace (second)
@@ -68,7 +69,6 @@
               month-days
 
               time->decimal-hour
-              datetime->decimal-hour
 
               time->seconds
               seconds->time
@@ -110,7 +110,7 @@
 
               ;; Arithmetic
               date+ date-
-              time+ time-
+              ;; time+ time-
               datetime+ datetime-
               date-difference
               datetime-difference
@@ -151,11 +151,36 @@
               timespec-time timespec-time*
               timespec-sign timespec-sign*
               timespec-type timespec-type*
+              timespec-value timespec-value*
 
               timespec+
               timespec-negate
               datetime-timespec-add
               parse-time-spec
+
+              ;; Duration
+              duration
+              duration?
+
+              duration-sign   duration-sign*
+              duration-year   duration-year*
+              duration-month  duration-month*
+              duration-day    duration-day*
+              duration-hour   duration-hour*
+              duration-minute duration-minute*
+              duration-second duration-second*
+
+              duration-week*
+              duration-time*
+
+              duration-negate
+              duration-negative?
+              duration-positive?
+
+              string->duration
+              duration->string
+
+              seconds->duration
 
               ;; IO
               datetime->string

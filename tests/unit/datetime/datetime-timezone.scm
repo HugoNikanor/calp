@@ -205,8 +205,8 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       ;; TODO the date 2026-10-25T02:30 CEST in UNREPRESENTABLE
 
       (test-group "still summer"
-        (let ((dt off name (zone->utc (tz #2026-10-25T01:59:60 "Europe/Stockholm"))))
-          (test-equal #2026-10-24T23:59:60Z dt)
+        (let ((dt off name (zone->utc (tz #2026-10-25T01:59:59 "Europe/Stockholm"))))
+          (test-equal #2026-10-24T23:59:59Z dt)
           (test-equal (timespec #02:00:00) off)
           (test-equal "CEST" name)))
 

@@ -1,339 +1,282 @@
-;;; Commentary:
-;;; Base arithmetic operations for zone un-aware datetime objects.
-;;; Code:
 (define-module (datetime arithmetic)
-  :use-module (datetime core)
+  :use-module ((datetime core)
+               :select (
+                        date?
+                        datetime?
+                        (month . date-month)
+                        (month* . date-month*)
+                        (year . date-year)
+                        (year* . date-year*)
+                        (day . date-day)
+                        (day* . date-day*)
+                        (second . time-second)
+                        (minute . time-minute)
+                        (hour . time-hour)
+                        date
+                        time
+                        datetime
+                        datetime-time
+                        datetime-date
+                        (time* . datetime-time*)
+                        (date* . datetime-date*)
+                        days-in-month
+                        date=
+                        date<=
+                        leap-year?
+                        days-in-year
+                        time->seconds
+                        ))
+  :use-module (datetime duration)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (hnh util)
   :use-module (hnh util lens)
   :use-module (hnh util type)
+  :use-module (ice-9 curried-definitions)
+  :use-module ((rnrs base) :version (6) :select (assert))
   :export (
-           date+ date-
-           time+ time-
-           datetime+ datetime-
+           date+
+           date-
+           ;; time+
+           ;; time-
+           datetime+
+           datetime-
+
            date-difference
            datetime-difference
-           ))
-
-
-;; NOTE +1 month is weird for late days in a month.
-;; is the last of january +1 month the last of february,
-;; or a few days into march? It's at least not the 31 of
-;; February, as the code is currently written.
-;; (date+ #2020-01-31 #0000-01-00) ; => 2020-02-31
-(define (date+%% change base)
-
-  (define-values (days-fixed change*)
-    (let loop ((target base) (change change))
-      (if (>= (days-in-month target) (+ (day change) (day target)))
-          ;; No date overflow, just add the change
-          (values (-> target (day (+ (day target)
-                                     (day change))))
-                  (day change 0))
-          ;; Date (and possibly year) overflow
-          (loop (if (= 12 (month target))
-                    (-> (modify target year* 1+)
-                        (month 1)
-                        (day 1))
-                    (-> (modify target month* 1+)
-                        (day 1)))
-                ;; How did this ever work‽
-                (modify change day*
-                        (lambda (d) (- d
-                                  (- (day target))
-                                  (days-in-month target)
-                                  1)))))))
-
-  (define-values (month-fixed change**)
-    (if (date-zero? change*)
-        (values days-fixed change*)
-     (let loop ((target days-fixed) (change change*))
-       (if (< 12 (+ (month change) (month target)))
-           ;; if we overflow into the next year
-           (loop (-> (modify target year* 1+)
-                     (month 1))
-                 (modify change month*
-                         (lambda (d) (+ d (month target) -13))))
-           ;; if we don't overflow our date
-           (values (modify target month* (lambda (d) (+ d (month change))))
-                   (month change 0))
-
-           ))))
-
-  ;; change** should here should have both month and date = 0
-
-  (year month-fixed (+ (year month-fixed) (year change**))))
-
-(define (date+% change base)
-
-  (when (or (negative? (year change))
-            (negative? (month change))
-            (negative? (day change)))
-    (scm-error 'misc-error "date+%" "Negative change ~a invalid (base=~a)"
-               (list change base)
-               #f))
-
-  (unless (and (< 0 (month base))
-               (< 0 (day base)))
-    (scm-error 'misc-error "date+%"
-           "~a needs day and month to be at least one"
-           (list base)
-           #f))
-
-  (date+%% change base))
-
-;; @var{base} MUST be a valid real date. all rest arguments can however
-;; be "invalid" dates, such as 0000-00-10
-(define (date+ base . rest)
-  (fold date+% base rest))
-
-(define (date-%% change base)
-  (define-values (days-fixed change*)
-    (let loop ((target base) (change change))
-      (if (>= (day change) (day target))
-          (let ((new-change (modify change day* (lambda (d) (- d (day target))))))
-            (loop (if (= 1 (month target))
-                      (-> (modify target year* 1-)
-                          (month 12)
-                          (day 31)              ; days in december
-                          )
-                      (let ((nm (modify target month* 1-)))
-                        (day nm (days-in-month nm))))
-                  new-change))
-          (values (modify target day* (lambda (d) (- d (day change))))
-                  (day change 0)))))
-
-  (define-values (month-fixed change**)
-    (let loop ((target days-fixed) (change change*))
-      (if (>= (month change) (month target))
-          (loop (-> (modify target year* 1-)
-                    (month 12))
-                (modify change month* (lambda (d) (- d (month target)))))
-          (values (modify target month* (lambda (d) (- d (month change))))
-                  (month change 0)))))
-
-  ;; change** should here should have both month and date = 0
-
-  (modify month-fixed year* (lambda (d) (- d (year change**)))))
-
-(define (date-% change base)
-
-  (when (or (negative? (year change))
-            (negative? (month change))
-            (negative? (day change)))
-    (scm-error 'misc-error "date-%" "Negative change ~a invalid (base=~a)"
-           (list change base)
-           #f))
-
-  (when (or (negative? (month base))
-            (negative? (day base)))
-    (scm-error 'misc-error "date-%"
-           "~a needs day and month to be at least one"
-           (list base)
-           #f))
-
-  (date-%% change base)
+           )
   )
 
-;;; Only use this with extreme caution
-(define (date- base . rest)
-  (fold date-% base rest))
+;;; duration := date-duration | week-duration | time-duration
+;;; date± :: date, date-duration | week-duration -> date
+;;; time± :: time, time-duration -> time
+;;; datetime± :: datetime, duration -> datetime
 
-;;; time
+;;; date := Y / m / d
+;;; Y := integer
+;;; m := [1, 12]
+;;; d := [1, 31] if m in [jan, mar, may, jul, aug, okt, dec]
+;;;      [1, 30] if m in [apr, jun, sep, nov]
+;;;      28 if m == 2 and not leap year
+;;;      29 if m == 2 and leap year
+;;; time := H / M / S
+;;; H := [0, 23]
+;;; M := [0, 59]
+;;; S := [0, 59] ; FUCK leap-seconds
+;;; datetime := date / time [/ timezone]
 
-;; overflow is number of days above
-;; time x time → time x int
-(define (time+% base change)
+;;; Arithmetic is done from largest to smallest part, meaning that #2026-01-30 + P1M1D will be #2026-03-01.
+;;; IF it where from smallest to largest then the result would de #2026-02-28
 
-  ;; while (day base) > (days-in-month base)
-  ;;     month++; days -= (days-in-month base)
-  (define second-fixed
-    (let loop ((target (modify base second* (lambda (d) (+ d (second change))))))
-      (if (>= (second target) 60)
-          (loop (-> target
-                    (modify minute* 1+)
-                    (modify second* (lambda (d) (- d 60)))))
-          target)))
+(define (clamp-to-month d)
+  (if (> (date-day d) (days-in-month d))
+      (date-day d (days-in-month d))
+      d))
 
-  ;; while (month base) > 12
-  ;;     year++; month -= 12
-  (define minute-fixed
-    (let loop ((target (modify second-fixed minute* (lambda (d) (+ d (minute change))))))
-      (if (>= (minute target) 60)
-          (loop (-> target
-                    (modify hour* 1+)
-                    (modify minute* (lambda (d) (- d 60)))))
-          target)))
+(define (date-add-months start month-count)
+  ;; (typecheck start date?)
+  (typecheck month-count (and exact-integer? (not negative?)))
 
-  (define hour-almost-fixed (modify minute-fixed hour* (lambda (d) (+ d (hour change)))))
+  (let ((o m (floor/ (+ (1- (date-month start)) month-count) 12)))
+    (-> start
+        (modify date-year* (lambda (y) (+ y o)))
+        (set date-month* (1+ m))
+        clamp-to-month)))
 
-  (if (<= 24 (hour hour-almost-fixed))
-      (let ((div remainder (floor/ (hour hour-almost-fixed) 24)))
-        (values (hour hour-almost-fixed remainder) div))
-      (values hour-almost-fixed 0)))
+(define (date-add-days start day-count)
+  ;; (typecheck start date?)
+  (typecheck day-count (and exact-integer? (not negative?)))
 
-;;; PLUS
-(define (time± proc)
-  (lambda (base . rest)
-   (let loop ((time-accumulated base) (overflow 0) (remaining rest))
-     (if (null? remaining)
-         (values time-accumulated overflow)
-         (let ((next-time rem (proc time-accumulated (car remaining))))
-           (loop next-time (+ overflow rem) (cdr remaining)))))))
+  (let loop ((base start)
+             (remaining day-count))
+    (let ((days-left-in-month (- (days-in-month base)
+                                 (date-day base))))
+      (if (> remaining days-left-in-month)
+          (loop (-> base
+                    (date-day 1)
+                    (date-add-months 1))
+                (- remaining days-left-in-month 1))
+          (modify base date-day* (lambda (d) (+ d remaining)))))))
 
-(define time+ (time± time+%))
+(define (date+% start dur)
+  ;; (typecheck start date?)
+  ;; (typecheck dur duration?)
 
-;; time, Δtime → time, hour
-(define (time-% base change)
-
-  (define-values (second-fixed change*)
-    (let loop ((target base) (change change))
-      (if (> (second change) (second target))
-          (loop (-> (modify target minute* 1-)
-                    (second 60))
-                (modify change second* (lambda (d) (- d (second target)))))
-          (values (modify target second* (lambda (d) (- d (second change))))
-                  (second change 0)))))
-
-  (define-values (minute-fixed change**)
-    (let loop ((target second-fixed) (change change*))
-      (if (> (minute change) (minute target))
-          (loop (-> (modify target hour* 1-)
-                    (minute 60))
-                (modify change minute* (lambda (d) (- d (minute target)))))
-          (values (modify target minute* (lambda (d) (- d (minute change))))
-                  (minute change 0)))))
-
-  (if (>= (hour minute-fixed) (hour change**))
-      (values (modify minute-fixed hour* (lambda (d) (- d (hour change**)))) 0)
-      (let ((diff (- (hour minute-fixed)
-                     (hour change**))))
-        (values (hour minute-fixed (modulo diff 24))
-                (abs (floor (/ diff 24)))))))
-
-;; Goes backwards from base, returning the two values:
-;; the new time, and the number of days back we went.
-;; Note that neither time+ or time- can return a time
-;; component greater than 24h, but nothing is stoping
-;; a user from creating them manually.
-;; @lisp
-;; (time- #10:00:00 #09:00:00) ; => 01:00:00 => 0
-;; (time- #03:00:00 #07:00:00) ; => 20:00:00 => 1
-;; (time- #10:00:00 (time hour: 48)) ; => 10:00:00 => 2
-;; (time- #10:00:00 (time hour: (+ 48 4))) ; => 06:00:00 => 2
-;; @end lisp
-(define time- (time± time-%))
+  (if (duration-negative? dur)
+      (date-% start (duration-negate dur))
+      (-> start
+          (modify date-year* (lambda (y) (+ y (duration-year dur))))
+          (date-add-months (duration-month dur))
+          (date-add-days (duration-day dur)))))
 
 
-;;; DATETIME
+(define (date-remove-months start month-count)
+  ;; (typecheck start date?)
+  (typecheck month-count (and exact-integer? (not negative?)))
+
+  (let ((o m (floor/ (- (1- (date-month start)) month-count) 12)))
+    (-> start
+        (modify date-year* (lambda (y) (+ y o)))
+        (set date-month* (1+ m))
+        clamp-to-month)))
+
+;;; Returns a new date, which is the last day of the month proceeding the given date
+;;; Example:
+;;; (end-of-previous-month #2026-03-11) ⇒ #2026-02-28
+(define (end-of-previous-month dt)
+  (if (= 1 (date-month dt))
+      (date year: (1- (date-year dt))
+            month: 12 day: 31)
+      (let ((d* (modify dt date-month* 1-)))
+        (set d* date-day* (days-in-month d*)))))
+
+(define (date-remove-days start day-count)
+  ;; (typecheck start date?)
+  (typecheck day-count (and exact-integer? (not negative?)))
+
+  (let loop ((base start)
+             (remaining day-count))
+    (if (> (date-day base) remaining)
+        (modify base date-day* (lambda (d) (- d remaining)))
+        (loop (end-of-previous-month base)
+              (- remaining (date-day base))))))
+
+(define (date-% start dur)
+  ;; (typecheck start date?)
+  ;; (typecheck dur duration?)
+
+  (if (duration-negative? dur)
+      (date+% start (duration-negate dur))
+      (-> start
+          (date-remove-days (duration-day dur))
+          (date-remove-months (duration-month dur))
+          (modify date-year* (lambda (y) (- y (duration-year dur)))))))
+
+(define (date+ start . durations)
+  (fold (swap date+%) start durations))
+
+(define (date- start . durations)
+  (fold (swap date-%) start durations))
+
+(define (time+% t d)
+  ;; This assumes coninious time (e.g. no DST changes or similar).
+  (if (duration-negative? d)
+      (time-% t (duration-negate d))
+      (let* ((r s (floor/ (+ (time-second t)   (duration-second d)) 60))
+             (r m (floor/ (+ (time-minute t) r (duration-minute d)) 60))
+             (r h (floor/ (+ (time-hour   t) r (duration-hour   d)) 24)))
+        (values (time hour: h minute: m second: s) r))))
+
+(define (time-% t d)
+  (if (duration-negative? d)
+      (time+% t (duration-negate d))
+      (let* ((r s (floor/ (- (time-second t)       (duration-second d)) 60))
+             (r m (floor/ (- (time-minute t) (- r) (duration-minute d)) 60))
+             (r h (floor/ (- (time-hour   t) (- r) (duration-hour   d)) 24)))
+        (values (time hour: h minute: m second: s) r))))
+
+(define ((date-add-or-remove-days days) date)
+  (if (negative? days)
+      (date-remove-days date (- days))
+      (date-add-days date days)))
+
+(define (add-time-duration datetime duration)
+  (let ((t r (time+% (datetime-time datetime) duration)))
+    (-> datetime
+        (modify datetime-date* (date-add-or-remove-days r))
+        (set datetime-time* t))))
+
+(define (remove-time-duration datetime duration)
+  (let ((t r (time-% (datetime-time datetime) duration)))
+    (-> datetime
+        (modify datetime-date* (date-add-or-remove-days r))
+        (set datetime-time* t))))
+
+(define (datetime+% start duration)
+  (add-time-duration
+   (modify start datetime-date* (lambda (d) (date+% d duration)))
+   duration))
+
+(define (datetime-% start duration)
+  (remove-time-duration
+   (modify start datetime-date* (lambda (d) (date-% d duration)))
+   duration))
+
+(define (datetime+ start . durations)
+  (typecheck start datetime?)
+  (typecheck durations (list-of duration?))
+  (fold (swap datetime+%) start durations))
+
+(define (datetime- start . durations)
+  (typecheck start datetime?)
+  (typecheck durations (list-of duration?))
+  (fold (swap datetime-%) start durations))
+
+(define (year-day d)
+  (typecheck d date?)
+
+  (apply
+   +
+   (date-day d)
+   (map (lambda (month)
+          (days-in-month (date year: (date-year d) month: month day: 1)))
+        (iota (1- (date-month d)) 1))))
+
+(define (range-non-inclusive-both from to)
+  (if (> to from)
+      (iota (- to from 1) (1+ from))
+      '()))
 
 
-(define (datetime+ base change)
-  ;; Note that this is timezone unaware (by design)
-  ;; This means that change is added to date completely ignoring timezones.
-  ;; This means that +1 day and +24 hours are identical here
-  (typecheck (tz change) false?)
-  (let ((new-time overflow (time+ (datetime-time base) (datetime-time change))))
-    (-> base
-        (modify date*
-                (lambda (d) (date+ d
-                              (datetime-date change)
-                              (date day: overflow))))
-        (set time* new-time))))
+;; (days-until-new-years-eve #2026-12-31) => 0
+(define (days-until-new-years-eve d)
+  (- (days-in-year d)
+     (year-day d)))
 
-(define (datetime- base change)
-  ;; Note that this is timezone unaware (by design)
-  ;; This means that change is added to date completely ignoring timezones.
-  ;; This means that +1 day and +24 hours are identical here
-  (typecheck (tz change) false?)
-  ;; !!!
-  (let ((new-time underflow (time- (datetime-time base) (datetime-time change))))
-    (-> base
-        (modify date*
-                (lambda (d) (date- d
-                              (datetime-date change)
-                              (date day: underflow))))
-        (set time* new-time))))
+;;; Return a date count, such that a + days-between(a, b) == b
+(define (days-between a b)
+  (assert (date<= a b))
+  (if (= (date-year a) (date-year b))
+      (- (year-day b)
+         (year-day a))
+      (apply +
+             (days-until-new-years-eve a)
+             (year-day b)
+             (map (lambda (y) (leap-year? y) 366 365)
+                  (range-non-inclusive-both (date-year a) (date-year b))))))
 
-;;; the *-difference procedures takes two actual datetimes.
-;;; date- instead takes a date and a delta (but NOT an actual date).
+(define (date-difference b a)
+  (if (date<= a b)
+      (duration day: (days-between a b))
+      (duration day: (days-between b a)
+                sign: '-)))
 
-;; Works on 0-based dates. So the last of January 2020 becomes
-;; 2020-00-30
-(define (date-difference% b a)
-  ;; #2020-01-01 #2020-00-26 → #2020-00-06 #2020-00-00
-  (define-values (b* a*)
-    (let loop ((b b) (a a))
-      (if (> (day a) (day b))
-          (let ((new-a (day a (- (day a) (day b) 1))))
-            (loop (if (= 0 (month b))
-                      (-> (modify b year* 1-)
-                          (month 11)
-                          (day 30)   ; Last day in december
-                          )
-                      (-> (modify b month* 1-)
-                          (day (1- (days-in-month b))))) ; last in prev month
-                  new-a))
-          ;; elif (> (day b) (day a))
-          (values (day b (- (day b) (day a)))
-                  (day a 0)))))
+(define (seconds-until-midnight t)
+  (- (* 60 60 24)
+     (time->seconds t)))
 
+;;; This blindly assumes 24 hours each day.
+;;; It tries to count days where possible, but generate a bit to much hours in some cases. For example, 
+;; (datetime-difference #2026-01-11T00:00 #2026-01-09T00:00)
+;; $29 = #.(string->duration "P1DT24H")
+;; ((swap datetime-difference) #2026-01-11T23:59:59 #2026-01-09T00:00:00)
+;; $26 = #.(string->duration "-P1DT47H59M59S")
 
-  ;; (day a*) should be 0 here.
+(define (datetime-difference b a)
+  (cond ((date= (datetime-date a) (datetime-date b))
+         (let ((d (- (time->seconds (datetime-time b))
+                     (time->seconds (datetime-time a)))))
+           (duration
+            sign: (if (negative? d) '- '+)
+            second: (abs d))))
+        ((date<= (datetime-date a) (datetime-date b))
+         (duration
+          second:
+          (+ (seconds-until-midnight (datetime-time a))
+             (time->seconds (datetime-time b)))
+          day: (1- (days-between (datetime-date a) (datetime-date b)))))
+        (else (duration-negate (datetime-difference a b)))))
 
-  (define-values (b** a**)
-    (let loop ((b b*) (a a*))
-      (if (> (month a) (month b))
-          (loop (-> (modify b year* 1-)
-                    (month 11))
-                (modify a month* (lambda (d) (- d 1 (month b)))))
-          ;; elif (> (month b) (month a))
-          (values (modify b month* (lambda (d) (- d (month a))))
-                  (month a 0)))))
-
-  ;; a** should here should have both month and date = 0
-
-  (year b** (- (year b**) (year a**))))
-
-
-
-;; Earlier date after later date to have same semantics as subtraction
-(define (date-difference later-date earlier-date)
-  (when (date< later-date earlier-date)
-    (scm-error 'misc-error "date-difference"
-               "The earlier of the two dates must come after. later-date: ~a, earlier-date: ~a"
-               (list later-date earlier-date) #f))
-  (when (or (negative? (month later-date))
-            (negative? (day   later-date))
-            (negative? (month earlier-date))
-            (negative? (day   earlier-date)) )
-    (scm-error 'misc-error "date-difference"
-           "~a or ~a contains negative months or days"
-           (list earlier-date later-date)
-           #f))
-
-  (let ((proc (lambda (d) (-> d
-                         (modify month* 1-)
-                         (modify day* 1-)))))
-    (date-difference% (proc later-date)
-                      (proc earlier-date))))
-
-
-;; NOTE, this is only properly defined when end is greater than start.
-(define (datetime-difference end start)
-  (unless (or (equal? #f (tz start) (tz end))
-              (equal? "UTC" (tz start) (tz end)))
-    (scm-error
-     'wrong-type-arg "datetime-difference"
-     "Datetime difference only defined for UTC or zoneless datetimes. Got start: ~s, end: ~s"
-     (list start end) #f))
-
-  ;; !!!
-  (let ((fixed-time overflow (time- (datetime-time end)
-                                    (datetime-time start))))
-    (datetime date: (date-difference (date- (datetime-date end)
-                                            (date day: overflow))
-                                     (datetime-date start))
-              time: fixed-time)))
+;; (datetime-difference #2026-01-10T01:00 #2026-01-09T23:00)
+;;; => DT2H

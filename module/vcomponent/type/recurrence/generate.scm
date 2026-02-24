@@ -106,7 +106,7 @@
 (define (find-first-week-day wday d)
   (let* ((start-day (week-day d))
          (diff (- wday start-day)))
-    (date+ d (date day: (modulo diff 7)))))
+    (date+ d (duration day: (modulo diff 7)))))
 
 ;; returns instances of the given week-day in month between
 ;; month-date and end of month.
@@ -167,7 +167,7 @@
 ;; effectively checking if we have a "real" date.
 
 (define ((expander-int rule-applier) rrule-accessor rrule dt-list)
-  (filter (lambda (dt) (datetime= dt (datetime+ dt (datetime))))
+  (filter (lambda (dt) (datetime= dt (datetime+ dt (duration))))
           (append-map (lambda (dt)
                         (map (lambda (x) (rule-applier x dt))
                              (rrule-accessor rrule)))
@@ -281,9 +281,9 @@
                 (lambda (d)
                   (if (positive? yearday)
                       (date+ (start-of-year d)
-                             (date day: (1- yearday)))
+                             (duration day: (1- yearday)))
                       (date- (date+ (start-of-year d) (date year: 1))
-                             (date day: (- yearday)))))))))
+                             (duration day: (- yearday)))))))))
 
     ((BYMONTHDAY)
      (expander-int
@@ -306,7 +306,7 @@
           (modify dt date*
                   (lambda (d)
                     (date+ (start-of-week d week-start)
-                           (date day: (modulo (- weekday week-start) 7)))))))
+                           (duration day: (modulo (- weekday week-start) 7)))))))
        (compose (cut map cdr <>) byday)
        rrule dt-list)))
 
@@ -345,13 +345,13 @@
   ;; eval FREQ and INTERVAL
   (define increment
     (case (freq rrule)
-      ((SECONDLY) (datetime second:   (interval rrule)))
-      ((MINUTELY) (datetime minute:   (interval rrule)))
-      ((HOURLY)   (datetime hour:     (interval rrule)))
-      ((DAILY)    (datetime day:      (interval rrule)))
-      ((WEEKLY)   (datetime day: (* 7 (interval rrule))))
-      ((MONTHLY)  (datetime month:    (interval rrule)))
-      ((YEARLY)   (datetime year:     (interval rrule)))
+      ((SECONDLY) (duration second: (interval rrule)))
+      ((MINUTELY) (duration minute: (interval rrule)))
+      ((HOURLY)   (duration hour:   (interval rrule)))
+      ((DAILY)    (duration day:    (interval rrule)))
+      ((WEEKLY)   (duration week:   (interval rrule)))
+      ((MONTHLY)  (duration month:  (interval rrule)))
+      ((YEARLY)   (duration year:   (interval rrule)))
       (else (unreachable "evaluate-recurrence-set"
                          "Invalid recurrence rule frequency: ~s"
                          (list rrule)))))

@@ -11,6 +11,7 @@
            duration
            duration?
 
+           duration-sign   duration-sign*
            duration-year   duration-year*
            duration-month  duration-month*
            duration-day    duration-day*
@@ -26,7 +27,10 @@
            duration-positive?
 
            string->duration
-           duration->string))
+           duration->string
+
+           seconds->duration
+           ))
 
 ;;; Further expansion:
 ;;; - the "biggest" component is allowed fractions, meaning that D0.5Y
@@ -268,3 +272,9 @@
          (scm-error 'misc-error "string->duration"
                     "String not parsable as duration: ~s"
                     (list str) #f))))
+
+
+(define (seconds->duration s)
+  (typecheck s exact-integer?)
+  (duration second: (abs s)
+            sign: (if (negative? s) '- '+)))

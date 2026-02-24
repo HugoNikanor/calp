@@ -14,17 +14,22 @@
   :use-module (hnh util lens)
   :use-module (datetime core)
   :use-module (datetime arithmetic)
+  :use-module (datetime duration)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (calp translation)
   :use-module (ice-9 regex)
   :use-module (ice-9 format)
+  :use-module (ice-9 curried-definitions)
   :export (timespec
            timespec?
            timespec->string
+
            timespec-time timespec-time*
            timespec-sign timespec-sign*
+
+           timespec-value timespec-value*
            timespec-type timespec-type*
 
            timespec+
@@ -36,28 +41,35 @@
            ))
 
 
+(define (sgn x)
+  (if (zero? x) x
+      (/ x (abs x))))
+
+
 ;; timespec as defined by the TZ-database
 ;; also used UTC-OFFSET defined by RFC5545. Then type should equal #\z
 ;; and be ignored.
 
-
 (define-type (timespec
               constructor:
               (lambda (constructor type-check)
-                (lambda* (time optional: (sign '+) type)
-                  (type-check time sign type)
-                  (constructor time sign type)))
+                (lambda* (tm optional: (sign '+) type)
+                  (define v (* (if (eq? '- sign) -1 1)
+                               (time->seconds tm)))
+                  (type-check v type)
+                  (constructor v type)))
               serializer:
               (lambda (r)
-                `(timespec ,(timespec-time r)
-                           ,@(if (and (eq? '+ (timespec-sign r))
+                `(timespec ,(seconds->time (abs (timespec-value r)))
+                           ,@(if (and (positive? (timespec-value r))
                                       (not (timespec-type r)))
                                  '()
-                                 `(,(serialize (timespec-sign r))))
+                                 `(,(serialize '-)))
                            ,@(awhen (timespec-type r)
                                     (list (serialize it))))))
-  (timespec-time type: time?)
-  (timespec-sign type: (memv '(+ -)))
+  ;; (timespec-time type: time?)
+  ;; (timespec-sign type: (memv '(+ -)))
+  (timespec-value type: exact-integer?)
   ;; types:
   ;; w - wall clock time (local time)
   ;; s - standard time without daylight savings adjustments
@@ -68,6 +80,30 @@
   ;; u, g, z - Universal time, all three are synonyms due to historical reasons
   (timespec-type type: (or false? (memv '(standard daylight wall utc)))))
 
+;;; DEPRECATED
+(define ((timespec-time* ts) f)
+  (modify ts timespec-value*
+          (lambda (v) (* (sgn v)
+                    (time->seconds (f (seconds->time (abs v))))))))
+
+;;; DEPRECATED
+(define timespec-time
+  (case-lambda ((ts)   (get ts timespec-time*))
+               ((ts v) (set ts timespec-time* v))))
+
+;;; DEPRECATED
+(define ((timespec-sign* ts) f)
+  (modify ts timespec-value*
+          (lambda (v) (if (eq? '- (f (if (negative? v) '- '+)))
+                     (* -1 (abs v))
+                     (abs v)))))
+
+;;; DEPRECATED
+(define timespec-sign
+  (case-lambda ((ts)   (get ts timespec-sign*))
+               ((ts v) (set ts timespec-sign* v))))
+
+
 (define* (timespec->string timespec
                            optional: (precision 'h)
                            key: (delimiter ":"))
@@ -76,15 +112,18 @@
 
   (with-output-to-string
     (lambda ()
-      (define t (timespec-time timespec))
-      (display (timespec-sign timespec))
-      (format #t "~2'0d" (hour t))
-      (when (or (memv precision '(m s))
-                (not (= 0 (minute t) (second t))))
-        (format #t "~a~2'0d" delimiter (minute t))
-        (when (or (memv precision '(s))
-                  (not (= 0 (second t))))
-          (format #t "~a~2'0d" delimiter (second t))))
+      (define t (timespec-value timespec))
+      (display (if (negative? t)
+                   "-" ""))
+      (let* ((h r (floor/ (abs t) 3600))
+             (m s (floor/ r 60)))
+        (format #t "~2'0d" h)
+        (when (or (memv precision '(m s))
+                  (not (= 0 m s)))
+          (format #t "~a~2'0d" delimiter m)
+          (when (or (memv precision '(s))
+                    (not (= 0 s)))
+            (format #t "~a~2'0d" delimiter s))))
       ;; Print milis here once we store them
       (display
        (case (timespec-type timespec)
@@ -104,49 +143,25 @@
       (warning "Adding timespecs of differing types: ~s"
                types)))
 
-  (define-values (sum-time sum-overflow)
-    (car+cdr
-     (fold (lambda (ts p)
-             (define-values (sum-time sum-overflow) (car+cdr p))
-             (case (timespec-sign ts)
-               ((+) (let ((t o (time+ sum-time (timespec-time ts))))
-                      (cons t (+ sum-overflow o))))
-               ((-) (let ((t o (time- sum-time (timespec-time ts))))
-                      (cons t (- sum-overflow o))))
-               (else (scm-error 'misc-error "timespec+"
-                                "Invalid timespec sign: ~s"
-                                (list (timespec-sign ts))
-                                #f))))
-           (cons (time) 0)
-           timespecs)))
+  (define sum (apply + (map timespec-value timespecs)))
 
   ;; Check negative, since we want to treat 0 as "positive"
   (timespec
-   (if (negative? sum-overflow)
-       (seconds->time
-        (modulo
-         (- (time->seconds sum-time))
-         (* -24 60 60 sum-overflow)))
-       (modify sum-time hour*
-               (lambda (h) (+ h (* 24 sum-overflow)))))
-   (if (negative? sum-overflow) '- '+)
+   (seconds->time (abs sum))
+   (if (negative? sum) '- '+)
    (if (null? timespecs)
        #f (timespec-type (car timespecs)))))
 
 
 
 (define (timespec-negate ts)
-  (modify ts timespec-sign*
-          (lambda (s)
-            (if (eq? s '+) '- '+))))
+  (modify ts timespec-value*
+          (lambda (v) (* -1 v))))
 
 
 ;;; Add a timespec to a datetime
 (define (datetime-timespec-add dt ts)
-  ((case (timespec-sign ts)
-     ((+) datetime+)
-     ((-) datetime-))
-   dt (datetime time: (timespec-time ts))))
+  (datetime+ dt (seconds->duration (timespec-value ts))))
 
 
 ;; "+10:20:30.13"
@@ -185,10 +200,7 @@
 
 
 
-(define (timespec->integer ts)
-  (* (if (eq? '+ (timespec-sign ts))
-         1 -1)
-     (time->seconds (timespec-time ts))))
+(define timespec->integer timespec-value)
 
 (define (integer->timespec i)
   (timespec (seconds->time (abs i))

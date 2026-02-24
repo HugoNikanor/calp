@@ -1,6 +1,7 @@
 (define-module (datetime extra)
   :use-module (datetime core)
   :use-module (datetime arithmetic)
+  :use-module (datetime duration)
   :use-module (hnh util)
   :use-module (hnh util type)
   :use-module (srfi srfi-41)
@@ -26,7 +27,6 @@
            timespan-overlaps?
 
            date-range
-           datetime->decimal-hour
 
            month-days
            ))
@@ -38,38 +38,27 @@
 
 (define (end-of-year d)
   (-> (start-of-year d)
-      (date+ (date year: 1))
-      (date- (date day: 1))))
+      (date+ (duration year: 1))
+      (date- (duration day: 1))))
 
 (define (date-stream date-increment start-day)
   (stream-iterate (lambda (d) (date+ d date-increment))
                   start-day))
 
 (define (day-stream start-day)
-  (date-stream (date day: 1) start-day))
+  (date-stream (duration day: 1) start-day))
 
 ;; The amount of days in the given interval, both end points inclusive
 (define (days-in-interval start-date end-date)
-  (unless (date<= start-date end-date)
-    (scm-error 'misc-error "days-in-interval"
-               "End date must be greater (or equal) to start date: ~s, ~s"
-               (list start-date end-date)
-               #f))
-  ;; Equivalent to (length (date-range start-date end-date)), but hopefully
-  ;; more performant (not tested)
-  (let ((diff (date-difference (date+ end-date (date day: 1)) start-date)))
-    (->> (date-stream (date month: 1) start-date)
-         (stream-take (+ (month diff)
-                         (* 12 (year diff))))
-         (stream-map days-in-month)
-         (stream-fold + (day diff)))))
+  (1+ ((@@ (datetime arithmetic) days-between) start-date end-date)))
 
 
 
 ;; Day from start of the year, so 1 feb would be day 32.
 ;; Also known as Julian day.
-(define (year-day date)
-  (days-in-interval (start-of-year date) date))
+;; (define (year-day date)
+;;   (days-in-interval (start-of-year date) date))
+(define year-day (@@ (datetime arithmetic) year-day))
 
 
 (define* (weeks-in-year date optional: (wkst (week-start)))
@@ -85,8 +74,8 @@
   (let* ((ystart (start-of-year d))
          (day-index (modulo (- (week-day ystart) wkst) 7)))
     (if (> day-index 3)
-        (date+ ystart (date day: (- 7 day-index)))
-        (date- ystart (date day: day-index)))))
+        (date+ ystart (duration day: (- 7 day-index)))
+        (date- ystart (duration day: day-index)))))
 
 
 
@@ -102,7 +91,7 @@
     [(and (= 12 (month d))
           (memv (day d) '(29 30 31))
           (< (year d) (year (date+ (start-of-week d wkst)
-                                   (date day: 3)))))
+                                   (duration day: 3)))))
      1]
 
     [else
@@ -115,7 +104,7 @@
           week-number d
           optional: (wkst (week-start)))
   (date+ (week-1-start d wkst)
-         (date day: (* (1- week-number) 7))))
+         (duration week: (1- week-number))))
 
 
 
@@ -172,40 +161,22 @@
 ;; date, day increment → [list date]
 (define* (date-range start end optional: (increment 1))
   (stream->list (ceiling (/ (days-in-interval start end) increment))
-                (date-stream (date day: increment) start)))
+                (date-stream (duration day: increment) start)))
 
 
-
-(define* (datetime->decimal-hour dt optional: start-date)
-  (typecheck dt datetime?)
-  (typecheck start-date (or false? date?))
-
-  (let ((date-diff
-         (cond [start-date
-                (let ((end-date (date+ start-date (datetime-date dt))))
-                  (1- (days-in-interval start-date end-date)))]
-               [(or (not (zero? (month (datetime-date dt))))
-                    (not (zero? (year  (datetime-date dt)))))
-                (scm-error 'misc-error "datetime->decimal-hour"
-                       "Multi-month intervals only supported when start-date is given (~a)"
-                       (list dt)
-                       #f)]
-               [else (-> dt datetime-date day)])))
-    (-> dt datetime-time time->decimal-hour
-        (+ (* date-diff 24)))))
 
 ;; returns the date the week containing d started.
 ;; (start-of-week #2020-04-02 sun) ; => 2020-03-29
 (define* (start-of-week d optional: (week-start (week-start)))
-  (date- d (date day: (modulo (- (week-day d)
-                                 week-start)
-                              7))))
+  (date- d (duration day: (modulo (- (week-day d)
+                                     week-start)
+                                  7))))
 
 ;; (end-of-week #2020-04-01 mon)
 ;; => 2020-04-05
 (define* (end-of-week d optional: (week-start (week-start)))
   (date+ (start-of-week d week-start)
-         (date day: 6)))
+         (duration day: 6)))
 
 
 
@@ -232,11 +203,11 @@
 ;; Ignores day component of @var{date}.
 (define* (month-days date* optional: (week-start (week-start)))
   (let* ((month-len (days-in-month date*))
-         (prev-month-len (days-in-month (date- date* (date month: 1))))
+         (prev-month-len (days-in-month (date- date* (duration month: 1))))
          (month-start (modulo (- (week-day date*) week-start) 7)))
     (values
-     (map (lambda (d) (-> date* (date- (date month: 1)) (day d)))
+     (map (lambda (d) (-> date* (date- (duration month: 1)) (day d)))
           (iota month-start (1+ (- prev-month-len month-start))))
      (map (lambda (d) (day date* d)) (iota month-len 1))
-     (map (lambda (d) (-> date* (date+ (date month: 1)) (day d)))
+     (map (lambda (d) (-> date* (date+ (duration month: 1)) (day d)))
           (iota (modulo (- (* 7 5) month-len month-start) 7) 1)))))

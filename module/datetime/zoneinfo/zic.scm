@@ -20,6 +20,7 @@
   :use-module (hnh util lens)
   :use-module (hnh util exceptions)
   :use-module (datetime core)
+  :use-module (datetime duration)
   :use-module (datetime arithmetic)
   :use-module (datetime timespec)
   :use-module (datetime zoneinfo types)
@@ -54,13 +55,13 @@
   (match day-spec
     ((? number? on) (day base-date on))
     (('last n)
-     (iterate (lambda (d) (date- d (date day: 1)))
+     (iterate (lambda (d) (date- d (duration day: 1)))
               (lambda (d) (eqv? n (week-day d)))
               (day base-date (days-in-month base-date))))
     (((? (lambda (x) (memv x '(< >))) <>) wday base-day)
      (iterate (lambda (d) ((if (eq? '< <>)
                           date- date+)
-                      d (date day: 1)))
+                      d (duration day: 1)))
               (lambda (d) (eqv? wday (week-day d)))
               (day base-date base-day)))))
 

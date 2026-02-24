@@ -73,6 +73,10 @@
      (lambda ()
        (format-recurrence-rule (prop1 comp 'RRULE) 'sv)))))
 
+;;; TODO TODO TODO
+;;; Most of these tests actually come with time zone information attached!
+;;; Update tests to use that!
+
 (map run-test
      (list (vevent
             summary:
@@ -783,7 +787,7 @@
                   (datetime year: 1997 month: 12 day: 31 hour: 09 minute: 00 second: 00)
                   (datetime year: 1998 month: 01 day: 01 hour: 09 minute: 00 second: 00)
                   (datetime year: 1998 month: 01 day: 31 hour: 09 minute: 00 second: 00)
-                  (datetime year: 1998 month: 03 day: 01 hour: 09 minute: 00 second: 00)))
+                  (datetime year: 1998 month: 02 day: 01 hour: 09 minute: 00 second: 00)))
            (vevent
             summary: "Every 18 months on the 10th thru 15th of the month for 10 occurrences"
             dtstart: (datetime year: 1997 month: 09 day: 10 hour: 09 minute: 00 second: 00)
@@ -1137,7 +1141,7 @@
                     freq: 'MONTHLY
                     byday: (list mon tue wed thu fri)
                     bysetpos: (list -2)
-                    count: 5                  ; added by me
+                    count: 5            ; added by me
                     )
             ;; TODO
             ;; "Den näst sista måndagen till fredagen i månaden, i totalt 3 månader"

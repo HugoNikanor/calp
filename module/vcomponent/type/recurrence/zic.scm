@@ -35,13 +35,7 @@
            ((standard) #f)
            ((utc) "UTC"))))
 
-  (let ((timespec (rule-at rule)))
-    ((case (timespec-sign timespec)
-       ((+) datetime+)
-       ((-) datetime-))
-     dt
-     (datetime time: (timespec-time timespec)))
-    ))
+  (datetime+ dt (seconds->duration (timespec-value (rule-at rule)))))
 
 
 (define (rule->rrule rule)
