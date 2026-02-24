@@ -27,7 +27,7 @@
 ;; (test-equal "/" (href->string (href resource)))
 (test-equal "Basic propstat"
     (propstat 200 (list ((xml webdav 'getcontentlength) "4")))
-    (getcontentlength resource))
+    (getcontentlength resource ((xml webdav 'getcontentlength) "4")))
 
 
 ;;; NOTE propstat's return order isn't stable, making this test possibly fail
