@@ -151,6 +151,21 @@ unix or TCP socket.<br/>
   (if (null? a)
       b a))
 
+;;; Runs the thunk with the name of the controlling terminal set to
+;;; the string. TODO only run this when output actually is a terminal
+(define (with-terminal-name name thunk)
+  (dynamic-wind
+    (lambda ()
+      ;; Save current terminal name
+      (format (current-error-port) "\x1b[22t")
+      ;; Set terminal name
+      (format (current-error-port) "\x1b]0;~a\a" name)
+      )
+    thunk
+    (lambda ()
+      ;; Restore previous terminal name
+      (format (current-error-port) "\x1b[23t"))))
+
 (define (wrapped-main args)
   (define opts (getopt-long args (getopt-opt options) stop-at-first-non-option: #t))
   (define stprof (option-ref opts 'statprof #f))
@@ -210,20 +225,12 @@ unix or TCP socket.<br/>
          (name (string->symbol (car remaining-options))))
 
     (cond ((memv name entry-points)
-           (dynamic-wind
-             (lambda ()
-               ;; Save current terminal name
-               (format #t "\x1b[22t")
-               ;; Set terminal name
-               (format #t "\x1b]0;calp ~a\a" name)
-               )
-             (lambda ()
-               ((module-ref (resolve-interface `(calp entry-points ,name))
-                            'main)
-                remaining-options))
-             (lambda ()
-               ;; Restore previous terminal name
-               (format #t "\x1b[23t"))))
+           (with-terminal-name
+            (format #f "calp ~a" name)
+            (lambda ()
+              ((module-ref (resolve-interface `(calp entry-points ,name))
+                           'main)
+               remaining-options))))
           (else (format (current-error-port)
                         (G_ "Unsupported mode of operation: ~a~%")
                         name)
