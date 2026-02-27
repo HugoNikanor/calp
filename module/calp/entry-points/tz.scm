@@ -56,7 +56,9 @@
   ;; TODO run this through the markup system
   (format #t "  calp tz [options] dump {--zone z | --rule r} ...~%")
   (format #t "  calp tz [options] list zone-limiters ...~%")
-  (format #t "  calp tz [options] convert [convert-options ...]~%"))
+  (format #t "  calp tz [options] convert [convert-options ...]~%")
+  (format #t "  calp tz [options] vtimezone [tzid ...]~%")
+  )
 
 (define (main args)
 
@@ -82,6 +84,8 @@
     (format #t "convert flags~%")
     (format #t "-------------~%")
     (print-arg-help convert-opt-spec)
+    (format #t "vtimezone flags~%")
+    (format #t "-------------~%")
     (throw 'return))
 
   (define intermediary
@@ -125,6 +129,7 @@
         ((dump)    (run-dump zoneinfo trailers))
         ((list)    (run-list intermediary trailers))
         ((convert) (run-convert zoneinfo trailers))
+        ((vtimezone) (run-vtimezone zoneinfo trailers))
         (else (print-help)
               (format (current-error-port) (G_ "Unknown mode of operation: ~s~%")
                       (car trailers))
@@ -292,3 +297,18 @@
                  (datetime->string output-datetime output-fmt)
                  (timespec->string (timespec-type output-offset #f) 'm)
                  pretty-output-name))))
+
+
+(define (run-vtimezone zoneinfo args)
+  ;; TODO flag for media-type
+  (define opts (getopt-long args '()))
+  (define zones (option-ref opts '() '()))
+
+  (define serializer
+    ((@ (vcomponent media-type) serializer)
+     (@ (vcomponent media-type text calendar) format)))
+
+  (for zone in zones
+       (serializer
+        ((@ (vcomponent datetime timezone) zoneinfo->vtimezone)
+         zoneinfo zone (tz (current-datetime) #f)))))
