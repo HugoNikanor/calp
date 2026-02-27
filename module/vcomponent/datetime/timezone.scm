@@ -47,7 +47,8 @@
 (define* (zoneinfo->vtimezone zoneinfo zone-name start-dt optional: end-year)
   (typecheck zoneinfo zoneinfo?)
   (typecheck zone-name string?)
-  (typecheck start-dt datetime?)
+  ;; TODO this should be zoned datetime, but the code is to old
+  (typecheck start-dt unzoned-datetime?)
   (typecheck end-year (or integer? false?))
 
   (define last-until (cons 'utc (datetime date: (date month: 1 day: 1))))
