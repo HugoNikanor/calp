@@ -71,9 +71,19 @@ pre {
     content: '"';
 }
 
+/* Colors matching the Firefox inspector */
+#response-body dt {color: #df00a9;}
+#response-body dd {color: #9400ff;}
+#response-body summary {color: #0a84ff;}
+
+.sub-document-header {
+    color: gray !important;
+}
+
 #response-body dl::after {
     /* content: '>'; */
 }
+
 
 .tabs {
     --tab-border-color: black;

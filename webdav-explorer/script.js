@@ -2,6 +2,7 @@
 
 
 const URI_BASE = `${window.location.protocol}//${window.location.host}`
+const CALDAV = "urn:ietf:params:xml:ns:caldav"
 
 let xsltProcessor
 
@@ -84,6 +85,7 @@ async function form_handler_common(
     return
   }
 
+  /* Content type checks all have an open end, to ignore any parameters */
   const content_type = response.headers.get('Content-Type')?.toLowerCase()
   if (content_type?.startsWith('image/')) {
     const img = document.createElement('img')
@@ -129,6 +131,13 @@ async function form_handler_common(
     }
     }
 
+  } else if (content_type?.match(/^text\/html/)) {
+    const iframe = document.createElement('iframe')
+    // TODO a blob uri could also work
+    iframe.srcdoc = await response.text()
+    iframe.style.width = '100%'
+    iframe.style.minHeight = '20em'
+    response_body_el.replaceChildren(iframe)
   } else if (content_type?.startsWith('text/')) {
     const pre = document.createElement('pre')
     pre.textContent = await response.text()
@@ -138,14 +147,19 @@ async function form_handler_common(
     // TODO possibly base-64 encode the data, and show that
 
     const a = document.createElement('a')
-    a.href = URL.createObjectURL(await response.blob())
-    a.textContent = 'Show binary data'
+    a.setAttribute('target', '_blank')
+    const blob = await response.blob()
+    a.href = URL.createObjectURL(blob)
+    if (content_type) {
+      a.textContent = `Show binary data of type ${content_type} (${blob.size} bytes)`
+    } else {
+      a.textContent = `Show binary data of unknown type (${blob.size} bytes)`
+    }
 
     response_body_el.replaceChildren(a)
 
   }
 
-  // TODO HTML documents can be decently included in a an iFrame, setting the srcdoc, or using a blob URI
 
 }
 
@@ -240,6 +254,8 @@ Consider using a browser with a different engine. Chromium browsers are known to
       if (tab_el?.role === 'tab') {
         tab_el.click()
       }
+    } else {
+      document.getElementById('propfind-tab').click()
     }
   }
 
@@ -259,6 +275,8 @@ Consider using a browser with a different engine. Chromium browsers are known to
         current_document.documentElement,
         XPathResult.UNORDERED_NODE_ITERATOR_TYPE)
 
+      // TODO this should create an interactive tree, just like the
+      // non-filtered response (if that setting is used)
       for (const match of iterator_to_list(iterator)) {
         if (match.nodeType == Node.ELEMENT_NODE) {
           pre.textContent += serializeXML(prettifyXML(match)) + '\n'
@@ -283,7 +301,10 @@ Consider using a browser with a different engine. Chromium browsers are known to
         'Depth': data.get('depth'),
         'Content-Type': 'application/xml',
       },
-      // TODO handle empty request body
+      // TODO if the request-body field is empty (after trimming whitespace)
+      // then no body should be sent, and the content-type header MUST be omitted.
+      // This is equivalent to a request body of
+      // `<propfind xmlns="DAV:"><allprop/></propfind>`
       body: data.get('request-body'),
     }))
   })
@@ -303,7 +324,19 @@ Consider using a browser with a different engine. Chromium browsers are known to
     }))
   })
 
-  for (const tab of ['proppatch', 'put', 'report', 'delete', 'mkcol', 'copy', 'mkcalendar', 'lock', 'unlock']) {
+  document.getElementById('report-form').addEventListener('submit', (e) => {
+    return form_handler_common(e, response_body_el, (data) => ({
+      method: 'REPORT',
+      headers: {
+        'Depth': data.get('depth'),
+        'Content-Type': 'application/xml',
+      },
+      body: data.get('request-body'),
+    }))
+  })
+
+  /* All anon-implemented forms. Remove items from this array as they are added above */
+  for (const tab of ['proppatch', 'put', 'delete', 'mkcol', 'copy', 'mkcalendar', 'lock', 'unlock']) {
     document.getElementById(`${tab}-form`).addEventListener('submit', (e) => {
       e.preventDefault()
     })
@@ -328,20 +361,80 @@ function build_tree(el) {
     return pre
   }
   case XMLDocument.ELEMENT_NODE: {
-    const desc = document.createElement('details')
-    desc.setAttribute('open', 'open')
-    const summ = document.createElement('summary')
-    summ.textContent = `<${el.tagName}`
-    const dl = document.createElement('dl')
-    dl.replaceChildren(...[...el.attributes].flatMap(attribute => {
-      const dt = document.createElement('dt')
-      const dd = document.createElement('dd')
-      dt.textContent = attribute.name
-      dd.textContent = attribute.value
-      return [dt, dd]
-    }))
-    desc.replaceChildren(summ, dl, ...[...el.childNodes].map(build_tree))
-    return desc
+    if (el.attributes.length === 0 && (el.childNodes.length === 0 || (el.childNodes.length === 1 && el.childNodes[0].nodeType === XMLDocument.TEXT_NODE && el.childNodes[0].textContent.length <= 40))) {
+      const desc = document.createElement('div')
+      // 1em copied from style.css (TODO unifi these)
+      // 1.5ch is the width of the <details /> arrow (in firefox)
+      desc.style.paddingLeft = 'calc(1em + 1.5ch)';
+      const summ = document.createElement('summary')
+      const content = document.createElement('pre')
+      summ.style.display = 'inline-block'
+      content.style.display = 'inline-block'
+      summ.textContent = `<${el.tagName}`
+      if (el.childNodes.length === 1) {
+        content.textContent = el.childNodes[0].textContent
+      }
+      desc.replaceChildren(summ, content)
+      return desc
+    } else {
+      const desc = document.createElement('details')
+      desc.setAttribute('open', 'open')
+      const summ = document.createElement('summary')
+      /*
+        TODO if the tag has
+        - no attributes,
+        - only text content,
+        - no newlines in the text, and
+        - sufficiently short text
+        then don't create a details tag, but insert the items inline (on the same line)
+        This would save quite a bit of horizontal space.
+
+        TODO similarly, tags with no attributes AND no content shouldn't be exandable at all
+      */
+      summ.textContent = `<${el.tagName}`
+      const dl = document.createElement('dl')
+      dl.replaceChildren(...[...el.attributes].flatMap(attribute => {
+        const dt = document.createElement('dt')
+        const dd = document.createElement('dd')
+        dt.textContent = attribute.name
+        dd.textContent = attribute.value
+        return [dt, dd]
+      }))
+
+      if (el.namespaceURI === CALDAV && el.localName === 'calendar-data'
+          && el.attributes["content-type"]
+          && el.childNodes.length === 1 && el.childNodes[0].nodeType === XMLDocument.TEXT_NODE)
+      {
+        const text = el.childNodes[0].textContent
+        switch (el.attributes["content-type"].textContent) {
+        case 'application/calendar+xml': {
+          const nested_document = parseXML(text)
+          const inner_desc = document.createElement('details')
+          const inner_summ = document.createElement('summary')
+          inner_summ.classList.add('sub-document-header')
+          inner_summ.textContent = '#application/calendar+xml'
+          inner_desc.replaceChildren(inner_summ, build_tree(nested_document.documentElement))
+          desc.replaceChildren(summ, dl, inner_desc)
+          break
+        }
+
+        case 'application/calendar+json': {
+          const pre = document.createElement('pre')
+          pre.textContent = format_jcal_object(JSON.parse(text)).join('\n')
+          desc.replaceChildren(summ, dl, pre)
+          break
+        }
+
+        default: {
+          desc.replaceChildren(summ, dl, ...[...el.childNodes].map(build_tree))
+          break
+        }
+        }
+      } else {
+        desc.replaceChildren(summ, dl, ...[...el.childNodes].map(build_tree))
+      }
+      return desc
+    }
   }
   default:
     return el

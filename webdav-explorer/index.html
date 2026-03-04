@@ -128,7 +128,28 @@
 
         <div id="report-panel" role="tabpanel" aria-labeledby="report-tab" hidden>
           <form id="report-form">
-            <div class="warning">Not Implemented</div>
+            <label for="report-depth">Depth</label>
+            <select name="depth" id="report-depth">
+              <option>0</option>
+              <option>1</option>
+              <option>Infinity</option>
+            </select>
+            <label for="report-request-body">Body</label>
+            <textarea name="request-body" id="report-request-body"
+                      placeholder="<xml content here/>"
+                      rows="15"
+                      spellcheck="false"
+                      ><?xml version="1.0" encoding="utf-8" ?>
+<C:calendar-query xmlns:D="DAV:"
+                  xmlns:C="urn:ietf:params:xml:ns:caldav">
+  <D:prop>
+    <D:getetag/>
+    <C:calendar-data content-type="text/calendar" />
+  </D:prop>
+  <C:filter>
+    <C:comp-filter name="VCALENDAR"/>
+  </C:filter>
+</C:calendar-query></textarea>
             <button type="submit">Submit</button>
           </form>
         </div>
@@ -196,6 +217,9 @@
       <input id="xpath" name="xpath"
              required="required"
              placeholder="//D:response[substring(D:href, string-length(D:href) - 3) = '.png']" />
+      <!-- TODO add expandable info box (or similar) explaining how
+        namespaces are resolved. In short, the prefix aliases shown
+        are those which can be used. -->
       <button type="submit">Filter</button>
     </form>
 
