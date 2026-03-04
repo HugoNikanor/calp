@@ -6,7 +6,6 @@
 ;;; Code:
 (define-module (vcomponent media-type common)
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (vcomponent)
   :use-module (vcomponent type duration)
   :use-module (vcomponent type period)

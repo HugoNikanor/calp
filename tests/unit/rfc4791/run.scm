@@ -10,7 +10,6 @@
   :use-module (sxml namespaced util)
 
   :use-module (datetime timezone)
-  :use-module (datetime timespec)
   :use-module ((datetime zoneinfo)
                :select (read-zoneinfo intermediary->zoneinfo))
 

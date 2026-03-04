@@ -6,7 +6,7 @@
   :use-module (ice-9 regex)
   :use-module (datetime core)
   :use-module (datetime arithmetic)
-  :use-module (datetime timespec)
+  :use-module (datetime duration)
   :use-module ((datetime zoneinfo)
                :select (
                         zi-rule?
@@ -34,8 +34,8 @@
   :use-module (hnh util type)
   :use-module (hnh util lens)
   :export (zoneinfo
-           utc->zone
-           zone->utc
+           utc->zone utc->zone1
+           zone->utc zone->utc1
            zone->zone
 
            query-timezone
@@ -91,13 +91,12 @@
   (typecheck year exact-integer?)
   (typecheck rule zi-rule?)
 
-  ;; TODO type of time
-  ;; Timespec allows 'utc, 'daylight, 'wall, and 'utc
-  ;; it semes that rule-on doesn't allow 'daylight for those
-  (datetime-timespec-add
+  ;; TODO type of time? (utc, standard, wall)
+  (datetime+/naive
    (datetime date: (execute-day-spec (date year: year month: (rule-in rule))
                                      (rule-on rule)))
-   (rule-at rule)))
+   (seconds->duration
+    (cdr (rule-at rule)))))
 
 
 
@@ -140,7 +139,7 @@
   ;; If no such instances exists, then the empty list is returned.
   ;; Each element in the stream consists of a pair consisting of:
   ;; - a datetime without zoneinfo, which MUST be interpreted
-  ;;   according to `(timespec-type (rule-at rule)), which denotes when
+  ;;   according to the type tag of `rule-at`, which denotes when
   ;;   this rule takes effect that year.
   ;; - the rule which takes effect.
   (define (generate-backwards year rule)
@@ -166,17 +165,12 @@
      ;; close to each other, using different time tracking
      ;; systems (wall, utc,standard). That is PROBABLY a safe
      ;; assumption.
-     (datetime>= (car a) (car b)))
+     (datetime>=/naive (car a) (car b)))
    (map list->stream
         (map (lambda (rule) (generate-backwards (year (datetime-date dt)) rule))
              (find-relevant-rule-instances
               dt rules)))))
 
-
-(define (get-other x)
-  (if (= 1 (hour (timespec-time x)))
-      (set x (lens-compose timespec-time* hour*) 0)
-      (set x (lens-compose timespec-time* hour*) 1)))
 
 ;; Find the revelent zoneinfo rule for the given datetime.
 ;; The datetime can be in either UTC or a known timezone
@@ -195,52 +189,50 @@
                         (list dt zone) #f))
             (else
              (let ((changeover-dt rule (car+cdr (car rules))))
-               (case (timespec-type (rule-at rule))
+               (case (car (rule-at rule))
 
                  ((utc)
-                  (datetime<=
+                  (datetime<=/naive
                    (tz changeover-dt "UTC")
                    (if (utc-datetime? dt)
                        dt
                        ;; This is zone->utc/simple
-                       (datetime-timespec-add
+                       (datetime-/naive
                         (tz dt "UTC")
-                        (timespec-negate
-                         (timespec+ (zone-entry-stdoff zone)
-                                    ;; NOTE removing this line seems to make
-                                    ;; NO difference. Find the cases where it does
-                                    (rule-save rule)))))))
+                        (seconds->duration
+                         (+ (zone-entry-stdoff zone)
+                            (cdr (rule-save rule))))))))
 
                  ((wall)
                   (if (utc-datetime? dt)
-                      (datetime<=
-                       (datetime-timespec-add
-                        (tz changeover-dt "UTC")
-                        (timespec-negate
-                         ;; TODO (cdr rules) may fail. In that case we
-                         ;; need to check the previous zone entry.
-                         (timespec+ (zone-entry-stdoff zone)
-                                    (rule-save (cdadr rules)))))
+                      (datetime<=/naive
+                       (datetime-/naive
+                        (tz changeover-dt "UTC") ; 2007-03-1102:00Z
+                        ;; TODO (cdr rules) may fail. In that case we
+                        ;; need to check the previous zone entry.
+                        (seconds->duration
+                         (+ (zone-entry-stdoff zone) ; -5:00
+                            (cdr (rule-save (cdadr rules))))))
                        dt)
 
                       ;; Both are in wall time, strip
                       ;; the information to appease datetime<=
-                      (datetime<= changeover-dt (tz dt #f))))
+                      (datetime<=/naive changeover-dt (tz dt #f))))
 
                  ((standard)
                   ;; Same reasoning as for wall, except we ignore the
                   ;; offset added by the savings rule.
                   (if (utc-datetime? dt)
-                      (datetime<=
-                       (datetime-timespec-add
+                      (datetime<=/naive
+                       (datetime-/naive
                         (tz changeover-dt "UTC")
-                        (timespec-negate (zone-entry-stdoff zone)))
+                        (seconds->duration (zone-entry-stdoff zone)))
                        dt)
-                      (datetime<= changeover-dt (tz dt #f))))
+                      (datetime<=/naive changeover-dt (tz dt #f))))
 
                  (else (scm-error 'misc-error #f
-                                  "Unexpected timespec type in rule-at: ~s"
-                                  (list (timespec-type (rule-at rule)))
+                                  "Unexpected time type in rule-at: ~s"
+                                  (list (car (rule-at rule)))
                                   #f)))))))
 
     (if rule-matches?
@@ -262,11 +254,11 @@
   (zone-format
    (cond ((string-contains entry-format "/")
           => (lambda (idx)
-               (case (timespec-type (rule-save rule))
+               (case (car (rule-save rule))
                  ((standard) (substring entry-format 0 idx))
                  ((daylight) (substring entry-format (1+ idx)))
                  (else (scm-error 'misc-error "run-zone-format"
-                                  "Unknown timespec type for rule save: ~s"
+                                  "Unknown time type for rule save: ~s"
                                   (list rule) #f)))))
          (else entry-format))
    (rule-letters rule)
@@ -290,26 +282,27 @@
   (define zone-entry
     (find (lambda (zone)
             (let ((until (zone-entry-until zone)))
-             (cond ((not until) zone)
-                   ((datetime<
-                     dt
-                     (case (car until)
-                       ((utc) (tz (cdr until) "UTC"))
-                       ((wall)
-                        ;; TODO
-                        ;; (get-rule (zoneinfo) (zone-entry-rule zone))
-                        (tz (cdr until) "UTC"))
-                       ((standard)
-                        (-> (cdr until)
-                            (datetime-timespec-add
-                             (timespec-negate (zone-entry-stdoff zone)))
-                            (tz "UTC")))
-                       (else (scm-error 'misc-error "utc->zone/name"
-                                        "Bad value for zone-entry-until: ~s"
-                                        (list (car (zone-entry-until zone)))
-                                        (list zone)))))
-                    zone)
-                   (else #f))))
+              (or (not until)
+                  (datetime</naive
+                   dt
+                   (case (car until)
+                     ((utc) (tz (cdr until) "UTC"))
+                     ((wall)
+                      ;; TODO we technically have to check the rule here,
+                      ;; since the end of the rule depends on what the time
+                      ;; happened to be localy. However, as far as I can see,
+                      ;; the edge cases will never come up with the data we have.
+                      ;; (get-rule (zoneinfo) (zone-entry-rule zone))
+                      (tz (cdr until) "UTC"))
+                     ((standard)
+                      (-> (cdr until)
+                          (datetime-/naive
+                           (seconds->duration (zone-entry-stdoff zone)))
+                          (tz "UTC")))
+                     (else (scm-error 'misc-error "utc->zone/name"
+                                      "Bad value for zone-entry-until: ~s"
+                                      (list (car (zone-entry-until zone)))
+                                      (list zone))))))))
           (get-zone (zoneinfo) zone-name)))
 
   (cond ((not zone-entry)
@@ -317,11 +310,11 @@
                     "Failed finding any relevant offset"
                     '() #f))
 
-        ((timespec? (zone-entry-rule zone-entry))
-         (let ((offset (timespec+ (zone-entry-rule zone-entry)
-                                  (zone-entry-stdoff zone-entry))))
+        ((pair? (zone-entry-rule zone-entry))
+         (let ((offset (+ (cdr (zone-entry-rule zone-entry))
+                          (zone-entry-stdoff zone-entry))))
            (values (-> dt
-                       (datetime-timespec-add offset)
+                       (datetime+/naive (seconds->duration offset))
                        (tz zone-name))
                    offset
                    (zone-entry-format zone-entry))))
@@ -333,10 +326,10 @@
 
          (define rule (find-exact-changeover dt zone-entry changeovers))
 
-         (let ((offset (timespec+ (zone-entry-stdoff zone-entry)
-                                  (rule-save rule))))
+         (let ((offset (+ (zone-entry-stdoff zone-entry)
+                          (cdr (rule-save rule)))))
            (values (-> dt
-                       (datetime-timespec-add offset)
+                       (datetime+/naive (seconds->duration offset))
                        (tz zone-name))
                    offset
                    (run-zone-format (zone-entry-format zone-entry)
@@ -353,7 +346,7 @@
     (find (lambda (zone)
             (let ((until (zone-entry-until zone)))
               (cond ((not until) zone)
-                    ((datetime<=
+                    ((datetime<=/naive
                       (tz dt #f)
                       (case (car until)
                         ((utc)
@@ -376,12 +369,12 @@
                     "Failed finding any relevant offset"
                     '() #f))
 
-        ((timespec? (zone-entry-rule zone-entry))
-         (let ((offset (timespec+ (zone-entry-rule zone-entry)
-                                  (zone-entry-stdoff zone-entry))))
+        ((pair? (zone-entry-rule zone-entry))
+         (let ((offset (+ (cdr (zone-entry-rule zone-entry))
+                          (zone-entry-stdoff zone-entry))))
            ;; TODO cache here
            (values (-> dt
-                       (datetime-timespec-add (timespec-negate offset))
+                       (datetime-/naive (seconds->duration offset))
                        (tz "UTC"))
                    offset
                    (zone-entry-format zone-entry))))
@@ -393,54 +386,57 @@
 
          (define rule (find-exact-changeover dt zone-entry changeovers))
 
-         (let ((offset (timespec+ (zone-entry-stdoff zone-entry)
-                                  (rule-save rule))))
+         (let ((offset (+ (zone-entry-stdoff zone-entry)
+                          (cdr (rule-save rule)))))
            ;; TODO cache here
            (values (-> dt
-                       (datetime-timespec-add (timespec-negate offset))
+                       (datetime-/naive (seconds->duration offset))
                        (tz "UTC"))
                    offset
                    (run-zone-format (zone-entry-format zone-entry)
                                     rule offset))))))
 
 
-;; Parses a UTC offest specifier string inte a timespec value.
-;; For exampleo, "UTC-2" or "UTC+01:30". Values after the ± are
+;; Parses a UTC offest specifier string inte a numeric offset
+;; For example, "UTC-2" or "UTC+01:30". Values after the ± are
 ;; treated as hour offsets up to (and including) the value of 99, after
 ;; which they become hours and minutes (meaning that UTC+0100 == UTC+1).
 ;; The "UTC" part is optional
 (define utc-offset-rx
   (make-regexp "^(UTC)?([+-])(([0-9]{1,2}):([0-9]{2})|[0-9]+)$"))
 
-;;; TODO rename to utc-indicator->timespec (or similar)
 (define (parse-utc-offset s)
   (and=> (regexp-exec utc-offset-rx  s)
          (lambda (m)
-           (timespec
-            (if (match:substring m 4)
-                (time hour: (string->number (match:substring m 4))
-                      minute: (string->number (match:substring m 5)))
-                (let ((s (match:substring m 3)))
-                  (cond ((string->number s)
-                         (lambda (x) (< x 100))
-                         => (lambda (x) (time hour: x)))
-                        ((= 4 (string-length s))
-                         (time hour: (string->number (substring s 0 2))
-                               minute: (string->number (substring s 2 4))))
-                        (else (scm-error 'misc-error "parse-utc-offset"
-                                         "Invalid UTC offset: ~s"
-                                         (list s)
-                                         #f)))))
-            (string->symbol (match:substring m 2))
-            #f))))
+           (* (if (string=? "-" (match:substring m 2))
+                  -1 1)
+              (time->seconds
+               (if (match:substring m 4)
+                   (time hour: (string->number (match:substring m 4))
+                         minute: (string->number (match:substring m 5)))
+                   (let ((s (match:substring m 3)))
+                     (cond ((string->number s)
+                            (lambda (x) (< x 100))
+                            => (lambda (x) (time hour: x)))
+                           ((= 4 (string-length s))
+                            (time hour: (string->number (substring s 0 2))
+                                  minute: (string->number (substring s 2 4))))
+                           (else (scm-error 'misc-error "parse-utc-offset"
+                                            "Invalid UTC offset: ~s"
+                                            (list s)
+                                            #f))))))))))
 
 (define (utc->zone dt identifier)
   (typecheck dt utc-datetime?)
   (typecheck identifier string?)
-  (cond ((parse-utc-offset identifier)
+  (cond ((equal? "UTC" identifier) dt)
+        ((parse-utc-offset identifier)
          => (lambda (offset)
-              (define name (string-append "UTC" (timespec->string offset)))
-              (values (-> (datetime-timespec-add dt offset)
+              (define name (string-append "UTC"
+                                          (if (negative? offset)
+                                              "-" "+")
+                                          (number->string (abs offset))))
+              (values (-> (datetime+/naive dt (seconds->duration offset))
                           (tz name))
                       offset
                       name)))
@@ -453,20 +449,25 @@
 (define (zone->utc dt)
   (typecheck dt zoned-datetime?)
   (cond ((equal? "UTC" (tz dt))
-         (values dt (timespec (time)) "UTC"))
+         (values dt 0 "UTC"))
         ((hash-ref offset-cache dt)
          => unvector)
         ((parse-utc-offset (tz dt))
          => (lambda (offset)
-              (values (-> (datetime-timespec-add dt (timespec-negate offset))
+              (values (-> (datetime-/naive dt (seconds->duration offset))
                           (tz "UTC"))
                       offset
-                      (string-append "UTC" (timespec->string offset)))))
+                      (string-append "UTC" (if (negative? offset)
+                                               "-" "+")
+                                     (number->string (abs offset))))))
         (else
          (let ((a b c (zone->utc/name dt)))
            (hash-set! offset-cache dt
                       (vector a b c))
            (values a b c)))))
+
+(define zone->utc1 (unval zone->utc))
+(define utc->zone1 (unval utc->zone))
 
 (define (zone->zone dt identifier)
   (typecheck (tz dt) string?)
@@ -477,7 +478,9 @@
 ;;; Retrieve UTC offset, and pretty name from a given timezone
 (define (query-timezone dt)
   (cond ((parse-utc-offset (tz dt))
-         => (lambda (offset) (values offset (string-append "UTC" (timespec->string offset)))))
+         => (lambda (offset) (values offset (string-append "UTC" (if (negative? offset)
+                                               "-" "+")
+                                     (number->string (abs offset))))))
         ;; NOTE this is a ridiculous way to query the data.
         ;; Write an actually query procedure
         (else (let ((_ offset name (utc->zone ((unval zone->utc) dt) (tz dt))))
@@ -491,39 +494,51 @@
 ;;; datetime-difference objects are always assumed to have their tz field.
 ;;; datetime± keeps the zone of the input
 
-(define (datetime±/zoneinfo datetime± dt dt-difference)
-  (cond ((tz dt)
-         => (lambda (zone)
-              (let ((utc-dt ((unval zone->utc) dt)))
-                ((unval utc->zone)
-                 (datetime± utc-dt dt-difference)
-                 zone))))
-        (else (datetime± dt dt-difference))))
+;; (define (datetime±/zoneinfo datetime± dt dt-difference)
+;;   (cond ((tz dt)
+;;          => (lambda (zone)
+;;               (let ((utc-dt ((unval zone->utc) dt)))
+;;                 ((unval utc->zone)
+;;                  (datetime± utc-dt dt-difference)
+;;                  zone))))
+;;         (else (datetime± dt dt-difference))))
+
+;; (define (datetime+/zoneinfo dt dt-difference)
+;;   (datetime±/zoneinfo datetime+/naive dt dt-difference))
+
+;; (define (datetime-/zoneinfo dt dt-difference)
+;;   (datetime±/zoneinfo datetime-/naive dt dt-difference))
 
 (define (datetime+/zoneinfo dt dt-difference)
-  (datetime±/zoneinfo datetime+ dt dt-difference))
+  (-> (modify dt date* (lambda (d) (date+ d dt-difference)))
+      zone->utc1
+      (add-time-duration dt-difference)
+      (utc->zone1 (tz dt))))
 
-(define (datetime-/zoneinfo dt dt-difference)
-  (datetime±/zoneinfo datetime- dt dt-difference))
+(define (date-/zoneinfo dt dt-difference)
+  (-> (modify dt date* (lambda (d) (date- d dt-difference)))
+      zone->utc1
+      (remove-time-duration dt-difference)
+      (utc->zone1 (tz dt))))
 
 (define (datetime-difference/zoneinfo end start)
   (cond ((and (tz start) (tz end))
-         (datetime-difference
+         (datetime-difference/naive
           ((unval zone->utc) end)
           ((unval zone->utc) start)))
         ((not (or (tz start) (tz end)))
-         (datetime-difference end start))
+         (datetime-difference/naive end start))
         (else
          (scm-error 'misc-error "datetime-difference/zoneinfo"
                     "Can't compare datetimes where only one has a timezone, got start: ~s, end: ~s"
                     (list start end) #f))))
 
 
-(define (datetime=/zoneinfo  . args) (apply datetime=  (map (unval zone->utc) args)))
-(define (datetime</zoneinfo  . args) (apply datetime<  (map (unval zone->utc) args)))
-(define (datetime>/zoneinfo  . args) (apply datetime>  (map (unval zone->utc) args)))
-(define (datetime<=/zoneinfo . args) (apply datetime<= (map (unval zone->utc) args)))
-(define (datetime>=/zoneinfo . args) (apply datetime>= (map (unval zone->utc) args)))
+(define (datetime=/zoneinfo  . args) (apply datetime=/naive  (map (unval zone->utc) args)))
+(define (datetime</zoneinfo  . args) (apply datetime</naive  (map (unval zone->utc) args)))
+(define (datetime>/zoneinfo  . args) (apply datetime>/naive  (map (unval zone->utc) args)))
+(define (datetime<=/zoneinfo . args) (apply datetime<=/naive (map (unval zone->utc) args)))
+(define (datetime>=/zoneinfo . args) (apply datetime>=/naive (map (unval zone->utc) args)))
 
 (define (ensure-zoned-datetime reference-zone s)
   (cond ((date? s) (datetime date: s tz: reference-zone))

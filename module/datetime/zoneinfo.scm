@@ -1,11 +1,12 @@
 (define-module (datetime zoneinfo)
   :use-module (hnh util)
   :use-module (hnh util type)
-  :use-module (datetime timespec)
   :use-module (calp translation)
   :use-module (datetime zoneinfo types)
   :use-module (datetime zoneinfo intermediary)
   :use-module (datetime zoneinfo zic)
+  ;; :use-module (datetime io)
+  :use-module (datetime core)
   :export (zone-format)
   :re-export (
               ;; Types
@@ -53,7 +54,7 @@
 (define (zone-format fmt-string arg utc-offset)
   (typecheck fmt-string string?)
   (typecheck arg string?)
-  (typecheck utc-offset timespec?)
+  (typecheck utc-offset rational?)
 
   (cond ((string-index fmt-string #\%)
          => (lambda (idx)
@@ -62,8 +63,14 @@
                  [(#\s) arg]
 
                  [(#\z)
-                  (timespec->string (-> utc-offset (timespec-type #f))
-                                    delimiter: "")]
+                  ;; TODO format time properly
+                  (format #f "~a~s"
+                          (if (negative? utc-offset) "-" "+")
+                          ;; TODO only have some components
+                          (seconds->time (abs utc-offset)))
+                  ;; (timespec->string (-> utc-offset (timespec-type #f))
+                  ;;                   delimiter: "")
+                  ]
 
                  ;; Not standard, but it feels like good faith to have it
                  [(#\%) "%"]

@@ -67,8 +67,9 @@
 
                             (->> (generate-recurrence-set ev)
                                  (stream-take-while ;
-                                  (lambda (instance) (datetime< (ensure-zoned-datetime "UTC" (prop1 instance 'DTSTART)) ;
-                                                           end)))
+                                  (lambda (instance)
+                                    (datetime< (ensure-zoned-datetime "UTC" (prop1 instance 'DTSTART)) ;
+                                               end)))
 
                                  (stream-filter ; ;
                                   (lambda (instance)

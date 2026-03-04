@@ -12,11 +12,11 @@
   :use-module ((hnh util) :select (->> sort*))
   :use-module (hnh util lens)
   :use-module ((datetime zoneinfo) :select (intermediary->zoneinfo read-zoneinfo))
-  :use-module (datetime timespec)
   :use-module ((vcomponent) :select (vcomponent-diff extract1 prop1))
   :use-module (vcomponent datetime)
   :use-module (vcomponent datetime timezone)
   :use-module ((vcomponent type recurrence) :select (recur-rule))
+  :use-module ((vcomponent type utc-offset) :select (utc-offset))
   :use-module ((vcomponent create) :select (vevent vtimezone daylight standard)))
 
 ;;; TODO RFC 5545 Specifies that an event lies in the range [start, end). Write explicit tests for this.
@@ -191,14 +191,14 @@ Link    Europe/Zurich  Europe/Vaduz
                     rrule: (recur-rule freq: 'YEARLY interval: 1 byday: `((-1 . ,sun)) bymonth: '(3) wkst: monday)
                     tzname: "CEST"
                     ;; TODO why isn't this 'hour: 1'?
-                    tzoffsetfrom: (timespec (time hour: 0) '+ #f)
-                    tzoffsetto: (timespec (time hour: 2) '+ #f))
+                    tzoffsetfrom: (utc-offset value: 0)
+                    tzoffsetto: (utc-offset value: 7200))
                    (standard
                     dtstart: (datetime year: 1996 month: 10 day: 27 hour: 1 tz: "UTC")
                     rrule: (recur-rule freq: 'YEARLY interval: 1 byday: `((-1 . ,sun)) bymonth: '(10) wkst: monday)
                     tzname: "CET"
-                    tzoffsetfrom: (timespec (time hour: 2) '+ #f)
-                    tzoffsetto: (timespec (time hour: 1) '+ #f))))
+                    tzoffsetfrom: (utc-offset value: 7200)
+                    tzoffsetto: (utc-offset value: 3600))))
        timezone-component))
 
     ;; TODO test where the requested timezone isn't available

@@ -16,7 +16,6 @@
       date time datetime tz
       mon tue wed thu fri sat sun
       )
-     ((datetime timespec) timespec)
      ((vcomponent create)
       create-vcomponent with-parameters
       vcalendar vevent vtodo vjournal vfreebusy
@@ -27,6 +26,7 @@
      ((vcomponent type recurrence) recur-rule)
      ((vcomponent type request-status) request-status)
      ((vcomponent type version) vcalendar-version)
+     ((vcomponent type utc-offset) utc-offset)
      ((vcomponent type unknown) unknown)
      ((web uri) string->uri))))
 

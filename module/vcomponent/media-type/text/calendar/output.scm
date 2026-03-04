@@ -14,9 +14,9 @@
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type request-status)
   :use-module (vcomponent type version)
+  :use-module (vcomponent type utc-offset)
   :use-module (vcomponent type unknown)
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (web uri)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -54,15 +54,6 @@
 
 
 
-;;; NOTE this is identical to the matching in application/celandar+json
-(define (timespec->string _ timespec)
-  (string-append
-   (symbol->string (timespec-sign timespec))
-   (let ((t (timespec-time timespec)))
-     (time->string t
-      (if (zero? (second t))
-          "~H~M"
-          "~H~M~S")))))
 
 
 (define (recur-rule->rrule-string _ rrule)
@@ -131,7 +122,7 @@
          (cons string? (lambda (_ v) (escape-chars v)))
          ;; TODO TODO timezone
          (cons time? (lambda (_ v) (time->string v "~H~M~S")))
-         (cons timespec? timespec->string)
+         (cons utc-offset? (lambda (_ v) (utc-offset->string v colon: "")))
          (cons unknown?
                (lambda (p v)
                  (values (from-unknown v)

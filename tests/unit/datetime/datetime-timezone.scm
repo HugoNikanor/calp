@@ -3,7 +3,6 @@
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :use-module (datetime timezone)
-  :use-module (datetime timespec)
   :use-module (datetime core)
   :use-module ((datetime zoneinfo)
                :select (read-zoneinfo intermediary->zoneinfo))
@@ -143,19 +142,19 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(before)"
         (let ((dt off name (utc->zone #2026-03-29T00:59:59Z "Europe/Stockholm")))
           (test-equal (tz #2026-03-29T01:59:59 "Europe/Stockholm") dt)
-          (test-equal (timespec #01:00) off)
+          (test-equal 3600 off)
           (test-equal "CET" name)))
 
       (test-group "(on)"
         (let ((dt off name (utc->zone #2026-03-29T01:00:00Z "Europe/Stockholm")))
           (test-equal (tz #2026-03-29T03:00:00 "Europe/Stockholm") dt)
-          (test-equal (timespec #02:00) off)
+          (test-equal 7200 off)
           (test-equal "CEST" name)))
 
       (test-group "(after)"
         (let ((dt off name (utc->zone #2026-03-29T01:00:01Z "Europe/Stockholm")))
           (test-equal (tz #2026-03-29T03:00:01 "Europe/Stockholm") dt)
-          (test-equal (timespec #02:00) off)
+          (test-equal 7200 off)
           (test-equal "CEST" name)))
       )
 
@@ -163,19 +162,19 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(before)"
         (let ((dt off name (utc->zone #2026-10-25T00:59:59Z "Europe/Stockholm")))
           (test-equal (tz #2026-10-25T02:59:59 "Europe/Stockholm") dt)
-          (test-equal (timespec #02:00) off)
+          (test-equal 7200 off)
           (test-equal "CEST" name)))
 
       (test-group "(on)"
         (let ((dt off name (utc->zone #2026-10-25T01:00:00Z "Europe/Stockholm")))
           (test-equal (tz #2026-10-25T02:00:00 "Europe/Stockholm") dt)
-          (test-equal (timespec #01:00) off)
+          (test-equal 3600 off)
           (test-equal "CET" name)))
 
       (test-group "(after)"
         (let ((dt off name (utc->zone #2026-10-25T01:00:01Z "Europe/Stockholm")))
           (test-equal (tz #2026-10-25T02:00:01 "Europe/Stockholm") dt)
-          (test-equal (timespec #01:00) off)
+          (test-equal 3600 off)
           (test-equal "CET" name)))
       ))
 
@@ -184,7 +183,7 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(before)"
         (let ((dt off name (zone->utc (tz #2026-03-29T01:59:59 "Europe/Stockholm"))))
           (test-equal #2026-03-29T00:59:59Z dt)
-          (test-equal (timespec #01:00) off)
+          (test-equal 3600 off)
           (test-equal "CET" name)))
 
       ;; TODO test with the 02:xx times (which don't exist)
@@ -192,13 +191,13 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(on)"
         (let ((dt off name (zone->utc (tz #2026-03-29T03:00:00 "Europe/Stockholm"))))
           (test-equal #2026-03-29T01:00:00Z dt)
-          (test-equal (timespec #02:00) off)
+          (test-equal 7200 off)
           (test-equal "CEST" name)))
 
       (test-group "(after)"
         (let ((dt off name (zone->utc (tz #2026-03-29T03:00:01 "Europe/Stockholm"))))
           (test-equal #2026-03-29T01:00:01Z dt)
-          (test-equal (timespec #02:00) off)
+          (test-equal 7200 off)
           (test-equal "CEST" name))))
 
     (test-group "summer -> standard"
@@ -207,13 +206,13 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "still summer"
         (let ((dt off name (zone->utc (tz #2026-10-25T01:59:59 "Europe/Stockholm"))))
           (test-equal #2026-10-24T23:59:59Z dt)
-          (test-equal (timespec #02:00:00) off)
+          (test-equal 7200 off)
           (test-equal "CEST" name)))
 
       (test-group "Ambigious becomes standard"
         (let ((dt off name (zone->utc (tz #2026-10-25T02:00 "Europe/Stockholm"))))
           (test-equal #2026-10-25T01:00:00Z dt)
-          (test-equal (timespec #01:00:00) off)
+          (test-equal 3600 off)
           (test-equal "CET" name))))))
 
 
@@ -223,38 +222,38 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(before)"
         (let ((dt off name (utc->zone #2026-03-08T06:59:59Z "America/New_York")))
           (test-equal (tz #2026-03-08T01:59:59 "America/New_York") dt)
-          (test-equal (timespec #05:00 '-) off)
+          (test-equal (* -5 3600) off)
           (test-equal "EST" name)))
 
       (test-group "(on)"
         (let ((dt off name (utc->zone #2026-03-08T07:00:00Z "America/New_York")))
           (test-equal (tz #2026-03-08T03:00:00 "America/New_York") dt)
-          (test-equal (timespec #04:00 '-) off)
+          (test-equal (* -4 3600) off)
           (test-equal "EDT" name)))
 
       (test-group "(after)"
         (let ((dt off name (utc->zone #2026-03-08T07:00:01Z "America/New_York")))
           (test-equal (tz #2026-03-08T03:00:01 "America/New_York") dt)
-          (test-equal (timespec #04:00 '-) off)
+          (test-equal (* -4 3600) off)
           (test-equal "EDT" name))))
 
     (test-group "summer -> standard"
       (test-group "(before)"
         (let ((dt off name (utc->zone #2026-11-01T05:59:59Z "America/New_York")))
           (test-equal (tz #2026-11-01T01:59:59 "America/New_York") dt)
-          (test-equal (timespec #04:00 '-) off)
+          (test-equal (* -4 3600) off)
           (test-equal "EDT" name))
         )
       (test-group "(on)"
         (let ((dt off name (utc->zone #2026-11-01T06:00:00Z "America/New_York")))
           (test-equal (tz #2026-11-01T01:00 "America/New_York") dt)
-          (test-equal (timespec #05:00 '-) off)
+          (test-equal (* -5 3600) off)
           (test-equal "EST" name))
         )
       (test-group "(after)"
         (let ((dt off name (utc->zone #2026-11-01T06:00:01Z "America/New_York")))
           (test-equal (tz #2026-11-01T01:00:01 "America/New_York") dt)
-          (test-equal (timespec #05:00 '-) off)
+          (test-equal (* -5 3600) off)
           (test-equal "EST" name)))))
 
   (test-group "zone->utc"
@@ -262,7 +261,7 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(before)"
         (let ((dt off name (zone->utc (tz #2026-03-08T01:59:59 "America/New_York"))))
           (test-equal #2026-03-08T06:59:59Z dt)
-          (test-equal (timespec #05:00 '-) off)
+          (test-equal (* -5 3600) off)
           (test-equal "EST" name)))
 
       ;; TODO test with the 02:xx times (which don't exist)
@@ -270,26 +269,26 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(on)"
         (let ((dt off name (zone->utc (tz #2026-03-08T03:00:00 "America/New_York"))))
           (test-equal #2026-03-08T07:00:00Z dt)
-          (test-equal (timespec #04:00 '-) off)
+          (test-equal (* -4 3600) off)
           (test-equal "EDT" name)))
 
       (test-group "(after)"
         (let ((dt off name (zone->utc (tz #2026-03-08T03:00:01 "America/New_York"))))
           (test-equal #2026-03-08T07:00:01Z dt)
-          (test-equal (timespec #04:00 '-) off)
+          (test-equal (* -4 3600) off)
           (test-equal "EDT" name))))
 
     (test-group "summer -> standard"
       (test-group "still summer"
         (let ((dt off name (zone->utc (tz #2026-11-01T01:59:59 "America/New_York"))))
           (test-equal #2026-11-01T05:59:59Z dt)
-          (test-equal (timespec #04:00 '-) off)
+          (test-equal (* -4 3600) off)
           (test-equal "EDT" name)))
 
       (test-group "Ambigious becomes standard"
         (let ((dt off name (zone->utc (tz #2026-11-01T02:00:00 "America/New_York"))))
           (test-equal #2026-11-01T07:00Z dt)
-          (test-equal (timespec #05:00 '-) off)
+          (test-equal (* -5 3600) off)
           (test-equal "EST" name))))))
 
 (test-group "Australia/Sydney"
@@ -298,34 +297,34 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(before)"
         (let ((dt off name (utc->zone #2026-10-03T15:59:59Z "Australia/Sydney")))
           (test-equal (tz #2026-10-04T01:59:59 "Australia/Sydney") dt)
-          (test-equal (timespec #10:00) off)
+          (test-equal (* 10 3600) off)
           (test-equal "AEST" name)))
       (test-group "(on)"
         (let ((dt off name (utc->zone #2026-10-03T16:00Z "Australia/Sydney")))
           (test-equal (tz #2026-10-04T03:00 "Australia/Sydney") dt)
-          (test-equal (timespec #11:00) off)
+          (test-equal (* 11 3600) off)
           (test-equal "AEDT" name)))
       (test-group "(after)"
         (let ((dt off name (utc->zone #2026-10-03T16:00:01Z "Australia/Sydney")))
           (test-equal (tz #2026-10-04T03:00:01 "Australia/Sydney") dt)
-          (test-equal (timespec #11:00) off)
+          (test-equal (* 11 3600) off)
           (test-equal "AEDT" name))))
 
     (test-group "summer -> standard"
       (test-group "(before)"
         (let ((dt off name (utc->zone #2026-04-04T15:59:59Z "Australia/Sydney")))
           (test-equal (tz #2026-04-05T02:59:59 "Australia/Sydney") dt)
-          (test-equal (timespec #11:00) off)
+          (test-equal (* 11 3600) off)
           (test-equal "AEDT" name)))
       (test-group "(on)"
         (let ((dt off name (utc->zone #2026-04-04T16:00Z "Australia/Sydney")))
           (test-equal (tz #2026-04-05T02:00 "Australia/Sydney") dt)
-          (test-equal (timespec #10:00) off)
+          (test-equal (* 10 3600) off)
           (test-equal "AEST" name)))
       (test-group "(after)"
         (let ((dt off name (utc->zone #2026-04-04T16:01Z "Australia/Sydney")))
           (test-equal (tz #2026-04-05T02:01 "Australia/Sydney") dt)
-          (test-equal (timespec #10:00) off)
+          (test-equal (* 10 3600) off)
           (test-equal "AEST" name)))))
 
   (test-group "zone->utc"
@@ -333,7 +332,7 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(before)"
         (let ((dt off name (zone->utc (tz #2026-10-04T01:59:59 "Australia/Sydney"))))
           (test-equal #2026-10-03T15:59:59Z dt)
-          (test-equal (timespec #10:00) off)
+          (test-equal (* 10 3600) off)
           (test-equal "AEST" name)))
 
       ;; TODO test with the 02:xx times (which don't exist)
@@ -341,24 +340,24 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
       (test-group "(on)"
         (let ((dt off name (zone->utc (tz #2026-10-04T03:00 "Australia/Sydney"))))
           (test-equal #2026-10-03T16:00Z dt)
-          (test-equal (timespec #11:00) off)
+          (test-equal (* 11 3600) off)
           (test-equal "AEDT" name)))
       (test-group "(after)"
         (let ((dt off name (zone->utc (tz #2026-10-04T03:00:01 "Australia/Sydney"))))
           (test-equal #2026-10-03T16:00:01Z dt)
-          (test-equal (timespec #11:00) off)
+          (test-equal (* 11 3600) off)
           (test-equal "AEDT" name))))
 
     (test-group "summer -> standard"
       (test-group "still summer"
         (let ((dt off name (zone->utc (tz #2026-04-05T01:59:59 "Australia/Sydney"))))
           (test-equal #2026-04-04T14:59:59Z dt)
-          (test-equal (timespec #11:00) off)
+          (test-equal (* 11 3600) off)
           (test-equal "AEDT" name)))
       (test-group "Ambigious becomes standard"
         (let ((dt off name (zone->utc (tz #2026-04-05T02:00 "Australia/Sydney"))))
           (test-equal #2026-04-04T16:00Z dt)
-          (test-equal (timespec #10:00) off)
+          (test-equal (* 10 3600) off)
           (test-equal "AEST" name))
         ))
     )

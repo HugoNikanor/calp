@@ -24,7 +24,6 @@
            week-number
            date-starting-week
 
-           timespan-overlaps?
 
            date-range
 
@@ -109,51 +108,6 @@
 
 
 
-;; @verbatim
-;;    A          B          C          D          E         ¬F
-;; |s1|     :     |s2| : |s1|     :     |s2| :          : |s1|
-;; |  |     :     |  | : |  ||s2| : |s1||  | : |s1||s2| : |  |
-;; |  ||s2| : |s1||  | : |  ||  | : |  ||  | : |  ||  | :
-;;     |  | : |  |     : |  ||  | : |  ||  | : |  ||  | :     |s2|
-;;     |  | : |  |     : |  |     :     |  | :          :     |  |
-;;
-;; Infinitely short ---+|s2| : |s1|+--- : two instants don't overlap
-;; events, overlap   s1      :      s2  :
-;; @end verbatim
-;; 
-;; E is covered by both case A and B.
-(define (timespan-overlaps? s1-begin s1-end s2-begin s2-end)
-  "Return whetever or not two timespans overlap."
-  ;; TODO why do we require unzoned or UTC? Wouldn't it be enough that all four datetimes are in the same zone?
-  (typecheck s1-begin (or utc-datetime? unzoned-datetime?))
-  (typecheck s1-end   (or utc-datetime? unzoned-datetime?))
-  (typecheck s2-begin (or utc-datetime? unzoned-datetime?))
-  (typecheck s2-end   (or utc-datetime? unzoned-datetime?))
-  (unless (equal? (tz s1-begin) (tz s1-end) (tz s2-begin) (tz s2-end))
-    (scm-error 'wrong-type-arg "timespan-overlaps?"
-               "All datetimes must be UTC or zoneless. Got: [~s, ~s), [~s, ~s)"
-               (list s1-begin s1-end s2-begin s2-end) #f))
-
-  ;; TODO isn't this overly complicated?
-  ;; Can't we just check if s1-begin is in [s2-begin, s2-end) or
-  ;; s1-end is in [s2-begin, s2-end)?
-
-  (or
-   ;; A
-   (and (datetime< s2-begin s1-end)
-        (datetime< s1-begin s2-end))
-
-   ;; B
-   (and (datetime< s1-begin s2-end)
-        (datetime< s2-begin s1-end))
-
-   ;; C
-   (and (datetime<= s1-begin s2-begin)
-        (datetime< s2-end s1-end))
-
-   ;; D
-   (and (datetime<= s2-begin s1-begin)
-        (datetime< s1-end s2-end))))
 
 
 ;; Returns a list of all dates from start to end.

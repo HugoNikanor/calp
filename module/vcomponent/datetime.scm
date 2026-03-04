@@ -9,7 +9,6 @@
   :use-module (vcomponent create)
   :use-module (vcomponent type duration)
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (datetime zoneinfo)
   :use-module (hnh util)
   :use-module (hnh util lens)

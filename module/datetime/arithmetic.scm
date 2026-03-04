@@ -40,11 +40,14 @@
            date-
            ;; time+
            ;; time-
-           datetime+
-           datetime-
+           datetime+/naive
+           datetime-/naive
+
+           add-time-duration
+           remove-time-duration
 
            date-difference
-           datetime-difference
+           datetime-difference/naive
            )
   )
 
@@ -193,25 +196,16 @@
         (modify datetime-date* (date-add-or-remove-days r))
         (set datetime-time* t))))
 
-(define (datetime+% start duration)
+(define (datetime+/naive start duration)
   (add-time-duration
    (modify start datetime-date* (lambda (d) (date+% d duration)))
    duration))
 
-(define (datetime-% start duration)
+(define (datetime-/naive start duration)
   (remove-time-duration
    (modify start datetime-date* (lambda (d) (date-% d duration)))
    duration))
 
-(define (datetime+ start . durations)
-  (typecheck start datetime?)
-  (typecheck durations (list-of duration?))
-  (fold (swap datetime+%) start durations))
-
-(define (datetime- start . durations)
-  (typecheck start datetime?)
-  (typecheck durations (list-of duration?))
-  (fold (swap datetime-%) start durations))
 
 (define (year-day d)
   (typecheck d date?)
@@ -263,7 +257,7 @@
 ;; ((swap datetime-difference) #2026-01-11T23:59:59 #2026-01-09T00:00:00)
 ;; $26 = #.(string->duration "-P1DT47H59M59S")
 
-(define (datetime-difference b a)
+(define (datetime-difference/naive b a)
   (cond ((date= (datetime-date a) (datetime-date b))
          (let ((d (- (time->seconds (datetime-time b))
                      (time->seconds (datetime-time a)))))
@@ -276,7 +270,7 @@
           (+ (seconds-until-midnight (datetime-time a))
              (time->seconds (datetime-time b)))
           day: (1- (days-between (datetime-date a) (datetime-date b)))))
-        (else (duration-negate (datetime-difference a b)))))
+        (else (duration-negate (datetime-difference/naive a b)))))
 
 ;; (datetime-difference #2026-01-10T01:00 #2026-01-09T23:00)
 ;;; => DT2H

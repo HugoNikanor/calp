@@ -13,13 +13,13 @@
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
-  :use-module (datetime timespec)
   :use-module (calp translation)
   :use-module (vcomponent type period)
   :use-module ((datetime) :select (date? time? datetime?))
   :use-module ((vcomponent type duration)   :select (duration?))
   :use-module ((vcomponent type period)     :select (period?))
   :use-module ((vcomponent type recurrence) :select (recur-rule?))
+  :use-module ((vcomponent type utc-offset) :select (utc-offset?))
   :export (
            default-types default-type
            apparent-types apparent-type
@@ -115,7 +115,7 @@
     (cons time?           'TIME)        ; TODO utc
     (cons (lambda (v) (and (uri? v) (not (eq? 'mailto (uri-scheme v)))))
                           'URI)
-    (cons timespec?       'UTC-OFFSET)
+    (cons utc-offset?     'UTC-OFFSET)
 
     ;; unknown? MUST NOT be added here.
     ;; If it where added here, it would be treated as an actual type,

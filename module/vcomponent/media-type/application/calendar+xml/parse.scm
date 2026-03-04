@@ -4,6 +4,7 @@
   :use-module (srfi srfi-88)
   :use-module (vcomponent)
   :use-module (vcomponent media-type types)
+  :use-module (vcomponent media-type parse-error)
   :use-module (vcomponent type period)
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type recurrence parse)
@@ -12,13 +13,13 @@
   :use-module (vcomponent type request-status)
   :use-module (vcomponent type unknown)
   :use-module (vcomponent type duration)
+  :use-module (vcomponent type utc-offset)
   :use-module (hnh util)
   :use-module (hnh util table)
   :use-module (hnh util optional)
   :use-module (hnh util lens)
   :use-module (hnh util type)
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (web uri)
   :use-module (base64)
   :use-module (sxml namespaced)
@@ -75,17 +76,19 @@
         (recur-rule)
         els))
 
-;;; TODO this is identical to the one in jcal
-(define (parse-utc-offset s)
+(define (parse-utc-offset* s)
   (cond ((string-match "^([+-])([0-9]{2}):([0-9]{2})(:([0-9]{2}))?$" s)
          => (lambda (m)
-              (timespec (time hour: (string->number (match:substring m 2))
-                              minute: (string->number (match:substring m 3))
-                              second: (cond ((match:substring m 5) => string->number)
-                                            (else 0)))
-                        (string->symbol (match:substring m 1))
-                        ;; TODO is this correct?
-                        'utc)))))
+              (utc-offset value:
+                          (time-components->integer
+                           sign: (match:substring m 1)
+                           h: (match:substring m 2)
+                           m: (match:substring m 3)
+                           s: (match:substring m 5)))))
+        (else (raise-calendar-parse-error
+               type: 'UTC-OFFSET
+               value: s
+               msg: "Not parseable as a UTC-OFFSET"))))
 
 ;;; Like `find`, but returns 2 values:
 ;;; - the found value
@@ -164,7 +167,7 @@
      (cons 'time (lambda (_ v) (string->time (xml-text-content v)
                                         "~H:~M:~S")))
      (cons 'uri (lambda (_ v) (string->uri (xml-text-content v))))
-     (cons 'utc-offset (lambda (_ v) (parse-utc-offset (xml-text-content v))))
+     (cons 'utc-offset (lambda (_ v) (parse-utc-offset* (xml-text-content v))))
      (cons 'unknown (lambda (_ v) (unknown (xml-text-content v))))
 
      ))))

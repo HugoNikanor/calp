@@ -6,6 +6,7 @@
   :use-module (ice-9 regex)
   :use-module (vcomponent)
   :use-module (vcomponent media-type types)
+  :use-module (vcomponent media-type parse-error)
   :use-module (vcomponent type period)
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type geo)
@@ -13,12 +14,12 @@
   :use-module (vcomponent type request-status)
   :use-module (vcomponent type unknown)
   :use-module (vcomponent type duration)
+  :use-module (vcomponent type utc-offset)
   :use-module (hnh util)
   :use-module (hnh util table)
   :use-module (hnh util lens)
   :use-module (hnh util optional)
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (web uri)
   :use-module ((vcomponent type recurrence parse) :select (rfc->datetime-weekday parse-day-spec))
   :use-module (base64)
@@ -54,16 +55,19 @@
         (recur-rule)
         rrule))
 
-(define (parse-utc-offset _ s)
+(define (parse-utc-offset* _ s)
   (cond ((string-match "^([+-])([0-9]{2}):([0-9]{2})(:([0-9]{2}))?$" s)
          => (lambda (m)
-              (timespec (time hour: (string->number (match:substring m 2))
-                              minute: (string->number (match:substring m 3))
-                              second: (cond ((match:substring m 5) => string->number)
-                                            (else 0)))
-                        (string->symbol (match:substring m 1))
-                        ;; TODO is this correct?
-                        'utc)))))
+              (utc-offset value:
+                          (time-components->integer
+                           sign: (match:substring m 1)
+                           h: (match:substring m 2)
+                           m: (match:substring m 3)
+                           s: (match:substring m 5)))))
+        (else (raise-calendar-parse-error
+               type: 'UTC-OFFSET
+               value: s
+               msg: "Not parseable as a UTC-OFFSET"))))
 
 (define-once parsers
   (make-parameter
@@ -104,7 +108,7 @@
      ;; TODO timezone
      (cons 'TIME (lambda (_ t) (string->time t)))
      (cons 'URI (lambda (_ v) (string->uri v)))
-     (cons 'UTC-OFFSET parse-utc-offset)))))
+     (cons 'UTC-OFFSET parse-utc-offset*)))))
 
 ;;; jCal serialization of value, to our internal representation
 (define (parse-value key type params value)

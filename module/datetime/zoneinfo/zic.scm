@@ -22,11 +22,11 @@
   :use-module (datetime core)
   :use-module (datetime duration)
   :use-module (datetime arithmetic)
-  :use-module (datetime timespec)
   :use-module (datetime zoneinfo types)
   :use-module (datetime zoneinfo intermediary)
   :use-module (ice-9 match)
   :use-module (ice-9 rdelim)
+  :use-module (ice-9 regex)
   :use-module (calp translation)
   :export (read-zoneinfo
            execute-day-spec))
@@ -42,6 +42,34 @@
                (call-with-input-file port-or-filename parse-zic-file)))
          ports-or-filenames))))
 
+
+
+;; "+10:20:30.13"
+;; suffix   = "s" / "w" / "u" / "g" / "z" / "d"
+;; hour     = 1*2DIGIT
+;; minute   = 2DIGIT
+;; second   = 2DIGIT
+;; milis    = *DIGIT
+;; timespec = ["+" / "-"] hour [":" minute [":" second ["." millis]]] [suffix]
+(define-once timespec-rx
+  (make-regexp "^([+-])?([0-9]{1,2})(:([0-9]{2}))?(:([0-9]{2}))?([.]([0-9]*))?(.)?$"))
+(define (parse-time-spec string callback)
+  (cond ((string=? string "-")
+         (callback 0 #f))
+
+        ((regexp-exec timespec-rx string)
+         => (lambda (m)
+              (callback (time-components->integer
+                         sign: (match:substring m 1)
+                         h: (match:substring m 2)
+                         m: (match:substring m 4)
+                         s: (match:substring m 6))
+                        (match:substring m 9))))
+
+        (else (scm-error 'misc-error "parse-time-spec"
+                         "String not parsable as a timespec: ~s"
+                         (list string) #f))))
+
 
 
 ;;; TODO write tests for this, zic(8) gives the following:
@@ -129,7 +157,14 @@
 
 
 (define* (parse-until year optional: (month "Jan") (day "1") (tm "-"))
-  (let ((timespec (parse-time-spec tm))
+  (let ((time-offset time-type
+                     (parse-time-spec tm (lambda (i s)
+                                           (values
+                                            i
+                                            (match s
+                                              ((or #f "w") 'wall)
+                                              ("s" 'standard)
+                                              ((or "u" "g" "z") 'utc))))))
         (base-date (date year:  (string->number year)
                          month: (month-name->number month)
                          day:   1)))
@@ -145,24 +180,26 @@
     ;; (even though utc could be coded as UTC, and wall as #f, that
     ;; leaves standard time).
     ;; Instead, we should return a new type, datetime-spec
-    (cons (or (timespec-type timespec) 'wall)
+    (cons time-type
           (datetime date: (execute-day-spec base-date (parse-day-spec day))
-                    time: (timespec-time timespec)))))
+                    time: (seconds->time time-offset)))))
 
 
 (define (parse-zone stdoff rule format . until)
   (zone-entry
-   stdoff: (parse-time-spec stdoff)
+   stdoff: (parse-time-spec stdoff (lambda (v _) v))
    rule: (cond [(string=? "-" rule)
-                (timespec (time) '+ 'standard)]
+                (cons 'standard 0)]
                [(char-alphabetic? (string-ref rule 0))
                 (string->symbol rule)]
                [else
-                (let ((s (parse-time-spec rule)))
-                  (modify s timespec-type*
-                          (lambda (t)
-                            (or t (if (time-zero? (timespec-time s))
-                                      'standard 'daylight)))))])
+                (parse-time-spec
+                 rule (lambda (v s)
+                        (cons (match s
+                                ("s" 'standard)
+                                ("d" 'daylight)
+                                (#f (if (= 0 v) 'standard 'daylight)))
+                              v)))])
    format: format
    until: (if (null? until)
               #f (apply parse-until until))))
@@ -215,19 +252,28 @@
                                                     (parse-from to))
                                        rule-in: (month-name->number in)
                                        rule-on: (parse-day-spec on)
-                                       rule-at: (modify (parse-time-spec at)
-                                                        timespec-type*
-                                                        (lambda (t) (or t 'wall)))
+                                       rule-at:
+                                       (parse-time-spec
+                                        at (lambda (v s)
+                                             (cons
+                                              (match s
+                                                ((or #f "w") 'wall)
+                                                ("s" 'standard)
+                                                ((or "u" "g" "z") 'utc))
+                                              v)))
                                        rule-save:
-                                       (let ((s (parse-time-spec save)))
-                                         (modify s timespec-type*
-                                                 (lambda (t)
-                                                   (or t (if (time-zero? (timespec-time s))
-                                                             'standard 'daylight)))))
+                                       (parse-time-spec
+                                        save (lambda (v s)
+                                               (cons (match s
+                                                       ("s" 'standard)
+                                                       ("d" 'daylight)
+                                                       (#f (if (= 0 v) 'standard 'daylight)))
+                                                     v)))
                                        rule-letters: (if (string= letters "-")
                                                          "" letters))))
                         (loop (cons rule done)
                               #f)))
+
                      (("Zone" name args ...)
                       (let* ((zone-entry (apply parse-zone args))
                              (zones (list zone-entry)))

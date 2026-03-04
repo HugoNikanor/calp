@@ -20,8 +20,8 @@
                 rule-to: 1973
                 rule-in: 4
                 rule-on: '(last 0)
-                rule-at: (timespec (time hour: 02 minute: 00 second: 00) '+ 'wall)
-                rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'daylight)
+                rule-at: (cons 'wall 7200)
+                rule-save: (cons 'daylight 3600)
                 rule-letters: "D")))
 
             (test-equal "sunday >= 1"
@@ -33,15 +33,15 @@
                 rule-to: 1980
                 rule-in: 4
                 rule-on: `(> ,sun 1)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'wall)
+                rule-at: (cons 'utc 3600)
+                rule-save: (cons 'daylight 3600)
                 rule-letters: "S")))
 
             ;; Max and min uses dummy dates, which is slightly wrong
             ;; but shouldn't cause any real problems
 
             (test-equal "Minimum time"
-              (datetime year: 0000 month: 10 day: 30 hour: 01 minute: 00 second: 00 tz: "UTC")
+              (datetime month: 10 day: 30 hour: 1 tz: "UTC")
               (rule->dtstart
                (zi-rule
                 rule-name: 'EU
@@ -49,8 +49,8 @@
                 rule-to: 2000
                 rule-in: 10
                 rule-on: '(last 0)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
+                rule-at: (cons 'utc 3600)
+                rule-save: (cons 'standard 0)
                 rule-letters: "")))
 )
 
@@ -69,8 +69,8 @@
                 rule-to: 'maximum
                 rule-in: 10
                 rule-on: '(last 0)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
+                rule-at: (cons 'utc 3600)
+                rule-save: (cons 'standard 0)
                 rule-letters: "")
                ))
 
@@ -83,8 +83,8 @@
                 rule-to: 'only
                 rule-in: 10
                 rule-on: '(last 2)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
+                rule-at: (cons 'utc 3600)
+                rule-save: (cons 'standard 0)
                 rule-letters: "")))
 
             (test-equal "with definitive to year"
@@ -100,8 +100,8 @@
                 rule-to: 2000
                 rule-in: 10
                 rule-on: '(last 2)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
+                rule-at: (cons 'utc 3600)
+                rule-save: (cons 'standard 0)
                 rule-letters: "")))
 
             (test-equal "on being a month day"
@@ -116,8 +116,8 @@
                 rule-to: 'maximum
                 rule-in: 10
                 rule-on: 2
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
+                rule-at: (cons 'utc 3600)
+                rule-save: (cons 'standard 0)
                 rule-letters: "")))
 
             (test-equal "on being first day after date"
@@ -132,8 +132,8 @@
                 rule-to: 'maximum
                 rule-in: 10
                 rule-on: `(> ,mon 2)
-                rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
+                rule-at: (cons 'utc 3600)
+                rule-save: (cons 'standard 0)
                 rule-letters: "")))
 
             #;
@@ -148,8 +148,8 @@
                    rule-to: 'maximum
                    rule-in: 10
                    rule-on: `(< ,mon 2)
-                   rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                   rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
+                   rule-at: (cons 'utc 3600)
+                   rule-save: (cons 'standard 0)
                    rule-letters: "")))
                 list))
 
@@ -165,8 +165,8 @@
                     rule-to: 'minimum
                     rule-in: 10
                     rule-on: `(< ,mon 2)
-                    rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                    rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'wall)
+                    rule-at: (cons 'utc 3600)
+                    rule-save: (cons 'standard 0)
                     rule-letters: "")))
                 list))
             )

@@ -3,10 +3,10 @@
   :use-module (datetime core)
   :use-module (datetime arithmetic)
   :use-module (datetime timezone)
-  :use-module (datetime timespec)
   :use-module (datetime io)
   :use-module (datetime duration)
   :use-module (datetime extra)
+  :use-module (datetime unified)
   ;; To resolve colision with cadr-second from srfi-1
   :re-export-and-replace (second)
   :re-export (
@@ -52,8 +52,6 @@
               time-max
               date-min
               date-max
-              datetime-min
-              datetime-max
 
               week-start
               week-day
@@ -83,9 +81,10 @@
               date> date>? date>= date>=?
               time< time<? time<= time<=?
               time> time>? time>= time>=?
-              datetime< datetime<? datetime<= datetime<=?
-              datetime> datetime>? datetime>= datetime>=?
+              datetime</naive datetime<=/naive
+              datetime>/naive datetime>=/naive
 
+              time-components->integer
 
               jan january
               feb february
@@ -111,9 +110,10 @@
               ;; Arithmetic
               date+ date-
               ;; time+ time-
-              datetime+ datetime-
               date-difference
-              datetime-difference
+
+              datetime+/naive datetime-/naive
+              datetime-difference/naive
 
               ;; Timezone
               zoneinfo
@@ -143,20 +143,6 @@
 
               days-in-interval
               year-day
-
-              ;; Timespec
-              timespec
-              timespec?
-              timespec->string
-              timespec-time timespec-time*
-              timespec-sign timespec-sign*
-              timespec-type timespec-type*
-              timespec-value timespec-value*
-
-              timespec+
-              timespec-negate
-              datetime-timespec-add
-              parse-time-spec
 
               ;; Duration
               duration
@@ -204,5 +190,16 @@
               week-day-name
 
               locale-month locale-month-short
+
+
+              ;; Unified
+              datetime-min
+              datetime-max
+
+              datetime< datetime<? datetime<= datetime<=?
+              datetime> datetime>? datetime>= datetime>=?
+
+              datetime+ datetime-
+              datetime-difference
 
               ))

@@ -71,8 +71,6 @@
            time-max
            date-min
            date-max
-           datetime-min
-           datetime-max
 
            week-day
 
@@ -87,14 +85,16 @@
 
            date= date=?
            time= time=?
-           datetime= datetime=?
+           datetime=/naive
 
            date< date<? date<= date<=?
            date> date>? date>= date>=?
            time< time<? time<= time<=?
            time> time>? time>= time>=?
-           datetime< datetime<? datetime<= datetime<=?
-           datetime> datetime>? datetime>= datetime>=?
+           datetime</naive datetime<=/naive
+           datetime>/naive datetime>=/naive
+
+           time-components->integer
            )
   )
 
@@ -195,7 +195,7 @@
   ;; - string?: a reference to the installed zoneinfo database
   ;; - (eq? 'UTC): UTC time, instead of the current where the string
   ;;               "UTC" gets special treatment.
-  ;; - timespec?: exact UTC offset, instead of the current overloading
+  ;; - rational?: exact UTC offset, instead of the current overloading
   ;;              of strings on the form "UTC+\d*"
   ;; - some representation of timezones from calendar streams:
   ;;   iCalendar streams carry along their own zoneinfo, which
@@ -318,11 +318,6 @@
 (define (date-max a b)
   (if (date< a b) b a))
 
-(define (datetime-min a b)
-  (if (datetime< a b) a b))
-
-(define (datetime-max a b)
-  (if (datetime< a b) b a))
 
 ;; https://projecteuclid.org/euclid.acta/1485888738
 ;; 1. Begel.
@@ -420,10 +415,10 @@
                  a))
           #t args))
 
-(define (datetime= . args)
+(define (datetime=/naive . args)
   (unless (apply equal? (map tz args))
     (scm-error
-     'wrong-type-arg "datetime="
+     'wrong-type-arg "datetime=/naive"
      "Datetime equivalence only defined for matching timezones. Got: ~s"
      (list args) #f))
 
@@ -436,7 +431,6 @@
 
 (define date=? date=)
 (define time=? time=)
-(define datetime=? datetime=)
 
 
 ;; Extends a binary comparison procedure to work on any
@@ -487,7 +481,7 @@
      (or (time= a b)
          (time< a b)))))
 
-(define datetime<
+(define datetime</naive
   (fold-comparator
    (lambda (a b)
      (typecheck a (or utc-datetime? unzoned-datetime?) "datetime<")
@@ -500,11 +494,11 @@
          (time< (datetime-time a) (datetime-time b))
          (date< (datetime-date a) (datetime-date b))))))
 
-(define datetime<=
+(define datetime<=/naive
   (fold-comparator
    (lambda (a b)
-     (or (datetime= a b)
-         (datetime< a b)))))
+     (or (datetime=/naive a b)
+         (datetime</naive a b)))))
 
 
 
@@ -528,16 +522,21 @@
 (define time>=        (swap time<=))
 (define time>=?       (swap time<=))
 
-(define datetime<?    datetime<)
+(define datetime>/naive  (swap datetime</naive))
+(define datetime>=/naive (swap datetime<=/naive))
 
-(define datetime>     (swap datetime<))
-(define datetime>?    (swap datetime<))
+
 
-(define datetime<=?   datetime<=)
+;;; TODO document me
+(define* (time-components->integer key: sign h m s)
+  (define (string->number/safe s)
+    (or (and=> s string->number) 0))
 
-(define datetime>=    (swap datetime<=))
-(define datetime>=?   (swap datetime<=))
-
+  (* (if (string=? "-" (or sign ""))
+         -1 1)
+     (+ (* 60 60 (string->number/safe h))
+        (* 60    (string->number/safe m))
+                 (string->number/safe s))))
 
 
 

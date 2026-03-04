@@ -30,9 +30,8 @@
                  ((duration? trigger)
                   (case (string->symbol (or (param trigger-vline 'RELATED) "START"))
                     ((START)
-                     (datetime+/zoneinfo
-                      (prop1 event 'DTSTART)
-                      trigger))
+                     (datetime+ (ensure-zoned-datetime timezone (prop1 event 'DTSTART))
+                                trigger))
 
                     ((END)
                      ;; vevent: then DTEND or (DTSTART and DURATION) MUST be present
@@ -40,14 +39,14 @@
                      (cond ((or (prop1 event 'DTEND)
                                 (prop1 event 'DUE))
                             => (lambda (end)
-                                 (datetime+
-                                  (ensure-zoned-datetime timezone end)
-                                  trigger)))
+                                 (datetime+ (ensure-zoned-datetime timezone end)
+                                            trigger)))
+
                            ((prop1 event 'DURATION)
                             => (lambda (dur)
-                                 (-> (ensure-zoned-datetime timezone (prop1 event 'DTSTART))
-                                     (datetime+/zoneinfo dur)
-                                     (datetime+/zoneinfo trigger))))
+                                 (datetime+ (ensure-zoned-datetime timezone (prop1 event 'DTSTART))
+                                            dur trigger)))
+
                            (else (scm-error
                                   'type-error "alarm-triggers"
                                   "Encountered ~a with neither DTEND/DUE or DURATION, with alarm relative end: ~s"
@@ -69,6 +68,6 @@
                                (repeat repeat))
                       (if (zero? repeat)
                           (list base)
-                          (cons base (loop (datetime+/zoneinfo base increment)
+                          (cons base (loop (datetime+ base increment)
                                            (1- repeat))))))))
             (else (list base))))))

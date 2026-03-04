@@ -9,9 +9,9 @@
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type version)
   :use-module (vcomponent type request-status)
+  :use-module (vcomponent type utc-offset)
   :use-module (ice-9 match)
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (srfi srfi-1)
   :use-module (calp translation)
   :use-module (calp namespaces)
@@ -131,15 +131,8 @@
          (cons recur-rule? (lambda (_ v) (list (recur-rule->sxml v))))
          (cons string? (lambda (_ v) (list ((xml xcal 'text) v))))
          (cons time? (lambda (_ v) (list ((xml xcal 'time) (time->string v)))))
-         (cons timespec?
-               (lambda (_ v) (list
-                         ((xml xcal 'utc-offset)
-                          (string-append
-                           (symbol->string (timespec-sign v))
-                           (let ((t (timespec-time v)))
-                             (time->string
-                              t (if (zero? (second t))
-                                    "~H:~M" "~H:~M:~S"))))))))
+         (cons utc-offset? (lambda (_ v) (list ((xml xcal 'utc-offset)
+                                           (utc-offset->string v colon: ":")))))
 
 
          ;;

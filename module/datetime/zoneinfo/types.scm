@@ -5,7 +5,6 @@
   :use-module (hnh util type)
   :use-module (hnh util object)
   :use-module (datetime core)
-  :use-module (datetime timespec)
   :export (
            zi-rule zi-rule?
            rule-name rule-from rule-to rule-in
@@ -49,16 +48,20 @@
                      (tuple-of (memv '(< >))
                                (memv (weekday-list sun))
                                integer?)))
-  (rule-at      type: timespec?)
-  (rule-save    type: timespec?)
+  (rule-at      type: (pair-of (memv '(utc standard wall))
+                               rational?))
+  (rule-save    type: (pair-of (memv '(standard daylight))
+                               rational?))
   (rule-letters type: string?))
 
 ;;; TODO zone-entry collision
 
 (define-type (zone-entry)               ; EXPORTED
-  ;; NOTE the letter for this timespec doesn't matter
-  (zone-entry-stdoff keyword: stdoff type: timespec?)
-  (zone-entry-rule   keyword: rule   type: (or symbol? timespec?))
+  (zone-entry-stdoff keyword: stdoff type: rational?)
+  (zone-entry-rule   keyword: rule
+                     type: (or symbol?
+                               (pair-of (memv '(standard daylight))
+                                        rational?)))
   (zone-entry-format keyword: format type: string?)
   (zone-entry-until  keyword: until
                      type: (or false? (pair-of (memv '(utc standard wall))

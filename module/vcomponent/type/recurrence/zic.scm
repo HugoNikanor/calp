@@ -30,12 +30,12 @@
   (define dt
     (datetime
      date: (execute-day-spec d (rule-on rule))
-     tz: (case (timespec-type (rule-at rule))
+     tz: (case (car (rule-at rule))
            ((wall) #f)
            ((standard) #f)
            ((utc) "UTC"))))
 
-  (datetime+ dt (seconds->duration (timespec-value (rule-at rule)))))
+  (datetime+ dt (seconds->duration (cdr (rule-at rule)))))
 
 
 (define (rule->rrule rule)
