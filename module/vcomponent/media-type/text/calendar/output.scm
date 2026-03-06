@@ -115,6 +115,7 @@
          (cons number? (lambda (_ v) (number->string v)))
          (cons period?
                (lambda (p v)
+                 ;; TODO TZID MUST be included here
                  (let ((start end params (serialize-period p v "~Y~m~dT~H~M~S~Z")))
                    (values (format #f "~a/~a" start end)
                            params))))

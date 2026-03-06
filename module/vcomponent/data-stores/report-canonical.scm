@@ -505,12 +505,18 @@
              (set component
                   vcomponent-children*
                   (cons base-instance
-                        (filter (lambda (instance)
-                                  (case (type instance)
-                                    ((VTIMEZONE) #t)
-                                    ((VEVENT) (instance-overlaps? "TODO REFERENCE ZONE" instance start end))
-                                    (else (throw 'not-implemented "Instance overlaps for" instance))))
-                                other-instances))))))
+                        (append
+                         (filter (lambda (instance)
+                                   (case (type instance)
+                                     ;; ((VTIMEZONE) #t)
+                                     ((VEVENT) (instance-overlaps? "TODO REFERENCE ZONE" instance start end))
+                                     (else (throw 'not-implemented "Instance overlaps for" instance))))
+                                 other-instances)
+                         ;; find-base-instance only returns VEVENT instances.
+                         ;; Simply re-attach the timezones.
+                         ;; TODO we actually should scan for which timezones the result uses,
+                         ;; and only attach those
+                         (filter vtimezone? (vcomponent-children component))))))))
 
      (else component)))
 

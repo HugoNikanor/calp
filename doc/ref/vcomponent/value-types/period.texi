@@ -1,6 +1,9 @@
 @node Period iCalendar Type
 @subsubsection Period iCalendar Type
 
+@c TODO document that the TZID property MUST be hanled as for
+@c DATE-TIME values.
+
 @defun period [#:start] [#:end]
 @end defun
 

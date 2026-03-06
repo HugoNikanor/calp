@@ -356,6 +356,7 @@
                          (list rrule)))))
   (define base-cases
     (->> start
+         ;; MOO
          (stream-iterate (lambda (x) (datetime+ x increment)))
          (stream-map list)))
 
@@ -405,6 +406,8 @@
                                               #f))))
                            (assoc-ref rrule-accessors row-name)
                            rrule dt-list)
+                          ;; TODO explain how this is unzoned
+                          ;; MOO
                           datetime<=))))
                 seed
                 (let ((data-start 1))
@@ -413,6 +416,8 @@
        base-cases))))
 
   (define limited-expanded
+    ;; TODO explain how this is unzoned
+    ;; MOO
     (stream-drop-while (lambda (dt) (datetime< dt start)) expanded))
 
   ;; then finally apply COUNT and UNTIL
@@ -536,9 +541,10 @@
                                              "Invalid RDATE value: ~s"
                                              (list v) #f)))))
                             vlines)
-                       (compose datetime</zoneinfo car))))
+                       datetime</zoneinfo
+                       car)))
                 (else '()))))
-   (interleave-streams (compose datetime</zoneinfo car) _)
+   (interleave-streams (lambda (a b) (datetime</zoneinfo (car a) (car b))) _)
    (stream-remove (lambda (p)
                     (cond ((prop% base 'EXDATE)
                            => (lambda (vs)
@@ -598,10 +604,10 @@
                                          "Invalid RDATE value: ~s"
                                          (list v) #f)))))
                         rdates)
-                       datetime<)))
+                       datetime</naive)))
                 (else '()))))
 
-   (interleave-streams (compose datetime< car) _)
+   (interleave-streams (lambda (a b) (datetime</naive (car a) (car b))) _)
 
    (stream-remove
     (lambda (p)
@@ -641,38 +647,32 @@
   ;; TODO
   ;; - SEQUENCE
 
-  ;; find base event
-  (define-values (base rest) (find-base-instance component))
+  (if (not (recurring? component))
+      (->> component
+           vcomponent-children
+           (filter vevent?)
+           list->stream)
+      (let ((base rest (find-base-instance component)))
 
-  ;; Duration of event, when the base has a DTEND value.
-  ;; DURATION values are ignored, since those are carried through automatically.
+        ;; Duration of event, when the base has a DTEND value.
+        ;; DURATION values are ignored, since those are carried through automatically.
 
-  ;; TODO Write tests for what happens when we pass timezone boundries in different ways.
-  (define start (prop1 base 'DTSTART))
-  (define duration (instance-length base))
+        ;; TODO Write tests for what happens when we pass timezone boundries in different ways.
+        (define start (prop1 base 'DTSTART))
+        (define duration (instance-length base))
 
-  ;; -------------------- TODO LINE --------------------
+        ;; (format (current-error-port) "base: ~s~%rest: ~s~%" base rest)
 
-  ;; (format (current-error-port) "base: ~s~%rest: ~s~%" base rest)
+        ;; TODO for these cases, DTEND should only be added if the original instance had a DTEND
 
-  ;; TODO for these cases, DTEND should only be added if the original instance had a DTEND
-
-  (cond
-   ((date? start)
-    (generate-recurrence-set/date base rest start duration))
-
-   ((zoned-datetime? start)
-    (generate-recurrence-set/zoned-datetime base rest start duration))
-
-   ((unzoned-datetime? start)
-    (generate-recurrence-set/unzoned-datetime base rest start duration))
-
-   (else (scm-error 'misc-error "generate-recurrence-set"
-                    "Invalid type for dtstart: ~s"
-                    (list start) #f)))
-
-  ;; -------------------- TODO LINE --------------------
-)
+        ((cond
+          ((date?             start) generate-recurrence-set/date)
+          ((zoned-datetime?   start) generate-recurrence-set/zoned-datetime)
+          ((unzoned-datetime? start) generate-recurrence-set/unzoned-datetime)
+          (else (scm-error 'misc-error "generate-recurrence-set"
+                           "Invalid type for dtstart: ~s"
+                           (list start) #f)))
+         base rest start duration))))
 
 
 ;; Takes a time interval in @var{start} and @var{end}, and the

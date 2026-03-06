@@ -93,6 +93,7 @@
                  (table-put parameters 'TZID (tz dt))))))
 
 ;;; TODO simplify this by using serialize-period instead
+;;; TODO TZID MUST be included here
 (define (period->sxml params v)
   (call-with-values (lambda () (datetime->sxml params (period-start v)))
     (lambda* (serialized optional: (params params))

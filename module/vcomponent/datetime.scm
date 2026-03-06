@@ -174,6 +174,8 @@
   (if (timespan-overlaps? start-dt-utc end-dt-utc
                           st-utc et-utc)
       (datetime-difference
+       ;; TODO datetime-(min|max) already implements zoneinfo
+       ;; Simplify this procedure
        (datetime-min start-dt-utc et-utc)
        (datetime-max end-dt-utc   st-utc))
       ;; TODO document the non-overlapping case

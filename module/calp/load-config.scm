@@ -1,6 +1,7 @@
 (define-module (calp load-config)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-88)
+  :use-module (srfi srfi-267)
   :use-module (calp translation)
   :use-module (hnh util path)
   :use-module (hnh util io)

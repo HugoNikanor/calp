@@ -85,6 +85,7 @@
          (cons number? (lambda (_ v) v))
          (cons period?
                (lambda (p v)
+                 ;; TODO TZID MUST be included here
                  (let ((start end params (serialize-period p v "~Y-~m-~dT~H:~M:~S~Z")))
                    (values (vector start end)
                            params))))

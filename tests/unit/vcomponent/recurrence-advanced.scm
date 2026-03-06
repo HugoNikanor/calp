@@ -1281,8 +1281,9 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
             rrule: (recur-rule
                     freq: 'HOURLY
                     interval: 3
-                    until: (datetime year: 1997 month: 09 day: 02 hour: 17 tz: "UTC"))
-            x-summary: "var tredje timme, till och med den 02 september, 1997 kl. 17:00"
+                    until: (datetime year: 1997 month: 09 day: 02 hour: 21 tz: "UTC"))
+            ;; TODO timezone in UNTIL description
+            x-summary: "var tredje timme, till och med den 02 september, 1997 kl. 21:00"
             x-set:
             (list (datetime year: 1997 month: 09 day: 02 hour: 09 tz: "America/New_York")
                   (datetime year: 1997 month: 09 day: 02 hour: 12 tz: "America/New_York")
