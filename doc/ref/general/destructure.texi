@@ -223,6 +223,49 @@ For example, the implementation for lists is:
 @end lisp
 @end defun
 
+@subsection Record Type Matchers
+@anchor{destructure-record}
+
+Record type matchers match record types, capturing fields by keywords
+
+@defmac define-record-matcher name predicate fields ...
+Define a pattern matcher for records. Is just syntax over an update to
+the @code{match-expanders} table and a call to @code{make-record-matcher}.
+
+Example usage (note that @code{define-record} already includes this
+matcher by default):
+@lisp
+(define-record (color-rgb)
+  (color-rgb-r #:keyword r)
+  (color-rgb-g #:keyword g)
+  (color-rgb-b #:keyword b))
+
+(define-record-matcher color-rgb color-rgb?
+                       #:r color-rgb-r
+                       #:g color-rgb-g
+                       #:b color-rgb-b)
+@end lisp
+@end defmac
+
+@defun make-record-matcher name predicate getters
+Procedure returning a syntax transformer suitable to use a a
+pattern matcher. Takes three arguments:
+
+@itemize
+@item @var{name}:
+A symbol containing the name of the pattern. Only used for error messages.
+
+@item @var{predicate}
+A syntax object refering to the procedure for checking if the object
+is of the correct type, something like @code{pair?}.
+
+@item @var{getters}
+A list of pairs, each containing the keyword for accessing a given
+fielde, and a syntax object representing the procedure for getting
+said feild from the record. For example: @code{(cons #:r #'color-r)}.
+@end itemize
+@end defun
+
 @subsection Defining new Matchers
 
 @c TODO details about how matchers are expanded:

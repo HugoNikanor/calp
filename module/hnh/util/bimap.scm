@@ -11,9 +11,11 @@
            bimap->list
            ))
 
-(define-type (bimap)
+(define-type (bimap no-destructure?: #t)
   (forward  default: (make-hash-table))
   (backward default: (make-hash-table)))
+
+;;; TODO destructure pattern
 
 (define* (get-left table key optional: dflt)
   (typecheck table bimap?)

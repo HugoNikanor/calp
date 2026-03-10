@@ -5,6 +5,8 @@
   :use-module (hnh util)
   :use-module (hnh util type)
   :use-module (hnh util serialize)
+  :use-module ((hnh util destructure)
+               :select (define-record-matcher))
   :export (define-type
             pprint-width
             record->list record->list/filtered))
@@ -270,6 +272,20 @@
              ;; Field lenses
              #,@(build-lenses stx #'(field ...))
 
+             ;; Destructure pattern
+             #,(cond ((kv-ref #'(attribute ...) no-destructure?:)
+                      #'noop)
+                     (else
+                      #`(define-record-matcher name <type>?
+                          #,@(let loop ((fields #'(field ...)))
+                               (if (null? fields)
+                                   '()
+                                   (cons* (-> (car fields)
+                                              get-keyword-name
+                                              syntax->datum
+                                              symbol->keyword)
+                                          (accessor-name (car fields))
+                                          (loop (cdr fields))))))))
 
              ;; Serializer
              (set-record-type-serializer!

@@ -12,7 +12,8 @@
 
 (define-type (just
               constructor: (lambda (c _) c)
-              serializer: (lambda (o) `(just ,(serialize (from-just o)))))
+              serializer: (lambda (o) `(just ,(serialize (from-just o))))
+              no-destructure?: #t)
   from-just)
 
 (define-type (nothing))
@@ -28,10 +29,6 @@
    (lambda (expr) (inner-values #`(from-just #,expr)))
    inner-captures))
 
-(define-matcher (nothing)
-  (values (lambda (expr) #`((nothing? #,expr)))
-          (const #'())
-          #'()))
 
 (define (optional? x)
   (or (just? x)
