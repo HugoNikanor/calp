@@ -5,6 +5,8 @@
   :use-module (hnh util)
   :use-module (hnh util type)
   :use-module (hnh util serialize)
+  :use-module ((hnh util destructure)
+               :select (define-record-matcher))
   :export (define-type
             pprint-width
             record->list record->list/filtered))
@@ -72,10 +74,7 @@
 (define-syntax (constructor-validator stx)
   (syntax-case stx ()
     ((_ (name kvs ...))
-     (with-syntax ((name*
-                    (cond ((kv-ref #'(kvs ...) keyword:)
-                           => identity)
-                          (else #'name))))
+     (with-syntax ((name* (get-keyword-name #'(name kvs ...))))
        #'(validator name* (name kvs ...))))
     ((_ name) #f)))
 
@@ -126,21 +125,18 @@
 (define (accessor-name field)
   (syntax-case field ()
     ((name kvs ...)
-     (cond ((kv-ref #'(kvs ...) accessor:)
-            => identity)
-           (else #'name)))
+     (or (kv-ref #'(kvs ...) accessor:) #'name))
     (name #'name)))
 
 ;;; Name of the created lens
 (define (lens-name field)
   (syntax-case field ()
     ((name kvs ...)
-     (cond ((kv-ref #'(kvs ...) lens:)
-            => identity)
-           (else (->> (syntax->datum #'name)
-                      (format #f "~a*")
-                      string->symbol
-                      (datum->syntax field)))))
+     (or (kv-ref #'(kvs ...) lens:)
+         (->> (syntax->datum #'name)
+              (format #f "~a*")
+              string->symbol
+              (datum->syntax field))))
     (name (->> (syntax->datum #'name)
                (format #f "~a*")
                string->symbol
@@ -180,9 +176,7 @@
 (define (get-keyword-name field)
   (syntax-case field ()
     ((name kvs ...)
-     (cond ((kv-ref #'(kvs ...) keyword:)
-            => identity)
-           (else #'name)))
+     (or (kv-ref #'(kvs ...) keyword:) #'name))
     (name #'name)))
 
 (define (get-field-name-and-keyword field)
@@ -275,30 +269,44 @@
              ;; Field accessors
              (build-accessor name field) ...
 
+             ;; Field lenses
              #,@(build-lenses stx #'(field ...))
 
+             ;; Destructure pattern
+             #,(cond ((kv-ref #'(attribute ...) no-destructure?:)
+                      #'noop)
+                     (else
+                      #`(define-record-matcher name <type>?
+                          #,@(let loop ((fields #'(field ...)))
+                               (if (null? fields)
+                                   '()
+                                   (cons* (-> (car fields)
+                                              get-keyword-name
+                                              syntax->datum
+                                              symbol->keyword)
+                                          (accessor-name (car fields))
+                                          (loop (cdr fields))))))))
+
+             ;; Serializer
              (set-record-type-serializer!
               <type>?
-              #,(cond ((kv-ref #'(attribute ...) serializer:)
-                       => identity)
-                      (else
-                       #`(lambda (r)
-                           `(name
-                             #,@(concatenate
-                                 (map (lambda (pair)
-                                        ;; We un-wrap and re-wrap field-name, since we change
-                                        ;; syntax scope here
-                                        (let ((field-name (syntax->datum (car pair)))
-                                              (keyword (syntax->datum (cdr pair))))
-                                          #`(#,(symbol->keyword keyword)
-                                             ,(serialize (#,(datum->syntax stx field-name) r)))))
-                                      (map get-field-name-and-keyword #'(field ...)))))))))
+              #,(or (kv-ref #'(attribute ...) serializer:)
+                    #`(lambda (r)
+                        `(name
+                          #,@(concatenate
+                              (map (lambda (pair)
+                                     ;; We un-wrap and re-wrap field-name, since we change
+                                     ;; syntax scope here
+                                     (let ((field-name (syntax->datum (car pair)))
+                                           (keyword (syntax->datum (cdr pair))))
+                                       #`(#,(symbol->keyword keyword)
+                                          ,(serialize (#,(datum->syntax stx field-name) r)))))
+                                   (map get-field-name-and-keyword #'(field ...))))))))
 
+             ;; Record type declaration index
              (set-object-to-rtd! <type>? <type>)
 
-             ;; TODO in interactive guile sessions, if a big enough
-             ;; list of objects are printed at once, then readline
-             ;; fails due to to many open files.
+             ;; Printer
              (set-record-type-printer!
               ;; Wrap printer is used, since sometimes
               ;; the output port closes to early (not

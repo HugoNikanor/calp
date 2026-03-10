@@ -31,6 +31,8 @@
   :use-module (ice-9 regex)
   :use-module (ice-9 curried-definitions)
 
+  :use-module (hnh util destructure)
+
   :export (date
            date?
            year month day
@@ -178,6 +180,7 @@
 (define-type (datetime
               constructor: datetime-constructor-constructor
               serializer: datetime-serializer
+              no-destructure?: #t
               printer: (lambda (r p)
                          (cond ((not (tz r))
                                 (format p "#~a" (datetime->string/simple r)))
@@ -202,6 +205,18 @@
   ;;   completely ignore any other database. These rules MUST be copied
   ;;   into each relevant datetime object.
   (tz type: (or false? string?)))
+
+(define-record-matcher datetime datetime?
+  date: datetime-date
+  time: datetime-time
+  tz: tz
+
+  year:   (compose year datetime-date)
+  month:  (compose month datetime-date)
+  day:    (compose day datetime-date)
+  hour:   (compose hour datetime-time)
+  minute: (compose minute datetime-time)
+  second: (compose second datetime-time))
 
 
 (define (date-zero? date)

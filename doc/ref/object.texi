@@ -74,6 +74,14 @@ Procedure for serializing this type (@ref{serialize}). Defaults to a
 form mimicing the default constructor.
 @end deffn
 
+@deffn {Type Parameter} #:no-destructure? bool
+By default, all new types gets a destructure pattern, matching each
+field by keyword, @ref{destructure-record}
+
+If this option is present, then no destructure pattern will be
+generated for the given type.
+@end deffn
+
 Each field declares a part of the record, along with relevant metadata
 about that field. The most basic declaration is a bare symbol, which
 adds a field which can hold anything. However, a list with the target

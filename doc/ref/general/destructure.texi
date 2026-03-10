@@ -42,7 +42,7 @@ Note that @code{'x} is @emph{not} included, since that expands as
 Vector literals are hard coded, since they (as far as I can tell) are
 not syntactic sugar over another form, but actually their own syntax.
 
-@item A compound form
+@item A compound form.
 Any compound form represented as a list. This is where the extensible
 part comes into play. A given form @code{(exp args ...)} is passed to
 @code{get-expander}, which in turn looks up the expander in
@@ -75,7 +75,7 @@ Convenience wrappers around lambda and destructure. Defined as follows:
 
 @subsection Built in Matchers
 
-@deftp {Matcher} @ name inner
+@deftp {Matcher} (@@ name inner)
 Identical to the matcher @var{inner}, but also captures the entire
 inner object in the field @var{name}.
 @end deftp
@@ -94,21 +94,21 @@ Matches an expression literally matching the value, and binds nothing.
 @c @c TODO examples
 @c @end deftp
 
-@deftp {Matcher} and matcher predicates ...
+@deftp {Matcher} (and matcher predicates ...)
 Executes and binds as @var{matcher}, and then runs all predicates with
 the values bound by @var{matcher} bound inside an @code{and} expression.
 @end deftp
 
-@deftp {Matcher} cons a d
+@deftp {Matcher} (cons a d)
 Matches an exact pair.
 @end deftp
 
-@deftp {Matcher} cons* xs ...
+@deftp {Matcher} (cons* x xs ...)
 Matches an exact sequence of pairs, where the final element need not
 be a list.
 @end deftp
 
-@deftp {Matcher} list args ...
+@deftp {Matcher} (list args ...)
 An ellipsised matcher for lists. See below for implementation details.
 
 However, the actuall pattern can contain any number of un-ellipsised
@@ -146,7 +146,7 @@ internally equal, do something like
 @end example
 @end deftp
 
-@deftp {Matcher} vector args ...
+@deftp {Matcher} (vector args ...)
 An ellipsised matcher for vectors.
 
 See the list matcher above for accepted forms.
@@ -221,6 +221,49 @@ For example, the implementation for lists is:
    container-ref-back: #'list-ref-back
    container-map: #'map))
 @end lisp
+@end defun
+
+@subsection Record Type Matchers
+@anchor{destructure-record}
+
+Record type matchers match record types, capturing fields by keywords
+
+@defmac define-record-matcher name predicate fields ...
+Define a pattern matcher for records. Is just syntax over an update to
+the @code{match-expanders} table and a call to @code{make-record-matcher}.
+
+Example usage (note that @code{define-record} already includes this
+matcher by default):
+@lisp
+(define-record (color-rgb)
+  (color-rgb-r #:keyword r)
+  (color-rgb-g #:keyword g)
+  (color-rgb-b #:keyword b))
+
+(define-record-matcher color-rgb color-rgb?
+                       #:r color-rgb-r
+                       #:g color-rgb-g
+                       #:b color-rgb-b)
+@end lisp
+@end defmac
+
+@defun make-record-matcher name predicate getters
+Procedure returning a syntax transformer suitable to use a a
+pattern matcher. Takes three arguments:
+
+@itemize
+@item @var{name}:
+A symbol containing the name of the pattern. Only used for error messages.
+
+@item @var{predicate}
+A syntax object refering to the procedure for checking if the object
+is of the correct type, something like @code{pair?}.
+
+@item @var{getters}
+A list of pairs, each containing the keyword for accessing a given
+fielde, and a syntax object representing the procedure for getting
+said feild from the record. For example: @code{(cons #:r #'color-r)}.
+@end itemize
 @end defun
 
 @subsection Defining new Matchers
@@ -300,6 +343,11 @@ prefered as an extra safeguard if bugs appear elsewhere. An
 empty @code{let} is used in favour of a @code{begin} in the body to
 allow @code{define}s in the user code.
 @end defmac
+
+@subsection Internal Details
+
+These are internal details of the implementation. They generally
+shouldn't be touched, except when implementing new matchers.
 
 @defvar match-expanders
 Hash table where all defined matchers are stored. Care must be taken

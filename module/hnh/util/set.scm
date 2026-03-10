@@ -26,8 +26,12 @@
 (define (any->symbol x)
   (string->symbol (format #f "~s" x)))
 
-(define-type (set serializer: (lambda (s) `(list->set '(,@(set->list s)))))
+(define-type (set serializer:
+                  (lambda (s) `(list->set '(,@(set->list s))))
+                  no-destructure?: #t)
   (internals default: (table)))
+
+;;; TODO destructure pattern
 
 (define (set-empty? x)
   (table-empty? (internals x)))

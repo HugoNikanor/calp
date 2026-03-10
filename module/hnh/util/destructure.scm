@@ -4,13 +4,17 @@
 
 (define-module (hnh util destructure)
   ;; Limit the amount of (hnh ...) imports here here,
-  ;; since very many of them pull in us.
+  ;; since very many of them depend on this module.
   :use-module (hnh util)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
   :export (match-expanders
            define-matcher
+
+           define-record-matcher
+           make-record-matcher
+
            get-expander
            common-sequence-destructurer
            destructure
@@ -28,6 +32,79 @@
                   (lambda (stx)
                     (syntax-case stx (name)
                       ((name args ...) (let () declarations ...))))))))
+
+
+;;; See also (@ (hnh util) kvlist->assq)
+(define (kwlist->alist kw-list)
+  (let loop ((lst kw-list))
+    (apply
+     (case-lambda
+       ((k v . rest) (cons (cons k v) (loop rest)))
+       ((_) (scm-error 'type-error "kwlist->alist"
+                       "Mismatched kwlist: ~s"
+                       (list kw-list) #f))
+       (() '()))
+     lst)))
+
+(define (make-record-matcher name predicate getters)
+  ;; (typecheck name symbol?)
+  ;; (typecheck predicate (syntax-of predicate?))
+  ;; (typecheck getters (alist-of keyword? (syntax-of getter?)))
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ args ...)
+       (let ((kws (let loop ((args* #'(args ...)))
+                    (apply
+                     (case-lambda
+                       ((kw value . rest)
+                        (cons (cons (syntax->datum kw)
+                                    (values->vector (get-expander value)))
+                              (loop rest)))
+                       ((_)
+                        ;; Runtime
+                        (scm-error 'type-error "record-destructure"
+                                   "Mismatched number of arguments for ~s. Probably bare keyword or value: ~s"
+                                   (list name (syntax->datum #'(args ...))) #f))
+                       (() '()))
+                     args*))))
+
+         ;; check that no other keywords are present
+         (let ((extras (lset-difference eq?
+                                        (map car (kwlist->alist (syntax->datum #'(args ...))))
+                                        (map car getters))))
+           (unless (null? extras)
+             ;; compile timeo
+             (scm-error 'type-error "make-record-matcher"
+                        "Unknown keyword arguments given to ~s destructure: ~s"
+                        (list name extras) #f)))
+
+         (values
+          ;; Predicates:
+          (lambda (expr)
+            #`((#,predicate #,expr)
+               #,@(append-map
+                   (lambda (sub) ((vector-ref (cdr sub) 0)
+                             #`(#,(assoc-ref getters (car sub)) #,expr)))
+                   kws)))
+          ;; Values:
+          (lambda (expr)
+            (append-map
+             (lambda (sub) ((vector-ref (cdr sub) 1)
+                       #`(#,(assoc-ref getters (car sub)) #,expr)))
+             kws))
+          ;; Captures:
+          (append-map (lambda (sub) (vector-ref (cdr sub) 2)) kws)))))))
+
+
+(define-syntax (define-record-matcher stx)
+  (syntax-case stx ()
+    ((_ pattern predicate fields ...)
+     #`(hash-set! match-expanders (quote pattern)
+                  (make-record-matcher
+                   (quote pattern)
+                   (syntax predicate)
+                   (list #,@(map (lambda (p) #`(cons #,(car p) (syntax #,(cdr p))))
+                                 (kwlist->alist #'(fields ...)))))))))
 
 (define (get-expander stx)
   (syntax-case stx ()

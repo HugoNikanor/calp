@@ -103,7 +103,8 @@ Not to be confuseod with @ref{table-difference}.
 @defun table-pop table key
 Returns 2 values:
 @itemize @bullet
-@item the focused value, as an optional
+@item @code{just} the value focused by key if present, and
+@code{nothing} otherwise
 @item the table without the specified key
 @end itemize
 @end defun
