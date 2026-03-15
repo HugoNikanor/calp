@@ -431,12 +431,6 @@
           #t args))
 
 (define (datetime=/naive . args)
-  (unless (apply equal? (map tz args))
-    (scm-error
-     'wrong-type-arg "datetime=/naive"
-     "Datetime equivalence only defined for matching timezones. Got: ~s"
-     (list args) #f))
-
   (reduce (lambda (a b)
             (and b
                  (date= (datetime-date a) (datetime-date b))
@@ -499,12 +493,6 @@
 (define datetime</naive
   (fold-comparator
    (lambda (a b)
-     (typecheck a (or utc-datetime? unzoned-datetime?) "datetime<")
-     (typecheck b (or utc-datetime? unzoned-datetime?) "datetime<")
-     (unless (equal? (tz a) (tz b))
-       (scm-error 'wrong-type-arg "datetime<"
-                  "All datetimes must be UTC or zoneless. Got: ~s & ~s"
-                  (list a b) #f))
      (if (date= (datetime-date a) (datetime-date b))
          (time< (datetime-time a) (datetime-time b))
          (date< (datetime-date a) (datetime-date b))))))
