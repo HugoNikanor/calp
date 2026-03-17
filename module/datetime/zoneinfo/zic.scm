@@ -80,6 +80,14 @@
 ;; Sun<=25  last Sunday on or before the 25th
 
 (define (execute-day-spec base-date day-spec)
+  (typecheck base-date date?)
+  ;; Same as rule-on
+  (typecheck day-spec (or integer? ; month day
+                          (tuple-of (eq? 'last)
+                                    (memv (weekday-list sun)))
+                          (tuple-of (memv '(< >))
+                                    (memv (weekday-list sun))
+                                    integer?)))
   (match day-spec
     ((? number? on) (day base-date on))
     (('last n)
@@ -216,8 +224,8 @@
 (define (parse-zic-file port)
   (define lineno 0)
   (let loop ((done '()) (continued #f))
-    ;; NOTE
-    ;; whitespace and #\# are techically allowed in names, if the name
+    ;; TODO
+    ;; whitespace and #\# ARE allowed in names, if the name
     ;; is quoted. There however doesn't appear to be ANY quoted strings
     ;; in the zoneinfo db.
     (let ((str (read-line port)))

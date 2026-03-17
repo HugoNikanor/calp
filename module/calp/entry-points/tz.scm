@@ -285,24 +285,22 @@
          trailers)))
 
   (for input-datetime in input-datetimes
-       (let* ((utc input-offset pretty-input-name
+       (let* ((utc input-info
                    (zone->utc (-> input-datetime (tz input-zone-name))))
-              (output-datetime output-offset pretty-output-name
-                               (utc->zone utc output-zone-name))
-              (output-fmt
-               (option-ref opts 'output-format "~Y-~m-~dT~H:~M:~S")))
+              (output-datetime output-info (utc->zone utc output-zone-name))
+              (output-fmt (option-ref opts 'output-format "~Y-~m-~dT~H:~M:~S")))
          ;; 2025-12-09T04:33:18+01:00 (CET)
          (format #t "~a~a (~a) = ~a~a (~a)~%"
                  (datetime->string input-datetime output-fmt)
-                 ;; TODO format better
-                 input-offset
-                 ;; (timespec->string (timespec-type input-offset #f) 'm)
-                 pretty-input-name
+                 ;; TODO always include minutes
+                 (zone-format "%z" "" (expanded-utc-offset input-info))
+                 (expanded-rule-printf input-info)
+
                  (datetime->string output-datetime output-fmt)
-                 ;; TODO format better
-                 output-offset
-                 ;; (timespec->string (timespec-type output-offset #f) 'm)
-                 pretty-output-name))))
+                 ;; TODO always include minutes
+                 (zone-format "%z" "" (expanded-utc-offset output-info))
+                 (expanded-rule-printf output-info)
+                 ))))
 
 
 (define (run-vtimezone zoneinfo args)

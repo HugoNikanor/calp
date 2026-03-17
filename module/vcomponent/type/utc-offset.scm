@@ -13,6 +13,7 @@
   (utc-offset-value type: exact-integer? keyword: value))
 
 (define* (utc-offset->string offset key: (colon ":"))
+  ;; NOTE see also `zone-format` in (datetime zoneinfo)
   (string-append
    (if (negative? (utc-offset-value offset))
        "-" "+")

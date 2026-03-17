@@ -1,12 +1,38 @@
 (define-module (test datetime-timezone)
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-71)
-  :use-module (srfi srfi-88)
   :use-module (datetime timezone)
   :use-module (datetime core)
+  :use-module ((datetime) :select (datetime-difference duration))
+  :use-module ((hnh test util) :select (test-match-path))
   :use-module ((datetime zoneinfo)
                :select (read-zoneinfo intermediary->zoneinfo))
   )
+
+
+;; RFC 5545 §3.3.5. Date-Time
+;; > If, based on the definition of the referenced time zone, the local
+;; > time described occurs more than once (when changing from daylight
+;; > to standard time), the DATE-TIME value refers to the first
+;; > occurrence of the referenced time.  Thus, TZID=America/
+;; > New_York:20071104T013000 indicates November 4, 2007 at 1:30 A.M.
+;; > EDT (UTC-04:00).
+;;
+;; > If the local time described does not occur (when
+;; > changing from standard to daylight time), the DATE-TIME value is
+;; > interpreted using the UTC offset before the gap in local times.
+;; > Thus, TZID=America/New_York:20070311T023000 indicates March 11,
+;; > 2007 at 3:30 A.M. EDT (UTC-04:00), one hour after 1:30 A.M. EST
+;; > (UTC-05:00).
+
+;; The above is only fully tested in the America/New_York zone tests below,
+;; since we know the result (and that we don't implement them properly).
+;; The other zones should have the "same" test written once we figure out
+;; how to properly implement it.
+(test-expect-fail (test-match-path
+                   ... "America/New_York"
+                   ... "Non-existant times are interpreted using previous UTC offset"
+                   "RFC-provided test"))
 
 
 ;;; Set up a local zoneinfo here. These rules are an extract from the
@@ -140,232 +166,223 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
   (test-group "utc->zone"
     (test-group "standard -> summer"
       (test-group "(before)"
-        (let ((dt off name (utc->zone #2026-03-29T00:59:59Z "Europe/Stockholm")))
+        (let ((dt info (utc->zone #2026-03-29T00:59:59Z "Europe/Stockholm")))
           (test-equal (tz #2026-03-29T01:59:59 "Europe/Stockholm") dt)
-          (test-equal 3600 off)
-          (test-equal "CET" name)))
+          (test-equal 3600 (expanded-utc-offset info))
+          (test-equal "CE%sT" (expanded-base-name info))
+          (test-equal "" (expanded-zone-letters info))))
 
       (test-group "(on)"
-        (let ((dt off name (utc->zone #2026-03-29T01:00:00Z "Europe/Stockholm")))
+        (let ((dt info (utc->zone #2026-03-29T01:00:00Z "Europe/Stockholm")))
           (test-equal (tz #2026-03-29T03:00:00 "Europe/Stockholm") dt)
-          (test-equal 7200 off)
-          (test-equal "CEST" name)))
+          (test-equal 7200 (expanded-utc-offset info))
+          (test-equal "CE%sT" (expanded-base-name info))
+          (test-equal "S" (expanded-zone-letters info))))
 
       (test-group "(after)"
-        (let ((dt off name (utc->zone #2026-03-29T01:00:01Z "Europe/Stockholm")))
+        (let ((dt info (utc->zone #2026-03-29T01:00:01Z "Europe/Stockholm")))
           (test-equal (tz #2026-03-29T03:00:01 "Europe/Stockholm") dt)
-          (test-equal 7200 off)
-          (test-equal "CEST" name)))
+          (test-equal 7200 (expanded-utc-offset info))))
       )
 
     (test-group "summer -> standard"
+
       (test-group "(before)"
-        (let ((dt off name (utc->zone #2026-10-25T00:59:59Z "Europe/Stockholm")))
+        (let ((dt info (utc->zone #2026-10-25T00:59:59Z "Europe/Stockholm")))
           (test-equal (tz #2026-10-25T02:59:59 "Europe/Stockholm") dt)
-          (test-equal 7200 off)
-          (test-equal "CEST" name)))
+          (test-equal 7200 (expanded-utc-offset info))))
 
       (test-group "(on)"
-        (let ((dt off name (utc->zone #2026-10-25T01:00:00Z "Europe/Stockholm")))
+        (let ((dt info (utc->zone #2026-10-25T01:00:00Z "Europe/Stockholm")))
           (test-equal (tz #2026-10-25T02:00:00 "Europe/Stockholm") dt)
-          (test-equal 3600 off)
-          (test-equal "CET" name)))
+          (test-equal 3600 (expanded-utc-offset info))))
 
       (test-group "(after)"
-        (let ((dt off name (utc->zone #2026-10-25T01:00:01Z "Europe/Stockholm")))
+        (let ((dt info (utc->zone #2026-10-25T01:00:01Z "Europe/Stockholm")))
           (test-equal (tz #2026-10-25T02:00:01 "Europe/Stockholm") dt)
-          (test-equal 3600 off)
-          (test-equal "CET" name)))
+          (test-equal 3600 (expanded-utc-offset info))))
       ))
 
   (test-group "zone->utc"
     (test-group "standard -> summer"
+
       (test-group "(before)"
-        (let ((dt off name (zone->utc (tz #2026-03-29T01:59:59 "Europe/Stockholm"))))
+        (let ((dt info (zone->utc (tz #2026-03-29T01:59:59 "Europe/Stockholm"))))
           (test-equal #2026-03-29T00:59:59Z dt)
-          (test-equal 3600 off)
-          (test-equal "CET" name)))
+          (test-equal 3600 (expanded-utc-offset info))))
 
       ;; TODO test with the 02:xx times (which don't exist)
 
       (test-group "(on)"
-        (let ((dt off name (zone->utc (tz #2026-03-29T03:00:00 "Europe/Stockholm"))))
+        (let ((dt info (zone->utc (tz #2026-03-29T03:00:00 "Europe/Stockholm"))))
           (test-equal #2026-03-29T01:00:00Z dt)
-          (test-equal 7200 off)
-          (test-equal "CEST" name)))
+          (test-equal 7200 (expanded-utc-offset info))))
 
       (test-group "(after)"
-        (let ((dt off name (zone->utc (tz #2026-03-29T03:00:01 "Europe/Stockholm"))))
+        (let ((dt info (zone->utc (tz #2026-03-29T03:00:01 "Europe/Stockholm"))))
           (test-equal #2026-03-29T01:00:01Z dt)
-          (test-equal 7200 off)
-          (test-equal "CEST" name))))
+          (test-equal 7200 (expanded-utc-offset info)))))
 
     (test-group "summer -> standard"
-      ;; TODO the date 2026-10-25T02:30 CEST in UNREPRESENTABLE
+      ;; The date 2026-10-25T02:30 Europe/Stockholm appears twice,
+      ;; first in CEST, then in CET. RFC 5545 §3.3.5 says that we
+      ;; should prefer the first instance.
 
       (test-group "still summer"
-        (let ((dt off name (zone->utc (tz #2026-10-25T01:59:59 "Europe/Stockholm"))))
+        (let ((dt info (zone->utc (tz #2026-10-25T01:59:59 "Europe/Stockholm"))))
           (test-equal #2026-10-24T23:59:59Z dt)
-          (test-equal 7200 off)
-          (test-equal "CEST" name)))
+          (test-equal 7200 (expanded-utc-offset info))))
 
-      (test-group "Ambigious becomes standard"
-        (let ((dt off name (zone->utc (tz #2026-10-25T02:00 "Europe/Stockholm"))))
-          (test-equal #2026-10-25T01:00:00Z dt)
-          (test-equal 3600 off)
-          (test-equal "CET" name))))))
+      (test-group "Times occurring twice gets their \"first\" instance."
+       (let ((dt info (zone->utc (tz #2026-10-25T02:30 "Europe/Stockholm"))))
+         (test-equal #2026-10-25T00:30Z dt)
+         (test-equal 7200 (expanded-utc-offset info)))))))
 
 
 (test-group "America/New_York"
   (test-group "utc->zone"
     (test-group "standard -> summer"
       (test-group "(before)"
-        (let ((dt off name (utc->zone #2026-03-08T06:59:59Z "America/New_York")))
+        (let ((dt info (utc->zone #2026-03-08T06:59:59Z "America/New_York")))
           (test-equal (tz #2026-03-08T01:59:59 "America/New_York") dt)
-          (test-equal (* -5 3600) off)
-          (test-equal "EST" name)))
+          (test-equal (* -5 3600) (expanded-utc-offset info))))
 
       (test-group "(on)"
-        (let ((dt off name (utc->zone #2026-03-08T07:00:00Z "America/New_York")))
+        (let ((dt info (utc->zone #2026-03-08T07:00:00Z "America/New_York")))
           (test-equal (tz #2026-03-08T03:00:00 "America/New_York") dt)
-          (test-equal (* -4 3600) off)
-          (test-equal "EDT" name)))
+          (test-equal (* -4 3600) (expanded-utc-offset info))))
 
       (test-group "(after)"
-        (let ((dt off name (utc->zone #2026-03-08T07:00:01Z "America/New_York")))
+        (let ((dt info (utc->zone #2026-03-08T07:00:01Z "America/New_York")))
           (test-equal (tz #2026-03-08T03:00:01 "America/New_York") dt)
-          (test-equal (* -4 3600) off)
-          (test-equal "EDT" name))))
+          (test-equal (* -4 3600) (expanded-utc-offset info)))))
 
     (test-group "summer -> standard"
       (test-group "(before)"
-        (let ((dt off name (utc->zone #2026-11-01T05:59:59Z "America/New_York")))
+        (let ((dt info (utc->zone #2026-11-01T05:59:59Z "America/New_York")))
           (test-equal (tz #2026-11-01T01:59:59 "America/New_York") dt)
-          (test-equal (* -4 3600) off)
-          (test-equal "EDT" name))
+          (test-equal (* -4 3600) (expanded-utc-offset info)))
         )
       (test-group "(on)"
-        (let ((dt off name (utc->zone #2026-11-01T06:00:00Z "America/New_York")))
+        (let ((dt info (utc->zone #2026-11-01T06:00:00Z "America/New_York")))
           (test-equal (tz #2026-11-01T01:00 "America/New_York") dt)
-          (test-equal (* -5 3600) off)
-          (test-equal "EST" name))
+          (test-equal (* -5 3600) (expanded-utc-offset info)))
         )
       (test-group "(after)"
-        (let ((dt off name (utc->zone #2026-11-01T06:00:01Z "America/New_York")))
+        (let ((dt info (utc->zone #2026-11-01T06:00:01Z "America/New_York")))
           (test-equal (tz #2026-11-01T01:00:01 "America/New_York") dt)
-          (test-equal (* -5 3600) off)
-          (test-equal "EST" name)))))
+          (test-equal (* -5 3600) (expanded-utc-offset info))))))
 
   (test-group "zone->utc"
     (test-group "stardard -> summer"
       (test-group "(before)"
-        (let ((dt off name (zone->utc (tz #2026-03-08T01:59:59 "America/New_York"))))
+        (let ((dt info (zone->utc (tz #2026-03-08T01:59:59 "America/New_York"))))
           (test-equal #2026-03-08T06:59:59Z dt)
-          (test-equal (* -5 3600) off)
-          (test-equal "EST" name)))
-
-      ;; TODO test with the 02:xx times (which don't exist)
+          (test-equal (* -5 3600) (expanded-utc-offset info))))
 
       (test-group "(on)"
-        (let ((dt off name (zone->utc (tz #2026-03-08T03:00:00 "America/New_York"))))
+        (let ((dt info (zone->utc (tz #2026-03-08T03:00:00 "America/New_York"))))
           (test-equal #2026-03-08T07:00:00Z dt)
-          (test-equal (* -4 3600) off)
-          (test-equal "EDT" name)))
+          (test-equal (* -4 3600) (expanded-utc-offset info))))
 
       (test-group "(after)"
-        (let ((dt off name (zone->utc (tz #2026-03-08T03:00:01 "America/New_York"))))
+        (let ((dt info (zone->utc (tz #2026-03-08T03:00:01 "America/New_York"))))
           (test-equal #2026-03-08T07:00:01Z dt)
-          (test-equal (* -4 3600) off)
-          (test-equal "EDT" name))))
+          (test-equal (* -4 3600) (expanded-utc-offset info))))
+
+      (test-group "Non-existant times are interpreted using previous UTC offset"
+        (test-equal "Reference, when both are valid dates"
+            (duration hour: 1)
+            (datetime-difference (tz #2007-03-11T03:30 "America/New_York")
+                                 (tz #2007-03-11T01:30 "America/New_York")))
+        (test-equal "RFC-provided test"
+          (duration hour: 1)
+          (datetime-difference (tz #2007-03-11T02:30 "America/New_York")
+                               (tz #2007-03-11T01:30 "America/New_York")))))
 
     (test-group "summer -> standard"
       (test-group "still summer"
-        (let ((dt off name (zone->utc (tz #2026-11-01T01:59:59 "America/New_York"))))
+        (let ((dt info (zone->utc (tz #2026-11-01T01:59:59 "America/New_York"))))
           (test-equal #2026-11-01T05:59:59Z dt)
-          (test-equal (* -4 3600) off)
-          (test-equal "EDT" name)))
+          (test-equal (* -4 3600) (expanded-utc-offset info))))
 
-      (test-group "Ambigious becomes standard"
-        (let ((dt off name (zone->utc (tz #2026-11-01T02:00:00 "America/New_York"))))
-          (test-equal #2026-11-01T07:00Z dt)
-          (test-equal (* -5 3600) off)
-          (test-equal "EST" name))))))
+      (test-group "Times occurring twice gets their \"first\" instance."
+        (let ((dt info (zone->utc (tz #2007-11-04T01:30 "America/New_York"))))
+          (test-equal (* -4 3600) (expanded-utc-offset info))
+          ;; Resulting time irrelevant to check, since we know the offset
+          ;; (and other checks exists for this case).
+          ))
+
+      )))
 
 (test-group "Australia/Sydney"
   (test-group "utc->zone"
     (test-group "standard -> summer"
       (test-group "(before)"
-        (let ((dt off name (utc->zone #2026-10-03T15:59:59Z "Australia/Sydney")))
+        (let ((dt info (utc->zone #2026-10-03T15:59:59Z "Australia/Sydney")))
           (test-equal (tz #2026-10-04T01:59:59 "Australia/Sydney") dt)
-          (test-equal (* 10 3600) off)
-          (test-equal "AEST" name)))
+          (test-equal (* 10 3600) (expanded-utc-offset info))))
       (test-group "(on)"
-        (let ((dt off name (utc->zone #2026-10-03T16:00Z "Australia/Sydney")))
+        (let ((dt info (utc->zone #2026-10-03T16:00Z "Australia/Sydney")))
           (test-equal (tz #2026-10-04T03:00 "Australia/Sydney") dt)
-          (test-equal (* 11 3600) off)
-          (test-equal "AEDT" name)))
+          (test-equal (* 11 3600) (expanded-utc-offset info))))
       (test-group "(after)"
-        (let ((dt off name (utc->zone #2026-10-03T16:00:01Z "Australia/Sydney")))
+        (let ((dt info (utc->zone #2026-10-03T16:00:01Z "Australia/Sydney")))
           (test-equal (tz #2026-10-04T03:00:01 "Australia/Sydney") dt)
-          (test-equal (* 11 3600) off)
-          (test-equal "AEDT" name))))
+          (test-equal (* 11 3600) (expanded-utc-offset info)))))
 
     (test-group "summer -> standard"
       (test-group "(before)"
-        (let ((dt off name (utc->zone #2026-04-04T15:59:59Z "Australia/Sydney")))
+        (let ((dt info (utc->zone #2026-04-04T15:59:59Z "Australia/Sydney")))
           (test-equal (tz #2026-04-05T02:59:59 "Australia/Sydney") dt)
-          (test-equal (* 11 3600) off)
-          (test-equal "AEDT" name)))
+          (test-equal (* 11 3600) (expanded-utc-offset info))))
       (test-group "(on)"
-        (let ((dt off name (utc->zone #2026-04-04T16:00Z "Australia/Sydney")))
+        (let ((dt info (utc->zone #2026-04-04T16:00Z "Australia/Sydney")))
           (test-equal (tz #2026-04-05T02:00 "Australia/Sydney") dt)
-          (test-equal (* 10 3600) off)
-          (test-equal "AEST" name)))
+          (test-equal (* 10 3600) (expanded-utc-offset info))))
       (test-group "(after)"
-        (let ((dt off name (utc->zone #2026-04-04T16:01Z "Australia/Sydney")))
+        (let ((dt info (utc->zone #2026-04-04T16:01Z "Australia/Sydney")))
           (test-equal (tz #2026-04-05T02:01 "Australia/Sydney") dt)
-          (test-equal (* 10 3600) off)
-          (test-equal "AEST" name)))))
+          (test-equal (* 10 3600) (expanded-utc-offset info))))))
+
+
 
   (test-group "zone->utc"
     (test-group "standard -> summer"
       (test-group "(before)"
-        (let ((dt off name (zone->utc (tz #2026-10-04T01:59:59 "Australia/Sydney"))))
+        (let ((dt info (zone->utc (tz #2026-10-04T01:59:59 "Australia/Sydney"))))
           (test-equal #2026-10-03T15:59:59Z dt)
-          (test-equal (* 10 3600) off)
-          (test-equal "AEST" name)))
+          (test-equal (* 10 3600) (expanded-utc-offset info))))
 
       ;; TODO test with the 02:xx times (which don't exist)
 
+      ;; AAA
       (test-group "(on)"
-        (let ((dt off name (zone->utc (tz #2026-10-04T03:00 "Australia/Sydney"))))
+        (let ((dt info (zone->utc (tz #2026-10-04T03:00 "Australia/Sydney"))))
           (test-equal #2026-10-03T16:00Z dt)
-          (test-equal (* 11 3600) off)
-          (test-equal "AEDT" name)))
+          (test-equal (* 11 3600) (expanded-utc-offset info))))
+      ;; BBB
       (test-group "(after)"
-        (let ((dt off name (zone->utc (tz #2026-10-04T03:00:01 "Australia/Sydney"))))
+        (let ((dt info (zone->utc (tz #2026-10-04T03:00:01 "Australia/Sydney"))))
           (test-equal #2026-10-03T16:00:01Z dt)
-          (test-equal (* 11 3600) off)
-          (test-equal "AEDT" name))))
+          (test-equal (* 11 3600) (expanded-utc-offset info)))))
 
     (test-group "summer -> standard"
       (test-group "still summer"
-        (let ((dt off name (zone->utc (tz #2026-04-05T01:59:59 "Australia/Sydney"))))
+        (let ((dt info (zone->utc (tz #2026-04-05T01:59:59 "Australia/Sydney"))))
           (test-equal #2026-04-04T14:59:59Z dt)
-          (test-equal (* 11 3600) off)
-          (test-equal "AEDT" name)))
-      (test-group "Ambigious becomes standard"
-        (let ((dt off name (zone->utc (tz #2026-04-05T02:00 "Australia/Sydney"))))
-          (test-equal #2026-04-04T16:00Z dt)
-          (test-equal (* 10 3600) off)
-          (test-equal "AEST" name))
-        ))
+          (test-equal (* 11 3600) (expanded-utc-offset info))))
+
+      ;; TODO times appearing twice
+     )
     )
+
+
+
   )
 
 ;; zone->zone
 
-;; query-timezone
 ;; datetime+/zoneinfo
 ;; datetime-/zoneinfo
 ;; datetime-difference/zoneinfo
@@ -472,5 +489,81 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
 ;; zone abbreviation has been CET for standard time and CEST for  daylight
 ;; saving time.
 
+
+
+;;; TODO write proper tests with manually written timezone database, containing at least:
+
+;;; 1. Direct rule forever:
+;;; - no preconditions
+;;; - will give a single stream value
+
+;;; 2. Indirect rule forever:
+;;; 2.1. If rules go on forever
+;;; 2.1.1. And we start before the first rule
+;;; 2.1.2. And we start on the first rule
+;;; 2.1.3. And we start after the first rule
+;;; 2.2. If the rule eventually stops
+;;; 2.2.1. And we start before the first rule
+;;; 2.2.2. And we start on the first rule
+;;; 2.2.3. And we start after the first rule
+
+;;; 3. Direct rule until:
+;;; - no preconditions
+;;; - will give a single stream value
+
+;;; 4. Indirct rule until:
+
+
+(test-equal
+    (expanded-rule
+     wall: #2026-03-29T02:00 utc: #2026-03-29T01:00Z
+     type: 'daylight offset: 7200 name: "CE%sT" letters: "S" from: 'final
+     ;; NOTE `rule` is only for debug. Update this test to match whatever
+     ;; the procedure happens to return
+     rule: "EU 1981-maximum")
+  (find-rule "Europe/Berlin" #2026-06-10T00:00 expanded-start-utc))
+
+
+
+(define ->utc (@@ (datetime timezone) ->utc))
+(define ->wall (@@ (datetime timezone) ->wall))
+
+(test-group "Time type conversions"
+  (let ((dt #2026-06-10T10:00))
+    (test-group "Group 1"
+      (test-equal #2026-06-10T10:00 (->utc  (cons 'utc dt) 3600 7200))
+      (test-equal #2026-06-10T12:00 (->wall (cons 'utc dt) 3600 7200))
+      (test-equal #2026-06-10T09:00 (->utc  (cons 'standard dt) 3600 7200))
+      (test-equal #2026-06-10T11:00 (->wall (cons 'standard dt) 3600 7200))
+      (test-equal #2026-06-10T08:00 (->utc  (cons 'wall dt) 3600 7200))
+      (test-equal #2026-06-10T10:00 (->wall (cons 'wall dt) 3600 7200)))
+
+    (test-group "Group 2"
+      (test-equal #2026-03-08T07:00 (->utc (cons 'wall #2026-03-08T02:00) (* -5 3600) (* -5 3600)))
+      (test-equal #2026-11-01T06:00 (->utc (cons 'wall #2026-11-01T02:00) (* -5 3600) (* -4 3600))))
+
+    ))
+
+
+
+(test-group "expanded-rule-printf"
+  (parameterize ((zoneinfo (call-with-input-string "
+# Zone	NAME		STDOFF	RULES	FORMAT			[UNTIL]
+Zone	Europe/Berlin	1:00	-	Local			2001
+			1:00	EU	Standard-%s/Summer-%s
+
+Rule	EU	1981	max	-	Mar	lastSun	 1:00u	1:00	1
+Rule	EU	1996	max	-	Oct	lastSun	 1:00u	0	2
+" (compose intermediary->zoneinfo read-zoneinfo))))
+    (test-equal
+        "Summer-1"
+      (expanded-rule-printf
+       (find-rule "Europe/Berlin" #2025-06-01T00:00 expanded-start-utc)))
+
+    (test-equal
+        "Standard-2"
+      (expanded-rule-printf
+       (find-rule "Europe/Berlin" #2025-12-01T00:00 expanded-start-utc)))
+    ))
 
 '((datetime timezone))

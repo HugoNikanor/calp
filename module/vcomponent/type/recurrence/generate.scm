@@ -166,7 +166,12 @@
 ;; effectively checking if we have a "real" date.
 
 (define ((expander-int rule-applier) rrule-accessor rrule dt-list)
-  (filter (lambda (dt) (datetime= dt (datetime+ dt (duration))))
+  (filter (lambda (dt)
+            ;; TODO this accepts #2007-02-30T09:00 America/New_York
+            ;; since datetime= first converts the datetime to UTC,
+            ;; during which it already realizes that the date was
+            ;; invalid and gives us #2007-02-28T14:00Z
+            (datetime= dt (datetime+ dt (duration))))
           (append-map (lambda (dt)
                         (map (lambda (x) (rule-applier x dt))
                              (rrule-accessor rrule)))

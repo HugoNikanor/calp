@@ -55,11 +55,13 @@
 (define datetime<=? datetime<=)
 (define datetime>=? datetime>=)
 
-(define (datetime-min a b)
-  (if (datetime< a b) a b))
+(define (datetime-min x . xs)
+  (fold (lambda (x min) (if (datetime< x min) x min))
+        x xs))
 
-(define (datetime-max a b)
-  (if (datetime< a b) b a))
+(define (datetime-max x . xs)
+  (fold (lambda (x max) (if (datetime< x max) max x))
+        x xs))
 
 ;; @verbatim
 ;;    A          B          C          D          E         ¬F

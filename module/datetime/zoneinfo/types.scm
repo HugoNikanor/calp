@@ -23,6 +23,7 @@
            ;; TODO rewrite these to return non-mutable references,
            ;; probably by running hash-map->list internally
            zoneinfo-zones zoneinfo-rules
+           cached-zone-expansions
 
            get-zone get-rule
            )
@@ -33,36 +34,41 @@
 
 (define-type (zi-rule)                  ; EXPORTED
   (rule-name    type: symbol?)
-  (rule-from    type: (or integer? ; year
-                          ))
+  (rule-from    type: integer?) ; year
   (rule-to      type: (or integer? ; year
                           (memv '(only maximum))))
 
   ;; type should always be "-"
   ;; (rule-type type: (eq? "-") default: "-")
 
-  (rule-in      type: integer?); month number
+  (rule-in      type: integer?); month number, jan = 1
   (rule-on      type: (or integer? ; month day
-                     (tuple-of (eq? 'last)
-                               (memv (weekday-list sun)))
-                     (tuple-of (memv '(< >))
-                               (memv (weekday-list sun))
-                               integer?)))
+                          (tuple-of (eq? 'last)
+                                    (memv (weekday-list sun)))
+                          (tuple-of (memv '(< >))
+                                    (memv (weekday-list sun))
+                                    integer?)))
+  ;; Defaults to wall time
   (rule-at      type: (pair-of (memv '(utc standard wall))
                                rational?))
+  ;; Defaults to standard if number is 0, daylight otherwise
   (rule-save    type: (pair-of (memv '(standard daylight))
                                rational?))
   (rule-letters type: string?))
 
-;;; TODO zone-entry collision
 
 (define-type (zone-entry)               ; EXPORTED
   (zone-entry-stdoff keyword: stdoff type: rational?)
+  ;; Direct numeric values follows same rules as the rule-save
+  ;; field of zi-rule above. E.g. a value of 0 defaluts to
+  ;; standard, and daylight othervise.
+  ;; The source string "-" maps to `(cons 'standard 0)`
   (zone-entry-rule   keyword: rule
                      type: (or symbol?
                                (pair-of (memv '(standard daylight))
                                         rational?)))
   (zone-entry-format keyword: format type: string?)
+  ;; Defaults to wall time
   (zone-entry-until  keyword: until
                      type: (or false? (pair-of (memv '(utc standard wall))
                                                unzoned-datetime?))))
@@ -80,6 +86,9 @@
   (zoneinfo-rules type: hash-table? keyword: rules)
   ;; (map string? (list <zone-entry>))
   (zoneinfo-zones type: hash-table? keyword: zones)
+
+  ;; zone identifier ("Europe/Stockholm") to stream of all it's expanded rules
+  (cached-zone-expansions type: hash-table? default: (make-hash-table))
   )
 
 

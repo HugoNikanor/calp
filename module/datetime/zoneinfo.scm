@@ -6,7 +6,10 @@
   :use-module (datetime zoneinfo intermediary)
   :use-module (datetime zoneinfo zic)
   ;; :use-module (datetime io)
+  :use-module (srfi srfi-71)
   :use-module (datetime core)
+  :use-module (ice-9 match)
+  :use-module (ice-9 format)
   :export (zone-format)
   :re-export (
               ;; Types
@@ -27,6 +30,7 @@
               ;; TODO rewrite these to return non-mutable references,
               ;; probably by running hash-map->list internally
               zoneinfo-zones zoneinfo-rules
+              cached-zone-expansions
 
               get-zone get-rule
 
@@ -51,38 +55,46 @@
 ;;   - `%z', to be filled with the UTC offset for the given rule
 ;; - `arg' is what will be spliced on `%s`
 ;; - `utc-offset' is used when an `%z` is encountered
-(define (zone-format fmt-string arg utc-offset)
+(define* (zone-format fmt-string arg offset optional: (time-type 'standard))
   (typecheck fmt-string string?)
   (typecheck arg string?)
-  (typecheck utc-offset rational?)
+  (typecheck offset rational?)
+  (typecheck time-type (memv '(standard daylight)))
 
-  (cond ((string-index fmt-string #\%)
-         => (lambda (idx)
-              (string-replace fmt-string
-               (case (string-ref fmt-string (1+ idx))
-                 [(#\s) arg]
+  (define (offset->string offset colon)
+    (with-output-to-string
+      (lambda ()
+        (display (if (negative? offset) "-" "+"))
+        (let* ((h r (floor/ (abs offset) 3600))
+               (m s (floor/ r 60)))
+          (format #t "~2'0d" h)
+          (unless (zero? r)
+            (display colon)
+            (format #t "~2'0d" m)
+            (unless (zero? s)
+              (display colon)
+              (format #t "~2'0d" s)))))))
 
-                 [(#\z)
-                  ;; TODO format time properly
-                  (format #f "~a~s"
-                          (if (negative? utc-offset) "-" "+")
-                          ;; TODO only have some components
-                          (seconds->time (abs utc-offset)))
-                  ;; (timespec->string (-> utc-offset (timespec-type #f))
-                  ;;                   delimiter: "")
-                  ]
-
-                 ;; Not standard, but it feels like good faith to have it
-                 [(#\%) "%"]
-
-                 [else (scm-error 'misc-error "zone-format"
-                                  ;; first slot is the errornous character,
-                                  ;; second is the whole string, third is the index
-                                  ;; of the faulty character.
-                                  (G_ "Invalid format char ~s in ~s at position ~a")
-                                  (list (string-ref fmt-string (1+ idx))
-                                        fmt-string
-                                        (1+ idx))
-                                  #f)])
-               idx (+ idx 2))))
-        (else fmt-string)))
+  (let loop ((remaining
+              (string->list
+               (cond ((string-contains fmt-string "/")
+                      => (lambda (idx)
+                           (case time-type
+                             ((standard) (substring fmt-string 0 idx))
+                             ((daylight) (substring fmt-string (1+ idx))))))
+                     (else fmt-string)))))
+    (match remaining
+      ('() "")
+      ((#\% #\: #\z rest ...)
+       (string-append (offset->string offset ":")
+                      (loop rest)))
+      ((#\% #\z rest ...)
+       (string-append (offset->string offset "")
+                      (loop rest)))
+      ((#\% #\s rest ...) (string-append arg (loop rest)))
+      ((#\% #\% rest ...) (string-append "%" (loop rest)))
+      ((#\% c rest ...) (scm-error 'misc-error "zone-format"
+                                   (G_ "Invalid format char %~s in ~s")
+                                   (list c fmt-string)
+                                   #f))
+      ((c rest ...) (string-append (string c) (loop rest))))))

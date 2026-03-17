@@ -121,7 +121,8 @@
               zone->utc
               zone->zone
 
-              query-timezone
+              find-rule
+              expand-zone
               datetime+/zoneinfo
               datetime-/zoneinfo
               datetime-difference/zoneinfo
@@ -133,6 +134,16 @@
               datetime>=/zoneinfo
 
               ensure-zoned-datetime
+
+              expanded-rule expanded-rule?
+              expanded-start-wall   expanded-start-wall*
+              expanded-start-utc    expanded-start-utc*
+              expanded-save-type    expanded-save-type*
+              expanded-utc-offset   expanded-utc-offset*
+              expanded-base-name    expanded-base-name*
+              expanded-zone-letters expanded-zone-letters*
+              expanded-from         expanded-from*
+              expanded-rule-printf
 
               ;; Extra
               start-of-year

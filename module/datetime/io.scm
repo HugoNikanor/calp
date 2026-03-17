@@ -92,6 +92,8 @@
                                   "Z")  ; special case
                                  (else
                                   ;; TODO change here
+                                  "TODO"
+                                  #;
                                   (let ((offset _ (query-timezone datetime)))
                                     "TODO"
                                     ;; (timespec->string offset 'm)

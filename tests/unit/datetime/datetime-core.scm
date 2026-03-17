@@ -236,9 +236,18 @@
     (date year: 2020 month: 03 day: 01) (date-max (date year: 2020 month: 02 day: 02) (date year: 2020 month: 03 day: 01)))
 
   (test-equal "Datetime min"
-    (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30) (datetime-min (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30) (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50)))
+    (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30)
+    (datetime-min (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30)
+                  (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50)))
   (test-equal "Datetime max"
-    (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50) (datetime-max (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30) (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50))))
+    (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50)
+    (datetime-max (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30)
+                  (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50)))
+  (test-equal "Datetime max (3 values)"
+    (datetime year: 5)
+    (datetime-max (datetime year: 3)
+                  (datetime year: 5)
+                  (datetime year: 1))))
 
 (test-equal "Week day" thu (week-day (date year: 2022 month: 06 day: 23)))
 
@@ -390,10 +399,6 @@
       (datetime= (datetime hour: 1) (datetime hour: 1)))
     (test-assert "Two dissimmalar datetimes aren't equal"
       (not (datetime= (datetime hour: 1) (datetime hour: 2))))
-
-    (test-error "Can't compare datetimes of differing timezones"
-      'wrong-type-arg
-      (datetime= (datetime) (datetime tz: "Something Else")))
 
     (test-assert "Three equal datetimes are equal"
       (datetime= (datetime hour: 1) (datetime hour: 1) (datetime hour: 1)))))

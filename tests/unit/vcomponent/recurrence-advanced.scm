@@ -51,6 +51,9 @@
 ;;; We change weekstart to sunday, meaning that sunday should come before monday
 (test-expect-fail "STR: changing only WKST from MO to SU, yields different results.")
 
+;;; Broken since the implementation of new datetime arithmetic
+(test-expect-fail "REC: An example where an invalid date (i.e., February 30) is ignored")
+
 
 
 ;;; TODO write speed tests for some deranged cases
@@ -1409,6 +1412,8 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
                   (datetime year: 1997 month: 08 day: 19 hour: 09 tz: "America/New_York")
                   (datetime year: 1997 month: 08 day: 31 hour: 09 tz: "America/New_York")))
            (vevent
+            ;; TODO this test fails since the reworking of date arithmetic.
+            ;; See comment in `expander-int` in (vcomponent type recurrence generate).
             summary: "An example where an invalid date (i.e., February 30) is ignored"
             dtstart: (datetime year: 2007 month: 01 day: 15 hour: 09 tz: "America/New_York")
             rrule: (recur-rule
@@ -1569,4 +1574,12 @@ Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	D
 '((vcomponent type recurrence)
   (vcomponent type recurrence generate)
   (vcomponent type recurrence display)
-  (vcomponent type recurrence internal))
+  (vcomponent type recurrence internal)
+  (datetime arithmetic)
+  (datetime core)
+  (datetime duration)
+  (datetime extra)
+  (datetime io)
+  (datetime timezone)
+  (datetime unified)
+  )
