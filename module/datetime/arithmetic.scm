@@ -72,6 +72,10 @@
 ;;; Arithmetic is done from largest to smallest part, meaning that #2026-01-30 + P1M1D will be #2026-03-01.
 ;;; IF it where from smallest to largest then the result would de #2026-02-28
 
+;; (define (clamp-to-month* dat)
+;;   (modify dat date-day*
+;;           (lambda (d) (min d (days-in-month dat)))))
+
 (define (clamp-to-month d)
   (if (> (date-day d) (days-in-month d))
       (date-day d (days-in-month d))
