@@ -1,6 +1,9 @@
 (define-module (hnh test util)
+  :use-module (srfi srfi-1)
+  :use-module (srfi srfi-64)
   :use-module ((hnh util) :select (begin1))
   :use-module ((hnh util io) :select (call-with-tmpfile))
+  :use-module (hnh util destructure)
   :use-module (ice-9 pretty-print)
   :use-module ((ice-9 rdelim) :select (read-string))
   :use-module ((ice-9 popen)
@@ -15,6 +18,9 @@
            make-indent
            string-replace-head
            diff
+
+           make-test-match-path
+           test-match-path
            ))
 
 (define (µs x)
@@ -73,3 +79,34 @@
                  (append diff-cmd (list filename1 filename2)))))
       (begin1 (read-string pipe)
               (close-pipe pipe)))))
+
+
+
+(define (make-test-match-path rule)
+  (lambda (runner)
+    (let loop ((rule rule)
+               (path
+                (reverse
+                 (cons (test-runner-test-name runner)
+                       (test-runner-group-stack runner)))))
+
+      ;; (format (current-error-port)
+      ;;         "~%rule: ~s~%path: ~s~%" rule path)
+
+      ;; Destructure instead of match, since match doesn't allow the '... symbol
+      (destructure rule
+        ('() (null? path))
+        ((list '...) #t)
+        ((list '... next rest ...)
+         ;; No check of next here, since remainder of path might be null.
+         (loop (cons next rest)
+               (drop-while (lambda (p) (not (equal? p next))) path)))
+        ((list next rest ...)
+         (and (not (null? path))
+              (equal? next (car path))
+              (loop rest (cdr path))))))))
+
+(define-syntax test-match-path
+  (syntax-rules ()
+    ((_ parts ...)
+     (make-test-match-path `(parts ...)))))
