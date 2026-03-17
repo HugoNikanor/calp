@@ -23,15 +23,17 @@
 
 ;;; TODO this really should be a parameter,
 ;;; to allow local overrides of the available patterns
-(define-once match-expanders (make-hash-table))
+(eval-when (expand load eval)
+  (define-once match-expanders (make-hash-table)))
 
 (define-syntax (define-matcher stx)
   (syntax-case stx ()
     ((_ (name args ...) declarations ...)
-     #`(hash-set! match-expanders (quote name)
-                  (lambda (stx)
-                    (syntax-case stx (name)
-                      ((name args ...) (let () declarations ...))))))))
+     #`(eval-when (expand load eval)
+         (hash-set! match-expanders (quote name)
+                    (lambda (stx)
+                      (syntax-case stx (name)
+                        ((name args ...) (let () declarations ...)))))))))
 
 
 ;;; See also (@ (hnh util) kvlist->assq)
@@ -99,12 +101,13 @@
 (define-syntax (define-record-matcher stx)
   (syntax-case stx ()
     ((_ pattern predicate fields ...)
-     #`(hash-set! match-expanders (quote pattern)
-                  (make-record-matcher
-                   (quote pattern)
-                   (syntax predicate)
-                   (list #,@(map (lambda (p) #`(cons #,(car p) (syntax #,(cdr p))))
-                                 (kwlist->alist #'(fields ...)))))))))
+     #`(eval-when (expand load eval)
+         (hash-set! match-expanders (quote pattern)
+                    (make-record-matcher
+                     (quote pattern)
+                     (syntax predicate)
+                     (list #,@(map (lambda (p) #`(cons #,(car p) (syntax #,(cdr p))))
+                                   (kwlist->alist #'(fields ...))))))))))
 
 (define (get-expander stx)
   (syntax-case stx ()
