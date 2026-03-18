@@ -150,8 +150,7 @@
   (table-get (child-table resource) (string->symbol name)))
 
 (define-method (remove-self! (resource <virtual-resource>))
-  (when (parent resource)
-    (on-child-removed (parent resource) resource))
+  (next-method)
   (set! (parent resource) #f)
   ;; This assumes that any children of us will be garbage collected.
   ;; This works for this run, since the tree is now gone.

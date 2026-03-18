@@ -133,6 +133,8 @@ Request a resource to clean up after itself, and then delete itself.
 If the @code{parent} slot is filled, then
 @code{(on-child-removed (parent @var{resource}) @var{resource})}
 @emph{must} be invoked by any implementation of this method.
+@b{Note} that this is done by the base @code{remove-self!} method,
+meaning that a well-placed @code{next-method} is highly recommended.
 @end deftp
 
 @deftp {GOOPS method} on-child-removed resource child

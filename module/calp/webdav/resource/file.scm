@@ -300,8 +300,7 @@
 
 (define-method (remove-self! (resource <file-resource>))
   (delete-file-recursively (path resource))
-  (when (parent resource)
-    (on-child-removed (parent resource) resource)))
+  (next-method))
 
 (define-method (create-collection! (resource <file-resource>) name headers body)
   (when body (throw 'http 415))
