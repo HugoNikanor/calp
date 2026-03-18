@@ -443,14 +443,6 @@
 (test-group "iterate"
   (test-equal 0 (iterate 1- zero? 10)))
 
-(test-group "valued-map"
-  (let ()
-    (define (± x) (values x (- x)))
-    (call-with-values
-        (lambda () (valued-map ± '(1 2)))
-      (lambda args
-        (test-equal '(1 -1 2 -2) args)))))
-
 (test-group "assoc-ref-all"
   (test-equal "assoc-ref-all"
     '(1 3) (assoc-ref-all '((a . 1) (b . 2) (a . 3)) 'a))

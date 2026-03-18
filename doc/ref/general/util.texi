@@ -310,19 +310,6 @@ Repeatedly applies @var{proc} to @var{base}, until @var{until} is
 satisfied.
 @end defun
 
-@defun valued-map proc lists ...
-Applies a procedure which returns multiple values to each element of a
-list, and returns all values returned from all procedure calls.
-@example
-(define (± x) (values x (- x)))
-(valued-map ± '(1 2))
-⇒  1
-⇒ -1
-⇒  2
-⇒ -2
-@end example
-@end defun
-
 @defun assoc-ref-all alist key
 @defunx assq-ref-all alist key
 @defunx assv-ref-all alist key

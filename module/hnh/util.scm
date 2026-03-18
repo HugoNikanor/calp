@@ -51,7 +51,6 @@
            upcase-symbol
            group
            iterate
-           valued-map
 
            assoc-ref-all
            assq-ref-all
@@ -524,14 +523,6 @@
     (if (until o)
         o
         (loop (proc o)))))
-
-;; (a → values a), list ... → values a
-(define (valued-map proc . lists)
-  (apply values
-   (apply append-map
-          (lambda args
-            (call-with-values (lambda () (apply proc args)) list))
-          lists)))
 
 (define (ass%-ref-all alist key =)
   (map cdr (filter (lambda (pair) (= key (car pair)))
