@@ -431,6 +431,13 @@
     (on-child-removed (parent resource) resource)))
 
 (define-generic create-collection!)
+
+;;; TODO since the change that resources are created with content:
+;;; 1. document this
+;;; 2. document which properties should be initialized from the headers:
+;;;   - getcontentlanguage
+;;;   - getcontenttype
+;;;   - etag
 (define-method (create-collection! resource name)
   (create-collection! resource name '() #f))
 (define-generic create-resource!)

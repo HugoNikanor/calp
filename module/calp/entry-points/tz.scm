@@ -30,6 +30,8 @@
   :use-module ((text numbers en) :select (number->string-ordinal))
   :export (main %description))
 
+;;; TODO add mode for typing in a time, and getting back which timezone that is right now
+
 (define %description (G_ "Query the zoneinfo database."))
 
 (define opt-spec
