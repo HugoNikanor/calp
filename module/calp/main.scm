@@ -188,24 +188,24 @@ unix or TCP socket.<br/>
   ;; print-configuration-and-return to show bound values.
   (awhen (option-ref opts 'help #f)
          (let ((help (module-help)))
-          (catch 'parser-error
-            (lambda ()
-              (display (sxml->ansi-text
-                        (xml->sxml help))
-                       (current-output-port)))
-            (lambda (_ port . parts)
-              (define idx (seek port 0 SEEK_CUR))
-              (with-output-to-port (current-error-port)
-                (lambda ()
-                  (format #t "Invalid XML encountered:~{ ~a~}~%" parts)
-                  (format #t "<!-- BEGIN XML -->~%")
-                  (display (substring help 0 idx))
-                  (format #t "\x1b[41m~a\x1b[m"
-                          (string-ref help idx))
-                  (display (substring help (1+ idx)))
-                  (format #t "~%<!-- END XML -->~%")))
-              ;; TODO error code
-              (throw 'return))))
+           (catch 'parser-error
+             (lambda ()
+               (display (sxml->ansi-text
+                         (xml->sxml help))
+                        (current-output-port)))
+             (lambda (_ port . parts)
+               (define idx (seek port 0 SEEK_CUR))
+               (with-output-to-port (current-error-port)
+                 (lambda ()
+                   (format #t "Invalid XML encountered:~{ ~a~}~%" parts)
+                   (format #t "<!-- BEGIN XML -->~%")
+                   (display (substring help 0 idx))
+                   (format #t "\x1b[41m~a\x1b[m"
+                           (string-ref help idx))
+                   (display (substring help (1+ idx)))
+                   (format #t "~%<!-- END XML -->~%")))
+               ;; TODO error code
+               (throw 'return))))
          (print-arg-help options)
          (throw 'return))
 
