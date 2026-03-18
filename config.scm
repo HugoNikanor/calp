@@ -9,6 +9,7 @@
              ;; since we load this file on every program startup (and
              ;; in a way which disables the compiler)
              (glob)
+             (hnh util path)
              )
 
 ;;; SYSTEMD_EXEC_PID was added in v248 (2021-03-30)
@@ -22,29 +23,42 @@
 ((@ (vcomponent config) data-stores)
  (list
 
-  (cons "TDDE18"
-        ((@ (vcomponent data-stores file) create-instance)
-         path: (car (glob "~/sample-cals/*TDDE18*.ics"))
-         media: "text/calendar"))
+  ;; TODO some of these depend on third party modules (guile-json,
+  ;; guile-sqlite3, ...), introduce better error messages when trying
+  ;; to create a store which lacks dependencies.
 
+  ;; (cons "TDDE18"
+  ;;       ((@ (vcomponent data-stores file) create-instance)
+  ;;        path: (car (glob "~/sample-cals/*TDDE18*.ics"))
+  ;;        media: "text/calendar"))
+
+  #;
   (cons "Maskin"
         ((@ (vcomponent data-stores file) create-instance)
          path: (car (glob "~/sample-cals/M1.json"))
          media: "application/calendar+json"))
 
-  (cons "odd-fellow"
-        ((@ (vcomponent data-stores file) create-instance)
-         path: (car (glob "~/sample-cals/odd-fellow.ics"))
-         media: "text/calendar"))
+  ;; (cons "odd-fellow"
+  ;;       ((@ (vcomponent data-stores file) create-instance)
+  ;;        path: (car (glob "~/sample-cals/odd-fellow.ics"))
+  ;;        media: "text/calendar"))
 
-  (cons "VG"
-        ((@ (vcomponent data-stores vdir) create-instance)
-         path: (car (glob "~/sample-cals/Västgöta Nation"))
-         media: "text/calendar"))
+  ;; (cons "VG"
+  ;;       ((@ (vcomponent data-stores vdir) create-instance)
+  ;;        path: (car (glob "~/sample-cals/Västgöta Nation"))
+  ;;        media: "text/calendar"))
 
-  (cons "Calendar"
+  ;; (cons "Calendar"
+  ;;       ((@ (vcomponent data-stores sqlite) create-instance)
+  ;;        path: (car (glob "~/sample-cals/cal.db"))))
+
+  (cons "alt-cal"
         ((@ (vcomponent data-stores sqlite) create-instance)
-         path: (car (glob "~/sample-cals/cal.db"))))
+         path: (path-append (getenv "HOME") "sample-cals/alt-cal.db")))
+
+  (cons "rfc"
+        ((@ (vcomponent data-stores sqlite) create-instance)
+         path: "/tmp/rfc.db"))
 
   ;; ;; NOTE This one is REALLY slow to start
   ;; (cons "Calendar"
