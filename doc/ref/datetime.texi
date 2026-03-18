@@ -11,5 +11,4 @@ due to summer time starting (in Sweden).
 @include datetime/datetime.texi
 @include datetime/timezone.texi
 @include datetime/zic.texi
-@include datetime/timespec.texi
 @include datetime/srfi-19.texi

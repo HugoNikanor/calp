@@ -196,9 +196,7 @@
                        (get component (prop* 'DUE)))
     ((vector (just dtstart) (just duration) (nothing))
      (let* ((start* (ensure-zoned-datetime reference-zone dtstart))
-            (end* (datetime+/zoneinfo
-                   start*
-                   (duration->datetime duration))))
+            (end* (datetime+ start* duration)))
        (and (datetime<=/zoneinfo start end*)
             (or (datetime>/zoneinfo end start*)
                 (datetime>=/zoneinfo end end*)))))
@@ -463,9 +461,12 @@
                   vcomponent-children*
                   (->> (generate-recurrence-set component)
                        (stream-take-while
-                        (lambda (instance) (datetime</zoneinfo (instance-start-datetime "TODO reference zone" instance) end)))
+                        (lambda (instance) (datetime</zoneinfo
+                                       (instance-start-datetime "TODO reference zone" instance)
+                                       end)))
                        (stream-filter
-                        (lambda (instance) (instance-overlaps? "TODO reference zone" instance start end)))
+                        (lambda (instance)
+                          (instance-overlaps? "TODO reference zone" instance start end)))
                        stream->list
 
                        (map (lambda (instance)
@@ -475,8 +476,20 @@
                                   (set (prop* 'EXRULE) (nothing))
                                   (set (prop* 'RDATE) (nothing))
                                   (set (prop* 'RRULE) (nothing))
-                                  (modify (lens-compose (prop* 'DTSTART) just* car* vline-value*) (unval zone->utc))
-                                  (modify (lens-compose (prop* 'DTEND)   just* car* vline-value*) (unval zone->utc))
+                                  (modify (lens-compose (prop* 'DTSTART) just* car* vline-value*)
+                                          (unval zone->utc))
+                                  (modify (lens-compose (prop* 'DTEND)   just* car* vline-value*)
+                                          (unval zone->utc))
+
+                                  ;; TODO RFC 4791 §9.6.5 states
+                                  ;; > The returned calendar components [...] MUST NOT
+                                  ;; > have reference to or include VTIMEZONE components.  Date and local
+                                  ;; > time with reference to time zone information MUST be converted
+                                  ;; > into date with UTC time.
+                                  ;; This means that we actually need to scan all fields
+                                  ;; and remove any timezone references.
+                                  (modify (lens-compose (prop* 'RECURRENCE-ID) just* car* vline-value*)
+                                          (unval zone->utc))
                                   ))))))))
 
      ;; <C:limit-recurrence-set start="&start;" end="&end;" />
@@ -492,12 +505,18 @@
              (set component
                   vcomponent-children*
                   (cons base-instance
-                        (filter (lambda (instance)
-                                  (case (type instance)
-                                    ((VTIMEZONE) #t)
-                                    ((VEVENT) (instance-overlaps? "TODO REFERENCE ZONE" instance start end))
-                                    (else (throw 'not-implemented "Instance overlaps for" instance))))
-                                other-instances))))))
+                        (append
+                         (filter (lambda (instance)
+                                   (case (type instance)
+                                     ;; ((VTIMEZONE) #t)
+                                     ((VEVENT) (instance-overlaps? "TODO REFERENCE ZONE" instance start end))
+                                     (else (throw 'not-implemented "Instance overlaps for" instance))))
+                                 other-instances)
+                         ;; find-base-instance only returns VEVENT instances.
+                         ;; Simply re-attach the timezones.
+                         ;; TODO we actually should scan for which timezones the result uses,
+                         ;; and only attach those
+                         (filter vtimezone? (vcomponent-children component))))))))
 
      (else component)))
 

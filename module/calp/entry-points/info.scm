@@ -8,6 +8,7 @@
   :use-module (vcomponent)
   :use-module (datetime)
   :use-module (vcomponent type duration)
+  :use-module (vcomponent type utc-offset)
   :export (%summary main))
 
 (define %summary
@@ -50,8 +51,9 @@
     ((STANDARD DAYLIGHT)
      (format #f "~a, from ~a to ~a"
              (datetime->string (prop1 vcomponent 'DTSTART) "~1 ~3")
-             (timespec->string (prop1 vcomponent 'TZOFFSETFROM) 'm)
-             (timespec->string (prop1 vcomponent 'TZOFFSETTO)   'm)))
+             ;; TODO
+             (utc-offset->string (prop1 vcomponent 'TZOFFSETFROM))
+             (utc-offset->string (prop1 vcomponent 'TZOFFSETTO))))
     (else "")))
 
 (define* (print-vcomponent-tree vcomponent optional: (depth 0))

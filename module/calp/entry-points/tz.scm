@@ -16,7 +16,6 @@
   :use-module (calp translation)
   :use-module (datetime)
   :use-module (datetime zoneinfo)
-  :use-module (datetime timespec)
   :use-module (datetime timezone)
   :use-module (datetime localtime)
   :use-module (hnh util)
@@ -141,10 +140,11 @@
 (define (dump-zone zone-entries)
   (for-each (lambda (entry)
               (format #t (G_ "stdoff: ~a, rule: ~a, name: ~a, until: ~a~%")
-                      (timespec->string (zone-entry-stdoff entry))
+                      (zone-entry-stdoff entry)
                       (let ((r (zone-entry-rule entry)))
                         (cond ((symbol? r) r)
-                              ((timespec? r) (timespec->string r))
+                              ;; TODO format better here
+                              ((pair? r) r)
                               (else "-")))
                       (zone-entry-format entry)
                       (cond ((zone-entry-until entry)
@@ -207,17 +207,19 @@
                           month-day monthname))))
 
 
-             (case (timespec-type (rule-at rule))
+             (case (car (rule-at rule))
                ((standard) (G_ "unmodified local time"))
                ((wall) (G_ "local time"))
                ((utc) "UTC")
                (else => (lambda (c) (format #f (G_ "time type '~a'") c))))
 
              ;; Changeover time
-             (timespec->string (rule-at rule))
+             ;; TODO format better
+             (rule-at rule)
 
              ;; Time change
-             (timespec->string (rule-save rule))))
+             ;; TODO format better
+             (rule-save rule)))
    rule-entries))
 
 
@@ -285,20 +287,22 @@
          trailers)))
 
   (for input-datetime in input-datetimes
-       (let* ((utc input-offset pretty-input-name
+       (let* ((utc input-info
                    (zone->utc (-> input-datetime (tz input-zone-name))))
-              (output-datetime output-offset pretty-output-name
-                               (utc->zone utc output-zone-name))
-              (output-fmt
-               (option-ref opts 'output-format "~Y-~m-~dT~H:~M:~S")))
+              (output-datetime output-info (utc->zone utc output-zone-name))
+              (output-fmt (option-ref opts 'output-format "~Y-~m-~dT~H:~M:~S")))
          ;; 2025-12-09T04:33:18+01:00 (CET)
          (format #t "~a~a (~a) = ~a~a (~a)~%"
                  (datetime->string input-datetime output-fmt)
-                 (timespec->string (timespec-type input-offset #f) 'm)
-                 pretty-input-name
+                 ;; TODO always include minutes
+                 (zone-format "%z" "" (expanded-utc-offset input-info))
+                 (expanded-rule-printf input-info)
+
                  (datetime->string output-datetime output-fmt)
-                 (timespec->string (timespec-type output-offset #f) 'm)
-                 pretty-output-name))))
+                 ;; TODO always include minutes
+                 (zone-format "%z" "" (expanded-utc-offset output-info))
+                 (expanded-rule-printf output-info)
+                 ))))
 
 
 (define (run-vtimezone zoneinfo args)

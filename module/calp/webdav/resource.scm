@@ -371,7 +371,7 @@
               (propstat
                200
                (list ((xml webdav 'getlastmodified)
-                      (datetime->http-date (zone->utc dt)))))))
+                      (datetime->http-date (zone->utc1 dt)))))))
         (else (propstat 404 (list ((xml webdav 'getlastmodified)))))))
 
 (define (remove-lockdiscovery! _) (throw 'protected-property))

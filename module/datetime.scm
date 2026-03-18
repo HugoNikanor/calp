@@ -1,9 +1,12 @@
 (define-module (datetime)
 
   :use-module (datetime core)
+  :use-module (datetime arithmetic)
   :use-module (datetime timezone)
-  :use-module (datetime timespec)
   :use-module (datetime io)
+  :use-module (datetime duration)
+  :use-module (datetime extra)
+  :use-module (datetime unified)
   ;; To resolve colision with cadr-second from srfi-1
   :re-export-and-replace (second)
   :re-export (
@@ -44,18 +47,11 @@
 
               start-of-month
               end-of-month
-              start-of-year
-              end-of-year
-
-              date-stream
-              day-stream
 
               time-min
               time-max
               date-min
               date-max
-              datetime-min
-              datetime-max
 
               week-start
               week-day
@@ -69,11 +65,8 @@
               start-of-week
               end-of-week
               month-days
-              days-in-interval
-              year-day
 
               time->decimal-hour
-              datetime->decimal-hour
 
               time->seconds
               seconds->time
@@ -88,14 +81,10 @@
               date> date>? date>= date>=?
               time< time<? time<= time<=?
               time> time>? time>= time>=?
-              datetime< datetime<? datetime<= datetime<=?
-              datetime> datetime>? datetime>= datetime>=?
+              datetime</naive datetime<=/naive
+              datetime>/naive datetime>=/naive
 
-              date+ date-
-              time+ time-
-              datetime+ datetime-
-              date-difference
-              datetime-difference
+              time-components->integer
 
               jan january
               feb february
@@ -118,13 +107,22 @@
               fri friday
               sat saturday
 
+              ;; Arithmetic
+              date+ date-
+              ;; time+ time-
+              date-difference
+
+              datetime+/naive datetime-/naive
+              datetime-difference/naive
+
               ;; Timezone
               zoneinfo
               utc->zone
               zone->utc
               zone->zone
 
-              query-timezone
+              find-rule
+              expand-zone
               datetime+/zoneinfo
               datetime-/zoneinfo
               datetime-difference/zoneinfo
@@ -137,18 +135,49 @@
 
               ensure-zoned-datetime
 
-              ;; Timespec
-              timespec
-              timespec?
-              timespec->string
-              timespec-time timespec-time*
-              timespec-sign timespec-sign*
-              timespec-type timespec-type*
+              expanded-rule expanded-rule?
+              expanded-start-wall   expanded-start-wall*
+              expanded-start-utc    expanded-start-utc*
+              expanded-save-type    expanded-save-type*
+              expanded-utc-offset   expanded-utc-offset*
+              expanded-base-name    expanded-base-name*
+              expanded-zone-letters expanded-zone-letters*
+              expanded-from         expanded-from*
+              expanded-rule-printf
 
-              timespec+
-              timespec-negate
-              datetime-timespec-add
-              parse-time-spec
+              ;; Extra
+              start-of-year
+              end-of-year
+
+              date-stream
+              day-stream
+
+              days-in-interval
+              year-day
+
+              ;; Duration
+              duration
+              duration?
+
+              duration-sign   duration-sign*
+              duration-year   duration-year*
+              duration-month  duration-month*
+              duration-day    duration-day*
+              duration-hour   duration-hour*
+              duration-minute duration-minute*
+              duration-second duration-second*
+
+              duration-week*
+              duration-time*
+
+              duration-negate
+              duration-negative?
+              duration-positive?
+
+              string->duration
+              duration->string
+
+              seconds->duration
 
               ;; IO
               datetime->string
@@ -172,5 +201,16 @@
               week-day-name
 
               locale-month locale-month-short
+
+
+              ;; Unified
+              datetime-min
+              datetime-max
+
+              datetime< datetime<? datetime<= datetime<=?
+              datetime> datetime>? datetime>= datetime>=?
+
+              datetime+ datetime-
+              datetime-difference
 
               ))

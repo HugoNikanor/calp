@@ -1,6 +1,5 @@
 (define-module (datetime io)
   :use-module (datetime core)
-  :use-module (datetime timespec)
   :use-module (datetime timezone)
   :use-module (hnh util)
   :use-module (hnh util lens)
@@ -92,8 +91,13 @@
                                  ((string=? "UTC" (tz datetime))
                                   "Z")  ; special case
                                  (else
+                                  ;; TODO change here
+                                  "TODO"
+                                  #;
                                   (let ((offset _ (query-timezone datetime)))
-                                    (timespec->string offset 'm))))))
+                                    "TODO"
+                                    ;; (timespec->string offset 'm)
+                                    )))))
                    ;; date(1) has the following
                    ;; %z ⇒ -0400 (numeric offset)
                    ;; %:z ⇒ -04:00 (numeric offset, colons)

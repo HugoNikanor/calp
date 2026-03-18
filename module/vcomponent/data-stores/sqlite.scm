@@ -10,6 +10,7 @@
   :use-module (vcomponent type geo)
   :use-module (vcomponent type version)
   :use-module (vcomponent type request-status)
+  :use-module (vcomponent type utc-offset)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-43)
   :use-module (srfi srfi-71)
@@ -26,7 +27,6 @@
   :use-module (web uri)
   :use-module ((web query) :select (encode-query-parameters))
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (sxml namespaced)
   :use-module (ice-9 format)
   :export (create-instance)
@@ -348,24 +348,20 @@ CREATE TABLE IF NOT EXISTS metadata
 (define (duration->sqlite-time-offset dur)
   (define ± (duration-sign dur))
 
-  (cond ((duration-week? dur)
-         (list (format #f "~a~a days" ± (* 7 (duration-week-count dur)))))
-        ((duration-datetime? dur)
-         (append
-          (cond ((duration-day dur)
-                 (lambda (x) (and (number? x) (not (zero? x))))
-                 => (lambda (d) (list (format #f "~a~a days" ± d))))
-                (else '()))
-          (cond ((duration-time dur)
-                 (lambda (x) (and (time? x) (not (time-zero? x))))
-                 => (lambda (t)
-                      (map (lambda (p) (format #f "~a~a ~a" ± (cdr p) (car p)))
-                           (remove (compose zero? cdr)
-                                   `((hours   . ,(hour t))
-                                     (minutes . ,(minute t))
-                                     (seconds . ,(second t)))))))
-                (else '()))))
-        (else '())))
+  (append
+   (cond ((duration-day dur)
+          (lambda (x) (and (number? x) (not (zero? x))))
+          => (lambda (d) (list (format #f "~a~a days" ± d))))
+         (else '()))
+   (cond ((duration-time dur)
+          (lambda (x) (and (time? x) (not (time-zero? x))))
+          => (lambda (t)
+               (map (lambda (p) (format #f "~a~a ~a" ± (cdr p) (car p)))
+                    (remove (compose zero? cdr)
+                            `((hours   . ,(hour t))
+                              (minutes . ,(minute t))
+                              (seconds . ,(second t)))))))
+         (else '()))))
 
 ;;; TODO this should use a parameter, to allow custom types
 (define (sqlite-serialize key vline)
@@ -408,8 +404,8 @@ CREATE TABLE IF NOT EXISTS metadata
           ;; TODO timezone
           ((time? v) (values 'TIME (time->string v "~H:~M:~S")))
 
-          ((timespec? v)
-           (values 'UTC-OFFSET (timespec->string v)))
+          ((utc-offset? v)
+           (values 'UTC-OFFSET (utc-offset-value v)))
 
           ;; `X-` prefix to GEO and VERSION, since the standard
           ;; claims them as FLOAT and TEXT respectively, but they have
@@ -549,7 +545,7 @@ VALUES (?, ?, ?)
      ;; TODO timezone
      (cons 'TIME (lambda (_ v) (string->time v "~H:~M:~S")))
 
-     (cons 'UTC-OFFSET (lambda (_ v) (parse-time-spec v)))
+     (cons 'UTC-OFFSET (lambda (_ v) (utc-offset value: v)))
 
      (cons 'URI (lambda (_ v) (string->uri v)))
 

@@ -93,7 +93,7 @@
     (if event-continued?
         0
         (* (/ 100 total-length)
-         (datetime->decimal-hour
+         (duration->decimal-hour
           (datetime-difference/zoneinfo
            (instance-start-datetime reference-zone ev)
            (datetime date: start-date tz: reference-zone))))))
@@ -101,7 +101,7 @@
   ;; Set length of event, which makes end time
   (define width*
     (* (/ 100 total-length)
-       (datetime->decimal-hour
+       (duration->decimal-hour
           (instance-length/clamped (datetime date: start-date
                                              tz: reference-zone)
                                    (datetime date: (date+ end-date (date day: 1))

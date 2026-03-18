@@ -3,7 +3,6 @@
   :use-module (srfi srfi-64)
   :use-module (srfi srfi-88)
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (datetime zoneinfo)
   :use-module (datetime zoneinfo types)
   :use-module (datetime zoneinfo intermediary)
@@ -43,8 +42,8 @@ Link    Europe/Zurich  Europe/Vaduz
                      rule-to: 1973
                      rule-in: 4
                      rule-on: '(last 0)
-                     rule-at: (timespec (time hour: 02 minute: 00 second: 00) '+ 'wall)
-                     rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'daylight)
+                     rule-at: (cons 'wall 7200)
+                     rule-save: (cons 'daylight 3600)
                      rule-letters: "D"))
               (call-with-input-string "Rule  US    1967  1973  -  Apr  lastSun  2:00w  1:00d  D"
                 parse-zic-file))
@@ -54,7 +53,7 @@ Link    Europe/Zurich  Europe/Vaduz
               (list ((@@ (datetime zoneinfo zic) zone)
                      zone-name: "Asia/Amman"
                      zone-entries: (list (zone-entry
-                                          stdoff: (timespec (time hour: 02 minute: 00 second: 00) '+ #f)
+                                          stdoff: 7200
                                           rule: 'Jordan
                                           format: "EE%sT"
                                           until: #f))))
@@ -68,12 +67,12 @@ Link    Europe/Zurich  Europe/Vaduz
               (list ((@@ (datetime zoneinfo zic) zone)
                      zone-name: "America/Menominee"
                      zone-entries: (list (zone-entry
-                                        stdoff: (timespec (time hour: 05 minute: 00 second: 00) '- #f)
-                                        rule: (timespec (time) '+ 'standard)
+                                        stdoff: (* -5 3600)
+                                        rule: (cons 'standard 0)
                                         format: "EST"
                                         until: (cons 'wall (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00)))
                                        (zone-entry
-                                        stdoff: (timespec (time hour: 06 minute: 00 second: 00) '- #f)
+                                        stdoff: (* -6 3600)
                                         rule: 'US
                                         format: "C%sT"
                                         until: #f))))
@@ -88,12 +87,12 @@ Link    Europe/Zurich  Europe/Vaduz
               (list ((@@ (datetime zoneinfo zic) zone)
                      zone-name: "America/Menominee"
                      zone-entries: (list (zone-entry
-                                          stdoff: (timespec (time hour: 05 minute: 00 second: 00) '- #f)
-                                          rule: (timespec (time) '+ 'standard)
+                                          stdoff: (* -5 3600)
+                                          rule: (cons 'standard 0)
                                           format: "EST"
                                           until: (cons 'wall (datetime year: 1973 month: 04 day: 29 hour: 02 minute: 00 second: 00)))
                                          (zone-entry
-                                          stdoff: (timespec (time hour: 06 minute: 00 second: 00) '- #f)
+                                          stdoff: (* -6 3600)
                                           rule: 'US
                                           format: "C%sT"
                                           until: #f)))
@@ -103,8 +102,8 @@ Link    Europe/Zurich  Europe/Vaduz
                      rule-to: 1973
                      rule-in: dec
                      rule-on: '(last 0)
-                     rule-at: (timespec (time hour: 02 minute: 00 second: 00) '+ 'wall)
-                     rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'daylight)
+                     rule-at: (cons 'wall 7200)
+                     rule-save: (cons 'daylight 3600)
                      rule-letters: "D")
                     (zi-rule
                      rule-name: 'US
@@ -112,8 +111,8 @@ Link    Europe/Zurich  Europe/Vaduz
                      rule-to: 2006
                      rule-in: nov
                      rule-on: '(last 0)
-                     rule-at: (timespec (time hour: 02 minute: 00 second: 00) '+ 'wall)
-                     rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'standard)
+                     rule-at: (cons 'wall 7200)
+                     rule-save: (cons 'standard 0)
                      rule-letters: "S"))
               (call-with-input-string
                   "# Rule  NAME  FROM  TO    -  IN   ON       AT    SAVE  LETTER/S
@@ -151,22 +150,22 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                     ((@@ (datetime zoneinfo zic) zone)
                      zone-name: "Europe/Zurich"
                      zone-entries: (list (zone-entry
-                                        stdoff: (timespec (time hour: 00 minute: 34 second: 08) '+ #f)
-                                        rule: (timespec (time) '+ 'standard)
+                                        stdoff: (+ (* 60 34) 8)
+                                        rule: (cons 'standard 0)
                                         format: "LMT"
-                                        until: (cons 'wall (datetime year: 1853 month: 07 day: 16 hour: 00 minute: 00 second: 00)))
+                                        until: (cons 'wall (datetime year: 1853 month: 07 day: 16)))
                                        (zone-entry
-                                        stdoff: (timespec (time hour: 00 minute: 29 second: 45) '+ #f) ; NOTE that the .50 is discarded
-                                        rule: (timespec (time) '+ 'standard)
+                                        stdoff: (+ (* 60 29) 45) ; NOTE that the .50 is discarded
+                                        rule: (cons 'standard 0)
                                         format: "BMT"
-                                        until: (cons 'wall (datetime year: 1894 month: 06 day: 01 hour: 00 minute: 00 second: 00)))
+                                        until: (cons 'wall (datetime year: 1894 month: 06 day: 01)))
                                        (zone-entry
-                                        stdoff: (timespec (time hour: 01 minute: 00 second: 00) '+ #f)
+                                        stdoff: 3600
                                         rule: 'Swiss
                                         format: "CE%sT"
-                                        until: (cons 'wall (datetime year: 1981 month: 01 day: 01 hour: 00 minute: 00 second: 00)))
+                                        until: (cons 'wall (datetime year: 1981 month: 01 day: 01)))
                                        (zone-entry
-                                        stdoff: (timespec (time hour: 01 minute: 00 second: 00) '+ #f)
+                                        stdoff: 3600
                                         rule: 'EU
                                         format: "CE%sT"
                                         until: #f)))
@@ -176,8 +175,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                      rule-to: 'maximum
                      rule-in: 10
                      rule-on: '(last 0)
-                     rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                     rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'standard)
+                     rule-at: (cons 'utc 3600)
+                     rule-save: (cons 'standard 0)
                      rule-letters: "")
                     (zi-rule
                      rule-name: 'EU
@@ -185,8 +184,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                      rule-to: 'maximum
                      rule-in: 3
                      rule-on: '(last 0)
-                     rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                     rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'daylight)
+                     rule-at: (cons 'utc 3600)
+                     rule-save: (cons 'daylight 3600)
                      rule-letters: "S")
                     (zi-rule
                      rule-name: 'EU
@@ -194,8 +193,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                      rule-to: 1995
                      rule-in: 9
                      rule-on: `(last ,sun)
-                     rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                     rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'standard)
+                     rule-at: (cons 'utc 3600)
+                     rule-save: (cons 'standard 0)
                      rule-letters: "")
                     (zi-rule
                      rule-name: 'EU
@@ -203,8 +202,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                      rule-to: 'only
                      rule-in: 10
                      rule-on: 1
-                     rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                     rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'standard)
+                     rule-at: (cons 'utc 3600)
+                     rule-save: (cons 'standard 0)
                      rule-letters: "")
                     (zi-rule
                      rule-name: 'EU
@@ -212,8 +211,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                      rule-to: 'only
                      rule-in: 9
                      rule-on: `(last ,sun)
-                     rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                     rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'standard)
+                     rule-at: (cons 'utc 3600)
+                     rule-save: (cons 'standard 0)
                      rule-letters: "")
                     (zi-rule
                      rule-name: 'EU
@@ -221,8 +220,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                      rule-to: 1980
                      rule-in: 4
                      rule-on: `(> ,sun 1)
-                     rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'utc)
-                     rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'daylight)
+                     rule-at: (cons 'utc 3600)
+                     rule-save: (cons 'daylight 3600)
                      rule-letters: "S")
                     (zi-rule
                      rule-name: 'Swiss
@@ -230,8 +229,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                      rule-to: 1942
                      rule-in: 10
                      rule-on: `(> ,mon 1)
-                     rule-at: (timespec (time hour: 02 minute: 00 second: 00) '+ 'wall)
-                     rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'standard)
+                     rule-at: (cons 'wall 7200)
+                     rule-save: (cons 'standard 0)
                      rule-letters: "")
                     (zi-rule
                      rule-name: 'Swiss
@@ -239,8 +238,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                      rule-to: 1942
                      rule-in: 5
                      rule-on: `(> ,mon 1)
-                     rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'wall)
-                     rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'daylight)
+                     rule-at: (cons 'wall 3600)
+                     rule-save: (cons 'daylight 3600)
                      rule-letters: "S"))
               (call-with-input-string big-sample
                 parse-zic-file)))
@@ -249,9 +248,9 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
 (test-group "zone-format"
 
             (test-equal "Zone format with argument"
-              "CEST" (zone-format "CE%sT" "S" (timespec (time))))
+              "CEST" (zone-format "CE%sT" "S" 0))
             (test-equal "Zone format with empty"
-              "CET"  (zone-format "CE%sT" ""  (timespec (time))))
+              "CET"  (zone-format "CE%sT" ""  0))
 
             ;; TODO zone-format %z is not yet implemented, and therefore untested
 
@@ -259,7 +258,7 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
             (test-equal "Invalid format specifier"
               '(misc-error "zone-format" ; "Invalid format char ~s in ~s at position ~a" (#\S "%S" 1) #f
                            )
-              (catch 'misc-error (lambda () (zone-format "%S" "A" (timespec (time))))
+              (catch 'misc-error (lambda () (zone-format "%S" "A" 0))
                 (lambda (err fmt . rest)
                   (list err fmt)))))
 
@@ -281,8 +280,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                        rule-to: 1942
                        rule-in: 5
                        rule-on: `(> ,mon 1)
-                       rule-at: (timespec (time hour: 01 minute: 00 second: 00) '+ 'wall)
-                       rule-save: (timespec (time hour: 01 minute: 00 second: 00) '+ 'daylight)
+                       rule-at: (cons 'wall 3600)
+                       rule-save: (cons 'daylight 3600)
                        rule-letters: "S")
                       (zi-rule
                        rule-name: 'Swiss
@@ -290,8 +289,8 @@ Zone  America/Menominee  -5:00   -      EST     1973 Apr 29 2:00
                        rule-to: 1942
                        rule-in: 10
                        rule-on: `(> ,mon 1)
-                       rule-at: (timespec (time hour: 02 minute: 00 second: 00) '+ 'wall)
-                       rule-save: (timespec (time hour: 00 minute: 00 second: 00) '+ 'standard)
+                       rule-at: (cons 'wall 7200)
+                       rule-save: (cons 'standard 0)
                        rule-letters: ""))
                (get-rule zoneinfo 'Swiss))))
 
@@ -312,8 +311,8 @@ Zone Etc/GMT 0 - GMT
             (zone-link name: "G_M_T" target: "Greenwich")
             (zone-link name: "Greenwich" target: "Etc/GMT")
             (cons "Etc/GMT"
-                  (zone-entry stdoff: (timespec (time))
-                              rule: (timespec (time) '+ 'standard)
+                  (zone-entry stdoff: 0
+                              rule: (cons 'standard 0)
                               format: "GMT"
                               until: #f)))
       ((@@ (vcomponent zic) resolve-link) intermediary root-link))))

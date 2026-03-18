@@ -284,7 +284,6 @@
              (xml-element-children calendar-query))
        ((xml webdav 'allprop)))))
 
-
 ;;; TODO this throws 'report-pre-condition in a number of places
 ;;; This MUST be caught somewhere.
 ;;; But first it must be documented
@@ -294,18 +293,18 @@
   (assert (tag-matches? calendar-query 'calendar-query caldav))
 
   (define timezone
-    (cond ((find (lambda (ch) (tag-matches? ch 'timezone caldav))
-                 (xml-element-children calendar-query))
-           => (lambda (timezone)
-                ;; Note that content-type here is a calp extension
-                (call-with-input-string (xml-text-content timezone)
-                  (parser
-                   (resolve-media-type
-                    (or (attribute timezone 'content-type)
-                        "text/calendar"))))))
-          (else #f)))
+    (or (and=> (find (lambda (ch) (tag-matches? ch 'timezone caldav))
+                     (xml-element-children calendar-query))
+               (lambda (timezone)
+                 ;; Note that content-type here is a calp extension
+                 (call-with-input-string (xml-text-content timezone)
+                   (parser
+                    (resolve-media-type
+                     (or (attribute timezone 'content-type)
+                         "text/calendar"))))))
+        (store-calendar-timezone store)))
 
-  ;; TODO validate that timezone is a vtimezone component (if present)
+  ;; TODO If timezone is present, validate that it's a vcalendar component with a vtimzone component.
 
   ;; This handles the <C:filter/> part of the query
   ;; Matching entries is a list of href, vcalendar pairs.
@@ -319,10 +318,15 @@
                        => (lambda (comp-filter)
                             (filter
                              (lambda (pair) (execute-comp-filter
-                                        ;; TODO give actual timezone object
-                                        ;; US/Eastern currently hard-coded, in order
-                                        ;; to work with RFC provided tests
-                                        "US/Eastern"
+                                        (if timezone
+                                            ;; TODO simply extracting the timezone name here is
+                                            ;; completely invalid with regards to CalDAV, since
+                                            ;; names are arbitrary.
+                                            ;; Update once the datetime procedures can work with
+                                            ;; timezone objects
+                                            (-> timezone vcomponent-children
+                                                car (prop1 'TZID))
+                                            "UTC")
                                         comp-filter store (cdr pair) '()))
                              (list-entries store))))
                       (else

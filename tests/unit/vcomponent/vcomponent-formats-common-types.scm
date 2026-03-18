@@ -8,7 +8,7 @@
   :use-module (vcomponent type period)
   :use-module (vcomponent type recurrence)
   :use-module ((datetime) :select (date time datetime))
-  :use-module ((datetime timespec) :select (timespec)))
+  :use-module ((vcomponent type utc-offset) :select (utc-offset)))
 
 
 ;;; TODO test with custom types appended to default-types
@@ -35,7 +35,7 @@
   (test-equal 'TEXT        (apparent-type "Hello"))
   (test-equal 'TIME        (apparent-type (time)))
   (test-equal 'URI         (apparent-type (string->uri "https://example.com")))
-  (test-equal 'UTC-OFFSET  (apparent-type (timespec (time) '+ 'utc)))
+  (test-equal 'UTC-OFFSET  (apparent-type (utc-offset value: 0)))
 
   (test-equal "Unknown types return false"
     #f (apparent-type (sqrt -1)))

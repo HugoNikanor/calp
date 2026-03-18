@@ -75,11 +75,11 @@
   (for-each displayln
             (map string-append
                  (graphical-calendar (-> d (day 1)
-                                         (date- (date month: 1))
+                                         (date- (duration month: 1))
                                          (day 0)))
                  (make-list 8 "  ")
                  (graphical-calendar d)
                  (make-list 8 "  ")
                  (graphical-calendar (-> d (day 1)
-                                         (date+ (date month: 1))
+                                         (date+ (duration month: 1))
                                          (day 0))))))

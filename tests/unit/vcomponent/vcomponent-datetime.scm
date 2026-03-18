@@ -12,11 +12,11 @@
   :use-module ((hnh util) :select (->> sort*))
   :use-module (hnh util lens)
   :use-module ((datetime zoneinfo) :select (intermediary->zoneinfo read-zoneinfo))
-  :use-module (datetime timespec)
   :use-module ((vcomponent) :select (vcomponent-diff extract1 prop1))
   :use-module (vcomponent datetime)
   :use-module (vcomponent datetime timezone)
   :use-module ((vcomponent type recurrence) :select (recur-rule))
+  :use-module ((vcomponent type utc-offset) :select (utc-offset))
   :use-module ((vcomponent create) :select (vevent vtimezone daylight standard)))
 
 ;;; TODO RFC 5545 Specifies that an event lies in the range [start, end). Write explicit tests for this.
@@ -75,32 +75,32 @@
 
 (test-group "instance-length"
   (test-equal "Datetime, with DTEND"
-    (datetime day: 2 hour: 17)
+    (duration day: 2 hour: 17)
     (instance-length
      (vevent
       dtstart: (datetime year: 2020 month: 3 day: 29 hour: 17)
       dtend:   (datetime year: 2020 month: 4 day:  1 hour: 10))))
 
   (test-equal "Datetime, without DTEND"
-    (datetime)
+    (duration)
     (instance-length
      (vevent
       dtstart: (datetime year: 2020 month: 3 day: 29 hour: 17))))
 
   (test-equal "Date, with DTEND"
-    (datetime day: 3)
+    (duration day: 3)
     (instance-length
      (vevent
       dtstart: (date year: 2020 month: 3 day: 29)
       dtend:   (date year: 2020 month: 4 day:  1))))
 
   (test-equal "Date, without DTEND"
-    (datetime day: 1)
+    (duration day: 1)
     (instance-length
      (vevent
       dtstart: (date year: 2020 month: 3 day: 29))))
 
-  ;; TODO durations
+  ;; TODO Events with durations instead of DTENDs
   )
 
 (test-group "instance-length/clamped"
@@ -113,7 +113,7 @@
    ;;                 |----------| event interval
 
    (test-equal "Correct clamping"
-     (datetime hour: 7) ; 2020-03-29T17:00 - 2020-03-30T00:00
+     (duration hour: 7) ; 2020-03-29T17:00 - 2020-03-30T00:00
      (instance-length/clamped
       (datetime year: 2020 month: 3 day: 23 tz: "UTC") ; a time way before the start of the event
       (datetime year: 2020 month: 3 day: (1+ 29) tz: "UTC") ; a time slightly after the end of the event
@@ -121,7 +121,7 @@
       ev))
 
    (test-equal "Correct clamping UTC"
-     (datetime hour: 7)
+     (duration hour: 7)
      (instance-length/clamped
       (datetime year: 2020 month: 3 day: 23 tz: "UTC")
       (datetime year: 2020 month: 3 day: (1+ 29) tz: "UTC")
@@ -130,7 +130,7 @@
 
  (let ((ev (vevent dtstart: (datetime year: 2020 month: 3 day: 1))))
    (test-equal
-       (datetime)
+       (duration)
      (instance-length/clamped
       (datetime year: 2020 month: 3 day: 1 tz: "UTC")
       (datetime year: 2020 month: 3 day: 2 tz: "UTC")
@@ -191,14 +191,14 @@ Link    Europe/Zurich  Europe/Vaduz
                     rrule: (recur-rule freq: 'YEARLY interval: 1 byday: `((-1 . ,sun)) bymonth: '(3) wkst: monday)
                     tzname: "CEST"
                     ;; TODO why isn't this 'hour: 1'?
-                    tzoffsetfrom: (timespec (time hour: 0) '+ #f)
-                    tzoffsetto: (timespec (time hour: 2) '+ #f))
+                    tzoffsetfrom: (utc-offset value: 0)
+                    tzoffsetto: (utc-offset value: 7200))
                    (standard
                     dtstart: (datetime year: 1996 month: 10 day: 27 hour: 1 tz: "UTC")
                     rrule: (recur-rule freq: 'YEARLY interval: 1 byday: `((-1 . ,sun)) bymonth: '(10) wkst: monday)
                     tzname: "CET"
-                    tzoffsetfrom: (timespec (time hour: 2) '+ #f)
-                    tzoffsetto: (timespec (time hour: 1) '+ #f))))
+                    tzoffsetfrom: (utc-offset value: 7200)
+                    tzoffsetto: (utc-offset value: 3600))))
        timezone-component))
 
     ;; TODO test where the requested timezone isn't available

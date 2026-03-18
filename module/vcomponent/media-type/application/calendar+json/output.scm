@@ -11,13 +11,13 @@
   :use-module (vcomponent type request-status)
   :use-module (vcomponent type unknown)
   :use-module (vcomponent type duration)
+  :use-module (vcomponent type utc-offset)
   :use-module (hnh util)
   :use-module (hnh util table)
   :use-module (hnh util type)
   :use-module (hnh util lens)
   :use-module (hnh util object)
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (web uri)
   :export (serialize/object
            serializers)
@@ -85,6 +85,7 @@
          (cons number? (lambda (_ v) v))
          (cons period?
                (lambda (p v)
+                 ;; TODO TZID MUST be included here
                  (let ((start end params (serialize-period p v "~Y-~m-~dT~H:~M:~S~Z")))
                    (values (vector start end)
                            params))))
@@ -92,14 +93,7 @@
          (cons string? (lambda (_ v) v))
          ;; TODO timezone
          (cons time? (lambda (_ v) (time->string v)))
-         (cons timespec?
-               ;; NOTE this is identical to the one for text/calendar
-               (lambda (_ v)
-                 (string-append
-                  (symbol->string (timespec-sign v))
-                  (let ((t (timespec-time v)))
-                    (time->string t (if (zero? (second t))
-                                        "~H:~M" "~H:~M:~S"))))))
+         (cons utc-offset? (lambda (_ v) (utc-offset->string v colon: ":")))
 
          (cons geo? (lambda (_ v) (vector (geo-latitude v) (geo-longitude v))))
 

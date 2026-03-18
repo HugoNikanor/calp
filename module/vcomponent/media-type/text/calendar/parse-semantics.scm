@@ -16,7 +16,6 @@
   :use-module (hnh util lens)
   :use-module (datetime)
   :use-module (datetime io)
-  :use-module (datetime timespec)
   :use-module (srfi srfi-1)
   :use-module (srfi srfi-71)
   :use-module (srfi srfi-88)
@@ -27,6 +26,7 @@
   :use-module (vcomponent type period)
   :use-module (vcomponent type unknown)
   :use-module (vcomponent type duration)
+  :use-module (vcomponent type utc-offset)
   :use-module (vcomponent type recurrence)
   :use-module (vcomponent type recurrence parse)
   :use-module (vcomponent media-type types)
@@ -186,17 +186,17 @@
     x))
 
 
+
 ;; UTC-OFFSET
-;;; (@ (datetime timespec) parse-time-spec) parses timespecs as they
-;;; appear in zoneinfo files.
-(define (parse-utc-offset props value)
-  (cond ((string-match "^([+-])([0-9]{4,6})$" value)
+(define (parse-utc-offset* _ value)
+  (cond ((string-match "^([+-])([0-9]{2})([0-9]{2})([0-9]{2})?$" value)
          => (lambda (m)
-              (timespec
-               (string->time (string-pad-right (match:substring m 2) 6 #\0)
-                             "~H~M~S")
-               (string->symbol (match:substring m 1))
-               'utc)))
+              (utc-offset value:
+                          (time-components->integer
+                           sign: (match:substring m 1)
+                           h: (match:substring m 2)
+                           m: (match:substring m 3)
+                           s: (match:substring m 4)))))
         (else (raise-calendar-parse-error
                type: 'UTC-OFFSET
                value: value
@@ -319,7 +319,7 @@
      ;; TODO time can have timezones...
      (cons 'TIME parse-time)
      (cons 'URI parse-uri)
-     (cons 'UTC-OFFSET parse-utc-offset)))))
+     (cons 'UTC-OFFSET parse-utc-offset*)))))
 
 ;;; Get iCalendar type parser by type name
 (define (get-parser type)

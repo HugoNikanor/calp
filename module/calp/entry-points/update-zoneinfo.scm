@@ -186,7 +186,6 @@ Given as a space-delimeted list of symbols, and defaults to <code>datetime timez
    ;; define-module is weird with keywords
    `(define-module ,output-module
       #:use-module ((datetime core) #:select (datetime date time))
-      #:use-module ((datetime timespec) #:select (timespec))
       #:use-module ((datetime zoneinfo)
                     #:select (parsed-zic-intermediary
                               intermediary->zoneinfo

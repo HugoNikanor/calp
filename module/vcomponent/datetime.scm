@@ -9,7 +9,6 @@
   :use-module (vcomponent create)
   :use-module (vcomponent type duration)
   :use-module (datetime)
-  :use-module (datetime timespec)
   :use-module (datetime zoneinfo)
   :use-module (hnh util)
   :use-module (hnh util lens)
@@ -68,23 +67,20 @@
 ;; TODO Exact value when a timezone changes (usually due to DST changeover) is currently UNDEFINED.
 (define (instance-length e)
   (let ((s (prop1 e 'DTSTART)))
-    (cond ((prop1 e 'DURATION) => (unval duration->datetime 1))
+    (cond ((prop1 e 'DURATION) => identity)
           ((prop1 e 'DTEND)
            => (lambda (end)
-                (cond ((date? s) (datetime date: (date-difference end s)))
-                      ((unzoned-datetime? s)
-                       (datetime-difference end s))
-                      ((zoned-datetime? s)
-                       (datetime-difference/zoneinfo end s))
+                (cond ((date? s)             (date-difference end s))
+                      ((unzoned-datetime? s) (datetime-difference end s))
+                      ((zoned-datetime? s)   (datetime-difference/zoneinfo end s))
                       (else (scm-error 'misc-error "instance-length"
                                        "Start of event of unknown type: ~s"
                                        (list s) #f)))))
-          (else
-           (cond ((date? s)     (datetime day: 1))
-                 ((datetime? s) (datetime))
-                 (else (scm-error 'misc-error "instance-length"
-                                  "Non date or datetime object found in DTSTART: ~s"
-                                  (list s) #f)))))))
+          ((date? s)     (duration day: 1))
+          ((datetime? s) (duration))
+          (else (scm-error 'misc-error "instance-length"
+                           "Non date or datetime object found in DTSTART: ~s"
+                           (list s) #f)))))
 
 
 
@@ -166,6 +162,8 @@
   ;; two timespans and returns the overlap between the two
   ;; This MUST be suitable to send to datetime-difference to get the length of the timespan.
 
+  ;; TODO this should be changed to work on zones
+
   (define st (instance-start-datetime reference-tz e))
 
   (define st-utc ((unval zone->utc) st))
@@ -176,7 +174,10 @@
   (if (timespan-overlaps? start-dt-utc end-dt-utc
                           st-utc et-utc)
       (datetime-difference
+       ;; TODO datetime-(min|max) already implements zoneinfo
+       ;; Simplify this procedure
        (datetime-min start-dt-utc et-utc)
        (datetime-max end-dt-utc   st-utc))
-      (datetime)))
+      ;; TODO document the non-overlapping case
+      (duration)))
 

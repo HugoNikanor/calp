@@ -12,7 +12,7 @@
  #:x-cal-address (string->uri "mailto:hugo@example.com")
  #:x-date #2025-01-02
  #:x-date-time (tz #2025-01-02T03:04:05 "Europe/Stockholm")
- #:x-duration (duration #:sign '- #:day 5 #:time #07:00:00)
+ #:x-duration (duration #:sign '- #:day 5 #:hour 7)
  #:x-float 3.141592653589793
  #:x-integer 1729
  #:x-period (period
@@ -28,7 +28,7 @@
  #:x-time #10:20:30
  #:x-unknown (unknown "Handle, This!")
  #:x-uri (string->uri "https://example.com")
- #:x-utc-offset (timespec (time #:hour 2) '+ 'utc)
+ #:x-utc-offset (utc-offset #:value 7200)
  (list (vevent
         #:comment
         "Event part mostly exists to make this a \"compliant\" entry. Otherwise, this entry only exists to provide one instance of each known data-type as a property on the surrounding calendar object.\nGEO, VERSION, and REQUEST-STATUS are added to the calendars properties, since those have special handling, but no VALUE parameter to specify that such handling should occur. Likewise, X-UNKNOWN lacks a VALUE parameter, and should be parsed as an unknown (and therefore opaque) type."

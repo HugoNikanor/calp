@@ -19,7 +19,7 @@
 
 (define start (datetime year: 2021 month: 11 day: 01 tz: "UTC"))
 
-(define end (datetime+ start (datetime day: 8)))
+(define end (datetime+ start (duration day: 8)))
 
 ;;; [--Event A-------------------------------]
 ;;;           [Event B]

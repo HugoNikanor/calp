@@ -5,11 +5,6 @@ These are the core components of the library. Note that (almost all)
 of these procedures are time-zone un-aware. See the next chapter for
 time-zone aware operations.
 
-Worth noting that the core data-types (@code{datetime}, @code{date},
-and @code{time}) are overloaded to both represent absolute date/times,
-but also differences. Despite that, time objects can't be negative,
-for that see @ref{Timespec}.
-
 @subsection Constants
 
 @defvar jan
@@ -362,13 +357,6 @@ Also known as Julian day.
 
 @defun time->decimal-hour time
 Convert @var{time} to a decimal value, so 10:30 would become 10.5.
-@end defun
-
-@defun datetime->decimal-hour dt [start-date]
-Similar to @code{time->decimal-hour}, but also looks at the date component.
-
-@var{start-date} is required if either the month of year component of
-@var{dt} is non-zero (since months and years have a variable number of hours).
 @end defun
 
 @defun time->seconds time

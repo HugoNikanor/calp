@@ -14,8 +14,8 @@
                         #:bymonth (list 4)
                         #:wkst mon)
                #:tzname "EDT"
-               #:tzoffsetfrom (timespec (time #:hour 5) '- 'utc)
-               #:tzoffsetto (timespec (time #:hour 4) '- 'utc))
+               #:tzoffsetfrom (utc-offset #:value (* -5 3600))
+               #:tzoffsetto (utc-offset #:value (* -4 3600)))
               (standard
                #:dtstart #2000-10-26T02:00:00
                #:rrule (recur-rule
@@ -25,23 +25,23 @@
                         #:bymonth (list 10)
                         #:wkst mon)
                #:tzname "EST"
-               #:tzoffsetfrom (timespec (time #:hour 4) '- 'utc)
-               #:tzoffsetto (timespec (time #:hour 5) '- 'utc))))
+               #:tzoffsetfrom (utc-offset #:value (* -4 3600))
+               #:tzoffsetto (utc-offset #:value (* -5 3600)))))
        (vevent
         #:description "We are having a meeting all this week at 12 pm for one hour, with an additional meeting on the first day 2 hours long.\nPlease bring your own lunch for the 12 pm meetings."
         #:dtstamp #2006-02-06T00:11:21Z
         #:dtstart (datetime #:date #2006-01-02 #:time #12:00:00 #:tz "US/Eastern")
-        #:duration (duration #:sign '+ #:day #f #:time #01:00:00)
+        #:duration (duration #:sign '+ #:hour 1)
         #:rdate (period
                  #:start (datetime #:date #2006-01-02 #:time #15:00:00 #:tz "US/Eastern")
-                 #:end (duration #:sign '+ #:day #f #:time #02:00:00))
+                 #:end (duration #:sign '+ #:hour 2))
         #:rrule (recur-rule #:freq 'DAILY #:count 5 #:interval 1 #:wkst 1)
         #:summary "Event #2"
         #:uid "00959BC664CA650E933C892C@example.com")
        (vevent
         #:dtstamp #2006-02-06T00:11:21Z
         #:dtstart (datetime #:date #2006-01-04 #:time #14:00:00 #:tz "US/Eastern")
-        #:duration (duration #:sign '+ #:day #f #:time #01:00:00)
+        #:duration (duration #:sign '+ #:hour 1)
         #:recurrence-id (datetime #:date #2006-01-04 #:time #12:00:00 #:tz "US/Eastern")
         #:summary "Event #2 bis"
         #:uid "00959BC664CA650E933C892C@example.com")))

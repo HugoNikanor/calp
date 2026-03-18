@@ -48,6 +48,29 @@ git diff --no-index --color-moved=default --color=always a b
 @end example
 @end defun
 
+@section SRFI-64 Matchers
+The following SRFI-64 test specifiers,
+@pxref{SRFI-64 Conditonal Test Suites and Other Advanced Features,,,guile},
+also exist.
+
+@defmac test-match-path path-component ...
+Matches (parts of) the path of the test, where each test group is a
+component, and the test name is the leaf of the tree.
+
+Each path component can either be a string literal, in which case it's
+matched literally, or the form @code{...} indicating that any amount,
+including zero, path components of the test path may occur here.
+
+@emph{Note} that this has the ability to skip whole groups, in which
+case they aren't reported as skipped (since no actual test was hit).
+@end defmac
+
+@defun make-test-match-path path
+Un-syntaxed version of @code{test-match-path}. Takes full path as a
+single list (meaning that the literal symbol @code{(quote ...)} is to
+be used).
+@end defun
+
 @section xmllint
 
 The module @code{(hnh test xmllint)} provides a wrapper around the

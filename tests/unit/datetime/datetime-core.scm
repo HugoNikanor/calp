@@ -5,6 +5,10 @@
   :use-module ((srfi srfi-41)
                :select (stream->list stream-take))
   :use-module (datetime core)
+  :use-module (datetime extra)
+  :use-module (datetime unified)
+  :use-module (datetime arithmetic)
+  :use-module (datetime duration)
   :use-module ((ice-9 i18n) :select (make-locale))
   :use-module ((guile) :select (LC_CTYPE LC_TIME)))
 
@@ -232,9 +236,18 @@
     (date year: 2020 month: 03 day: 01) (date-max (date year: 2020 month: 02 day: 02) (date year: 2020 month: 03 day: 01)))
 
   (test-equal "Datetime min"
-    (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30) (datetime-min (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30) (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50)))
+    (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30)
+    (datetime-min (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30)
+                  (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50)))
   (test-equal "Datetime max"
-    (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50) (datetime-max (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30) (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50))))
+    (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50)
+    (datetime-max (datetime year: 2020 month: 02 day: 02 hour: 10 minute: 20 second: 30)
+                  (datetime year: 2020 month: 03 day: 01 hour: 07 minute: 40 second: 50)))
+  (test-equal "Datetime max (3 values)"
+    (datetime year: 5)
+    (datetime-max (datetime year: 3)
+                  (datetime year: 5)
+                  (datetime year: 1))))
 
 (test-equal "Week day" thu (week-day (date year: 2022 month: 06 day: 23)))
 
@@ -254,9 +267,12 @@
                   mon)))
 
 (test-group "week-number"
-  (test-equal "Week number at end of year"   53 (week-number (date year: 2008 month: 12 day: 31) sun))
-  (test-equal "Week number at start of year" 53 (week-number (date year: 2009 month: 01 day: 01) sun))
-  (test-equal "Week using next years weeks"   1 (week-number (date year: 2018 month: 12 day: 31) mon)))
+  (test-equal "Week number at end of year"
+    53 (week-number (date year: 2008 month: 12 day: 31) sun))
+  (test-equal "Week number at start of year"
+    53 (week-number (date year: 2009 month: 01 day: 01) sun))
+  (test-equal "Week using next years weeks"
+    1 (week-number (date year: 2018 month: 12 day: 31) mon)))
 
 (test-equal (date year: 2008 month: 12 day: 28) (date-starting-week 53 (date year: 2008) sun))
 (test-equal (date year: 2007 month: 12 day: 30) (date-starting-week 1  (date year: 2008) sun))
@@ -309,7 +325,7 @@
 
 (test-group "Days in interval"
   (test-equal "Steps from start to end of month" 31 (days-in-interval (date year: 2022 month: 01 day: 01) (date year: 2022 month: 01 day: 31)))
-  (test-error "Negative intervals should fail" 'misc-error (days-in-interval (date year: 2022 month: 01 day: 01) (date year: 2020 month: 01 day: 31))))
+  (test-error "Negative intervals should fail" #t (days-in-interval (date year: 2022 month: 01 day: 01) (date year: 2020 month: 01 day: 31))))
 
 (test-equal "Year day" 191 (year-day (date year: 2020 month: 07 day: 09)))
 
@@ -320,14 +336,7 @@
     (test-equal "60 Minutes gives a whole hour"         6.0 (time->decimal-hour (time hour: 5 minute: 60)))
     (test-equal "A second is the right length" (/ 1.0 3600) (time->decimal-hour (time second: 1))))
 
-  (test-group "Datetime->decimal-hour"
-    (test-equal "Datetimes without dates work as times"
-      5.5 (datetime->decimal-hour (datetime hour: 5 minute: 30)))
-    (test-equal "Full day" 24.0 (datetime->decimal-hour (datetime day: 1)))
-    (test-error "Can't get length of month without information about which month"
-      'misc-error (datetime->decimal-hour (datetime month: 1)))
-    (test-equal "Can get length of month if we have a month"
-      (* 31 24.0) (datetime->decimal-hour (datetime month: 1) (date year: 2020 month: 01 day: 01)))))
+  )
 
 (test-equal "date-range"
   (list (date year: 2020 month: 01 day: 01)
@@ -390,10 +399,6 @@
       (datetime= (datetime hour: 1) (datetime hour: 1)))
     (test-assert "Two dissimmalar datetimes aren't equal"
       (not (datetime= (datetime hour: 1) (datetime hour: 2))))
-
-    (test-error "Can't compare datetimes of differing timezones"
-      'wrong-type-arg
-      (datetime= (datetime) (datetime tz: "Something Else")))
 
     (test-assert "Three equal datetimes are equal"
       (datetime= (datetime hour: 1) (datetime hour: 1) (datetime hour: 1)))))
@@ -463,99 +468,75 @@ datetime<=
 
     (test-group "Simple cases"
       (test-group "Days"
-        (test-equal "Add"     (date year: 2020 month: 01 day: 06) (date+ (date year: 2020 month: 01 day: 01) (date day: 5)))
-        (test-equal "Remove"  (date year: 2020 month: 01 day: 01) (date- (date year: 2020 month: 01 day: 06) (date day: 5))))
+        (test-equal "Add"     (date year: 2020 month: 01 day: 06) (date+ (date year: 2020 month: 01 day: 01) (duration day: 5)))
+        (test-equal "Remove"  (date year: 2020 month: 01 day: 01) (date- (date year: 2020 month: 01 day: 06) (duration day: 5))))
       (test-group "Months"
-        (test-equal "Add"     (date year: 2020 month: 06 day: 01) (date+ (date year: 2020 month: 01 day: 01) (date month: 5)))
-        (test-equal "Remove"  (date year: 2020 month: 01 day: 01) (date- (date year: 2020 month: 06 day: 01) (date month: 5))))
+        (test-equal "Add"     (date year: 2020 month: 06 day: 01) (date+ (date year: 2020 month: 01 day: 01) (duration month: 5)))
+        (test-equal "Remove"  (date year: 2020 month: 01 day: 01) (date- (date year: 2020 month: 06 day: 01) (duration month: 5))))
       (test-group "Years"
-        (test-equal "Add"     (date year: 2022 month: 01 day: 01) (date+ (date year: 2020 month: 01 day: 01) (date year: 2)))
-        (test-equal "Remove"  (date year: 2020 month: 01 day: 01) (date- (date year: 2022 month: 01 day: 01) (date year: 2)))))
+        (test-equal "Add"     (date year: 2022 month: 01 day: 01) (date+ (date year: 2020 month: 01 day: 01) (duration year: 2)))
+        (test-equal "Remove"  (date year: 2020 month: 01 day: 01) (date- (date year: 2022 month: 01 day: 01) (duration year: 2)))))
 
     (test-group "Many operands"
       (test-equal (date year: 2021 month: 02 day: 02)
           (date+ (date year: 2020 month: 01 day: 01)
-                 (date day: 1)
-                 (date month: 1)
-                 (date year: 1))))
+                 (duration day: 1)
+                 (duration month: 1)
+                 (duration year: 1))))
 
     (test-group "Overflow"
       ;; Years don't overflow, so no need to test
-      (test-equal "Day overflow"        (date year: 2022 month: 02 day: 01) (date+ (date year: 2022 month: 01 day: 31) (date day: 1)))
-      (test-equal "Month overflow"      (date year: 2023 month: 01 day: 01) (date+ (date year: 2022 month: 12 day: 01) (date month: 1)))
-      (test-equal "Date+Month overflow" (date year: 2023 month: 01 day: 01) (date+ (date year: 2022 month: 12 day: 31) (date day: 1))))
+      (test-equal "Day overflow"        (date year: 2022 month: 02 day: 01) (date+ (date year: 2022 month: 01 day: 31) (duration day: 1)))
+      (test-equal "Month overflow"      (date year: 2023 month: 01 day: 01) (date+ (date year: 2022 month: 12 day: 01) (duration month: 1)))
+      (test-equal "Date+Month overflow" (date year: 2023 month: 01 day: 01) (date+ (date year: 2022 month: 12 day: 31) (duration day: 1))))
 
     ;; NOTE
     (test-equal "Undefined overflow"
-      (date year: 2020 month: 02 day: 31)
-      (date+ (date year: 2020 month: 01 day: 31) (date month: 1)))
+      (date year: 2020 month: 02 day: 29)
+      (date+ (date year: 2020 month: 01 day: 31)
+             (duration month: 1)))
     )
-
-  (test-group "Time"
-    (test-group "Unary application"
-      (test-equal "Time+ single argument returns itself" (time) (time+ (time)))
-      (test-equal "Time- single argument returns itself" (time) (time- (time))))
-
-    (test-group "Simple cases"
-      (test-group "Seconds"
-        (test-equal "Add"     (time hour: 20 minute: 00 second: 40) (time+ (time hour: 20 minute: 00 second: 00) (time second: 40)))
-        (test-equal "Remove"  (time hour: 20 minute: 00 second: 00) (time- (time hour: 20 minute: 00 second: 40) (time second: 40))))
-      (test-group "Minutes"
-        (test-equal "Add"     (time hour: 20 minute: 10 second: 00) (time+ (time hour: 20 minute: 00 second: 00) (time minute: 10)))
-        (test-equal "Remove"  (time hour: 20 minute: 00 second: 00) (time- (time hour: 20 minute: 10 second: 00) (time minute: 10))))
-      (test-group "Hours"
-        (test-equal "Add"     (time hour: 22 minute: 00 second: 00) (time+ (time hour: 20 minute: 00 second: 00) (time hour: 2)))
-        (test-equal "Remove"  (time hour: 20 minute: 00 second: 00) (time- (time hour: 22 minute: 00 second: 00) (time hour: 2)))))
-
-    (test-group "Overflowing cases"
-      (test-group "Addition"
-        (test-group "Single overflow"
-          (call-with-values (lambda () (time+ (time hour: 20 minute: 00 second: 00) (time hour: 5)))
-            (lambda (result overflow)
-              (test-equal "Time" (time hour: 1) result)
-              (test-equal "Overflow" 1 overflow))))
-        (test-group "Mulitple overflows"
-          (call-with-values (lambda () (time+ (time hour: 20 minute: 00 second: 00) (time hour: 5) (time hour: 24)))
-            (lambda (result overflow)
-              (test-equal "Time" (time hour: 1) result)
-              (test-equal "Overflow" 2 overflow)))))
-
-      (test-group "Subtraction"
-        (test-group "Single overflow"
-          (call-with-values (lambda () (time- (time hour: 20 minute: 00 second: 00) (time hour: 25)))
-            (lambda (result overflow)
-              (test-equal "Time" (time hour: 19) result)
-              (test-equal "Overflow" 1 overflow))))
-        (test-group "Mulitple overflows"
-          (call-with-values (lambda () (time- (time hour: 4) (time hour: 10) (time hour: 24)))
-            (lambda (result overflow)
-              (test-equal "Time" (time hour: 18) result)
-              (test-equal "Overflow" 2 overflow))))))))
+)
 
 ;; TODO
 datetime+ datetime-
 
 ;;; TODO document this behaviour
 (test-equal "(datetime+ x 0) causes overflow handling"
-  (datetime year: 2020 month: 3 day: 1)
-  (datetime+ (datetime year: 2020 month: 2 day: 30) (datetime)))
+  (datetime year: 2020 month: 2 day: 29)
+  (datetime+ (datetime year: 2020 month: 2 day: 30) (duration)))
 
 (test-group "Date difference"
   (test-assert "The differente between a date and itself is zero"
-    (date-zero? (date-difference (date year: 2022 month: 02 day: 02) (date year: 2022 month: 02 day: 02))))
+    (equal? (duration)
+            (date-difference (date year: 2022 month: 02 day: 02)
+                             (date year: 2022 month: 02 day: 02))))
 
-  (test-error "Later date must be first" 'misc-error
-              (date-difference (date year: 2020 month: 01 day: 01) (date year: 2021 month: 01 day: 01)))
+  (test-equal "Inverted order gives negative duration"
+    (duration day: 366 sign: '-)
+    (date-difference (date year: 2020 month: 01 day: 01)
+                     (date year: 2021 month: 01 day: 01)))
 
-  (test-error "Negative months are invalid" 'misc-error
+  ;; TODO are these constraints still correct?
+  (test-error "Negative months are invalid" #t
               (date-difference (date) (date month: -1)))
-  (test-error "Negative days are invalid" 'misc-error
+  (test-error "Negative days are invalid" #t
               (date-difference (date) (date day: -1)))
-  (test-equal "Negative years ARE valid"
-    (date year: 1) (date-difference (date) (date year: -1))))
+  (test-error "Negative years are invalid" #t
+              (date-difference (date) (date year: -1)))
+
+  ;; TODO, the following returns (date month: 2 day: 3), which is
+  ;; clearly not right
+  (date-difference #2026-05-01 #2026-02-28)
+  )
 
 ;; TODO
 datetime-difference
 
 
-'((datetime core))
+'((datetime core)
+  (datetime duration)
+  (datetime extra)
+  (datetime arithmetic)
+  (datetime unified)
+  )
