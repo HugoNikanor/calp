@@ -1,3 +1,9 @@
+;;; Commentary:
+;;; Period of time.
+;;; Note that this is limited to the iCalendar subset of the ISO 8601
+;;; periods, meaning that all periods start with a datetime, and that
+;;; iCalendar restrictions on durations apply (see duration module).
+;;; Code:
 (define-module (vcomponent type period)
   :use-module (hnh util)
   :use-module (hnh util object)
