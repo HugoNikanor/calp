@@ -13,6 +13,6 @@
   "dependencies": {
     "@microsoft/tsdoc": "^0.14.2",
     "typedoc": "^0.24.6",
-    "uuid": "^8.3.2"
+    "uuid": "^14.0.0"
   }
 }
